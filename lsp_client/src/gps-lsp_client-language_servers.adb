@@ -67,8 +67,7 @@ package body GPS.LSP_Client.Language_Servers is
 
    function Is_Configuration_Supported
      (Self    : in out Abstract_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
-      return Boolean
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind) return Boolean
    is
       pragma Unreferenced (Self, Setting);
    begin

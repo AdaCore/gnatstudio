@@ -19,7 +19,7 @@ with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 with Call_Graph_Views;                  use Call_Graph_Views;
-with GPS.Editors; use GPS.Editors;
+with GPS.Editors;                       use GPS.Editors;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.LSP_Client.Language_Servers;   use GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
@@ -31,8 +31,8 @@ with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with Language;                          use Language;
 with LSP.Messages;                      use LSP.Messages;
 with LSP.Types;                         use LSP.Types;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with Basic_Types; use Basic_Types;
+with GNATCOLL.Projects;                 use GNATCOLL.Projects;
+with Basic_Types;                       use Basic_Types;
 
 package body GPS.LSP_Client.Call_Tree is
 
@@ -41,25 +41,28 @@ package body GPS.LSP_Client.Call_Tree is
    end record;
    type LSP_Provider_Access is access all LSP_Provider;
 
-   overriding function Supports_Language
-     (Self : access LSP_Provider;
-      Lang : Language.Language_Access)
+   overriding
+   function Supports_Language
+     (Self : access LSP_Provider; Lang : Language.Language_Access)
       return Boolean;
 
-   overriding procedure Prepare_Call_Hierarchy
+   overriding
+   procedure Prepare_Call_Hierarchy
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class;
       Kind     : View_Type);
 
-   overriding procedure Is_Called_By
+   overriding
+   procedure Is_Called_By
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class);
 
-   overriding procedure Calls
+   overriding
+   procedure Calls
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
@@ -69,31 +72,35 @@ package body GPS.LSP_Client.Call_Tree is
    -- Prepare_Call_Hierarchy_Request  --
    -------------------------------------
 
-   type Prepare_Call_Hierarchy_Request
-   is new Abstract_Prepare_Call_Hierarchy_Request with record
-      ID     : VSS.Strings.Virtual_String;
-      Kind   : View_Type;
+   type Prepare_Call_Hierarchy_Request is
+     new Abstract_Prepare_Call_Hierarchy_Request
+   with record
+      ID   : VSS.Strings.Virtual_String;
+      Kind : View_Type;
    end record;
    type Prepare_Call_Hierarchy_Request_Access is
      access all Prepare_Call_Hierarchy_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Prepare_Call_Hierarchy_Request;
       Result : LSP.Messages.CallHierarchyItem_Vector);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out Prepare_Call_Hierarchy_Request; Reason : Reject_Reason);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Get_Task_Label
+   overriding
+   function Get_Task_Label
      (Self : Prepare_Call_Hierarchy_Request) return String
-   is
-      ("preparing call hierarchy");
+   is ("preparing call hierarchy");
 
    ------------------------
    -- Called_By_Request  --
@@ -104,18 +111,21 @@ package body GPS.LSP_Client.Call_Tree is
    end record;
    type Called_By_Request_Access is access all Called_By_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Called_By_Request;
       Result : LSP.Messages.CallHierarchyIncomingCall_Vector);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out Called_By_Request; Reason : Reject_Reason);
 
-   overriding function Get_Task_Label (Self : Called_By_Request) return String
-   is
-      ("is called by");
+   overriding
+   function Get_Task_Label (Self : Called_By_Request) return String
+   is ("is called by");
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -130,14 +140,16 @@ package body GPS.LSP_Client.Call_Tree is
    end record;
    type Calls_Request_Access is access all Calls_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Calls_Request;
       Result : LSP.Messages.CallHierarchyOutgoingCall_Vector);
 
-   overriding procedure On_Rejected
-     (Self : in out Calls_Request; Reason : Reject_Reason);
+   overriding
+   procedure On_Rejected (Self : in out Calls_Request; Reason : Reject_Reason);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Calls_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -160,7 +172,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Prepare_Call_Hierarchy_Request;
       Result : LSP.Messages.CallHierarchyItem_Vector) is
    begin
@@ -175,17 +188,14 @@ package body GPS.LSP_Client.Call_Tree is
                  Position => Item.selectionRange.first);
          begin
             Call_Graph_Views.Finished_Prepare_Call_Hierarchy
-              (Kernel       => Self.Kernel,
-               Name         =>
-                 VSS.Strings.Conversions.To_UTF_8_String (Item.name),
-               Line         => Editable_Line_Type (Location.Line),
-               Column       => Location.Column,
-               File         => File,
-               Project      => Lookup_Project
-                 (Self.Kernel, File).Project_Path,
-               ID           =>
-                 VSS.Strings.Conversions.To_UTF_8_String (Self.ID),
-               Kind         => Self.Kind);
+              (Kernel  => Self.Kernel,
+               Name    => VSS.Strings.Conversions.To_UTF_8_String (Item.name),
+               Line    => Editable_Line_Type (Location.Line),
+               Column  => Location.Column,
+               File    => File,
+               Project => Lookup_Project (Self.Kernel, File).Project_Path,
+               ID      => VSS.Strings.Conversions.To_UTF_8_String (Self.ID),
+               Kind    => Self.Kind);
          end;
       end loop;
 
@@ -199,7 +209,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out Prepare_Call_Hierarchy_Request; Reason : Reject_Reason)
    is
       pragma Unreferenced (Reason);
@@ -212,7 +223,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -226,7 +238,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Called_By_Request;
       Result : LSP.Messages.CallHierarchyIncomingCall_Vector) is
    begin
@@ -251,7 +264,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Calls_Request;
       Result : LSP.Messages.CallHierarchyOutgoingCall_Vector)
    is
@@ -319,7 +333,7 @@ package body GPS.LSP_Client.Call_Tree is
                 (Holder.Editor, X.span.first);
 
          begin
-            Decl_Line   := Location.Line;
+            Decl_Line := Location.Line;
             Decl_Column := Integer (Location.Column);
          end;
 
@@ -335,8 +349,8 @@ package body GPS.LSP_Client.Call_Tree is
 
       begin
          if Kind_Index <= Kinds.Last_Index then
-            Is_Dispatching := Kinds (Kind_Index).Is_Set and then
-              Kinds (Kind_Index).Value;
+            Is_Dispatching :=
+              Kinds (Kind_Index).Is_Set and then Kinds (Kind_Index).Value;
             Kind_Index := Kind_Index + 1;
          end if;
          Ref_Line := Integer (X.first.line + 1);
@@ -369,7 +383,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -383,7 +398,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Calls_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -397,7 +413,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out Called_By_Request; Reason : Reject_Reason)
    is
       pragma Unreferenced (Reason);
@@ -410,8 +427,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
-     (Self : in out Calls_Request; Reason : Reject_Reason)
+   overriding
+   procedure On_Rejected (Self : in out Calls_Request; Reason : Reject_Reason)
    is
       pragma Unreferenced (Reason);
    begin
@@ -423,9 +440,9 @@ package body GPS.LSP_Client.Call_Tree is
    -- Supports_Language --
    -----------------------
 
-   overriding function Supports_Language
-     (Self : access LSP_Provider;
-      Lang : Language.Language_Access)
+   overriding
+   function Supports_Language
+     (Self : access LSP_Provider; Lang : Language.Language_Access)
       return Boolean is
    begin
       return Get_Language_Server (Lang) /= null;
@@ -435,7 +452,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- Prepare_Call_Hierarchy --
    ----------------------------
 
-   overriding procedure Prepare_Call_Hierarchy
+   overriding
+   procedure Prepare_Call_Hierarchy
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
@@ -444,13 +462,15 @@ package body GPS.LSP_Client.Call_Tree is
    is
       R : Prepare_Call_Hierarchy_Request_Access;
    begin
-      R := new Prepare_Call_Hierarchy_Request'
-        (LSP_Request with
-           Kernel   => Self.Kernel,
-           File     => File,
-           Position => Location_To_LSP_Position (Location),
-           ID       => VSS.Strings.Conversions.To_Virtual_String (ID),
-           Kind     => Kind);
+      R :=
+        new Prepare_Call_Hierarchy_Request'
+          (LSP_Request
+           with
+             Kernel   => Self.Kernel,
+             File     => File,
+             Position => Location_To_LSP_Position (Location),
+             ID       => VSS.Strings.Conversions.To_Virtual_String (ID),
+             Kind     => Kind);
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
          Request_Access (R));
@@ -460,7 +480,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- Is_Called_By --
    ------------------
 
-   overriding procedure Is_Called_By
+   overriding
+   procedure Is_Called_By
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
@@ -470,22 +491,23 @@ package body GPS.LSP_Client.Call_Tree is
       Position : constant LSP.Messages.Position :=
         Location_To_LSP_Position (Location);
    begin
-      R := new Called_By_Request'
-        (LSP_Request with
-           Kernel => Self.Kernel,
-         Item   => LSP.Messages.CallHierarchyItem'
-           (uri            => To_URI (File),
-            span           => LSP.Messages.Span'
-              (first => Position,
-               last  => Position),
-            selectionRange => LSP.Messages.Span'
-              (first => Position,
-               last  => Position),
-            kind           => A_Function,
-            name           => <>,
-            detail         => <>,
-            tags           => (Is_Set => False)),
-           ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
+      R :=
+        new Called_By_Request'
+          (LSP_Request
+           with
+             Kernel => Self.Kernel,
+             Item   =>
+               LSP.Messages.CallHierarchyItem'
+                 (uri            => To_URI (File),
+                  span           =>
+                    LSP.Messages.Span'(first => Position, last => Position),
+                  selectionRange =>
+                    LSP.Messages.Span'(first => Position, last => Position),
+                  kind           => A_Function,
+                  name           => <>,
+                  detail         => <>,
+                  tags           => (Is_Set => False)),
+             ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -496,7 +518,8 @@ package body GPS.LSP_Client.Call_Tree is
    -- Calls --
    -----------
 
-   overriding procedure Calls
+   overriding
+   procedure Calls
      (Self     : access LSP_Provider;
       ID       : String;
       File     : Virtual_File;
@@ -506,22 +529,23 @@ package body GPS.LSP_Client.Call_Tree is
       Position : constant LSP.Messages.Position :=
         Location_To_LSP_Position (Location);
    begin
-      R := new Calls_Request'
-        (LSP_Request with
-           Kernel => Self.Kernel,
-         Item   => LSP.Messages.CallHierarchyItem'
-           (uri            => To_URI (File),
-            span           => LSP.Messages.Span'
-              (first => Position,
-               last  => Position),
-            selectionRange => LSP.Messages.Span'
-              (first => Position,
-               last  => Position),
-            kind           => A_Function,
-            name           => <>,
-            detail         => <>,
-            tags           => (Is_Set => False)),
-         ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
+      R :=
+        new Calls_Request'
+          (LSP_Request
+           with
+             Kernel => Self.Kernel,
+             Item   =>
+               LSP.Messages.CallHierarchyItem'
+                 (uri            => To_URI (File),
+                  span           =>
+                    LSP.Messages.Span'(first => Position, last => Position),
+                  selectionRange =>
+                    LSP.Messages.Span'(first => Position, last => Position),
+                  kind           => A_Function,
+                  name           => <>,
+                  detail         => <>,
+                  tags           => (Is_Set => False)),
+             ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -532,8 +556,7 @@ package body GPS.LSP_Client.Call_Tree is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module (Kernel : Kernel_Handle)
-   is
+   procedure Register_Module (Kernel : Kernel_Handle) is
       Provider : constant LSP_Provider_Access :=
         new LSP_Provider'(Kernel => Kernel);
    begin

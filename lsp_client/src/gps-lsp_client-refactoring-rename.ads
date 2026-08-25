@@ -15,14 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GPS.Kernel.Modules;
 
 package GPS.LSP_Client.Refactoring.Rename is
 
    procedure Register
-     (Kernel : Kernel_Handle;
-      Id     : GPS.Kernel.Modules.Module_ID);
+     (Kernel : Kernel_Handle; Id : GPS.Kernel.Modules.Module_ID);
    --  Register requests
 
 end GPS.LSP_Client.Refactoring.Rename;

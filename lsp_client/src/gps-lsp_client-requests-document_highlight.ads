@@ -19,11 +19,11 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Highlight is
 
-   type Abstract_Document_Highlight_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-      record
-         Position : LSP.Messages.Position;
-      end record;
+   type Abstract_Document_Highlight_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Position : LSP.Messages.Position;
+   end record;
 
    function Params
      (Self : Abstract_Document_Highlight_Request)
@@ -32,23 +32,27 @@ package GPS.LSP_Client.Requests.Document_Highlight is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Document_Highlight_Request;
-      Result : LSP.Messages.DocumentHighlight_Vector) is abstract;
+      Result : LSP.Messages.DocumentHighlight_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Document_Highlight_Request)
       return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Document_Highlight_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Document_Highlight_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Document_Highlight_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

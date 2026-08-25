@@ -40,15 +40,17 @@ package body GPS.LSP_Client.Tasks is
       Request_Id : LSP.Types.LSP_Number_Or_String;
    end record;
 
-   type Language_Server_Monitor_Access is access all
-     Language_Server_Monitor'Class;
+   type Language_Server_Monitor_Access is
+     access all Language_Server_Monitor'Class;
 
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String;
-   overriding function Execute
+   overriding
+   function Name (Command : access Language_Server_Monitor) return String;
+   overriding
+   function Execute
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type;
-   overriding procedure Interrupt (Self : in out Language_Server_Monitor);
+   overriding
+   procedure Interrupt (Self : in out Language_Server_Monitor);
 
    function Get_Request
      (Command : Language_Server_Monitor'Class) return Request_Access;
@@ -78,7 +80,8 @@ package body GPS.LSP_Client.Tasks is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Language_Server_Monitor)
       return Commands.Command_Return_Type is
    begin
@@ -93,14 +96,14 @@ package body GPS.LSP_Client.Tasks is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Self : in out Language_Server_Monitor) is
+   overriding
+   procedure Interrupt (Self : in out Language_Server_Monitor) is
       Request : Request_Access := Get_Request (Self);
-      Server  : constant GPS.LSP_Client.Language_Servers.Language_Server_Access
-        := GPS.LSP_Module.Get_Language_Server (Self.Lang);
+      Server  :
+        constant GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+          GPS.LSP_Module.Get_Language_Server (Self.Lang);
    begin
-      if Server /= null
-        and then Request /= null
-      then
+      if Server /= null and then Request /= null then
          Cancel (Server.all, Request);
       end if;
    end Interrupt;
@@ -109,10 +112,13 @@ package body GPS.LSP_Client.Tasks is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Language_Server_Monitor) return String is
+   overriding
+   function Name (Command : access Language_Server_Monitor) return String is
    begin
-      return "[" & Command.Lang.Get_Name & "] "
+      return
+        "["
+        & Command.Lang.Get_Name
+        & "] "
         & Ada.Strings.Unbounded.To_String (Command.Label);
    end Name;
 
@@ -124,16 +130,18 @@ package body GPS.LSP_Client.Tasks is
      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String) return not null Task_Manager_Integration_Access is
    begin
-      return new Task_Manager_Integration'
-        (Kernel   => Kernel,
-         Language => Ada.Strings.Unbounded.To_Unbounded_String (Language));
+      return
+        new Task_Manager_Integration'
+          (Kernel   => Kernel,
+           Language => Ada.Strings.Unbounded.To_Unbounded_String (Language));
    end New_Task_Manager_Integration;
 
    ---------------------
    -- On_Send_Request --
    ---------------------
 
-   overriding procedure On_Send_Request
+   overriding
+   procedure On_Send_Request
      (Self    : in out Task_Manager_Integration;
       Request : GPS.LSP_Client.Requests.Reference)
    is
@@ -144,13 +152,17 @@ package body GPS.LSP_Client.Tasks is
    begin
       --  Launch a background command to show progress in the Task Manager
 
-      Command := new Language_Server_Monitor'
-        (Commands.Root_Command with
-           Label    => Ada.Strings.Unbounded.To_Unbounded_String
-             (Request.Request.Get_Task_Label),
-         Lang       => Self.Kernel.Get_Language_Handler.Get_Language_By_Name
-           (Ada.Strings.Unbounded.To_String (Self.Language)),
-         Request_Id => Request.Request.Id);
+      Command :=
+        new Language_Server_Monitor'
+          (Commands.Root_Command
+           with
+             Label      =>
+               Ada.Strings.Unbounded.To_Unbounded_String
+                 (Request.Request.Get_Task_Label),
+             Lang       =>
+               Self.Kernel.Get_Language_Handler.Get_Language_By_Name
+                 (Ada.Strings.Unbounded.To_String (Self.Language)),
+             Request_Id => Request.Request.Id);
 
       GPS.Kernel.Task_Manager.Launch_Background_Command
         (Kernel            => Self.Kernel,

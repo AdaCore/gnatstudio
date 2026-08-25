@@ -21,7 +21,8 @@ package body GPS.LSP_Client.Requests.Shutdown is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Shutdown_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -34,18 +35,20 @@ package body GPS.LSP_Client.Requests.Shutdown is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Shutdown_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is null;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is null;
 
    --------------------------
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Shutdown_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return True;
    end Is_Request_Supported;
@@ -54,7 +57,8 @@ package body GPS.LSP_Client.Requests.Shutdown is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Shutdown_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is

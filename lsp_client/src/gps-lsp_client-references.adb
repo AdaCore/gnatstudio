@@ -28,7 +28,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with VSS.JSON.Pull_Readers.Simple;
@@ -37,23 +37,23 @@ with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
-with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Stock_Labels;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Button;                 use Gtk.Button;
-with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Radio_Button;           use Gtk.Radio_Button;
-with Gtk.Widget;                 use Gtk.Widget;
-with Glib.Convert;               use Glib.Convert;
+with Gtk.Box;          use Gtk.Box;
+with Gtk.Button;       use Gtk.Button;
+with Gtk.Check_Button; use Gtk.Check_Button;
+with Gtk.Dialog;       use Gtk.Dialog;
+with Gtk.Enums;        use Gtk.Enums;
+with Gtk.Radio_Button; use Gtk.Radio_Button;
+with Gtk.Widget;       use Gtk.Widget;
+with Glib.Convert;     use Glib.Convert;
 
-with GPS.Default_Styles;         use GPS.Default_Styles;
+with GPS.Default_Styles;       use GPS.Default_Styles;
 with GPS.Editors;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Entities;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages;      use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;
@@ -61,35 +61,39 @@ with GPS.Kernel.Task_Manager;
 with GPS.Location_View;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Requests.References;
-with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
-with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
+with GPS.Main_Window;          use GPS.Main_Window;
 with GPS.Scripts.Commands;
 
-with Commands;                   use Commands;
+with Commands;             use Commands;
 with Commands.Generic_Asynchronous;
-with Commands.Interactive;       use Commands.Interactive;
-with Dialog_Utils;               use Dialog_Utils;
+with Commands.Interactive; use Commands.Interactive;
+with Dialog_Utils;         use Dialog_Utils;
 with Histories;
 with Language;
 with Src_Editor_Module.Shell;
 
-with Basic_Types;                use Basic_Types;
+with Basic_Types;  use Basic_Types;
 with LSP.JSON_Streams;
 with LSP.Messages;
-with String_Utils;               use String_Utils;
+with String_Utils; use String_Utils;
 with UTF8_Utils;
 
 package body GPS.LSP_Client.References is
 
-   type Find_Refs_Command (Locals_Only : Boolean; Specific : Boolean) is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Find_Refs_Command
+     (Locals_Only : Boolean;
+      Specific    : Boolean)
+   is new Interactive_Command with null record;
+   overriding
+   function Execute
      (Command : access Find_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Find references command which calls LSP or old implementation.
 
    type Has_Entity_Name_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Entity_Name_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity is an access type.
@@ -104,47 +108,49 @@ package body GPS.LSP_Client.References is
 
    -- References_Command --
 
-   type References_Command is
-     new Abstract_References_Command with record
+   type References_Command is new Abstract_References_Command with record
       Locations : LSP.Messages.Location_Vector;
    end record;
    type Ref_Command_Access is access all References_Command'Class;
    --  Used to transfer references lists via python API
 
-   overriding function Execute
-     (Command : access References_Command)
-      return Command_Return_Type is (Failure);
+   overriding
+   function Execute
+     (Command : access References_Command) return Command_Return_Type
+   is (Failure);
 
-   overriding procedure Get_Result
+   overriding
+   procedure Get_Result
      (Self : not null access References_Command;
       Data : in out GNATCOLL.Scripts.Callback_Data'Class);
 
    -- References_Request --
 
    type References_Request is
-     new GPS.LSP_Client.Requests.References.Abstract_References_Request with
-      record
-         Titles    : VSS.String_Vectors.Virtual_String_Vector;
-         Name      : VSS.Strings.Virtual_String;
-         Filter    : Result_Filter;
-         Command   : Ref_Command_Access;
-         File_Only : Boolean;
-         Column    : Visible_Column_Type;
-      end record;
+     new GPS.LSP_Client.Requests.References.Abstract_References_Request
+   with record
+      Titles    : VSS.String_Vectors.Virtual_String_Vector;
+      Name      : VSS.Strings.Virtual_String;
+      Filter    : Result_Filter;
+      Command   : Ref_Command_Access;
+      File_Only : Boolean;
+      Column    : Visible_Column_Type;
+   end record;
    --  Used for communicate with LSP
 
-   overriding procedure Finalize (Self : in out References_Request);
+   overriding
+   procedure Finalize (Self : in out References_Request);
 
-   overriding function Get_Task_Label
-     (Self : References_Request) return String
-   is
-     ("querying references");
+   overriding
+   function Get_Task_Label (Self : References_Request) return String
+   is ("querying references");
 
-   overriding procedure On_Result_Message
-     (Self   : in out References_Request;
-      Result : LSP.Messages.Location_Vector);
+   overriding
+   procedure On_Result_Message
+     (Self : in out References_Request; Result : LSP.Messages.Location_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -166,11 +172,11 @@ package body GPS.LSP_Client.References is
       Filters      : Filters_Buttons_Access;
       Include_Decl : Gtk_Check_Button;
    end record;
-   type References_Filter_Dialog is access all
-     References_Filter_Dialog_Record'Class;
+   type References_Filter_Dialog is
+     access all References_Filter_Dialog_Record'Class;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Filters_Buttons, Filters_Buttons_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Filters_Buttons, Filters_Buttons_Access);
 
    procedure Unselect_All_Filters (Dialog : access Gtk_Widget_Record'Class);
    procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class);
@@ -189,22 +195,21 @@ package body GPS.LSP_Client.References is
    --  GPS.EditorBuffer.references python API
 
    function All_Reference_Kinds
-     return VSS.String_Vectors.Virtual_String_Vector;
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Returns list of all supported reference kinds.
 
    Message_Flag : constant Message_Flags :=
-     (Editor_Side => True,
-      Editor_Line => False,
-      Locations   => True);
+     (Editor_Side => True, Editor_Line => False, Locations => True);
 
    --  Async Command --
 
-   package File_To_Location_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => GNATCOLL.VFS.Virtual_File,
-      Element_Type    => LSP.Messages.Location_Vectors.Vector,
-      Hash            => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Keys => GNATCOLL.VFS."=",
-      "="             => LSP.Messages.Location_Vectors."=");
+   package File_To_Location_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => GNATCOLL.VFS.Virtual_File,
+        Element_Type    => LSP.Messages.Location_Vectors.Vector,
+        Hash            => GNATCOLL.VFS.Full_Name_Hash,
+        Equivalent_Keys => GNATCOLL.VFS."=",
+        "="             => LSP.Messages.Location_Vectors."=");
 
    procedure Group_By_File
      (V                : LSP.Messages.Location_Vector;
@@ -215,41 +220,41 @@ package body GPS.LSP_Client.References is
    --  appearance inside the initial Location_Vector.
 
    type Messages_Data is record
-      File_To_Locations    : File_To_Location_Maps.Map;
+      File_To_Locations : File_To_Location_Maps.Map;
       --  The messages yet to be created
 
-      File_Vector          : GNATCOLL.VFS.File_Array_Access;
+      File_Vector : GNATCOLL.VFS.File_Array_Access;
       --  Sorted vector of File (used to keep the order while going through
       --  File_To_Locations)
 
-      Total_Locations      : Natural;
+      Total_Locations : Natural;
       --  Total numbers of locations to be parsed
 
-      Parsed_Locations     : Natural;
+      Parsed_Locations : Natural;
       --  Current numbers of locations parsed
 
       References_Displayed : Boolean;
       --  True if at least one Messages was created
 
-      Has_Hidden           : Boolean;
+      Has_Hidden : Boolean;
       --  True if contains hidden locations
 
-      Kernel               : Kernel_Handle;
-      File                 : GNATCOLL.VFS.Virtual_File;
-      Position             : LSP.Messages.Position;
-      Titles               : VSS.String_Vectors.Virtual_String_Vector;
-      Name                 : VSS.Strings.Virtual_String;
-      Filter               : Result_Filter;
-      Command              : Ref_Command_Access;
-      File_Only            : Boolean;
-      Column               : Visible_Column_Type;
+      Kernel    : Kernel_Handle;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Position  : LSP.Messages.Position;
+      Titles    : VSS.String_Vectors.Virtual_String_Vector;
+      Name      : VSS.Strings.Virtual_String;
+      Filter    : Result_Filter;
+      Command   : Ref_Command_Access;
+      File_Only : Boolean;
+      Column    : Visible_Column_Type;
       --  Fields from the request
    end record;
 
    procedure Clean_Messages_Data (Data : in out Messages_Data);
 
-   package Messages_Commands is new Commands.Generic_Asynchronous
-     (Messages_Data, Clean_Messages_Data);
+   package Messages_Commands is new
+     Commands.Generic_Asynchronous (Messages_Data, Clean_Messages_Data);
 
    procedure Next_Messages
      (Data    : in out Messages_Data;
@@ -277,8 +282,12 @@ package body GPS.LSP_Client.References is
            (VSS.Strings.Conversions.To_Virtual_String
               ("Local references for "
                & Escape_Text (Entity)
-               & " ("  & Local_File.Display_Base_Name
-               & ":" & String_Utils.Image (Line) & ") " & "in "
+               & " ("
+               & Local_File.Display_Base_Name
+               & ":"
+               & String_Utils.Image (Line)
+               & ") "
+               & "in "
                & (Local_File.Display_Base_Name)));
 
       else
@@ -286,22 +295,31 @@ package body GPS.LSP_Client.References is
            (VSS.Strings.Conversions.To_Virtual_String
               ("References for "
                & Escape_Text (Entity)
-               & " (" & Local_File.Display_Base_Name
-               & ":" & String_Utils.Image (Line) & ")"));
+               & " ("
+               & Local_File.Display_Base_Name
+               & ":"
+               & String_Utils.Image (Line)
+               & ")"));
 
          Result.Append
            (VSS.Strings.Conversions.To_Virtual_String
               ("References for "
                & Escape_Text (Entity)
-               & " in extended projects (" & Local_File.Display_Base_Name
-               & ":" & String_Utils.Image (Line) & ")"));
+               & " in extended projects ("
+               & Local_File.Display_Base_Name
+               & ":"
+               & String_Utils.Image (Line)
+               & ")"));
 
          Result.Append
            (VSS.Strings.Conversions.To_Virtual_String
               ("References for "
                & Escape_Text (Entity)
-               & " in current project (" & Local_File.Display_Base_Name
-               & ":" & String_Utils.Image (Line) & ")"));
+               & " in current project ("
+               & Local_File.Display_Base_Name
+               & ":"
+               & String_Utils.Image (Line)
+               & ")"));
       end if;
 
       return Result;
@@ -311,18 +329,16 @@ package body GPS.LSP_Client.References is
    -- All_Reference_Kinds --
    -------------------------
 
-   function All_Reference_Kinds
-     return VSS.String_Vectors.Virtual_String_Vector
+   function All_Reference_Kinds return VSS.String_Vectors.Virtual_String_Vector
    is
       Interesting_Kinds : constant LSP.Messages.AlsReferenceKind_Set :=
-        (Is_Server_Side => True, As_Flags =>
-           (LSP.Messages.Parent => False,
-            others => True));
+        (Is_Server_Side => True,
+         As_Flags       => (LSP.Messages.Parent => False, others => True));
       Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
 
       JS     : aliased LSP.JSON_Streams.JSON_Stream;
-      Output : aliased
-        VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
+      Output :
+        aliased VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
 
    begin
       JS.Set_Stream (Output'Unchecked_Access);
@@ -330,11 +346,12 @@ package body GPS.LSP_Client.References is
       JS.End_Document;
 
       declare
-         Memory : aliased
-           VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
+         Memory :
+           aliased VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
          Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-         Input  : aliased LSP.JSON_Streams.JSON_Stream
-           (False, Reader'Unchecked_Access);
+         Input  :
+           aliased LSP.JSON_Streams.JSON_Stream
+                     (False, Reader'Unchecked_Access);
       begin
          Memory.Set_Data (Output.Buffer);
          Reader.Set_Stream (Memory'Unchecked_Access);
@@ -352,7 +369,8 @@ package body GPS.LSP_Client.References is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -368,15 +386,13 @@ package body GPS.LSP_Client.References is
 
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
          Line :=
-           (if Has_Entity_Line_Information (Context.Context) then
-               Integer (Entity_Line_Information (Context.Context))
-            else
-               Line_Information (Context.Context));
+           (if Has_Entity_Line_Information (Context.Context)
+            then Integer (Entity_Line_Information (Context.Context))
+            else Line_Information (Context.Context));
          Column :=
-           (if Has_Entity_Column_Information (Context.Context) then
-               Entity_Column_Information (Context.Context)
-            else
-               Column_Information (Context.Context));
+           (if Has_Entity_Column_Information (Context.Context)
+            then Entity_Column_Information (Context.Context)
+            else Column_Information (Context.Context));
 
          Titles :=
            All_Refs_Category
@@ -387,8 +403,8 @@ package body GPS.LSP_Client.References is
 
          if Command.Specific then
             declare
-               All_Refs              : constant
-                 VSS.String_Vectors.Virtual_String_Vector :=
+               All_Refs              :
+                 constant VSS.String_Vectors.Virtual_String_Vector :=
                    All_Reference_Kinds;
                Dialog                : References_Filter_Dialog;
                Main_View             : Dialog_View;
@@ -407,8 +423,9 @@ package body GPS.LSP_Client.References is
                  (Dialog,
                   Title  => "Find References Options",
                   Parent => Kernel.Get_Main_Window,
-                  Flags  => Modal
-                  or Use_Header_Bar_From_Settings (Kernel.Get_Main_Window));
+                  Flags  =>
+                    Modal
+                    or Use_Header_Bar_From_Settings (Kernel.Get_Main_Window));
                Set_Default_Size_From_History
                  (Win    => Dialog,
                   Name   => "Find References Options",
@@ -429,8 +446,10 @@ package body GPS.LSP_Client.References is
                   Group_Name          => "Context",
                   Allow_Multi_Columns => True);
 
-               Gtk_New (Project_And_Recursive, Widget_SList.Null_List,
-                        "In all projects");
+               Gtk_New
+                 (Project_And_Recursive,
+                  Widget_SList.Null_List,
+                  "In all projects");
                Group_Widget.Create_Child
                  (Widget => Project_And_Recursive,
                   Doc    => "Perform the search in whole project hierarchy.");
@@ -444,8 +463,10 @@ package body GPS.LSP_Client.References is
                   "Find_Prefs_Project_Recursive",
                   Project_And_Recursive);
 
-               Gtk_New (File_Only, Get_Group (Project_And_Recursive),
-                        "In current file");
+               Gtk_New
+                 (File_Only,
+                  Get_Group (Project_And_Recursive),
+                  "In current file");
                Group_Widget.Create_Child
                  (Widget => File_Only,
                   Doc    => "Perform the search in the current file only.");
@@ -467,17 +488,13 @@ package body GPS.LSP_Client.References is
 
                Filters_View := new Dialog_View_With_Button_Box_Record;
                Dialog_Utils.Initialize
-                 (Self     => Filters_View,
-                  Position => Pos_Right);
+                 (Self => Filters_View, Position => Pos_Right);
 
                Group_Widget.Append_Child
-                 (Filters_View,
-                  Expand => True,
-                  Fill   => True);
+                 (Filters_View, Expand => True, Fill => True);
 
                Group_Widget := new Dialog_Group_Widget_Record;
-               Group_Widget.Initialize
-                 (Parent_View => Filters_View);
+               Group_Widget.Initialize (Parent_View => Filters_View);
 
                --  Add the LSP 'includeDeclaration' predefined filter
                Gtk_New (Dialog.Include_Decl, Label => "include declaration");
@@ -485,14 +502,12 @@ package body GPS.LSP_Client.References is
 
                Histories.Create_New_Boolean_Key_If_Necessary
                  (Get_History (Kernel).all,
-                  Histories.History_Key'
-                    ("Find_Prefs_Filter_include_decl"),
+                  Histories.History_Key'("Find_Prefs_Filter_include_decl"),
                   False);
 
                Histories.Associate
                  (Get_History (Kernel).all,
-                  Histories.History_Key'
-                    ("Find_Prefs_Filter_include_decl"),
+                  Histories.History_Key'("Find_Prefs_Filter_include_decl"),
                   Dialog.Include_Decl);
 
                --  Add the server specific filters
@@ -504,8 +519,8 @@ package body GPS.LSP_Client.References is
 
                   Histories.Create_New_Boolean_Key_If_Necessary
                     (Get_History (Kernel).all,
-                     Histories.History_Key
-                       ("Find_Prefs_Filter_" & F'Img), True);
+                     Histories.History_Key ("Find_Prefs_Filter_" & F'Img),
+                     True);
                   Histories.Associate
                     (Get_History (Kernel).all,
                      Histories.History_Key ("Find_Prefs_Filter_" & F'Img),
@@ -515,8 +530,7 @@ package body GPS.LSP_Client.References is
                Gtk_New (Button, "Select all");
                Filters_View.Append_Button (Button);
                Widget_Callback.Object_Connect
-                 (Button, Signal_Clicked,
-                  Select_All_Filters'Access, Dialog);
+                 (Button, Signal_Clicked, Select_All_Filters'Access, Dialog);
 
                Gtk_New (Button, "Unselect all");
                Filters_View.Append_Button (Button);
@@ -528,13 +542,15 @@ package body GPS.LSP_Client.References is
 
                --  Extra info choice
 
-               Ignore := Add_Button
-                 (Dialog,
-                  Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK);
+               Ignore :=
+                 Add_Button
+                   (Dialog, Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK);
                Set_Default_Response (Dialog, Gtk_Response_OK);
-               Ignore := Add_Button
-                 (Dialog,
-                  Gtkada.Stock_Labels.Stock_Cancel, Gtk_Response_Cancel);
+               Ignore :=
+                 Add_Button
+                   (Dialog,
+                    Gtkada.Stock_Labels.Stock_Cancel,
+                    Gtk_Response_Cancel);
 
                Show_All (Dialog);
 
@@ -556,29 +572,33 @@ package body GPS.LSP_Client.References is
                      end loop;
 
                      declare
-                        Holder   : constant GPS.Editors.
-                          Controlled_Editor_Buffer_Holder :=
+                        Holder   :
+                          constant GPS
+                                     .Editors
+                                     .Controlled_Editor_Buffer_Holder :=
                             Kernel.Get_Buffer_Factory.Get_Holder (File);
-                        Location : constant
-                          GPS.Editors.Editor_Location'Class :=
+                        Location :
+                          constant GPS.Editors.Editor_Location'Class :=
                             Holder.Editor.New_Location (Line, Column);
                      begin
-                        Request := new References_Request'
-                          (GPS.LSP_Client.Requests.LSP_Request with
-                           Kernel              => Kernel,
-                           File                => File,
-                           Titles              => Titles,
-                           Name                =>
-                             VSS.Strings.Conversions.To_Virtual_String
-                               (Entity_Name_Information (Context.Context)),
-                           Position            =>
-                             Location_To_LSP_Position (Location),
-                           Include_Declaration =>
-                             Dialog.Include_Decl.Get_Active,
-                           Filter              => Filter,
-                           File_Only           => File_Only.Get_Active,
-                           Command             => null,
-                           Column              => Location.Column);
+                        Request :=
+                          new References_Request'
+                            (GPS.LSP_Client.Requests.LSP_Request
+                             with
+                               Kernel              => Kernel,
+                               File                => File,
+                               Titles              => Titles,
+                               Name                =>
+                                 VSS.Strings.Conversions.To_Virtual_String
+                                   (Entity_Name_Information (Context.Context)),
+                               Position            =>
+                                 Location_To_LSP_Position (Location),
+                               Include_Declaration =>
+                                 Dialog.Include_Decl.Get_Active,
+                               Filter              => Filter,
+                               File_Only           => File_Only.Get_Active,
+                               Command             => null,
+                               Column              => Location.Column);
                      end;
 
                      GPS.Location_View.Set_Activity_Progress_Bar_Visibility
@@ -610,37 +630,37 @@ package body GPS.LSP_Client.References is
             --  some time to compute.
 
             GPS.Location_View.Raise_Locations_Window
-              (Self             => Kernel,
-               Give_Focus       => False,
-               Create_If_Needed => True);
+              (Self => Kernel, Give_Focus => False, Create_If_Needed => True);
             GPS.Location_View.Set_Activity_Progress_Bar_Visibility
               (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
                Visible => True);
 
             declare
-               Holder   : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
+               Holder   :
+                 constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
                    Kernel.Get_Buffer_Factory.Get_Holder (File);
                Location : constant GPS.Editors.Editor_Location'Class :=
                  Holder.Editor.New_Location (Line, Column);
 
                Request : GPS.LSP_Client.Requests.Request_Access :=
                  new References_Request'
-                   (GPS.LSP_Client.Requests.LSP_Request with
-                    Kernel              => Kernel,
-                    Titles              => Titles,
-                    Name                =>
-                      VSS.Strings.Conversions.To_Virtual_String
-                        (Entity_Name_Information (Context.Context)),
-                    Position            => Location_To_LSP_Position (Location),
-                    Include_Declaration => True,
-                    File                => File,
-                    File_Only           => Command.Locals_Only,
-                    Filter              =>
-                      Result_Filter'(Is_Set    => False,
-                                     Ref_Kinds => All_Reference_Kinds),
-                    Command             => null,
-                    Column              => Location.Column);
+                   (GPS.LSP_Client.Requests.LSP_Request
+                    with
+                      Kernel              => Kernel,
+                      Titles              => Titles,
+                      Name                =>
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Entity_Name_Information (Context.Context)),
+                      Position            =>
+                        Location_To_LSP_Position (Location),
+                      Include_Declaration => True,
+                      File                => File,
+                      File_Only           => Command.Locals_Only,
+                      Filter              =>
+                        Result_Filter'
+                          (Is_Set => False, Ref_Kinds => All_Reference_Kinds),
+                      Command             => null,
+                      Column              => Location.Column);
 
             begin
                GPS.LSP_Client.Requests.Execute (Lang, Request);
@@ -673,7 +693,8 @@ package body GPS.LSP_Client.References is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Entity_Name_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -686,24 +707,24 @@ package body GPS.LSP_Client.References is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
-     (Self   : in out References_Request;
-      Result : LSP.Messages.Location_Vector)
+   overriding
+   procedure On_Result_Message
+     (Self : in out References_Request; Result : LSP.Messages.Location_Vector)
    is
-      Locations      : constant GPS.Location_View.Location_View_Access :=
+      Locations    : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel);
-      Command_Data   : Messages_Data;
-      C              : Messages_Commands.Generic_Asynchronous_Command_Access;
-      Has_Hidden     : Boolean := False;
+      Command_Data : Messages_Data;
+      C            : Messages_Commands.Generic_Asynchronous_Command_Access;
+      Has_Hidden   : Boolean := False;
    begin
       if Locations /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
-           (Locations,
-            Visible => False);
+           (Locations, Visible => False);
       end if;
 
-      Has_Hidden := (for some Element of Result =>
-                       Element.hidden.Is_Set and then Element.hidden.Value);
+      Has_Hidden :=
+        (for some Element of Result =>
+           Element.hidden.Is_Set and then Element.hidden.Value);
 
       Command_Data :=
         (File_To_Locations    => File_To_Location_Maps.Empty_Map,
@@ -723,9 +744,7 @@ package body GPS.LSP_Client.References is
          Column               => Self.Column);
 
       Group_By_File
-        (Result,
-         Command_Data.File_Vector,
-         Command_Data.File_To_Locations);
+        (Result, Command_Data.File_Vector, Command_Data.File_To_Locations);
 
       Messages_Commands.Create
         (Command     => C,
@@ -745,7 +764,8 @@ package body GPS.LSP_Client.References is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -757,8 +777,7 @@ package body GPS.LSP_Client.References is
    begin
       if Locations /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
-           (Locations,
-            Visible => False);
+           (Locations, Visible => False);
       end if;
    end On_Error_Message;
 
@@ -766,15 +785,15 @@ package body GPS.LSP_Client.References is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out References_Request) is
+   overriding
+   procedure Finalize (Self : in out References_Request) is
       Locations_View : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View
           (Self.Kernel, Allow_Creation => False);
    begin
       if Locations_View /= null then
          GPS.Location_View.Set_Activity_Progress_Bar_Visibility
-           (Locations_View,
-            Visible => False);
+           (Locations_View, Visible => False);
       end if;
 
       GPS.LSP_Client.Requests.References.Finalize
@@ -849,39 +868,34 @@ package body GPS.LSP_Client.References is
             use GNATCOLL.Scripts;
 
             Command : constant Ref_Command_Access :=
-              (if Data = null
-               then null
-               else new References_Command);
+              (if Data = null then null else new References_Command);
 
-            Holder   : constant GPS.Editors.
-              Controlled_Editor_Buffer_Holder :=
-                Kernel.Get_Buffer_Factory.Get_Holder (File);
+            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+              Kernel.Get_Buffer_Factory.Get_Holder (File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               Holder.Editor.New_Location (Line, Column);
 
             Request : GPS.LSP_Client.Requests.Request_Access :=
               new References_Request'
-                (GPS.LSP_Client.Requests.LSP_Request with
-                 Kernel              => Kernel,
-                 Titles              => Titles,
-                 Name                =>
-                   VSS.Strings.Conversions.To_Virtual_String (Name),
-                 Position            => Location_To_LSP_Position (Location),
-                 Include_Declaration => True,
-                 File                => File,
-                 File_Only           => False,
-                 Filter              => Result_Filter'
-                   (Is_Set    => False,
-                    Ref_Kinds => <>),
-                 Command             => Command,
-                 Column              => Location.Column);
+                (GPS.LSP_Client.Requests.LSP_Request
+                 with
+                   Kernel              => Kernel,
+                   Titles              => Titles,
+                   Name                =>
+                     VSS.Strings.Conversions.To_Virtual_String (Name),
+                   Position            => Location_To_LSP_Position (Location),
+                   Include_Declaration => True,
+                   File                => File,
+                   File_Only           => False,
+                   Filter              =>
+                     Result_Filter'(Is_Set => False, Ref_Kinds => <>),
+                   Command             => Command,
+                   Column              => Location.Column);
 
          begin
             Result := GPS.LSP_Client.Requests.Execute (Lang, Request);
 
-            if Result
-              and then Data /= null
-            then
+            if Result and then Data /= null then
                Data.Set_Return_Value
                  (GPS.Scripts.Commands.Get_Instance
                     (GPS.Scripts.Commands.Create_Wrapper (Command),
@@ -903,7 +917,8 @@ package body GPS.LSP_Client.References is
    -- Get_Result --
    ----------------
 
-   overriding procedure Get_Result
+   overriding
+   procedure Get_Result
      (Self : not null access References_Command;
       Data : in out GNATCOLL.Scripts.Callback_Data'Class)
    is
@@ -916,19 +931,20 @@ package body GPS.LSP_Client.References is
 
       for Loc of Self.Locations loop
          declare
-            File : constant GNATCOLL.VFS.Virtual_File :=
+            File     : constant GNATCOLL.VFS.Virtual_File :=
               GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
-            Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
               Get_Kernel (Data).Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Loc.span.first);
          begin
-            Inst := Create_File_Location
-              (Script => Get_Script (Data),
-               File   => File,
-               Line   => Location.Line,
-               Column => Location.Column);
+            Inst :=
+              Create_File_Location
+                (Script => Get_Script (Data),
+                 File   => File,
+                 Line   => Location.Line,
+                 Column => Location.Column);
          end;
          Set_Return_Value (Data, Inst);
       end loop;
@@ -987,8 +1003,7 @@ package body GPS.LSP_Client.References is
       begin
          --  Return True if there is no filter or if the reference has not
          --  any associated kind.
-         if not Data.Filter.Is_Set
-           or else Item.alsKind.As_Strings.Is_Empty
+         if not Data.Filter.Is_Set or else Item.alsKind.As_Strings.Is_Empty
          then
             return True;
          end if;
@@ -1026,8 +1041,7 @@ package body GPS.LSP_Client.References is
               Data.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
          begin
             for Loc of Data.File_To_Locations.Element (File) loop
-               if (not Data.File_Only
-                   or else Data.File = File)
+               if (not Data.File_Only or else Data.File = File)
                  and then Match (Loc)
                then
                   if Data.Command = null then
@@ -1061,15 +1075,16 @@ package body GPS.LSP_Client.References is
                           GPS.LSP_Client.Utilities.LSP_Position_To_Location
                             (Buffer.Editor, Loc.span.last);
 
-                        Start_Loc  : constant GPS.Editors.Editor_Location'Class
-                          := Buffer.Editor.New_Location_At_Line
-                            (Editable_Line_Type (From.Line));
-                        End_Loc    : constant GPS.Editors.Editor_Location'Class
-                          := Start_Loc.End_Of_Line;
+                        Start_Loc  :
+                          constant GPS.Editors.Editor_Location'Class :=
+                            Buffer.Editor.New_Location_At_Line
+                              (Editable_Line_Type (From.Line));
+                        End_Loc    :
+                          constant GPS.Editors.Editor_Location'Class :=
+                            Start_Loc.End_Of_Line;
                         Whole_Line : constant String :=
                           Buffer.Editor.Get_Chars_S
-                            (From => Start_Loc,
-                             To   => End_Loc);
+                            (From => Start_Loc, To => End_Loc);
 
                         Start      : Natural := Whole_Line'First;
                         Last       : Natural := Whole_Line'Last;
@@ -1088,16 +1103,19 @@ package body GPS.LSP_Client.References is
                         --  concatenate it with the reference itself surrounded
                         --  by bold markup.
 
-                        Before_Idx := (Whole_Line'First - 1)
+                        Before_Idx :=
+                          (Whole_Line'First - 1)
                           + UTF8_Utils.Column_To_Index
-                          (Whole_Line,
-                           Character_Offset_Type (Loc.span.first.character));
+                              (Whole_Line,
+                               Character_Offset_Type
+                                 (Loc.span.first.character));
 
-                        After_Idx := (Whole_Line'First - 1)
+                        After_Idx :=
+                          (Whole_Line'First - 1)
                           + UTF8_Utils.Column_To_Index
-                          (Whole_Line,
-                           Character_Offset_Type
-                             (Loc.span.last.character) + 1);
+                              (Whole_Line,
+                               Character_Offset_Type (Loc.span.last.character)
+                               + 1);
 
                         --  Ensure that Before_Idx and After_Idx are within
                         --  the range: these indexes may be outside of the
@@ -1114,14 +1132,11 @@ package body GPS.LSP_Client.References is
 
                         declare
                            Before_Text : constant String :=
-                             Whole_Line
-                               (Start .. Before_Idx);
+                             Whole_Line (Start .. Before_Idx);
                            After_Text  : constant String :=
-                             Whole_Line
-                               (After_Idx .. Last);
+                             Whole_Line (After_Idx .. Last);
                            Name_Text   : constant String :=
-                             Whole_Line
-                               (Before_Idx + 1 .. After_Idx - 1);
+                             Whole_Line (Before_Idx + 1 .. After_Idx - 1);
                            Msg_Text    : constant String :=
                              Escape_Text (Before_Text)
                              & "<b>"
@@ -1133,15 +1148,13 @@ package body GPS.LSP_Client.References is
                         begin
                            Data.References_Displayed := True;
 
-                           if Loc.hidden.Is_Set
-                             and then Loc.hidden.Value
-                           then
-                              Category := Data.Titles.Element
-                                (Extended_Projects_Idx);
+                           if Loc.hidden.Is_Set and then Loc.hidden.Value then
+                              Category :=
+                                Data.Titles.Element (Extended_Projects_Idx);
 
                            elsif Data.Has_Hidden then
-                              Category := Data.Titles.Element
-                                (Current_Project_Idx);
+                              Category :=
+                                Data.Titles.Element (Current_Project_Idx);
 
                            else
                               Category := Data.Titles.First_Element;
@@ -1157,20 +1170,21 @@ package body GPS.LSP_Client.References is
                                 Column                   => From.Column,
                                 Text                     =>
                                   VSS.Strings.Conversions.To_UTF_8_String
-                                    (Kinds) & Msg_Text,
+                                    (Kinds)
+                                  & Msg_Text,
                                 Importance               => Unspecified,
                                 Flags                    => Message_Flag,
                                 Allow_Auto_Jump_To_First =>
-                                   not Loc.hidden.Is_Set
-                                     or else not Loc.hidden.Value);
+                                  not Loc.hidden.Is_Set
+                                  or else not Loc.hidden.Value);
 
                            GPS.Kernel.Messages.Set_Highlighting
                              (Self   => Message,
                               Style  => Search_Results_Style,
                               --  The number of characters to highlight is the
                               --  number of decoded UTF-8 characters
-                              Length => Highlight_Length
-                                (To.Column - From.Column));
+                              Length =>
+                                Highlight_Length (To.Column - From.Column));
                         end;
                      end;
 
@@ -1186,10 +1200,7 @@ package body GPS.LSP_Client.References is
          end;
 
          Set_Progress
-           (Command,
-            (Running,
-             Data.Parsed_Locations,
-             Data.Total_Locations));
+           (Command, (Running, Data.Parsed_Locations, Data.Total_Locations));
 
          Remove (Data.File_Vector, File);
          if Data.File_Vector'Length = 0 then
@@ -1219,8 +1230,7 @@ package body GPS.LSP_Client.References is
    -- Clean_Messages_Data --
    -------------------------
 
-   procedure Clean_Messages_Data (Data : in out Messages_Data)
-   is
+   procedure Clean_Messages_Data (Data : in out Messages_Data) is
       Message : GPS.Kernel.Messages.Markup.Markup_Message_Access;
       pragma Unreferenced (Message);
    begin
@@ -1280,12 +1290,13 @@ package body GPS.LSP_Client.References is
       Src_Editor_Module.Shell.Find_All_Refs_Handler := Find_All_Refs'Access;
 
       Register_Action
-        (Kernel, Find_All,
+        (Kernel,
+         Find_All,
          Command     => new Find_Refs_Command (False, False),
          Description =>
            "List all references to the selected entity"
-             & " in the Locations window",
-         Filter => Has_Entity_Name);
+           & " in the Locations window",
+         Filter      => Has_Entity_Name);
 
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel,
@@ -1294,20 +1305,22 @@ package body GPS.LSP_Client.References is
          Group  => GPS.Kernel.Modules.UI.Navigation_Contextual_Group);
 
       Register_Action
-        (Kernel, "find all local references",
+        (Kernel,
+         "find all local references",
          Command     => new Find_Refs_Command (True, False),
          Description =>
            "List all references in the selected file to the selected entity"
            & " in the Locations window",
-         Filter => Has_Entity_Name);
+         Filter      => Has_Entity_Name);
 
       Register_Action
-        (Kernel, Find_Dialog,
+        (Kernel,
+         Find_Dialog,
          Command     => new Find_Refs_Command (False, True),
          Description =>
            "List all references to the selected entity"
            & " in the Locations window, with extra filters",
-         Filter => Has_Entity_Name);
+         Filter      => Has_Entity_Name);
 
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel,

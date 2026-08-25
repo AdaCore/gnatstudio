@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Convert;                        use Glib.Convert;
+with Glib.Convert; use Glib.Convert;
 
-with Basic_Types;                         use Basic_Types;
-with Commands;                            use Commands;
+with Basic_Types; use Basic_Types;
+with Commands;    use Commands;
 
-with Language;                            use Language;
-with Language_Handlers;                   use Language_Handlers;
-with GPS.Editors;                         use GPS.Editors;
+with Language;                 use Language;
+with Language_Handlers;        use Language_Handlers;
+with GPS.Editors;              use GPS.Editors;
 with GPS.LSP_Client.Requests.Code_Action;
-with GPS.LSP_Client.Utilities;            use GPS.LSP_Client.Utilities;
+with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
 with Refactoring.Code_Actions;
 with GPS.LSP_Client.Editors.Code_Actions.Dialog;
@@ -40,31 +40,36 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    --  and the processing of its results.
 
    type Code_Action_Request is
-     new GPS.LSP_Client.Requests.Code_Action.Abstract_Code_Action_Request with
-      record
-         Lang : Language_Access;
-      end record;
+     new GPS.LSP_Client.Requests.Code_Action.Abstract_Code_Action_Request
+   with record
+      Lang : Language_Access;
+   end record;
 
    type Code_Action_Request_Access is access all Code_Action_Request'Class;
 
-   overriding function Is_Request_Supported
-     (Self    : Code_Action_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is (Options.codeActionProvider.Is_Set);
+   overriding
+   function Is_Request_Supported
+     (Self : Code_Action_Request; Options : LSP.Messages.ServerCapabilities)
+      return Boolean
+   is (Options.codeActionProvider.Is_Set);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Code_Action_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Auto_Cancel
-     (Self         : in out Code_Action_Request;
-      Next_Request : Request_Access) return Boolean is (True);
+   overriding
+   function Auto_Cancel
+     (Self : in out Code_Action_Request; Next_Request : Request_Access)
+      return Boolean
+   is (True);
 
    -------------------------
    -- Code_Action_Command --
@@ -78,29 +83,33 @@ package body GPS.LSP_Client.Editors.Code_Actions is
       Lang    : Language_Access;
       Command : LSP.Messages.Command (Is_Unknown => True);
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Code_Action_Command) return Command_Return_Type;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Code_Action_Command) return Command_Return_Type is
+   overriding
+   function Execute
+     (Command : access Code_Action_Command) return Command_Return_Type
+   is
       Request : Execute_Command_Request_Access;
    begin
       Request :=
         new Execute_Command_Request'
-          (LSP_Request with Kernel => Command.Kernel,
-           Params =>
-             (Is_Unknown => True, Base => (workDoneToken => (Is_Set => False)),
-              command => Command.Command.command,
-              arguments => Command.Command.arguments));
+          (LSP_Request
+           with
+             Kernel => Command.Kernel,
+             Params =>
+               (Is_Unknown => True,
+                Base       => (workDoneToken => (Is_Set => False)),
+                command    => Command.Command.command,
+                arguments  => Command.Command.arguments));
 
       Execute_Request_Via_Dialog
-        (Kernel  => Command.Kernel,
-         Lang    => Command.Lang,
-         Request => Request);
+        (Kernel => Command.Kernel, Lang => Command.Lang, Request => Request);
       return Success;
    end Execute;
 
@@ -108,31 +117,33 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector)
    is
-      Buffer : constant Editor_Buffer'Class :=
+      Buffer  : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File            => Self.Text_Document,
-           Force           => False,
-           Open_Buffer     => False,
-           Open_View       => False,
-           Focus           => False);
+          (File        => Self.Text_Document,
+           Force       => False,
+           Open_Buffer => False,
+           Open_View   => False,
+           Focus       => False);
       Command : Command_Access;
 
       function To_Category (Kind : LSP.Messages.CodeActionKind) return String
-      is
-        (case Kind is
-            when LSP.Messages.Empty  =>
-               "",
-            when LSP.Messages.QuickFix =>
-               "Codefix",
-            when LSP.Messages.Refactor | LSP.Messages.RefactorExtract |
-                 LSP.Messages.RefactorInline | LSP.Messages.RefactorRewrite =>
-               "Refactoring",
+      is (case Kind is
+            when LSP.Messages.Empty                                       =>
+              "",
+            when LSP.Messages.QuickFix                                    =>
+              "Codefix",
+            when LSP.Messages.Refactor
+               | LSP.Messages.RefactorExtract
+               | LSP.Messages.RefactorInline
+               | LSP.Messages.RefactorRewrite                             =>
+              "Refactoring",
             when LSP.Messages.Source | LSP.Messages.SourceOrganizeImports =>
-               "Sources");
+              "Sources");
 
    begin
       Refactoring.Code_Actions.Invalidate_Code_Actions (Self.Kernel);
@@ -150,24 +161,26 @@ package body GPS.LSP_Client.Editors.Code_Actions is
                Start_Location : constant GPS.Editors.Editor_Location'Class :=
                  LSP_Position_To_Location (Buffer, Self.Start_Position);
             begin
-               Command := new Code_Action_Command'
-                 (Root_Command with Self.Kernel,
-                  Self.Lang, Code_Action.command.Value);
+               Command :=
+                 new Code_Action_Command'
+                   (Root_Command
+                    with Self.Kernel, Self.Lang, Code_Action.command.Value);
 
                Refactoring.Code_Actions.Add_Code_Action
-                 (Kernel => Self.Kernel,
-                  File   => Self.Text_Document,
-                  Line   => Editable_Line_Type (Start_Location.Line),
-                  Column => Start_Location.Column,
-                  Markup => Escape_Text
-                    (VSS.Strings.Conversions.To_UTF_8_String (
-                     if Code_Action.command.Value.title.Is_Empty
-                     then Code_Action.title
-                     else Code_Action.command.Value.title)),
-                  Category => (if Code_Action.kind.Is_Set then
-                                    Escape_Text
-                                 (To_Category (Code_Action.kind.Value))
-                               else ""),
+                 (Kernel   => Self.Kernel,
+                  File     => Self.Text_Document,
+                  Line     => Editable_Line_Type (Start_Location.Line),
+                  Column   => Start_Location.Column,
+                  Markup   =>
+                    Escape_Text
+                      (VSS.Strings.Conversions.To_UTF_8_String
+                         (if Code_Action.command.Value.title.Is_Empty
+                          then Code_Action.title
+                          else Code_Action.command.Value.title)),
+                  Category =>
+                    (if Code_Action.kind.Is_Set
+                     then Escape_Text (To_Category (Code_Action.kind.Value))
+                     else ""),
                   Command  => Command);
             end;
          end if;
@@ -179,7 +192,8 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Code_Action_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -197,10 +211,9 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    -------------------------
 
    procedure Request_Code_Action
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File)
+     (Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File)
    is
-      Buffer : constant Editor_Buffer'Class :=
+      Buffer  : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File            => File,
            Force           => False,
@@ -208,11 +221,9 @@ package body GPS.LSP_Client.Editors.Code_Actions is
            Open_View       => False,
            Focus           => False,
            Only_If_Focused => True);
-      Lang               : constant Language.Language_Access :=
-        Get_Language_From_File
-          (Kernel.Get_Language_Handler,
-           File);
-      Request  : Code_Action_Request_Access;
+      Lang    : constant Language.Language_Access :=
+        Get_Language_From_File (Kernel.Get_Language_Handler, File);
+      Request : Code_Action_Request_Access;
    begin
       --  Sanity check
       if Buffer = Nil_Editor_Buffer then
@@ -227,9 +238,7 @@ package body GPS.LSP_Client.Editors.Code_Actions is
          --  The cursor or the selection bound might be in the special lines:
          --  in this case, it will have a Line of 0; in this case, do not
          --  emit a request for code actions.
-         if Loc_Start.Line = 0
-           or else Loc_End.Line = 0
-         then
+         if Loc_Start.Line = 0 or else Loc_End.Line = 0 then
             return;
          end if;
 
@@ -239,14 +248,16 @@ package body GPS.LSP_Client.Editors.Code_Actions is
             End_Position   : constant LSP.Messages.Position :=
               Location_To_LSP_Position (Loc_End);
          begin
-            Request := new Code_Action_Request'
-              (LSP_Request with
-               Kernel           => Kernel_Handle (Kernel),
-               Lang             => Lang,
-               Text_Document    => File,
-               Start_Position   => Start_Position,
-               End_Position     => End_Position,
-               Document_Version => Buffer.Version);
+            Request :=
+              new Code_Action_Request'
+                (LSP_Request
+                 with
+                   Kernel           => Kernel_Handle (Kernel),
+                   Lang             => Lang,
+                   Text_Document    => File,
+                   Start_Position   => Start_Position,
+                   End_Position     => End_Position,
+                   Document_Version => Buffer.Version);
 
             GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
          end;

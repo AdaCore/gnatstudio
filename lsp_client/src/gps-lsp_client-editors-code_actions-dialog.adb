@@ -19,45 +19,45 @@ with VSS.Strings;             use VSS.Strings;
 with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 with VSS.String_Vectors;      use VSS.String_Vectors;
 
-with Glib.Object;             use Glib.Object;
-with Glib.Main;               use Glib.Main;
+with Glib.Object; use Glib.Object;
+with Glib.Main;   use Glib.Main;
 
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
-with Gtk.Window;              use Gtk.Window;
-with Gtk.Box;                 use Gtk.Box;
+with Gtk.Window; use Gtk.Window;
+with Gtk.Box;    use Gtk.Box;
 with Gtk.Enums;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Label;  use Gtk.Label;
+with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Style_Context;
 
-with GNATCOLL.JSON;           use GNATCOLL.JSON;
-with LSP.Types;               use LSP.Types;
-with LSP.Messages;            use LSP.Messages;
+with GNATCOLL.JSON; use GNATCOLL.JSON;
+with LSP.Types;     use LSP.Types;
+with LSP.Messages;  use LSP.Messages;
 
-with GPS.Kernel;              use GPS.Kernel;
-with GUI_Utils;               use GUI_Utils;
+with GPS.Kernel; use GPS.Kernel;
+with GUI_Utils;  use GUI_Utils;
 
 with GPS.LSP_Client.Requests.Check_Syntax;
-use  GPS.LSP_Client.Requests.Check_Syntax;
-with Gdk.Window;              use Gdk.Window;
-with Glib;                    use Glib;
-with GPS.Editors;             use GPS.Editors;
-with Src_Editor_Box;          use Src_Editor_Box;
-with Src_Editor_Module;       use Src_Editor_Module;
+use GPS.LSP_Client.Requests.Check_Syntax;
+with Gdk.Window;                           use Gdk.Window;
+with Glib;                                 use Glib;
+with GPS.Editors;                          use GPS.Editors;
+with Src_Editor_Box;                       use Src_Editor_Box;
+with Src_Editor_Module;                    use Src_Editor_Module;
 
 package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
    type Code_Action_Window_Record is new Gtk_Window_Record with record
-      Kernel  : Kernel_Handle;
-      Lang    : Language_Access;
+      Kernel : Kernel_Handle;
+      Lang   : Language_Access;
 
       Request : Execute_Command_Request_Access;
       --  The request to execute, if the user validates the input dialog
 
-      Input          : Gtk_Entry;
+      Input : Gtk_Entry;
       --  The user-editable text
 
       Response_Label : Gtk_Label;
@@ -70,7 +70,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       --  Handler of a timeout source to ask the language server to validate
       --  the input.
 
-      Rules   : VSS.String_Vectors.Virtual_String_Vector;
+      Rules : VSS.String_Vectors.Virtual_String_Vector;
       --  The rules used to validate the input.
    end record;
    type Code_Action_Window is access all Code_Action_Window_Record'Class;
@@ -94,16 +94,15 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Event : Gdk.Event.Gdk_Event_Key) return Boolean;
    --  React to a key press event on Entry
 
-   procedure On_Win_Destroy
-     (Self  : access Glib.Object.GObject_Record'Class);
+   procedure On_Win_Destroy (Self : access Glib.Object.GObject_Record'Class);
    --  Called when the window is about to be destroyed
 
    procedure Dialog
-      (Kernel    : Kernel_Handle;
-       Lang      : Language_Access;
-       Request   : Execute_Command_Request_Access;
-       Rules     : VSS.String_Vectors.Virtual_String_Vector;
-       Help_Text : String);
+     (Kernel    : Kernel_Handle;
+      Lang      : Language_Access;
+      Request   : Execute_Command_Request_Access;
+      Rules     : VSS.String_Vectors.Virtual_String_Vector;
+      Help_Text : String);
    --  Create a dialog for the given request.
    --  Lang is the language/language server to use.
    --  Request is the request to execute if the user validates the dialog.
@@ -130,14 +129,17 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       declare
          Request : Check_Syntax_Request_Access;
       begin
-         Request := new Check_Syntax_Request'
-           (LSP_Request with
-            Kernel => The_Win.Kernel,
-            Input  => Conversions.To_Virtual_String (The_Win.Input.Get_Text),
-            Rules  => The_Win.Rules);
+         Request :=
+           new Check_Syntax_Request'
+             (LSP_Request
+              with
+                Kernel => The_Win.Kernel,
+                Input  =>
+                  Conversions.To_Virtual_String (The_Win.Input.Get_Text),
+                Rules  => The_Win.Rules);
 
          GPS.LSP_Client.Requests.Execute
-            (The_Win.Lang, Request_Access (Request));
+           (The_Win.Lang, Request_Access (Request));
       end;
       return False;
    end On_Win_Timeout;
@@ -146,9 +148,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
    -- On_Win_Destroy --
    --------------------
 
-   procedure On_Win_Destroy
-     (Self  : access Glib.Object.GObject_Record'Class)
-   is
+   procedure On_Win_Destroy (Self : access Glib.Object.GObject_Record'Class) is
       pragma Unreferenced (Self);
    begin
       The_Win := null;
@@ -233,7 +233,8 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
             Win.Closing := True;
             Win.Close;
             return True;
-         when others =>
+
+         when others     =>
             --  Another key has been pressed: schedule a validation of the
             --  input. Don't spam the language server: do this in a timeout;
             --  if the timeout is already scheduled, don't schedule another
@@ -251,28 +252,28 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
    ------------
 
    procedure Dialog
-      (Kernel    : Kernel_Handle;
-       Lang      : Language_Access;
-       Request   : Execute_Command_Request_Access;
-       Rules     : VSS.String_Vectors.Virtual_String_Vector;
-       Help_Text : String)
+     (Kernel    : Kernel_Handle;
+      Lang      : Language_Access;
+      Request   : Execute_Command_Request_Access;
+      Rules     : VSS.String_Vectors.Virtual_String_Vector;
+      Help_Text : String)
    is
-      Win  : Code_Action_Window;
-      Vbox : Gtk_Vbox;
-      Hbox : Gtk_Hbox;
-      Help : Gtk_Label;
+      Win                              : Code_Action_Window;
+      Vbox                             : Gtk_Vbox;
+      Hbox                             : Gtk_Hbox;
+      Help                             : Gtk_Label;
       Total_Height, Total_Width, Dummy : Gint;
    begin
       Win := new Code_Action_Window_Record;
-      Win.Kernel  := Kernel;
-      Win.Lang    := Lang;
+      Win.Kernel := Kernel;
+      Win.Lang := Lang;
       Win.Request := Request;
-      Win.Rules   := Rules;
+      Win.Rules := Rules;
 
       Gtk.Window.Initialize (Win, Gtk.Enums.Window_Toplevel);
 
-      Gtk.Style_Context.Get_Style_Context
-        (Win).Add_Class ("gnatstudio-refactor-input");
+      Gtk.Style_Context.Get_Style_Context (Win).Add_Class
+        ("gnatstudio-refactor-input");
 
       Win.Set_Title ("GNAT Studio refactoring");
 
@@ -316,8 +317,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Win.Add (Vbox);
 
       --  Connect signals
-      Win.On_Destroy
-        (On_Win_Destroy'Access, Slot => Win, After => False);
+      Win.On_Destroy (On_Win_Destroy'Access, Slot => Win, After => False);
 
       Win.Input.On_Focus_Out_Event
         (On_Entry_Focus_Out'Access, Slot => Win, After => True);
@@ -346,10 +346,9 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Win.Present;
 
       Place_Window_On_Cursor
-        (Editor       => Get_Source_Box_From_MDI
-           (Find_Current_Editor
-                (Kernel,
-                 Only_If_Focused => True)),
+        (Editor       =>
+           Get_Source_Box_From_MDI
+             (Find_Current_Editor (Kernel, Only_If_Focused => True)),
          Win          => Gtk_Window (Win),
          Total_Height => Total_Height,
          Total_Width  => Total_Width);
@@ -363,9 +362,9 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
    --------------------------------
 
    procedure Execute_Request_Via_Dialog
-      (Kernel  : Kernel_Handle;
-       Lang    : Language_Access;
-       Request : in out Execute_Command_Request_Access)
+     (Kernel  : Kernel_Handle;
+      Lang    : Language_Access;
+      Request : in out Execute_Command_Request_Access)
    is
       Rules : VSS.String_Vectors.Virtual_String_Vector;
    begin
@@ -373,14 +372,18 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
          --  Support for the "Add Parameter" refactoring
 
          Rules.Append (Conversions.To_Virtual_String ("Defining_Id_Rule"));
-         Rules.Append (Conversions.To_Virtual_String
-            ("Defining_Id_List_Rule"));
+         Rules.Append
+           (Conversions.To_Virtual_String ("Defining_Id_List_Rule"));
          Rules.Append (Conversions.To_Virtual_String ("Param_Spec_Rule"));
 
-         Dialog (Kernel, Lang, Request,
-                 Rules,
-                 "Insert one or more comma-separated parameter names" &
-                 ASCII.LF & "or a full parameter specification.");
+         Dialog
+           (Kernel,
+            Lang,
+            Request,
+            Rules,
+            "Insert one or more comma-separated parameter names"
+            & ASCII.LF
+            & "or a full parameter specification.");
       else
          GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
       end if;

@@ -32,7 +32,8 @@ package body GPS.LSP_Client.Requests is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (Self : in out Abstract_Reference) is
+   overriding
+   procedure Adjust (Self : in out Abstract_Reference) is
    begin
       if Self.Request /= null then
          Self.Request.References.Append (Self'Unchecked_Access);
@@ -71,8 +72,7 @@ package body GPS.LSP_Client.Requests is
    ------------
 
    procedure Set_Id
-     (Self : in out LSP_Request;
-      Id   : LSP.Types.LSP_Number_Or_String) is
+     (Self : in out LSP_Request; Id : LSP.Types.LSP_Number_Or_String) is
    begin
       Self.Id := Id;
    end Set_Id;
@@ -82,11 +82,10 @@ package body GPS.LSP_Client.Requests is
    -------------
 
    procedure Destroy
-     (Item         : in out Request_Access;
-      Is_Cancelled : Boolean := False)
+     (Item : in out Request_Access; Is_Cancelled : Boolean := False)
    is
-      procedure Free is
-        new Ada.Unchecked_Deallocation (LSP_Request'Class, Request_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (LSP_Request'Class, Request_Access);
 
    begin
       if Is_Cancelled then
@@ -97,7 +96,7 @@ package body GPS.LSP_Client.Requests is
       if Item /= null then
          for Reference of Item.References loop
             Reference.Request := null;
-            Reference.Server  := null;
+            Reference.Server := null;
             Reference.Position := Reference_Lists.No_Element;
          end loop;
 
@@ -154,8 +153,7 @@ package body GPS.LSP_Client.Requests is
             return;
          end if;
 
-         if Request.Kernel /= null
-           and then Request.Kernel.Is_In_Destruction
+         if Request.Kernel /= null and then Request.Kernel.Is_In_Destruction
          then
             --  exiting GNAT Studio
             On_Checks_Passed := False;
@@ -219,12 +217,13 @@ package body GPS.LSP_Client.Requests is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Abstract_Reference) is
+   overriding
+   procedure Finalize (Self : in out Abstract_Reference) is
    begin
       if Self.Request /= null then
          Self.Request.References.Delete (Self.Position);
          Self.Request := null;
-         Self.Server  := null;
+         Self.Server := null;
       end if;
    end Finalize;
 
@@ -247,7 +246,7 @@ package body GPS.LSP_Client.Requests is
       Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access) is
    begin
       Self.Request := Request;
-      Self.Server  := Language_Server_Access (Server);
+      Self.Server := Language_Server_Access (Server);
 
       if Self.Request /= null then
          Self.Request.References.Append (Self'Unchecked_Access);
@@ -268,8 +267,8 @@ package body GPS.LSP_Client.Requests is
    -- Text_Document --
    -------------------
 
-   function Text_Document
-     (Self : LSP_Request) return GNATCOLL.VFS.Virtual_File is
+   function Text_Document (Self : LSP_Request) return GNATCOLL.VFS.Virtual_File
+   is
    begin
       return GNATCOLL.VFS.No_File;
    end Text_Document;

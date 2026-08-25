@@ -16,18 +16,18 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with LSP.Types;
 
-with Basic_Types;                         use Basic_Types;
+with Basic_Types;              use Basic_Types;
 with Language;
-with Src_Editor_Buffer;                   use Src_Editor_Buffer;
-with Src_Editor_Buffer.Blocks;            use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer;        use Src_Editor_Buffer;
+with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 
-with GPS.Editors;                         use GPS.Editors;
-with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
+with GPS.Editors;        use GPS.Editors;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Folding_Range;
@@ -43,44 +43,46 @@ package body GPS.LSP_Client.Editors.Folding is
    -- Folding_Request --
 
    type Folding_Request is
-     new GPS.LSP_Client.Requests.Folding_Range.
-       Abstract_Folding_Range_Request with null record;
+     new GPS.LSP_Client.Requests.Folding_Range.Abstract_Folding_Range_Request
+   with null record;
    type Folding_Request_Access is access all Folding_Request;
    --  Used for communicate with LSP
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Folding_Request;
       Result : LSP.Messages.FoldingRange_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Folding_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Auto_Cancel
+   overriding
+   function Auto_Cancel
      (Self         : in out Folding_Request;
-      Next_Request : GPS.LSP_Client.Requests.Request_Access)
-      return Boolean;
+      Next_Request : GPS.LSP_Client.Requests.Request_Access) return Boolean;
 
    -- LSP_Editor_Folding_Provider --
 
-   type LSP_Editor_Folding_Provider is
-     new GPS.Editors.Editor_Folding_Provider with record
+   type LSP_Editor_Folding_Provider is new GPS.Editors.Editor_Folding_Provider
+   with record
       Kernel : Kernel_Handle;
    end record;
 
-   overriding function Compute_Blocks
+   overriding
+   function Compute_Blocks
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean;
 
-   type LSP_Folding_Module_Id_Record is
-     new Module_ID_Record with null record;
+   type LSP_Folding_Module_Id_Record is new Module_ID_Record with null record;
    type LSP_Folding_Module_Id_Access is
      access all LSP_Folding_Module_Id_Record'Class;
 
-   overriding procedure Destroy
-     (Module : in out LSP_Folding_Module_Id_Record);
+   overriding
+   procedure Destroy (Module : in out LSP_Folding_Module_Id_Record);
 
    Module_Id : LSP_Folding_Module_Id_Access;
    Provider  : aliased LSP_Editor_Folding_Provider;
@@ -89,7 +91,8 @@ package body GPS.LSP_Client.Editors.Folding is
    -- Auto_Cancel --
    -----------------
 
-   overriding function Auto_Cancel
+   overriding
+   function Auto_Cancel
      (Self         : in out Folding_Request;
       Next_Request : GPS.LSP_Client.Requests.Request_Access) return Boolean
    is
@@ -108,9 +111,9 @@ package body GPS.LSP_Client.Editors.Folding is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
-     (Self   : in out Folding_Request;
-      Result : LSP.Messages.FoldingRange_Vector)
+   overriding
+   procedure On_Result_Message
+     (Self : in out Folding_Request; Result : LSP.Messages.FoldingRange_Vector)
    is
       Buffer : Source_Buffer;
       Data   : Blocks_Vector.Vector;
@@ -177,7 +180,8 @@ package body GPS.LSP_Client.Editors.Folding is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Folding_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -209,7 +213,8 @@ package body GPS.LSP_Client.Editors.Folding is
    -- Compute_Blocks --
    --------------------
 
-   overriding function Compute_Blocks
+   overriding
+   function Compute_Blocks
      (Self : in out LSP_Editor_Folding_Provider;
       File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
@@ -229,13 +234,14 @@ package body GPS.LSP_Client.Editors.Folding is
          return False;
       end if;
 
-      Request := new Folding_Request'
-        (GPS.LSP_Client.Requests.LSP_Request
-         with Kernel => Self.Kernel,
-              File   => File);
+      Request :=
+        new Folding_Request'
+          (GPS.LSP_Client.Requests.LSP_Request
+           with Kernel => Self.Kernel, File => File);
 
-      return GPS.LSP_Client.Requests.Execute
-        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+      return
+        GPS.LSP_Client.Requests.Execute
+          (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
    exception
       when E : others =>
@@ -247,9 +253,8 @@ package body GPS.LSP_Client.Editors.Folding is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
-     (Module : in out LSP_Folding_Module_Id_Record)
-   is
+   overriding
+   procedure Destroy (Module : in out LSP_Folding_Module_Id_Record) is
       pragma Unreferenced (Module);
    begin
       Src_Editor_Buffer.Set_Folding_Provider (null);

@@ -26,18 +26,19 @@ package GPS.LSP_Client.Partial_Results is
 
    procedure On_Partial_Result_Message
      (Self   : in out LSP_Request_Partial_Result;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is null;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is null;
    --  Called when partial result is received from the server.
 
    procedure Set_Partial_Result_Token
-     (Self : in out LSP_Request_Partial_Result;
-      To   : LSP.Types.ProgressToken) is abstract;
+     (Self : in out LSP_Request_Partial_Result; To : LSP.Types.ProgressToken)
+   is abstract;
    --  Set token to return partial requests. Request must store it and return
    --  by Partial_Result_Token function.
 
    function Partial_Result_Token
-     (Self : LSP_Request_Partial_Result)
-      return LSP.Types.ProgressToken is abstract;
+     (Self : LSP_Request_Partial_Result) return LSP.Types.ProgressToken
+   is abstract;
    --  Returns partial result token allocated for the given request.
 
 end GPS.LSP_Client.Partial_Results;

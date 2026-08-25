@@ -17,8 +17,7 @@
 
 package GPS.LSP_Client.Requests.Hover is
 
-   type Abstract_Hover_Request is
-     abstract new LSP_Request with record
+   type Abstract_Hover_Request is abstract new LSP_Request with record
       File     : Virtual_File;
       Position : LSP.Messages.Position;
    end record;
@@ -30,27 +29,33 @@ package GPS.LSP_Client.Requests.Hover is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Hover_Request;
-      Result : LSP.Messages.Optional_Hover) is abstract;
+      Result : LSP.Messages.Optional_Hover)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Hover_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
-     (Self    : Abstract_Hover_Request;
-      Options : LSP.Messages.ServerCapabilities)
+   overriding
+   function Is_Request_Supported
+     (Self : Abstract_Hover_Request; Options : LSP.Messages.ServerCapabilities)
       return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Auto_Cancel
-     (Self         : in out Abstract_Hover_Request;
-      Next_Request : Request_Access) return Boolean is (True);
+   overriding
+   function Auto_Cancel
+     (Self : in out Abstract_Hover_Request; Next_Request : Request_Access)
+      return Boolean
+   is (True);
 
 end GPS.LSP_Client.Requests.Hover;

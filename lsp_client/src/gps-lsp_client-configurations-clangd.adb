@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
+with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.Strings;              use GNAT.Strings;
-with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
+with GNAT.Strings;          use GNAT.Strings;
+with GNAT.Regpat;           use GNAT.Regpat;
 
-with GNATCOLL.JSON;             use GNATCOLL.JSON;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.JSON;     use GNATCOLL.JSON;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtk.Enums;                 use Gtk.Enums;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+with Gtk.Enums;      use Gtk.Enums;
 
 with GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with Default_Preferences;       use Default_Preferences;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with Default_Preferences;    use Default_Preferences;
 with Default_Preferences.Enums;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GUI_Utils;                 use GUI_Utils;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GUI_Utils;              use GUI_Utils;
 
 with VSS.JSON.Push_Writers;
 with VSS.Strings.Conversions;
@@ -46,9 +46,9 @@ with VSS.Strings;
 with VSS.String_Vectors;
 
 with GS_Text_Streams;
-with Toolchains;                use Toolchains;
+with Toolchains; use Toolchains;
 with Remote;
-with Cpp_Module;                use Cpp_Module;
+with Cpp_Module; use Cpp_Module;
 
 package body GPS.LSP_Client.Configurations.Clangd is
 
@@ -64,19 +64,22 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    Clang_Format_File_Name : constant Filesystem_String := ".clang-format";
 
-   package String_String_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
+   package String_String_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
-   package Unbounded_String_Vectors is
-     new Ada.Containers.Indefinite_Vectors
-       (Positive, Ada.Strings.Unbounded.Unbounded_String);
+   package Unbounded_String_Vectors is new
+     Ada.Containers.Indefinite_Vectors
+       (Positive,
+        Ada.Strings.Unbounded.Unbounded_String);
 
    function Hash
      (Item : GNATCOLL.VFS.Virtual_File) return Ada.Containers.Hash_Type;
 
-   package Virtual_File_Sets is
-     new Ada.Containers.Hashed_Sets
-           (GNATCOLL.VFS.Virtual_File, Hash, GNATCOLL.VFS."=");
+   package Virtual_File_Sets is new
+     Ada.Containers.Hashed_Sets
+       (GNATCOLL.VFS.Virtual_File,
+        Hash,
+        GNATCOLL.VFS."=");
 
    type Formatting_Options is
      (None,
@@ -223,40 +226,40 @@ package body GPS.LSP_Client.Configurations.Clangd is
    function Check_Formatting_Option
      (Option    : Formatting_Options;
       Value     : String;
-      New_Value : out Unbounded_String)
-      return Boolean;
+      New_Value : out Unbounded_String) return Boolean;
    --  Checks whether the given Option's Value has changed.
    --  Returns True and the new option's in New_Value if it's the case.
 
    function Is_Header_File
-     (File            : Virtual_File;
-      C_Spec_Suffix   : String;
-      CPP_Spec_Suffix : String) return Boolean;
+     (File : Virtual_File; C_Spec_Suffix : String; CPP_Spec_Suffix : String)
+      return Boolean;
    --  Return True if the given File is a C or C++ header file, depending on
    --  the given spec suffixes.
 
    type On_Pref_Changed is new GPS.Kernel.Hooks.Preferences_Hooks_Function
-     with null record;
-   overriding procedure Execute
+   with null record;
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
 
    type On_Project_Changing is new GPS.Kernel.Hooks.File_Hooks_Function
-     with null record;
-   overriding procedure Execute
-      (Self   : On_Project_Changing;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : GNATCOLL.VFS.Virtual_File);
+   with null record;
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project will be unloaded.
 
-   Formatting_Config_Dirs     : Virtual_File_Sets.Set;
+   Formatting_Config_Dirs : Virtual_File_Sets.Set;
    --  Directories where clangd formatting configurations are located.
 
    Current_Formatting_Options : Unbounded_String_Vectors.Vector;
    --  Holds current option file lines
 
-   Option_Regexp              : constant Pattern_Matcher :=
+   Option_Regexp : constant Pattern_Matcher :=
      Compile ("^([a-zA-Z]+)\s*:\s*(.+)$", Single_Line);
 
    -- Preferences --
@@ -270,7 +273,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
    package BasedOnStyle_Formatting_Preferences is new
      Default_Preferences.Enums.Generics (BasedOnStyle_Kind);
 
-   BasedOnStyle_Preference : BasedOnStyle_Formatting_Preferences.Preference;
+   BasedOnStyle_Preference            :
+     BasedOnStyle_Formatting_Preferences.Preference;
    ContinuationIndentWidth_Preference : Integer_Preference;
 
    procedure Write_Clang_Format_Files
@@ -285,32 +289,32 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -----------------------------
 
    procedure Check_Formatting_Option
-     (S          : in out Unbounded_String;
-      Check_Only : Formatting_Options := None;
-      Found_Option     : out Formatting_Options;
-      Changed    : out Boolean)
+     (S            : in out Unbounded_String;
+      Check_Only   : Formatting_Options := None;
+      Found_Option : out Formatting_Options;
+      Changed      : out Boolean)
    is
       Matched : Match_Array (0 .. 2);
       Value   : Unbounded_String;
    begin
       Changed := False;
-      Found_Option  := None;
+      Found_Option := None;
       Match (Option_Regexp, To_String (S), Matched);
 
       if Matched (0) /= No_Match then
          begin
-            Found_Option := Formatting_Options'Value
-              (Slice (S, Matched (1).First, Matched (1).Last));
+            Found_Option :=
+              Formatting_Options'Value
+                (Slice (S, Matched (1).First, Matched (1).Last));
 
-            if Check_Only = None
-              or else Found_Option = Check_Only
-            then
+            if Check_Only = None or else Found_Option = Check_Only then
                if Check_Formatting_Option
-                 (Option    => Found_Option,
-                  Value     => Slice (S, Matched (2).First, Matched (2).Last),
-                  New_Value => Value)
+                    (Option    => Found_Option,
+                     Value     =>
+                       Slice (S, Matched (2).First, Matched (2).Last),
+                     New_Value => Value)
                then
-                  S       := Value;
+                  S := Value;
                   Changed := True;
                end if;
             end if;
@@ -329,8 +333,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
    function Check_Formatting_Option
      (Option    : Formatting_Options;
       Value     : String;
-      New_Value : out Unbounded_String)
-      return Boolean
+      New_Value : out Unbounded_String) return Boolean
    is
       Result : Boolean := False;
 
@@ -350,15 +353,15 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    begin
       case Option is
-         when BasedOnStyle =>
+         when BasedOnStyle            =>
             Compare
               ("BasedOnStyle",
                Image (BasedOnStyle_Kind'(BasedOnStyle_Preference.Get_Pref)));
 
-         when ColumnLimit =>
+         when ColumnLimit             =>
             Compare ("ColumnLimit", Image (Highlight_Column.Get_Pref));
 
-         when IndentWidth =>
+         when IndentWidth             =>
             Compare ("IndentWidth", Image (C_Indentation_Level.Get_Pref));
 
          when ContinuationIndentWidth =>
@@ -366,16 +369,16 @@ package body GPS.LSP_Client.Configurations.Clangd is
               ("ContinuationIndentWidth",
                Image (Integer'(ContinuationIndentWidth_Preference.Get_Pref)));
 
-         when UseTab =>
+         when UseTab                  =>
             Compare
               ("UseTab", (if C_Use_Tabs.Get_Pref then "Always" else "Never"));
 
-         when ReflowComments =>
+         when ReflowComments          =>
             Compare
               ("ReflowComments",
                (if C_Indent_Comments.Get_Pref then "true" else "false"));
 
-         when others =>
+         when others                  =>
             null;
       end case;
 
@@ -386,10 +389,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Project_Changing;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : GNATCOLL.VFS.Virtual_File) is
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       Formatting_Config_Dirs.Clear;
       Current_Formatting_Options.Clear;
@@ -399,7 +403,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -418,10 +423,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
       begin
          for S of Current_Formatting_Options loop
             Check_Formatting_Option
-              (S          => S,
-               Check_Only => Which,
-               Found_Option     => Option,
-               Changed    => Modified);
+              (S            => S,
+               Check_Only   => Which,
+               Found_Option => Option,
+               Changed      => Modified);
             exit when Option = Language;
             Changed := Changed or else Modified;
          end loop;
@@ -440,10 +445,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
          begin
             for S of Current_Formatting_Options loop
                Check_Formatting_Option
-                 (S          => S,
-                  Check_Only => None,
-                  Found_Option     => Option,
-                  Changed    => Modified);
+                 (S            => S,
+                  Check_Only   => None,
+                  Found_Option => Option,
+                  Changed      => Modified);
                exit when Option = Language;
                Changed := Changed or else Modified;
             end loop;
@@ -479,18 +484,19 @@ package body GPS.LSP_Client.Configurations.Clangd is
                --  If some formatting preferences have been modified, ask the
                --  user if he wants to override the corresponding .clang-format
                --  settings for his project.
-               Response := GPS_Message_Dialog
-                 (Msg            =>
-                    "Some C/C++ formatting settings have been changed. "
-                  & ASCII.LF
-                  & "Do you want to change this setting in the project's "
-                  & ".clang-format file too?",
-                  Dialog_Type    => Confirmation,
-                  Buttons        => Button_Yes or Button_No,
-                  Default_Button => Button_Yes,
-                  Title          => "C/C++ formatting settings",
-                  Justification  => Justify_Center,
-                  Parent         => Get_Current_Window (Kernel));
+               Response :=
+                 GPS_Message_Dialog
+                   (Msg            =>
+                      "Some C/C++ formatting settings have been changed. "
+                      & ASCII.LF
+                      & "Do you want to change this setting in the project's "
+                      & ".clang-format file too?",
+                    Dialog_Type    => Confirmation,
+                    Buttons        => Button_Yes or Button_No,
+                    Default_Button => Button_Yes,
+                    Title          => "C/C++ formatting settings",
+                    Justification  => Justify_Center,
+                    Parent         => Get_Current_Window (Kernel));
 
                if Response = Button_Yes then
                   Write_Clang_Format_Files (Kernel);
@@ -515,9 +521,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
    --------------------
 
    function Is_Header_File
-     (File            : Virtual_File;
-      C_Spec_Suffix   : String;
-      CPP_Spec_Suffix : String) return Boolean
+     (File : Virtual_File; C_Spec_Suffix : String; CPP_Spec_Suffix : String)
+      return Boolean
    is
       File_Ext : constant String := +File.File_Extension;
    begin
@@ -533,7 +538,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
    ----------------------------
 
    procedure On_Server_Capabilities
-     (Capabilities : in out LSP.Messages.ServerCapabilities) is null;
+     (Capabilities : in out LSP.Messages.ServerCapabilities)
+   is null;
 
    -----------
    -- Image --
@@ -542,19 +548,25 @@ package body GPS.LSP_Client.Configurations.Clangd is
    function Image (Item : BasedOnStyle_Kind) return String is
    begin
       case Item is
-         when LLVM =>
+         when LLVM      =>
             return "LLVM";
-         when Google =>
+
+         when Google    =>
             return "Google";
-         when Chromium =>
+
+         when Chromium  =>
             return "Chromium";
-         when Mozilla =>
+
+         when Mozilla   =>
             return "Mozilla";
-         when WebKit =>
+
+         when WebKit    =>
             return "WebKit";
+
          when Microsoft =>
             return "Microsoft";
-         when GNU =>
+
+         when GNU       =>
             return "GNU";
       end case;
    end Image;
@@ -573,10 +585,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
    -- Prepare_Configuration_Settings --
    ------------------------------------
 
-   overriding procedure Prepare_Configuration_Settings
+   overriding
+   procedure Prepare_Configuration_Settings
      (Self : in out Clangd_Configuration)
    is
-      Tree         : constant Project_Tree_Access :=
+      Tree             : constant Project_Tree_Access :=
         Self.Kernel.Get_Project_Tree;
       Iter             : Project_Iterator;
       P                : Project_Type;
@@ -585,25 +598,27 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Project_Dir_Name : constant VSS.Strings.Virtual_String :=
         VSS.Strings.Conversions.To_Virtual_String
           (Project_Dir.Display_Dir_Name);
-      C_Spec_Suffix    : constant String := Attribute_Value
-        (Project      => P,
-         Attribute    => Spec_Suffix_Attribute,
-         Index        => "C",
-         Default      => ".h",
-         Use_Extended => True);
-      CPP_Spec_Suffix  : constant String := Attribute_Value
-        (Project      => P,
-         Attribute    => Spec_Suffix_Attribute,
-         Index        => "C++",
-         Default      => ".hh",
-         Use_Extended => True);
-      Compilers  : String_String_Maps.Map;
-      Drivers    : Unbounded_String;
-      Includes   : Unbounded_String;
+      C_Spec_Suffix    : constant String :=
+        Attribute_Value
+          (Project      => P,
+           Attribute    => Spec_Suffix_Attribute,
+           Index        => "C",
+           Default      => ".h",
+           Use_Extended => True);
+      CPP_Spec_Suffix  : constant String :=
+        Attribute_Value
+          (Project      => P,
+           Attribute    => Spec_Suffix_Attribute,
+           Index        => "C++",
+           Default      => ".hh",
+           Use_Extended => True);
+      Compilers        : String_String_Maps.Map;
+      Drivers          : Unbounded_String;
+      Includes         : Unbounded_String;
 
-      Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
-      Stream     : aliased GS_Text_Streams.File_UTF8_Output_Stream;
-      Dir        : Virtual_File;
+      Writer : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
+      Stream : aliased GS_Text_Streams.File_UTF8_Output_Stream;
+      Dir    : Virtual_File;
 
       procedure Process_Files (P : Project_Type);
       --  Process project's files and prepare a database for clangd
@@ -614,7 +629,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
       procedure Process_Files (P : Project_Type) is
          Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
-         Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
+         Files      : GNATCOLL.VFS.File_Array_Access := P.Source_Files;
          Switches   : GNAT.Strings.String_List_Access;
          Is_Default : Boolean;
          Command    : Unbounded_String;
@@ -646,7 +661,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
          for File of Files.all loop
             declare
                use Remote;
-               Language : constant String :=
+               Language  : constant String :=
                  File_Info'Class (Tree.Info_Set (File).First_Element).Language;
                Toolchain : Toolchains.Toolchain;
                Full_Name : Unbounded_String;
@@ -655,26 +670,30 @@ package body GPS.LSP_Client.Configurations.Clangd is
                --  implementation files, not headers.
 
                if Language in "c" | "cpp" | "c++"
-                 and then not Is_Header_File
-                   (File            => File,
-                    C_Spec_Suffix   => C_Spec_Suffix,
-                    CPP_Spec_Suffix => CPP_Spec_Suffix)
+                 and then
+                   not Is_Header_File
+                         (File            => File,
+                          C_Spec_Suffix   => C_Spec_Suffix,
+                          CPP_Spec_Suffix => CPP_Spec_Suffix)
                then
                   --  Retrieve compiler name for certain language if
                   --  did'nt done yet. For C and CPP we can have
                   --  different ones.
                   if not Compilers.Contains (Language) then
-                     Toolchain := Self.Kernel.Get_Toolchains_Manager.
-                       Get_Toolchain (P);
+                     Toolchain :=
+                       Self.Kernel.Get_Toolchains_Manager.Get_Toolchain (P);
 
                      if Is_Base_Name (Toolchain, Language) then
-                        Full_Name := To_Unbounded_String
-                          (+GNATCOLL.VFS.Locate_On_Path
-                             (+Get_Exe (Get_Compiler (Toolchain, Language)),
-                              Get_Nickname (Build_Server)).Full_Name);
+                        Full_Name :=
+                          To_Unbounded_String
+                            (+GNATCOLL.VFS.Locate_On_Path
+                                (+Get_Exe (Get_Compiler (Toolchain, Language)),
+                                 Get_Nickname (Build_Server))
+                                .Full_Name);
                      else
-                        Full_Name := To_Unbounded_String
-                          (Get_Exe (Get_Compiler (Toolchain, Language)));
+                        Full_Name :=
+                          To_Unbounded_String
+                            (Get_Exe (Get_Compiler (Toolchain, Language)));
                      end if;
 
                      Compilers.Insert (Language, To_String (Full_Name));
@@ -716,8 +735,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                        (VSS.Strings.Conversions.To_Virtual_String
                           (Ada.Strings.Unbounded.To_String (Command & Path)));
 
-                     Writer.Key_Name
-                       (VSS.Strings.To_Virtual_String ("file"));
+                     Writer.Key_Name (VSS.Strings.To_Virtual_String ("file"));
                      Writer.String_Value
                        (VSS.Strings.Conversions.To_Virtual_String (Path));
                   end;
@@ -800,8 +818,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Current_Formatting_Options.Clear;
       Formatting_Config_Dirs.Clear;
 
-      Project_Config_Dir :=
-        Greatest_Common_Path (Root_Project.Source_Dirs);
+      Project_Config_Dir := Greatest_Common_Path (Root_Project.Source_Dirs);
 
       if Project_Config_Dir = No_File then
          Project_Config_Dir := Root_Project.Project_Path.Dir;
@@ -824,9 +841,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
             exit when Project = No_Project;
 
             if not Project.Externally_Built
-              and (Project.Has_Language ("c")
-                   or Project.Has_Language ("cpp")
-                   or Project.Has_Language ("c++"))
+              and
+                (Project.Has_Language ("c")
+                 or Project.Has_Language ("cpp")
+                 or Project.Has_Language ("c++"))
             then
                --  Process only project with C/C++ sources and not externally
                --  built.
@@ -834,7 +852,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                Common_Dir := Greatest_Common_Path (Project.Source_Dirs);
 
                if Common_Dir /= No_File then
-                  Include    := True;
+                  Include := True;
 
                   for D of Formatting_Config_Dirs loop
                      if D = Greatest_Common_Path ((D, Common_Dir)) then
@@ -860,10 +878,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
          --  Loading old settings
          declare
             Items : VSS.String_Vectors.Virtual_String_Vector;
-            S     : GNAT.Strings.String_Access :=  F.Read_File;
+            S     : GNAT.Strings.String_Access := F.Read_File;
          begin
-            Items := VSS.Strings.Conversions.To_Virtual_String
-              (S.all).Split_Lines;
+            Items :=
+              VSS.Strings.Conversions.To_Virtual_String (S.all).Split_Lines;
             Free (S);
 
             declare
@@ -903,9 +921,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                Changed := True;
 
             elsif Check_Formatting_Option
-              (Option => Option,
-               Value     => "",
-               New_Value => New_Value)
+                    (Option => Option, Value => "", New_Value => New_Value)
             then
                Current_Formatting_Options.Prepend (New_Value);
                Changed := True;
@@ -931,11 +947,13 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Client : in out GPS.LSP_Clients.LSP_Client)
    is
       Now  : constant Ada.Calendar.Time := Clock;
-      File : constant Virtual_File := Create_From_Dir
-        (Kernel.Get_Log_Dir,
-         +("clangd." &
-             Image (Now, ISO_Date) & Image (Now, "T%H%M%S") &
-             ".txt"));
+      File : constant Virtual_File :=
+        Create_From_Dir
+          (Kernel.Get_Log_Dir,
+           +("clangd."
+             & Image (Now, ISO_Date)
+             & Image (Now, "T%H%M%S")
+             & ".txt"));
    begin
       Client.Set_Standard_Errors_File (File);
    end Set_Standard_Errors_File;
@@ -946,13 +964,15 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
    procedure Register (Kernel : Kernel_Handle) is
 
-      Manager : constant Preferences_Manager := Kernel.Get_Preferences;
-      Page    : constant Preferences_Page := Manager.Get_Registered_Page
-        (Name             => "Editor/C & C++",
-         Create_If_Needed => True);
+      Manager                 : constant Preferences_Manager :=
+        Kernel.Get_Preferences;
+      Page                    : constant Preferences_Page :=
+        Manager.Get_Registered_Page
+          (Name => "Editor/C & C++", Create_If_Needed => True);
       Clangd_Formatting_Group : constant Preferences_Group :=
         new Preferences_Group_Record;
-      Path    : constant String := "Editor/C & C++:Formatting with clangd";
+      Path                    : constant String :=
+        "Editor/C & C++:Formatting with clangd";
    begin
       Page.Register_Group
         (Name             => "Formatting with clangd",
@@ -961,30 +981,32 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Replace_If_Exist => False,
          Description      =>
            "These preferences are used to create .clang-format files when not "
-         & "already present for your project. The .clang-format files are "
-         & "then used by clangd (i.e: the language server for C/C++) for "
-         & "formatting. "
-         & ASCII.LF
-         & "Note that you can customize these files to add more formatting "
-         & "options that are not exposed by GNAT Studio "
-         & "(see https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
+           & "already present for your project. The .clang-format files are "
+           & "then used by clangd (i.e: the language server for C/C++) for "
+           & "formatting. "
+           & ASCII.LF
+           & "Note that you can customize these files to add more formatting "
+           & "options that are not exposed by GNAT Studio "
+           & "(see https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
 
-      BasedOnStyle_Preference := BasedOnStyle_Formatting_Preferences.Create
-        (Manager,
-         Path    => Path,
-         Name    => "clangd-BasedOnStyle",
-         Default => GNU,
-         Doc     => "The style used for all options not specifically set.",
-         Label   => "BasedOnStyle");
+      BasedOnStyle_Preference :=
+        BasedOnStyle_Formatting_Preferences.Create
+          (Manager,
+           Path    => Path,
+           Name    => "clangd-BasedOnStyle",
+           Default => GNU,
+           Doc     => "The style used for all options not specifically set.",
+           Label   => "BasedOnStyle");
 
-      ContinuationIndentWidth_Preference := Manager.Create
-        (Path    => Path,
-         Name    => "clangd-ContinuationIndentWidth",
-         Minimum => 0,
-         Maximum => 99,
-         Default => 2,
-         Doc     => "Indent width for line continuations.",
-         Label   => "ContinuationIndentWidth");
+      ContinuationIndentWidth_Preference :=
+        Manager.Create
+          (Path    => Path,
+           Name    => "clangd-ContinuationIndentWidth",
+           Minimum => 0,
+           Maximum => 99,
+           Default => 2,
+           Doc     => "Indent width for line continuations.",
+           Label   => "ContinuationIndentWidth");
 
       GPS.Kernel.Hooks.Preferences_Changed_Hook.Add (new On_Pref_Changed);
       GPS.Kernel.Hooks.Project_Changing_Hook.Add (new On_Project_Changing);
@@ -1006,9 +1028,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                WF : Writable_File;
             begin
                if D.Is_Writable then
-                  if Override_Existing
-                    or else not F.Is_Regular_File
-                  then
+                  if Override_Existing or else not F.Is_Regular_File then
 
                      WF := Write_File (F);
 
@@ -1021,16 +1041,17 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
                else
                   Me_Diagnostics.Trace
-                    ("Can't create clangd formatting configuration file, " &
-                     (+D.Full_Name) & " is not writable.");
+                    ("Can't create clangd formatting configuration file, "
+                     & (+D.Full_Name)
+                     & " is not writable.");
                end if;
             end;
 
          exception
             when others =>
                Kernel.Get_Messages_Window.Insert_Error
-                 ("Can't create clangd formatting configuration file in " &
-                  (+D.Full_Name));
+                 ("Can't create clangd formatting configuration file in "
+                  & (+D.Full_Name));
          end;
       end loop;
    end Write_Clang_Format_Files;

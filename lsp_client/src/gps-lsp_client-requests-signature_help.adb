@@ -30,8 +30,7 @@ package body GPS.LSP_Client.Requests.Signature_Help is
       return LSP.Messages.SignatureHelpParams is
    begin
       return
-        (textDocument =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
+        (textDocument => (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
          position     => Self.Position,
          context      => Self.Context,
          others       => <>);
@@ -41,10 +40,10 @@ package body GPS.LSP_Client.Requests.Signature_Help is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Signature_Help_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
-   is
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
       LSP.Messages.SignatureHelpParams'Write (Stream, Self.Params);
    end Params;
@@ -53,10 +52,10 @@ package body GPS.LSP_Client.Requests.Signature_Help is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Signature_Help_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.signatureHelpProvider.Is_Set;
    end Is_Request_Supported;
@@ -65,15 +64,16 @@ package body GPS.LSP_Client.Requests.Signature_Help is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Signature_Help_Request;
-      Stream :        not null access LSP.JSON_Streams.JSON_Stream'Class)
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Response : LSP.Messages.SignatureHelp;
    begin
       LSP.Messages.SignatureHelp'Read (Stream, Response);
-      Abstract_Signature_Help_Request'Class
-        (Self).On_Result_Message (Response);
+      Abstract_Signature_Help_Request'Class (Self).On_Result_Message
+        (Response);
    end On_Result_Message;
 
 end GPS.LSP_Client.Requests.Signature_Help;

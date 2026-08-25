@@ -20,43 +20,49 @@ with VSS.Strings;
 
 package GPS.LSP_Client.Requests.Execute_Command is
 
-   type Abstract_Execute_Command_Request is
-     abstract new LSP_Request with null record;
+   type Abstract_Execute_Command_Request is abstract new LSP_Request
+   with null record;
 
    function Command_Name
      (Self : Abstract_Execute_Command_Request)
-      return VSS.Strings.Virtual_String is abstract;
+      return VSS.Strings.Virtual_String
+   is abstract;
    --  Return command name as it send to the server.
 
    function Params
      (Self : Abstract_Execute_Command_Request)
-      return LSP.Messages.ExecuteCommandParams is abstract;
+      return LSP.Messages.ExecuteCommandParams
+   is abstract;
    --  Return parameters of the request to be sent to the server.
 
-   procedure On_Result_Message
-     (Self : in out Abstract_Execute_Command_Request) is abstract;
+   procedure On_Result_Message (Self : in out Abstract_Execute_Command_Request)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Abstract_Execute_Command_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Execute_Command_Request)
       return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Execute_Command_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

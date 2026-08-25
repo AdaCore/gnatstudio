@@ -24,7 +24,8 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Execute_Command_Request)
       return VSS.Strings.Virtual_String
    is
@@ -38,7 +39,8 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -52,12 +54,12 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Abstract_Execute_Command_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
+      Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
         ("Failed to execute command: "
@@ -68,7 +70,8 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Execute_Command_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -80,17 +83,19 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Execute_Command_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean
+      Options : LSP.Messages.ServerCapabilities) return Boolean
    is
       Command_Name : constant VSS.Strings.Virtual_String :=
         Abstract_Execute_Command_Request'Class (Self).Command_Name;
    begin
-      return Options.executeCommandProvider.Is_Set
-        and then Options.executeCommandProvider.Value.commands.Contains
-          (Command_Name);
+      return
+        Options.executeCommandProvider.Is_Set
+        and then
+          Options.executeCommandProvider.Value.commands.Contains
+            (Command_Name);
    end Is_Request_Supported;
 
 end GPS.LSP_Client.Requests.Execute_Command;

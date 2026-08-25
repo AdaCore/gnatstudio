@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.JSON;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.LSP_Client.Requests.Internals;
 with GPS.LSP_Client.Language_Servers.Interceptors;
@@ -30,7 +30,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- Cancel --
    ------------
 
-   overriding procedure Cancel
+   overriding
+   procedure Cancel
      (Self    : in out Real_Language_Server;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -41,13 +42,13 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- Configuration_Changed --
    ---------------------------
 
-   overriding procedure Configuration_Changed
-     (Self : in out Real_Language_Server) is
+   overriding
+   procedure Configuration_Changed (Self : in out Real_Language_Server) is
    begin
       if Self.Client.Is_Ready then
          declare
             Settings : constant GNATCOLL.JSON.JSON_Value :=
-                         Self.Configuration.Configuration_Settings;
+              Self.Configuration.Configuration_Settings;
 
          begin
             if not Settings.Is_Empty then
@@ -66,24 +67,25 @@ package body GPS.LSP_Client.Language_Servers.Real is
    ------------
 
    function Create
-     (Kernel              : not null access
-        GPS.Kernel.Kernel_Handle_Record'Class;
-      Configuration       : not null access
-        GPS.LSP_Client.Configurations.Server_Configuration'Class;
-      Server_Interceptor  : not null access
-        Interceptors.Server_Listener'Class;
-      Request_Interceptor : not null access
-        Interceptors.Request_Listener'Class;
+     (Kernel              :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Configuration       :
+        not null access
+          GPS.LSP_Client.Configurations.Server_Configuration'Class;
+      Server_Interceptor  : not null access Interceptors.Server_Listener'Class;
+      Request_Interceptor :
+        not null access Interceptors.Request_Listener'Class;
       Language            : not null access Language_Root'Class)
       return not null Language_Server_Access is
    begin
-      return Result : constant not null Language_Server_Access :=
-        new Real_Language_Server
-          (Kernel              => Kernel,
-           Configuration       => Configuration,
-           Server_Interceptor  => Server_Interceptor,
-           Request_Interceptor => Request_Interceptor,
-           Language            => Language)
+      return
+         Result : constant not null Language_Server_Access :=
+           new Real_Language_Server
+                 (Kernel => Kernel,
+                  Configuration => Configuration,
+                  Server_Interceptor => Server_Interceptor,
+                  Request_Interceptor => Request_Interceptor,
+                  Language => Language)
       do
          Real_Language_Server'Class (Result.all).Initialize;
       end return;
@@ -93,7 +95,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : in out Real_Language_Server;
       Request : in out GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -113,10 +116,10 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- Is_Configuration_Supported --
    --------------------------------
 
-   overriding function Is_Configuration_Supported
+   overriding
+   function Is_Configuration_Supported
      (Self    : in out Real_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
-      return Boolean is
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind) return Boolean is
    begin
       return Self.Configuration.Is_Configuration_Supported (Setting);
    end Is_Configuration_Supported;
@@ -125,7 +128,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Receive_Reply --
    ----------------------
 
-   overriding procedure On_Receive_Reply
+   overriding
+   procedure On_Receive_Reply
      (Self    : in out Real_Language_Server;
       Request : GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -140,7 +144,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Reject_Request --
    -----------------------
 
-   overriding procedure On_Reject_Request
+   overriding
+   procedure On_Reject_Request
      (Self    : in out Real_Language_Server;
       Request : GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -155,7 +160,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Response_Processed --
    ---------------------------
 
-   overriding procedure On_Response_Processed
+   overriding
+   procedure On_Response_Processed
      (Self   : in out Real_Language_Server;
       Data   : Ada.Strings.Unbounded.Unbounded_String;
       Method : Ada.Strings.Unbounded.Unbounded_String) is
@@ -170,7 +176,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Response_Sent --
    ----------------------
 
-   overriding procedure On_Response_Sent
+   overriding
+   procedure On_Response_Sent
      (Self : in out Real_Language_Server;
       Data : Ada.Strings.Unbounded.Unbounded_String) is
    begin
@@ -184,7 +191,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Send_Cancel --
    --------------------
 
-   overriding procedure On_Send_Cancel
+   overriding
+   procedure On_Send_Cancel
      (Self    : in out Real_Language_Server;
       Request : GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -199,7 +207,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Send_Request --
    ---------------------
 
-   overriding procedure On_Send_Request
+   overriding
+   procedure On_Send_Request
      (Self    : in out Real_Language_Server;
       Request : GPS.LSP_Client.Requests.Request_Access) is
    begin
@@ -214,8 +223,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Server_Started --
    -----------------------
 
-   overriding procedure On_Server_Started
-     (Self : in out Real_Language_Server) is
+   overriding
+   procedure On_Server_Started (Self : in out Real_Language_Server) is
    begin
       Self.Server_Interceptor.On_Server_Started (Self'Unchecked_Access);
    end On_Server_Started;
@@ -224,8 +233,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -- On_Server_Stopped --
    -----------------------
 
-   overriding procedure On_Server_Stopped
-     (Self : in out Real_Language_Server) is
+   overriding
+   procedure On_Server_Stopped (Self : in out Real_Language_Server) is
    begin
       Self.Server_Interceptor.On_Server_Stopped (Self'Unchecked_Access);
    end On_Server_Stopped;
@@ -250,8 +259,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    --------------
 
    procedure Shutdown
-     (Self               : in out Real_Language_Server'Class;
-      Reject_Immediately : Boolean) is
+     (Self : in out Real_Language_Server'Class; Reject_Immediately : Boolean)
+   is
    begin
       Self.Destroyed := Reject_Immediately;
       Self.Client.Stop (Reject_Immediately);
@@ -266,8 +275,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Client.Restart
         (Initialization_Options =>
            (True,
-            (Self.Configuration.Configuration_Settings with
-             null record)));
+            (Self.Configuration.Configuration_Settings with null record)));
    end Restart;
 
    -------------------------
@@ -275,8 +283,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -------------------------
 
    function Get_Running_Request
-     (Self : Real_Language_Server'Class;
-      Id   : LSP.Types.LSP_Number_Or_String)
+     (Self : Real_Language_Server'Class; Id : LSP.Types.LSP_Number_Or_String)
       return GPS.LSP_Client.Requests.Request_Access is
    begin
       return Self.Client.Get_Running_Request (Id);

@@ -20,7 +20,8 @@
 generic
    type Request_Type is abstract new LSP_Request with private;
 
-package GPS.LSP_Client.Requests.Generic_References is
+package GPS.LSP_Client.Requests.Generic_References
+is
 
    type Request_Access is access all Request_Type'Class;
 

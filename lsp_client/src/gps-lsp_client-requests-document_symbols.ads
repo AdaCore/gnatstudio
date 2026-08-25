@@ -19,8 +19,8 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Symbols is
 
-   type Document_Symbols_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   type Document_Symbols_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
       Query          : VSS.Strings.Virtual_String;
       Case_Sensitive : LSP.Types.Optional_Boolean;
@@ -31,22 +31,26 @@ package GPS.LSP_Client.Requests.Document_Symbols is
 
    procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
-      Result : LSP.Messages.Symbol_Vector) is abstract;
+      Result : LSP.Messages.Symbol_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Document_Symbols_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Document_Symbols_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Document_Symbols_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

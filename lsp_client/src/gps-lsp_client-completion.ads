@@ -22,13 +22,13 @@ with GNATCOLL.VFS;
 private with VSS.Characters;
 private with VSS.Strings;
 
-with Basic_Types;           use Basic_Types;
-with Completion;            use Completion;
-with GPS.Editors;           use GPS.Editors;
-with GPS.Kernel;            use GPS.Kernel;
-with Language;              use Language;
-with LSP.Messages;          use LSP.Messages;
-with Xref;                  use Xref;
+with Basic_Types;  use Basic_Types;
+with Completion;   use Completion;
+with GPS.Editors;  use GPS.Editors;
+with GPS.Kernel;   use GPS.Kernel;
+with Language;     use Language;
+with LSP.Messages; use LSP.Messages;
+with Xref;         use Xref;
 
 package GPS.LSP_Client.Completion is
 
@@ -44,11 +44,13 @@ package GPS.LSP_Client.Completion is
    type LSP_Completion_Manager_Access is
      access all LSP_Completion_Manager'Class;
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context) return Completion_List;
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access LSP_Completion_Manager; Context : Completion_Context)
+      return Completion_List;
 
-   overriding procedure Query_Completion_List
+   overriding
+   procedure Query_Completion_List
      (Manager      : access LSP_Completion_Manager;
       Context      : Completion_Context;
       Initial_List : in out Completion_List);
@@ -61,19 +63,20 @@ package GPS.LSP_Client.Completion is
    type LSP_Completion_Resolver_Access is
      access all LSP_Completion_Resolver'Class;
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access LSP_Completion_Resolver;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List);
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access LSP_Completion_Resolver;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
-   overriding function Get_Id
-     (Resolver : LSP_Completion_Resolver) return String;
+   overriding
+   function Get_Id (Resolver : LSP_Completion_Resolver) return String;
    --  See inherited documentation
 
-   overriding procedure Free (Resolver : in out LSP_Completion_Resolver)
-   is null;
+   overriding
+   procedure Free (Resolver : in out LSP_Completion_Resolver) is null;
    --  See inherited documentation
 
    -----------------------------
@@ -82,88 +85,97 @@ package GPS.LSP_Client.Completion is
 
    type LSP_Completion_Proposal is new Completion_Proposal with private;
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  See inherited documentation
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  See inherited documentation
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  See inherited documentation
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  See inherited documentation
 
-   overriding function Get_Category
+   overriding
+   function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
-   overriding function Get_Visibility
+   overriding
+   function Get_Visibility
      (Proposal : LSP_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location;
    --  See inherited documentation.
 
-   overriding function Get_Documentation
-     (Proposal : LSP_Completion_Proposal)
-      return String;
+   overriding
+   function Get_Documentation
+     (Proposal : LSP_Completion_Proposal) return String;
    --  See inherited documentation
 
-   overriding function Insert_Text_On_Selected
+   overriding
+   function Insert_Text_On_Selected
      (Proposal : LSP_Completion_Proposal) return Boolean;
    --  See inherited documentation
 
-   overriding function Should_Delete_Range_On_Selected
+   overriding
+   function Should_Delete_Range_On_Selected
      (Proposal    : LSP_Completion_Proposal;
       Kernel      : Kernel_Handle;
       Range_Start : out File_Location;
-      Range_End   : out File_Location)
-      return Boolean;
+      Range_End   : out File_Location) return Boolean;
    --  See inherited documentation
 
-   overriding procedure On_Selected
-     (Proposal : LSP_Completion_Proposal;
-      Kernel   : not null Kernel_Handle);
+   overriding
+   procedure On_Selected
+     (Proposal : LSP_Completion_Proposal; Kernel : not null Kernel_Handle);
    --  See inherited documentation
 
-   overriding function On_Documentation_Query
+   overriding
+   function On_Documentation_Query
      (Proposal : LSP_Completion_Proposal) return Boolean;
 
-   overriding function Match
-     (Proposal   : LSP_Completion_Proposal;
-      Context    : Completion_Context;
-      Offset     : String_Index_Type) return Boolean;
+   overriding
+   function Match
+     (Proposal : LSP_Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : String_Index_Type) return Boolean;
    --  See inherited documentation
 
-   overriding procedure Free (Proposal : in out LSP_Completion_Proposal)
-   is
-   null;
+   overriding
+   procedure Free (Proposal : in out LSP_Completion_Proposal) is null;
    --  See inherited documentation
 
-   overriding function Deep_Copy
-     (Proposal : LSP_Completion_Proposal)
-      return Completion_Proposal'Class
-   is
-     (Proposal);
+   overriding
+   function Deep_Copy
+     (Proposal : LSP_Completion_Proposal) return Completion_Proposal'Class
+   is (Proposal);
    --  See inherited documentation
 
-   overriding function To_Completion_Id
+   overriding
+   function To_Completion_Id
      (Proposal : LSP_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
@@ -172,7 +184,7 @@ package GPS.LSP_Client.Completion is
 private
 
    type LSP_Completion_Manager is new Asynchronous_Completion_Manager
-     with record
+   with record
       Kernel : Kernel_Handle;
    end record;
 
@@ -183,47 +195,47 @@ private
    end record;
 
    type LSP_Completion_Proposal is new Completion_Proposal with record
-      Text                     : VSS.Strings.Virtual_String;
+      Text : VSS.Strings.Virtual_String;
       --  The text that will replace the completion prefix if this proposal
       --  gets selected.
 
-      Span                     : LSP.Messages.Span := LSP.Messages.Empty_Span;
+      Span : LSP.Messages.Span := LSP.Messages.Empty_Span;
       --  When not empty, delete the content in span before inserting text
 
-      Label                    : VSS.Strings.Virtual_String;
+      Label : VSS.Strings.Virtual_String;
       --  The label displayed in the completion window.
 
-      Sort_Text                : VSS.Strings.Virtual_String;
+      Sort_Text : VSS.Strings.Virtual_String;
       --  The sort text used to sort completion proposals. Defaults to the
       --  label when not set.
 
-      Filter_Text              : VSS.Strings.Virtual_String;
+      Filter_Text : VSS.Strings.Virtual_String;
       --  The filter text used to filter completion proposals. Defaults to the
       --  label when not set.
 
-      Detail                   : VSS.Strings.Virtual_String;
+      Detail : VSS.Strings.Virtual_String;
       --  The detail displayed in the completion window notes.
       --  In the LSP world, this field is commonly used to display the
       --  profile of subprograms for instance.
 
-      Highlightable_Detail     : Boolean := False;
+      Highlightable_Detail : Boolean := False;
       --  True if the detail can be highlighted.
       --  ??? This field is only set to True for Ada since we don't have
       --  a generic API to highlight code in markup format.
 
-      Documentation            : VSS.Strings.Virtual_String;
+      Documentation : VSS.Strings.Virtual_String;
       --  The documentation associated to this proposal, if any.
 
-      Category                 : Language_Category;
+      Category : Language_Category;
       --  The language category associated to this proposal.
 
-      Is_Snippet               : Boolean := False;
+      Is_Snippet : Boolean := False;
       --  True when the proposal is a snippet.
 
-      ID                       : Integer := 0;
+      ID : Integer := 0;
       --  The LSP completion proposal ID.
 
-      Command                  : LSP.Messages.Optional_Command;
+      Command : LSP.Messages.Optional_Command;
       --  An optional command that is executed after inserting this
       --  completion.
    end record;
@@ -252,8 +264,8 @@ private
    --  Return null if there is no LSP server for the given language.
 
    function LSP_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean;
    --  The LSP function used to determine whether this character should trigger
    --  completion in the given editor.
 

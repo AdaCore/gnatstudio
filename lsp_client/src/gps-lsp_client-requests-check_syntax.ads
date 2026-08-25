@@ -28,25 +28,32 @@ package GPS.LSP_Client.Requests.Check_Syntax is
    end record;
    type Check_Syntax_Request_Access is access all Check_Syntax_Request'Class;
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Check_Syntax_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Check_Syntax_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Check_Syntax_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Check_Syntax_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is null;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is null;
 
-   overriding function Is_Request_Supported
-     (Self    : Check_Syntax_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is (True);
+   overriding
+   function Is_Request_Supported
+     (Self : Check_Syntax_Request; Options : LSP.Messages.ServerCapabilities)
+      return Boolean
+   is (True);
 
 end GPS.LSP_Client.Requests.Check_Syntax;

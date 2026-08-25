@@ -23,7 +23,8 @@ package body GPS.LSP_Clients.Shutdowns is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message (Self : in out Shutdown_Request) is
+   overriding
+   procedure On_Result_Message (Self : in out Shutdown_Request) is
    begin
       Self.Client.On_Exit_Notification;
    end On_Result_Message;
@@ -32,7 +33,8 @@ package body GPS.LSP_Clients.Shutdowns is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Shutdown_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -40,8 +42,7 @@ package body GPS.LSP_Clients.Shutdowns is
    is
       pragma Unreferenced (Code, Data);
    begin
-      Self.Client.On_Error
-        (VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Self.Client.On_Error (VSS.Strings.Conversions.To_UTF_8_String (Message));
       Self.Client.On_Exit_Notification;
    end On_Error_Message;
 

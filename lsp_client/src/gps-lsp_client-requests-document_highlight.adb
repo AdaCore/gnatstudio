@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Document_Highlight_Request)
       return VSS.Strings.Virtual_String
    is
@@ -39,15 +40,16 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Document_Highlight_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Locations : LSP.Messages.DocumentHighlight_Vector;
    begin
       LSP.Messages.DocumentHighlight_Vector'Read (Stream, Locations);
-      Abstract_Document_Highlight_Request'Class
-        (Self).On_Result_Message (Locations);
+      Abstract_Document_Highlight_Request'Class (Self).On_Result_Message
+        (Locations);
    end On_Result_Message;
 
    ------------
@@ -70,10 +72,10 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Document_Highlight_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.documentHighlightProvider.Is_Set;
    end Is_Request_Supported;
@@ -82,7 +84,8 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Document_Highlight_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

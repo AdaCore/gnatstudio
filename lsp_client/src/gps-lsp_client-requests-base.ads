@@ -22,13 +22,14 @@ package GPS.LSP_Client.Requests.Base is
    --  Text_Document_Request provides field to store associated
    --  virtual file, and implementation of Text_Document function.
 
-   type Text_Document_Request is
-     abstract new GPS.LSP_Client.Requests.LSP_Request with
-      record
-         File : GNATCOLL.VFS.Virtual_File;
-      end record;
+   type Text_Document_Request is abstract
+     new GPS.LSP_Client.Requests.LSP_Request
+   with record
+      File : GNATCOLL.VFS.Virtual_File;
+   end record;
 
-   overriding function Text_Document
+   overriding
+   function Text_Document
      (Self : Text_Document_Request) return GNATCOLL.VFS.Virtual_File;
 
 end GPS.LSP_Client.Requests.Base;

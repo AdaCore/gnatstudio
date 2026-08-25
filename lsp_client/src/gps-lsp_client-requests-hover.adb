@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Hover is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Hover_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -38,7 +39,8 @@ package body GPS.LSP_Client.Requests.Hover is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -58,8 +60,7 @@ package body GPS.LSP_Client.Requests.Hover is
       return LSP.Messages.TextDocumentPositionParams is
    begin
       return
-        (textDocument =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
+        (textDocument => (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
          position     => Self.Position);
    end Params;
 
@@ -67,9 +68,9 @@ package body GPS.LSP_Client.Requests.Hover is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
-     (Self    : Abstract_Hover_Request;
-      Options : LSP.Messages.ServerCapabilities)
+   overriding
+   function Is_Request_Supported
+     (Self : Abstract_Hover_Request; Options : LSP.Messages.ServerCapabilities)
       return Boolean is
    begin
       return Options.hoverProvider.Is_Set;
@@ -79,7 +80,8 @@ package body GPS.LSP_Client.Requests.Hover is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

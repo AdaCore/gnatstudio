@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Completion_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -38,15 +39,15 @@ package body GPS.LSP_Client.Requests.Completion is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       List : LSP.Messages.CompletionList;
    begin
       LSP.Messages.CompletionList'Read (Stream, List);
-      Abstract_Completion_Request'Class (Self).On_Result_Message
-        (List);
+      Abstract_Completion_Request'Class (Self).On_Result_Message (List);
    end On_Result_Message;
 
    ------------
@@ -54,8 +55,8 @@ package body GPS.LSP_Client.Requests.Completion is
    ------------
 
    function Params
-     (Self : Abstract_Completion_Request)
-      return LSP.Messages.CompletionParams is
+     (Self : Abstract_Completion_Request) return LSP.Messages.CompletionParams
+   is
    begin
       return
         (textDocument =>
@@ -69,10 +70,10 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Completion_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.completionProvider.Is_Set;
    end Is_Request_Supported;
@@ -81,7 +82,8 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -92,10 +94,12 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_CompletionItem_Resolve_Request)
-      return VSS.Strings.Virtual_String is
-   pragma Unreferenced (Self);
+      return VSS.Strings.Virtual_String
+   is
+      pragma Unreferenced (Self);
 
    begin
       return "completionItem/resolve";
@@ -116,7 +120,8 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_CompletionItem_Resolve_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -127,12 +132,13 @@ package body GPS.LSP_Client.Requests.Completion is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_CompletionItem_Resolve_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
-      return Options.completionProvider.Is_Set
+      return
+        Options.completionProvider.Is_Set
         and then Options.completionProvider.Value.resolveProvider.Is_Set
         and then Options.completionProvider.Value.resolveProvider.Value;
    end Is_Request_Supported;
@@ -141,7 +147,8 @@ package body GPS.LSP_Client.Requests.Completion is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_CompletionItem_Resolve_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is

@@ -26,8 +26,11 @@ private with GPS.LSP_Client.Requests;
 package GPS.LSP_Client.Tasks is
 
    type Task_Manager_Integration (<>) is limited
-     new GPS.LSP_Client.Language_Servers.Interceptors.Request_Listener
-       with private;
+     new GPS
+          .LSP_Client
+          .Language_Servers
+          .Interceptors
+          .Request_Listener with private;
 
    type Task_Manager_Integration_Access is
      access all Task_Manager_Integration'Class;
@@ -39,13 +42,14 @@ package GPS.LSP_Client.Tasks is
 private
 
    type Task_Manager_Integration
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-   limited new GPS.LSP_Client.Language_Servers.Interceptors.Request_Listener
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is limited new GPS.LSP_Client.Language_Servers.Interceptors.Request_Listener
    with record
       Language : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   overriding procedure On_Send_Request
+   overriding
+   procedure On_Send_Request
      (Self    : in out Task_Manager_Integration;
       Request : GPS.LSP_Client.Requests.Reference);
 

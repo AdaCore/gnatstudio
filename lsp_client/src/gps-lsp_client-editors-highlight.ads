@@ -18,7 +18,7 @@
 --  Integration of LSP auto-highlighting capabilities with GNAT Studio's source
 --  editor.
 
-with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GPS.LSP_Client.Editors.Highlight is
 

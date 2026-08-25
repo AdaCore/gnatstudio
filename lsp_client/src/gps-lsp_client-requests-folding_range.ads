@@ -19,9 +19,9 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Folding_Range is
 
-   type Abstract_Folding_Range_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
-       with null record;
+   type Abstract_Folding_Range_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with null record;
 
    function Params
      (Self : Abstract_Folding_Range_Request)
@@ -30,23 +30,26 @@ package GPS.LSP_Client.Requests.Folding_Range is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Folding_Range_Request;
-      Result : LSP.Messages.FoldingRange_Vector) is abstract;
+      Result : LSP.Messages.FoldingRange_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
-     (Self : Abstract_Folding_Range_Request)
-      return VSS.Strings.Virtual_String;
+   overriding
+   function Method
+     (Self : Abstract_Folding_Range_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Folding_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Folding_Range_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Folding_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

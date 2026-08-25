@@ -23,30 +23,30 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Prepare_Call_Hierarchy_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
       LSP.Messages.CallHierarchyPrepareParams'Write
         (Stream,
-         (textDocument =>
-              (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
+         (textDocument => (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
           position     => Self.Position,
-          others => <>));
+          others       => <>));
    end Params;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Prepare_Call_Hierarchy_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Result : LSP.Messages.CallHierarchyItem_Vector;
    begin
-      LSP.Messages.CallHierarchyItem_Vector'Read
-        (Stream, Result);
+      LSP.Messages.CallHierarchyItem_Vector'Read (Stream, Result);
       Abstract_Prepare_Call_Hierarchy_Request'Class (Self).On_Result_Message
         (Result);
    end On_Result_Message;
@@ -55,20 +55,20 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Prepare_Call_Hierarchy_Request)
       return VSS.Strings.Virtual_String
-   is
-      ("textDocument/prepareCallHierarchy");
+   is ("textDocument/prepareCallHierarchy");
 
    --------------------------
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Prepare_Call_Hierarchy_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.callHierarchyProvider.Is_Set;
    end Is_Request_Supported;
@@ -77,7 +77,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Called_By_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -90,7 +91,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -104,7 +106,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Calls_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -117,7 +120,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Calls_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -131,7 +135,8 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Calls_Or_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -143,10 +148,10 @@ package body GPS.LSP_Client.Requests.Called_By is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Calls_Or_Called_By_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.callHierarchyProvider.Is_Set;
    end Is_Request_Supported;

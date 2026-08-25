@@ -20,34 +20,34 @@ with VSS.Strings.Conversions;
 
 with VSS.Strings;
 
-with Glib;                            use Glib;
-with Glib.Main;                       use Glib.Main;
+with Glib;            use Glib;
+with Glib.Main;       use Glib.Main;
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with GPS.Editors;                     use GPS.Editors;
-with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
+with GPS.Editors;                              use GPS.Editors;
+with GPS.LSP_Client.Requests;                  use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Document_Symbols;
 use GPS.LSP_Client.Requests.Document_Symbols;
-with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
-with GPS.LSP_Client.Utilities;        use GPS.LSP_Client.Utilities;
-with GPS.LSP_Module;                  use GPS.LSP_Module;
+with GPS.LSP_Client.Language_Servers;
+use GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Utilities;                 use GPS.LSP_Client.Utilities;
+with GPS.LSP_Module;                           use GPS.LSP_Module;
 
 with Basic_Types;
-with Language;                        use Language;
-with LSP.Messages;                    use LSP.Messages;
-with LSP.Types;                       use LSP.Types;
-with Outline_View;                    use Outline_View;
+with Language;     use Language;
+with LSP.Messages; use LSP.Messages;
+with LSP.Types;    use LSP.Types;
+with Outline_View; use Outline_View;
 
 package body GPS.LSP_Client.Outline is
 
-   Me        : constant Trace_Handle :=
+   Me             : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE.ADVANCED", Off);
-   Me_Debug  : constant Trace_Handle :=
+   Me_Debug       : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE.DEBUG", Off);
-   Me_Active : constant Trace_Handle :=
-     Create ("GPS.LSP.OUTLINE", On);
+   Me_Active      : constant Trace_Handle := Create ("GPS.LSP.OUTLINE", On);
    Me_Use_Timeout : constant Trace_Handle :=
      Create ("GPS.LSP.OUTLINE.USE_TIMEOUT", Off);
 
@@ -57,8 +57,8 @@ package body GPS.LSP_Client.Outline is
 
    type Result_Access is access LSP.Messages.Symbol_Vector;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (LSP.Messages.Symbol_Vector, Result_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (LSP.Messages.Symbol_Vector, Result_Access);
 
    type Outline_LSP_Provider is new Outline_View.Outline_Provider with record
       Kernel        : Kernel_Handle;
@@ -73,18 +73,21 @@ package body GPS.LSP_Client.Outline is
    end record;
    type Outline_LSP_Provider_Access is access all Outline_LSP_Provider;
 
-   overriding procedure Start_Fill
+   overriding
+   procedure Start_Fill
      (Self : access Outline_LSP_Provider; File : Virtual_File);
 
-   overriding procedure Stop_Fill (Self : access Outline_LSP_Provider);
+   overriding
+   procedure Stop_Fill (Self : access Outline_LSP_Provider);
    --  Stop the async_load if necessary and clean the Outline model
 
-   overriding function Support_Language
-     (Self : access Outline_LSP_Provider;
-      Lang : Language_Access)
+   overriding
+   function Support_Language
+     (Self : access Outline_LSP_Provider; Lang : Language_Access)
       return Boolean;
 
-   overriding function Get_Last_Result
+   overriding
+   function Get_Last_Result
      (Self : access Outline_LSP_Provider; File : Virtual_File)
       return LSP.Messages.Symbol_Vector;
 
@@ -92,9 +95,8 @@ package body GPS.LSP_Client.Outline is
    -- LSP Request --
    -----------------
 
-   type GPS_LSP_Outline_Request is
-     new Document_Symbols_Request with record
-      Provider                 : Outline_LSP_Provider_Access;
+   type GPS_LSP_Outline_Request is new Document_Symbols_Request with record
+      Provider : Outline_LSP_Provider_Access;
 
       Close_Document_On_Finish : Boolean := False;
       --  Set to True if we should send a didClose notification to the server
@@ -105,24 +107,28 @@ package body GPS.LSP_Client.Outline is
       --  textDocument/documentSymbols request and then close the document
       --  once the request finished.
    end record;
-   type GPS_LSP_Outline_Request_Access is access all
-     GPS_LSP_Outline_Request'Class;
+   type GPS_LSP_Outline_Request_Access is
+     access all GPS_LSP_Outline_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Outline_Request;
       Result : LSP.Messages.Symbol_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Auto_Cancel
-     (Self         : in out GPS_LSP_Outline_Request;
-      Next_Request : Request_Access) return Boolean;
+   overriding
+   function Auto_Cancel
+     (Self : in out GPS_LSP_Outline_Request; Next_Request : Request_Access)
+      return Boolean;
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason);
 
    function Get_Optional_Boolean (B : Optional_Boolean) return Boolean;
@@ -134,9 +140,10 @@ package body GPS.LSP_Client.Outline is
    -- Auto_Cancel --
    -----------------
 
-   overriding function Auto_Cancel
-     (Self         : in out GPS_LSP_Outline_Request;
-      Next_Request : Request_Access) return Boolean is
+   overriding
+   function Auto_Cancel
+     (Self : in out GPS_LSP_Outline_Request; Next_Request : Request_Access)
+      return Boolean is
    begin
       if Next_Request /= null
         and then Next_Request.all in GPS_LSP_Outline_Request'Class
@@ -151,28 +158,26 @@ package body GPS.LSP_Client.Outline is
    -- Async Load --
    ----------------
 
-   package Async_Load is new Glib.Main.Generic_Sources
-     (Outline_LSP_Provider_Access);
+   package Async_Load is new
+     Glib.Main.Generic_Sources (Outline_LSP_Provider_Access);
    function On_Idle_Load_Tree
      (Self : Outline_LSP_Provider_Access) return Boolean;
    function On_Idle_Load_Vector
      (Self : Outline_LSP_Provider_Access) return Boolean;
-   procedure Free_Idle
-     (Self    : Outline_LSP_Provider_Access;
-      Stopped : Boolean);
+   procedure Free_Idle (Self : Outline_LSP_Provider_Access; Stopped : Boolean);
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Outline_Request;
       Result : LSP.Messages.Symbol_Vector)
    is
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
-      Server : constant Language_Server_Access := Get_Language_Server
-        (Lang);
+      Server : constant Language_Server_Access := Get_Language_Server (Lang);
 
       procedure Register (Callback : Async_Load.G_Source_Func);
 
@@ -183,8 +188,8 @@ package body GPS.LSP_Client.Outline is
               Async_Load.Timeout_Add (100, Callback, Self.Provider);
 
          else
-            Self.Provider.Loader_Id := Async_Load.Idle_Add
-              (Callback, Self.Provider);
+            Self.Provider.Loader_Id :=
+              Async_Load.Idle_Add (Callback, Self.Provider);
          end if;
       end Register;
 
@@ -242,7 +247,8 @@ package body GPS.LSP_Client.Outline is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -250,8 +256,7 @@ package body GPS.LSP_Client.Outline is
    is
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
-      Server : constant Language_Server_Access := Get_Language_Server
-        (Lang);
+      Server : constant Language_Server_Access := Get_Language_Server (Lang);
    begin
       Trace (Me_Debug, "On_Error_Message");
       if Self.Close_Document_On_Finish and then Server /= null then
@@ -271,7 +276,8 @@ package body GPS.LSP_Client.Outline is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason) is
    begin
       Trace
@@ -292,7 +298,8 @@ package body GPS.LSP_Client.Outline is
    -- Start_Fill --
    ----------------
 
-   overriding procedure Start_Fill
+   overriding
+   procedure Start_Fill
      (Self : access Outline_LSP_Provider; File : Virtual_File)
    is
       R                        : GPS_LSP_Outline_Request_Access;
@@ -318,9 +325,7 @@ package body GPS.LSP_Client.Outline is
          declare
             Buffer : constant Editor_Buffer'Class :=
               Self.Kernel.Get_Buffer_Factory.Get
-                (File        => File,
-                 Open_Buffer => True,
-                 Open_View   => False);
+                (File => File, Open_Buffer => True, Open_View => False);
          begin
             if Buffer.Get_Language /= null then
                Server.Get_Client.Send_Text_Document_Did_Open (File);
@@ -351,7 +356,8 @@ package body GPS.LSP_Client.Outline is
    -- Stop_Fill --
    ---------------
 
-   overriding procedure Stop_Fill (Self : access Outline_LSP_Provider) is
+   overriding
+   procedure Stop_Fill (Self : access Outline_LSP_Provider) is
    begin
       Trace (Me_Debug, "Stop_Fill");
       if Self.Loader_Id /= No_Source_Id then
@@ -373,9 +379,9 @@ package body GPS.LSP_Client.Outline is
    -- Support_Language --
    ----------------------
 
-   overriding function Support_Language
-     (Self : access Outline_LSP_Provider;
-      Lang : Language_Access)
+   overriding
+   function Support_Language
+     (Self : access Outline_LSP_Provider; Lang : Language_Access)
       return Boolean
    is
       pragma Unreferenced (Self);
@@ -412,7 +418,7 @@ package body GPS.LSP_Client.Outline is
       Prev_Depth    : Integer;
       Tree_Iter     : Tree_Iterator_Interfaces.Forward_Iterator'Class :=
         Iterate (Self.Result.Tree);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder        : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
    begin
       Trace (Me_Debug, "On_Idle_Load_Tree");
@@ -429,7 +435,7 @@ package body GPS.LSP_Client.Outline is
             First_Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Symbol.selectionRange.first);
-            Last_Location : constant GPS.Editors.Editor_Location'Class :=
+            Last_Location  : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Symbol.selectionRange.last);
 
@@ -442,8 +448,9 @@ package body GPS.LSP_Client.Outline is
                Name           => Symbol.name,
                Profile        =>
                  (if Symbol.detail.Is_Set
-                  then VSS.Strings.Conversions.To_UTF_8_String
-                         (Symbol.detail.Value)
+                  then
+                    VSS.Strings.Conversions.To_UTF_8_String
+                      (Symbol.detail.Value)
                   else ""),
                Category       =>
                  To_Language_Category
@@ -484,8 +491,10 @@ package body GPS.LSP_Client.Outline is
 
             Trace
               (Me_Debug,
-               "On_Idle_Load_Tree set visibility, Cur_Depth:" &
-                 Cur_Depth'Img & " Prev_Depth:" & Prev_Depth'Img);
+               "On_Idle_Load_Tree set visibility, Cur_Depth:"
+               & Cur_Depth'Img
+               & " Prev_Depth:"
+               & Prev_Depth'Img);
 
             if Visible then
                --  We finished adding nodes for this branch so go back to the
@@ -527,7 +536,7 @@ package body GPS.LSP_Client.Outline is
       use type Basic_Types.Visible_Column_Type;
       Dummy         : Boolean;
       Nb_Added_Rows : Integer := 0;
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder        : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
 
    begin
@@ -577,9 +586,8 @@ package body GPS.LSP_Client.Outline is
    -- Free_Idle --
    ---------------
 
-   procedure Free_Idle
-     (Self    : Outline_LSP_Provider_Access;
-      Stopped : Boolean) is
+   procedure Free_Idle (Self : Outline_LSP_Provider_Access; Stopped : Boolean)
+   is
    begin
       Self.Loader_Id := No_Source_Id;
 
@@ -608,16 +616,15 @@ package body GPS.LSP_Client.Outline is
    -- Get_Last_Result --
    ---------------------
 
-   overriding function Get_Last_Result
+   overriding
+   function Get_Last_Result
      (Self : access Outline_LSP_Provider; File : Virtual_File)
       return LSP.Messages.Symbol_Vector is
    begin
-      if Self.File = File
-        and then Self.Result /= null
-      then
+      if Self.File = File and then Self.Result /= null then
          return Self.Result.all;
       else
-         return (Is_Tree => False, Vector  => <>);
+         return (Is_Tree => False, Vector => <>);
       end if;
    end Get_Last_Result;
 

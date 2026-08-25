@@ -18,26 +18,29 @@
 
 package GPS.LSP_Client.Requests.Shutdown is
 
-   type Abstract_Shutdown_Request is
-     abstract new LSP_Request (Kernel => null) with null record;
+   type Abstract_Shutdown_Request is abstract new LSP_Request (Kernel => null)
+   with null record;
 
-   procedure On_Result_Message
-     (Self : in out Abstract_Shutdown_Request) is abstract;
+   procedure On_Result_Message (Self : in out Abstract_Shutdown_Request)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Shutdown_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Shutdown_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Shutdown_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Shutdown_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

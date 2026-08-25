@@ -215,8 +215,9 @@ package body GPS.LSP_Client.Configurations.ALS is
          On_Type_Formatting.Set_Field
            ("indentOnly",
             To_Lower (LSP_Ada_On_Type_Formatting.Get_Pref)
-            = To_Lower (VSS.Strings.Conversions.To_UTF_8_String
-              (GPS.Kernel.Preferences.Indent_Choice)));
+            = To_Lower
+                (VSS.Strings.Conversions.To_UTF_8_String
+                   (GPS.Kernel.Preferences.Indent_Choice)));
          Ada_Settings.Set_Field ("onTypeFormatting", On_Type_Formatting);
       end;
 
@@ -226,8 +227,7 @@ package body GPS.LSP_Client.Configurations.ALS is
          use GPS.Kernel.Preferences;
       begin
          On_Range_Formatting.Set_Field
-           ("indentOnly",
-            To_Lower (LSP_Ada_On_Range_Formatting.Get_Pref));
+           ("indentOnly", To_Lower (LSP_Ada_On_Range_Formatting.Get_Pref));
          Ada_Settings.Set_Field ("rangeFormatting", On_Range_Formatting);
       end;
 

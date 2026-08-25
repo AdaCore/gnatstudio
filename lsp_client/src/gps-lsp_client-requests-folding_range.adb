@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Folding_Range_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -38,7 +39,8 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Folding_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -46,8 +48,7 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    begin
       LSP.Messages.FoldingRange_Vector'Read (Stream, Response);
-      Abstract_Folding_Range_Request'Class
-        (Self).On_Result_Message (Response);
+      Abstract_Folding_Range_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 
    ------------
@@ -69,17 +70,16 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Folding_Range_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean
+      Options : LSP.Messages.ServerCapabilities) return Boolean
    is
-      Option  : constant LSP.Messages.Optional_Provider_Options :=
+      Option : constant LSP.Messages.Optional_Provider_Options :=
         Options.foldingRangeProvider;
    begin
       if not Option.Is_Set
-        or else (Option.Value.Is_Boolean
-                 and then not Option.Value.Bool)
+        or else (Option.Value.Is_Boolean and then not Option.Value.Bool)
       then
          return False;
       else
@@ -91,7 +91,8 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Folding_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

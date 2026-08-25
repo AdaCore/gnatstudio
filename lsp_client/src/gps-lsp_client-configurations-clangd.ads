@@ -17,14 +17,15 @@
 
 with LSP.Messages;
 
-with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GPS.LSP_Clients;
 
 package GPS.LSP_Client.Configurations.Clangd is
 
    type Clangd_Configuration is new Server_Configuration with private;
 
-   overriding procedure Prepare_Configuration_Settings
+   overriding
+   procedure Prepare_Configuration_Settings
      (Self : in out Clangd_Configuration);
 
    procedure On_Server_Capabilities

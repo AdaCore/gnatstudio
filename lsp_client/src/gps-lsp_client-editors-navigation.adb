@@ -16,63 +16,65 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Exceptions; use Ada.Exceptions;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Xref;
 
 with VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;
 
-with Gdk.Device;                use Gdk.Device;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Main;                  use Gdk.Main;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Screen;                use Gdk.Screen;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gdk.Window;                use Gdk.Window;
-with Glib.Convert.VSS_Utils;    use Glib.Convert.VSS_Utils;
-with Glib.Object;               use Glib.Object;
-with Glib;                      use Glib;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gdk.Device;             use Gdk.Device;
+with Gdk.Event;              use Gdk.Event;
+with Gdk.Main;               use Gdk.Main;
+with Gdk.Rectangle;          use Gdk.Rectangle;
+with Gdk.Screen;             use Gdk.Screen;
+with Gdk.Types;              use Gdk.Types;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+with Gdk.Window;             use Gdk.Window;
+with Glib.Convert.VSS_Utils; use Glib.Convert.VSS_Utils;
+with Glib.Object;            use Glib.Object;
+with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Separator;          use Gtk.Separator;
+with Gtk.Style_Context;      use Gtk.Style_Context;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
+with Gtkada.MDI;             use Gtkada.MDI;
 
 with VSS.Strings.Conversions;
 
-with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
+with GPS.Editors;         use GPS.Editors;
+with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Kernel.Xref;     use GPS.Kernel.Xref;
 
 with GPS.LSP_Client.Editors.Tooltips;
 with GPS.LSP_Client.Requests.Simple_Editor_Requests;
 use GPS.LSP_Client.Requests.Simple_Editor_Requests;
-with GPS.LSP_Client.Requests;   use GPS.LSP_Client.Requests;
-with GPS.LSP_Client.Utilities;  use GPS.LSP_Client.Utilities;
+with GPS.LSP_Client.Requests;
+use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Utilities;
+use GPS.LSP_Client.Utilities;
 
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands.Interactive;
-with Commands;                  use Commands;
+with Basic_Types;          use Basic_Types;
+with Commands.Interactive; use Commands.Interactive;
+with Commands;             use Commands;
 
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
@@ -86,11 +88,11 @@ with Xref;                      use Xref;
 
 package body GPS.LSP_Client.Editors.Navigation is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.LSP.NAVIGATION", GNATCOLL.Traces.On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.LSP.NAVIGATION", GNATCOLL.Traces.On);
 
-   Me_Advanced : constant Trace_Handle := Create
-     ("GPS.LSP.NAVIGATION.ADVANCED", GNATCOLL.Traces.Off);
+   Me_Advanced                 : constant Trace_Handle :=
+     Create ("GPS.LSP.NAVIGATION.ADVANCED", GNATCOLL.Traces.Off);
    Proposals_Menu_Notes_Width  : constant := 500;
    Proposals_Menu_Notes_Height : constant := 150;
    --  The size of the entities proposals menu notes.
@@ -99,13 +101,13 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- Preferences --
    -----------------
 
-   package Display_Ancestry_On_Navigation_Prefs is
-     new Default_Preferences.Enums.Generics
+   package Display_Ancestry_On_Navigation_Prefs is new
+     Default_Preferences.Enums.Generics
        (Enumeration =>
-           LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy);
+          LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy);
 
    Display_Ancestry_On_Navigation_Pref :
-      Display_Ancestry_On_Navigation_Prefs.Preference;
+     Display_Ancestry_On_Navigation_Prefs.Preference;
 
    --  Implementation of simple text editor requests
 
@@ -114,21 +116,26 @@ package body GPS.LSP_Client.Editors.Navigation is
       Column      : Visible_Column_Type;
    end record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Simple_Request;
       Result : LSP.Messages.Location_Or_Link_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding function Auto_Cancel
-     (Self         : in out GPS_LSP_Simple_Request;
-      Next_Request : Request_Access) return Boolean is (True);
+   overriding
+   function Auto_Cancel
+     (Self : in out GPS_LSP_Simple_Request; Next_Request : Request_Access)
+      return Boolean
+   is (True);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Simple_Request; Reason : Reject_Reason);
 
    --------------------------------------------------------------------
@@ -138,7 +145,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    type Goto_Command_Type is new Interactive_Command with record
       Action_Kind : Command_Kind;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Command_Type;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Goto actions command type.
@@ -152,10 +160,11 @@ package body GPS.LSP_Client.Editors.Navigation is
    end record;
    --  Type used to represent an entity.
 
-   package Entity_Info_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Entity_Info_Type,
-      "="          => "=");
+   package Entity_Info_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Entity_Info_Type,
+        "="          => "=");
 
    type Entity_Proposals_Menu_Record is new Gtk_Window_Record with record
       Kernel       : Kernel_Handle;
@@ -183,8 +192,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  The column types used for entity proposals
 
    function Get_Primitives_Hierarchy_On_Dispatching
-     (Context     : Selection_Context;
-      Action_Kind : Command_Kind)
+     (Context : Selection_Context; Action_Kind : Command_Kind)
       return Entity_Info_Vectors.Vector;
    --  When the user's cursor is on a dispatching call, return all the
    --  declarations/bodies in the hierarchy for this primitive.
@@ -201,7 +209,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    type On_MDI_Child_Selected is new Mdi_Child_Hooks_Function with record
       Proposals_Menu : Entity_Proposals_Menu;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child);
@@ -209,8 +218,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  entities proposals menu.
 
    function On_Entity_Proposals_Menu_Key_Press
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Key) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk.Event.Gdk_Event_Key)
+      return Boolean;
    --  Called when the users presses a key in the entity proposals menu.
    --  Close the menu if the ESC key was pressed.
 
@@ -231,17 +240,16 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Called when clicking on an entity proposal menu item.
    --  Jump to the clicked entity.
 
-   procedure On_Entity_Item_Selected
-     (Self : access GObject_Record'Class);
+   procedure On_Entity_Item_Selected (Self : access GObject_Record'Class);
    --  Called when selecting an entity proposal menu item.
    --  Display the associated hover text in the menu's notes part.
 
    procedure Search_Entity_From_Comment
-     (Buffer            : GPS.Editors.Editor_Buffer'Class;
-      Src_Buffer        : Source_Buffer;
-      Entity_Name       : String;
-      Line              : in out Editable_Line_Type;
-      Column            : in out Visible_Column_Type);
+     (Buffer      : GPS.Editors.Editor_Buffer'Class;
+      Src_Buffer  : Source_Buffer;
+      Entity_Name : String;
+      Line        : in out Editable_Line_Type;
+      Column      : in out Visible_Column_Type);
    --  Search the first occurrence of Entity_Name in Buffer that is not within
    --  a comment. The location of the occurrence is returned in Line and Column
    --  if the search succeed, otherwise Line and Column will be left
@@ -263,7 +271,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Command_Type;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -272,8 +281,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
       File          : constant Virtual_File :=
         File_Information (Context.Context);
-      Project       : constant Project_Type := Get_Project_For_File
-        (Kernel.Get_Project_Tree, File => File);
+      Project       : constant Project_Type :=
+        Get_Project_For_File (Kernel.Get_Project_Tree, File => File);
       Buffer        : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File, Open_View => False, Open_Buffer => False);
@@ -287,12 +296,12 @@ package body GPS.LSP_Client.Editors.Navigation is
       Lang          : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_By_Name
           (Get_File_Language (Context.Context));
-      Line          : constant Editable_Line_Type := Editable_Line_Type
-        (Line_Information (Context.Context));
-      Column        : constant Visible_Column_Type := Column_Information
-        (Context.Context);
-      Entity_Name   : constant String := Entity_Name_Information
-        (Context.Context);
+      Line          : constant Editable_Line_Type :=
+        Editable_Line_Type (Line_Information (Context.Context));
+      Column        : constant Visible_Column_Type :=
+        Column_Information (Context.Context);
+      Entity_Name   : constant String :=
+        Entity_Name_Information (Context.Context);
       Src_Buffer    : constant Source_Buffer :=
         (if Editor /= null then Editor.Get_Buffer else null);
       Actual_Line   : Editable_Line_Type := Line;
@@ -321,24 +330,28 @@ package body GPS.LSP_Client.Editors.Navigation is
          Location : constant GPS.Editors.Editor_Location'Class :=
            Buffer.New_Location (Integer (Actual_Line), Actual_Column);
       begin
-         Request := new GPS_LSP_Simple_Request'
-           (GPS.LSP_Client.Requests.LSP_Request with
-            Kernel      => Get_Kernel (Context.Context),
-            Command     => Command.Action_Kind,
-            File        => File_Information (Context.Context),
-            Position    => Location_To_LSP_Position (Location),
-            Entity_Name => VSS.Strings.Conversions.To_Virtual_String
-              (Entity_Name_Information (Context.Context)),
-            Display_Ancestry_On_Navigation =>
-              Display_Ancestry_On_Navigation_Pref.Get_Pref,
-            Column      => Location.Column);
+         Request :=
+           new GPS_LSP_Simple_Request'
+             (GPS.LSP_Client.Requests.LSP_Request
+              with
+                Kernel                         => Get_Kernel (Context.Context),
+                Command                        => Command.Action_Kind,
+                File                           =>
+                  File_Information (Context.Context),
+                Position                       =>
+                  Location_To_LSP_Position (Location),
+                Entity_Name                    =>
+                  VSS.Strings.Conversions.To_Virtual_String
+                    (Entity_Name_Information (Context.Context)),
+                Display_Ancestry_On_Navigation =>
+                  Display_Ancestry_On_Navigation_Pref.Get_Pref,
+                Column                         => Location.Column);
       end;
 
       Editor.Set_Activity_Progress_Bar_Visibility (True);
 
       if GPS.LSP_Client.Requests.Execute
-        (Language => Lang,
-         Request  => Request_Access (Request))
+           (Language => Lang, Request => Request_Access (Request))
       then
          return Commands.Success;
       end if;
@@ -348,15 +361,16 @@ package body GPS.LSP_Client.Editors.Navigation is
       if Is_Dispatching (Context.Context) then
          Display_Menu_For_Entities_Proposals
            (Kernel   => Kernel,
-            Entities => Get_Primitives_Hierarchy_On_Dispatching
-              (Context     => Context.Context,
-               Action_Kind => Command.Action_Kind),
+            Entities =>
+              Get_Primitives_Hierarchy_On_Dispatching
+                (Context     => Context.Context,
+                 Action_Kind => Command.Action_Kind),
             Line     => Actual_Line,
             Column   => Actual_Column);
       else
          declare
             Entity   : constant Root_Entity'Class :=
-                         Get_Entity (Context.Context);
+              Get_Entity (Context.Context);
             Location : General_Location;
             Current  : General_Location;
          begin
@@ -367,7 +381,8 @@ package body GPS.LSP_Client.Editors.Navigation is
 
                Kernel.Insert
                  ("No cross-reference information found for "
-                  & Entity_Name_Information (Context.Context) & ASCII.LF,
+                  & Entity_Name_Information (Context.Context)
+                  & ASCII.LF,
                   Mode => Error);
                return Commands.Failure;
             end if;
@@ -375,18 +390,20 @@ package body GPS.LSP_Client.Editors.Navigation is
             --  Get the declaration/body
 
             case Command.Action_Kind is
-               when Goto_Body =>
+               when Goto_Body                     =>
                   Current :=
                     (File         => File,
                      Line         => Line_Information (Context.Context),
-                     Project_Path => Project_Information
-                       (Context.Context).Project_Path,
-                     Column       => Entity_Column_Information
-                       (Context.Context));
+                     Project_Path =>
+                       Project_Information (Context.Context).Project_Path,
+                     Column       =>
+                       Entity_Column_Information (Context.Context));
                   Location := Get_Body (Entity, After => Current);
+
                when Goto_Spec | Goto_Spec_Or_Body =>
                   Get_Entity_Spec_Locations (Context.Context, Location);
-               when Goto_Type_Decl =>
+
+               when Goto_Type_Decl                =>
                   Location := Get_Declaration (Get_Type_Of (Entity)).Loc;
             end case;
 
@@ -395,8 +412,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                  (Kernel                      => Kernel,
                   Filename                    => Location.File,
                   Project                     => Get_Project (Location),
-                  Line                        => Editable_Line_Type
-                    (Location.Line),
+                  Line                        =>
+                    Editable_Line_Type (Location.Line),
                   Column                      => Location.Column,
                   Entity_Name                 => Get_Name (Entity),
                   Display_Msg_On_Non_Accurate => False);
@@ -412,16 +429,14 @@ package body GPS.LSP_Client.Editors.Navigation is
    --------------------------------
 
    procedure Search_Entity_From_Comment
-     (Buffer            : GPS.Editors.Editor_Buffer'Class;
-      Src_Buffer        : Source_Buffer;
-      Entity_Name       : String;
-      Line              : in out Editable_Line_Type;
-      Column            : in out Visible_Column_Type)
+     (Buffer      : GPS.Editors.Editor_Buffer'Class;
+      Src_Buffer  : Source_Buffer;
+      Entity_Name : String;
+      Line        : in out Editable_Line_Type;
+      Column      : in out Visible_Column_Type)
    is
       Occurrence_Start_Loc : Editor_Location'Class :=
-        Buffer.New_Location
-          (Line   => 1,
-           Column => 1);
+        Buffer.New_Location (Line => 1, Column => 1);
       Occurrence_End_Loc   : Editor_Location'Class := Occurrence_Start_Loc;
       Continue_Search      : Boolean := True;
       Success              : Boolean := False;
@@ -438,11 +453,13 @@ package body GPS.LSP_Client.Editors.Navigation is
             Ends              => Occurrence_End_Loc,
             Success           => Success);
 
-         Continue_Search := Success
-           and then Is_In_Comment
-             (Src_Buffer,
-              Editable_Line_Type (Occurrence_Start_Loc.Line),
-              Occurrence_Start_Loc.Column);
+         Continue_Search :=
+           Success
+           and then
+             Is_In_Comment
+               (Src_Buffer,
+                Editable_Line_Type (Occurrence_Start_Loc.Line),
+                Occurrence_Start_Loc.Column);
       end loop;
 
       if Success then
@@ -493,42 +510,46 @@ package body GPS.LSP_Client.Editors.Navigation is
 
             declare
                Location : constant GPS.Editors.Editor_Location'Class :=
-                 Buffer.New_Location
-                   (Integer (Actual_Line), Actual_Column);
+                 Buffer.New_Location (Integer (Actual_Line), Actual_Column);
             begin
-               Request := new GPS_LSP_Simple_Request'
-                 (GPS.LSP_Client.Requests.LSP_Request with
-                  Kernel                         => Kernel,
-                  Command                        => Goto_Spec,
-                  File                           => File,
-                  Position                       =>
-                    Location_To_LSP_Position (Location),
-                  Entity_Name                    =>
-                    VSS.Strings.Conversions.To_Virtual_String (Entity_Name),
-                  Display_Ancestry_On_Navigation =>
-                    Display_Ancestry_On_Navigation_Pref.Get_Pref,
-                  Column                         => Location.Column);
+               Request :=
+                 new GPS_LSP_Simple_Request'
+                   (GPS.LSP_Client.Requests.LSP_Request
+                    with
+                      Kernel                         => Kernel,
+                      Command                        => Goto_Spec,
+                      File                           => File,
+                      Position                       =>
+                        Location_To_LSP_Position (Location),
+                      Entity_Name                    =>
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Entity_Name),
+                      Display_Ancestry_On_Navigation =>
+                        Display_Ancestry_On_Navigation_Pref.Get_Pref,
+                      Column                         => Location.Column);
             end;
 
          else
             declare
                Location : constant GPS.Editors.Editor_Location'Class :=
-                 Buffer.New_Location
-                   (Integer (Actual_Line), Actual_Column);
+                 Buffer.New_Location (Integer (Actual_Line), Actual_Column);
             begin
-               Request := new GPS_LSP_Simple_Request'
-                 (GPS.LSP_Client.Requests.LSP_Request with
-                  Kernel                         => Kernel,
-                  Command                        =>
-                    (if Alternate then Goto_Body else Goto_Spec_Or_Body),
-                  File                           => File,
-                  Position                       =>
-                    Location_To_LSP_Position (Location),
-                  Entity_Name                    =>
-                    VSS.Strings.Conversions.To_Virtual_String (Entity_Name),
-                  Display_Ancestry_On_Navigation =>
-                    Display_Ancestry_On_Navigation_Pref.Get_Pref,
-                  Column                         => Location.Column);
+               Request :=
+                 new GPS_LSP_Simple_Request'
+                   (GPS.LSP_Client.Requests.LSP_Request
+                    with
+                      Kernel                         => Kernel,
+                      Command                        =>
+                        (if Alternate then Goto_Body else Goto_Spec_Or_Body),
+                      File                           => File,
+                      Position                       =>
+                        Location_To_LSP_Position (Location),
+                      Entity_Name                    =>
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Entity_Name),
+                      Display_Ancestry_On_Navigation =>
+                        Display_Ancestry_On_Navigation_Pref.Get_Pref,
+                      Column                         => Location.Column);
             end;
          end if;
 
@@ -536,8 +557,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       end if;
 
       if not GPS.LSP_Client.Requests.Execute
-        (Language => Buffer.Get_Language,
-         Request  => Request_Access (Request))
+               (Language => Buffer.Get_Language,
+                Request  => Request_Access (Request))
       then
          --  Use old implementation
 
@@ -556,7 +577,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Simple_Request;
       Result : LSP.Messages.Location_Or_Link_Vector)
    is
@@ -622,16 +644,16 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       if Result.Locations.Length = 1 then
          declare
-            Loc     : constant LSP.Messages.Location :=
+            Loc      : constant LSP.Messages.Location :=
               Result.Locations.First_Element;
-            File    : constant Virtual_File := To_Virtual_File (Loc.uri);
-            Infos   : constant File_Info_Set := Get_Registry
-              (Self.Kernel).Tree.Info_Set (File);
-            Project : constant Project_Type :=
+            File     : constant Virtual_File := To_Virtual_File (Loc.uri);
+            Infos    : constant File_Info_Set :=
+              Get_Registry (Self.Kernel).Tree.Info_Set (File);
+            Project  : constant Project_Type :=
               File_Info'Class (Infos.First_Element).Project (True);
             --  Don't forget to add 1 to both line and column numbers since
             --  LSP lines/columns are zero-based.
-            Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
               Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
@@ -645,17 +667,18 @@ package body GPS.LSP_Client.Editors.Navigation is
                   --  Go_To_Closest_Match on the result, attempting to find
                   --  Entity_Name.
                   Go_To_Closest_Match
-                    (Kernel      => Self.Kernel,
-                     Filename    => File,
-                     Project     => Project,
-                     Line        => Editable_Line_Type (Location.Line),
-                     Column      => Location.Column,
-                     Entity_Name =>
+                    (Kernel                      => Self.Kernel,
+                     Filename                    => File,
+                     Project                     => Project,
+                     Line                        =>
+                       Editable_Line_Type (Location.Line),
+                     Column                      => Location.Column,
+                     Entity_Name                 =>
                        VSS.Strings.Conversions.To_UTF_8_String
                          (Self.Entity_Name),
                      Display_Msg_On_Non_Accurate => False);
 
-               when Goto_Type_Decl =>
+               when Goto_Type_Decl                            =>
                   --  In the case of Goto_Type_Decl, the Entity_Name is not
                   --  what we're looking for: don't try Go_To_Closest_Match.
                   declare
@@ -679,18 +702,17 @@ package body GPS.LSP_Client.Editors.Navigation is
          begin
             for Location of Result.Locations loop
                declare
-                  Template : constant
-                    VSS.Strings.Templates.Virtual_String_Template :=
+                  Template :
+                    constant VSS.Strings.Templates.Virtual_String_Template :=
                       "{}<b>{}</b> in <b>{}</b>";
-                  File     : constant Virtual_File := To_Virtual_File
-                    (Location.uri);
-                  Infos    : constant File_Info_Set := Get_Registry
-                    (Self.Kernel).Tree.Info_Set (File);
+                  File     : constant Virtual_File :=
+                    To_Virtual_File (Location.uri);
+                  Infos    : constant File_Info_Set :=
+                    Get_Registry (Self.Kernel).Tree.Info_Set (File);
                   Project  : constant Project_Type :=
-                    File_Info'Class (Infos.First_Element).Project
-                    (True);
-                  Holder   : constant GPS.Editors.
-                    Controlled_Editor_Buffer_Holder :=
+                    File_Info'Class (Infos.First_Element).Project (True);
+                  Holder   :
+                    constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
                       Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
                   From     : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location
@@ -704,8 +726,8 @@ package body GPS.LSP_Client.Editors.Navigation is
                                (Kinds_Label (Location.alsKind)),
                              VSS.Strings.Formatters.Strings.Image
                                (Escape_Text (Self.Entity_Name)),
-                           VSS.Strings.Formatters.Strings.Image
-                             (Escape_Text (File.Display_Base_Name))),
+                             VSS.Strings.Formatters.Strings.Image
+                               (Escape_Text (File.Display_Base_Name))),
                         Project_Path => Project.Project_Path,
                         File         => File,
                         Line         => Editable_Line_Type (From.Line),
@@ -726,7 +748,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -743,7 +766,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Simple_Request; Reason : Reject_Reason)
    is
       pragma Unreferenced (Reason);
@@ -796,8 +820,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          --  Get the menu's size
 
-         Proposals_Menu.Tree_View.Get_Preferred_Width
-           (Dummy, Menu_Width);
+         Proposals_Menu.Tree_View.Get_Preferred_Width (Dummy, Menu_Width);
          Sep.Get_Preferred_Width (Dummy, Sep_Width);
          Menu_Width := Menu_Width + Sep_Width;
 
@@ -808,18 +831,18 @@ package body GPS.LSP_Client.Editors.Navigation is
       end Get_Size;
 
       procedure Set_Position is
-         Editor            : constant Source_Editor_Box :=
+         Editor        : constant Source_Editor_Box :=
            Get_Source_Box_From_MDI
              (Find_Current_Editor (Kernel, Only_If_Focused => True));
-         Toplevel          : constant Gtk_Window :=
+         Toplevel      : constant Gtk_Window :=
            Gtk_Window (Editor.Get_Toplevel);
-         Screen            : constant Gdk_Screen := Toplevel.Get_Screen;
-         Geom              : Gdk_Rectangle;
-         Monitor           : Gint;
-         Root_X            : Gint;
-         Root_Y            : Gint;
-         Screen_Width      : Gint;
-         Screen_Height     : Gint;
+         Screen        : constant Gdk_Screen := Toplevel.Get_Screen;
+         Geom          : Gdk_Rectangle;
+         Monitor       : Gint;
+         Root_X        : Gint;
+         Root_Y        : Gint;
+         Screen_Width  : Gint;
+         Screen_Height : Gint;
       begin
          if Editor = null then
             return;
@@ -829,15 +852,17 @@ package body GPS.LSP_Client.Editors.Navigation is
          --  we'll place the menu right under by default.
 
          Editor.Get_View.Get_Root_Coords_For_Location
-           (Line   => Line + 1, Column => Column,
-            Root_X => Root_X, Root_Y => Root_Y);
+           (Line   => Line + 1,
+            Column => Column,
+            Root_X => Root_X,
+            Root_Y => Root_Y);
 
          --  Get the screen size
 
          Monitor := Screen.Get_Monitor_At_Point (Root_X, Root_Y);
          Screen.Get_Monitor_Geometry (Monitor, Geom);
 
-         Screen_Width  := Geom.Width;
+         Screen_Width := Geom.Width;
          Screen_Height := Geom.Height;
 
          --  Set Root_X, Root_Y into the physical monitor area, this is needed
@@ -866,8 +891,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                Root_X := Root_X - Proposals_Menu_Notes_Width;
             end if;
 
-            Hbox.Reorder_Child
-              (Proposals_Menu.Notes_Window, 0);
+            Hbox.Reorder_Child (Proposals_Menu.Notes_Window, 0);
          end if;
 
          --  If the window goes outside of the screen on the y-axis, place it
@@ -875,8 +899,10 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          if Root_Y + Total_Height > Screen_Height then
             Editor.Get_View.Get_Root_Coords_For_Location
-              (Line   => Line, Column => Column,
-               Root_X => Dummy, Root_Y => Root_Y);
+              (Line   => Line,
+               Column => Column,
+               Root_X => Dummy,
+               Root_Y => Root_Y);
             Root_Y := Root_Y - Total_Height;
          end if;
 
@@ -895,7 +921,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Proposals_Menu := new Entity_Proposals_Menu_Record;
       Proposals_Menu.Kernel := Kernel;
 
-      Gtk.Window.Initialize (Proposals_Menu,  Window_Popup);
+      Gtk.Window.Initialize (Proposals_Menu, Window_Popup);
       Proposals_Menu.Set_Type_Hint (Window_Type_Hint_Menu);
       Proposals_Menu.Set_Decorated (False);
       Proposals_Menu.Set_Resizable (False);
@@ -906,10 +932,8 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Proposals_Menu.On_Key_Press_Event
         (On_Entity_Proposals_Menu_Key_Press'Access);
-      Proposals_Menu.On_Show
-        (On_Entity_Proposals_Menu_Show'Access);
-      Proposals_Menu.On_Destroy
-        (On_Entity_Proposals_Menu_Destroy'Access);
+      Proposals_Menu.On_Show (On_Entity_Proposals_Menu_Show'Access);
+      Proposals_Menu.On_Destroy (On_Entity_Proposals_Menu_Destroy'Access);
 
       --  Create the menu's hbox
 
@@ -922,10 +946,11 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       --  Create the menu's tree view
 
-      Proposals_Menu.Tree_View := Create_Tree_View
-        (Column_Types => Column_Types,
-         Column_Names       => (1 => new String'("Label")),
-         Show_Column_Titles => False);
+      Proposals_Menu.Tree_View :=
+        Create_Tree_View
+          (Column_Types       => Column_Types,
+           Column_Names       => (1 => new String'("Label")),
+           Show_Column_Titles => False);
       Model := -(Proposals_Menu.Tree_View.Get_Model);
 
       for Entity of Entities loop
@@ -936,8 +961,8 @@ package body GPS.LSP_Client.Editors.Navigation is
             Iter,
             (Col_Label, Col_Project, Col_File, Col_Line, Col_Column),
             (1 =>
-                 As_String
-                   (VSS.Strings.Conversions.To_UTF_8_String (Entity.Label)),
+               As_String
+                 (VSS.Strings.Conversions.To_UTF_8_String (Entity.Label)),
              2 => As_File (Entity.Project_Path),
              3 => As_File (Entity.File),
              4 => As_Int (Gint (Entity.Line)),
@@ -949,11 +974,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       Proposals_Menu.Tree_View.Set_Hover_Selection (True);
 
       Proposals_Menu.Tree_View.On_Row_Activated
-        (On_Entity_Item_Clicked'Access,
-         Slot => Proposals_Menu);
+        (On_Entity_Item_Clicked'Access, Slot => Proposals_Menu);
       Proposals_Menu.Tree_View.Get_Selection.On_Changed
-        (On_Entity_Item_Selected'Access,
-         Slot => Proposals_Menu);
+        (On_Entity_Item_Selected'Access, Slot => Proposals_Menu);
 
       --  Add a separator between the tree view that displays the proposals
       --  and the right part that displays the associated notes.
@@ -965,12 +988,10 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Gtk_New (Proposals_Menu.Notes_Window);
       Proposals_Menu.Notes_Window.Set_Name ("entity-proposals-menu-notes");
-      Get_Style_Context (Proposals_Menu.Notes_Window).Add_Class
-        ("notes");
+      Get_Style_Context (Proposals_Menu.Notes_Window).Add_Class ("notes");
       Hbox.Pack_Start (Proposals_Menu.Notes_Window, Expand => False);
       Proposals_Menu.Notes_Window.Set_Policy
-        (Policy_Automatic,
-         Policy_Automatic);
+        (Policy_Automatic, Policy_Automatic);
       Proposals_Menu.Notes_Window.Set_Size_Request
         (Proposals_Menu_Notes_Width, Proposals_Menu_Notes_Height);
 
@@ -993,8 +1014,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    ---------------------------------------------
 
    function Get_Primitives_Hierarchy_On_Dispatching
-     (Context     : Selection_Context;
-      Action_Kind : Command_Kind)
+     (Context : Selection_Context; Action_Kind : Command_Kind)
       return Entity_Info_Vectors.Vector
    is
       Entities : Entity_Info_Vectors.Vector;
@@ -1003,32 +1023,30 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       function Reference_Is_Body_Filter
         (Ref : Root_Entity_Reference'Class) return Boolean
-      is
-        (Ref.Reference_Is_Body);
+      is (Ref.Reference_Is_Body);
 
       -------------------
       -- Append_Entity --
       -------------------
 
-      function Append_Entity (Callee : Root_Entity'Class) return Boolean
-      is
-         Template        : constant
-           VSS.Strings.Templates.Virtual_String_Template :=
+      function Append_Entity (Callee : Root_Entity'Class) return Boolean is
+         Template        :
+           constant VSS.Strings.Templates.Virtual_String_Template :=
              "<b>{}.{}</b> in <b>{}</b>";
          Target_Location : constant General_Location :=
-                             (case Action_Kind is
-                                 when Goto_Body => Get_Body (Callee),
-                                 when Goto_Spec | Goto_Spec_Or_Body =>
-                                   Get_Declaration (Callee).Loc,
-                                 when Goto_Type_Decl =>
-                                   Get_Declaration (Get_Type_Of (Callee)).Loc);
+           (case Action_Kind is
+              when Goto_Body                     => Get_Body (Callee),
+              when Goto_Spec | Goto_Spec_Or_Body =>
+                Get_Declaration (Callee).Loc,
+              when Goto_Type_Decl                =>
+                Get_Declaration (Get_Type_Of (Callee)).Loc);
          Primitive_Of    : Entity_Array := Is_Primitive_Of (Callee);
          Type_Entity     : constant Root_Entity'Class :=
-                             Primitive_Of (Primitive_Of'First).all;
+           Primitive_Of (Primitive_Of'First).all;
       begin
          Entities.Append
            (Entity_Info_Type'
-              (Label         =>
+              (Label        =>
                  Template.Format
                    (VSS.Strings.Formatters.Strings.Image
                       (Escape_Text (Type_Entity.Get_Name)),
@@ -1051,8 +1069,9 @@ package body GPS.LSP_Client.Editors.Navigation is
          On_Callee => Append_Entity'Access,
          Filter    =>
            (case Action_Kind is
-               when Goto_Body => Reference_Is_Body_Filter'Unrestricted_Access,
-               when Goto_Spec | Goto_Spec_Or_Body | Goto_Type_Decl => null));
+              when Goto_Body                                      =>
+                Reference_Is_Body_Filter'Unrestricted_Access,
+              when Goto_Spec | Goto_Spec_Or_Body | Goto_Type_Decl => null));
 
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
@@ -1061,7 +1080,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child) is
@@ -1075,8 +1095,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    ----------------------------------------
 
    function On_Entity_Proposals_Menu_Key_Press
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Key) return Boolean
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk.Event.Gdk_Event_Key)
+      return Boolean
    is
       use Gdk.Types;
 
@@ -1100,12 +1120,10 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure On_Entity_Proposals_Menu_Show
      (Self : access Gtk_Widget_Record'Class)
    is
-      Menu : constant Entity_Proposals_Menu :=
-        Entity_Proposals_Menu (Self);
+      Menu  : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
       Dummy : Gdk_Grab_Status;
    begin
-      Grab_Toplevel_Focus
-        (Get_MDI (Menu.Kernel), Menu.Tree_View);
+      Grab_Toplevel_Focus (Get_MDI (Menu.Kernel), Menu.Tree_View);
 
       Dummy := Keyboard_Grab (Menu.Get_Window, False);
    end On_Entity_Proposals_Menu_Show;
@@ -1133,18 +1151,17 @@ package body GPS.LSP_Client.Editors.Navigation is
    is
       pragma Unreferenced (Column);
 
-      Menu         : constant Entity_Proposals_Menu := Entity_Proposals_Menu
-        (Self);
+      Menu         : constant Entity_Proposals_Menu :=
+        Entity_Proposals_Menu (Self);
       Model        : constant Gtk_Tree_Model := Menu.Tree_View.Get_Model;
-      Iter         : constant Gtk_Tree_Iter := Get_Iter
-        (Menu.Tree_View.Get_Model, Path);
+      Iter         : constant Gtk_Tree_Iter :=
+        Get_Iter (Menu.Tree_View.Get_Model, Path);
       Label        : constant String := Get_String (Model, Iter, Col_Label);
-      Project_Path : constant Virtual_File := Get_File
-        (Model, Iter, Col_Project);
-      File         : constant Virtual_File := Get_File
-        (Model, Iter, Col_File);
-      Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
-      Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
+      Project_Path : constant Virtual_File :=
+        Get_File (Model, Iter, Col_Project);
+      File         : constant Virtual_File := Get_File (Model, Iter, Col_File);
+      Line         : constant Gint := Get_Int (Model, Iter, Col_Line);
+      Col          : constant Gint := Get_Int (Model, Iter, Col_Column);
    begin
       Keyboard_Ungrab;
       Menu.Notes_Window.Destroy;
@@ -1153,8 +1170,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       Go_To_Closest_Match
         (Kernel                      => Menu.Kernel,
          Filename                    => File,
-         Project                     => Get_Registry
-           (Menu.Kernel).Tree.Project_From_Path (Project_Path),
+         Project                     =>
+           Get_Registry (Menu.Kernel).Tree.Project_From_Path (Project_Path),
          Line                        => Editable_Line_Type (Line),
          Column                      => Visible_Column_Type (Col),
          Entity_Name                 => Label,
@@ -1176,11 +1193,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- On_Entity_Item_Selected --
    -----------------------------
 
-   procedure On_Entity_Item_Selected
-     (Self  : access GObject_Record'Class)
-   is
+   procedure On_Entity_Item_Selected (Self : access GObject_Record'Class) is
       Menu         : constant Entity_Proposals_Menu :=
-                       Entity_Proposals_Menu (Self);
+        Entity_Proposals_Menu (Self);
       Notes_Window : Gtk_Scrolled_Window renames Menu.Notes_Window;
       Model        : Gtk_Tree_Model;
       Iter         : Gtk_Tree_Iter;
@@ -1192,10 +1207,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       end if;
 
       declare
-         File         : constant Virtual_File := Get_File
-           (Model, Iter, Col_File);
-         Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
-         Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
+         File : constant Virtual_File := Get_File (Model, Iter, Col_File);
+         Line : constant Gint := Get_Int (Model, Iter, Col_Line);
+         Col  : constant Gint := Get_Int (Model, Iter, Col_Column);
       begin
          Remove_All_Children (Notes_Window);
 
@@ -1219,26 +1233,27 @@ package body GPS.LSP_Client.Editors.Navigation is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module (Kernel : Kernel_Handle)
-   is
+   procedure Register_Module (Kernel : Kernel_Handle) is
       Has_Entity_Name_Filter : constant Action_Filter :=
-                                 Lookup_Filter (Kernel, "Has entity name");
+        Lookup_Filter (Kernel, "Has entity name");
    begin
       --  Register the navigation actions and preferences based on the LSP
 
       Register_Action
-        (Kernel, "goto declaration",
-         Command      => new Goto_Command_Type'
-           (Root_Command with Action_Kind => Goto_Spec),
+        (Kernel,
+         "goto declaration",
+         Command      =>
+           new Goto_Command_Type'(Root_Command with Action_Kind => Goto_Spec),
          Description  => "Jump to the declaration of the current entity",
          Category     => "Editor",
          For_Learning => False,
          Filter       => Has_Entity_Name_Filter);
 
       Register_Action
-        (Kernel, "goto body",
-         Command      => new Goto_Command_Type'
-           (Root_Command with Action_Kind => Goto_Body),
+        (Kernel,
+         "goto body",
+         Command      =>
+           new Goto_Command_Type'(Root_Command with Action_Kind => Goto_Body),
          Description  =>
            "Jump to the implementation/body of the current entity",
          Category     => "Editor",
@@ -1246,19 +1261,24 @@ package body GPS.LSP_Client.Editors.Navigation is
          Filter       => Has_Entity_Name_Filter);
 
       Register_Action
-        (Kernel, "goto declaration or body",
-         Command      => new Goto_Command_Type'
-           (Root_Command with Action_Kind => Goto_Spec_Or_Body),
-         Description  => "Jump to the declaration or to the body of the "
-         & "current entity depending on the context",
+        (Kernel,
+         "goto declaration or body",
+         Command      =>
+           new Goto_Command_Type'
+             (Root_Command with Action_Kind => Goto_Spec_Or_Body),
+         Description  =>
+           "Jump to the declaration or to the body of the "
+           & "current entity depending on the context",
          Category     => "Editor",
          For_Learning => False,
          Filter       => Has_Entity_Name_Filter);
 
       Register_Action
-        (Kernel, "goto type of entity",
-         Command      => new Goto_Command_Type'
-           (Root_Command with Action_Kind => Goto_Type_Decl),
+        (Kernel,
+         "goto type of entity",
+         Command      =>
+           new Goto_Command_Type'
+             (Root_Command with Action_Kind => Goto_Type_Decl),
          Description  => "Jump to the declaration for the type of the entity",
          Category     => "Editor",
          For_Learning => False,
@@ -1266,15 +1286,16 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Display_Ancestry_On_Navigation_Pref :=
         Display_Ancestry_On_Navigation_Prefs.Create
-          (Manager  => Kernel.Get_Preferences,
-           Path     => "Editor/Ada:Navigation",
-           Name     => "display-ancestry-on-navigation",
-           Label    => "Display ancestry on navigation",
-           Doc      => "Controls the policy regarding the listing of the "
-           & "subprogram ancestry when executing navigation requests on "
-           & "subprograms (e.g : when ctrl-clicking on a subprogram "
-           & "declaration).",
-           Default  => LSP.Messages.Usage_And_Abstract_Only);
+          (Manager => Kernel.Get_Preferences,
+           Path    => "Editor/Ada:Navigation",
+           Name    => "display-ancestry-on-navigation",
+           Label   => "Display ancestry on navigation",
+           Doc     =>
+             "Controls the policy regarding the listing of the "
+             & "subprogram ancestry when executing navigation requests on "
+             & "subprograms (e.g : when ctrl-clicking on a subprogram "
+             & "declaration).",
+           Default => LSP.Messages.Usage_And_Abstract_Only);
 
       --  Register the hyper mode click callback based on the LSP
 

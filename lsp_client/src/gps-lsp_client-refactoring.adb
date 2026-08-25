@@ -22,8 +22,7 @@ with GPS.LSP_Module;
 package body GPS.LSP_Client.Refactoring is
 
    procedure Register
-     (Kernel : Kernel_Handle;
-      Id     : GPS.Kernel.Modules.Module_ID) is
+     (Kernel : Kernel_Handle; Id : GPS.Kernel.Modules.Module_ID) is
    begin
       GPS.LSP_Client.Refactoring.Rename.Register (Kernel, Id);
       if GPS.LSP_Module.LSP_Ada_Support_Is_Active then

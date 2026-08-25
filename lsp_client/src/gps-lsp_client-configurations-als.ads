@@ -19,15 +19,15 @@ package GPS.LSP_Client.Configurations.ALS is
 
    type ALS_Configuration is new Server_Configuration with private;
 
-   overriding function Configuration_Settings
+   overriding
+   function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value;
    --  Return JSON object with configuration description necessary for
    --  particular language server.
 
-   overriding function Is_Configuration_Supported
-     (Self    : ALS_Configuration;
-      Setting : Setting_Kind)
-      return Boolean;
+   overriding
+   function Is_Configuration_Supported
+     (Self : ALS_Configuration; Setting : Setting_Kind) return Boolean;
 
 private
 

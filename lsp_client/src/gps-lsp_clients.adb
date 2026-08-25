@@ -30,7 +30,7 @@ with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with LSP.JSON_Streams;
 with LSP.Messages;
@@ -76,12 +76,11 @@ package body GPS.LSP_Clients is
    --  Queued.Auto_Cancel (Request) returns True
 
    procedure Clear_Change_Requests
-     (Self : in out LSP_Client'Class;
-      File : Virtual_File);
+     (Self : in out LSP_Client'Class; File : Virtual_File);
    --  Remove any pending change request for the given file
 
-   package LSP_Client_Sources is
-     new Glib.Main.Generic_Sources (LSP_Client_Access);
+   package LSP_Client_Sources is new
+     Glib.Main.Generic_Sources (LSP_Client_Access);
 
    function On_Restart_Timer (Self : LSP_Client_Access) return Boolean;
    --  Process restart timer event: do startup of new language server process
@@ -108,9 +107,7 @@ package body GPS.LSP_Clients is
                Item : constant Command := Command_Lists.Element (Position);
 
             begin
-               if Item.Kind = GPS_Request
-                 and then Item.Request = Request
-               then
+               if Item.Kind = GPS_Request and then Item.Request = Request then
                   Self.Commands.Delete (Position);
                   Request.On_Rejected (GPS.LSP_Client.Requests.Canceled);
 
@@ -155,13 +152,17 @@ package body GPS.LSP_Clients is
                Self.Requests.Delete (Position);
 
                if Request.all
-                    in GPS.LSP_Client.Partial_Results
-                         .LSP_Request_Partial_Result'Class
+                  in GPS
+                       .LSP_Client
+                       .Partial_Results
+                       .LSP_Request_Partial_Result'Class
                then
                   Partial_Token :=
-                    GPS.LSP_Client.Partial_Results
-                      .LSP_Request_Partial_Result'Class
-                         (Request.all).Partial_Result_Token;
+                    GPS
+                      .LSP_Client
+                      .Partial_Results
+                      .LSP_Request_Partial_Result'Class (Request.all)
+                      .Partial_Result_Token;
 
                   Self.Canceled_Tokens.Insert (Request_Id, Partial_Token);
                end if;
@@ -178,8 +179,7 @@ package body GPS.LSP_Clients is
                      Trace (Me_Exceptions, E);
                end;
 
-               GPS.LSP_Client.Requests.Destroy
-                 (Request, Is_Cancelled => True);
+               GPS.LSP_Client.Requests.Destroy (Request, Is_Cancelled => True);
 
                return;
             end if;
@@ -196,8 +196,7 @@ package body GPS.LSP_Clients is
    -------------------------
 
    function Get_Running_Request
-     (Self       : LSP_Client'Class;
-      Request_Id : LSP.Types.LSP_Number_Or_String)
+     (Self : LSP_Client'Class; Request_Id : LSP.Types.LSP_Number_Or_String)
       return GPS.LSP_Client.Requests.Request_Access is
    begin
       if not Self.Requests.Contains (Request_Id) then
@@ -238,16 +237,13 @@ package body GPS.LSP_Clients is
    ---------------------------
 
    procedure Clear_Change_Requests
-     (Self : in out LSP_Client'Class;
-      File : Virtual_File)
+     (Self : in out LSP_Client'Class; File : Virtual_File)
    is
       New_Commands : Command_Lists.List;
    begin
       --  Remove any "Change_File" command pending for this file.
       for C of Self.Commands loop
-         if not (C.Kind = Changed_File
-                 and then C.Handler.File = File)
-         then
+         if not (C.Kind = Changed_File and then C.Handler.File = File) then
             New_Commands.Append (C);
          end if;
       end loop;
@@ -298,9 +294,7 @@ package body GPS.LSP_Clients is
    -- Enqueue --
    -------------
 
-   procedure Enqueue
-     (Self : in out LSP_Client'Class;
-      Item : in out Command) is
+   procedure Enqueue (Self : in out LSP_Client'Class; Item : in out Command) is
    begin
       if Self.Is_Ready then
          if Self.Commands.Is_Empty then
@@ -323,7 +317,8 @@ package body GPS.LSP_Clients is
    -- Initialize_Response --
    -------------------------
 
-   overriding procedure Initialize_Response
+   overriding
+   procedure Initialize_Response
      (Self     : not null access Response_Handler;
       Request  : LSP.Types.LSP_Number_Or_String;
       Response : LSP.Messages.Server_Responses.Initialize_Response)
@@ -342,17 +337,17 @@ package body GPS.LSP_Clients is
       if Capabilities.textDocumentSync.Is_Set then
          if Capabilities.textDocumentSync.Is_Number then
             case Capabilities.textDocumentSync.Value is
-            when LSP.Messages.None =>
-               Self.Client.Text_Document_Synchronization :=
-                 GPS.LSP_Client.Text_Documents.Full;
+               when LSP.Messages.None        =>
+                  Self.Client.Text_Document_Synchronization :=
+                    GPS.LSP_Client.Text_Documents.Full;
 
-            when LSP.Messages.Full =>
-               Self.Client.Text_Document_Synchronization :=
-                 GPS.LSP_Client.Text_Documents.Full;
+               when LSP.Messages.Full        =>
+                  Self.Client.Text_Document_Synchronization :=
+                    GPS.LSP_Client.Text_Documents.Full;
 
-            when LSP.Messages.Incremental =>
-               Self.Client.Text_Document_Synchronization :=
-                 GPS.LSP_Client.Text_Documents.Incremental;
+               when LSP.Messages.Incremental =>
+                  Self.Client.Text_Document_Synchronization :=
+                    GPS.LSP_Client.Text_Documents.Incremental;
             end case;
 
          else
@@ -372,7 +367,7 @@ package body GPS.LSP_Clients is
          Self.Client.Standard_Errors_File :=
            Create
              (+VSS.Strings.Conversions.To_UTF_8_String
-                (Response.result.serverInfo.Value.log_filename.Value));
+                 (Response.result.serverInfo.Value.log_filename.Value));
       end if;
 
       Self.Client.Is_Ready := True;
@@ -387,7 +382,8 @@ package body GPS.LSP_Clients is
    -- Workspace_Apply_Edit --
    --------------------------
 
-   overriding procedure Workspace_Apply_Edit
+   overriding
+   procedure Workspace_Apply_Edit
      (Self    : not null access Request_Handler;
       Request : LSP.Types.LSP_Number_Or_String;
       Params  : LSP.Messages.ApplyWorkspaceEditParams)
@@ -395,8 +391,8 @@ package body GPS.LSP_Clients is
       On_Error : Boolean;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel                   => GPS.Kernel.Kernel_Handle
-           (Self.Client.Kernel),
+        (Kernel                   =>
+           GPS.Kernel.Kernel_Handle (Self.Client.Kernel),
          Workspace_Edit           => Params.edit,
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
@@ -424,7 +420,8 @@ package body GPS.LSP_Clients is
    -- Window_Work_Done_Progress_Create --
    --------------------------------------
 
-   overriding procedure Window_Work_Done_Progress_Create
+   overriding
+   procedure Window_Work_Done_Progress_Create
      (Self    : not null access Request_Handler;
       Request : LSP.Types.LSP_Number_Or_String;
       Params  : LSP.Messages.WorkDoneProgressCreateParams) is
@@ -446,9 +443,8 @@ package body GPS.LSP_Clients is
    -- On_Error --
    --------------
 
-   overriding procedure On_Error
-     (Self  : in out LSP_Client;
-      Error : String) is
+   overriding
+   procedure On_Error (Self : in out LSP_Client; Error : String) is
    begin
       --  A race condition could occur whereby the glib context poll
       --  occurs while the process is being terminated intentionally
@@ -466,7 +462,8 @@ package body GPS.LSP_Clients is
    -- On_Exit_Notification --
    --------------------------
 
-   overriding procedure On_Exit_Notification (Self : access LSP_Client) is
+   overriding
+   procedure On_Exit_Notification (Self : access LSP_Client) is
    begin
       LSP.Clients_3_16.Client (Self.all).On_Exit_Notification;
       Self.Exiting := True;
@@ -476,7 +473,8 @@ package body GPS.LSP_Clients is
    -- On_Standard_Error_Message --
    -------------------------------
 
-   overriding procedure On_Standard_Error_Message
+   overriding
+   procedure On_Standard_Error_Message
      (Self : in out LSP_Client; Text : String) is
    begin
       if Self.Errors_Writable_File /= Invalid_File then
@@ -491,7 +489,8 @@ package body GPS.LSP_Clients is
    -- On_Finished --
    -----------------
 
-   overriding procedure On_Finished (Self : in out LSP_Client) is
+   overriding
+   procedure On_Finished (Self : in out LSP_Client) is
    begin
       Me.Trace ("On_Finished");
 
@@ -513,7 +512,8 @@ package body GPS.LSP_Clients is
    -- On_Raw_Message --
    --------------------
 
-   overriding procedure On_Raw_Message
+   overriding
+   procedure On_Raw_Message
      (Self    : in out LSP_Client;
       Data    : Ada.Strings.Unbounded.Unbounded_String;
       Success : in out Boolean)
@@ -529,8 +529,8 @@ package body GPS.LSP_Clients is
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
 
-      Text_Stream : aliased
-        VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
+      Text_Stream :
+        aliased VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
 
       ----------------
       -- Look_Ahead --
@@ -545,10 +545,11 @@ package body GPS.LSP_Clients is
       is
          use all type VSS.JSON.Streams.JSON_Stream_Element_Kind;
 
-         Reader   : aliased
-           VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-         JS       : aliased LSP.JSON_Streams.JSON_Stream
-           (False, Reader'Unchecked_Access);
+         Reader   :
+           aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
+         JS       :
+           aliased LSP.JSON_Streams.JSON_Stream
+                     (False, Reader'Unchecked_Access);
          Id_Found : Boolean := False;
 
       begin
@@ -588,16 +589,16 @@ package body GPS.LSP_Clients is
                   case JS.R.Element_Kind is
                      when String_Value =>
                         Id :=
-                          (Is_Number => False,
-                           String    => JS.R.String_Value);
+                          (Is_Number => False, String => JS.R.String_Value);
 
                      when Number_Value =>
                         Id :=
                           (Is_Number => True,
-                           Number    => LSP.Types.LSP_Number
-                             (JS.R.Number_Value.Integer_Value));
+                           Number    =>
+                             LSP.Types.LSP_Number
+                               (JS.R.Number_Value.Integer_Value));
 
-                     when others =>
+                     when others       =>
                         raise Constraint_Error;
                   end case;
 
@@ -650,19 +651,20 @@ package body GPS.LSP_Clients is
                               when String_Value =>
                                  Token :=
                                    (Is_Set => True,
-                                    Value =>
+                                    Value  =>
                                       (Is_Number => False,
                                        String    => JS.R.String_Value));
 
                               when Number_Value =>
                                  Token :=
                                    (Is_Set => True,
-                                    Value =>
+                                    Value  =>
                                       (Is_Number => True,
-                                       Number    => LSP.Types.LSP_Number
-                                         (JS.R.Number_Value.Integer_Value)));
+                                       Number    =>
+                                         LSP.Types.LSP_Number
+                                           (JS.R.Number_Value.Integer_Value)));
 
-                              when others =>
+                              when others       =>
                                  raise Constraint_Error;
                            end case;
                         end if;
@@ -683,8 +685,9 @@ package body GPS.LSP_Clients is
       end Look_Ahead;
 
       Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-      Stream : aliased LSP.JSON_Streams.JSON_Stream
-        (Is_Server_Side => False, R => Reader'Unchecked_Access);
+      Stream :
+        aliased LSP.JSON_Streams.JSON_Stream
+                  (Is_Server_Side => False, R => Reader'Unchecked_Access);
       Id     : LSP.Types.LSP_Number_Or_String;
       Token  : LSP.Messages.Optional_ProgressToken;
       Method : LSP.Types.Optional_Virtual_String;
@@ -729,13 +732,17 @@ package body GPS.LSP_Clients is
             Self.Requests.Delete (Request_Position);
 
             if Request.all
-                 in GPS.LSP_Client.Partial_Results
-                      .LSP_Request_Partial_Result'Class
+               in GPS
+                    .LSP_Client
+                    .Partial_Results
+                    .LSP_Request_Partial_Result'Class
             then
                Self.Partials.Delete
-                 (GPS.LSP_Client.Partial_Results
-                    .LSP_Request_Partial_Result'Class
-                       (Request.all).Partial_Result_Token);
+                 (GPS
+                    .LSP_Client
+                    .Partial_Results
+                    .LSP_Request_Partial_Result'Class (Request.all)
+                    .Partial_Result_Token);
             end if;
 
             Req_Method := Request.Method;
@@ -765,9 +772,12 @@ package body GPS.LSP_Clients is
                --  Rewind Stream to "result" rey
                loop
                   Stream.R.Read_Next;
-                  exit when Stream.R.Is_Key_Name
-                    and then VSS.Strings.Conversions.To_UTF_8_String
-                      (Stream.R.Key_Name) = "result";
+                  exit when
+                    Stream.R.Is_Key_Name
+                    and then
+                      VSS.Strings.Conversions.To_UTF_8_String
+                        (Stream.R.Key_Name)
+                      = "result";
                end loop;
 
                Stream.R.Read_Next;
@@ -826,8 +836,10 @@ package body GPS.LSP_Clients is
                   Stream.R.Read_Next;
 
                   if Stream.R.Is_Key_Name
-                    and then VSS.Strings.Conversions.To_UTF_8_String
-                               (Stream.R.Key_Name) = "params"
+                    and then
+                      VSS.Strings.Conversions.To_UTF_8_String
+                        (Stream.R.Key_Name)
+                      = "params"
                   then
                      Stream.R.Read_Next;
                      pragma Assert (Stream.R.Is_Start_Object);
@@ -837,9 +849,10 @@ package body GPS.LSP_Clients is
                      loop
                         pragma Assert (Stream.R.Is_Key_Name);
 
-                        exit Outer
-                          when VSS.Strings.Conversions.To_UTF_8_String
-                                 (Stream.R.Key_Name) = "value";
+                        exit Outer when
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (Stream.R.Key_Name)
+                          = "value";
 
                         Stream.R.Read_Next;
                         Stream.Skip_Value;
@@ -856,10 +869,11 @@ package body GPS.LSP_Clients is
                   if Request.Kernel = null
                     or else not Request.Kernel.Is_In_Destruction
                   then
-                     GPS.LSP_Client.Partial_Results
-                       .LSP_Request_Partial_Result'Class
-                          (Request.all).On_Partial_Result_Message
-                             (Stream'Access);
+                     GPS
+                       .LSP_Client
+                       .Partial_Results
+                       .LSP_Request_Partial_Result'Class (Request.all)
+                       .On_Partial_Result_Message (Stream'Access);
                   end if;
 
                exception
@@ -868,9 +882,10 @@ package body GPS.LSP_Clients is
                end;
 
             else
-               pragma Assert
-                 (Self.Canceled_Requests.Contains
-                    (Request_Id_Maps.Element (Partial_Position)));
+               pragma
+                 Assert
+                   (Self.Canceled_Requests.Contains
+                      (Request_Id_Maps.Element (Partial_Position)));
             end if;
 
             Processed := True;
@@ -880,17 +895,21 @@ package body GPS.LSP_Clients is
       if error.Is_Set then
          declare
             use GPS.LSP_Client.Requests;
-            S : constant String :=
+            S               : constant String :=
               "The language server has reported the following error "
-              & "for language:" & Self.Language.Get_Name
-              & ASCII.LF & "Code: " & error.Value.code'Img & ASCII.LF
-              & VSS.Strings.Conversions.To_UTF_8_String
-              (error.Value.message);
+              & "for language:"
+              & Self.Language.Get_Name
+              & ASCII.LF
+              & "Code: "
+              & error.Value.code'Img
+              & ASCII.LF
+              & VSS.Strings.Conversions.To_UTF_8_String (error.Value.message);
             Request_Message : constant String :=
               (if Request /= null
-               then (ASCII.LF
-                 & "Request: "
-                 & VSS.Strings.Conversions.To_UTF_8_String (Request.Method))
+               then
+                 (ASCII.LF
+                  & "Request: "
+                  & VSS.Strings.Conversions.To_UTF_8_String (Request.Method))
                else "");
          begin
             Trace (Me_Errors, S & Request_Message);
@@ -914,7 +933,7 @@ package body GPS.LSP_Clients is
                     (Me_Exceptions,
                      "Error: "
                      & VSS.Strings.Conversions.To_UTF_8_String
-                       (Self.Error_Message));
+                         (Self.Error_Message));
                end if;
             end if;
          end;
@@ -923,8 +942,7 @@ package body GPS.LSP_Clients is
       --  Call response processed hook for all responses
 
       Self.Listener.On_Response_Processed
-        (Data,
-         VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Req_Method));
+        (Data, VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Req_Method));
    end On_Raw_Message;
 
    ----------------------
@@ -955,9 +973,12 @@ package body GPS.LSP_Clients is
 
       else
          Self.Kernel.Insert
-           ("The language server for " & Self.Language.Get_Name
-            & " had to be restarted more than" & Throttle_Max'Img
-            & " times in the past" & Integer (Throttle_Period)'Img
+           ("The language server for "
+            & Self.Language.Get_Name
+            & " had to be restarted more than"
+            & Throttle_Max'Img
+            & " times in the past"
+            & Integer (Throttle_Period)'Img
             & " seconds - aborting. Please report this.",
             Mode => GPS.Kernel.Error);
          Me.Trace ("Restarted too many times, aborting");
@@ -975,7 +996,8 @@ package body GPS.LSP_Clients is
    -- On_Exception --
    ------------------
 
-   overriding procedure On_Exception
+   overriding
+   procedure On_Exception
      (Self       : in out LSP_Client;
       Occurrence : Ada.Exceptions.Exception_Occurrence)
    is
@@ -988,22 +1010,22 @@ package body GPS.LSP_Clients is
    -- On_Started --
    ----------------
 
-   overriding procedure On_Started (Self : in out LSP_Client) is
+   overriding
+   procedure On_Started (Self : in out LSP_Client) is
 
       function Get_Completion_Documentation_Formats
-        return LSP.Messages.MarkupKind_Vector;
+         return LSP.Messages.MarkupKind_Vector;
 
       function Get_CompletionItem_Resolve_Properties
-        return VSS.String_Vectors.Virtual_String_Vector;
+         return VSS.String_Vectors.Virtual_String_Vector;
 
       function Get_Supported_ResourceOperations
-        return LSP.Messages.ResourceOperationKindSet;
+         return LSP.Messages.ResourceOperationKindSet;
 
       function Get_Supported_CodeActionKinds
-        return LSP.Messages.CodeActionKindSet;
+         return LSP.Messages.CodeActionKindSet;
 
-      function Get_Supported_Symbols
-         return LSP.Messages.SymbolKindSet;
+      function Get_Supported_Symbols return LSP.Messages.SymbolKindSet;
 
       function Get_Experimental_Features return LSP.Types.LSP_Any;
       --  Return the selection of experimental features that are supported
@@ -1094,9 +1116,7 @@ package body GPS.LSP_Clients is
       -- Get_Supported_Symbols --
       ---------------------------
 
-      function Get_Supported_Symbols
-         return LSP.Messages.SymbolKindSet
-      is
+      function Get_Supported_Symbols return LSP.Messages.SymbolKindSet is
          Result : LSP.Messages.SymbolKindSets.Set;
       begin
          for Kind in LSP.Messages.SymbolKind loop
@@ -1123,8 +1143,8 @@ package body GPS.LSP_Clients is
          rootUri               =>
            (True,
 
-              LSP.Types.To_Virtual_String
-                (GPS.LSP_Client.Utilities.To_URI (Root))),
+            LSP.Types.To_Virtual_String
+              (GPS.LSP_Client.Utilities.To_URI (Root))),
          initializationOptions => Self.Initialization_Options,
          capabilities          =>
            (workspace    =>
@@ -1137,16 +1157,15 @@ package body GPS.LSP_Clients is
                fileOperations =>
                  (Is_Set => True,
                   Value  => (didRename => (True, True), others => <>)),
-               symbol =>
+               symbol         =>
                  (Is_Set => True,
                   Value  =>
                     (symbolKind =>
-                         (Is_Set => True,
-                          Value  =>
-                            (valueSet =>
-                               (Is_Set => True,
-                                Value  => Get_Supported_Symbols))
-                         ),
+                       (Is_Set => True,
+                        Value  =>
+                          (valueSet =>
+                             (Is_Set => True,
+                              Value  => Get_Supported_Symbols))),
                      others     => <>)),
                others         => <>),
             textDocument =>
@@ -1181,8 +1200,8 @@ package body GPS.LSP_Clients is
                         resolveSupport      =>
                           (True,
 
-                             (properties =>
-                                Get_CompletionItem_Resolve_Properties)),
+                           (properties =>
+                              Get_CompletionItem_Resolve_Properties)),
                         others              => <>)),
                   completionItemKind  => <>,
                   contextSupport      => <>),
@@ -1228,9 +1247,7 @@ package body GPS.LSP_Clients is
    -- Process_Command --
    ---------------------
 
-   procedure Process_Command
-     (Self : in out LSP_Client'Class;
-      Item : Command)
+   procedure Process_Command (Self : in out LSP_Client'Class; Item : Command)
    is
       procedure Process_Open_File;
       procedure Process_Changed_File;
@@ -1267,15 +1284,12 @@ package body GPS.LSP_Clients is
          use GPS.Editors;
 
          Value : constant LSP.Messages.DidCloseTextDocumentParams :=
-                   (textDocument =>
-                      (uri        =>
-                         GPS.LSP_Client.Utilities.To_URI (Item.File)));
+           (textDocument =>
+              (uri => GPS.LSP_Client.Utilities.To_URI (Item.File)));
 
-         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
            Self.Kernel.Get_Buffer_Factory.Get
-             (File        => Item.File,
-              Open_Buffer => False,
-              Open_View   => False);
+             (File => Item.File, Open_Buffer => False, Open_View => False);
       begin
          if Buffer /= Nil_Editor_Buffer then
             Buffer.Set_Opened_On_LSP_Server (False);
@@ -1289,23 +1303,19 @@ package body GPS.LSP_Clients is
 
       procedure Process_Open_File is
          Factory : constant GPS.Editors.Editor_Buffer_Factory_Access :=
-                     Self.Kernel.Get_Buffer_Factory;
-         Buffer  : constant GPS.Editors.Editor_Buffer'Class := Factory.Get
-           (File        => Item.File,
-            Open_Buffer => True,
-            Open_View   => False);
+           Self.Kernel.Get_Buffer_Factory;
+         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+           Factory.Get
+             (File => Item.File, Open_Buffer => True, Open_View => False);
          Lang    : constant not null Language.Language_Access :=
-                     Buffer.Get_Language;
+           Buffer.Get_Language;
          Value   : constant LSP.Messages.DidOpenTextDocumentParams :=
-                     (textDocument =>
-                        (uri        =>
-                           GPS.LSP_Client.Utilities.To_URI
-                             (Item.File),
-                         languageId =>
-                           VSS.Strings.Conversions.To_Virtual_String
-                             (Lang.Get_Name),
-                         version    => 0,
-                         text       => Buffer.Get_Text));
+           (textDocument =>
+              (uri        => GPS.LSP_Client.Utilities.To_URI (Item.File),
+               languageId =>
+                 VSS.Strings.Conversions.To_Virtual_String (Lang.Get_Name),
+               version    => 0,
+               text       => Buffer.Get_Text));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);
@@ -1320,13 +1330,13 @@ package body GPS.LSP_Clients is
          Value : LSP.Messages.RenameFilesParams;
       begin
          Value.files.Append
-           (LSP.Messages.FileRename'(
-            oldUri =>
-              LSP.Types.To_Virtual_String
-                (GPS.LSP_Client.Utilities.To_URI (Item.Old_URI)),
-            newUri =>
-              LSP.Types.To_Virtual_String
-                (GPS.LSP_Client.Utilities.To_URI (Item.New_URI))));
+           (LSP.Messages.FileRename'
+              (oldUri =>
+                 LSP.Types.To_Virtual_String
+                   (GPS.LSP_Client.Utilities.To_URI (Item.Old_URI)),
+               newUri =>
+                 LSP.Types.To_Virtual_String
+                   (GPS.LSP_Client.Utilities.To_URI (Item.New_URI))));
          Self.On_DidRenameFiles_Notification (Value);
       end Process_Rename_File;
 
@@ -1338,8 +1348,11 @@ package body GPS.LSP_Clients is
          Id     : constant LSP.Types.LSP_Number_Or_String :=
            Self.Allocate_Request_Id;
          Stream : aliased LSP.JSON_Streams.JSON_Stream;
-         Output : aliased
-           VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
+         Output :
+           aliased VSS
+                     .Text_Streams
+                     .Memory_UTF8_Output
+                     .Memory_UTF8_Output_Stream;
 
       begin
          --  Allocate and set id of the request and token of the partial result
@@ -1349,7 +1362,7 @@ package body GPS.LSP_Clients is
          Self.Requests.Insert (Id, Item.Request);
 
          if Item.Request.all
-           in GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
+            in GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
          then
             declare
                Token : constant LSP.Types.LSP_Number_Or_String :=
@@ -1357,7 +1370,8 @@ package body GPS.LSP_Clients is
 
             begin
                GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
-                 (Item.Request.all).Set_Partial_Result_Token (Token);
+                 (Item.Request.all)
+                 .Set_Partial_Result_Token (Token);
                Self.Partials.Insert (Token, Id);
             end;
          end if;
@@ -1401,19 +1415,19 @@ package body GPS.LSP_Clients is
 
    begin
       case Item.Kind is
-         when Open_File =>
+         when Open_File          =>
             Process_Open_File;
 
-         when Changed_File =>
+         when Changed_File       =>
             Process_Changed_File;
 
-         when Close_File =>
+         when Close_File         =>
             Process_Close_File;
 
-         when Rename_File =>
+         when Rename_File        =>
             Process_Rename_File;
 
-         when GPS_Request =>
+         when GPS_Request        =>
             Process_Request;
 
          when Cancel_GPS_Request =>
@@ -1525,7 +1539,8 @@ package body GPS.LSP_Clients is
    -- Request_Id_Prefix --
    -----------------------
 
-   overriding function Request_Id_Prefix
+   overriding
+   function Request_Id_Prefix
      (Self : LSP_Client) return VSS.Strings.Virtual_String is
    begin
       return
@@ -1537,7 +1552,8 @@ package body GPS.LSP_Clients is
    -- Server_Language --
    ---------------------
 
-   overriding function Server_Language
+   overriding
+   function Server_Language
      (Self : LSP_Client) return VSS.Strings.Virtual_String is
    begin
       return
@@ -1548,18 +1564,18 @@ package body GPS.LSP_Clients is
    -- Send_Text_Document_Did_Change --
    -----------------------------------
 
-   overriding procedure Send_Text_Document_Did_Change
+   overriding
+   procedure Send_Text_Document_Did_Change
      (Self     : in out LSP_Client;
-      Document : not null
-        GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
+      Document :
+        not null GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access)
    is
       use type GPS.LSP_Client.Text_Documents.Text_Document_Handler_Access;
       Item : Command;
 
    begin
       for Command of Self.Commands loop
-         if Command.Kind = Changed_File
-           and then Command.Handler = Document
+         if Command.Kind = Changed_File and then Command.Handler = Document
          then
             --  Nothing to do, DidChangeTextDocument notification has been
             --  requested.
@@ -1577,9 +1593,9 @@ package body GPS.LSP_Clients is
    -- Send_Text_Document_Did_Close --
    ----------------------------------
 
-   overriding procedure Send_Text_Document_Did_Close
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File)
+   overriding
+   procedure Send_Text_Document_Did_Close
+     (Self : in out LSP_Client; File : GNATCOLL.VFS.Virtual_File)
    is
       Item : Command := (Close_File, File);
    begin
@@ -1593,9 +1609,9 @@ package body GPS.LSP_Clients is
    -- Send_Text_Document_Did_Open --
    ---------------------------------
 
-   overriding procedure Send_Text_Document_Did_Open
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File)
+   overriding
+   procedure Send_Text_Document_Did_Open
+     (Self : in out LSP_Client; File : GNATCOLL.VFS.Virtual_File)
    is
       Item : Command := (Open_File, File);
    begin
@@ -1606,7 +1622,8 @@ package body GPS.LSP_Clients is
    -- Send_Did_Rename_File --
    --------------------------
 
-   overriding procedure Send_Did_Rename_File
+   overriding
+   procedure Send_Did_Rename_File
      (Self    : in out LSP_Client;
       Old_URI : GNATCOLL.VFS.Virtual_File;
       New_URI : GNATCOLL.VFS.Virtual_File)
@@ -1621,8 +1638,7 @@ package body GPS.LSP_Clients is
    --------------------------------
 
    procedure Set_On_Server_Capabilities
-     (Self : in out LSP_Client'Class;
-      Proc : On_Server_Capabilities_Proc) is
+     (Self : in out LSP_Client'Class; Proc : On_Server_Capabilities_Proc) is
    begin
       Self.On_Server_Capabilities := Proc;
    end Set_On_Server_Capabilities;
@@ -1632,8 +1648,7 @@ package body GPS.LSP_Clients is
    ------------------------------
 
    procedure Set_Standard_Errors_File
-     (Self : in out LSP_Client'Class;
-      File : Virtual_File) is
+     (Self : in out LSP_Client'Class; File : Virtual_File) is
    begin
       if Self.Standard_Errors_File /= File then
          if Self.Errors_Writable_File /= Invalid_File then
@@ -1654,8 +1669,9 @@ package body GPS.LSP_Clients is
 
          Self.Standard_Errors_File := File;
          Self.Errors_Writable_File := File.Write_File (Append => True);
-         --  Open file with "Append => True" means that exactly given file
-         --  will be used to write, and not a temporary file.
+      --  Open file with "Append => True" means that exactly given file
+      --  will be used to write, and not a temporary file.
+
       end if;
    end Set_Standard_Errors_File;
 
@@ -1664,8 +1680,7 @@ package body GPS.LSP_Clients is
    ------------------------------
 
    function Get_Standard_Errors_File
-     (Self : LSP_Client'Class) return Virtual_File
-   is
+     (Self : LSP_Client'Class) return Virtual_File is
    begin
       return Self.Standard_Errors_File;
    end Get_Standard_Errors_File;
@@ -1703,7 +1718,7 @@ package body GPS.LSP_Clients is
 
    begin
       Self.Set_Response_Handler (Self.Response_Handler'Unchecked_Access);
-      Self.Set_Request_Handler  (Self.Request_Handler'Unchecked_Access);
+      Self.Set_Request_Handler (Self.Request_Handler'Unchecked_Access);
 
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);
@@ -1727,14 +1742,13 @@ package body GPS.LSP_Clients is
    ----------
 
    procedure Stop
-     (Self               : in out LSP_Client'Class;
-      Reject_Immediately : Boolean)
+     (Self : in out LSP_Client'Class; Reject_Immediately : Boolean)
    is
       use type Glib.Main.G_Source_Id;
 
       Request : GPS.LSP_Client.Requests.Request_Access :=
-                  new GPS.LSP_Clients.Shutdowns.Shutdown_Request
-                    (Client => Self'Unchecked_Access);
+        new GPS.LSP_Clients.Shutdowns.Shutdown_Request
+              (Client => Self'Unchecked_Access);
 
    begin
       if Self.Restart_Timer /= Glib.Main.No_Source_Id then
@@ -1762,8 +1776,7 @@ package body GPS.LSP_Clients is
 
    procedure Restart
      (Self                   : in out LSP_Client'Class;
-      Initialization_Options : LSP.Types.Optional_LSP_Any)
-   is
+      Initialization_Options : LSP.Types.Optional_LSP_Any) is
    begin
       --  Reset the initialization options
       Self.Initialization_Options := Initialization_Options;

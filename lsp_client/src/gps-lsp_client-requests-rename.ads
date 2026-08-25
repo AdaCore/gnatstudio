@@ -19,41 +19,43 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Rename is
 
-   type Abstract_Rename_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-      record
-         Position : LSP.Messages.Position;
-         New_Name : VSS.Strings.Virtual_String;
-      end record;
+   type Abstract_Rename_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Position : LSP.Messages.Position;
+      New_Name : VSS.Strings.Virtual_String;
+   end record;
 
    function Params
-     (Self : Abstract_Rename_Request)
-      return LSP.Messages.RenameParams;
+     (Self : Abstract_Rename_Request) return LSP.Messages.RenameParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Rename_Request;
-      Result : LSP.Messages.WorkspaceEdit) is abstract;
+      Result : LSP.Messages.WorkspaceEdit)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Rename_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Rename_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Get_Task_Label
-     (Self : Abstract_Rename_Request) return String
-   is
-     ("renaming");
+   overriding
+   function Get_Task_Label (Self : Abstract_Rename_Request) return String
+   is ("renaming");
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Rename_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Rename_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

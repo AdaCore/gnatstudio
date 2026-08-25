@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Document_Symbols_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -37,7 +38,8 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -51,7 +53,8 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Document_Symbols_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -72,10 +75,10 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Document_Symbols_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.documentSymbolProvider.Is_Set;
    end Is_Request_Supported;

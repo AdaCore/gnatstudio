@@ -19,8 +19,7 @@ with GNATCOLL.VFS;
 
 package GPS.LSP_Client.Requests.Code_Action is
 
-   type Abstract_Code_Action_Request is
-     abstract new LSP_Request with record
+   type Abstract_Code_Action_Request is abstract new LSP_Request with record
       Text_Document    : GNATCOLL.VFS.Virtual_File;
       Start_Position   : LSP.Messages.Position;
       End_Position     : LSP.Messages.Position;
@@ -34,17 +33,21 @@ package GPS.LSP_Client.Requests.Code_Action is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Code_Action_Request;
-      Result : LSP.Messages.CodeAction_Vector) is abstract;
+      Result : LSP.Messages.CodeAction_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Code_Action_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Code_Action_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Code_Action_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

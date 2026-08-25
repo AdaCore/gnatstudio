@@ -17,17 +17,17 @@
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Gtk.Widget;                    use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 
 with LSP.Types;
 with VSS.Strings.Conversions;
 
-with Language;  use Language;
+with Language;                        use Language;
 with GPS.LSP_Client.Utilities;
-with GPS.Kernel;   use GPS.Kernel;
-with GPS.Editors;  use GPS.Editors;
+with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Editors;                     use GPS.Editors;
 with GPS.LSP_Module;
-with GPS.LSP_Clients; use GPS.LSP_Clients;
+with GPS.LSP_Clients;                 use GPS.LSP_Clients;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
 
 package body GPS.LSP_Client.Editors is
@@ -42,21 +42,19 @@ package body GPS.LSP_Client.Editors is
    --  exists, null if not.
 
    function Get_Client
-     (Self : Src_Editor_Handler)
-      return GPS.LSP_Clients.LSP_Client_Access;
+     (Self : Src_Editor_Handler) return GPS.LSP_Clients.LSP_Client_Access;
    --  Return the  client associated to Self, or null
 
    ----------------
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer
-     (Self : Src_Editor_Handler) return Editor_Buffer'Class is
+   function Get_Buffer (Self : Src_Editor_Handler) return Editor_Buffer'Class
+   is
    begin
-      return Self.Kernel.Get_Buffer_Factory.Get
-        (File        => Self.File,
-         Open_Buffer => False,
-         Open_View   => False);
+      return
+        Self.Kernel.Get_Buffer_Factory.Get
+          (File => Self.File, Open_Buffer => False, Open_View => False);
    end Get_Buffer;
 
    ----------------
@@ -83,8 +81,7 @@ package body GPS.LSP_Client.Editors is
    ----------------
 
    function Get_Client
-     (Self : Src_Editor_Handler)
-      return GPS.LSP_Clients.LSP_Client_Access
+     (Self : Src_Editor_Handler) return GPS.LSP_Clients.LSP_Client_Access
    is
       Server : constant Language_Server_Access := Get_Server (Self);
    begin
@@ -99,9 +96,9 @@ package body GPS.LSP_Client.Editors is
    -- After_Delete_Range --
    ------------------------
 
-   overriding procedure After_Delete_Range
-     (Self      : in out Src_Editor_Handler;
-      From_User : Boolean)
+   overriding
+   procedure After_Delete_Range
+     (Self : in out Src_Editor_Handler; From_User : Boolean)
    is
       Server : constant Language_Server_Access := Get_Server (Self);
       Client : constant LSP_Client_Access := Get_Client (Self);
@@ -119,7 +116,8 @@ package body GPS.LSP_Client.Editors is
    -- After_Insert_Text --
    -----------------------
 
-   overriding procedure After_Insert_Text
+   overriding
+   procedure After_Insert_Text
      (Self      : in out Src_Editor_Handler;
       Location  : Editor_Location'Class;
       Text      : String := "";
@@ -151,7 +149,8 @@ package body GPS.LSP_Client.Editors is
    -- Before_Delete_Range --
    -------------------------
 
-   overriding procedure Before_Delete_Range
+   overriding
+   procedure Before_Delete_Range
      (Self           : in out Src_Editor_Handler;
       Start_Location : GPS.Editors.Editor_Location'Class;
       End_Location   : GPS.Editors.Editor_Location'Class;
@@ -181,8 +180,9 @@ package body GPS.LSP_Client.Editors is
    -- File --
    ----------
 
-   overriding function File
-     (Self : Src_Editor_Handler) return GNATCOLL.VFS.Virtual_File is
+   overriding
+   function File (Self : Src_Editor_Handler) return GNATCOLL.VFS.Virtual_File
+   is
    begin
       return Self.File;
    end File;
@@ -191,7 +191,8 @@ package body GPS.LSP_Client.Editors is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Src_Editor_Handler) is
+   overriding
+   procedure Finalize (Self : in out Src_Editor_Handler) is
    begin
       null;
    end Finalize;
@@ -200,7 +201,8 @@ package body GPS.LSP_Client.Editors is
    -- Get_Did_Change_Message --
    ----------------------------
 
-   overriding function Get_Did_Change_Message
+   overriding
+   function Get_Did_Change_Message
      (Self : in out Src_Editor_Handler;
       Mode : GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type)
       return LSP.Messages.DidChangeTextDocumentParams
@@ -210,38 +212,39 @@ package body GPS.LSP_Client.Editors is
       Buffer : constant Editor_Buffer'Class := Get_Buffer (Self);
    begin
       case Mode is
-      when GPS.LSP_Client.Text_Documents.Full =>
-         Changes.Append
-           (LSP.Messages.TextDocumentContentChangeEvent'
-              (text   =>
-                 Buffer.Get_Text
-                   (Buffer.Beginning_Of_Buffer,
-                    Buffer.End_Of_Buffer),
-               others => <>));
+         when GPS.LSP_Client.Text_Documents.Full        =>
+            Changes.Append
+              (LSP.Messages.TextDocumentContentChangeEvent'
+                 (text   =>
+                    Buffer.Get_Text
+                      (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer),
+                  others => <>));
 
-      when GPS.LSP_Client.Text_Documents.Incremental =>
-         for Action of Self.Actions loop
-            case Action.Kind is
-            when Insert =>
-               Changes.Append
-                 (LSP.Messages.TextDocumentContentChangeEvent'
-                    (span   => (Is_Set => True,
-                                Value  =>
-                                  (first => Action.Start_Location,
-                                   last  => Action.End_Location)),
-                     text   => Action.Text,
-                     others => <>));
+         when GPS.LSP_Client.Text_Documents.Incremental =>
+            for Action of Self.Actions loop
+               case Action.Kind is
+                  when Insert =>
+                     Changes.Append
+                       (LSP.Messages.TextDocumentContentChangeEvent'
+                          (span   =>
+                             (Is_Set => True,
+                              Value  =>
+                                (first => Action.Start_Location,
+                                 last  => Action.End_Location)),
+                           text   => Action.Text,
+                           others => <>));
 
-            when Remove =>
-               Changes.Append
-                 (LSP.Messages.TextDocumentContentChangeEvent'
-                    (span   => (Is_Set => True,
-                                Value  =>
-                                  (first => Action.Start_Location,
-                                   last  => Action.End_Location)),
-                     others => <>));
-            end case;
-         end loop;
+                  when Remove =>
+                     Changes.Append
+                       (LSP.Messages.TextDocumentContentChangeEvent'
+                          (span   =>
+                             (Is_Set => True,
+                              Value  =>
+                                (first => Action.Start_Location,
+                                 last  => Action.End_Location)),
+                           others => <>));
+               end case;
+            end loop;
       end case;
 
       Self.Actions.Clear;
@@ -258,8 +261,8 @@ package body GPS.LSP_Client.Editors is
    ----------------
 
    procedure Initialize
-     (Self   : in out Src_Editor_Handler'Class;
-      File   : GNATCOLL.VFS.Virtual_File) is
+     (Self : in out Src_Editor_Handler'Class; File : GNATCOLL.VFS.Virtual_File)
+   is
    begin
       Self.File := File;
    end Initialize;
@@ -268,7 +271,8 @@ package body GPS.LSP_Client.Editors is
    -- File_Renamed --
    ------------------
 
-   overriding procedure File_Renamed
+   overriding
+   procedure File_Renamed
      (Self : in out Src_Editor_Handler;
       From : GNATCOLL.VFS.Virtual_File;
       To   : GNATCOLL.VFS.Virtual_File)

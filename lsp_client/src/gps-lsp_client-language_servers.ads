@@ -39,30 +39,29 @@ package GPS.LSP_Client.Language_Servers is
       Request : in out GPS.LSP_Client.Requests.Request_Access);
    --  Cancel request. Memory will be deallocated.
 
-   procedure Configuration_Changed
-     (Self : in out Abstract_Language_Server) is null;
+   procedure Configuration_Changed (Self : in out Abstract_Language_Server)
+   is null;
    --  Called when GNAT Studio configuration is changed. Should send
    --  didConfigurationChange notification to the language server when
    --  necessary.
 
    function Get_Client
-     (Self : Abstract_Language_Server)
-      return GPS.LSP_Clients.LSP_Client_Access is (null);
+     (Self : Abstract_Language_Server) return GPS.LSP_Clients.LSP_Client_Access
+   is (null);
 
    --  Configuration --
 
    function Is_Configuration_Supported
      (Self    : in out Abstract_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind)
-      return Boolean;
+      Setting : GPS.LSP_Client.Configurations.Setting_Kind) return Boolean;
    --  Return True when server supports the configuration option.
 
 private
 
    type Abstract_Language_Server is tagged limited null record;
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation
+   procedure Free is new
+     Ada.Unchecked_Deallocation
        (GPS.LSP_Client.Requests.LSP_Request'Class,
         GPS.LSP_Client.Requests.Request_Access);
 
