@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -40,12 +41,12 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Document_Symbols_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Document_Symbols_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Symbols : LSP.Messages.Symbol_Vector;
+      Symbols : LSP.Structures.DocumentSymbol_Result;
    begin
-      LSP.Messages.Symbol_Vector'Read (Stream, Symbols);
+      LSP.Inputs.Read_DocumentSymbol_Result (Handler, Symbols);
       Document_Symbols_Request'Class (Self).On_Result_Message (Symbols);
    end On_Result_Message;
 
@@ -55,11 +56,11 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
 
    overriding
    procedure Params
-     (Self   : Document_Symbols_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Document_Symbols_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.DocumentSymbolParams'Write
-        (Stream,
+      LSP.Outputs.Write_DocumentSymbolParams
+        (Handler,
          (workDoneToken      => <>,
           partialResultToken => <>,
           textDocument       =>
@@ -78,7 +79,7 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
    overriding
    function Is_Request_Supported
      (Self    : Document_Symbols_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.documentSymbolProvider.Is_Set;
    end Is_Request_Supported;

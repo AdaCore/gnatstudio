@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -27,13 +28,14 @@ package body GPS.LSP_Client.Requests.Signature_Help is
 
    function Params
      (Self : Abstract_Signature_Help_Request)
-      return LSP.Messages.SignatureHelpParams is
+      return LSP.Structures.SignatureHelpParams is
    begin
       return
-        (textDocument => (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
-         position     => Self.Position,
-         context      => Self.Context,
-         others       => <>);
+        (LSP.Structures.TextDocumentPositionParams'
+           (textDocument =>
+              (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
+            position     => Self.Position)
+         with workDoneToken => (Is_Set => False), context => Self.Context);
    end Params;
 
    ------------
@@ -42,10 +44,10 @@ package body GPS.LSP_Client.Requests.Signature_Help is
 
    overriding
    procedure Params
-     (Self   : Abstract_Signature_Help_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Signature_Help_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.SignatureHelpParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_SignatureHelpParams (Handler, Self.Params);
    end Params;
 
    --------------------------
@@ -55,7 +57,7 @@ package body GPS.LSP_Client.Requests.Signature_Help is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Signature_Help_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.signatureHelpProvider.Is_Set;
    end Is_Request_Supported;
@@ -66,12 +68,12 @@ package body GPS.LSP_Client.Requests.Signature_Help is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Signature_Help_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Signature_Help_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Response : LSP.Messages.SignatureHelp;
+      Response : LSP.Structures.SignatureHelp_Or_Null;
    begin
-      LSP.Messages.SignatureHelp'Read (Stream, Response);
+      LSP.Inputs.Read_SignatureHelp_Or_Null (Handler, Response);
       Abstract_Signature_Help_Request'Class (Self).On_Result_Message
         (Response);
    end On_Result_Message;

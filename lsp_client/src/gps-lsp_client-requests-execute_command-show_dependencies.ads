@@ -17,7 +17,7 @@
 
 with Ada.Containers.Vectors;
 
-with LSP.Types;
+with VSS.JSON.Pull_Readers;
 
 package GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
 
@@ -34,7 +34,7 @@ package GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
    overriding
    function Params
      (Self : Abstract_Show_Dependencies_Command_Request)
-      return LSP.Messages.ExecuteCommandParams;
+      return LSP.Structures.ExecuteCommandParams;
    --  Return parameters of the request to be sent to the server.
 
    overriding
@@ -56,12 +56,12 @@ package GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
 
    overriding
    procedure On_Result_Message
-     (Self : in out Abstract_Show_Dependencies_Command_Request;
-      JS   : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Show_Dependencies_Command_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    type Unit_Description is record
-      uri        : LSP.Types.LSP_URI;
-      projectUri : LSP.Types.LSP_URI;
+      uri        : LSP.Structures.DocumentUri;
+      projectUri : LSP.Structures.DocumentUri;
    end record;
 
    package Unit_Description_Vectors is new

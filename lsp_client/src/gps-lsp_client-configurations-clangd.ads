@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Messages;
+with LSP.Structures;
 
 with GPS.Kernel; use GPS.Kernel;
 with GPS.LSP_Clients;
@@ -29,7 +29,7 @@ package GPS.LSP_Client.Configurations.Clangd is
      (Self : in out Clangd_Configuration);
 
    procedure On_Server_Capabilities
-     (Capabilities : in out LSP.Messages.ServerCapabilities);
+     (Capabilities : in out LSP.Structures.ServerCapabilities);
 
    procedure Set_Standard_Errors_File
      (Kernel : not null access Kernel_Handle_Record'Class;

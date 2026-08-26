@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Completion is
@@ -22,19 +25,22 @@ package GPS.LSP_Client.Requests.Completion is
    type Abstract_Completion_Request is abstract
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
-      Position : LSP.Messages.Position;
-      Context  : LSP.Messages.CompletionContext;
+      Position : LSP.Structures.Position;
+      Context  : LSP.Structures.CompletionContext;
    end record;
 
    function Params
-     (Self : Abstract_Completion_Request) return LSP.Messages.CompletionParams;
+     (Self : Abstract_Completion_Request)
+      return LSP.Structures.CompletionParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Completion_Request;
-      Result : LSP.Messages.CompletionList)
+      Result : LSP.Structures.CompletionList)
    is abstract;
-   --  Called when a result response is received from the server.
+   --  Called when a result response is received from the server. The
+   --  CompletionItem_Vector/null variants of the wire-level Completion_Result
+   --  are normalized into an equivalent CompletionList here.
 
    overriding
    function Method
@@ -42,33 +48,33 @@ package GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure Params
-     (Self   : Abstract_Completion_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Completion_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Completion_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Completion_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Completion_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    type Abstract_CompletionItem_Resolve_Request is abstract
      new GPS.LSP_Client.Requests.LSP_Request
    with record
-      Item : LSP.Messages.CompletionItem;
+      Item : LSP.Structures.CompletionItem;
    end record;
 
    function Params
      (Self : Abstract_CompletionItem_Resolve_Request)
-      return LSP.Messages.CompletionItem;
+      return LSP.Structures.CompletionItem;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_CompletionItem_Resolve_Request;
-      Result : LSP.Messages.CompletionItem)
+      Result : LSP.Structures.CompletionItem)
    is abstract;
    --  Called when a result response is received from the server.
 
@@ -79,17 +85,17 @@ package GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure Params
-     (Self   : Abstract_CompletionItem_Resolve_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_CompletionItem_Resolve_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_CompletionItem_Resolve_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_CompletionItem_Resolve_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_CompletionItem_Resolve_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Completion;

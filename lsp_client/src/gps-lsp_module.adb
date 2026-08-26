@@ -109,9 +109,10 @@ with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
 with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
 with Language;                          use Language;
-with LSP.Client_Notification_Receivers_3_16;
-with LSP.Messages;
-with LSP.Types;                         use LSP.Types;
+with LSP.Client_Notification_Receivers;
+with LSP.Enumerations;
+with LSP.Structures;
+with LSP.Structures.Hashes;
 with Outline_View;                      use Outline_View;
 with Src_Editor_Buffer;
 with Src_Editor_Module;                 use Src_Editor_Module;
@@ -194,7 +195,7 @@ package body GPS.LSP_Module is
       Title : VSS.Strings.Virtual_String;
       --  The title that should show in the progress bar
 
-      Key : LSP_Number_Or_String;
+      Key : LSP.Structures.ProgressToken;
       --  The key of the Command in Module.Token_To_Command
 
       Action : Command_Return_Type := Execute_Again;
@@ -233,15 +234,15 @@ package body GPS.LSP_Module is
 
    package Token_Command_Maps is new
      Ada.Containers.Hashed_Maps
-       (Key_Type        => LSP_Number_Or_String,
+       (Key_Type        => LSP.Structures.ProgressToken,
         Element_Type    => Scheduled_Command_Access,
-        Hash            => Hash,
-        Equivalent_Keys => "=");
+        Hash            => LSP.Structures.Hashes.Hash,
+        Equivalent_Keys => LSP.Structures."=");
 
    package Source_Sets is new
      Ada.Containers.Hashed_Sets
        (Element_Type        => VSS.Strings.Virtual_String,
-        Hash                => Hash,
+        Hash                => VSS.Strings.Hash,
         Equivalent_Elements => VSS.Strings."=",
         "="                 => VSS.Strings."=");
 
@@ -249,7 +250,7 @@ package body GPS.LSP_Module is
      Ada.Containers.Hashed_Maps
        (Key_Type        => VSS.Strings.Virtual_String,
         Element_Type    => Source_Sets.Set,
-        Hash            => Hash,
+        Hash            => VSS.Strings.Hash,
         Equivalent_Keys => VSS.Strings."=",
         "="             => Source_Sets."=");
 
@@ -259,7 +260,7 @@ package body GPS.LSP_Module is
 
    type Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record
-     and LSP.Client_Notification_Receivers_3_16.Client_Notification_Receiver
+     and LSP.Client_Notification_Receivers.Client_Notification_Receiver
      and GPS.LSP_Client.Language_Servers.Interceptors.Server_Listener
    with record
       Language_Servers : Language_Server_Maps.Map;
@@ -338,35 +339,42 @@ package body GPS.LSP_Module is
 
    overriding
    procedure On_Publish_Diagnostics
-     (Self     : access Module_Id_Record;
-      Params   : LSP.Messages.PublishDiagnosticsParams;
-      Language : VSS.Strings.Virtual_String);
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.PublishDiagnosticsParams);
 
    overriding
    procedure On_Show_Message
-     (Self     : access Module_Id_Record;
-      Value    : LSP.Messages.ShowMessageParams;
-      Language : VSS.Strings.Virtual_String);
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.ShowMessageParams);
 
    overriding
    procedure On_Log_Message
-     (Self     : access Module_Id_Record;
-      Value    : LSP.Messages.LogMessageParams;
-      Language : VSS.Strings.Virtual_String);
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.LogMessageParams);
 
    overriding
-   function Get_Progress_Type
-     (Self : access Module_Id_Record; Token : LSP.Types.LSP_Number_Or_String)
-      return LSP.Client_Notification_Receivers_3_16.Progress_Value_Kind;
+   procedure On_Progress_Begin
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressBegin);
 
    overriding
-   procedure On_Progress
-     (Self : access Module_Id_Record; Value : LSP.Messages.Progress_Params);
+   procedure On_Progress_Report
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressReport);
 
    overriding
-   procedure On_Progress_SymbolInformation_Vector
-     (Self   : access Module_Id_Record;
-      Params : LSP.Messages.Progress_SymbolInformation_Vector);
+   procedure On_Progress_End
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressEnd);
 
    procedure Initiate_Server_Shutdown
      (Server         :
@@ -714,7 +722,7 @@ package body GPS.LSP_Module is
       --  After each location change, request whether there are CodeActions
       --  available for this location.
       declare
-         Capabilities : constant LSP.Messages.ServerCapabilities :=
+         Capabilities : constant LSP.Structures.ServerCapabilities :=
            Server.Get_Client.Capabilities;
       begin
          if Me_Code_Actions.Active
@@ -954,7 +962,7 @@ package body GPS.LSP_Module is
          end if;
 
          S.Client.Set_On_Server_Capabilities (On_Server_Capabilities);
-         S.Client.Set_Notification_Handler (Module);
+         S.Client.Set_Notification_Handler (S'Unchecked_Access);
          Module.Language_Servers.Insert (Language, Server);
          S.Start;
       end;
@@ -1063,7 +1071,7 @@ package body GPS.LSP_Module is
 
    function Get_Running_Request
      (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Id     : LSP.Types.LSP_Number_Or_String)
+      Id     : LSP.Structures.Integer_Or_Virtual_String)
       return GPS.LSP_Client.Requests.Request_Access
    is
       S :
@@ -1437,12 +1445,14 @@ package body GPS.LSP_Module is
 
    overriding
    procedure On_Publish_Diagnostics
-     (Self     : access Module_Id_Record;
-      Params   : LSP.Messages.PublishDiagnosticsParams;
-      Language : VSS.Strings.Virtual_String)
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.PublishDiagnosticsParams)
    is
+      Lang : constant Language_Access := Self.Lookup_Language (Server);
+
       function To_Importance
-        (Item : LSP.Messages.Optional_DiagnosticSeverity)
+        (Item : LSP.Structures.DiagnosticSeverity_Optional)
          return GPS.Kernel.Messages.Message_Importance_Type;
       --  Convert LSP's DiagnosticSeverity type to GNAT Studio's
       --  Message_Importance_Type.
@@ -1459,28 +1469,33 @@ package body GPS.LSP_Module is
       --  to their importance.
 
       function Get_Category
-        (Diag : LSP.Messages.Diagnostic) return VSS.Strings.Virtual_String;
+        (Diag : LSP.Structures.Diagnostic) return VSS.Strings.Virtual_String;
       --  Return the message category of Diag
 
       function Contains
-        (Messages : Message_Array; Diag : LSP.Messages.Diagnostic)
+        (Messages : Message_Array; Diag : LSP.Structures.Diagnostic)
          return Boolean;
       --  Return True if Diag is already in messages
 
       function Contains
         (Messages : Message_Array;
-         Info     : LSP.Messages.DiagnosticRelatedInformation) return Boolean;
+         Info     : LSP.Structures.DiagnosticRelatedInformation)
+         return Boolean;
       --  Return True if Info is already in messages
 
       function Compare_Diagnostics
-        (Diagnostics : LSP.Messages.Diagnostic_Vector;
+        (Diagnostics : LSP.Structures.Diagnostic_Vector;
          File        : GNATCOLL.VFS.Virtual_File) return Boolean;
       --  Return True if the Diagnostics are still the same
 
+      Language  : constant VSS.Strings.Virtual_String :=
+        (if Lang = null
+         then VSS.Strings.Empty_Virtual_String
+         else VSS.Strings.Conversions.To_Virtual_String (Lang.Get_Name));
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
         Self.Get_Kernel.Get_Messages_Container;
       File      : constant GNATCOLL.VFS.Virtual_File :=
-        GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
+        GPS.LSP_Client.Utilities.To_Virtual_File (Value.uri);
       Holder    : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
 
@@ -1489,7 +1504,7 @@ package body GPS.LSP_Module is
       -------------------
 
       function To_Importance
-        (Item : LSP.Messages.Optional_DiagnosticSeverity)
+        (Item : LSP.Structures.DiagnosticSeverity_Optional)
          return GPS.Kernel.Messages.Message_Importance_Type is
       begin
          if not Item.Is_Set then
@@ -1497,16 +1512,16 @@ package body GPS.LSP_Module is
 
          else
             case Item.Value is
-               when LSP.Messages.Error       =>
+               when LSP.Enumerations.Error       =>
                   return GPS.Kernel.Messages.High;
 
-               when LSP.Messages.Warning     =>
+               when LSP.Enumerations.Warning     =>
                   return GPS.Kernel.Messages.Medium;
 
-               when LSP.Messages.Information =>
+               when LSP.Enumerations.Information =>
                   return GPS.Kernel.Messages.Low;
 
-               when LSP.Messages.Hint        =>
+               when LSP.Enumerations.Hint        =>
                   return GPS.Kernel.Messages.Informational;
             end case;
          end if;
@@ -1517,14 +1532,14 @@ package body GPS.LSP_Module is
       --------------
 
       function Contains
-        (Messages : Message_Array; Diag : LSP.Messages.Diagnostic)
+        (Messages : Message_Array; Diag : LSP.Structures.Diagnostic)
          return Boolean
       is
          use type Basic_Types.Visible_Column_Type;
          use type VSS.Strings.Virtual_String;
          Location : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Diag.span.first);
+             (Holder.Editor, Diag.a_range.start);
       begin
          for Msg of Messages loop
             --  The primary message must match a diagnostics
@@ -1564,7 +1579,7 @@ package body GPS.LSP_Module is
 
       function Contains
         (Messages : Message_Array;
-         Info     : LSP.Messages.DiagnosticRelatedInformation) return Boolean
+         Info     : LSP.Structures.DiagnosticRelatedInformation) return Boolean
       is
          use GPS.Editors;
          use type Basic_Types.Visible_Column_Type;
@@ -1574,7 +1589,7 @@ package body GPS.LSP_Module is
            Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
          Start_Loc : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Info.location.span.first);
+             (Holder.Editor, Info.location.a_range.start);
       begin
          for Msg of Messages loop
             if VSS.Strings.Conversions.To_Virtual_String (Msg.Get_Text)
@@ -1594,14 +1609,14 @@ package body GPS.LSP_Module is
       ------------------
 
       function Get_Category
-        (Diag : LSP.Messages.Diagnostic) return VSS.Strings.Virtual_String
+        (Diag : LSP.Structures.Diagnostic) return VSS.Strings.Virtual_String
       is
          use type VSS.Strings.Virtual_String;
       begin
          return
            Diagnostics_Messages_Category_Prefix
            & ": "
-           & (if Diag.source.Is_Set then Diag.source.Value else Language);
+           & (if not Diag.source.Is_Empty then Diag.source else Language);
       end Get_Category;
 
       -------------------------
@@ -1609,7 +1624,7 @@ package body GPS.LSP_Module is
       -------------------------
 
       function Compare_Diagnostics
-        (Diagnostics : LSP.Messages.Diagnostic_Vector;
+        (Diagnostics : LSP.Structures.Diagnostic_Vector;
          File        : GNATCOLL.VFS.Virtual_File) return Boolean
       is
          use type VSS.Strings.Virtual_String;
@@ -1645,17 +1660,20 @@ package body GPS.LSP_Module is
       end Compare_Diagnostics;
 
    begin
-      if Compare_Diagnostics (Params.diagnostics, File) then
+      if Lang = null then
+         return;
+      end if;
+
+      if Compare_Diagnostics (Value.diagnostics, File) then
          return;
       end if;
 
       Module.Remove_Diagnostics (File, Language);
 
-      for Diagnostic of Params.diagnostics loop
-         if Diagnostic.source.Is_Set then
+      for Diagnostic of Value.diagnostics loop
+         if not Diagnostic.source.Is_Empty then
             --  Register the source so we can clean it later
-            Module.Register_Diagnostic_Source
-              (Language, Diagnostic.source.Value);
+            Module.Register_Diagnostic_Source (Language, Diagnostic.source);
          else
             --  Use Language as the backup source
             Module.Register_Diagnostic_Source (Language, Language);
@@ -1666,7 +1684,7 @@ package body GPS.LSP_Module is
 
             Location   : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Diagnostic.span.first);
+                (Holder.Editor, Diagnostic.a_range.start);
             Importance : constant Message_Importance_Type :=
               To_Importance (Diagnostic.severity);
             Flags      : constant Message_Flags :=
@@ -1710,13 +1728,14 @@ package body GPS.LSP_Module is
                  GPS.Default_Styles.Messages_Styles
                    (To_Importance (Diagnostic.severity)),
                Length =>
-                 (if Diagnostic.span.last.line = Diagnostic.span.first.line
+                 (if Diagnostic.a_range.an_end.line
+                    = Diagnostic.a_range.start.line
                   then
                     Highlight_Length'Min
                       (1,
                        Highlight_Length
-                         (Diagnostic.span.last.character
-                          - Diagnostic.span.first.character))
+                         (Diagnostic.a_range.an_end.character
+                          - Diagnostic.a_range.start.character))
                   else Highlight_Whole_Line));
 
             --  For each related information, create a secondary message
@@ -1732,7 +1751,7 @@ package body GPS.LSP_Module is
                       (File => File);
                   Start_Loc : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                      (Holder.Editor, Info.location.span.first);
+                      (Holder.Editor, Info.location.a_range.start);
 
                   SLOC_Prefix : constant String :=
                     File.Display_Base_Name
@@ -1769,26 +1788,26 @@ package body GPS.LSP_Module is
 
    overriding
    procedure On_Show_Message
-     (Self     : access Module_Id_Record;
-      Value    : LSP.Messages.ShowMessageParams;
-      Language : VSS.Strings.Virtual_String)
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.ShowMessageParams)
    is
-      pragma Unreferenced (Language);
+      pragma Unreferenced (Server);
       Mode   : GPS.Messages_Windows.Message_Type;
       Is_Log : Boolean := False;   --  Whether the message is a log
    begin
       --  Convert the message type to a GNAT STudio type
       case Value.a_type is
-         when LSP.Messages.Error   =>
+         when LSP.Enumerations.Error   =>
             Mode := GPS.Messages_Windows.Error;
 
-         when LSP.Messages.Warning =>
+         when LSP.Enumerations.Warning =>
             Mode := GPS.Messages_Windows.Info;
 
-         when LSP.Messages.Info    =>
+         when LSP.Enumerations.Info    =>
             Mode := GPS.Messages_Windows.Info;
 
-         when LSP.Messages.Log     =>
+         when LSP.Enumerations.Log     =>
             Is_Log := True;
       end case;
 
@@ -1812,14 +1831,14 @@ package body GPS.LSP_Module is
 
    overriding
    procedure On_Log_Message
-     (Self     : access Module_Id_Record;
-      Value    : LSP.Messages.LogMessageParams;
-      Language : VSS.Strings.Virtual_String)
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.LogMessageParams)
    is
-      pragma Unreferenced (Language);
+      pragma Unreferenced (Server);
    begin
       case Value.a_type is
-         when LSP.Messages.Log =>
+         when LSP.Enumerations.Log =>
             declare
                File : GNATCOLL.VFS.Virtual_File;
 
@@ -1833,16 +1852,16 @@ package body GPS.LSP_Module is
                       (VSS.Strings.Conversions.To_UTF_8_String
                          (Match.Captured (1)));
 
-                  for Server of
+                  for S of
                     Module.Language_Servers
-                    when Server.Get_Client.Language.Get_Name = "Ada"
+                    when S.Get_Client.Language.Get_Name = "Ada"
                   loop
-                     Server.Get_Client.Set_Standard_Errors_File (File);
+                     S.Get_Client.Set_Standard_Errors_File (File);
                   end loop;
                end if;
             end;
 
-         when others           =>
+         when others               =>
             null;
       end case;
    end On_Log_Message;
@@ -1851,155 +1870,166 @@ package body GPS.LSP_Module is
    -- Get_Progress_Type --
    -----------------------
 
-   overriding
-   function Get_Progress_Type
-     (Self : access Module_Id_Record; Token : LSP.Types.LSP_Number_Or_String)
-      return LSP.Client_Notification_Receivers_3_16.Progress_Value_Kind is
-   begin
-      return LSP.Client_Notification_Receivers_3_16.ProgressParams;
-   end Get_Progress_Type;
+   -------------------------------------
+   -- Get_Or_Create_Scheduled_Command --
+   -------------------------------------
 
-   -----------------
-   -- On_Progress --
-   -----------------
-
-   overriding
-   procedure On_Progress
-     (Self : access Module_Id_Record; Value : LSP.Messages.Progress_Params)
+   function Get_Or_Create_Scheduled_Command
+     (Self  : in out Module_Id_Record'Class;
+      Key   : LSP.Structures.ProgressToken;
+      Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access
    is
-      use LSP.Messages;
+      S      : Scheduled_Command_Access;
+      C      : Language_Server_Progress_Command_Access;
+      Cursor : constant Token_Command_Maps.Cursor :=
+        Self.Token_To_Command.Find (Key);
+   begin
+      if Token_Command_Maps.Has_Element (Cursor) then
+         return Token_Command_Maps.Element (Cursor);
 
-      S : Scheduled_Command_Access;
+      else
+         --  Start a monitoring command...
+         C := new Language_Server_Progress_Command;
+         C.Title := Title;
+         C.Key := Key;
+         S :=
+           Launch_Background_Command
+             (Kernel     => Self.Get_Kernel,
+              Command    => C,
+              Active     => False,
+              Show_Bar   => True,
+              Queue_Id   =>
+                VSS.Strings.Conversions.To_UTF_8_String
+                  ((case Key.Is_Integer is
+                      when True  =>
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Integer'Image (Key.Integer)),
+                      when False => Key.Virtual_String)),
+              Block_Exit => False);
 
-      function Get_Or_Create_Scheduled_Command
-        (Key : LSP_Number_Or_String; Title : VSS.Strings.Virtual_String)
-         return Scheduled_Command_Access;
-      --  Get the scheduled command for the given key, creating it if needed
+         --  ... and store it by its token identifier
+         Self.Token_To_Command.Insert (Key, S);
+         return S;
+      end if;
+   end Get_Or_Create_Scheduled_Command;
 
-      -------------------------------------
-      -- Get_Or_Create_Scheduled_Command --
-      -------------------------------------
+   -----------------------
+   -- On_Progress_Begin --
+   -----------------------
 
-      function Get_Or_Create_Scheduled_Command
-        (Key : LSP_Number_Or_String; Title : VSS.Strings.Virtual_String)
-         return Scheduled_Command_Access
-      is
-         S      : Scheduled_Command_Access;
-         C      : Language_Server_Progress_Command_Access;
-         Cursor : constant Token_Command_Maps.Cursor :=
-           Self.Token_To_Command.Find (Key);
-      begin
-         if Token_Command_Maps.Has_Element (Cursor) then
-            return Token_Command_Maps.Element (Cursor);
+   overriding
+   procedure On_Progress_Begin
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressBegin)
+   is
+      pragma Unreferenced (Server);
 
-         else
-            --  Start a monitoring command...
-            C := new Language_Server_Progress_Command;
-            C.Title := Title;
-            C.Key := Key;
-            S :=
-              Launch_Background_Command
-                (Kernel     => Self.Get_Kernel,
-                 Command    => C,
-                 Active     => False,
-                 Show_Bar   => True,
-                 Queue_Id   =>
-                   VSS.Strings.Conversions.To_UTF_8_String
-                     (LSP.Types.To_Virtual_String (Key)),
-                 Block_Exit => False);
+      S : constant Scheduled_Command_Access :=
+        Get_Or_Create_Scheduled_Command (Self, Token, Value.title);
+      pragma Unreferenced (S);
 
-            --  ... and store it by its token identifier
-            Self.Token_To_Command.Insert (Key, S);
-            return S;
-         end if;
-      end Get_Or_Create_Scheduled_Command;
+   begin
+      null;
+   end On_Progress_Begin;
+
+   ------------------------
+   -- On_Progress_Report --
+   ------------------------
+
+   overriding
+   procedure On_Progress_Report
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressReport)
+   is
+      pragma Unreferenced (Server);
 
       Default_Title : constant VSS.Strings.Virtual_String := "Indexing";
-      Progress_Set  : Boolean := False;
+      --  It could happen that the progress bar was cancelled when
+      --  a language server died. If this happens, we create a
+      --  scheduled command with a "fallback" value for the title.
+
+      S            : constant Scheduled_Command_Access :=
+        Get_Or_Create_Scheduled_Command (Self, Token, Default_Title);
+      Progress_Set : Boolean := False;
 
    begin
-      case Value.Kind is
-         when Progress_Begin  =>
-            S :=
-              Get_Or_Create_Scheduled_Command
-                (Value.Begin_Param.token, Value.Begin_Param.value.title);
+      if not Value.message.Is_Empty then
+         --  processed/total files may be in a message
+         declare
+            Match :
+              constant VSS.Regular_Expressions.Regular_Expression_Match :=
+                Progress_Pattern.Match (Value.message);
 
-         when Progress_Report =>
-            --  It could happen that the progress bar was cancelled when
-            --  a language server died. If this happens, we create a
-            --  scheduled command with a "fallback" value for the title.
-            S :=
-              Get_Or_Create_Scheduled_Command
-                (Value.Report_Param.token, Default_Title);
-
-            if Value.Report_Param.value.message.Is_Set then
-               --  processed/total files may be in a message
+         begin
+            if Match.Has_Match then
                declare
+                  Processed : constant Integer :=
+                    Integer'Wide_Wide_Value
+                      (VSS.Strings.Conversions.To_Wide_Wide_String
+                         (Match.Captured (1)));
 
-                  Message : constant VSS.Strings.Virtual_String :=
-                    Value.Report_Param.value.message.Value;
-
-                  Match :
-                    constant VSS
-                               .Regular_Expressions
-                               .Regular_Expression_Match :=
-                      Progress_Pattern.Match (Message);
-
+                  Total : constant Integer :=
+                    Integer'Wide_Wide_Value
+                      (VSS.Strings.Conversions.To_Wide_Wide_String
+                         (Match.Captured (2)));
                begin
-                  if Match.Has_Match then
-                     declare
-                        Processed : constant Integer :=
-                          Integer'Wide_Wide_Value
-                            (VSS.Strings.Conversions.To_Wide_Wide_String
-                               (Match.Captured (1)));
+                  S.Set_Progress
+                    ((Activity => Running,
+                      Current  => Processed,
+                      Total    => Total));
 
-                        Total : constant Integer :=
-                          Integer'Wide_Wide_Value
-                            (VSS.Strings.Conversions.To_Wide_Wide_String
-                               (Match.Captured (2)));
-                     begin
-                        S.Set_Progress
-                          ((Activity => Running,
-                            Current  => Processed,
-                            Total    => Total));
-
-                        Progress_Set := True;
-                     end;
-                  end if;
+                  Progress_Set := True;
                end;
             end if;
+         end;
+      end if;
 
-            if not Progress_Set then
-               S.Set_Progress
-                 ((Activity => Running,
-                   --  The LSP supports giving the value as percentage, not
-                   --  as current/total.
-                   Current  =>
-                     Integer (Value.Report_Param.value.percentage.Value),
-                   Total    => 100));
-            end if;
+      if not Progress_Set then
+         S.Set_Progress
+           ((Activity => Running,
+             --  The LSP supports giving the value as percentage, not
+             --  as current/total.
+             Current  =>
+               (if Value.percentage.Is_Set
+                then Integer (Value.percentage.Value)
+                else 0),
+             Total    => 100));
+      end if;
+   end On_Progress_Report;
 
-         when Progress_End    =>
-            --  Make the action self-destruct at the next call to Execute,
-            --  and remove it right now from the associating array.
-            declare
-               Cursor : Token_Command_Maps.Cursor :=
-                 Self.Token_To_Command.Find (Value.End_Param.token);
-            begin
-               if Token_Command_Maps.Has_Element (Cursor) then
-                  Language_Server_Progress_Command_Access
-                    (Token_Command_Maps.Element (Cursor).Get_Command)
-                    .Action :=
-                    Success;
-                  Self.Token_To_Command.Delete (Cursor);
+   ---------------------
+   -- On_Progress_End --
+   ---------------------
 
-               else
-                  GNATCOLL.Traces.Trace
-                    (Me_LSP_Logs, "No command on progress end");
-               end if;
-            end;
-      end case;
-   end On_Progress;
+   overriding
+   procedure On_Progress_End
+     (Self   : in out Module_Id_Record;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressEnd)
+   is
+      pragma Unreferenced (Server, Value);
+
+      --  Make the action self-destruct at the next call to Execute,
+      --  and remove it right now from the associating array.
+      Cursor : Token_Command_Maps.Cursor := Self.Token_To_Command.Find (Token);
+
+   begin
+      if Token_Command_Maps.Has_Element (Cursor) then
+         Language_Server_Progress_Command_Access
+           (Token_Command_Maps.Element (Cursor).Get_Command)
+           .Action :=
+           Success;
+         Self.Token_To_Command.Delete (Cursor);
+
+      else
+         GNATCOLL.Traces.Trace (Me_LSP_Logs, "No command on progress end");
+      end if;
+   end On_Progress_End;
 
    ---------------
    -- Interrupt --
@@ -2016,18 +2046,6 @@ package body GPS.LSP_Module is
          Module.Token_To_Command.Delete (Command.Key);
       end if;
    end Interrupt;
-
-   ------------------------------------------
-   -- On_Progress_SymbolInformation_Vector --
-   ------------------------------------------
-
-   overriding
-   procedure On_Progress_SymbolInformation_Vector
-     (Self   : access Module_Id_Record;
-      Params : LSP.Messages.Progress_SymbolInformation_Vector) is
-   begin
-      raise Program_Error;
-   end On_Progress_SymbolInformation_Vector;
 
    ---------------------
    -- Register_Module --

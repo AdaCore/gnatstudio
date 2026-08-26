@@ -20,7 +20,7 @@ private with Ada.Containers.Indefinite_Vectors;
 
 with GNATCOLL.VFS;
 
-private with LSP.Messages;
+private with LSP.Structures;
 private with VSS.Strings;
 
 with GPS.Editors;
@@ -48,8 +48,8 @@ private
    type Action_Kind_Type is (Insert, Remove);
 
    type Action (Kind : Action_Kind_Type) is record
-      Start_Location : LSP.Messages.Position;
-      End_Location   : LSP.Messages.Position;
+      Start_Location : LSP.Structures.Position;
+      End_Location   : LSP.Structures.Position;
 
       case Kind is
          when Insert =>
@@ -81,7 +81,7 @@ private
    function Get_Did_Change_Message
      (Self : in out Src_Editor_Handler;
       Mode : GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type)
-      return LSP.Messages.DidChangeTextDocumentParams;
+      return LSP.Structures.DidChangeTextDocumentParams;
    --  Returns message to be send to the server. Called by server manager
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.

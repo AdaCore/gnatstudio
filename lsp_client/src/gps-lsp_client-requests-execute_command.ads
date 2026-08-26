@@ -15,8 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.JSON;
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 with VSS.Strings;
+
+with LSP.Enumerations;
+with LSP.Structures;
 
 package GPS.LSP_Client.Requests.Execute_Command is
 
@@ -31,7 +35,7 @@ package GPS.LSP_Client.Requests.Execute_Command is
 
    function Params
      (Self : Abstract_Execute_Command_Request)
-      return LSP.Messages.ExecuteCommandParams
+      return LSP.Structures.ExecuteCommandParams
    is abstract;
    --  Return parameters of the request to be sent to the server.
 
@@ -42,9 +46,8 @@ package GPS.LSP_Client.Requests.Execute_Command is
    overriding
    procedure On_Error_Message
      (Self    : in out Abstract_Execute_Command_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Method
@@ -53,17 +56,17 @@ package GPS.LSP_Client.Requests.Execute_Command is
 
    overriding
    procedure Params
-     (Self   : Abstract_Execute_Command_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Execute_Command_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Execute_Command_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Execute_Command_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Execute_Command_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Execute_Command;

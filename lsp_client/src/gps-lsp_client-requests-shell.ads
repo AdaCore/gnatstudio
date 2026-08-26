@@ -17,7 +17,14 @@
 
 --  LSP request to be used by scripting languages integration.
 
+with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
+
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Enumerations;
+with LSP.Structures;
 
 package GPS.LSP_Client.Requests.Shell is
 
@@ -42,25 +49,24 @@ package GPS.LSP_Client.Requests.Shell is
 
    overriding
    procedure Params
-     (Self   : Shell_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Shell_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
-     (Self : Shell_Request; Options : LSP.Messages.ServerCapabilities)
+     (Self : Shell_Request; Options : LSP.Structures.ServerCapabilities)
       return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Shell_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Shell_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    overriding
    procedure On_Error_Message
      (Self    : in out Shell_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    procedure On_Rejected (Self : in out Shell_Request; Reason : Reject_Reason);

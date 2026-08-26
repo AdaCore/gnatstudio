@@ -15,21 +15,25 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Structures;
+
 package GPS.LSP_Client.Requests.Hover is
 
    type Abstract_Hover_Request is abstract new LSP_Request with record
       File     : Virtual_File;
-      Position : LSP.Messages.Position;
+      Position : LSP.Structures.Position;
    end record;
 
    function Params
-     (Self : Abstract_Hover_Request)
-      return LSP.Messages.TextDocumentPositionParams;
+     (Self : Abstract_Hover_Request) return LSP.Structures.HoverParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Hover_Request;
-      Result : LSP.Messages.Optional_Hover)
+      Result : LSP.Structures.Hover_Or_Null)
    is abstract;
    --  Called when a result response is received from the server.
 
@@ -39,18 +43,18 @@ package GPS.LSP_Client.Requests.Hover is
 
    overriding
    procedure Params
-     (Self   : Abstract_Hover_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Hover_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
-     (Self : Abstract_Hover_Request; Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+     (Self    : Abstract_Hover_Request;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Hover_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Hover_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    overriding
    function Auto_Cancel

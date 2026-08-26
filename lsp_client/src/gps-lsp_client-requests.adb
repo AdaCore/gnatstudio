@@ -62,7 +62,8 @@ package body GPS.LSP_Client.Requests is
    -- Id --
    --------
 
-   function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String is
+   function Id
+     (Self : LSP_Request) return LSP.Structures.Integer_Or_Virtual_String is
    begin
       return Self.Id;
    end Id;
@@ -72,7 +73,8 @@ package body GPS.LSP_Client.Requests is
    ------------
 
    procedure Set_Id
-     (Self : in out LSP_Request; Id : LSP.Types.LSP_Number_Or_String) is
+     (Self : in out LSP_Request; Id : LSP.Structures.Integer_Or_Virtual_String)
+   is
    begin
       Self.Id := Id;
    end Set_Id;

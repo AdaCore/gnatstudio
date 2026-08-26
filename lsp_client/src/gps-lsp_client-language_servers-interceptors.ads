@@ -25,6 +25,8 @@
 
 with Ada.Strings.Unbounded;
 
+with LSP.Structures;
+
 package GPS.LSP_Client.Language_Servers.Interceptors is
 
    type Server_Listener is limited interface;
@@ -56,6 +58,45 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
       Data   : Ada.Strings.Unbounded.Unbounded_String)
    is null;
    --  Called when response message from GNAT Studio has been sent.
+
+   procedure On_Progress_Begin
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressBegin)
+   is null;
+
+   procedure On_Progress_Report
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressReport)
+   is null;
+
+   procedure On_Progress_End
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Token  : LSP.Structures.ProgressToken;
+      Value  : LSP.Structures.WorkDoneProgressEnd)
+   is null;
+
+   procedure On_Publish_Diagnostics
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.PublishDiagnosticsParams)
+   is null;
+
+   procedure On_Show_Message
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.ShowMessageParams)
+   is null;
+
+   procedure On_Log_Message
+     (Self   : in out Server_Listener;
+      Server : not null Language_Server_Access;
+      Value  : LSP.Structures.LogMessageParams)
+   is null;
 
    type Request_Listener is limited interface;
    --  Intercepts lifecycle of the requests

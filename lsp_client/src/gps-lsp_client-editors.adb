@@ -19,7 +19,6 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Gtk.Widget; use Gtk.Widget;
 
-with LSP.Types;
 with VSS.Strings.Conversions;
 
 with Language;                        use Language;
@@ -205,16 +204,16 @@ package body GPS.LSP_Client.Editors is
    function Get_Did_Change_Message
      (Self : in out Src_Editor_Handler;
       Mode : GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type)
-      return LSP.Messages.DidChangeTextDocumentParams
+      return LSP.Structures.DidChangeTextDocumentParams
    is
-      Changes : LSP.Messages.TextDocumentContentChangeEvent_Vector;
+      Changes : LSP.Structures.TextDocumentContentChangeEvent_Vector;
 
       Buffer : constant Editor_Buffer'Class := Get_Buffer (Self);
    begin
       case Mode is
          when GPS.LSP_Client.Text_Documents.Full        =>
             Changes.Append
-              (LSP.Messages.TextDocumentContentChangeEvent'
+              (LSP.Structures.TextDocumentContentChangeEvent'
                  (text   =>
                     Buffer.Get_Text
                       (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer),
@@ -225,24 +224,24 @@ package body GPS.LSP_Client.Editors is
                case Action.Kind is
                   when Insert =>
                      Changes.Append
-                       (LSP.Messages.TextDocumentContentChangeEvent'
-                          (span   =>
+                       (LSP.Structures.TextDocumentContentChangeEvent'
+                          (a_range =>
                              (Is_Set => True,
                               Value  =>
-                                (first => Action.Start_Location,
-                                 last  => Action.End_Location)),
-                           text   => Action.Text,
-                           others => <>));
+                                (start  => Action.Start_Location,
+                                 an_end => Action.End_Location)),
+                           text    => Action.Text,
+                           others  => <>));
 
                   when Remove =>
                      Changes.Append
-                       (LSP.Messages.TextDocumentContentChangeEvent'
-                          (span   =>
+                       (LSP.Structures.TextDocumentContentChangeEvent'
+                          (a_range =>
                              (Is_Set => True,
                               Value  =>
-                                (first => Action.Start_Location,
-                                 last  => Action.End_Location)),
-                           others => <>));
+                                (start  => Action.Start_Location,
+                                 an_end => Action.End_Location)),
+                           others  => <>));
                end case;
             end loop;
       end case;
@@ -251,8 +250,9 @@ package body GPS.LSP_Client.Editors is
 
       return
         (textDocument   =>
-           (uri     => GPS.LSP_Client.Utilities.To_URI (Self.File),
-            version => LSP.Types.LSP_Number (Buffer.Version)),
+           (LSP.Structures.TextDocumentIdentifier'
+              (uri => GPS.LSP_Client.Utilities.To_URI (Self.File))
+            with version => Buffer.Version),
          contentChanges => Changes);
    end Get_Did_Change_Message;
 

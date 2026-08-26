@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -41,13 +42,19 @@ package body GPS.LSP_Client.Requests.Rename is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Rename_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Rename_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Edit : LSP.Messages.WorkspaceEdit;
+      Edit_Or_Null : LSP.Structures.WorkspaceEdit_Or_Null;
+      Edit         : LSP.Structures.WorkspaceEdit;
 
    begin
-      LSP.Messages.WorkspaceEdit'Read (Stream, Edit);
+      LSP.Inputs.Read_WorkspaceEdit_Or_Null (Handler, Edit_Or_Null);
+
+      if not Edit_Or_Null.Is_Null then
+         Edit := Edit_Or_Null.Value;
+      end if;
+
       Abstract_Rename_Request'Class (Self).On_Result_Message (Edit);
    end On_Result_Message;
 
@@ -56,7 +63,7 @@ package body GPS.LSP_Client.Requests.Rename is
    ------------
 
    function Params
-     (Self : Abstract_Rename_Request) return LSP.Messages.RenameParams is
+     (Self : Abstract_Rename_Request) return LSP.Structures.RenameParams is
    begin
       return
         (textDocument  =>
@@ -73,7 +80,7 @@ package body GPS.LSP_Client.Requests.Rename is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Rename_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.renameProvider.Is_Set;
    end Is_Request_Supported;
@@ -84,10 +91,10 @@ package body GPS.LSP_Client.Requests.Rename is
 
    overriding
    procedure Params
-     (Self   : Abstract_Rename_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Rename_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.RenameParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_RenameParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.Rename;

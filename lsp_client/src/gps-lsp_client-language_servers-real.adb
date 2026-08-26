@@ -20,6 +20,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.LSP_Client.Requests.Internals;
 with GPS.LSP_Client.Language_Servers.Interceptors;
+with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Language_Servers.Real is
 
@@ -55,8 +56,12 @@ package body GPS.LSP_Client.Language_Servers.Real is
                --  Send WorkspaceDidChangeConfiguration notification when
                --  where is something to send.
 
-               Self.Client.On_DidChangeConfiguration_Notification
-                 ((settings => (Settings with null record)));
+               Self
+                 .Client
+                 .Send_Notification
+                 .On_DidChangeConfiguration_Notification
+                    ((settings =>
+                        GPS.LSP_Client.Utilities.To_LSP_Any (Settings)));
             end if;
          end;
       end if;
@@ -219,6 +224,85 @@ package body GPS.LSP_Client.Language_Servers.Real is
       end if;
    end On_Send_Request;
 
+   ------------------------
+   -- On_Progress_Begin --
+   ------------------------
+
+   overriding
+   procedure On_Progress_Begin
+     (Self  : in out Real_Language_Server;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressBegin) is
+   begin
+      Self.Server_Interceptor.On_Progress_Begin
+        (Self'Unchecked_Access, Token, Value);
+   end On_Progress_Begin;
+
+   -------------------------
+   -- On_Progress_Report --
+   -------------------------
+
+   overriding
+   procedure On_Progress_Report
+     (Self  : in out Real_Language_Server;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressReport) is
+   begin
+      Self.Server_Interceptor.On_Progress_Report
+        (Self'Unchecked_Access, Token, Value);
+   end On_Progress_Report;
+
+   ----------------------
+   -- On_Progress_End --
+   ----------------------
+
+   overriding
+   procedure On_Progress_End
+     (Self  : in out Real_Language_Server;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressEnd) is
+   begin
+      Self.Server_Interceptor.On_Progress_End
+        (Self'Unchecked_Access, Token, Value);
+   end On_Progress_End;
+
+   -----------------------------------------
+   -- On_PublishDiagnostics_Notification --
+   -----------------------------------------
+
+   overriding
+   procedure On_PublishDiagnostics_Notification
+     (Self  : in out Real_Language_Server;
+      Value : LSP.Structures.PublishDiagnosticsParams) is
+   begin
+      Self.Server_Interceptor.On_Publish_Diagnostics
+        (Self'Unchecked_Access, Value);
+   end On_PublishDiagnostics_Notification;
+
+   -----------------------------------
+   -- On_ShowMessage_Notification --
+   -----------------------------------
+
+   overriding
+   procedure On_ShowMessage_Notification
+     (Self  : in out Real_Language_Server;
+      Value : LSP.Structures.ShowMessageParams) is
+   begin
+      Self.Server_Interceptor.On_Show_Message (Self'Unchecked_Access, Value);
+   end On_ShowMessage_Notification;
+
+   ----------------------------------
+   -- On_LogMessage_Notification --
+   ----------------------------------
+
+   overriding
+   procedure On_LogMessage_Notification
+     (Self  : in out Real_Language_Server;
+      Value : LSP.Structures.LogMessageParams) is
+   begin
+      Self.Server_Interceptor.On_Log_Message (Self'Unchecked_Access, Value);
+   end On_LogMessage_Notification;
+
    -----------------------
    -- On_Server_Started --
    -----------------------
@@ -250,8 +334,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
            +Self.Configuration.Server_Program.Full_Name.all,
          Arguments              => Self.Configuration.Server_Arguments,
          Initialization_Options =>
-           (True,
-            (Self.Configuration.Configuration_Settings with null record)));
+           GPS.LSP_Client.Utilities.To_LSP_Any
+             (Self.Configuration.Configuration_Settings));
    end Start;
 
    --------------
@@ -274,8 +358,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    begin
       Self.Client.Restart
         (Initialization_Options =>
-           (True,
-            (Self.Configuration.Configuration_Settings with null record)));
+           GPS.LSP_Client.Utilities.To_LSP_Any
+             (Self.Configuration.Configuration_Settings));
    end Restart;
 
    -------------------------
@@ -283,7 +367,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -------------------------
 
    function Get_Running_Request
-     (Self : Real_Language_Server'Class; Id : LSP.Types.LSP_Number_Or_String)
+     (Self : Real_Language_Server'Class;
+      Id   : LSP.Structures.Integer_Or_Virtual_String)
       return GPS.LSP_Client.Requests.Request_Access is
    begin
       return Self.Client.Get_Running_Request (Id);

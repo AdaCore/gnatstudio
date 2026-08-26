@@ -24,13 +24,13 @@ package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
    with record
       Project  : GNATCOLL.Projects.Project_Type;
       File     : GNATCOLL.VFS.Virtual_File;
-      Position : LSP.Messages.Position;
+      Position : LSP.Structures.Position;
    end record;
 
    overriding
    function Params
      (Self : Abstract_Named_Parameters_Command_Request)
-      return LSP.Messages.ExecuteCommandParams;
+      return LSP.Structures.ExecuteCommandParams;
    --  Return parameters of the request to be sent to the server.
 
    overriding

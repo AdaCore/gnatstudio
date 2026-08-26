@@ -27,9 +27,8 @@ package GPS.LSP_Client.Requests.Execute_Command.Reload_Project is
    overriding
    procedure On_Error_Message
      (Self    : in out Reload_Project_Command_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is null;
 
    overriding
@@ -40,11 +39,10 @@ package GPS.LSP_Client.Requests.Execute_Command.Reload_Project is
    overriding
    function Params
      (Self : Reload_Project_Command_Request)
-      return LSP.Messages.ExecuteCommandParams
-   is (Is_Unknown => True,
-       command    => Self.Command_Name,
-       arguments  => (Is_Set => True, Value => <>),
-       others     => <>);
+      return LSP.Structures.ExecuteCommandParams
+   is (workDoneToken => (Is_Set => False),
+       command       => Self.Command_Name,
+       arguments     => <>);
    --  Return parameters of the request to be sent to the server.
 
 end GPS.LSP_Client.Requests.Execute_Command.Reload_Project;

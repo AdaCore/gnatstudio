@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 with GPS.LSP_Client.Editors.Code_Actions.Dialog;
 
 package body GPS.LSP_Client.Requests.Check_Syntax is
@@ -40,14 +41,14 @@ package body GPS.LSP_Client.Requests.Check_Syntax is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Check_Syntax_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Check_Syntax_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
       pragma Unreferenced (Self);
-      Response : LSP.Messages.ALS_Check_Syntax_Result;
+      Response : LSP.Structures.AlsCheckSyntaxResult;
 
    begin
-      LSP.Messages.ALS_Check_Syntax_Result'Read (Stream, Response);
+      LSP.Inputs.Read_AlsCheckSyntaxResult (Handler, Response);
       GPS.LSP_Client.Editors.Code_Actions.Dialog.Set_Result_Message (Response);
    end On_Result_Message;
 
@@ -57,11 +58,11 @@ package body GPS.LSP_Client.Requests.Check_Syntax is
 
    overriding
    procedure Params
-     (Self   : Check_Syntax_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Check_Syntax_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.ALS_Check_Syntax_Params'Write
-        (Stream, (Self.Input, Self.Rules));
+      LSP.Outputs.Write_AlsCheckSyntaxParams
+        (Handler, (input => Self.Input, rules => Self.Rules));
    end Params;
 
 end GPS.LSP_Client.Requests.Check_Syntax;

@@ -26,11 +26,10 @@ with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Called_By; use GPS.LSP_Client.Requests.Called_By;
 with GPS.LSP_Client.Utilities;          use GPS.LSP_Client.Utilities;
 with GPS.LSP_Module;                    use GPS.LSP_Module;
-with GNATCOLL.JSON;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with Language;                          use Language;
-with LSP.Messages;                      use LSP.Messages;
-with LSP.Types;                         use LSP.Types;
+with LSP.Enumerations;                  use LSP.Enumerations;
+with LSP.Structures;                    use LSP.Structures;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with Basic_Types;                       use Basic_Types;
 
@@ -84,7 +83,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Prepare_Call_Hierarchy_Request;
-      Result : LSP.Messages.CallHierarchyItem_Vector);
+      Result : LSP.Structures.CallHierarchyItem_Vector);
 
    overriding
    procedure On_Rejected
@@ -93,9 +92,8 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Get_Task_Label
@@ -114,7 +112,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Called_By_Request;
-      Result : LSP.Messages.CallHierarchyIncomingCall_Vector);
+      Result : LSP.Structures.CallHierarchyIncomingCall_Vector);
 
    overriding
    procedure On_Rejected
@@ -127,9 +125,8 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Called_By_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    --------------------
    -- Calls_Request  --
@@ -143,7 +140,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Calls_Request;
-      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector);
+      Result : LSP.Structures.CallHierarchyOutgoingCall_Vector);
 
    overriding
    procedure On_Rejected (Self : in out Calls_Request; Reason : Reject_Reason);
@@ -151,16 +148,15 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Calls_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    procedure Results_Received
      (Kernel   : Kernel_Handle;
       ID       : VSS.Strings.Virtual_String;
-      Item     : LSP.Messages.CallHierarchyItem;
-      Spans    : LSP.Messages.Span_Vector;
-      Kinds    : LSP.Messages.Boolean_Vector;
+      Item     : LSP.Structures.CallHierarchyItem;
+      Spans    : LSP.Structures.Range_Vector;
+      Kinds    : LSP.Structures.Boolean_Vector;
       Ref_File : Virtual_File);
    --  Common function to process the results from "Calls" and "Called By"
    --  requests.
@@ -175,7 +171,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Prepare_Call_Hierarchy_Request;
-      Result : LSP.Messages.CallHierarchyItem_Vector) is
+      Result : LSP.Structures.CallHierarchyItem_Vector) is
    begin
       for Item of Result loop
          declare
@@ -185,7 +181,7 @@ package body GPS.LSP_Client.Call_Tree is
             Location : constant Editor_Location'Class :=
               LSP_Position_To_Location
                 (Editor   => Holder.Editor,
-                 Position => Item.selectionRange.first);
+                 Position => Item.selectionRange.start);
          begin
             Call_Graph_Views.Finished_Prepare_Call_Hierarchy
               (Kernel  => Self.Kernel,
@@ -226,9 +222,8 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       Call_Graph_Views.Finished_Computing
         (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
@@ -241,7 +236,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Called_By_Request;
-      Result : LSP.Messages.CallHierarchyIncomingCall_Vector) is
+      Result : LSP.Structures.CallHierarchyIncomingCall_Vector) is
    begin
       for Item of Result loop
          --  According to documentation: "This is the range relative to the
@@ -267,7 +262,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Result_Message
      (Self   : in out Calls_Request;
-      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector)
+      Result : LSP.Structures.CallHierarchyOutgoingCall_Vector)
    is
       --  According to documentation: "This is the range relative to
       --  the caller, e.g the item passed to `callHierarchy/outgoingCalls`
@@ -295,9 +290,9 @@ package body GPS.LSP_Client.Call_Tree is
    procedure Results_Received
      (Kernel   : Kernel_Handle;
       ID       : VSS.Strings.Virtual_String;
-      Item     : LSP.Messages.CallHierarchyItem;
-      Spans    : LSP.Messages.Span_Vector;
-      Kinds    : LSP.Messages.Boolean_Vector;
+      Item     : LSP.Structures.CallHierarchyItem;
+      Spans    : LSP.Structures.Range_Vector;
+      Kinds    : LSP.Structures.Boolean_Vector;
       Ref_File : Virtual_File)
    is
       Decl_Name      : VSS.Strings.Virtual_String;
@@ -310,17 +305,17 @@ package body GPS.LSP_Client.Call_Tree is
       Ref_Column     : Integer;
       Kind_Index     : Integer := Kinds.First_Index;
 
-      procedure Get_Decl (X : LSP.Messages.CallHierarchyItem);
+      procedure Get_Decl (X : LSP.Structures.CallHierarchyItem);
       --  Retrieve declaration data and store them in local variables
 
-      procedure Get_Reference_Record (X : LSP.Messages.Span);
+      procedure Get_Reference_Record (X : LSP.Structures.A_Range);
       --  Retrieve the reference data and stotr them in local variables
 
       --------------
       -- Get_Decl --
       --------------
 
-      procedure Get_Decl (X : LSP.Messages.CallHierarchyItem) is
+      procedure Get_Decl (X : LSP.Structures.CallHierarchyItem) is
       begin
          Decl_File := To_Virtual_File (X.uri);
          Decl_Name := X.name;
@@ -330,7 +325,7 @@ package body GPS.LSP_Client.Call_Tree is
               Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, X.span.first);
+                (Holder.Editor, X.a_range.start);
 
          begin
             Decl_Line := Location.Line;
@@ -344,17 +339,16 @@ package body GPS.LSP_Client.Call_Tree is
       -- Get_Reference_Record --
       --------------------------
 
-      procedure Get_Reference_Record (X : LSP.Messages.Span) is
+      procedure Get_Reference_Record (X : LSP.Structures.A_Range) is
          use type VSS.Unicode.UTF16_Code_Unit_Count;
 
       begin
          if Kind_Index <= Kinds.Last_Index then
-            Is_Dispatching :=
-              Kinds (Kind_Index).Is_Set and then Kinds (Kind_Index).Value;
+            Is_Dispatching := Kinds (Kind_Index);
             Kind_Index := Kind_Index + 1;
          end if;
-         Ref_Line := Integer (X.first.line + 1);
-         Ref_Column := Integer (X.first.character + 1);
+         Ref_Line := Integer (X.start.line + 1);
+         Ref_Column := Integer (X.start.character + 1);
       end Get_Reference_Record;
    begin
       --  Add a child for each of the references found.
@@ -386,9 +380,8 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Called_By_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       Call_Graph_Views.Finished_Computing
         (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
@@ -401,9 +394,8 @@ package body GPS.LSP_Client.Call_Tree is
    overriding
    procedure On_Error_Message
      (Self    : in out Calls_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       Call_Graph_Views.Finished_Computing
         (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
@@ -488,7 +480,7 @@ package body GPS.LSP_Client.Call_Tree is
       Location : GPS.Editors.Editor_Location'Class)
    is
       R        : Called_By_Request_Access;
-      Position : constant LSP.Messages.Position :=
+      Position : constant LSP.Structures.Position :=
         Location_To_LSP_Position (Location);
    begin
       R :=
@@ -497,16 +489,19 @@ package body GPS.LSP_Client.Call_Tree is
            with
              Kernel => Self.Kernel,
              Item   =>
-               LSP.Messages.CallHierarchyItem'
+               LSP.Structures.CallHierarchyItem'
                  (uri            => To_URI (File),
-                  span           =>
-                    LSP.Messages.Span'(first => Position, last => Position),
+                  a_range        =>
+                    LSP.Structures.A_Range'
+                      (start => Position, an_end => Position),
                   selectionRange =>
-                    LSP.Messages.Span'(first => Position, last => Position),
-                  kind           => A_Function,
+                    LSP.Structures.A_Range'
+                      (start => Position, an_end => Position),
+                  kind           => LSP.Enumerations.A_Function,
                   name           => <>,
                   detail         => <>,
-                  tags           => (Is_Set => False)),
+                  tags           => (others => False),
+                  data           => <>),
              ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute
@@ -526,7 +521,7 @@ package body GPS.LSP_Client.Call_Tree is
       Location : GPS.Editors.Editor_Location'Class)
    is
       R        : Calls_Request_Access;
-      Position : constant LSP.Messages.Position :=
+      Position : constant LSP.Structures.Position :=
         Location_To_LSP_Position (Location);
    begin
       R :=
@@ -535,16 +530,19 @@ package body GPS.LSP_Client.Call_Tree is
            with
              Kernel => Self.Kernel,
              Item   =>
-               LSP.Messages.CallHierarchyItem'
+               LSP.Structures.CallHierarchyItem'
                  (uri            => To_URI (File),
-                  span           =>
-                    LSP.Messages.Span'(first => Position, last => Position),
+                  a_range        =>
+                    LSP.Structures.A_Range'
+                      (start => Position, an_end => Position),
                   selectionRange =>
-                    LSP.Messages.Span'(first => Position, last => Position),
-                  kind           => A_Function,
+                    LSP.Structures.A_Range'
+                      (start => Position, an_end => Position),
+                  kind           => LSP.Enumerations.A_Function,
                   name           => <>,
                   detail         => <>,
-                  tags           => (Is_Set => False)),
+                  tags           => (others => False),
+                  data           => <>),
              ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute

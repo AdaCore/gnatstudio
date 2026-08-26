@@ -15,21 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Structures;
+
 package GPS.LSP_Client.Requests.Signature_Help is
 
    type Abstract_Signature_Help_Request is abstract new LSP_Request with record
       File     : Virtual_File;
-      Position : LSP.Messages.Position;
-      Context  : LSP.Messages.Optional_SignatureHelpContext;
+      Position : LSP.Structures.Position;
+      Context  : LSP.Structures.SignatureHelpContext_Optional;
    end record;
 
    function Params
      (Self : Abstract_Signature_Help_Request)
-      return LSP.Messages.SignatureHelpParams;
+      return LSP.Structures.SignatureHelpParams;
 
    procedure On_Result_Message
      (Self   : in out Abstract_Signature_Help_Request;
-      Result : LSP.Messages.SignatureHelp)
+      Result : LSP.Structures.SignatureHelp_Or_Null)
    is abstract;
 
    overriding
@@ -39,17 +44,17 @@ package GPS.LSP_Client.Requests.Signature_Help is
 
    overriding
    procedure Params
-     (Self   : Abstract_Signature_Help_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Signature_Help_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Signature_Help_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Signature_Help_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Signature_Help_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Signature_Help;

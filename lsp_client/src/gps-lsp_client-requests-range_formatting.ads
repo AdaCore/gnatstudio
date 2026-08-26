@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Structures;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Range_Formatting is
@@ -22,18 +27,18 @@ package GPS.LSP_Client.Requests.Range_Formatting is
    type Abstract_Range_Formatting_Request is abstract
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
-      Span             : LSP.Messages.Span;
+      Span             : LSP.Structures.A_Range;
       Document_Version : Integer;
    end record;
 
    function Params
      (Self : Abstract_Range_Formatting_Request)
-      return LSP.Messages.DocumentRangeFormattingParams;
+      return LSP.Structures.DocumentRangeFormattingParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Range_Formatting_Request;
-      Result : LSP.Messages.TextEdit_Vector)
+      Result : LSP.Structures.TextEdit_Vector)
    is abstract;
    --  Called when a result response is received from the server.
 
@@ -44,17 +49,17 @@ package GPS.LSP_Client.Requests.Range_Formatting is
 
    overriding
    procedure Params
-     (Self   : Abstract_Range_Formatting_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Range_Formatting_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Range_Formatting_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Range_Formatting_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Range_Formatting_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Range_Formatting;

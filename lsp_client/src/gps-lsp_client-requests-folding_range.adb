@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -41,13 +42,13 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Folding_Range_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Folding_Range_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Response : LSP.Messages.FoldingRange_Vector;
+      Response : LSP.Structures.FoldingRange_Vector;
 
    begin
-      LSP.Messages.FoldingRange_Vector'Read (Stream, Response);
+      LSP.Inputs.Read_FoldingRange_Vector (Handler, Response);
       Abstract_Folding_Range_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 
@@ -57,7 +58,7 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    function Params
      (Self : Abstract_Folding_Range_Request)
-      return LSP.Messages.FoldingRangeParams is
+      return LSP.Structures.FoldingRangeParams is
    begin
       return
         (workDoneToken      => <>,
@@ -73,13 +74,22 @@ package body GPS.LSP_Client.Requests.Folding_Range is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Folding_Range_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean
+      Options : LSP.Structures.ServerCapabilities) return Boolean
    is
-      Option : constant LSP.Messages.Optional_Provider_Options :=
-        Options.foldingRangeProvider;
+      use type LSP
+                 .Structures
+                 .foldingRangeProvider_OfServerCapabilities_Variant;
+
+      Option :
+        LSP
+          .Structures
+          .foldingRangeProvider_OfServerCapabilities_Optional renames
+          Options.foldingRangeProvider;
    begin
       if not Option.Is_Set
-        or else (Option.Value.Is_Boolean and then not Option.Value.Bool)
+        or else
+          (Option.Value.Kind = LSP.Structures.Variant_1
+           and then not Option.Value.Variant_1)
       then
          return False;
       else
@@ -93,10 +103,10 @@ package body GPS.LSP_Client.Requests.Folding_Range is
 
    overriding
    procedure Params
-     (Self   : Abstract_Folding_Range_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Folding_Range_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.FoldingRangeParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_FoldingRangeParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.Folding_Range;

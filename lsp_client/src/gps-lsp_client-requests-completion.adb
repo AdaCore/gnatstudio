@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -41,12 +42,28 @@ package body GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Completion_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Completion_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      List : LSP.Messages.CompletionList;
+      Response : LSP.Structures.Completion_Result;
+      List     : LSP.Structures.CompletionList;
    begin
-      LSP.Messages.CompletionList'Read (Stream, List);
+      LSP.Inputs.Read_Completion_Result (Handler, Response);
+
+      case Response.Kind is
+         when LSP.Structures.Variant_1 =>
+            List :=
+              (isIncomplete => False,
+               items        => Response.Variant_1,
+               others       => <>);
+
+         when LSP.Structures.Variant_2 =>
+            List := Response.Variant_2;
+
+         when LSP.Structures.Variant_3 =>
+            List := (isIncomplete => False, items => <>, others => <>);
+      end case;
+
       Abstract_Completion_Request'Class (Self).On_Result_Message (List);
    end On_Result_Message;
 
@@ -55,8 +72,8 @@ package body GPS.LSP_Client.Requests.Completion is
    ------------
 
    function Params
-     (Self : Abstract_Completion_Request) return LSP.Messages.CompletionParams
-   is
+     (Self : Abstract_Completion_Request)
+      return LSP.Structures.CompletionParams is
    begin
       return
         (textDocument =>
@@ -73,7 +90,7 @@ package body GPS.LSP_Client.Requests.Completion is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Completion_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.completionProvider.Is_Set;
    end Is_Request_Supported;
@@ -84,10 +101,10 @@ package body GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure Params
-     (Self   : Abstract_Completion_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Completion_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.CompletionParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_CompletionParams (Handler, Self.Params);
    end Params;
 
    ------------
@@ -111,7 +128,7 @@ package body GPS.LSP_Client.Requests.Completion is
 
    function Params
      (Self : Abstract_CompletionItem_Resolve_Request)
-      return LSP.Messages.CompletionItem is
+      return LSP.Structures.CompletionItem is
    begin
       return Self.Item;
    end Params;
@@ -122,10 +139,10 @@ package body GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure Params
-     (Self   : Abstract_CompletionItem_Resolve_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_CompletionItem_Resolve_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.CompletionItem'Write (Stream, Self.Params);
+      LSP.Outputs.Write_CompletionItem (Handler, Self.Params);
    end Params;
 
    --------------------------
@@ -135,7 +152,7 @@ package body GPS.LSP_Client.Requests.Completion is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_CompletionItem_Resolve_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return
         Options.completionProvider.Is_Set
@@ -149,12 +166,12 @@ package body GPS.LSP_Client.Requests.Completion is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_CompletionItem_Resolve_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_CompletionItem_Resolve_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Item : LSP.Messages.CompletionItem;
+      Item : LSP.Structures.CompletionItem;
    begin
-      LSP.Messages.CompletionItem'Read (Stream, Item);
+      LSP.Inputs.Read_CompletionItem (Handler, Item);
       Abstract_CompletionItem_Resolve_Request'Class (Self).On_Result_Message
         (Item);
    end On_Result_Message;

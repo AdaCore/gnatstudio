@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -41,13 +42,13 @@ package body GPS.LSP_Client.Requests.Code_Action is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Code_Action_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Code_Action_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Response : LSP.Messages.CodeAction_Vector;
+      Response : LSP.Structures.Command_Or_CodeAction_Vector;
 
    begin
-      LSP.Messages.CodeAction_Vector'Read (Stream, Response);
+      LSP.Inputs.Read_Command_Or_CodeAction_Vector (Handler, Response);
       Abstract_Code_Action_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 
@@ -56,19 +57,20 @@ package body GPS.LSP_Client.Requests.Code_Action is
    ------------
 
    function Params
-     (Self : Abstract_Code_Action_Request) return LSP.Messages.CodeActionParams
+     (Self : Abstract_Code_Action_Request)
+      return LSP.Structures.CodeActionParams
    is
-      Diagnostics : LSP.Messages.Diagnostic_Vector;
+      Diagnostics : LSP.Structures.Diagnostic_Vector;
    begin
       return
         (workDoneToken      => (Is_Set => False),
          partialResultToken => (Is_Set => False),
          textDocument       =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         span               =>
-           (first => Self.Start_Position, last => Self.End_Position),
+         a_range            =>
+           (start => Self.Start_Position, an_end => Self.End_Position),
          context            =>
-           (diagnostics => Diagnostics, only => (Is_Set => False)));
+           (diagnostics => Diagnostics, only => <>, others => <>));
    end Params;
 
    ------------
@@ -77,10 +79,10 @@ package body GPS.LSP_Client.Requests.Code_Action is
 
    overriding
    procedure Params
-     (Self   : Abstract_Code_Action_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Code_Action_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.CodeActionParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_CodeActionParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.Code_Action;

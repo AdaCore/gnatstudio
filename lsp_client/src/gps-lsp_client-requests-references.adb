@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -41,13 +42,13 @@ package body GPS.LSP_Client.Requests.References is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_References_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_References_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Locations : LSP.Messages.Location_Vector;
+      Locations : LSP.Structures.Location_Vector;
 
    begin
-      LSP.Messages.Location_Vector'Read (Stream, Locations);
+      LSP.Inputs.Read_Location_Vector (Handler, Locations);
       Abstract_References_Request'Class (Self).On_Result_Message (Locations);
    end On_Result_Message;
 
@@ -56,17 +57,19 @@ package body GPS.LSP_Client.Requests.References is
    ------------
 
    function Params
-     (Self : Abstract_References_Request) return LSP.Messages.ReferenceParams
+     (Self : Abstract_References_Request) return LSP.Structures.ReferenceParams
    is
    begin
       return
-        (textDocument       =>
-           (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         position           => Self.Position,
-         context            =>
-           (includeDeclaration => Self.Include_Declaration),
-         workDoneToken      => (Is_Set => False),
-         partialResultToken => (Is_Set => False));
+        (LSP.Structures.TextDocumentPositionParams'
+           (textDocument =>
+              (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+            position     => Self.Position)
+         with
+           context            =>
+             (includeDeclaration => Self.Include_Declaration),
+           workDoneToken      => (Is_Set => False),
+           partialResultToken => (Is_Set => False));
    end Params;
 
    --------------------------
@@ -76,7 +79,7 @@ package body GPS.LSP_Client.Requests.References is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_References_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.referencesProvider.Is_Set;
    end Is_Request_Supported;
@@ -87,10 +90,10 @@ package body GPS.LSP_Client.Requests.References is
 
    overriding
    procedure Params
-     (Self   : Abstract_References_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_References_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.ReferenceParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_ReferenceParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.References;

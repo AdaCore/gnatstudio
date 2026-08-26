@@ -1177,8 +1177,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                      VSS.Strings.Conversions.To_UTF_8_String (Command.Title)
                      & " raises errors",
                    Msg           =>
-                     "Some references could not be processed because one or more"
-                     & " files were already modified or non writable",
+                     "Some references could not be processed because one or"
+                     & " more files were already modified or non writable",
                    Files         => Errors,
                    Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
                    Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)

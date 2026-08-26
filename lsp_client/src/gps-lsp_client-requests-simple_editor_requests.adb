@@ -15,11 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
+
+   function To_Location_Or_Link_Vector
+     (Result : LSP.Structures.Declaration_Result)
+      return Location_Or_Link_Vector;
+
+   function To_Location_Or_Link_Vector
+     (Result : LSP.Structures.Definition_Result)
+      return Location_Or_Link_Vector;
+
+   function To_LocationLink_Vector
+     (Links : LSP.Structures.DeclarationLink_Vector)
+      return LocationLink_Vector;
+   function To_LocationLink_Vector
+     (Links : LSP.Structures.DefinitionLink_Vector) return LocationLink_Vector;
+   --  LSP.Structures generates a distinct vector type per request kind for
+   --  what is structurally the same LocationLink element type -- copy
+   --  element-by-element into our own common LocationLink_Vector.
 
    ------------
    -- Method --
@@ -44,19 +62,108 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
       end case;
    end Method;
 
+   -----------------------------
+   -- To_LocationLink_Vector --
+   -----------------------------
+
+   function To_LocationLink_Vector
+     (Links : LSP.Structures.DeclarationLink_Vector) return LocationLink_Vector
+   is
+      Result : LocationLink_Vector;
+
+   begin
+      for Link of Links loop
+         Result.Append (LSP.Structures.LocationLink (Link));
+      end loop;
+
+      return Result;
+   end To_LocationLink_Vector;
+
+   function To_LocationLink_Vector
+     (Links : LSP.Structures.DefinitionLink_Vector) return LocationLink_Vector
+   is
+      Result : LocationLink_Vector;
+
+   begin
+      for Link of Links loop
+         Result.Append (LSP.Structures.LocationLink (Link));
+      end loop;
+
+      return Result;
+   end To_LocationLink_Vector;
+
+   ---------------------------------
+   -- To_Location_Or_Link_Vector --
+   ---------------------------------
+
+   function To_Location_Or_Link_Vector
+     (Result : LSP.Structures.Declaration_Result)
+      return Location_Or_Link_Vector is
+   begin
+      case Result.Kind is
+         when LSP.Structures.Variant_1 =>
+            return
+              (Kind => Location_Vector_Kind, Locations => Result.Variant_1);
+
+         when LSP.Structures.Variant_2 =>
+            return
+              (Kind  => LocationLink_Vector_Kind,
+               Links => To_LocationLink_Vector (Result.Variant_2));
+
+         when LSP.Structures.Variant_3 =>
+            return (Kind => Location_Vector_Kind, others => <>);
+      end case;
+   end To_Location_Or_Link_Vector;
+
+   function To_Location_Or_Link_Vector
+     (Result : LSP.Structures.Definition_Result) return Location_Or_Link_Vector
+   is
+   begin
+      case Result.Kind is
+         when LSP.Structures.Variant_1 =>
+            return
+              (Kind => Location_Vector_Kind, Locations => Result.Variant_1);
+
+         when LSP.Structures.Variant_2 =>
+            return
+              (Kind  => LocationLink_Vector_Kind,
+               Links => To_LocationLink_Vector (Result.Variant_2));
+
+         when LSP.Structures.Variant_3 =>
+            return (Kind => Location_Vector_Kind, others => <>);
+      end case;
+   end To_Location_Or_Link_Vector;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Simple_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
-   is
-      Locations : LSP.Messages.Location_Or_Link_Vector;
+     (Self    : in out Abstract_Simple_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class) is
    begin
-      LSP.Messages.Location_Or_Link_Vector'Read (Stream, Locations);
-      Abstract_Simple_Request'Class (Self).On_Result_Message (Locations);
+      case Self.Command is
+         when Goto_Spec =>
+            declare
+               Result : LSP.Structures.Declaration_Result;
+
+            begin
+               LSP.Inputs.Read_Declaration_Result (Handler, Result);
+               Abstract_Simple_Request'Class (Self).On_Result_Message
+                 (To_Location_Or_Link_Vector (Result));
+            end;
+
+         when others    =>
+            declare
+               Result : LSP.Structures.Definition_Result;
+
+            begin
+               LSP.Inputs.Read_Definition_Result (Handler, Result);
+               Abstract_Simple_Request'Class (Self).On_Result_Message
+                 (To_Location_Or_Link_Vector (Result));
+            end;
+      end case;
    end On_Result_Message;
 
    ------------
@@ -65,21 +172,49 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
    overriding
    procedure Params
-     (Self   : Abstract_Simple_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Simple_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
       case Self.Command is
-         when Goto_Type_Decl =>
-            LSP.Messages.TextDocumentPositionParams'Write
-              (Stream,
-               (textDocument =>
+         when Goto_Type_Decl    =>
+            LSP.Outputs.Write_TypeDefinitionParams
+              (Handler,
+               (textDocument       =>
                   (uri =>
                      GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-                position     => Self.Position));
+                position           => Self.Position,
+                workDoneToken      => (Is_Set => False),
+                partialResultToken => (Is_Set => False)));
 
-         when others         =>
-            LSP.Messages.NavigationRequestParams'Write
-              (Stream,
+         when Goto_Spec         =>
+            LSP.Outputs.Write_DeclarationParams
+              (Handler,
+               (textDocument                         =>
+                  (uri =>
+                     GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+                position                             => Self.Position,
+                alsDisplayMethodAncestryOnNavigation =>
+                  (Is_Set => True,
+                   Value  => Self.Display_Ancestry_On_Navigation),
+                workDoneToken                        => (Is_Set => False),
+                partialResultToken                   => (Is_Set => False)));
+
+         when Goto_Body         =>
+            LSP.Outputs.Write_ImplementationParams
+              (Handler,
+               (textDocument                         =>
+                  (uri =>
+                     GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+                position                             => Self.Position,
+                alsDisplayMethodAncestryOnNavigation =>
+                  (Is_Set => True,
+                   Value  => Self.Display_Ancestry_On_Navigation),
+                workDoneToken                        => (Is_Set => False),
+                partialResultToken                   => (Is_Set => False)));
+
+         when Goto_Spec_Or_Body =>
+            LSP.Outputs.Write_DefinitionParams
+              (Handler,
                (textDocument                         =>
                   (uri =>
                      GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
@@ -99,7 +234,7 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Simple_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       case Self.Command is
          when Goto_Body         =>

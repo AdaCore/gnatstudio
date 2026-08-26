@@ -538,7 +538,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
    ----------------------------
 
    procedure On_Server_Capabilities
-     (Capabilities : in out LSP.Messages.ServerCapabilities)
+     (Capabilities : in out LSP.Structures.ServerCapabilities)
    is null;
 
    -----------
@@ -987,7 +987,8 @@ package body GPS.LSP_Client.Configurations.Clangd is
            & ASCII.LF
            & "Note that you can customize these files to add more formatting "
            & "options that are not exposed by GNAT Studio "
-           & "(see https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
+           & "(see "
+           & "https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
 
       BasedOnStyle_Preference :=
         BasedOnStyle_Formatting_Preferences.Create

@@ -22,13 +22,14 @@ with GNATCOLL.VFS;
 private with VSS.Characters;
 private with VSS.Strings;
 
-with Basic_Types;  use Basic_Types;
-with Completion;   use Completion;
-with GPS.Editors;  use GPS.Editors;
-with GPS.Kernel;   use GPS.Kernel;
-with Language;     use Language;
-with LSP.Messages; use LSP.Messages;
-with Xref;         use Xref;
+with Basic_Types;    use Basic_Types;
+with Completion;     use Completion;
+with GPS.Editors;    use GPS.Editors;
+with GPS.Kernel;     use GPS.Kernel;
+with Language;       use Language;
+with LSP.Constants;
+with LSP.Structures; use LSP.Structures;
+with Xref;           use Xref;
 
 package GPS.LSP_Client.Completion is
 
@@ -191,7 +192,7 @@ private
    type LSP_Completion_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
       Lang_Name   : VSS.Strings.Virtual_String;
-      Completions : LSP.Messages.CompletionList;
+      Completions : LSP.Structures.CompletionList;
    end record;
 
    type LSP_Completion_Proposal is new Completion_Proposal with record
@@ -199,7 +200,7 @@ private
       --  The text that will replace the completion prefix if this proposal
       --  gets selected.
 
-      Span : LSP.Messages.Span := LSP.Messages.Empty_Span;
+      Span : LSP.Structures.A_Range := LSP.Constants.Empty;
       --  When not empty, delete the content in span before inserting text
 
       Label : VSS.Strings.Virtual_String;
@@ -235,7 +236,7 @@ private
       ID : Integer := 0;
       --  The LSP completion proposal ID.
 
-      Command : LSP.Messages.Optional_Command;
+      Command : LSP.Structures.Command_Optional;
       --  An optional command that is executed after inserting this
       --  completion.
    end record;

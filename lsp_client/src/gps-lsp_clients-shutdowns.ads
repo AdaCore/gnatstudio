@@ -16,7 +16,8 @@
 ------------------------------------------------------------------------------
 --  Implementation of the "shutdown" request for the language server.
 
-with GNATCOLL.JSON;
+with LSP.Enumerations;
+
 with GPS.LSP_Client.Requests.Shutdown;
 
 private package GPS.LSP_Clients.Shutdowns is
@@ -36,8 +37,7 @@ private package GPS.LSP_Clients.Shutdowns is
    overriding
    procedure On_Error_Message
      (Self    : in out Shutdown_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
 end GPS.LSP_Clients.Shutdowns;

@@ -20,6 +20,11 @@ with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with VSS.Strings.Conversions;
 
+with LSP.Inputs;
+with LSP.Outputs;
+
+with GPS.LSP_Client.Utilities;
+
 package body GPS.LSP_Client.Requests.Shell is
 
    --------------
@@ -53,9 +58,8 @@ package body GPS.LSP_Client.Requests.Shell is
    overriding
    procedure On_Error_Message
      (Self    : in out Shell_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       if Self.On_Error_Message /= null then
          declare
@@ -63,12 +67,13 @@ package body GPS.LSP_Client.Requests.Shell is
               Self.On_Error_Message.Get_Script.Create (3);
 
          begin
-            Set_Nth_Arg (Arguments, 1, LSP.Messages.ErrorCodes'Pos (Code));
+            Set_Nth_Arg (Arguments, 1, LSP.Enumerations.ErrorCodes'Pos (Code));
             Set_Nth_Arg
               (Arguments,
                2,
                VSS.Strings.Conversions.To_UTF_8_String (Message));
-            Set_Nth_Arg (Arguments, 3, GNATCOLL.JSON.Write (Data));
+            Set_Nth_Arg
+              (Arguments, 3, GNATCOLL.JSON.Write (GNATCOLL.JSON.Create));
 
             declare
                Dummy : GNATCOLL.Any_Types.Any_Type :=
@@ -111,20 +116,21 @@ package body GPS.LSP_Client.Requests.Shell is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Shell_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Shell_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
       function To_String return String;
-      --  Convert first JSON value from Stream to String.
+      --  Convert first JSON value from Handler to String.
 
       Arguments : Callback_Data'Class :=
         Self.On_Result_Message.Get_Script.Create (1);
 
       function To_String return String is
-         Any : LSP.Types.LSP_Any;
+         Any : LSP.Structures.LSPAny;
       begin
-         LSP.Types.LSP_Any'Read (Stream, Any);
-         return GNATCOLL.JSON.Write (GNATCOLL.JSON.JSON_Value (Any));
+         LSP.Inputs.Read_LSPAny (Handler, Any);
+         return
+           GNATCOLL.JSON.Write (GPS.LSP_Client.Utilities.From_LSP_Any (Any));
       end To_String;
    begin
       Set_Nth_Arg (Arguments, 1, To_String);
@@ -146,10 +152,11 @@ package body GPS.LSP_Client.Requests.Shell is
 
    overriding
    procedure Params
-     (Self   : Shell_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Shell_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Types.LSP_Any'Write (Stream, (Self.Params with null record));
+      LSP.Outputs.Write_LSPAny
+        (Handler, GPS.LSP_Client.Utilities.To_LSP_Any (Self.Params));
    end Params;
 
    --------------------------
@@ -158,7 +165,7 @@ package body GPS.LSP_Client.Requests.Shell is
 
    overriding
    function Is_Request_Supported
-     (Self : Shell_Request; Options : LSP.Messages.ServerCapabilities)
+     (Self : Shell_Request; Options : LSP.Structures.ServerCapabilities)
       return Boolean is
    begin
       return True;

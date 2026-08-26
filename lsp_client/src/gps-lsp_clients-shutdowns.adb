@@ -36,11 +36,10 @@ package body GPS.LSP_Clients.Shutdowns is
    overriding
    procedure On_Error_Message
      (Self    : in out Shutdown_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
-      pragma Unreferenced (Code, Data);
+      pragma Unreferenced (Code);
    begin
       Self.Client.On_Error (VSS.Strings.Conversions.To_UTF_8_String (Message));
       Self.Client.On_Exit_Notification;
