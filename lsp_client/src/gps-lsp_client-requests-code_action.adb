@@ -48,7 +48,10 @@ package body GPS.LSP_Client.Requests.Code_Action is
       Response : LSP.Structures.Command_Or_CodeAction_Vector;
 
    begin
-      LSP.Inputs.Read_Command_Or_CodeAction_Vector (Handler, Response);
+      --  The result is "(Command | CodeAction)[] | null" per the LSP spec:
+      --  a server reporting no available code actions sends a JSON "null",
+      --  not an empty array, so the "_Or_Null" variant must be used here.
+      LSP.Inputs.Read_Command_Or_CodeAction_Vector_Or_Null (Handler, Response);
       Abstract_Code_Action_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 

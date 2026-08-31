@@ -48,7 +48,8 @@ package body GPS.LSP_Client.Requests.Folding_Range is
       Response : LSP.Structures.FoldingRange_Vector;
 
    begin
-      LSP.Inputs.Read_FoldingRange_Vector (Handler, Response);
+      --  Result is "FoldingRange[] | null" per the LSP spec.
+      LSP.Inputs.Read_FoldingRange_Vector_Or_Null (Handler, Response);
       Abstract_Folding_Range_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 

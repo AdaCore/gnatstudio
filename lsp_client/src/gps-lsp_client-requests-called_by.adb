@@ -114,7 +114,9 @@ package body GPS.LSP_Client.Requests.Called_By is
    is
       Result : LSP.Structures.CallHierarchyIncomingCall_Vector;
    begin
-      LSP.Inputs.Read_CallHierarchyIncomingCall_Vector (Handler, Result);
+      --  Result is "CallHierarchyIncomingCall[] | null" per the LSP spec.
+      LSP.Inputs.Read_CallHierarchyIncomingCall_Vector_Or_Null
+        (Handler, Result);
       Abstract_Called_By_Request'Class (Self).On_Result_Message (Result);
    end On_Result_Message;
 
@@ -156,7 +158,9 @@ package body GPS.LSP_Client.Requests.Called_By is
    is
       Result : LSP.Structures.CallHierarchyOutgoingCall_Vector;
    begin
-      LSP.Inputs.Read_CallHierarchyOutgoingCall_Vector (Handler, Result);
+      --  Result is "CallHierarchyOutgoingCall[] | null" per the LSP spec.
+      LSP.Inputs.Read_CallHierarchyOutgoingCall_Vector_Or_Null
+        (Handler, Result);
       Abstract_Calls_Request'Class (Self).On_Result_Message (Result);
    end On_Result_Message;
 

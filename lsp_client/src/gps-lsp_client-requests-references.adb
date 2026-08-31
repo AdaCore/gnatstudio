@@ -48,7 +48,8 @@ package body GPS.LSP_Client.Requests.References is
       Locations : LSP.Structures.Location_Vector;
 
    begin
-      LSP.Inputs.Read_Location_Vector (Handler, Locations);
+      --  Result is "Location[] | null" per the LSP spec.
+      LSP.Inputs.Read_Location_Vector_Or_Null (Handler, Locations);
       Abstract_References_Request'Class (Self).On_Result_Message (Locations);
    end On_Result_Message;
 

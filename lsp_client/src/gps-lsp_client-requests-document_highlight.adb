@@ -48,7 +48,8 @@ package body GPS.LSP_Client.Requests.Document_Highlight is
    is
       Locations : LSP.Structures.DocumentHighlight_Vector;
    begin
-      LSP.Inputs.Read_DocumentHighlight_Vector (Handler, Locations);
+      --  Result is "DocumentHighlight[] | null" per the LSP spec.
+      LSP.Inputs.Read_DocumentHighlight_Vector_Or_Null (Handler, Locations);
       Abstract_Document_Highlight_Request'Class (Self).On_Result_Message
         (Locations);
    end On_Result_Message;
