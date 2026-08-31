@@ -628,6 +628,15 @@ package body GPS.LSP_Clients is
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
 
+      procedure Look_Ahead_Work_Done_Progress_Kind
+        (Method_Name : out VSS.Strings.Virtual_String);
+      --  Parse a "$/progress" notification's "params"."value"."kind" field
+      --  to determine which generated WorkDoneProgress* message this is.
+      --  This uses a Reader dedicated to this single pass: a
+      --  JSON_Simple_Pull_Reader cannot be reused across passes, since
+      --  Set_Stream only rebinds the input stream and does not reset the
+      --  parser's own internal state.
+
       Text_Stream :
         aliased VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
 
@@ -825,6 +834,89 @@ package body GPS.LSP_Clients is
          Text_Stream.Rewind;
       end Look_Ahead;
 
+      -----------------------------------------
+      -- Look_Ahead_Work_Done_Progress_Kind --
+      -----------------------------------------
+
+      procedure Look_Ahead_Work_Done_Progress_Kind
+        (Method_Name : out VSS.Strings.Virtual_String)
+      is
+         Reader    :
+           aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
+         JS        :
+           aliased LSP.JSON_Streams.JSON_Stream
+                     (False, Reader'Unchecked_Access);
+         Kind_Name : VSS.Strings.Virtual_String;
+
+      begin
+         Method_Name := VSS.Strings.Empty_Virtual_String;
+
+         Reader.Set_Stream (Text_Stream'Unchecked_Access);
+
+         loop
+            JS.R.Read_Next;
+
+            exit when
+              JS.R.Is_Key_Name
+              and then
+                VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name)
+                = "params";
+         end loop;
+
+         JS.R.Read_Next;
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+
+            declare
+               Param_Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+
+            begin
+               JS.R.Read_Next;
+
+               if Param_Key = "value" then
+                  pragma Assert (JS.R.Is_Start_Object);
+                  JS.R.Read_Next;
+
+                  while not JS.R.Is_End_Object loop
+                     pragma Assert (JS.R.Is_Key_Name);
+
+                     declare
+                        Value_Key : constant String :=
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (JS.R.Key_Name);
+
+                     begin
+                        JS.R.Read_Next;
+
+                        if Value_Key = "kind" then
+                           Kind_Name := JS.R.String_Value;
+                        end if;
+
+                        JS.Skip_Value;
+                     end;
+                  end loop;
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+
+         Text_Stream.Rewind;
+
+         if Kind_Name = "begin" then
+            Method_Name := "WorkDoneProgressBegin";
+         elsif Kind_Name = "report" then
+            Method_Name := "WorkDoneProgressReport";
+         elsif Kind_Name = "end" then
+            Method_Name := "WorkDoneProgressEnd";
+         end if;
+      end Look_Ahead_Work_Done_Progress_Kind;
+
       Reader   : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
       Stream   :
         aliased LSP.JSON_Streams.JSON_Stream
@@ -1018,99 +1110,31 @@ package body GPS.LSP_Clients is
             --  work-done progress notification (e.g. background indexing).
 
             declare
-               Kind_Name : VSS.Strings.Virtual_String;
+               Method_Name : VSS.Strings.Virtual_String;
 
             begin
-               Reader.Set_Stream (Text_Stream'Unchecked_Access);
+               Look_Ahead_Work_Done_Progress_Kind (Method_Name);
 
-               loop
+               if not Method_Name.Is_Empty then
+                  Reader.Set_Stream (Text_Stream'Unchecked_Access);
+
+                  loop
+                     Stream.R.Read_Next;
+
+                     exit when
+                       Stream.R.Is_Key_Name
+                       and then
+                         VSS.Strings.Conversions.To_UTF_8_String
+                           (Stream.R.Key_Name)
+                         = "params";
+                  end loop;
+
                   Stream.R.Read_Next;
 
-                  exit when
-                    Stream.R.Is_Key_Name
-                    and then
-                      VSS.Strings.Conversions.To_UTF_8_String
-                        (Stream.R.Key_Name)
-                      = "params";
-               end loop;
-
-               Stream.R.Read_Next;
-               pragma Assert (Stream.R.Is_Start_Object);
-               Stream.R.Read_Next;
-
-               while not Stream.R.Is_End_Object loop
-                  pragma Assert (Stream.R.Is_Key_Name);
-
-                  declare
-                     Param_Key : constant String :=
-                       VSS.Strings.Conversions.To_UTF_8_String
-                         (Stream.R.Key_Name);
-
-                  begin
-                     Stream.R.Read_Next;
-
-                     if Param_Key = "value" then
-                        pragma Assert (Stream.R.Is_Start_Object);
-                        Stream.R.Read_Next;
-
-                        while not Stream.R.Is_End_Object loop
-                           pragma Assert (Stream.R.Is_Key_Name);
-
-                           declare
-                              Value_Key : constant String :=
-                                VSS.Strings.Conversions.To_UTF_8_String
-                                  (Stream.R.Key_Name);
-
-                           begin
-                              Stream.R.Read_Next;
-
-                              if Value_Key = "kind" then
-                                 Kind_Name := Stream.R.String_Value;
-                              end if;
-
-                              Stream.Skip_Value;
-                           end;
-                        end loop;
-
-                     else
-                        Stream.Skip_Value;
-                     end if;
-                  end;
-               end loop;
-
-               declare
-                  Method_Name : VSS.Strings.Virtual_String;
-
-               begin
-                  if Kind_Name = "begin" then
-                     Method_Name := "WorkDoneProgressBegin";
-                  elsif Kind_Name = "report" then
-                     Method_Name := "WorkDoneProgressReport";
-                  elsif Kind_Name = "end" then
-                     Method_Name := "WorkDoneProgressEnd";
-                  end if;
-
-                  if not Method_Name.Is_Empty then
-                     Reader.Set_Stream (Text_Stream'Unchecked_Access);
-
-                     loop
-                        Stream.R.Read_Next;
-
-                        exit when
-                          Stream.R.Is_Key_Name
-                          and then
-                            VSS.Strings.Conversions.To_UTF_8_String
-                              (Stream.R.Key_Name)
-                            = "params";
-                     end loop;
-
-                     Stream.R.Read_Next;
-
-                     LSP.Progress_Report_Readers.Read_Progress_Report
-                       (Reader, Method_Name)
-                       .Visit_Receiver (Self.Progress_Handler);
-                  end if;
-               end;
+                  LSP.Progress_Report_Readers.Read_Progress_Report
+                    (Reader, Method_Name)
+                    .Visit_Receiver (Self.Progress_Handler);
+               end if;
             end;
 
             Processed := True;
