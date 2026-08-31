@@ -520,8 +520,17 @@ package body GPS.LSP_Client.Outline is
                      "On_Idle_Load_Tree Nb_Added_Rows:" & Nb_Added_Rows'Img);
 
                   if Visible and then Symbol.children.Length > 0 then
+                     --  Descend: Add_Row already advanced the cursor to
+                     --  this row, which is exactly the parent the first
+                     --  child needs.
                      Self.Tree_Stack.Append
                        (Stack_Frame'(Vec => Symbol.children, Index => 1));
+                  else
+                     --  No children to descend into: Add_Row still
+                     --  advanced the cursor to this row, so pop back to
+                     --  its parent now or the next sibling would be
+                     --  nested underneath it instead of alongside it.
+                     Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
                   end if;
                end;
             end if;
