@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
@@ -39,7 +38,7 @@ use GPS.LSP_Module;
 with Language;                                                  use Language;
 with Language.Ada;
 use Language.Ada;
-with LSP.Messages;
+with LSP.Enumerations;
 
 package body GPS.LSP_Client.Dependency_Browers is
 
@@ -78,9 +77,8 @@ package body GPS.LSP_Client.Dependency_Browers is
    overriding
    procedure On_Error_Message
      (Self    : in out Show_Dependencies_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Get_Task_Label (Self : Show_Dependencies_Request) return String
@@ -152,9 +150,8 @@ package body GPS.LSP_Client.Dependency_Browers is
    overriding
    procedure On_Error_Message
      (Self    : in out Show_Dependencies_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);

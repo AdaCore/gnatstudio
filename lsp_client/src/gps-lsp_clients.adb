@@ -36,9 +36,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with LSP.Constants;
 with LSP.Enumerations;
 with LSP.Errors;
-with LSP.Inputs;
 with LSP.JSON_Streams;
-with LSP.Outputs;
 with LSP.Progress_Report_Readers;
 with LSP.Progress_Reports;
 
@@ -96,14 +94,6 @@ package body GPS.LSP_Clients is
            (Is_Integer => False, Virtual_String => Id.Virtual_String));
    --  LSP.Structures.Integer_Or_Virtual_String and LSP.Structures.
    --  ProgressToken have the same shape but are distinct types.
-
-   function To_Id
-     (Token : LSP.Structures.ProgressToken)
-      return LSP.Structures.Integer_Or_Virtual_String
-   is (case Token.Is_Integer is
-         when True  => (Is_Integer => True, Integer => Token.Integer),
-         when False =>
-           (Is_Integer => False, Virtual_String => Token.Virtual_String));
 
    package LSP_Client_Sources is new
      Glib.Main.Generic_Sources (LSP_Client_Access);
@@ -400,6 +390,16 @@ package body GPS.LSP_Clients is
    -- On_ApplyEdit_Request --
    ---------------------------
 
+   function To_Kernel_Handle
+     (Self : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GPS.Kernel.Kernel_Handle
+   is (GPS.Kernel.Kernel_Handle (Self));
+   --  Self.Client.Kernel (an access discriminant) cannot be converted to
+   --  the named Kernel_Handle type directly, even though it was itself
+   --  built from a Kernel_Handle when the LSP_Client was constructed and
+   --  is guaranteed to outlive this handler. Routing the value through a
+   --  regular anonymous-access parameter first makes the conversion legal.
+
    overriding
    procedure On_ApplyEdit_Request
      (Self  : in out Request_Handler;
@@ -409,8 +409,7 @@ package body GPS.LSP_Clients is
       On_Error : Boolean;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel                   =>
-           GPS.Kernel.Kernel_Handle (Self.Client.Kernel),
+        (Kernel                   => To_Kernel_Handle (Self.Client.Kernel),
          Workspace_Edit           => Value.edit,
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
@@ -1422,8 +1421,7 @@ package body GPS.LSP_Clients is
                                  Value  =>
                                    (properties =>
                                       Get_CompletionItem_Resolve_Properties)),
-                              others              => <>),
-                           others => <>),
+                              others              => <>)),
                         others              => <>)),
                   --  Right now we support only whole line folding
                   foldingRange       =>
@@ -1460,8 +1458,7 @@ package body GPS.LSP_Clients is
          trace                 => (Is_Set => False));
 
       Request : constant LSP.Structures.InitializeParams :=
-        (Base
-         with Parent => (workspaceFolders => (Is_Set => False), others => <>));
+        (Base with Parent => (workspaceFolders => (Is_Set => False)));
 
    begin
       Id := Self.Allocate_Request_Id;

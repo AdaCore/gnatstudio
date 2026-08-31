@@ -17,7 +17,6 @@
 
 with Ada.Strings.Unbounded;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.LSP_Client.Editors.Semantic_Tokens;
@@ -45,6 +44,8 @@ with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Hover; use GPS.LSP_Client.Requests.Hover;
 with GPS.LSP_Module;                use GPS.LSP_Module;
+with LSP.Enumerations;
+with LSP.Structures;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
@@ -104,14 +105,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
-      Result : LSP.Messages.Optional_Hover);
+      Result : LSP.Structures.Hover_Or_Null);
 
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    procedure On_Rejected
@@ -302,9 +302,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
-      Result : LSP.Messages.Optional_Hover)
+      Result : LSP.Structures.Hover_Or_Null)
    is
-      use LSP.Messages;
+      use LSP.Enumerations;
       use type Pango.Font.Pango_Font_Description;
       use type VSS.Strings.Virtual_String;
 
@@ -363,8 +363,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       --  Append the contents to the tooltip or "No data available" when empty
 
-      if Result.Is_Set and then Result.Value.contents.Is_MarkupContent then
-         if Result.Value.contents.MarkupContent.kind = plaintext then
+      if not Result.Is_Null and then Result.Value.contents.Is_MarkupContent
+      then
+         if Result.Value.contents.MarkupContent.kind = PlainText then
             Gtk_New_Vbox (Vbox, Homogeneous => False);
             Self.Tooltip_Vbox.Pack_Start (Vbox);
 
@@ -384,20 +385,21 @@ package body GPS.LSP_Client.Editors.Tooltips is
               (Me, "MarkupContent.markdown in hover reponse not supported");
          end if;
 
-      elsif Result.Is_Set and then not Result.Value.contents.Vector.Is_Empty
+      elsif not Result.Is_Null
+        and then not Result.Value.contents.MarkedString_Vector.Is_Empty
       then
          Trace (Me, "Non-empty response received on hover request");
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
          Self.Tooltip_Vbox.Pack_Start (Vbox);
 
-         for Tooltip_Block of Result.Value.contents.Vector loop
+         for Tooltip_Block of Result.Value.contents.MarkedString_Vector loop
             New_Tooltip_Block_Label;
 
             --  If language is specified for the tooltip block and it is "ada",
             --  try to highlight this block. Otherwise process tooltip block
             --  as plaintext.
-            if not Tooltip_Block.Is_String
+            if not Tooltip_Block.Is_Virtual_String
               and then Tooltip_Block.language = "ada"
               and then
                 Integer (Tooltip_Block.value.Character_Length)
@@ -445,14 +447,20 @@ package body GPS.LSP_Client.Editors.Tooltips is
                end;
 
             else
-               Tooltip_Block_Label.Set_Use_Markup (False);
-               Tooltip_Block_Label.Set_Text
-                 (Ada.Strings.Unbounded.To_String
-                    (String_Utils.Wrap_At_Words
-                       (S     =>
-                          VSS.Strings.Conversions.To_UTF_8_String
-                            (Tooltip_Block.value),
-                        Limit => Max_Width_Chars)));
+               declare
+                  Text : constant VSS.Strings.Virtual_String :=
+                    (if Tooltip_Block.Is_Virtual_String
+                     then Tooltip_Block.Virtual_String
+                     else Tooltip_Block.value);
+               begin
+                  Tooltip_Block_Label.Set_Use_Markup (False);
+                  Tooltip_Block_Label.Set_Text
+                    (Ada.Strings.Unbounded.To_String
+                       (String_Utils.Wrap_At_Words
+                          (S     =>
+                             VSS.Strings.Conversions.To_UTF_8_String (Text),
+                           Limit => Max_Width_Chars)));
+               end;
             end if;
          end loop;
       else
@@ -479,9 +487,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       --  Disconnect the callback on the tooltip's destruction now that we
       --  received an error response.
@@ -494,7 +501,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
         (Me,
          "Error received on hover request: "
          & VSS.Strings.Conversions.To_UTF_8_String (Message));
-      Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
    end On_Error_Message;
 
    -----------------
@@ -557,7 +563,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       function Is_LSP_Tooltips_Enabled return Boolean;
       function Is_LSP_Tooltips_Enabled return Boolean is
-         Capabilities : LSP.Messages.ServerCapabilities;
+         Capabilities : LSP.Structures.ServerCapabilities;
       begin
          if LSP_Is_Enabled (Lang) then
             Capabilities :=

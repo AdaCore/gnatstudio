@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings.Conversions;
-with VSS.Unicode;
 
 with Call_Graph_Views;                  use Call_Graph_Views;
 with GPS.Editors;                       use GPS.Editors;
@@ -340,8 +339,6 @@ package body GPS.LSP_Client.Call_Tree is
       --------------------------
 
       procedure Get_Reference_Record (X : LSP.Structures.A_Range) is
-         use type VSS.Unicode.UTF16_Code_Unit_Count;
-
       begin
          if Kind_Index <= Kinds.Last_Index then
             Is_Dispatching := Kinds (Kind_Index);

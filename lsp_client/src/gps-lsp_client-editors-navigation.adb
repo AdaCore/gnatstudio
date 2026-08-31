@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers.Vectors;
 with Ada.Exceptions; use Ada.Exceptions;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GNATCOLL.Traces;     use GNATCOLL.Traces;
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
@@ -80,7 +80,8 @@ with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with LSP.Types;                 use LSP.Types;
+with LSP.Enumerations;          use LSP.Enumerations;
+with LSP.Structures;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
@@ -104,7 +105,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    package Display_Ancestry_On_Navigation_Prefs is new
      Default_Preferences.Enums.Generics
        (Enumeration =>
-          LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy);
+          LSP.Enumerations.AlsDisplayMethodAncestryOnNavigationPolicy);
 
    Display_Ancestry_On_Navigation_Pref :
      Display_Ancestry_On_Navigation_Prefs.Preference;
@@ -118,15 +119,13 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out GPS_LSP_Simple_Request;
-      Result : LSP.Messages.Location_Or_Link_Vector);
+     (Self : in out GPS_LSP_Simple_Request; Result : Location_Or_Link_Vector);
 
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Auto_Cancel
@@ -579,13 +578,12 @@ package body GPS.LSP_Client.Editors.Navigation is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out GPS_LSP_Simple_Request;
-      Result : LSP.Messages.Location_Or_Link_Vector)
+     (Self : in out GPS_LSP_Simple_Request; Result : Location_Or_Link_Vector)
    is
       use type Ada.Containers.Count_Type;
 
       function Kinds_Label
-        (Kind : LSP.Messages.AlsReferenceKind_Set)
+        (Kind : LSP.Structures.AlsReferenceKind_Set)
          return VSS.Strings.Virtual_String;
       --  Return a label for displaying the kinds in the menus
 
@@ -594,46 +592,67 @@ package body GPS.LSP_Client.Editors.Navigation is
       -----------------
 
       function Kinds_Label
-        (Kind : LSP.Messages.AlsReferenceKind_Set)
+        (Kind : LSP.Structures.AlsReferenceKind_Set)
          return VSS.Strings.Virtual_String
       is
-         use type LSP.Messages.AlsReferenceKind_Set;
          use type VSS.Strings.Virtual_String;
+
+         function To_Display_Name (Value : String) return String;
+         --  Lower-case an AlsReferenceKind literal's spelling and strip the
+         --  "an_" prefix (added to dodge Ada reserved words).
+
+         ---------------------
+         -- To_Display_Name --
+         ---------------------
+
+         function To_Display_Name (Value : String) return String is
+            N : constant String := Ada.Characters.Handling.To_Lower (Value);
+         begin
+            if N'Length > 3 and then N (N'First .. N'First + 2) = "an_" then
+               return N (N'First + 3 .. N'Last);
+            else
+               return N;
+            end if;
+         end To_Display_Name;
 
          Has_Content : Boolean := False;
          Result      : VSS.Strings.Virtual_String;
       begin
-         if Kind = LSP.Messages.Empty_Set then
-            return "";
-         end if;
+         for K in Kind'Range loop
+            if Kind (K) then
+               if Has_Content then
+                  Result.Append
+                    (VSS.Strings.Conversions.To_Virtual_String (", "));
+               end if;
 
-         for Str of Kind.As_Strings loop
-            if Has_Content then
-               Result.Append (", ");
+               Result.Append
+                 (VSS.Strings.Conversions.To_Virtual_String
+                    (To_Display_Name
+                       (LSP.Enumerations.AlsReferenceKind'Image (K))));
+               Has_Content := True;
             end if;
-
-            Result.Append (Str);
-            Has_Content := True;
          end loop;
 
          if Has_Content then
-            return "[" & Result & "] ";
+            return
+              VSS.Strings.Conversions.To_Virtual_String ("[")
+              & Result
+              & VSS.Strings.Conversions.To_Virtual_String ("] ");
          else
-            return "";
+            return VSS.Strings.Conversions.To_Virtual_String ("");
          end if;
       end Kinds_Label;
 
-      use type LSP.Messages.Location_Or_Link_Kind;
    begin
       Trace (Me_Advanced, "Result received");
 
       Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
 
-      if Result.Kind = LSP.Messages.Empty_Vector_Kind then
-         Trace (Me_Advanced, "No locations found");
-         return;
-      elsif Result.Kind = LSP.Messages.LocationLink_Vector_Kind then
+      if Result.Kind = LocationLink_Vector_Kind then
          Trace (Me_Advanced, "Unexpected result kind");
+         return;
+      elsif Result.Locations.Is_Empty then
+         Trace (Me_Advanced, "No locations found");
          return;
       end if;
 
@@ -644,7 +663,7 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       if Result.Locations.Length = 1 then
          declare
-            Loc      : constant LSP.Messages.Location :=
+            Loc      : constant LSP.Structures.Location :=
               Result.Locations.First_Element;
             File     : constant Virtual_File := To_Virtual_File (Loc.uri);
             Infos    : constant File_Info_Set :=
@@ -657,7 +676,7 @@ package body GPS.LSP_Client.Editors.Navigation is
               Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Loc.span.first);
+                (Holder.Editor, Loc.a_range.start);
          begin
             --  Go the closest match of the returned location.
 
@@ -684,7 +703,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                   declare
                      To : constant GPS.Editors.Editor_Location'Class :=
                        GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                         (Holder.Editor, Loc.span.last);
+                         (Holder.Editor, Loc.a_range.an_end);
                   begin
                      Open_File_Action_Hook.Run
                        (Kernel     => Self.Kernel,
@@ -716,7 +735,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                       Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
                   From     : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                      (Holder.Editor, Location.span.first);
+                      (Holder.Editor, Location.a_range.start);
                begin
                   Entities.Append
                     (Entity_Info_Type'
@@ -751,9 +770,8 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace
@@ -1295,7 +1313,7 @@ package body GPS.LSP_Client.Editors.Navigation is
              & "subprogram ancestry when executing navigation requests on "
              & "subprograms (e.g : when ctrl-clicking on a subprogram "
              & "declaration).",
-           Default => LSP.Messages.Usage_And_Abstract_Only);
+           Default => LSP.Enumerations.Usage_And_Abstract_Only);
 
       --  Register the hyper mode click callback based on the LSP
 

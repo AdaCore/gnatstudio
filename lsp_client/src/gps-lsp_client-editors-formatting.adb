@@ -19,7 +19,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;

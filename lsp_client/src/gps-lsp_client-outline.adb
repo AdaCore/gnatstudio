@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with VSS.Strings.Conversions;
 
@@ -22,7 +23,6 @@ with VSS.Strings;
 
 with Glib;            use Glib;
 with Glib.Main;       use Glib.Main;
-with GNATCOLL.JSON;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
@@ -36,10 +36,11 @@ with GPS.LSP_Client.Utilities;                 use GPS.LSP_Client.Utilities;
 with GPS.LSP_Module;                           use GPS.LSP_Module;
 
 with Basic_Types;
-with Language;     use Language;
-with LSP.Messages; use LSP.Messages;
-with LSP.Types;    use LSP.Types;
-with Outline_View; use Outline_View;
+with Language;         use Language;
+with LSP.Enumerations; use LSP.Enumerations;
+with LSP.Messages;
+with LSP.Structures;   use LSP.Structures;
+with Outline_View;     use Outline_View;
 
 package body GPS.LSP_Client.Outline is
 
@@ -55,21 +56,39 @@ package body GPS.LSP_Client.Outline is
    -- Outline Provider --
    ----------------------
 
-   type Result_Access is access LSP.Messages.Symbol_Vector;
+   type Result_Access is access LSP.Structures.DocumentSymbol_Result;
 
    procedure Free is new
-     Ada.Unchecked_Deallocation (LSP.Messages.Symbol_Vector, Result_Access);
+     Ada.Unchecked_Deallocation
+       (LSP.Structures.DocumentSymbol_Result,
+        Result_Access);
+
+   --  3.17's DocumentSymbol_Vector represents the hierarchical result as a
+   --  vector of DocumentSymbol, each carrying its own nested "children"
+   --  vector, rather than the multiway-tree-with-cursor used by 3.16. We
+   --  walk it depth-first using an explicit stack of (vector, next index)
+   --  frames so that we can resume the walk across idle callbacks exactly
+   --  as the previous cursor-based code did. Each frame holds its own COPY
+   --  of the sibling vector (DocumentSymbol_Vector copies are cheap deep
+   --  copies via its controlled Adjust) rather than a pointer into the
+   --  parent, since taking 'Access of a vector element/component is not
+   --  legal here (the public indexing view is not an aliased view).
+
+   type Stack_Frame is record
+      Vec   : LSP.Structures.DocumentSymbol_Vector;
+      Index : Positive := 1;
+   end record;
+
+   package Stack_Vectors is new Ada.Containers.Vectors (Positive, Stack_Frame);
 
    type Outline_LSP_Provider is new Outline_View.Outline_Provider with record
-      Kernel        : Kernel_Handle;
-      File          : Virtual_File := No_File;
-      Model         : Outline_Model_Access := null;
-      Loader_Id     : Glib.Main.G_Source_Id := No_Source_Id;
-      Tree_Cursor   : DocumentSymbol_Trees.Cursor :=
-        DocumentSymbol_Trees.No_Element;
-      Vector_Cursor : SymbolInformation_Vectors.Element_Vectors.Cursor :=
-        SymbolInformation_Vectors.Element_Vectors.No_Element;
-      Result        : Result_Access := null;
+      Kernel       : Kernel_Handle;
+      File         : Virtual_File := No_File;
+      Model        : Outline_Model_Access := null;
+      Loader_Id    : Glib.Main.G_Source_Id := No_Source_Id;
+      Tree_Stack   : Stack_Vectors.Vector;
+      Vector_Index : Positive := 1;
+      Result       : Result_Access := null;
    end record;
    type Outline_LSP_Provider_Access is access all Outline_LSP_Provider;
 
@@ -90,6 +109,16 @@ package body GPS.LSP_Client.Outline is
    function Get_Last_Result
      (Self : access Outline_LSP_Provider; File : Virtual_File)
       return LSP.Messages.Symbol_Vector;
+   --  Outline_View.Outline_Provider (a separate, out-of-scope project) still
+   --  declares this abstract function in terms of the 3.16
+   --  LSP.Messages.Symbol_Vector type. Rather than reintroduce a real 3.16
+   --  dependency here to build a faithful conversion, this always returns
+   --  the "no result" value: it disables the cross-feature reuse
+   --  optimization documented on Outline_Provider.Get_Last_Result (used by
+   --  GPS.LSP_Client.Search.Entities to skip a redundant documentSymbol
+   --  request), which now always re-queries instead. Properly restoring the
+   --  optimization requires migrating Outline_View itself (and
+   --  code_analysis's Outline_Provider implementation) to LSP.Structures.
 
    -----------------
    -- LSP Request --
@@ -113,14 +142,13 @@ package body GPS.LSP_Client.Outline is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Outline_Request;
-      Result : LSP.Messages.Symbol_Vector);
+      Result : LSP.Structures.DocumentSymbol_Result);
 
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Auto_Cancel
@@ -131,10 +159,10 @@ package body GPS.LSP_Client.Outline is
    procedure On_Rejected
      (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason);
 
-   function Get_Optional_Boolean (B : Optional_Boolean) return Boolean;
+   function Get_Optional_Boolean (B : Boolean_Optional) return Boolean;
 
    function Get_Optional_Visibility
-     (V : Optional_Als_Visibility) return Construct_Visibility;
+     (V : AlsVisibility_Optional) return Construct_Visibility;
 
    -----------------
    -- Auto_Cancel --
@@ -173,7 +201,7 @@ package body GPS.LSP_Client.Outline is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Outline_Request;
-      Result : LSP.Messages.Symbol_Vector)
+      Result : LSP.Structures.DocumentSymbol_Result)
    is
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
@@ -228,18 +256,25 @@ package body GPS.LSP_Client.Outline is
       end if;
 
       Free (Self.Provider.Result);
-      Self.Provider.Result := new LSP.Messages.Symbol_Vector'(Result);
+      Self.Provider.Result :=
+        new LSP.Structures.DocumentSymbol_Result'(Result);
 
-      if Result.Is_Tree then
-         Trace (Me_Debug, "Process result tree");
-         Self.Provider.Tree_Cursor := Self.Provider.Result.Tree.Root;
-         Register (On_Idle_Load_Tree'Access);
+      case Result.Kind is
+         when Variant_2 =>
+            Trace (Me_Debug, "Process result tree");
+            Self.Provider.Tree_Stack.Clear;
+            if Self.Provider.Result.Variant_2.Length > 0 then
+               Self.Provider.Tree_Stack.Append
+                 (Stack_Frame'
+                    (Vec => Self.Provider.Result.Variant_2, Index => 1));
+            end if;
+            Register (On_Idle_Load_Tree'Access);
 
-      else
-         Trace (Me_Debug, "Process result vector");
-         Self.Provider.Vector_Cursor := Self.Provider.Result.Vector.First;
-         Register (On_Idle_Load_Vector'Access);
-      end if;
+         when others    =>
+            Trace (Me_Debug, "Process result vector");
+            Self.Provider.Vector_Index := 1;
+            Register (On_Idle_Load_Vector'Access);
+      end case;
       Trace (Me_Debug, "On_Result_Message done");
    end On_Result_Message;
 
@@ -250,9 +285,8 @@ package body GPS.LSP_Client.Outline is
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
@@ -413,107 +447,87 @@ package body GPS.LSP_Client.Outline is
    function On_Idle_Load_Tree
      (Self : Outline_LSP_Provider_Access) return Boolean
    is
-      use DocumentSymbol_Trees;
       Nb_Added_Rows : Integer := 0;
-      Prev_Depth    : Integer;
-      Tree_Iter     : Tree_Iterator_Interfaces.Forward_Iterator'Class :=
-        Iterate (Self.Result.Tree);
       Holder        : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
    begin
       Trace (Me_Debug, "On_Idle_Load_Tree");
-      if Is_Root (Self.Tree_Cursor) then
-         Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
-      end if;
 
-      Prev_Depth := Integer (Depth (Self.Tree_Cursor));
-
-      while Self.Tree_Cursor /= No_Element loop
+      while not Self.Tree_Stack.Is_Empty loop
          declare
-            Symbol         : constant DocumentSymbol :=
-              Element (Self.Tree_Cursor);
-            First_Location : constant GPS.Editors.Editor_Location'Class :=
-              GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Symbol.selectionRange.first);
-            Last_Location  : constant GPS.Editors.Editor_Location'Class :=
-              GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Symbol.selectionRange.last);
-
-            Visible   : Boolean;
-            Cur_Depth : Integer;
+            Top : Stack_Frame := Self.Tree_Stack.Last_Element;
          begin
-            Trace (Me_Debug, "On_Idle_Load_Tree Outline_View.Add_Row");
-            Outline_View.Add_Row
-              (Self           => Self.Model,
-               Name           => Symbol.name,
-               Profile        =>
-                 (if Symbol.detail.Is_Set
-                  then
-                    VSS.Strings.Conversions.To_UTF_8_String
-                      (Symbol.detail.Value)
-                  else ""),
-               Category       =>
-                 To_Language_Category
-                   (Symbol.kind,
-                    Get_Optional_Boolean (Symbol.alsIsAdaProcedure)),
-               Is_Declaration =>
-                 Get_Optional_Boolean (Symbol.alsIsDeclaration),
-               Visibility     =>
-                 Get_Optional_Visibility (Symbol.alsVisibility),
-               Start_Line     => Integer (Symbol.span.first.line + 1),
-               Def_Line       => First_Location.Line,
-               Def_Col        => First_Location.Column,
-               Def_End_Line   => Last_Location.Line,
-               Def_End_Col    => Last_Location.Column,
-               End_Line       => Integer (Symbol.span.last.line + 1),
-               Id             => "",
-               Visible        => Visible);
-
-            Nb_Added_Rows := Nb_Added_Rows + 1;
-
-            Trace
-              (Me_Debug,
-               "On_Idle_Load_Tree Nb_Added_Rows:" & Nb_Added_Rows'Img);
-
-            Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
-            if not Visible then
-               --  skip invisible nested nodes
-               while Has_Element (Self.Tree_Cursor)
-                 and then Integer (Depth (Self.Tree_Cursor)) > Prev_Depth
-               loop
-                  Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
-               end loop;
-            end if;
-
-            --  When not visible we didn't add the last row so the current
-            --  depth is one above Tree_Cursor
-            Cur_Depth := Integer (Depth (Self.Tree_Cursor));
-
-            Trace
-              (Me_Debug,
-               "On_Idle_Load_Tree set visibility, Cur_Depth:"
-               & Cur_Depth'Img
-               & " Prev_Depth:"
-               & Prev_Depth'Img);
-
-            if Visible then
-               --  We finished adding nodes for this branch so go back to the
-               --  parent node at Prev_Depth and fill a new branch/sibling
-               for I in Cur_Depth .. Prev_Depth loop
+            if Top.Index > Top.Vec.Length then
+               --  Finished this vector: pop back to the parent level.
+               Self.Tree_Stack.Delete_Last;
+               if not Self.Tree_Stack.Is_Empty then
                   Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
-               end loop;
+               end if;
 
             else
-               --  we did not add a row so the steps should be less by 1
-               for I in Cur_Depth .. Prev_Depth - 1 loop
-                  Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
-               end loop;
+               declare
+                  Symbol         : constant DocumentSymbol :=
+                    Top.Vec (Top.Index);
+                  First_Location :
+                    constant GPS.Editors.Editor_Location'Class :=
+                      GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                        (Holder.Editor, Symbol.selectionRange.start);
+                  Last_Location  :
+                    constant GPS.Editors.Editor_Location'Class :=
+                      GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                        (Holder.Editor, Symbol.selectionRange.an_end);
+
+                  Visible : Boolean;
+
+               begin
+                  --  Advance to the next sibling before we possibly descend
+                  --  into this symbol's children.
+                  Top.Index := Top.Index + 1;
+                  Self.Tree_Stack.Replace_Element (Self.Tree_Stack.Last, Top);
+
+                  Trace (Me_Debug, "On_Idle_Load_Tree Outline_View.Add_Row");
+                  Outline_View.Add_Row
+                    (Self           => Self.Model,
+                     Name           => Symbol.name,
+                     Profile        =>
+                       (if not Symbol.detail.Is_Empty
+                        then
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (Symbol.detail)
+                        else ""),
+                     Category       =>
+                       To_Language_Category
+                         (Symbol.kind,
+                          Get_Optional_Boolean (Symbol.alsIsAdaProcedure)),
+                     Is_Declaration =>
+                       Get_Optional_Boolean (Symbol.alsIsDeclaration),
+                     Visibility     =>
+                       Get_Optional_Visibility (Symbol.alsVisibility),
+                     Start_Line     => Integer (Symbol.a_range.start.line + 1),
+                     Def_Line       => First_Location.Line,
+                     Def_Col        => First_Location.Column,
+                     Def_End_Line   => Last_Location.Line,
+                     Def_End_Col    => Last_Location.Column,
+                     End_Line       =>
+                       Integer (Symbol.a_range.an_end.line + 1),
+                     Id             => "",
+                     Visible        => Visible);
+
+                  Nb_Added_Rows := Nb_Added_Rows + 1;
+
+                  Trace
+                    (Me_Debug,
+                     "On_Idle_Load_Tree Nb_Added_Rows:" & Nb_Added_Rows'Img);
+
+                  if Visible and then Symbol.children.Length > 0 then
+                     Self.Tree_Stack.Append
+                       (Stack_Frame'(Vec => Symbol.children, Index => 1));
+                  end if;
+               end;
             end if;
-            Trace (Me_Debug, "On_Idle_Load_Tree visibility is set");
-            Prev_Depth := Cur_Depth;
          end;
 
-         if Nb_Added_Rows = 100 then
+         if Nb_Added_Rows >= 100 then
             --  Stop here and restart later
             Trace (Me_Debug, "On_Idle_Load_Tree restart later");
             return True;
@@ -532,7 +546,6 @@ package body GPS.LSP_Client.Outline is
    function On_Idle_Load_Vector
      (Self : Outline_LSP_Provider_Access) return Boolean
    is
-      use SymbolInformation_Vectors.Element_Vectors;
       use type Basic_Types.Visible_Column_Type;
       Dummy         : Boolean;
       Nb_Added_Rows : Integer := 0;
@@ -541,13 +554,13 @@ package body GPS.LSP_Client.Outline is
 
    begin
       Trace (Me_Debug, "On_Idle_Load_Vector");
-      while Self.Vector_Cursor /= No_Element loop
+      while Self.Vector_Index <= Natural (Self.Result.Variant_1.Length) loop
          declare
             Symbol   : constant SymbolInformation :=
-              Self.Result.Vector.Reference (Self.Vector_Cursor);
+              Self.Result.Variant_1 (Self.Vector_Index);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Symbol.location.span.first);
+                (Holder.Editor, Symbol.location.a_range.start);
 
          begin
             Outline_View.Add_Row
@@ -557,19 +570,21 @@ package body GPS.LSP_Client.Outline is
                Category       => To_Language_Category (Symbol.kind),
                Is_Declaration => False,
                Visibility     => Visibility_Public,
-               Start_Line     => Integer (Symbol.location.span.first.line + 1),
+               Start_Line     =>
+                 Integer (Symbol.location.a_range.start.line + 1),
                Def_Line       => Location.Line,
                Def_Col        => Location.Column,
                Def_End_Line   => -1,
                Def_End_Col    => -1,
-               End_Line       => Integer (Symbol.location.span.last.line + 1),
+               End_Line       =>
+                 Integer (Symbol.location.a_range.an_end.line + 1),
                Id             => "",
                Visible        => Dummy);
             Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
          end;
 
          Nb_Added_Rows := Nb_Added_Rows + 1;
-         Next (Self.Vector_Cursor);
+         Self.Vector_Index := Self.Vector_Index + 1;
          if Nb_Added_Rows = 100 then
             --  Stop here and restart later
             Trace (Me_Debug, "On_Idle_Load_Vector restart later");
@@ -619,20 +634,18 @@ package body GPS.LSP_Client.Outline is
    overriding
    function Get_Last_Result
      (Self : access Outline_LSP_Provider; File : Virtual_File)
-      return LSP.Messages.Symbol_Vector is
+      return LSP.Messages.Symbol_Vector
+   is
+      pragma Unreferenced (Self, File);
    begin
-      if Self.File = File and then Self.Result /= null then
-         return Self.Result.all;
-      else
-         return (Is_Tree => False, Vector => <>);
-      end if;
+      return (Is_Tree => False, Vector => <>);
    end Get_Last_Result;
 
    --------------------------
    -- Get_Optional_Boolean --
    --------------------------
 
-   function Get_Optional_Boolean (B : Optional_Boolean) return Boolean is
+   function Get_Optional_Boolean (B : Boolean_Optional) return Boolean is
    begin
       if B.Is_Set then
          return B.Value;
@@ -646,7 +659,7 @@ package body GPS.LSP_Client.Outline is
    -----------------------------
 
    function Get_Optional_Visibility
-     (V : Optional_Als_Visibility) return Construct_Visibility is
+     (V : AlsVisibility_Optional) return Construct_Visibility is
    begin
       if V.Is_Set then
          return To_Construct_Visibility (V.Value);

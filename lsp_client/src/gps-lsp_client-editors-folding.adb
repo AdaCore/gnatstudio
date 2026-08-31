@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.JSON;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with LSP.Types;
+with LSP.Enumerations;
+with LSP.Structures;
 
 with Basic_Types;              use Basic_Types;
 with Language;
@@ -51,14 +51,13 @@ package body GPS.LSP_Client.Editors.Folding is
    overriding
    procedure On_Result_Message
      (Self   : in out Folding_Request;
-      Result : LSP.Messages.FoldingRange_Vector);
+      Result : LSP.Structures.FoldingRange_Vector);
 
    overriding
    procedure On_Error_Message
      (Self    : in out Folding_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    function Auto_Cancel
@@ -113,22 +112,23 @@ package body GPS.LSP_Client.Editors.Folding is
 
    overriding
    procedure On_Result_Message
-     (Self : in out Folding_Request; Result : LSP.Messages.FoldingRange_Vector)
+     (Self   : in out Folding_Request;
+      Result : LSP.Structures.FoldingRange_Vector)
    is
       Buffer : Source_Buffer;
       Data   : Blocks_Vector.Vector;
 
       function Get_Kind
-        (kind : LSP.Types.Optional_Virtual_String) return Block_Kind;
+        (kind : LSP.Structures.FoldingRangeKind_Optional) return Block_Kind;
 
       --------------
       -- Get_Kind --
       --------------
 
       function Get_Kind
-        (kind : LSP.Types.Optional_Virtual_String) return Block_Kind
+        (kind : LSP.Structures.FoldingRangeKind_Optional) return Block_Kind
       is
-         use type LSP.Messages.FoldingRangeKind;
+         use type LSP.Enumerations.FoldingRangeKind;
 
       begin
          if kind.Is_Set then
@@ -183,11 +183,10 @@ package body GPS.LSP_Client.Editors.Folding is
    overriding
    procedure On_Error_Message
      (Self    : in out Folding_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
-      pragma Unreferenced (Code, Message, Data);
+      pragma Unreferenced (Code, Message);
       Buffer : Source_Buffer;
    begin
       declare

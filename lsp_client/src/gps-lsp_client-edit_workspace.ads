@@ -18,20 +18,24 @@
 with VSS.Strings;
 
 with GPS.Kernel; use GPS.Kernel;
-with LSP.Messages;
+with LSP.Structures;
 
 package GPS.LSP_Client.Edit_Workspace is
 
+   Empty_Range : constant LSP.Structures.A_Range :=
+     (start  => (line => 0, character => 0),
+      an_end => (line => 0, character => 0));
+
    procedure Edit
      (Kernel                   : Kernel_Handle;
-      Workspace_Edit           : LSP.Messages.WorkspaceEdit;
+      Workspace_Edit           : LSP.Structures.WorkspaceEdit;
       Title                    : VSS.Strings.Virtual_String;
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : VSS.Strings.Virtual_String;
       Error                    : out Boolean;
-      Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
+      Limit_Span               : LSP.Structures.A_Range := Empty_Range;
       Compute_Minimal_Edits    : Boolean := False;
       Avoid_Cursor_Move        : Boolean := True);
    --  Apply edit changes.

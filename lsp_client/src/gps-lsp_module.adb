@@ -62,7 +62,7 @@ with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Application;
 with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
-with VSS.Unicode;
+with VSS.Strings.Hash;
 
 with Default_Preferences;            use Default_Preferences;
 with GPS.Core_Kernels;
@@ -111,7 +111,6 @@ with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
 with Language;                          use Language;
 with LSP.Client_Notification_Receivers;
 with LSP.Enumerations;
-with LSP.Structures;
 with LSP.Structures.Hashes;
 with Outline_View;                      use Outline_View;
 with Src_Editor_Buffer;
@@ -375,6 +374,13 @@ package body GPS.LSP_Module is
       Server : not null Language_Server_Access;
       Token  : LSP.Structures.ProgressToken;
       Value  : LSP.Structures.WorkDoneProgressEnd);
+
+   function Get_Or_Create_Scheduled_Command
+     (Self  : in out Module_Id_Record'Class;
+      Key   : LSP.Structures.ProgressToken;
+      Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access;
+   --  Return the scheduled command associated with Key, creating one (with
+   --  the given Title) if none exists yet.
 
    procedure Initiate_Server_Shutdown
      (Server         :
@@ -1680,8 +1686,6 @@ package body GPS.LSP_Module is
          end if;
 
          declare
-            use type VSS.Unicode.UTF16_Code_Unit_Count;
-
             Location   : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Diagnostic.a_range.start);
@@ -1835,7 +1839,7 @@ package body GPS.LSP_Module is
       Server : not null Language_Server_Access;
       Value  : LSP.Structures.LogMessageParams)
    is
-      pragma Unreferenced (Server);
+      pragma Unreferenced (Self, Server);
    begin
       case Value.a_type is
          when LSP.Enumerations.Log =>

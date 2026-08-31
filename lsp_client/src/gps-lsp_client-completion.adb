@@ -23,7 +23,6 @@ with GNAT.Strings;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.JSON;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
@@ -36,7 +35,6 @@ with Glib.Convert;           use Glib.Convert;
 with Glib.Convert.VSS_Utils; use Glib.Convert.VSS_Utils;
 with Gtkada.Style;
 
-with LSP.Constants;
 with LSP.Enumerations; use LSP.Enumerations;
 
 with Completion_Module;               use Completion_Module;
@@ -997,8 +995,11 @@ package body GPS.LSP_Client.Completion is
          Trace
            (Advanced_Me,
             "queriying completions with ID "
-            & VSS.Strings.Conversions.To_UTF_8_String
-                (To_Virtual_String (Request.Id)));
+            & (if Request.Id.Is_Integer
+               then Request.Id.Integer'Image
+               else
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (Request.Id.Virtual_String)));
       end if;
    end Query_Completion_List;
 

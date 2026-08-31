@@ -18,7 +18,6 @@
 with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.Regpat;    use GNAT.Regpat;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.Utils;  use GNATCOLL.Utils;
@@ -62,8 +61,8 @@ with Gtkada.Handlers;                        use Gtkada.Handlers;
 with Gtkada.MDI;                             use Gtkada.MDI;
 with GUI_Utils;                              use GUI_Utils;
 with Language;                               use Language;
-with LSP.Messages;                           use LSP.Messages;
-with LSP.Types;                              use LSP.Types;
+with LSP.Enumerations;                       use LSP.Enumerations;
+with LSP.Structures;                         use LSP.Structures;
 with Pango.Enums;                            use Pango.Enums;
 with Src_Editor_Box;                         use Src_Editor_Box;
 with Src_Editor_Module;                      use Src_Editor_Module;
@@ -87,14 +86,13 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    overriding
    procedure On_Result_Message
      (Self   : in out Signature_Help_Request;
-      Result : LSP.Messages.SignatureHelp);
+      Result : LSP.Structures.SignatureHelp_Or_Null);
 
    overriding
    procedure On_Error_Message
      (Self    : in out Signature_Help_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is null;
 
    overriding
@@ -165,21 +163,21 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    procedure Create_Signature_Help_If_Needed
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Response : LSP.Messages.SignatureHelp);
+      Response : LSP.Structures.SignatureHelp);
    --  Create the signature help window if it's not the case yet.
 
    function Should_Send_Signature_Help_Request
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Char    : Glib.Gunichar;
-      Context : in out LSP.Messages.Optional_SignatureHelpContext;
+      Context : in out LSP.Structures.SignatureHelpContext_Optional;
       Lang    : out Language.Language_Access) return Boolean;
    --  Return True if signatureHelp should be triggered and fill the Context
 
    function Create_Signature_Help_Request
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : Virtual_File;
-      Context : LSP.Messages.Optional_SignatureHelpContext)
+      Context : LSP.Structures.SignatureHelpContext_Optional)
       return Signature_Help_Request_Access;
 
    procedure Refresh
@@ -249,7 +247,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    procedure Refresh
      (Self : not null Signature_Help_Window; Content_Only : Boolean := False)
    is
-      Signature       : constant LSP.Messages.SignatureInformation :=
+      Signature       : constant LSP.Structures.SignatureInformation :=
         Self.Signatures (Self.Active_Signature_Nb);
       Signature_Label : constant String :=
         VSS.Strings.Conversions.To_UTF_8_String (Signature.label);
@@ -320,11 +318,11 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       --  associated to the active signature or not.
 
       if Signature.documentation.Is_Set
-        and then Signature.documentation.Value.Is_String
+        and then Signature.documentation.Value.Is_Virtual_String
       then
          declare
             Doc : constant VSS.Strings.Virtual_String :=
-              Escape_Text (Signature.documentation.Value.String);
+              Escape_Text (Signature.documentation.Value.Virtual_String);
          begin
             if not Doc.Is_Empty then
                Self.Documentation_Label.Set_Text
@@ -349,13 +347,15 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
       if Active_Param_Num <= Signature.parameters.Last_Index then
          declare
-            Param : constant LSP.Messages.ParameterInformation :=
+            Param : constant LSP.Structures.ParameterInformation :=
               Signature.parameters (Active_Param_Num);
          begin
-            if not Param.label.Is_String then
+            if not Param.label.Is_Virtual_String then
                declare
-                  From : constant Integer := Integer (Param.label.From);
-                  Till : constant Integer := Integer (Param.label.Till);
+                  From : constant Integer :=
+                    Integer (Param.label.Natural_Tuple (1));
+                  Till : constant Integer :=
+                    Integer (Param.label.Natural_Tuple (2));
                begin
                   Self.Active_Signature_Label.Set_Markup
                     (Escape_Text
@@ -371,7 +371,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
                   Escaped_Param     : constant String :=
                     Escape_Text
                       (VSS.Strings.Conversions.To_UTF_8_String
-                         (Param.label.String));
+                         (Param.label.Virtual_String));
                   Escaped_Signature : constant String :=
                     Escape_Text (Signature_Label);
                   Param_Pattern     : constant Pattern_Matcher :=
@@ -595,7 +595,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
    procedure Create_Signature_Help_If_Needed
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Response : LSP.Messages.SignatureHelp)
+      Response : LSP.Structures.SignatureHelp)
    is
       Arrow                : Gtk_Arrow;
       Label_Max_With_Chars : constant := 80;
@@ -729,11 +729,11 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
       Global_Window.Active_Signature_Nb :=
         (if Response.activeSignature.Is_Set
-         then Natural (Response.activeSignature.Value) + 1
+         then Response.activeSignature.Value + 1
          else 1);
       Global_Window.Active_Parameter_Nb :=
         (if Response.activeParameter.Is_Set
-         then Natural (Response.activeParameter.Value) + 1
+         then Response.activeParameter.Value + 1
          else 1);
 
       Global_Window.Signatures := Response.signatures;
@@ -753,15 +753,16 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    overriding
    procedure On_Result_Message
      (Self   : in out Signature_Help_Request;
-      Result : LSP.Messages.SignatureHelp) is
+      Result : LSP.Structures.SignatureHelp_Or_Null) is
    begin
       if Signature_Help_Provider.Was_Opened
         and then Signature_Help_Provider.Global_Window = null
       then
          --  The signature help window has been closed since then => do nothing
          null;
-      elsif not Result.signatures.Is_Empty then
-         Create_Signature_Help_If_Needed (Self.Kernel, Result);
+      elsif not Result.Is_Null and then not Result.Value.signatures.Is_Empty
+      then
+         Create_Signature_Help_If_Needed (Self.Kernel, Result.Value);
       elsif Signature_Help_Provider.Global_Window /= null then
          Signature_Help_Provider.Global_Window.Destroy;
          Signature_Help_Provider.Global_Window := null;
@@ -778,7 +779,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Char    : Glib.Gunichar;
-      Context : in out LSP.Messages.Optional_SignatureHelpContext;
+      Context : in out LSP.Structures.SignatureHelpContext_Optional;
       Lang    : out Language.Language_Access) return Boolean
    is
       Editor      : constant Editor_Buffer'Class :=
@@ -797,7 +798,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       end if;
 
       declare
-         Capabilities : constant LSP.Messages.ServerCapabilities :=
+         Capabilities : constant LSP.Structures.ServerCapabilities :=
            Server.Get_Client.Capabilities;
       begin
          if not Capabilities.signatureHelpProvider.Is_Set then
@@ -808,28 +809,21 @@ package body GPS.LSP_Client.Editors.Signature_Help is
          --  characters for signature help.
 
          declare
-            Signature_Options : LSP.Messages.SignatureHelpOptions renames
+            Signature_Options : LSP.Structures.SignatureHelpOptions renames
               Capabilities.signatureHelpProvider.Value;
             Virtual_Char      : VSS.Strings.Virtual_String;
 
          begin
             Virtual_Char.Append (VSS.Characters.Virtual_Character'Val (Char));
 
-            if Signature_Options.triggerCharacters.Is_Set
-              and then
-                Signature_Options.triggerCharacters.Value.Contains
-                  (Virtual_Char)
-            then
+            if Signature_Options.triggerCharacters.Contains (Virtual_Char) then
                Context.Value.triggerKind := TriggerCharacter;
-               Context.Value.triggerCharacter := (True, Virtual_Char);
+               Context.Value.triggerCharacter := Virtual_Char;
                --  Trigger characters will always send a signatureHelp request
                Res := True;
-            elsif Signature_Options.retriggerCharacters.Is_Set
-              and then
-                Signature_Options.retriggerCharacters.Value.Contains
-                  (Virtual_Char)
+            elsif Signature_Options.retriggerCharacters.Contains (Virtual_Char)
             then
-               Context.Value.triggerCharacter := (True, Virtual_Char);
+               Context.Value.triggerCharacter := Virtual_Char;
                Context.Value.triggerKind := TriggerCharacter;
             else
                Context.Value.triggerKind := ContentChange;
@@ -840,23 +834,24 @@ package body GPS.LSP_Client.Editors.Signature_Help is
             if Signature_Help_Provider.Global_Window /= null then
                Context.Value.isRetrigger := True;
                Context.Value.activeSignatureHelp :=
-                 (True,
-                  (signatures      =>
-                     Signature_Help_Provider.Global_Window.Signatures,
-                   activeSignature =>
-                     (True,
-                      LSP_Number
-                        (Signature_Help_Provider
-                           .Global_Window
-                           .Active_Signature_Nb)
-                      - 1),
-                   activeParameter =>
-                     (True,
-                      LSP_Number
-                        (Signature_Help_Provider
-                           .Global_Window
-                           .Active_Parameter_Nb)
-                      - 1)));
+                 (Is_Set => True,
+                  Value  =>
+                    (signatures      =>
+                       Signature_Help_Provider.Global_Window.Signatures,
+                     activeSignature =>
+                       (Is_Set => True,
+                        Value  =>
+                          Signature_Help_Provider
+                            .Global_Window
+                            .Active_Signature_Nb
+                          - 1),
+                     activeParameter =>
+                       (Is_Set => True,
+                        Value  =>
+                          Signature_Help_Provider
+                            .Global_Window
+                            .Active_Parameter_Nb
+                          - 1)));
                Res := True;
             else
                Context.Value.isRetrigger := False;
@@ -874,7 +869,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    function Create_Signature_Help_Request
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : Virtual_File;
-      Context : LSP.Messages.Optional_SignatureHelpContext)
+      Context : LSP.Structures.SignatureHelpContext_Optional)
       return Signature_Help_Request_Access
    is
       Editor_Context : constant Selection_Context :=
@@ -912,7 +907,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Interactive : Boolean)
    is
       Lang    : Language.Language_Access;
-      Context : LSP.Messages.Optional_SignatureHelpContext :=
+      Context : LSP.Structures.SignatureHelpContext_Optional :=
         (Is_Set => True, others => <>);
    begin
       if not GPS.Kernel.Preferences.LSP_Use_Signatures.Get_Pref
@@ -965,7 +960,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Project      : GNATCOLL.Projects.Project_Type)
    is
       pragma Unreferenced (Project);
-      Context : LSP.Messages.Optional_SignatureHelpContext :=
+      Context : LSP.Structures.SignatureHelpContext_Optional :=
         (Is_Set => True, others => <>);
    begin
       if not GPS.Kernel.Preferences.LSP_Use_Signatures.Get_Pref
@@ -983,18 +978,20 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       --  Reuse the previous context
       Context.Value.isRetrigger := True;
       Context.Value.activeSignatureHelp :=
-        (True,
-         (signatures      => Signature_Help_Provider.Global_Window.Signatures,
-          activeSignature =>
-            (True,
-             LSP_Number
-               (Signature_Help_Provider.Global_Window.Active_Signature_Nb)
-             - 1),
-          activeParameter =>
-            (True,
-             LSP_Number
-               (Signature_Help_Provider.Global_Window.Active_Parameter_Nb)
-             - 1)));
+        (Is_Set => True,
+         Value  =>
+           (signatures      =>
+              Signature_Help_Provider.Global_Window.Signatures,
+            activeSignature =>
+              (Is_Set => True,
+               Value  =>
+                 Signature_Help_Provider.Global_Window.Active_Signature_Nb
+                 - 1),
+            activeParameter =>
+              (Is_Set => True,
+               Value  =>
+                 Signature_Help_Provider.Global_Window.Active_Parameter_Nb
+                 - 1)));
 
       declare
          Request : Signature_Help_Request_Access :=
