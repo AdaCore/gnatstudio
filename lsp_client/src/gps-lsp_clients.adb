@@ -1064,19 +1064,12 @@ package body GPS.LSP_Clients is
 
                Reader.Set_Stream (Text_Stream'Unchecked_Access);
 
-               --  Rewind Reader to the start of the "params" value
+               --  Rewind Reader to the start of the message: Read_Progress_
+               --  Report (below) expects to be positioned on the top-level
+               --  message object and parses the "jsonrpc"/"method"/"params"
+               --  keys (and, inside "params", "token"/"value") itself.
 
-               loop
-                  Stream.R.Read_Next;
-
-                  exit when
-                    Stream.R.Is_Key_Name
-                    and then
-                      VSS.Strings.Conversions.To_UTF_8_String
-                        (Stream.R.Key_Name)
-                      = "params";
-               end loop;
-
+               Stream.R.Read_Next;
                Stream.R.Read_Next;
 
                declare
@@ -1118,17 +1111,13 @@ package body GPS.LSP_Clients is
                if not Method_Name.Is_Empty then
                   Reader.Set_Stream (Text_Stream'Unchecked_Access);
 
-                  loop
-                     Stream.R.Read_Next;
+                  --  Rewind Reader to the start of the message:
+                  --  Read_Progress_Report (below) expects to be positioned
+                  --  on the top-level message object and parses the
+                  --  "jsonrpc"/"method"/"params" keys (and, inside
+                  --  "params", "token"/"value") itself.
 
-                     exit when
-                       Stream.R.Is_Key_Name
-                       and then
-                         VSS.Strings.Conversions.To_UTF_8_String
-                           (Stream.R.Key_Name)
-                         = "params";
-                  end loop;
-
+                  Stream.R.Read_Next;
                   Stream.R.Read_Next;
 
                   LSP.Progress_Report_Readers.Read_Progress_Report
