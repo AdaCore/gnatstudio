@@ -597,10 +597,21 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       return LSP.Structures.SemanticTokensClientCapabilities_Optional
    is
 
-      function To_Wire_Name (Value : String) return VSS.Strings.Virtual_String;
-      --  Convert an Ada SemanticTokenTypes/SemanticTokenModifiers literal
-      --  spelling to its LSP wire name: lower-cased, with the "a_"/"an_"
-      --  prefix (added to dodge Ada reserved words) stripped.
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenTypes)
+         return VSS.Strings.Virtual_String;
+      --  Convert a SemanticTokenTypes literal to its LSP wire name. This
+      --  cannot be derived from 'Image (which upper-cases identifiers,
+      --  losing the wire protocol's camelCase spelling, e.g.
+      --  "typeParameter"/"enumMember"), so it must mirror the spelling
+      --  used by the generated LSP.Outputs.Write_SemanticTokenTypes.
+
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenModifiers)
+         return VSS.Strings.Virtual_String;
+      --  Likewise for SemanticTokenModifiers (e.g. "globalVariable",
+      --  "dispatchingCall", "defaultLibrary"), mirroring
+      --  LSP.Outputs.Write_SemanticTokenModifiers.
 
       function Get_Supported_Token_Types
          return VSS.String_Vectors.Virtual_String_Vector;
@@ -612,24 +623,59 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       -- To_Wire_Name --
       ------------------
 
-      function To_Wire_Name (Value : String) return VSS.Strings.Virtual_String
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenTypes)
+         return VSS.Strings.Virtual_String
       is
-         N : constant String := Ada.Characters.Handling.To_Lower (Value);
-      begin
-         if N'Length > 2 and then N (N'First .. N'First + 1) = "a_" then
-            return
-              VSS.Strings.Conversions.To_Virtual_String
-                (N (N'First + 2 .. N'Last));
+        (VSS.Strings.Conversions.To_Virtual_String
+           (case Value is
+               when namespace     => "namespace",
+               when a_type        => "type",
+               when class         => "class",
+               when enum          => "enum",
+               when an_interface  => "interface",
+               when struct        => "struct",
+               when typeParameter => "typeParameter",
+               when parameter     => "parameter",
+               when variable      => "variable",
+               when property      => "property",
+               when enumMember    => "enumMember",
+               when event         => "event",
+               when a_function    => "function",
+               when method        => "method",
+               when macro         => "macro",
+               when keyword       => "keyword",
+               when modifier      => "modifier",
+               when comment       => "comment",
+               when LSP.Enumerations.string => "string",
+               when number        => "number",
+               when regexp        => "regexp",
+               when operator      => "operator",
+               when decorator     => "decorator"));
 
-         elsif N'Length > 3 and then N (N'First .. N'First + 2) = "an_" then
-            return
-              VSS.Strings.Conversions.To_Virtual_String
-                (N (N'First + 3 .. N'Last));
+      ------------------
+      -- To_Wire_Name --
+      ------------------
 
-         else
-            return VSS.Strings.Conversions.To_Virtual_String (N);
-         end if;
-      end To_Wire_Name;
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenModifiers)
+         return VSS.Strings.Virtual_String
+      is
+        (VSS.Strings.Conversions.To_Virtual_String
+           (case Value is
+               when LSP.Enumerations.declaration    => "declaration",
+               when LSP.Enumerations.definition     => "definition",
+               when LSP.Enumerations.readonly       => "readonly",
+               when LSP.Enumerations.static         => "static",
+               when LSP.Enumerations.deprecated     => "deprecated",
+               when LSP.Enumerations.an_abstract    => "abstract",
+               when LSP.Enumerations.async          => "async",
+               when LSP.Enumerations.modification   => "modification",
+               when LSP.Enumerations.documentation  => "documentation",
+               when LSP.Enumerations.defaultLibrary => "defaultLibrary",
+               when LSP.Enumerations.globalVariable => "globalVariable",
+               when LSP.Enumerations.localVariable  => "localVariable",
+               when LSP.Enumerations.dispatchingCall => "dispatchingCall"));
 
       -------------------------------
       -- Get_Supported_Token_Types --
@@ -646,7 +692,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               and then Item /= macro
               and then Item /= regexp
             then
-               Result.Append (To_Wire_Name (SemanticTokenTypes'Image (Item)));
+               Result.Append (To_Wire_Name (Item));
             end if;
          end loop;
 
@@ -666,8 +712,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          for Item in SemanticTokenModifiers'Range loop
             --  skip unsupported
             if Item /= async then
-               Result.Append
-                 (To_Wire_Name (SemanticTokenModifiers'Image (Item)));
+               Result.Append (To_Wire_Name (Item));
             end if;
          end loop;
 
