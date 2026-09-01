@@ -39,7 +39,17 @@ package body GPS.LSP_Client.Requests.Shutdown is
    procedure Params
      (Self    : Abstract_Shutdown_Request;
       Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class)
-   is null;
+   is
+      pragma Unreferenced (Self);
+
+   begin
+      --  The "shutdown" request takes no parameters, but the "params"
+      --  member is unconditionally written by the caller, so this must
+      --  still produce a valid JSON value (an empty object).
+
+      Handler.Start_Object;
+      Handler.End_Object;
+   end Params;
 
    --------------------------
    -- Is_Request_Supported --
