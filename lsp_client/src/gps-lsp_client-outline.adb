@@ -525,13 +525,18 @@ package body GPS.LSP_Client.Outline is
                      --  child needs.
                      Self.Tree_Stack.Append
                        (Stack_Frame'(Vec => Symbol.children, Index => 1));
-                  else
+                  elsif Visible then
                      --  No children to descend into: Add_Row still
                      --  advanced the cursor to this row, so pop back to
                      --  its parent now or the next sibling would be
                      --  nested underneath it instead of alongside it.
                      Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
                   end if;
+                  --  else: the symbol was filtered out, so Add_Row left
+                  --  the cursor untouched at the real parent. Moving it
+                  --  up here would incorrectly pop past that parent and
+                  --  cause the next sibling to be added one level too
+                  --  high (or at the top level).
                end;
             end if;
          end;
