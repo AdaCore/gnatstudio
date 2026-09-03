@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;                use LSP.Types;
-with LSP.Messages;             use LSP.Messages;
+with LSP.Types;    use LSP.Types;
+with LSP.Messages; use LSP.Messages;
 
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
@@ -28,16 +28,17 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
    -- Params --
    ------------
 
-   overriding function Params
+   overriding
+   function Params
      (Self : Abstract_Named_Parameters_Command_Request)
       return LSP.Messages.ExecuteCommandParams
    is
       Arguments : Any_Vector;
 
-      Argument  : constant LSP.Types.LSP_Any := Create_Object;
-      Where     : constant LSP.Types.LSP_Any := Create_Object;
-      Document  : constant LSP.Types.LSP_Any := Create_Object;
-      Position  : constant LSP.Types.LSP_Any := Create_Object;
+      Argument : constant LSP.Types.LSP_Any := Create_Object;
+      Where    : constant LSP.Types.LSP_Any := Create_Object;
+      Document : constant LSP.Types.LSP_Any := Create_Object;
+      Position : constant LSP.Types.LSP_Any := Create_Object;
 
    begin
       Document.Set_Field
@@ -52,8 +53,9 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
 
       Argument.Set_Field
         ("context",
-         Create (URIs.Conversions.From_File
-           (Self.Project.Project_Path.Display_Full_Name)));
+         Create
+           (URIs.Conversions.From_File
+              (Self.Project.Project_Path.Display_Full_Name)));
       Argument.Set_Field ("where", Where);
 
       Arguments.Append (Argument);
@@ -69,7 +71,8 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
    -- Text_Document --
    -------------------
 
-   overriding function Text_Document
+   overriding
+   function Text_Document
      (Self : Abstract_Named_Parameters_Command_Request)
       return GNATCOLL.VFS.Virtual_File is
    begin

@@ -45,21 +45,18 @@ package GPS.LSP_Client.Utilities is
    --  Converts the given editor location to a LSP position.
 
    function To_Language_Category
-     (K            : LSP.Messages.SymbolKind;
-      Is_Procedure : Boolean := False)
+     (K : LSP.Messages.SymbolKind; Is_Procedure : Boolean := False)
       return Language.Language_Category;
    --  Converts SymbolKind to an appropriate Language_Category.
    --  Is_Procedure should be True if the Symbol is a function without a return
    --  statement (The LSP doesn't have the concept of Procedure).
 
    function To_Construct_Visibility
-     (V : LSP.Messages.Als_Visibility)
-      return Language.Construct_Visibility;
+     (V : LSP.Messages.Als_Visibility) return Language.Construct_Visibility;
    --  Converts AlsVisibility to Construct_Visibility.
 
    function Get_Formatting_Options
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      File   : GNATCOLL.VFS.Virtual_File)
+     (Kernel : GPS.Kernel.Kernel_Handle; File : GNATCOLL.VFS.Virtual_File)
       return LSP.Messages.FormattingOptions;
    --  Return the formatting options used for LSP Formatting for Document
 

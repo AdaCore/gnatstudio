@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Code_Action is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Code_Action_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -38,7 +39,8 @@ package body GPS.LSP_Client.Requests.Code_Action is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Code_Action_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -46,8 +48,7 @@ package body GPS.LSP_Client.Requests.Code_Action is
 
    begin
       LSP.Messages.CodeAction_Vector'Read (Stream, Response);
-      Abstract_Code_Action_Request'Class
-        (Self).On_Result_Message (Response);
+      Abstract_Code_Action_Request'Class (Self).On_Result_Message (Response);
    end On_Result_Message;
 
    ------------
@@ -55,29 +56,27 @@ package body GPS.LSP_Client.Requests.Code_Action is
    ------------
 
    function Params
-     (Self : Abstract_Code_Action_Request)
-      return LSP.Messages.CodeActionParams
+     (Self : Abstract_Code_Action_Request) return LSP.Messages.CodeActionParams
    is
       Diagnostics : LSP.Messages.Diagnostic_Vector;
    begin
       return
         (workDoneToken      => (Is_Set => False),
          partialResultToken => (Is_Set => False),
-         textDocument =>
+         textDocument       =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         span         =>
-           (first => Self.Start_Position,
-            last  => Self.End_Position),
-         context =>
-           (diagnostics => Diagnostics,
-            only        => (Is_Set => False)));
+         span               =>
+           (first => Self.Start_Position, last => Self.End_Position),
+         context            =>
+           (diagnostics => Diagnostics, only => (Is_Set => False)));
    end Params;
 
    ------------
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Code_Action_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

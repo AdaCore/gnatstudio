@@ -19,44 +19,47 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Completion is
 
-   type Abstract_Completion_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-      record
-         Position : LSP.Messages.Position;
-         Context  : LSP.Messages.CompletionContext;
-      end record;
+   type Abstract_Completion_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Position : LSP.Messages.Position;
+      Context  : LSP.Messages.CompletionContext;
+   end record;
 
    function Params
-     (Self : Abstract_Completion_Request)
-      return LSP.Messages.CompletionParams;
+     (Self : Abstract_Completion_Request) return LSP.Messages.CompletionParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Completion_Request;
-      Result : LSP.Messages.CompletionList) is abstract;
+      Result : LSP.Messages.CompletionList)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Completion_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Completion_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Completion_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   type Abstract_CompletionItem_Resolve_Request is
-     abstract new GPS.LSP_Client.Requests.LSP_Request with
-      record
-         Item : LSP.Messages.CompletionItem;
-      end record;
+   type Abstract_CompletionItem_Resolve_Request is abstract
+     new GPS.LSP_Client.Requests.LSP_Request
+   with record
+      Item : LSP.Messages.CompletionItem;
+   end record;
 
    function Params
      (Self : Abstract_CompletionItem_Resolve_Request)
@@ -65,23 +68,27 @@ package GPS.LSP_Client.Requests.Completion is
 
    procedure On_Result_Message
      (Self   : in out Abstract_CompletionItem_Resolve_Request;
-      Result : LSP.Messages.CompletionItem) is abstract;
+      Result : LSP.Messages.CompletionItem)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_CompletionItem_Resolve_Request)
       return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_CompletionItem_Resolve_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_CompletionItem_Resolve_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_CompletionItem_Resolve_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

@@ -44,9 +44,7 @@ package body GPS.LSP_Client.Configurations is
    --------------------------------
 
    function Is_Configuration_Supported
-     (Self    : Server_Configuration;
-      Setting : Setting_Kind)
-      return Boolean
+     (Self : Server_Configuration; Setting : Setting_Kind) return Boolean
    is
       pragma Unreferenced (Self, Setting);
    begin

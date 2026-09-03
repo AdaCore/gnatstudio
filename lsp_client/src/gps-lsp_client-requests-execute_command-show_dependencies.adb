@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;                use LSP.Types;
-with LSP.Messages;             use LSP.Messages;
+with LSP.Types;    use LSP.Types;
+with LSP.Messages; use LSP.Messages;
 
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
@@ -26,9 +26,10 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
-     (Self   : in out Abstract_Show_Dependencies_Command_Request;
-      JS     : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   overriding
+   procedure On_Result_Message
+     (Self : in out Abstract_Show_Dependencies_Command_Request;
+      JS   : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       procedure Read_Item (Item : out Unit_Description);
 
@@ -76,21 +77,22 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
       end loop;
       JS.R.Read_Next;
 
-      Abstract_Show_Dependencies_Command_Request'Class (Self)
-        .On_Result_Message (Result);
+      Abstract_Show_Dependencies_Command_Request'Class (Self).On_Result_Message
+        (Result);
    end On_Result_Message;
 
    ------------
    -- Params --
    ------------
 
-   overriding function Params
+   overriding
+   function Params
      (Self : Abstract_Show_Dependencies_Command_Request)
       return LSP.Messages.ExecuteCommandParams
    is
       Arguments : Any_Vector;
 
-      Argument  : constant LSP.Types.LSP_Any := Create_Object;
+      Argument : constant LSP.Types.LSP_Any := Create_Object;
 
       URI : constant String := To_UTF_8_String (To_URI (Self.Text_Document));
 

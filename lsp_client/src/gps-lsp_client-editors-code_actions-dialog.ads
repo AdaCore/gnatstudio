@@ -24,9 +24,9 @@ with LSP.Messages;
 package GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
    procedure Execute_Request_Via_Dialog
-      (Kernel  : Kernel_Handle;
-       Lang    : Language_Access;
-       Request : in out Execute_Command_Request_Access);
+     (Kernel  : Kernel_Handle;
+      Lang    : Language_Access;
+      Request : in out Execute_Command_Request_Access);
    --  Look at the specifics of Request and determine whether
    --  extra input is required from the user.
    --

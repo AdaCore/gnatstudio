@@ -15,28 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;         use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Wide_Wide_Fixed;
-with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
-with GNAT.Regpat;                     use GNAT.Regpat;
+with Ada_Semantic_Tree;       use Ada_Semantic_Tree;
+with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.Strings;
 
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.JSON;
-with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 
 with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 
 with Glib;
-with Glib.Convert;                    use Glib.Convert;
-with Glib.Convert.VSS_Utils;          use Glib.Convert.VSS_Utils;
+with Glib.Convert;           use Glib.Convert;
+with Glib.Convert.VSS_Utils; use Glib.Convert.VSS_Utils;
 with Gtkada.Style;
 
-with LSP.Types;                       use LSP.Types;
+with LSP.Types; use LSP.Types;
 
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
@@ -52,9 +52,9 @@ with GPS.LSP_Module;                  use GPS.LSP_Module;
 with LAL.Core_Module;
 with LAL.Highlighters;
 with LAL.Module;
-with Language.Ada;                    use Language.Ada;
-with Language.Cpp;                    use Language.Cpp;
-with Language.C;                      use Language.C;
+with Language.Ada; use Language.Ada;
+with Language.Cpp; use Language.Cpp;
+with Language.C;   use Language.C;
 with Langkit_Support.Text;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -68,7 +68,7 @@ package body GPS.LSP_Client.Completion is
 
    LSP_Resolver_ID_Prefix : constant String := "LSP_CMP_";
 
-   Location_Pattern       : constant Pattern_Matcher :=
+   Location_Pattern : constant Pattern_Matcher :=
      Compile ("at\s([\w\-]*?\.\w*)\s\((\d*)\:(\d*)\)");
    --  Pattern used to detect a file location in the completion items'
    --  documentation.
@@ -81,66 +81,73 @@ package body GPS.LSP_Client.Completion is
 
    function To_LSP_Completion_Trigger_Kind
      (Trigger_Kind : Completion_Trigger_Kind)
-      return LSP.Messages.CompletionTriggerKind is
-     (case Trigger_Kind is
-         when Invoked =>
-            LSP.Messages.Invoked,
-         when TriggerCharacter =>
-            LSP.Messages.TriggerCharacter,
+      return LSP.Messages.CompletionTriggerKind
+   is (case Trigger_Kind is
+         when Invoked                         => LSP.Messages.Invoked,
+         when TriggerCharacter                => LSP.Messages.TriggerCharacter,
          when TriggerForIncompleteCompletions =>
-            LSP.Messages.TriggerForIncompleteCompletions);
+           LSP.Messages.TriggerForIncompleteCompletions);
 
    ----------------------------
    -- LSP Completion Request --
    ----------------------------
 
    type LSP_Completion_Request is
-     new GPS.LSP_Client.Requests.Completion.Abstract_Completion_Request with
-      record
-         Resolver : LSP_Completion_Resolver_Access;
-         Result   : Completion_List;
-      end record;
+     new GPS.LSP_Client.Requests.Completion.Abstract_Completion_Request
+   with record
+      Resolver : LSP_Completion_Resolver_Access;
+      Result   : Completion_List;
+   end record;
    type LSP_Completion_Request_Access is access all LSP_Completion_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out LSP_Completion_Request;
       Result : LSP.Messages.CompletionList);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out LSP_Completion_Request; Reason : Reject_Reason);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure Finalize (Self : in out LSP_Completion_Request)
-   is null;
+   overriding
+   procedure Finalize (Self : in out LSP_Completion_Request) is null;
 
    ----------------------------------------
    -- LSP CompletionItem Resolve Request --
    ----------------------------------------
 
    type LSP_CompletionItem_Resolve_Request is
-     new GPS.LSP_Client.Requests.Completion.
-       Abstract_CompletionItem_Resolve_Request with
-      record
-         Resolver : LSP_Completion_Resolver_Access;
-         Item_Idx : Positive;
+     new GPS
+          .LSP_Client
+          .Requests
+          .Completion
+          .Abstract_CompletionItem_Resolve_Request
+   with record
+      Resolver : LSP_Completion_Resolver_Access;
+      Item_Idx : Positive;
    end record;
-   type LSP_CompletionItem_Resolve_Request_Access
-   is access all LSP_CompletionItem_Resolve_Request;
+   type LSP_CompletionItem_Resolve_Request_Access is
+     access all LSP_CompletionItem_Resolve_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out LSP_CompletionItem_Resolve_Request;
       Result : LSP.Messages.CompletionItem);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out LSP_CompletionItem_Resolve_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is null;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is null;
 
    ----------------------
    -- Lazy Computation --
@@ -159,14 +166,19 @@ package body GPS.LSP_Client.Completion is
       Index    : Positive;
    end record;
 
-   overriding function First (List : LSP_Completion_Component)
+   overriding
+   function First
+     (List : LSP_Completion_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
 
-   overriding function At_End (It : LSP_Completion_Iterator) return Boolean;
+   overriding
+   function At_End (It : LSP_Completion_Iterator) return Boolean;
 
-   overriding procedure Next (It : in out LSP_Completion_Iterator);
+   overriding
+   procedure Next (It : in out LSP_Completion_Iterator);
 
-   overriding function Get
+   overriding
+   function Get
      (It : in out LSP_Completion_Iterator) return Completion_Proposal'Class;
 
    -----------
@@ -175,8 +187,7 @@ package body GPS.LSP_Client.Completion is
 
    function To_Language_Category
      (Kind : CompletionItemKind) return Language_Category
-   is
-     (case Kind is
+   is (case Kind is
          when Text                  => Cat_Unknown,
          when Method .. Constructor => Cat_Function,
          when Field | Property      => Cat_Field,
@@ -190,26 +201,30 @@ package body GPS.LSP_Client.Completion is
          when others                => Cat_Unknown);
 
    type LSP_Completion_Detail_Highlighter is
-     new LAL.Highlighters.Highlightable_Interface with record
+     new LAL.Highlighters.Highlightable_Interface
+   with record
       Kernel : Kernel_Handle;
       Detail : VSS.Strings.Virtual_String;
    end record;
    --  Used to highlight the completion item's detail.
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out LSP_Completion_Detail_Highlighter;
       Token : Libadalang.Common.Token_Reference;
       Style : String);
 
-   overriding procedure Remove_Highlighting
+   overriding
+   procedure Remove_Highlighting
      (Self  : in out LSP_Completion_Detail_Highlighter;
       Style : String;
       From  : Integer;
-      To    : Integer) is null;
+      To    : Integer)
+   is null;
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean;
 
    function Get_Detail
      (Item : CompletionItem) return VSS.Strings.Virtual_String;
@@ -223,28 +238,28 @@ package body GPS.LSP_Client.Completion is
    -- LSP Completion Resolver --
    -----------------------------
 
-   overriding function Get_Id
-     (Resolver : LSP_Completion_Resolver) return String
-   is
-     (LSP_Resolver_ID_Prefix
-      & VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
+   overriding
+   function Get_Id (Resolver : LSP_Completion_Resolver) return String
+   is (LSP_Resolver_ID_Prefix
+       & VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
 
    --------------------
    -- Get_Completion --
    --------------------
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
-   is
-     (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
+   is (VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
 
    ---------------
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
@@ -258,7 +273,8 @@ package body GPS.LSP_Client.Completion is
    -- Get_Sort_Text --
    -------------------
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
@@ -272,7 +288,8 @@ package body GPS.LSP_Client.Completion is
    -- Get_Filter_Text --
    ---------------------
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String is
@@ -284,33 +301,33 @@ package body GPS.LSP_Client.Completion is
    -- Get_Category --
    ------------------
 
-   overriding function Get_Category
+   overriding
+   function Get_Category
      (Proposal : LSP_Completion_Proposal) return Language_Category
-   is
-     (Proposal.Category);
+   is (Proposal.Category);
 
    --------------------
    -- Get_Visibility --
    --------------------
 
-   overriding function Get_Visibility
+   overriding
+   function Get_Visibility
      (Proposal : LSP_Completion_Proposal) return Construct_Visibility
-   is
-     (Visibility_Public);
+   is (Visibility_Public);
 
    ------------------
    -- Get_Location --
    ------------------
 
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : LSP_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location
    is
       pragma Unreferenced (Db);
       Resolver : constant LSP_Completion_Resolver_Access :=
-        LSP_Completion_Resolver_Access
-          (Proposal.Resolver);
+        LSP_Completion_Resolver_Access (Proposal.Resolver);
       Item     : constant CompletionItem :=
         Resolver.Completions.items (Proposal.ID);
       Doc      : constant String :=
@@ -324,8 +341,8 @@ package body GPS.LSP_Client.Completion is
       --  documentation.
 
       declare
-         Kernel   : constant Kernel_Handle := Resolver.Kernel;
-         Matched  : Match_Array (0 .. 3);
+         Kernel  : constant Kernel_Handle := Resolver.Kernel;
+         Matched : Match_Array (0 .. 3);
       begin
          Match (Location_Pattern, Doc, Matched);
 
@@ -334,24 +351,25 @@ package body GPS.LSP_Client.Completion is
          end if;
 
          declare
-            Filename : constant String := Doc
-              (Matched (1).First .. Matched (1).Last);
+            Filename : constant String :=
+              Doc (Matched (1).First .. Matched (1).Last);
             File     : constant Virtual_File :=
               Kernel.Get_Project_Tree.Create
                 (Base_Name (Create_From_Base (+Filename)));
-            Line     : constant Integer := Integer'Value
-              (Doc (Matched (2).First .. Matched (2).Last));
-            Column   : constant Integer := Integer'Value
-              (Doc (Matched (3).First .. Matched (3).Last));
+            Line     : constant Integer :=
+              Integer'Value (Doc (Matched (2).First .. Matched (2).Last));
+            Column   : constant Integer :=
+              Integer'Value (Doc (Matched (3).First .. Matched (3).Last));
          begin
             if File = No_File then
                return Null_File_Location;
             end if;
 
-            return File_Location'
-              (File_Path => File,
-               Line      => Line,
-               Column    => Visible_Column_Type (Column));
+            return
+              File_Location'
+                (File_Path => File,
+                 Line      => Line,
+                 Column    => Visible_Column_Type (Column));
          end;
 
       end;
@@ -361,9 +379,9 @@ package body GPS.LSP_Client.Completion is
    -- Get_Documentation --
    -----------------------
 
-   overriding function Get_Documentation
-     (Proposal : LSP_Completion_Proposal)
-      return String
+   overriding
+   function Get_Documentation
+     (Proposal : LSP_Completion_Proposal) return String
    is
       use Libadalang.Analysis;
       use Libadalang.Common;
@@ -382,31 +400,26 @@ package body GPS.LSP_Client.Completion is
 
       --  Try to highlight the completion item's detail, if any.
 
-      if Proposal.Highlightable_Detail
-        and then not Detail.Is_Empty
-      then
+      if Proposal.Highlightable_Detail and then not Detail.Is_Empty then
          declare
-            Highlighter     : LSP_Completion_Detail_Highlighter :=
-              (Kernel => LSP_Completion_Resolver_Access
-                 (Proposal.Resolver).Kernel,
+            Highlighter : LSP_Completion_Detail_Highlighter :=
+              (Kernel =>
+                 LSP_Completion_Resolver_Access (Proposal.Resolver).Kernel,
                Detail => <>);
-            LAL_Module      : constant LAL.Core_Module.LAL_Module_Id :=
+            LAL_Module  : constant LAL.Core_Module.LAL_Module_Id :=
               LAL.Module.Get_LAL_Core_Module;
-            Unit            : constant Analysis_Unit :=
+            Unit        : constant Analysis_Unit :=
               Get_From_Buffer
-                (Context  =>
-                   LAL_Module.Get_Current_Analysis_Context,
+                (Context  => LAL_Module.Get_Current_Analysis_Context,
                  Filename => "",
                  Charset  => "UTF-8",
                  Buffer   =>
                    VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Detail),
                  Rule     => Basic_Decl_Rule);
          begin
-            Is_Highlighted := Highlighter.Highlight_Using_Tree
-              (Unit => Unit);
+            Is_Highlighted := Highlighter.Highlight_Using_Tree (Unit => Unit);
 
-            Detail :=
-              (if Is_Highlighted then Highlighter.Detail else Detail);
+            Detail := (if Is_Highlighted then Highlighter.Detail else Detail);
          end;
       end if;
 
@@ -414,16 +427,17 @@ package body GPS.LSP_Client.Completion is
          return
            (if Is_Highlighted
             then VSS.Strings.Conversions.To_UTF_8_String (Detail)
-            else Escape_Text
-              (VSS.Strings.Conversions.To_UTF_8_String (Detail)))
+            else
+              Escape_Text (VSS.Strings.Conversions.To_UTF_8_String (Detail)))
            & ASCII.LF
            & ASCII.LF
            & Escape_Text
-           (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
+               (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
 
       else
-         return Escape_Text
-           (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
+         return
+           Escape_Text
+             (VSS.Strings.Conversions.To_UTF_8_String (Documentation));
       end if;
    end Get_Documentation;
 
@@ -431,18 +445,19 @@ package body GPS.LSP_Client.Completion is
    -- Match --
    -----------
 
-   overriding function Match
-     (Proposal   : LSP_Completion_Proposal;
-      Context    : Completion_Context;
-      Offset     : String_Index_Type) return Boolean
-   is
-     (True);
+   overriding
+   function Match
+     (Proposal : LSP_Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : String_Index_Type) return Boolean
+   is (True);
 
    -----------------------------
    -- Insert_Text_On_Selected --
    -----------------------------
 
-   overriding function Insert_Text_On_Selected
+   overriding
+   function Insert_Text_On_Selected
      (Proposal : LSP_Completion_Proposal) return Boolean is
    begin
       if not Proposal.Is_Snippet then
@@ -457,20 +472,19 @@ package body GPS.LSP_Client.Completion is
       return
         Ada.Strings.Wide_Wide_Fixed.Index
           (VSS.Strings.Conversions.To_Wide_Wide_String (Proposal.Text), "$")
-             = 0;
+        = 0;
    end Insert_Text_On_Selected;
 
    ------------------------------
    -- Delete_Range_On_Selected --
    ------------------------------
 
-   overriding function Should_Delete_Range_On_Selected
+   overriding
+   function Should_Delete_Range_On_Selected
      (Proposal    : LSP_Completion_Proposal;
       Kernel      : Kernel_Handle;
       Range_Start : out File_Location;
-      Range_End   : out File_Location)
-      return Boolean
-   is
+      Range_End   : out File_Location) return Boolean is
    begin
       if Proposal.Span = Empty_Span then
          return False;
@@ -537,9 +551,9 @@ package body GPS.LSP_Client.Completion is
    -- On_Selected --
    -----------------
 
-   overriding procedure On_Selected
-     (Proposal : LSP_Completion_Proposal;
-      Kernel   : not null Kernel_Handle) is
+   overriding
+   procedure On_Selected
+     (Proposal : LSP_Completion_Proposal; Kernel : not null Kernel_Handle) is
    begin
       --  The user selected a snippet: expand it using the aliases Python
       --  plugin.
@@ -565,25 +579,24 @@ package body GPS.LSP_Client.Completion is
             use GPS.LSP_Client.Editors;
 
             Resolver : constant LSP_Completion_Resolver_Access :=
-              LSP_Completion_Resolver_Access
-                (Proposal.Resolver);
+              LSP_Completion_Resolver_Access (Proposal.Resolver);
             Lang     : constant Language_Access :=
               Kernel.Get_Language_Handler.Get_Language_By_Name
                 (VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
-            Command : constant LSP.Messages.Command := Proposal.Command.Value;
-            Request : Code_Actions.Execute_Command_Request_Access :=
+            Command  : constant LSP.Messages.Command := Proposal.Command.Value;
+            Request  : Code_Actions.Execute_Command_Request_Access :=
               new Code_Actions.Execute_Command_Request'
-                (LSP_Request with Kernel => Kernel,
-                 Params                  =>
-                   (Is_Unknown => True,
-                    Base       => (workDoneToken => (Is_Set => False)),
-                    command    => Command.command,
-                    arguments  => Command.arguments));
+                (LSP_Request
+                 with
+                   Kernel => Kernel,
+                   Params =>
+                     (Is_Unknown => True,
+                      Base       => (workDoneToken => (Is_Set => False)),
+                      command    => Command.command,
+                      arguments  => Command.arguments));
          begin
             Code_Actions.Dialog.Execute_Request_Via_Dialog
-              (Kernel  => Kernel,
-               Lang    => Lang,
-               Request => Request);
+              (Kernel => Kernel, Lang => Lang, Request => Request);
          end;
       end if;
    end On_Selected;
@@ -592,53 +605,56 @@ package body GPS.LSP_Client.Completion is
    -- On_Documentation_Query --
    ----------------------------
 
-   overriding function On_Documentation_Query
+   overriding
+   function On_Documentation_Query
      (Proposal : LSP_Completion_Proposal) return Boolean
    is
       Resolver : constant LSP_Completion_Resolver_Access :=
-        LSP_Completion_Resolver_Access
-             (Proposal.Resolver);
+        LSP_Completion_Resolver_Access (Proposal.Resolver);
       Kernel   : constant Kernel_Handle := Resolver.Kernel;
       Lang     : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_By_Name
           (VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
       Request  : LSP_CompletionItem_Resolve_Request_Access :=
         new LSP_CompletionItem_Resolve_Request'
-          (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel   => Kernel,
-           Resolver => Resolver,
-           Item     => Resolver.Completions.items (Proposal.ID),
-           Item_Idx => Proposal.ID);
+          (GPS.LSP_Client.Requests.LSP_Request
+           with
+             Kernel   => Kernel,
+             Resolver => Resolver,
+             Item     => Resolver.Completions.items (Proposal.ID),
+             Item_Idx => Proposal.ID);
    begin
-      return GPS.LSP_Client.Requests.Execute
-        (Lang,
-         GPS.LSP_Client.Requests.Request_Access (Request));
+      return
+        GPS.LSP_Client.Requests.Execute
+          (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
    end On_Documentation_Query;
 
    ----------------------
    -- To_Completion_Id --
    ----------------------
 
-   overriding function To_Completion_Id
-     (Proposal : LSP_Completion_Proposal)
-      return Completion_Id
+   overriding
+   function To_Completion_Id
+     (Proposal : LSP_Completion_Proposal) return Completion_Id
    is
       ID : constant String := Integer'Image (Proposal.ID);
    begin
-      return Completion_Id'
-        (Id_Length   => ID'Length,
-         Resolver_Id => LSP_Resolver_ID_Prefix,
-         Id          => ID,
-         File        => No_File,
-         Line        => 0,
-         Column      => 0);
+      return
+        Completion_Id'
+          (Id_Length   => ID'Length,
+           Resolver_Id => LSP_Resolver_ID_Prefix,
+           Id          => ID,
+           File        => No_File,
+           Line        => 0,
+           Column      => 0);
    end To_Completion_Id;
 
    ---------------------
    -- Highlight_Token --
    ---------------------
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out LSP_Completion_Detail_Highlighter;
       Token : Libadalang.Common.Token_Reference;
       Style : String)
@@ -648,18 +664,19 @@ package body GPS.LSP_Client.Completion is
       use Libadalang.Common;
 
       Highlight_Style : constant Style_Access :=
-        Get_Style_Manager (Self.Kernel).Get
-        (Key        => Style,
-         Allow_Null => True);
+        Get_Style_Manager (Self.Kernel).Get (Key => Style, Allow_Null => True);
    begin
       if Highlight_Style = null then
-         Self.Detail := Self.Detail
+         Self.Detail :=
+           Self.Detail
            & VSS.Strings.Conversions.To_Virtual_String
-           (Escape_Text (To_UTF8 (Text (Token))));
+               (Escape_Text (To_UTF8 (Text (Token))));
       else
-         Self.Detail := Self.Detail & "<span foreground="""
+         Self.Detail :=
+           Self.Detail
+           & "<span foreground="""
            & VSS.Strings.Conversions.To_Virtual_String
-           (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))
+               (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))
            & """>"
            & Escape_Text (Text (Token))
            & "</span>";
@@ -670,25 +687,24 @@ package body GPS.LSP_Client.Completion is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out LSP_Completion_Request;
       Result : LSP.Messages.CompletionList)
    is
       Component : constant LSP_Completion_Component :=
-        LSP_Completion_Component'
-                          (Resolver => Self.Resolver);
+        LSP_Completion_Component'(Resolver => Self.Resolver);
    begin
       --  If there are no completion items, return immediately and display
       --  any results already computed by other providers.
       if Result.items.Is_Empty then
          declare
             Window : constant Completion_Display_Interface_Access :=
-                       Get_Completion_Display;
+              Get_Completion_Display;
          begin
             if Window /= null then
                Window.Display_Proposals
-                 (List          => Self.Result,
-                  Is_Incomplete => False);
+                 (List => Self.Result, Is_Incomplete => False);
             end if;
 
             return;
@@ -699,25 +715,24 @@ package body GPS.LSP_Client.Completion is
         (Advanced_Me,
          "completions received, ID "
          & VSS.Strings.Conversions.To_UTF_8_String
-           (To_Virtual_String (Self.Id))
-         & ": " & Integer (Result.items.Length)'Img);
-      Trace
-        (Advanced_Me, "Is list incomplete: " & Result.isIncomplete'Img);
+             (To_Virtual_String (Self.Id))
+         & ": "
+         & Integer (Result.items.Length)'Img);
+      Trace (Advanced_Me, "Is list incomplete: " & Result.isIncomplete'Img);
 
       Self.Resolver.Completions :=
-        CompletionList'(isIncomplete => Result.isIncomplete,
-                        items        => Result.items.Copy);
+        CompletionList'
+          (isIncomplete => Result.isIncomplete, items => Result.items.Copy);
 
       Append (Self.Result, Component);
 
       declare
          Window : constant Completion_Display_Interface_Access :=
-                      Get_Completion_Display;
+           Get_Completion_Display;
       begin
          if Window /= null then
             Window.Display_Proposals
-              (List          => Self.Result,
-               Is_Incomplete => Result.isIncomplete);
+              (List => Self.Result, Is_Incomplete => Result.isIncomplete);
          end if;
       end;
    end On_Result_Message;
@@ -726,12 +741,14 @@ package body GPS.LSP_Client.Completion is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
-     (Self : in out LSP_Completion_Request; Reason : Reject_Reason) is
+   overriding
+   procedure On_Rejected
+     (Self : in out LSP_Completion_Request; Reason : Reject_Reason)
+   is
       pragma Unreferenced (Self, Reason);
 
       Window : constant Completion_Display_Interface_Access :=
-                  Get_Completion_Display;
+        Get_Completion_Display;
    begin
       Trace (Advanced_Me, "On_Rejected is called");
 
@@ -744,7 +761,8 @@ package body GPS.LSP_Client.Completion is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -753,7 +771,7 @@ package body GPS.LSP_Client.Completion is
       pragma Unreferenced (Self);
 
       Window : constant Completion_Display_Interface_Access :=
-                  Get_Completion_Display;
+        Get_Completion_Display;
    begin
       Trace
         (Advanced_Me,
@@ -769,7 +787,8 @@ package body GPS.LSP_Client.Completion is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out LSP_CompletionItem_Resolve_Request;
       Result : LSP.Messages.CompletionItem)
    is
@@ -778,8 +797,7 @@ package body GPS.LSP_Client.Completion is
    begin
       --  Replace the completion item returned on textDocument/completion
       --  with the new one, that has all its fields computed.
-      Self.Resolver.Completions.items.Replace_Element
-        (Self.Item_Idx, Result);
+      Self.Resolver.Completions.items.Replace_Element (Self.Item_Idx, Result);
 
       if Window /= null then
          Window.Display_Documentation;
@@ -790,7 +808,9 @@ package body GPS.LSP_Client.Completion is
    -- First --
    -----------
 
-   overriding function First (List : LSP_Completion_Component)
+   overriding
+   function First
+     (List : LSP_Completion_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       Iterator : LSP_Completion_Iterator;
@@ -805,7 +825,8 @@ package body GPS.LSP_Client.Completion is
    -- At_End --
    ------------
 
-   overriding function At_End (It : LSP_Completion_Iterator) return Boolean is
+   overriding
+   function At_End (It : LSP_Completion_Iterator) return Boolean is
    begin
       return It.Index > Integer (It.Resolver.Completions.items.Length);
    end At_End;
@@ -814,7 +835,8 @@ package body GPS.LSP_Client.Completion is
    -- Next --
    ----------
 
-   overriding procedure Next (It : in out LSP_Completion_Iterator) is
+   overriding
+   procedure Next (It : in out LSP_Completion_Iterator) is
    begin
       It.Index := It.Index + 1;
    end Next;
@@ -823,20 +845,20 @@ package body GPS.LSP_Client.Completion is
    -- Get --
    ---------
 
-   overriding function Get
+   overriding
+   function Get
      (It : in out LSP_Completion_Iterator) return Completion_Proposal'Class is
    begin
       if It.Resolver.Completions.items.Is_Empty then
-         return LSP_Completion_Proposal'
-           (Resolver => It.Resolver,
-            others   => <>);
+         return
+           LSP_Completion_Proposal'(Resolver => It.Resolver, others => <>);
       end if;
 
       declare
          use type VSS.Strings.Virtual_String;
 
-         Item     : constant CompletionItem := It.Resolver.Completions.items
-           (It.Index);
+         Item     : constant CompletionItem :=
+           It.Resolver.Completions.items (It.Index);
          Proposal : constant LSP_Completion_Proposal :=
            LSP_Completion_Proposal'
              (Resolver             => It.Resolver,
@@ -866,10 +888,9 @@ package body GPS.LSP_Client.Completion is
               Highlightable_Detail => It.Resolver.Lang_Name = "ada",
               Documentation        => Get_Documentation (Item),
               Category             =>
-                (if Item.kind.Is_Set then
-                    To_Language_Category (Item.kind.Value)
-                 else
-                    Cat_Unknown),
+                (if Item.kind.Is_Set
+                 then To_Language_Category (Item.kind.Value)
+                 else Cat_Unknown),
               Is_Snippet           =>
                 (Item.insertTextFormat.Is_Set
                  and then Item.insertTextFormat.Value = Snippet),
@@ -884,9 +905,10 @@ package body GPS.LSP_Client.Completion is
    -- Get_Initial_Completion_List --
    ---------------------------------
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access LSP_Completion_Manager;
-      Context : Completion_Context) return Completion_List
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access LSP_Completion_Manager; Context : Completion_Context)
+      return Completion_List
    is
       Result : Completion_List := Null_Completion_List;
    begin
@@ -910,41 +932,42 @@ package body GPS.LSP_Client.Completion is
    -- Query_Completion_List --
    ---------------------------
 
-   overriding procedure Query_Completion_List
+   overriding
+   procedure Query_Completion_List
      (Manager      : access LSP_Completion_Manager;
       Context      : Completion_Context;
       Initial_List : in out Completion_List)
    is
       Kernel         : Kernel_Handle renames Manager.Kernel;
       Editor_Context : constant Selection_Context :=
-                         Kernel.Get_Current_Context;
-      File           : constant Virtual_File := File_Information
-        (Editor_Context);
+        Kernel.Get_Current_Context;
+      File           : constant Virtual_File :=
+        File_Information (Editor_Context);
       Lang           : constant Language_Access :=
-                         Kernel.Get_Language_Handler.Get_Language_From_File
-          (File);
+        Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Resolver_ID    : constant String :=
         LSP_Resolver_ID_Prefix & To_Lower (Lang.Get_Name);
       Resolver       : constant LSP_Completion_Resolver_Access :=
-        LSP_Completion_Resolver_Access
-          (Manager.Get_Resolver (Resolver_ID));
+        LSP_Completion_Resolver_Access (Manager.Get_Resolver (Resolver_ID));
       Holder         : constant Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File);
       Location       : constant Editor_Location'Class :=
         Holder.Editor.New_Location
           (Line_Information (Editor_Context),
            Column_Information (Editor_Context));
-      Request        : LSP_Completion_Request_Access := new
-        LSP_Completion_Request'
-          (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel        => Kernel,
-           Resolver      => Resolver,
-           File          => File,
-           Result        => Initial_List,
-           Position      =>
-             GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-           Context       => (To_LSP_Completion_Trigger_Kind
-                             (Get_Trigger_Kind (Context)), others => <>));
+      Request        : LSP_Completion_Request_Access :=
+        new LSP_Completion_Request'
+          (GPS.LSP_Client.Requests.LSP_Request
+           with
+             Kernel   => Kernel,
+             Resolver => Resolver,
+             File     => File,
+             Result   => Initial_List,
+             Position =>
+               GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+             Context  =>
+               (To_LSP_Completion_Trigger_Kind (Get_Trigger_Kind (Context)),
+                others => <>));
 
    begin
       if Resolver = null then
@@ -952,27 +975,31 @@ package body GPS.LSP_Client.Completion is
          return;
       end if;
 
-      Request := new LSP_Completion_Request'
-        (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel        => Resolver.Kernel,
-         Resolver      => Resolver,
-         File          => File,
-         Result        => Initial_List,
-         Position      =>
-           GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-         Context       => (To_LSP_Completion_Trigger_Kind
-                           (Get_Trigger_Kind (Context)), others => <>));
+      Request :=
+        new LSP_Completion_Request'
+          (GPS.LSP_Client.Requests.LSP_Request
+           with
+             Kernel   => Resolver.Kernel,
+             Resolver => Resolver,
+             File     => File,
+             Result   => Initial_List,
+             Position =>
+               GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+             Context  =>
+               (To_LSP_Completion_Trigger_Kind (Get_Trigger_Kind (Context)),
+                others => <>));
 
       Resolver.Completions.items.Clear;
 
       GPS.LSP_Client.Requests.Execute
-        (Lang,
-         GPS.LSP_Client.Requests.Request_Access (Request));
+        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
       if Request /= null then
-         Trace (Advanced_Me, "queriying completions with ID "
-                & VSS.Strings.Conversions.To_UTF_8_String
-                  (To_Virtual_String (Request.Id)));
+         Trace
+           (Advanced_Me,
+            "queriying completions with ID "
+            & VSS.Strings.Conversions.To_UTF_8_String
+                (To_Virtual_String (Request.Id)));
       end if;
    end Query_Completion_List;
 
@@ -980,11 +1007,13 @@ package body GPS.LSP_Client.Completion is
    -- Get_Completion_Root --
    -------------------------
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access LSP_Completion_Resolver;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List) is null;
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access LSP_Completion_Resolver;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
+   is null;
 
    ------------------------------------
    -- LSP_Completion_Manager_Factory --
@@ -1006,21 +1035,21 @@ package body GPS.LSP_Client.Completion is
       if (Lang_Name /= "ada" or else Me.Is_Active)
         and then LSP_Is_Enabled (Lang)
       then
-         Manager := new LSP_Completion_Manager'
-           (Asynchronous_Completion_Manager with
-            Kernel => Kernel);
+         Manager :=
+           new LSP_Completion_Manager'
+             (Asynchronous_Completion_Manager with Kernel => Kernel);
 
-         Resolver := new LSP_Completion_Resolver'
-           (Completion_Resolver with
-            Kernel      => Kernel,
-            Lang_Name   =>
-              VSS.Strings.Conversions.To_Virtual_String
-                (To_Lower (Lang.Get_Name)),
-            Completions => <>);
+         Resolver :=
+           new LSP_Completion_Resolver'
+             (Completion_Resolver
+              with
+                Kernel      => Kernel,
+                Lang_Name   =>
+                  VSS.Strings.Conversions.To_Virtual_String
+                    (To_Lower (Lang.Get_Name)),
+                Completions => <>);
 
-         Register_Resolver
-           (Manager,
-            Resolver);
+         Register_Resolver (Manager, Resolver);
       end if;
 
       return Manager;
@@ -1031,14 +1060,13 @@ package body GPS.LSP_Client.Completion is
    -------------------------------------------
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean
    is
       use type VSS.Characters.Virtual_Character;
 
-      Lang   : constant Language.Language_Access
-        := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
-            else null);
+      Lang : constant Language.Language_Access :=
+        (if Editor /= Nil_Editor_Buffer then Editor.Get_Language else null);
 
       --  Return true if the cursor is at a location where an Ada keyword
       --  should open an auto-completion, false otherwise
@@ -1063,18 +1091,26 @@ package body GPS.LSP_Client.Completion is
                The_Text        : GNAT.Strings.String_Access;
                Ret             : Boolean;
             begin
-               The_Text := new String'(Editor.Get_Chars_S
-                 (From                 => Insert_Mark_Loc,
-                  To                   => Insert_Mark_Loc.Beginning_Of_Line,
-                  Include_Hidden_Chars => False));
+               The_Text :=
+                 new String'
+                   (Editor.Get_Chars_S
+                      (From                 => Insert_Mark_Loc,
+                       To                   =>
+                         Insert_Mark_Loc.Beginning_Of_Line,
+                       Include_Hidden_Chars => False));
 
                Exp := Parse_Expression_Backward (The_Text);
 
-               Ret := Integer (Exp.Tokens.Length) = 1
+               Ret :=
+                 Integer (Exp.Tokens.Length) = 1
                  and then
-                   Exp.Tokens.First_Element.Tok_Type in
-                     Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
-                       | Tok_Raise | Tok_Aspect;
+                   Exp.Tokens.First_Element.Tok_Type
+                   in Tok_With
+                    | Tok_Use
+                    | Tok_Pragma
+                    | Tok_Accept
+                    | Tok_Raise
+                    | Tok_Aspect;
 
                Free (Exp);
 
@@ -1096,20 +1132,17 @@ package body GPS.LSP_Client.Completion is
    ---------------------------------------
 
    function LSP_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean
    is
-      Lang   : constant Language.Language_Access :=
-        Editor.Get_Language;
-      Server : constant Language_Server_Access := Get_Language_Server
-        (Lang);
+      Lang   : constant Language.Language_Access := Editor.Get_Language;
+      Server : constant Language_Server_Access := Get_Language_Server (Lang);
    begin
       --  If there is no server for the given language, fallback to the default
       --  function, based on the old engine.
       if Server = null then
-         return Default_Completion_Trigger_Chars_Func
-           (Editor => Editor,
-            C      => C);
+         return
+           Default_Completion_Trigger_Chars_Func (Editor => Editor, C => C);
       end if;
 
       --  Check if the entered character is present in the server's
@@ -1129,8 +1162,10 @@ package body GPS.LSP_Client.Completion is
             begin
                S.Append (C);
 
-               return Completion_Options.triggerCharacters.Is_Set and then
-                 Completion_Options.triggerCharacters.Value.Contains (S);
+               return
+                 Completion_Options.triggerCharacters.Is_Set
+                 and then
+                   Completion_Options.triggerCharacters.Value.Contains (S);
             end;
          end if;
       end;

@@ -28,44 +28,47 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
      (Goto_Body, Goto_Spec, Goto_Spec_Or_Body, Goto_Type_Decl);
    --  The command kinds that we support
 
-   type Abstract_Simple_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-      record
-         Command  : Command_Kind;
-         Position : LSP.Messages.Position;
-         Display_Ancestry_On_Navigation :
-            LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy;
-      end record;
+   type Abstract_Simple_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Command                        : Command_Kind;
+      Position                       : LSP.Messages.Position;
+      Display_Ancestry_On_Navigation :
+        LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy;
+   end record;
 
    procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;
-      Result : LSP.Messages.Location_Or_Link_Vector) is abstract;
+      Result : LSP.Messages.Location_Or_Link_Vector)
+   is abstract;
    --  Children need to override this, this is what takes care of the actual
    --  processing.
 
-   overriding function Get_Task_Label
-     (Self : Abstract_Simple_Request) return String
-   is
-     (case Self.Command is
-                when Goto_Body         => "querying implementation",
-                when Goto_Spec         => "querying declaration",
-                when Goto_Spec_Or_Body => "querying definition",
-                when Goto_Type_Decl    => "querying type definition");
+   overriding
+   function Get_Task_Label (Self : Abstract_Simple_Request) return String
+   is (case Self.Command is
+         when Goto_Body         => "querying implementation",
+         when Goto_Spec         => "querying declaration",
+         when Goto_Spec_Or_Body => "querying definition",
+         when Goto_Type_Decl    => "querying type definition");
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Simple_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Simple_Request) return VSS.Strings.Virtual_String;
 
 end GPS.LSP_Client.Requests.Simple_Editor_Requests;

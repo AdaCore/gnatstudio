@@ -30,15 +30,15 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
    type Server_Listener is limited interface;
 
    procedure On_Server_Started
-     (Self   : in out Server_Listener;
-      Server : not null Language_Server_Access) is null;
+     (Self : in out Server_Listener; Server : not null Language_Server_Access)
+   is null;
    --  Called when language server process has been started, language server
    --  has been initialized and configured (if necessary) and ready to
    --  process requests.
 
    procedure On_Server_Stopped
-     (Self   : in out Server_Listener;
-      Server : not null Language_Server_Access) is null;
+     (Self : in out Server_Listener; Server : not null Language_Server_Access)
+   is null;
    --  Called when language server has been stopped for any reason and
    --  unable to process requests anymore.
 
@@ -46,13 +46,15 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
      (Self   : in out Server_Listener;
       Server : not null Language_Server_Access;
       Data   : Ada.Strings.Unbounded.Unbounded_String;
-      Method : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Method : Ada.Strings.Unbounded.Unbounded_String)
+   is null;
    --  Called when response message from the server has been processed.
 
    procedure On_Response_Sent
      (Self   : in out Server_Listener;
       Server : not null Language_Server_Access;
-      Data   : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Data   : Ada.Strings.Unbounded.Unbounded_String)
+   is null;
    --  Called when response message from GNAT Studio has been sent.
 
    type Request_Listener is limited interface;
@@ -60,22 +62,26 @@ package GPS.LSP_Client.Language_Servers.Interceptors is
 
    procedure On_Send_Request
      (Self    : in out Request_Listener;
-      Request : GPS.LSP_Client.Requests.Reference) is null;
+      Request : GPS.LSP_Client.Requests.Reference)
+   is null;
    --  Called when request send to the server.
 
    procedure On_Send_Cancel
      (Self    : in out Request_Listener;
-      Request : GPS.LSP_Client.Requests.Reference) is null;
+      Request : GPS.LSP_Client.Requests.Reference)
+   is null;
    --  Called when request cancel notification send to the server.
 
    procedure On_Receive_Reply
      (Self    : in out Request_Listener;
-      Request : GPS.LSP_Client.Requests.Reference) is null;
+      Request : GPS.LSP_Client.Requests.Reference)
+   is null;
    --  Called when reply is received.
 
    procedure On_Reject_Request
      (Self    : in out Request_Listener;
-      Request : GPS.LSP_Client.Requests.Reference) is null;
+      Request : GPS.LSP_Client.Requests.Reference)
+   is null;
    --  Called when request is rejected.
 
 end GPS.LSP_Client.Language_Servers.Interceptors;

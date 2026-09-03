@@ -60,8 +60,8 @@ package GPS.LSP_Module is
    --  the server.
 
    procedure Restart_Server
-     (Server : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access);
+     (Server :
+        not null GPS.LSP_Client.Language_Servers.Language_Server_Access);
    --  Restart the server
 
 end GPS.LSP_Module;

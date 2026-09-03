@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Simple_Request) return VSS.Strings.Virtual_String is
    begin
       case Self.Command is
@@ -47,22 +48,23 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Locations : LSP.Messages.Location_Or_Link_Vector;
    begin
       LSP.Messages.Location_Or_Link_Vector'Read (Stream, Locations);
-      Abstract_Simple_Request'Class
-        (Self).On_Result_Message (Locations);
+      Abstract_Simple_Request'Class (Self).On_Result_Message (Locations);
    end On_Result_Message;
 
    ------------
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Simple_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -71,21 +73,22 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
             LSP.Messages.TextDocumentPositionParams'Write
               (Stream,
                (textDocument =>
-                    (uri => GPS.LSP_Client.Utilities.To_URI
-                       (Self.Text_Document)),
+                  (uri =>
+                     GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
                 position     => Self.Position));
-         when others =>
+
+         when others         =>
             LSP.Messages.NavigationRequestParams'Write
               (Stream,
-               (textDocument       =>
-                    (uri           => GPS.LSP_Client.Utilities.To_URI
-                       (Self.Text_Document)),
-                position           => Self.Position,
+               (textDocument                         =>
+                  (uri =>
+                     GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+                position                             => Self.Position,
                 alsDisplayMethodAncestryOnNavigation =>
-                 (Is_Set           => True,
-                  Value            => Self.Display_Ancestry_On_Navigation),
-                workDoneToken      => (Is_Set => False),
-                partialResultToken => (Is_Set => False)));
+                  (Is_Set => True,
+                   Value  => Self.Display_Ancestry_On_Navigation),
+                workDoneToken                        => (Is_Set => False),
+                partialResultToken                   => (Is_Set => False)));
       end case;
    end Params;
 
@@ -93,10 +96,10 @@ package body GPS.LSP_Client.Requests.Simple_Editor_Requests is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Simple_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       case Self.Command is
          when Goto_Body         =>

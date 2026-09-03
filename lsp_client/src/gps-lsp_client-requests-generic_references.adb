@@ -46,8 +46,7 @@ package body GPS.LSP_Client.Requests.Generic_References is
 
    function Request (Self : Reference) return Request_Access is
    begin
-      if Self.Request = null
-        or else Self.Request.all not in Request_Type'Class
+      if Self.Request = null or else Self.Request.all not in Request_Type'Class
       then
          return null;
 

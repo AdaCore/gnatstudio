@@ -43,14 +43,14 @@ package GPS.LSP_Client.Text_Documents is
    --  resources.
 
    function File
-     (Self : Text_Document_Handler)
-      return GNATCOLL.VFS.Virtual_File is abstract;
+     (Self : Text_Document_Handler) return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Returns name of the file processed by this handler.
 
    function Get_Did_Change_Message
-     (Self : in out Text_Document_Handler;
-      Mode : Text_Document_Sync_Kind_Type)
-      return LSP.Messages.DidChangeTextDocumentParams is abstract;
+     (Self : in out Text_Document_Handler; Mode : Text_Document_Sync_Kind_Type)
+      return LSP.Messages.DidChangeTextDocumentParams
+   is abstract;
    --  Returns message to be send to the server. Called by server manager
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.
@@ -61,19 +61,22 @@ package GPS.LSP_Client.Text_Documents is
 
    procedure Send_Text_Document_Did_Open
      (Self : in out Text_Document_Server_Proxy;
-      File : GNATCOLL.VFS.Virtual_File) is abstract;
+      File : GNATCOLL.VFS.Virtual_File)
+   is abstract;
    --  Send DidOpenTextDocument notification.
 
    procedure Send_Text_Document_Did_Change
      (Self     : in out Text_Document_Server_Proxy;
-      Document : not null Text_Document_Handler_Access) is abstract;
+      Document : not null Text_Document_Handler_Access)
+   is abstract;
    --  Send DidChangeTextDocument notification. Implementation should
    --  get actual modification changes with Get_Did_Change_Message on
    --  Document when ready to deliver information to server.
 
    procedure Send_Text_Document_Did_Close
      (Self : in out Text_Document_Server_Proxy;
-      File : GNATCOLL.VFS.Virtual_File) is abstract;
+      File : GNATCOLL.VFS.Virtual_File)
+   is abstract;
    --  Send text DidCloseDocument notification. Implementation can call
    --  Get_Did_Change_Message on Document if necessary during execution of
    --  this subprogram.
@@ -81,7 +84,8 @@ package GPS.LSP_Client.Text_Documents is
    procedure Send_Did_Rename_File
      (Self    : in out Text_Document_Server_Proxy;
       Old_URI : GNATCOLL.VFS.Virtual_File;
-      New_URI : GNATCOLL.VFS.Virtual_File) is abstract;
+      New_URI : GNATCOLL.VFS.Virtual_File)
+   is abstract;
    --  Send DidRenameFIle notification. It's recommended to be done after
    --  DidCloseTextDocument and DidOpenTextDocument notification if Old_URI
    --  was opened in the buffer.

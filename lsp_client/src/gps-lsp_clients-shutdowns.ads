@@ -25,15 +25,16 @@ private package GPS.LSP_Clients.Shutdowns is
    -- Shutdown_Request --
    ----------------------
 
-   type Shutdown_Request
-     (Client : not null access LSP_Client'Class) is
+   type Shutdown_Request (Client : not null access LSP_Client'Class) is
      new GPS.LSP_Client.Requests.Shutdown.Abstract_Shutdown_Request
-       with null record;
+   with null record;
 
-   overriding procedure On_Result_Message (Self : in out Shutdown_Request);
+   overriding
+   procedure On_Result_Message (Self : in out Shutdown_Request);
    --  Handles result messages for shutdown request.
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Shutdown_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;

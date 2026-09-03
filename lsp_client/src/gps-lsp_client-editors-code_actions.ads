@@ -20,8 +20,8 @@
 with VSS.Strings.Conversions;
 
 with GNATCOLL.JSON;
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
-with GPS.Kernel;    use GPS.Kernel;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Kernel;   use GPS.Kernel;
 
 with LSP.Messages;
 with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
@@ -42,34 +42,41 @@ package GPS.LSP_Client.Editors.Code_Actions is
    --  This part handles the emission of the textDocument/codeAction request
    --  and the processing of its results.
 
-   type Execute_Command_Request is new
-     GPS.LSP_Client.Requests.Execute_Command.Abstract_Execute_Command_Request
+   type Execute_Command_Request is
+     new GPS
+          .LSP_Client
+          .Requests
+          .Execute_Command
+          .Abstract_Execute_Command_Request
    with record
       Params : LSP.Messages.ExecuteCommandParams (True);
    end record;
    type Execute_Command_Request_Access is
      access all Execute_Command_Request'Class;
 
-   overriding function Params
-     (Self : Execute_Command_Request)
-      return LSP.Messages.ExecuteCommandParams is (Self.Params);
+   overriding
+   function Params
+     (Self : Execute_Command_Request) return LSP.Messages.ExecuteCommandParams
+   is (Self.Params);
 
-   overriding procedure On_Result_Message
-     (Self : in out Execute_Command_Request) is null;
+   overriding
+   procedure On_Result_Message (Self : in out Execute_Command_Request) is null;
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Execute_Command_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is null;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is null;
 
-   overriding function Get_Task_Label
-     (Self : Execute_Command_Request) return String
-   is
-     (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
+   overriding
+   function Get_Task_Label (Self : Execute_Command_Request) return String
+   is (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
 
-   overriding function Command_Name
-     (Self : Execute_Command_Request)
-        return VSS.Strings.Virtual_String is (Self.Params.command);
+   overriding
+   function Command_Name
+     (Self : Execute_Command_Request) return VSS.Strings.Virtual_String
+   is (Self.Params.command);
 
 end GPS.LSP_Client.Editors.Code_Actions;

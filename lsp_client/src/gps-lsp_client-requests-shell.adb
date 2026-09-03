@@ -26,7 +26,8 @@ package body GPS.LSP_Client.Requests.Shell is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Shell_Request) is
+   overriding
+   procedure Finalize (Self : in out Shell_Request) is
    begin
       Free (Self.On_Result_Message);
       Free (Self.On_Error_Message);
@@ -39,8 +40,8 @@ package body GPS.LSP_Client.Requests.Shell is
    -- Method --
    ------------
 
-   overriding function Method
-     (Self : Shell_Request) return VSS.Strings.Virtual_String is
+   overriding
+   function Method (Self : Shell_Request) return VSS.Strings.Virtual_String is
    begin
       return Self.Method;
    end Method;
@@ -49,7 +50,8 @@ package body GPS.LSP_Client.Requests.Shell is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Shell_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -58,7 +60,7 @@ package body GPS.LSP_Client.Requests.Shell is
       if Self.On_Error_Message /= null then
          declare
             Arguments : Callback_Data'Class :=
-                          Self.On_Error_Message.Get_Script.Create (3);
+              Self.On_Error_Message.Get_Script.Create (3);
 
          begin
             Set_Nth_Arg (Arguments, 1, LSP.Messages.ErrorCodes'Pos (Code));
@@ -70,7 +72,7 @@ package body GPS.LSP_Client.Requests.Shell is
 
             declare
                Dummy : GNATCOLL.Any_Types.Any_Type :=
-                         Self.On_Error_Message.Execute (Arguments);
+                 Self.On_Error_Message.Execute (Arguments);
 
             begin
                null;
@@ -85,17 +87,17 @@ package body GPS.LSP_Client.Requests.Shell is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
-     (Self : in out Shell_Request; Reason : Reject_Reason)
+   overriding
+   procedure On_Rejected (Self : in out Shell_Request; Reason : Reject_Reason)
    is
       pragma Unreferenced (Reason);
    begin
       if Self.On_Rejected /= null then
          declare
             Arguments : Callback_Data'Class :=
-                          Self.On_Rejected.Get_Script.Create (0);
+              Self.On_Rejected.Get_Script.Create (0);
             Dummy     : GNATCOLL.Any_Types.Any_Type :=
-                          Self.On_Rejected.Execute (Arguments);
+              Self.On_Rejected.Execute (Arguments);
 
          begin
             Free (Arguments);
@@ -107,7 +109,8 @@ package body GPS.LSP_Client.Requests.Shell is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -115,7 +118,7 @@ package body GPS.LSP_Client.Requests.Shell is
       --  Convert first JSON value from Stream to String.
 
       Arguments : Callback_Data'Class :=
-                    Self.On_Result_Message.Get_Script.Create (1);
+        Self.On_Result_Message.Get_Script.Create (1);
 
       function To_String return String is
          Any : LSP.Types.LSP_Any;
@@ -128,7 +131,7 @@ package body GPS.LSP_Client.Requests.Shell is
 
       declare
          Dummy : GNATCOLL.Any_Types.Any_Type :=
-                   Self.On_Result_Message.Execute (Arguments);
+           Self.On_Result_Message.Execute (Arguments);
 
       begin
          null;
@@ -141,7 +144,8 @@ package body GPS.LSP_Client.Requests.Shell is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -152,9 +156,9 @@ package body GPS.LSP_Client.Requests.Shell is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
-     (Self    : Shell_Request;
-      Options : LSP.Messages.ServerCapabilities)
+   overriding
+   function Is_Request_Supported
+     (Self : Shell_Request; Options : LSP.Messages.ServerCapabilities)
       return Boolean is
    begin
       return True;

@@ -17,7 +17,7 @@
 
 with VSS.Strings;
 
-with GPS.Kernel;    use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with LSP.Messages;
 
 package GPS.LSP_Client.Edit_Workspace is

@@ -21,7 +21,8 @@ package body GPS.LSP_Client.Requests.Symbols is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Symbol_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -34,7 +35,8 @@ package body GPS.LSP_Client.Requests.Symbols is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Symbol_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin
@@ -53,10 +55,10 @@ package body GPS.LSP_Client.Requests.Symbols is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Symbol_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.workspaceSymbolProvider.Is_Set;
    end Is_Request_Supported;
@@ -65,22 +67,23 @@ package body GPS.LSP_Client.Requests.Symbols is
    -- On_Partial_Result_Message --
    -------------------------------
 
-   overriding procedure On_Partial_Result_Message
+   overriding
+   procedure On_Partial_Result_Message
      (Self   : in out Abstract_Symbol_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Info : LSP.Messages.SymbolInformation_Vector;
    begin
       LSP.Messages.SymbolInformation_Vector'Read (Stream, Info);
-      Abstract_Symbol_Request'Class
-        (Self).On_Partial_Result_Message (Info);
+      Abstract_Symbol_Request'Class (Self).On_Partial_Result_Message (Info);
    end On_Partial_Result_Message;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Symbol_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -94,9 +97,9 @@ package body GPS.LSP_Client.Requests.Symbols is
    -- Set_Partial_Result_Token --
    ------------------------------
 
-   overriding procedure Set_Partial_Result_Token
-     (Self : in out Abstract_Symbol_Request;
-      To   : LSP.Types.ProgressToken) is
+   overriding
+   procedure Set_Partial_Result_Token
+     (Self : in out Abstract_Symbol_Request; To : LSP.Types.ProgressToken) is
    begin
       Self.partialResultToken := (Is_Set => True, Value => To);
    end Set_Partial_Result_Token;

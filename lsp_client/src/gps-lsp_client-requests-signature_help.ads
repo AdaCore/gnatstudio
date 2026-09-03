@@ -17,8 +17,7 @@
 
 package GPS.LSP_Client.Requests.Signature_Help is
 
-   type Abstract_Signature_Help_Request is
-     abstract new LSP_Request with record
+   type Abstract_Signature_Help_Request is abstract new LSP_Request with record
       File     : Virtual_File;
       Position : LSP.Messages.Position;
       Context  : LSP.Messages.Optional_SignatureHelpContext;
@@ -30,23 +29,26 @@ package GPS.LSP_Client.Requests.Signature_Help is
 
    procedure On_Result_Message
      (Self   : in out Abstract_Signature_Help_Request;
-      Result : LSP.Messages.SignatureHelp) is abstract;
+      Result : LSP.Messages.SignatureHelp)
+   is abstract;
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Signature_Help_Request) return VSS.Strings.Virtual_String
-   is
-      ("textDocument/signatureHelp");
+   is ("textDocument/signatureHelp");
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Signature_Help_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Signature_Help_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Signature_Help_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

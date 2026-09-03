@@ -34,35 +34,41 @@ package GPS.LSP_Client.Requests.Shell is
       Auto_Canceled     : Boolean := False;
    end record;
 
-   overriding procedure Finalize (Self : in out Shell_Request);
+   overriding
+   procedure Finalize (Self : in out Shell_Request);
 
-   overriding function Method
-     (Self : Shell_Request) return VSS.Strings.Virtual_String;
+   overriding
+   function Method (Self : Shell_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
-     (Self    : Shell_Request;
-      Options : LSP.Messages.ServerCapabilities)
+   overriding
+   function Is_Request_Supported
+     (Self : Shell_Request; Options : LSP.Messages.ServerCapabilities)
       return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Shell_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Shell_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
-     (Self : in out Shell_Request; Reason : Reject_Reason);
+   overriding
+   procedure On_Rejected (Self : in out Shell_Request; Reason : Reject_Reason);
 
-   overriding function Auto_Cancel
-     (Self         : in out Shell_Request;
-      Next_Request : Request_Access) return Boolean is (Self.Auto_Canceled);
+   overriding
+   function Auto_Cancel
+     (Self : in out Shell_Request; Next_Request : Request_Access)
+      return Boolean
+   is (Self.Auto_Canceled);
 
 end GPS.LSP_Client.Requests.Shell;

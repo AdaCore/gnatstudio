@@ -24,7 +24,8 @@ package body GPS.LSP_Client.Requests.Check_Syntax is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Check_Syntax_Request) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Self);
@@ -37,7 +38,8 @@ package body GPS.LSP_Client.Requests.Check_Syntax is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Check_Syntax_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -46,15 +48,15 @@ package body GPS.LSP_Client.Requests.Check_Syntax is
 
    begin
       LSP.Messages.ALS_Check_Syntax_Result'Read (Stream, Response);
-      GPS.LSP_Client.Editors.Code_Actions.Dialog.Set_Result_Message
-        (Response);
+      GPS.LSP_Client.Editors.Code_Actions.Dialog.Set_Result_Message (Response);
    end On_Result_Message;
 
    ------------
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Check_Syntax_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

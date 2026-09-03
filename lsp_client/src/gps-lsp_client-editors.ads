@@ -31,15 +31,16 @@ with GPS.LSP_Client.Text_Documents;
 package GPS.LSP_Client.Editors is
 
    type Src_Editor_Handler
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-   limited new GPS.LSP_Client.Text_Documents.Text_Document_Handler
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is limited
+     new GPS.LSP_Client.Text_Documents.Text_Document_Handler
      and GPS.Editors.Editor_Listener with private;
 
    type Src_Editor_Handler_Access is access all Src_Editor_Handler'Class;
 
    procedure Initialize
-     (Self   : in out Src_Editor_Handler'Class;
-      File   : GNATCOLL.VFS.Virtual_File);
+     (Self : in out Src_Editor_Handler'Class;
+      File : GNATCOLL.VFS.Virtual_File);
    --  Initialize handler and register it in the module.
 
 private
@@ -59,23 +60,25 @@ private
       end case;
    end record;
 
-   package Action_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Action);
+   package Action_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Action);
 
    type Src_Editor_Handler
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-   limited new GPS.LSP_Client.Text_Documents.Text_Document_Handler
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is limited
+     new GPS.LSP_Client.Text_Documents.Text_Document_Handler
      and GPS.Editors.Editor_Listener
    with record
       File    : GNATCOLL.VFS.Virtual_File;
       Actions : Action_Vectors.Vector;
    end record;
 
-   overriding function File
-     (Self : Src_Editor_Handler) return GNATCOLL.VFS.Virtual_File;
+   overriding
+   function File (Self : Src_Editor_Handler) return GNATCOLL.VFS.Virtual_File;
    --  Returns name of the file processed by this handler.
 
-   overriding function Get_Did_Change_Message
+   overriding
+   function Get_Did_Change_Message
      (Self : in out Src_Editor_Handler;
       Mode : GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type)
       return LSP.Messages.DidChangeTextDocumentParams;
@@ -83,19 +86,21 @@ private
    --  when it is ready to send update to the server. Mode is active text
    --  synchronization mode.
 
-   overriding procedure Before_Delete_Range
+   overriding
+   procedure Before_Delete_Range
      (Self           : in out Src_Editor_Handler;
       Start_Location : GPS.Editors.Editor_Location'Class;
       End_Location   : GPS.Editors.Editor_Location'Class;
       From_User      : Boolean);
    --  React to text being removed
 
-   overriding procedure After_Delete_Range
-     (Self      : in out Src_Editor_Handler;
-      From_User : Boolean);
+   overriding
+   procedure After_Delete_Range
+     (Self : in out Src_Editor_Handler; From_User : Boolean);
    --  Send a DidChangeTextDocument notification to the language server
 
-   overriding procedure After_Insert_Text
+   overriding
+   procedure After_Insert_Text
      (Self      : in out Src_Editor_Handler;
       Location  : GPS.Editors.Editor_Location'Class;
       Text      : String := "";
@@ -103,12 +108,14 @@ private
    --  React to text being added, and send the corresponding
    --  DidChangeTextDocument notification to the language server.
 
-   overriding procedure Finalize (Self : in out Src_Editor_Handler);
+   overriding
+   procedure Finalize (Self : in out Src_Editor_Handler);
 
-   overriding procedure Destroy (Self : in out Src_Editor_Handler)
-                                 renames Finalize;
+   overriding
+   procedure Destroy (Self : in out Src_Editor_Handler) renames Finalize;
 
-   overriding procedure File_Renamed
+   overriding
+   procedure File_Renamed
      (Self : in out Src_Editor_Handler;
       From : GNATCOLL.VFS.Virtual_File;
       To   : GNATCOLL.VFS.Virtual_File);

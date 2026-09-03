@@ -19,24 +19,29 @@ with GNATCOLL.Projects;
 
 package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
 
-   type Abstract_Named_Parameters_Command_Request is
-     abstract new Abstract_Execute_Command_Request with record
+   type Abstract_Named_Parameters_Command_Request is abstract
+     new Abstract_Execute_Command_Request
+   with record
       Project  : GNATCOLL.Projects.Project_Type;
       File     : GNATCOLL.VFS.Virtual_File;
       Position : LSP.Messages.Position;
    end record;
 
-   overriding function Params
+   overriding
+   function Params
      (Self : Abstract_Named_Parameters_Command_Request)
       return LSP.Messages.ExecuteCommandParams;
    --  Return parameters of the request to be sent to the server.
 
-   overriding function Text_Document
+   overriding
+   function Text_Document
      (Self : Abstract_Named_Parameters_Command_Request)
       return GNATCOLL.VFS.Virtual_File;
 
-   overriding function Command_Name
+   overriding
+   function Command_Name
      (Self : Abstract_Named_Parameters_Command_Request)
-        return VSS.Strings.Virtual_String is ("als-named-parameters");
+      return VSS.Strings.Virtual_String
+   is ("als-named-parameters");
 
 end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;

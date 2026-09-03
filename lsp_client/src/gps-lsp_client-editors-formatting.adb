@@ -16,13 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Exceptions;               use Ada.Exceptions;
-with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 with GNAT.Strings;
 
 with GPS.Editors.GtkAda;
@@ -36,24 +36,24 @@ with VSS.Strings.Conversions;
 with Gtkada.MDI;
 
 with GPS.Default_Styles;
-with GPS.Editors;                   use GPS.Editors;
-with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output;
 
 with GUI_Utils;
-with Language;                      use Language;
-with Src_Editor_Box;                use Src_Editor_Box;
-with Src_Editor_Buffer;             use Src_Editor_Buffer;
+with Language;             use Language;
+with Src_Editor_Box;       use Src_Editor_Box;
+with Src_Editor_Buffer;    use Src_Editor_Buffer;
 with Src_Editor_Module;
-with Src_Editor_View;               use Src_Editor_View;
-with Commands;                      use Commands;
-with Commands.Interactive;          use Commands.Interactive;
+with Src_Editor_View;      use Src_Editor_View;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Module;
@@ -81,94 +81,111 @@ package body GPS.LSP_Client.Editors.Formatting is
       Lang_To_Trigger_Chars : LSP_Trigger_Characters_Maps.Map;
    end record;
 
-   overriding function On_Range_Formatting
+   overriding
+   function On_Range_Formatting
      (Self        : in out LSP_Editor_Formatting_Provider;
       From, To    : Editor_Location'Class;
       Cursor_Line : Natural;
-      Cursor_Move : in out Integer)
-      return Boolean;
+      Cursor_Move : in out Integer) return Boolean;
 
-   overriding function On_Type_Formatting
+   overriding
+   function On_Type_Formatting
      (Self        : in out LSP_Editor_Formatting_Provider;
       From, To    : Editor_Location'Class;
-      Cursor_Line : Natural)
-      return Boolean;
+      Cursor_Line : Natural) return Boolean;
 
-   overriding function Get_Name
-     (Self : LSP_Editor_Formatting_Provider) return String;
+   overriding
+   function Get_Name (Self : LSP_Editor_Formatting_Provider) return String;
 
    -- Document_Formatting_Request --
 
    type Document_Formatting_Request is
-     new GPS.LSP_Client.Requests.Document_Formatting.
-       Abstract_Document_Formatting_Request with
-      record
-         Editor : Gtkada.MDI.MDI_Child;
-      end record;
+     new GPS
+          .LSP_Client
+          .Requests
+          .Document_Formatting
+          .Abstract_Document_Formatting_Request
+   with record
+      Editor : Gtkada.MDI.MDI_Child;
+   end record;
    type Document_Formatting_Request_Access is
      access all Document_Formatting_Request;
    --  Used for communicate with LSP
 
-   overriding function Get_Task_Label
-     (Self : Document_Formatting_Request) return String
-   is
-     ("format file");
+   overriding
+   function Get_Task_Label (Self : Document_Formatting_Request) return String
+   is ("format file");
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Document_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Document_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Document_Formatting_Request;
       Reason : GPS.LSP_Client.Requests.Reject_Reason);
 
    -- Range_Formatting_Request --
 
    type Range_Formatting_Request is
-     new GPS.LSP_Client.Requests.Range_Formatting.
-       Abstract_Range_Formatting_Request with null record;
+     new GPS
+          .LSP_Client
+          .Requests
+          .Range_Formatting
+          .Abstract_Range_Formatting_Request
+   with null record;
    type Range_Formatting_Request_Access is access all Range_Formatting_Request;
    --  Corresponding LSP request
 
-   overriding function Get_Task_Label
-     (Self : Range_Formatting_Request) return String
-   is
-     ("format range");
+   overriding
+   function Get_Task_Label (Self : Range_Formatting_Request) return String
+   is ("format range");
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Range_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Range_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Range_Formatting_Request;
       Reason : GPS.LSP_Client.Requests.Reject_Reason);
 
    -- On_Type_Formatting_Request --
 
    type On_Type_Formatting_Request is
-     new GPS.LSP_Client.Requests.On_Type_Formatting.
-       Abstract_On_Type_Formatting_Request with null record;
+     new GPS
+          .LSP_Client
+          .Requests
+          .On_Type_Formatting
+          .Abstract_On_Type_Formatting_Request
+   with null record;
    type On_Type_Formatting_Request_Access is
      access all On_Type_Formatting_Request;
    --  Used for communicate with LSP
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out On_Type_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out On_Type_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -176,13 +193,14 @@ package body GPS.LSP_Client.Editors.Formatting is
 
    -- LSP_Formatting_Module_Id_Record --
 
-   type LSP_Formatting_Module_Id_Record is
-     new Module_ID_Record with null record;
+   type LSP_Formatting_Module_Id_Record is new Module_ID_Record
+   with null record;
    type LSP_Formatting_Module_Id_Access is
      access all LSP_Formatting_Module_Id_Record'Class;
 
    type Indentation_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Indentation_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -193,7 +211,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Document_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector)
    is
@@ -258,7 +277,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Document_Formatting_Request;
       Reason : GPS.LSP_Client.Requests.Reject_Reason) is
    begin
@@ -278,7 +298,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Document_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -300,8 +321,7 @@ package body GPS.LSP_Client.Editors.Formatting is
          Show_In_Locations => True);
 
       --  Display the message in the Messages view
-      Self.Kernel.Insert
-        (VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Self.Kernel.Insert (VSS.Strings.Conversions.To_UTF_8_String (Message));
 
    exception
       when E : others =>
@@ -316,7 +336,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Range_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector)
    is
@@ -375,7 +396,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Range_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -411,7 +433,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Range_Formatting_Request;
       Reason : GPS.LSP_Client.Requests.Reject_Reason) is
    begin
@@ -429,15 +452,14 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out On_Type_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector)
    is
       Editor : Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Text_Document,
-           Open_View => False,
-           Focus     => False);
+          (File => Self.Text_Document, Open_View => False, Focus => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
       Dummy  : Boolean;
    begin
@@ -450,9 +472,12 @@ package body GPS.LSP_Client.Editors.Formatting is
       if Editor.Version /= Self.Document_Version then
          Trace
            (Me,
-            "On_Type_Formatting canceled for " & (+Base_Name (Editor.File)) &
-              " ver." & Integer'Image (Editor.Version) & ", data ver." &
-              Integer'Image (Self.Document_Version));
+            "On_Type_Formatting canceled for "
+            & (+Base_Name (Editor.File))
+            & " ver."
+            & Integer'Image (Editor.Version)
+            & ", data ver."
+            & Integer'Image (Self.Document_Version));
          return;
       end if;
 
@@ -465,11 +490,12 @@ package body GPS.LSP_Client.Editors.Formatting is
 
          GPS.LSP_Client.Edit_Workspace.Edit
            (Kernel                   => Self.Kernel,
-            Workspace_Edit           => LSP.Messages.WorkspaceEdit'
-              (changes           => Map,
-               documentChanges   => <>,
-               changeAnnotations => <>),
-            Title          => "Format",
+            Workspace_Edit           =>
+              LSP.Messages.WorkspaceEdit'
+                (changes           => Map,
+                 documentChanges   => <>,
+                 changeAnnotations => <>),
+            Title                    => "Format",
             Make_Writable            => False,
             Auto_Save                => False,
             Allow_File_Renaming      => False,
@@ -486,7 +512,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out On_Type_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -495,9 +522,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       pragma Unreferenced (Code, Data);
       Editor : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.Text_Document,
-           Open_View => False,
-           Focus     => False);
+          (File => Self.Text_Document, Open_View => False, Focus => False);
    begin
       if Editor = Nil_Editor_Buffer then
          --  Buffer can have been closed since the request was queued
@@ -520,12 +545,12 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- On_Range_Formatting --
    -------------------------
 
-   overriding function On_Range_Formatting
+   overriding
+   function On_Range_Formatting
      (Self        : in out LSP_Editor_Formatting_Provider;
       From, To    : Editor_Location'Class;
       Cursor_Line : Natural;
-      Cursor_Move : in out Integer)
-      return Boolean
+      Cursor_Move : in out Integer) return Boolean
    is
       pragma Unreferenced (Cursor_Line, Cursor_Move);
       File    : constant Virtual_File := From.Buffer.File;
@@ -535,24 +560,28 @@ package body GPS.LSP_Client.Editors.Formatting is
       Box     : Source_Editor_Box;
 
    begin
-      Editor := GPS.Editors.GtkAda.Get_MDI_Child
-        (From.Buffer.Current_View);
+      Editor := GPS.Editors.GtkAda.Get_MDI_Child (From.Buffer.Current_View);
       Box := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
       Box.Set_Activity_Progress_Bar_Visibility (True);
 
-      Request := new Range_Formatting_Request'
-        (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel          => Self.Kernel,
-         File            => File,
-         Span            =>
-           (first => GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
-            last  => GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
-         Document_Version  => From.Buffer.Version);
+      Request :=
+        new Range_Formatting_Request'
+          (GPS.LSP_Client.Requests.LSP_Request
+           with
+             Kernel           => Self.Kernel,
+             File             => File,
+             Span             =>
+               (first =>
+                  GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
+                last  =>
+                  GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
+             Document_Version => From.Buffer.Version);
 
-      return GPS.LSP_Client.Requests.Execute
-        (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+      return
+        GPS.LSP_Client.Requests.Execute
+          (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
 
    exception
       when E : others =>
@@ -634,18 +663,20 @@ package body GPS.LSP_Client.Editors.Formatting is
             if Options.Is_Set then
                Set :=
                  Set
-                 or To_Set
-                   (First_Character (Options.Value.firstTriggerCharacter));
+                 or
+                   To_Set
+                     (First_Character (Options.Value.firstTriggerCharacter));
                if Options.Value.moreTriggerCharacter.Is_Set then
-                  for Index
-                  in 1 .. Options.Value.moreTriggerCharacter.Value.Length
+                  for Index in
+                    1 .. Options.Value.moreTriggerCharacter.Value.Length
                   loop
                      Set :=
                        Set
-                       or To_Set
-                         (First_Character
-                            (Options.Value.moreTriggerCharacter.Value.Element
-                               (Index)));
+                       or
+                         To_Set
+                           (First_Character
+                              (Options.Value.moreTriggerCharacter.Value.Element
+                                 (Index)));
                   end loop;
                end if;
             end if;
@@ -676,12 +707,13 @@ package body GPS.LSP_Client.Editors.Formatting is
                  new On_Type_Formatting_Request'
                    (GPS.LSP_Client.Requests.LSP_Request
                     with
-                    Kernel           => Self.Kernel,
-                    File             => File,
-                    Position         =>
-                      GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
-                    Text             => Text,
-                    Document_Version => Buffer.Version);
+                      Kernel           => Self.Kernel,
+                      File             => File,
+                      Position         =>
+                        GPS.LSP_Client.Utilities.Location_To_LSP_Position
+                          (Loc),
+                      Text             => Text,
+                      Document_Version => Buffer.Version);
 
                return
                  GPS.LSP_Client.Requests.Execute
@@ -708,9 +740,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Self : LSP_Editor_Formatting_Provider) return String
-   is
+   overriding
+   function Get_Name (Self : LSP_Editor_Formatting_Provider) return String is
       pragma Unreferenced (Self);
    begin
       return Src_Editor_Module.LSP_Formatter_Value;
@@ -720,7 +751,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Indentation_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -752,8 +784,8 @@ package body GPS.LSP_Client.Editors.Formatting is
            Src_Editor_Module.Find_Editor
              (Kernel, File, GNATCOLL.Projects.No_Project)
          else Src_Editor_Module.Find_Current_Editor (Kernel));
-      Box    := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
-      View   := Get_View (Box);
+      Box := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
+      View := Get_View (Box);
       Buffer := Get_Buffer (Box);
 
       if not Get_Editable (View) then
@@ -763,12 +795,14 @@ package body GPS.LSP_Client.Editors.Formatting is
       File := Buffer.Get_Filename;
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      Request := new Document_Formatting_Request'
-        (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel            => Kernel,
-         File              => File,
-         Editor            => Editor,
-         Document_Version  => Buffer.Get_Editor_Buffer.Version);
+      Request :=
+        new Document_Formatting_Request'
+          (GPS.LSP_Client.Requests.LSP_Request
+           with
+             Kernel           => Kernel,
+             File             => File,
+             Editor           => Editor,
+             Document_Version => Buffer.Get_Editor_Buffer.Version);
 
       --  If we're formatting during a save operation, defer the save until
       --  the formatting response arrives
@@ -777,7 +811,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       end if;
 
       if GPS.LSP_Client.Requests.Execute
-        (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
+           (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
       then
          Box.Set_Activity_Progress_Bar_Visibility (True);
          return Success;

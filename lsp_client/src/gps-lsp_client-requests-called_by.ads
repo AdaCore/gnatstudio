@@ -24,86 +24,99 @@ package GPS.LSP_Client.Requests.Called_By is
    -- Prepare Call Hierarchy Request --
    ------------------------------------
 
-   type Abstract_Prepare_Call_Hierarchy_Request is
-     abstract new LSP_Request with record
+   type Abstract_Prepare_Call_Hierarchy_Request is abstract new LSP_Request
+   with record
       File     : Virtual_File;
       Position : LSP.Messages.Position;
    end record;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Prepare_Call_Hierarchy_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Prepare_Call_Hierarchy_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    procedure On_Result_Message
      (Self   : in out Abstract_Prepare_Call_Hierarchy_Request;
-      Result : LSP.Messages.CallHierarchyItem_Vector) is abstract;
+      Result : LSP.Messages.CallHierarchyItem_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Prepare_Call_Hierarchy_Request)
       return VSS.Strings.Virtual_String;
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Prepare_Call_Hierarchy_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
    -------------------
    -- Common parent --
    -------------------
 
-   type Abstract_Calls_Or_Called_By_Request is
-     abstract new LSP_Request with record
+   type Abstract_Calls_Or_Called_By_Request is abstract new LSP_Request
+   with record
       Item : LSP.Messages.CallHierarchyItem;
    end record;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_Calls_Or_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_Calls_Or_Called_By_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
    ---------------
    -- Called By --
    ---------------
 
-   type Abstract_Called_By_Request is
-     abstract new Abstract_Calls_Or_Called_By_Request with null record;
+   type Abstract_Called_By_Request is abstract
+     new Abstract_Calls_Or_Called_By_Request
+   with null record;
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Called_By_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Called_By_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    procedure On_Result_Message
      (Self   : in out Abstract_Called_By_Request;
-      Result : LSP.Messages.CallHierarchyIncomingCall_Vector) is abstract;
+      Result : LSP.Messages.CallHierarchyIncomingCall_Vector)
+   is abstract;
 
    -----------
    -- Calls --
    -----------
 
-   type Abstract_Calls_Request is
-     abstract new Abstract_Calls_Or_Called_By_Request with null record;
+   type Abstract_Calls_Request is abstract
+     new Abstract_Calls_Or_Called_By_Request
+   with null record;
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_Calls_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_Calls_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
    procedure On_Result_Message
      (Self   : in out Abstract_Calls_Request;
-      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector) is abstract;
+      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector)
+   is abstract;
 
 end GPS.LSP_Client.Requests.Called_By;

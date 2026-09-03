@@ -46,13 +46,13 @@ package body GPS.LSP_Client.Shell is
    Get_Log_File_Method         : constant String := "get_log_file";
    Get_Requests_Method         : constant String := "get_requests";
 
-   Is_Enabled_Name_Method      : constant String :=
-     "is_enabled_for_language_name";
+   Is_Enabled_Name_Method : constant String := "is_enabled_for_language_name";
 
    LanguageServer_Class : GNATCOLL.Scripts.Class_Type;
 
    type LanguageServer_Properties_Record is
-     new GNATCOLL.Scripts.Instance_Property_Record with record
+     new GNATCOLL.Scripts.Instance_Property_Record
+   with record
       Language : VSS.Strings.Virtual_String;
    end record;
    type LanguageServer_Properties_Access is
@@ -81,22 +81,23 @@ package body GPS.LSP_Client.Shell is
       elsif Command = Get_By_File_Method then
          declare
             File : constant GNATCOLL.VFS.Virtual_File :=
-                     GPS.Kernel.Scripts.Get_Data (Nth_Arg (Data, 1));
+              GPS.Kernel.Scripts.Get_Data (Nth_Arg (Data, 1));
 
          begin
             Instance := New_Instance (Data.Get_Script, LanguageServer_Class);
             Set_Data
               (Instance,
-               GPS.Kernel.Scripts.Get_Kernel
-                 (Data).Get_Language_Handler.Get_Language_From_File
-                   (File).Get_Name);
+               GPS.Kernel.Scripts.Get_Kernel (Data)
+                 .Get_Language_Handler
+                 .Get_Language_From_File (File)
+                 .Get_Name);
             Set_Return_Value (Data, Instance);
          end;
 
       elsif Command = Get_By_Language_Info_Method then
          declare
             Info : constant Language.Language_Access :=
-                     GPS.Kernel.Scripts.Get_Language_Info (Nth_Arg (Data, 1));
+              GPS.Kernel.Scripts.Get_Language_Info (Nth_Arg (Data, 1));
 
          begin
             Instance := New_Instance (Data.Get_Script, LanguageServer_Class);
@@ -120,8 +121,11 @@ package body GPS.LSP_Client.Shell is
             Language : constant Standard.Language.Language_Access :=
               Get_Language (Instance);
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
-            Server   : constant
-              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+            Server   :
+              constant GPS
+                         .LSP_Client
+                         .Language_Servers
+                         .Language_Server_Access :=
                 GPS.LSP_Module.Get_Language_Server (Language);
          begin
             if Server = null then
@@ -136,8 +140,11 @@ package body GPS.LSP_Client.Shell is
             Language : constant Standard.Language.Language_Access :=
               Get_Language (Instance);
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
-            Server   : constant
-              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+            Server   :
+              constant GPS
+                         .LSP_Client
+                         .Language_Servers
+                         .Language_Server_Access :=
                 GPS.LSP_Module.Get_Language_Server (Language);
          begin
             if Server = null then
@@ -156,7 +163,7 @@ package body GPS.LSP_Client.Shell is
 
             Instance    : constant Class_Instance := Nth_Arg (Data, 1);
             Language    : constant Standard.Language.Language_Access :=
-                          Get_Language (Instance);
+              Get_Language (Instance);
             Method      : constant VSS.Strings.Virtual_String :=
               Nth_Arg (Data, 2);
             Params      : constant VSS.Strings.Virtual_String :=
@@ -166,7 +173,7 @@ package body GPS.LSP_Client.Shell is
             On_Error    : Subprogram_Type;
             On_Reject   : Subprogram_Type;
 
-            Aux         : GPS.LSP_Client.Requests.Request_Access;
+            Aux : GPS.LSP_Client.Requests.Request_Access;
 
          begin
             begin
@@ -187,17 +194,18 @@ package body GPS.LSP_Client.Shell is
 
             Aux :=
               new GPS.LSP_Client.Requests.Shell.Shell_Request'
-                (GPS.LSP_Client.Requests.LSP_Request with
-                 Kernel            => null,
-                 Method            => Method,
-                 Params            =>
-                   GNATCOLL.JSON.Read
-                     (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                        (Params)),
-                 On_Result_Message => On_Result,
-                 On_Error_Message  => On_Error,
-                 On_Rejected       => On_Reject,
-                 Auto_Canceled     => Auto_Cancel);
+                (GPS.LSP_Client.Requests.LSP_Request
+                 with
+                   Kernel            => null,
+                   Method            => Method,
+                   Params            =>
+                     GNATCOLL.JSON.Read
+                       (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+                          (Params)),
+                   On_Result_Message => On_Result,
+                   On_Error_Message  => On_Error,
+                   On_Rejected       => On_Reject,
+                   Auto_Canceled     => Auto_Cancel);
 
             if Language /= null then
                GPS.LSP_Client.Requests.Execute (Language, Aux);
@@ -214,10 +222,11 @@ package body GPS.LSP_Client.Shell is
 
             Name     : constant String := Nth_Arg (Data, 1);
             Language : constant Standard.Language.Language_Access :=
-              GPS.Kernel.Scripts.Get_Kernel (Data).
-              Get_Language_Handler.Get_Language_By_Name
-                (Ada.Characters.Handling.To_Lower (Name));
-            Result : Boolean := False;
+              GPS.Kernel.Scripts.Get_Kernel (Data)
+                .Get_Language_Handler
+                .Get_Language_By_Name
+                   (Ada.Characters.Handling.To_Lower (Name));
+            Result   : Boolean := False;
 
          begin
             if Language /= null then
@@ -232,8 +241,11 @@ package body GPS.LSP_Client.Shell is
               Get_Language (Instance);
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
             use type GPS.LSP_Client.Requests.Request_Access;
-            Server   : constant
-              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+            Server   :
+              constant GPS
+                         .LSP_Client
+                         .Language_Servers
+                         .Language_Server_Access :=
                 GPS.LSP_Module.Get_Language_Server (Language);
          begin
             if Server = null then
@@ -273,9 +285,10 @@ package body GPS.LSP_Client.Shell is
          if Properties /= null then
             return
               GPS.Kernel.Scripts.Get_Kernel (Get_Script (Instance))
-                .Get_Language_Handler.Get_Language_By_Name
-                  (VSS.Strings.Conversions.To_UTF_8_String
-                     (Properties.Language));
+                .Get_Language_Handler
+                .Get_Language_By_Name
+                   (VSS.Strings.Conversions.To_UTF_8_String
+                      (Properties.Language));
          end if;
       end if;
 
@@ -343,10 +356,10 @@ package body GPS.LSP_Client.Shell is
          Class   => LanguageServer_Class);
 
       Kernel.Scripts.Register_Command
-        (Command       => Get_Requests_Method,
-         Params        => No_Params,
-         Handler       => Command_Handler'Access,
-         Class         => LanguageServer_Class);
+        (Command => Get_Requests_Method,
+         Params  => No_Params,
+         Handler => Command_Handler'Access,
+         Class   => LanguageServer_Class);
 
       Kernel.Scripts.Register_Command
         (Command       => Is_Enabled_Name_Method,
@@ -368,7 +381,7 @@ package body GPS.LSP_Client.Shell is
          Property =>
            LanguageServer_Properties_Record'
              (Language =>
-                  VSS.Strings.Conversions.To_Virtual_String (Language)));
+                VSS.Strings.Conversions.To_Virtual_String (Language)));
    end Set_Data;
 
 end GPS.LSP_Client.Shell;

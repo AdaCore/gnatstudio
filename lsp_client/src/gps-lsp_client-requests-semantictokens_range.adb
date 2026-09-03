@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Range is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_SemanticTokens_Range_Request)
       return VSS.Strings.Virtual_String
    is
@@ -39,15 +40,16 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Range is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_SemanticTokens_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
       Tokens : LSP.Messages.SemanticTokens;
    begin
       LSP.Messages.SemanticTokens'Read (Stream, Tokens);
-      Abstract_SemanticTokens_Range_Request'Class
-        (Self).On_Result_Message (Tokens);
+      Abstract_SemanticTokens_Range_Request'Class (Self).On_Result_Message
+        (Tokens);
    end On_Result_Message;
 
    ------------
@@ -71,12 +73,13 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Range is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_SemanticTokens_Range_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
-      return Options.semanticTokensProvider.Is_Set
+      return
+        Options.semanticTokensProvider.Is_Set
         and then Options.semanticTokensProvider.Value.span.Is_Set
         and then Options.semanticTokensProvider.Value.span.Value;
    end Is_Request_Supported;
@@ -85,7 +88,8 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Range is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_SemanticTokens_Range_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

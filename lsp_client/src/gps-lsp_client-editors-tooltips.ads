@@ -18,13 +18,13 @@
 --  Integration with GNAT Studio's source editor tooltips
 
 with Glib;
-with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 with Pango.Font;
 
-with Basic_Types;              use Basic_Types;
-with GPS.Kernel;               use GPS.Kernel;
-with Src_Editor_Box;           use Src_Editor_Box;
-with Src_Editor_Box.Tooltips;  use Src_Editor_Box.Tooltips;
+with Basic_Types;             use Basic_Types;
+with GPS.Kernel;              use GPS.Kernel;
+with Src_Editor_Box;          use Src_Editor_Box;
+with Src_Editor_Box.Tooltips; use Src_Editor_Box.Tooltips;
 
 package GPS.LSP_Client.Editors.Tooltips is
 
@@ -51,8 +51,7 @@ package GPS.LSP_Client.Editors.Tooltips is
       Yalign              : Glib.Gfloat := 0.5;
       Font                : Pango.Font.Pango_Font_Description := null;
       Separator_Expand    : Boolean := False;
-      Separator_Padding   : Glib.Guint := 0)
-      return Gtk_Widget;
+      Separator_Padding   : Glib.Guint := 0) return Gtk_Widget;
    --  Query a tooltip widget for the given entity, displaying useful
    --  information about it (i.e: declaration and associated comments in most
    --  cases). When For_Glabal_Tooltips is True, this tooltip widget will be

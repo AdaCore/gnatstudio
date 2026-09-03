@@ -18,23 +18,23 @@
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;
 
-with Glib;                          use Glib;
-with Glib.Convert.VSS_Utils;        use Glib.Convert.VSS_Utils;
-with Glib.Object;                   use Glib.Object;
+with Glib;                   use Glib;
+with Glib.Convert.VSS_Utils; use Glib.Convert.VSS_Utils;
+with Glib.Object;            use Glib.Object;
 with Glib.Values;
 
-with Gdk.Event;                     use Gdk.Event;
-with Gtk.Box;                       use Gtk.Box;
-with Gtk.Event_Box;                 use Gtk.Event_Box;
-with Gtk.Handlers;                  use Gtk.Handlers;
-with Gtk.Label;                     use Gtk.Label;
-with Gtk.Separator;                 use Gtk.Separator;
+with Gdk.Event;     use Gdk.Event;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Event_Box; use Gtk.Event_Box;
+with Gtk.Handlers;  use Gtk.Handlers;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Separator; use Gtk.Separator;
 with Gtkada.Style;
 
 with VSS.Strings.Conversions;
@@ -62,8 +62,8 @@ with Xref;                          use Xref;
 
 package body GPS.LSP_Client.Editors.Tooltips is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.LSP.TOOLTIPS", GNATCOLL.Traces.On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.LSP.TOOLTIPS", GNATCOLL.Traces.On);
 
    Max_Highlighting_Chars : constant := 10_000;
    --  Do not try to use LAL to highlight tooltips that exceed 10_000
@@ -76,57 +76,62 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  case, an LSP request will be sent and we'll only be able to show the
    --  tooltip after receiving the result from the underlying language server.
 
-   type LSP_Client_Editor_Tooltip_Handler is new Editor_Tooltip_Handler with
-     null record;
+   type LSP_Client_Editor_Tooltip_Handler is new Editor_Tooltip_Handler
+   with null record;
    --  Type representing LSP-based tooltip handlers.
 
    type GPS_LSP_Hover_Request is new Abstract_Hover_Request with record
-      Tooltip_Vbox                 : Gtk_Vbox;
+      Tooltip_Vbox : Gtk_Vbox;
       --  The box containing the tooltip text blocks
 
       Tooltip_Destroyed_Handler_ID : Handler_Id;
       --  The handler on signal-destroy used to detect a tooltip destruction
       --  while waiting for the hover request result.
 
-      For_Global_Tooltips          : Boolean;
+      For_Global_Tooltips : Boolean;
       --  True if this request is being made for global tooltips, False
       --  otherwise.
 
       --  Settings for representation adjusting
-      Xalign                       : Glib.Gfloat;
-      Yalign                       : Glib.Gfloat;
-      Font                         : Pango.Font.Pango_Font_Description;
-      Separator_Expand             : Boolean;
-      Separator_Padding            : Guint;
+      Xalign            : Glib.Gfloat;
+      Yalign            : Glib.Gfloat;
+      Font              : Pango.Font.Pango_Font_Description;
+      Separator_Expand  : Boolean;
+      Separator_Padding : Guint;
    end record;
    type GPS_LSP_Hover_Request_Access is access all GPS_LSP_Hover_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
       Result : LSP.Messages.Optional_Hover);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason);
 
-   overriding function Get_Tooltip_Widget_For_Entity
+   overriding
+   function Get_Tooltip_Widget_For_Entity
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
 
-   overriding function Show_Tooltip_On_Create_Contents
+   overriding
+   function Show_Tooltip_On_Create_Contents
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler)
       return Boolean
-   is
-     (Show_Tooltip_After_Query);
+   is (Show_Tooltip_After_Query);
 
-   package Tooltip_Destroyed_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type  => Gtk_Widget_Record,
-      User_Type    => GPS_LSP_Hover_Request_Access);
+   package Tooltip_Destroyed_Callback is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Gtk_Widget_Record,
+        User_Type   => GPS_LSP_Hover_Request_Access);
 
    procedure On_Tooltip_Destroyed
      (Widget    : access Gtk_Widget_Record'Class;
@@ -136,30 +141,32 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  the hover request result.
 
    function On_Tooltip_Label_Clicked
-     (Self  : access GObject_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk.Event.Gdk_Event_Button)
+      return Boolean;
 
-   procedure On_Tooltip_Label_Hidden
-     (Self : access Gtk_Widget_Record'Class);
+   procedure On_Tooltip_Label_Hidden (Self : access Gtk_Widget_Record'Class);
 
    type Highlightable_Tooltip_Label_Type is
-     new Gtk_Label_Record and LAL.Highlighters.Highlightable_Interface with
-      record
-         Kernel      : Kernel_Handle;
-         Markup_Text : VSS.Strings.Virtual_String;
-      end record;
+     new Gtk_Label_Record
+     and LAL.Highlighters.Highlightable_Interface
+   with record
+      Kernel      : Kernel_Handle;
+      Markup_Text : VSS.Strings.Virtual_String;
+   end record;
    --  A type of label that implements the LAL highlightable interface to
    --  highlight the declarations displayed in tooltips.
 
    type Highlightable_Tooltip_Label_Type_Access is
      access all Highlightable_Tooltip_Label_Type'Class;
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out Highlightable_Tooltip_Label_Type;
       Token : Libadalang.Common.Token_Reference;
       Style : String);
 
-   overriding procedure Remove_Highlighting
+   overriding
+   procedure Remove_Highlighting
      (Self  : in out Highlightable_Tooltip_Label_Type;
       Style : String;
       From  : Integer;
@@ -186,8 +193,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    ------------------------------
 
    function On_Tooltip_Label_Clicked
-     (Self  : access GObject_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk.Event.Gdk_Event_Button)
+      return Boolean
    is
       pragma Unreferenced (Event);
       Tooltip_Label : constant Highlightable_Tooltip_Label_Type_Access :=
@@ -204,8 +211,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- On_Tooltip_Label_Hidden --
    -----------------------------
 
-   procedure On_Tooltip_Label_Hidden
-     (Self : access Gtk_Widget_Record'Class) is
+   procedure On_Tooltip_Label_Hidden (Self : access Gtk_Widget_Record'Class) is
       pragma Unreferenced (Self);
    begin
       Set_Tooltip_Highlighted (False);
@@ -225,18 +231,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Yalign              : Glib.Gfloat := 0.5;
       Font                : Pango.Font.Pango_Font_Description := null;
       Separator_Expand    : Boolean := False;
-      Separator_Padding   : Guint := 0)
-      return Gtk_Widget
+      Separator_Padding   : Guint := 0) return Gtk_Widget
    is
-      Request            : GPS_LSP_Hover_Request_Access;
-      Tooltip_Vbox       : Gtk_Vbox;
-      Lang               : constant Language.Language_Access :=
-        Get_Language_From_File
-          (Kernel.Get_Language_Handler,
-           File);
-      Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Request      : GPS_LSP_Hover_Request_Access;
+      Tooltip_Vbox : Gtk_Vbox;
+      Lang         : constant Language.Language_Access :=
+        Get_Language_From_File (Kernel.Get_Language_Handler, File);
+      Holder       : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-      Location : constant GPS.Editors.Editor_Location'Class :=
+      Location     : constant GPS.Editors.Editor_Location'Class :=
         Holder.Editor.New_Location (Line, Column);
 
    begin
@@ -249,34 +252,34 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Gtk_New_Vbox (Tooltip_Vbox, Homogeneous => False);
 
-      Request := new GPS_LSP_Hover_Request'
-        (LSP_Request with
-           Kernel                       => Kernel_Handle (Kernel),
-         File                         => File,
-         Position                     =>
-           GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-         Tooltip_Vbox                 => Tooltip_Vbox,
-         Tooltip_Destroyed_Handler_ID => <>,
-         For_Global_Tooltips          => For_Global_Tooltips,
-         Xalign                       => Xalign,
-         Yalign                       => Yalign,
-         Font                         => Font,
-         Separator_Expand             => Separator_Expand,
-         Separator_Padding            => Separator_Padding);
+      Request :=
+        new GPS_LSP_Hover_Request'
+          (LSP_Request
+           with
+             Kernel                       => Kernel_Handle (Kernel),
+             File                         => File,
+             Position                     =>
+               GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+             Tooltip_Vbox                 => Tooltip_Vbox,
+             Tooltip_Destroyed_Handler_ID => <>,
+             For_Global_Tooltips          => For_Global_Tooltips,
+             Xalign                       => Xalign,
+             Yalign                       => Yalign,
+             Font                         => Font,
+             Separator_Expand             => Separator_Expand,
+             Separator_Padding            => Separator_Padding);
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
-          (Tooltip_Vbox, Signal_Destroy,
+          (Tooltip_Vbox,
+           Signal_Destroy,
            On_Tooltip_Destroyed'Access,
            Slot_Object => Tooltip_Vbox,
            User_Data   => Request);
 
-      Trace
-        (Me, "Tooltip about to be displayed: sending the hover request");
+      Trace (Me, "Tooltip about to be displayed: sending the hover request");
 
-      if GPS.LSP_Client.Requests.Execute
-        (Lang, Request_Access (Request))
-      then
+      if GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request)) then
          --  Hover request is being sent: create the tooltip area
          --  for the semantic token information if the preference
          --  is enabled.
@@ -296,7 +299,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Hover_Request;
       Result : LSP.Messages.Optional_Hover)
    is
@@ -323,17 +327,16 @@ package body GPS.LSP_Client.Editors.Tooltips is
                Padding => Self.Separator_Padding);
          end if;
 
-         Tooltip_Block_Label := new Highlightable_Tooltip_Label_Type'
-           (Glib.Object.GObject_Record with
-              Kernel      => Self.Kernel,
-            Markup_Text => <>);
+         Tooltip_Block_Label :=
+           new Highlightable_Tooltip_Label_Type'
+             (Glib.Object.GObject_Record
+              with Kernel => Self.Kernel, Markup_Text => <>);
          Gtk.Label.Initialize (Tooltip_Block_Label);
 
          Tooltip_Block_Label.Set_Alignment (Self.Xalign, Self.Yalign);
          if Self.Font = null then
             Set_Font_And_Colors
-              (Widget     => Tooltip_Block_Label,
-               Fixed_Font => True);
+              (Widget => Tooltip_Block_Label, Fixed_Font => True);
          else
             Tooltip_Block_Label.Modify_Font (Self.Font);
          end if;
@@ -356,8 +359,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       --  Disconnect the callback on the tooltip's destruction now that we
       --  received the response.
       Disconnect
-        (Object => Self.Tooltip_Vbox,
-         Id     => Self.Tooltip_Destroyed_Handler_ID);
+        (Object => Self.Tooltip_Vbox, Id => Self.Tooltip_Destroyed_Handler_ID);
 
       --  Append the contents to the tooltip or "No data available" when empty
 
@@ -372,9 +374,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Tooltip_Block_Label.Set_Text
               (Ada.Strings.Unbounded.To_String
                  (String_Utils.Wrap_At_Words
-                      (S     => VSS.Strings.Conversions.To_UTF_8_String
-                           (Result.Value.contents.MarkupContent.value),
-                       Limit => Max_Width_Chars)));
+                    (S     =>
+                       VSS.Strings.Conversions.To_UTF_8_String
+                         (Result.Value.contents.MarkupContent.value),
+                     Limit => Max_Width_Chars)));
 
          else
             Trace
@@ -396,8 +399,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
             --  as plaintext.
             if not Tooltip_Block.Is_String
               and then Tooltip_Block.language = "ada"
-              and then Integer
-                (Tooltip_Block.value.Character_Length) < Max_Highlighting_Chars
+              and then
+                Integer (Tooltip_Block.value.Character_Length)
+                < Max_Highlighting_Chars
             then
                declare
                   use Libadalang.Analysis;
@@ -411,20 +415,18 @@ package body GPS.LSP_Client.Editors.Tooltips is
                       (Tooltip_Block.value);
                   Unit         : constant Analysis_Unit :=
                     Get_From_Buffer
-                      (Context  =>
-                         LAL_Module.Get_Current_Analysis_Context,
+                      (Context  => LAL_Module.Get_Current_Analysis_Context,
                        Filename => "",
                        Charset  => "UTF-8",
                        Buffer   =>
                          Ada.Strings.Unbounded.To_String
                            (String_Utils.Wrap_At_Words
-                              (S     => Tooltip_Text,
-                               Limit => Max_Width_Chars)),
+                              (S => Tooltip_Text, Limit => Max_Width_Chars)),
                        Rule     => Basic_Decl_Rule);
-                  Success    : Boolean;
+                  Success      : Boolean;
                begin
-                  Success := Tooltip_Block_Label.Highlight_Using_Tree
-                    (Unit => Unit);
+                  Success :=
+                    Tooltip_Block_Label.Highlight_Using_Tree (Unit => Unit);
 
                   --  If we failed to highlight the given Ada code, display it
                   --  wihout any highlighting instead.
@@ -438,8 +440,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                      Tooltip_Block_Label.Set_Text
                        (Ada.Strings.Unbounded.To_String
                           (String_Utils.Wrap_At_Words
-                               (S     => Tooltip_Text,
-                                Limit => Max_Width_Chars)));
+                             (S => Tooltip_Text, Limit => Max_Width_Chars)));
                   end if;
                end;
 
@@ -448,9 +449,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
                Tooltip_Block_Label.Set_Text
                  (Ada.Strings.Unbounded.To_String
                     (String_Utils.Wrap_At_Words
-                         (S     => VSS.Strings.Conversions.To_UTF_8_String
-                              (Tooltip_Block.value),
-                          Limit => Max_Width_Chars)));
+                       (S     =>
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (Tooltip_Block.value),
+                        Limit => Max_Width_Chars)));
             end if;
          end loop;
       else
@@ -474,7 +476,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -498,7 +501,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason) is
    begin
       --  Disconnect the callback on the tooltip's destruction now that we
@@ -535,7 +539,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- Get_Tooltip_Widget_For_Entity --
    -----------------------------------
 
-   overriding function Get_Tooltip_Widget_For_Entity
+   overriding
+   function Get_Tooltip_Widget_For_Entity
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
@@ -551,13 +556,14 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Lang   : constant Language_Access := Buffer.Get_Language;
 
       function Is_LSP_Tooltips_Enabled return Boolean;
-      function Is_LSP_Tooltips_Enabled return Boolean
-      is
+      function Is_LSP_Tooltips_Enabled return Boolean is
          Capabilities : LSP.Messages.ServerCapabilities;
       begin
          if LSP_Is_Enabled (Lang) then
-            Capabilities := GPS.LSP_Module.Get_Language_Server
-              (Lang).Get_Client.Capabilities;
+            Capabilities :=
+              GPS.LSP_Module.Get_Language_Server (Lang)
+                .Get_Client
+                .Capabilities;
 
             return Capabilities.hoverProvider.Is_Set;
 
@@ -573,14 +579,16 @@ package body GPS.LSP_Client.Editors.Tooltips is
       --  based on xrefs ontherwise.
 
       if Is_LSP_Tooltips_Enabled then
-         return Query_Tooltip_For_Entity
-           (Kernel => Kernel,
-            File   => File,
-            Line   => Integer (Entity_Line_Information (Context)),
-            Column => Entity_Column_Information (Context));
+         return
+           Query_Tooltip_For_Entity
+             (Kernel => Kernel,
+              File   => File,
+              Line   => Integer (Entity_Line_Information (Context)),
+              Column => Entity_Column_Information (Context));
       else
-         return Editor_Tooltip_Handler
-           (Tooltip.all).Get_Tooltip_Widget_For_Entity (Context);
+         return
+           Editor_Tooltip_Handler (Tooltip.all).Get_Tooltip_Widget_For_Entity
+             (Context);
       end if;
    end Get_Tooltip_Widget_For_Entity;
 
@@ -588,7 +596,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- Highlight_Token --
    ---------------------
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out Highlightable_Tooltip_Label_Type;
       Token : Libadalang.Common.Token_Reference;
       Style : String)
@@ -596,13 +605,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
       use Libadalang.Common;
       use type VSS.Strings.Virtual_String;
 
-      Template        : constant
-        VSS.Strings.Templates.Virtual_String_Template :=
+      Template        :
+        constant VSS.Strings.Templates.Virtual_String_Template :=
           "<span foreground=""{}"">{}</span>";
       Highlight_Style : constant Style_Access :=
-        Get_Style_Manager (Self.Kernel).Get
-        (Key        => Style,
-         Allow_Null => True);
+        Get_Style_Manager (Self.Kernel).Get (Key => Style, Allow_Null => True);
    begin
       if Highlight_Style = null then
          Self.Markup_Text := Self.Markup_Text & Escape_Text (Text (Token));
@@ -610,11 +617,11 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Self.Markup_Text :=
            Self.Markup_Text
            & Template.Format
-           (VSS.Strings.Formatters.Strings.Image
-              (VSS.Strings.Conversions.To_Virtual_String
-                   (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))),
-           VSS.Strings.Formatters.Strings.Image
-              (Escape_Text (Text (Token))));
+               (VSS.Strings.Formatters.Strings.Image
+                  (VSS.Strings.Conversions.To_Virtual_String
+                     (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))),
+                VSS.Strings.Formatters.Strings.Image
+                  (Escape_Text (Text (Token))));
       end if;
    end Highlight_Token;
 
@@ -622,11 +629,13 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- Remove_Highlighting --
    -------------------------
 
-   overriding procedure Remove_Highlighting
+   overriding
+   procedure Remove_Highlighting
      (Self  : in out Highlightable_Tooltip_Label_Type;
       Style : String;
       From  : Integer;
-      To    : Integer) is null;
+      To    : Integer)
+   is null;
 
    ---------------------------------
    -- LSP_Outline_Tooltip_Factory --
@@ -650,11 +659,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
       if LSP_Is_Enabled (Lang) then
          Set_Outline_Tooltips_Synchronous (False);
 
-         return Query_Tooltip_For_Entity
-           (Kernel => Kernel,
-            File   => File,
-            Line   => Line,
-            Column => Column);
+         return
+           Query_Tooltip_For_Entity
+             (Kernel => Kernel, File => File, Line => Line, Column => Column);
       else
          declare
             Ref    : Root_Entity_Reference_Ref;
@@ -671,11 +678,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
             Set_Outline_Tooltips_Synchronous (True);
 
             if Entity /= No_Root_Entity then
-               return Entities_Tooltips.Draw_Tooltip
-                 (Kernel      => Kernel,
-                  Draw_Border => True,
-                  Ref         => Ref.Element,
-                  Entity      => Entity);
+               return
+                 Entities_Tooltips.Draw_Tooltip
+                   (Kernel      => Kernel,
+                    Draw_Border => True,
+                    Ref         => Ref.Element,
+                    Entity      => Entity);
             else
                return null;
             end if;

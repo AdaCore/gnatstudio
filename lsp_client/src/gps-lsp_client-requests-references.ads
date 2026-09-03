@@ -19,36 +19,39 @@ with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.References is
 
-   type Abstract_References_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-      record
-         Position            : LSP.Messages.Position;
-         Include_Declaration : Boolean;
-      end record;
+   type Abstract_References_Request is abstract
+     new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Position            : LSP.Messages.Position;
+      Include_Declaration : Boolean;
+   end record;
 
    function Params
-     (Self : Abstract_References_Request)
-      return LSP.Messages.ReferenceParams;
+     (Self : Abstract_References_Request) return LSP.Messages.ReferenceParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_References_Request;
-      Result : LSP.Messages.Location_Vector) is abstract;
+      Result : LSP.Messages.Location_Vector)
+   is abstract;
    --  Called when a result response is received from the server.
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_References_Request) return VSS.Strings.Virtual_String;
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_References_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_References_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean;
+      Options : LSP.Messages.ServerCapabilities) return Boolean;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_References_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 

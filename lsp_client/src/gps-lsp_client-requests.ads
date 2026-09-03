@@ -58,7 +58,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Finalization;
 
 with GNATCOLL.JSON;
-with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with VSS.Strings;
 
@@ -66,14 +66,13 @@ with LSP.JSON_Streams;
 with LSP.Messages;
 with LSP.Types;
 
-with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 limited private with GPS.LSP_Client.Language_Servers;
-with Language;             use Language;
+with Language;   use Language;
 
 package GPS.LSP_Client.Requests is
 
-   type LSP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is
+   type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
      abstract tagged limited private;
    --  Do not fill Kernel if an answer on request should not be skipped
    --  when Kernel is destroying
@@ -82,8 +81,8 @@ package GPS.LSP_Client.Requests is
 
    type Reference is tagged private;
 
-   package Requests_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Request_Access);
+   package Requests_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Request_Access);
 
    -----------------
    -- LSP_Request --
@@ -94,13 +93,13 @@ package GPS.LSP_Client.Requests is
    --  Return Text_Document associated with the request, if any. Default
    --  implementation always returns No_File.
 
-   function Method
-     (Self : LSP_Request) return VSS.Strings.Virtual_String is abstract;
+   function Method (Self : LSP_Request) return VSS.Strings.Virtual_String
+   is abstract;
    --  Name of the RPC method to be called.
 
    function Auto_Cancel
-     (Self         : in out LSP_Request;
-      Next_Request : Request_Access) return Boolean is (False);
+     (Self : in out LSP_Request; Next_Request : Request_Access) return Boolean
+   is (False);
    --  When True, creating a new request for the same method will cancel the
    --  previous one.
    --  Next_Request is the new request, so we can decide whether we need to
@@ -111,42 +110,44 @@ package GPS.LSP_Client.Requests is
    --  Return the Id of the request
 
    procedure Set_Id
-     (Self : in out LSP_Request;
-      Id   : LSP.Types.LSP_Number_Or_String);
+     (Self : in out LSP_Request; Id : LSP.Types.LSP_Number_Or_String);
    --  Set the Id of this request
 
-   function Get_Task_Label (Self : LSP_Request) return String is ("");
+   function Get_Task_Label (Self : LSP_Request) return String
+   is ("");
    --  Label displayed in the mini-tasks bar and/or the Tasks view.
    --  Return an empty string if the task should not be shown (default).
 
    procedure Params
      (Self   : LSP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is abstract;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is abstract;
    --  Fill the stream with the request parameters.
 
    function Is_Request_Supported
-     (Self    : LSP_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is abstract;
+     (Self : LSP_Request; Options : LSP.Messages.ServerCapabilities)
+      return Boolean
+   is abstract;
    --  Returns False when server does not support the request
 
    procedure On_Result_Message
      (Self   : in out LSP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is abstract;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is abstract;
    --  Called when a "result" response is received from the server.
 
    procedure On_Error_Message
      (Self    : in out LSP_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is abstract;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is abstract;
    --  Called when an "error" response is received from the server.
 
    type Reject_Reason is (Server_Not_Ready, Canceled, Server_Died);
 
-   procedure On_Rejected
-     (Self   : in out LSP_Request;
-      Reason : Reject_Reason) is null;
+   procedure On_Rejected (Self : in out LSP_Request; Reason : Reject_Reason)
+   is null;
    --  Called when the processing of the request rejected by any reason, for
    --  example server is not ready, or dies before request is sent, it dies
    --  after request was send but before response or error is received, or
@@ -192,8 +193,7 @@ package GPS.LSP_Client.Requests is
    --  parameter is set to null.
 
    procedure Destroy
-     (Item         : in out Request_Access;
-      Is_Cancelled : Boolean := False);
+     (Item : in out Request_Access; Is_Cancelled : Boolean := False);
    --  Call Finalize and deallocate memory. All references are reset to null.
    --  Is_Cancelled indicates if the command was canceled by the client,
    --  it's used for logging and doesn't affect the behaviour
@@ -206,11 +206,11 @@ private
    type Abstract_Reference is tagged;
    type Reference_Access is access all Abstract_Reference'Class;
 
-   package Reference_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Reference_Access);
+   package Reference_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Reference_Access);
 
-   type Abstract_Reference is
-     abstract new Ada.Finalization.Controlled with record
+   type Abstract_Reference is abstract new Ada.Finalization.Controlled
+   with record
       Server   : Language_Server_Access;
       --  Language server that executes request. For internal use only.
       Request  : Request_Access;
@@ -223,12 +223,14 @@ private
       Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access);
    --  Initialize reference and add it to the list of the request's references.
 
-   overriding procedure Adjust (Self : in out Abstract_Reference);
-   overriding procedure Finalize (Self : in out Abstract_Reference);
+   overriding
+   procedure Adjust (Self : in out Abstract_Reference);
+   overriding
+   procedure Finalize (Self : in out Abstract_Reference);
 
    type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
-     abstract tagged limited record
-      Id         : LSP.Types.LSP_Number_Or_String;
+   abstract tagged limited record
+      Id : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request.
 
       References : Reference_Lists.List;

@@ -44,7 +44,7 @@ with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Basic_Types;
 with GNAT.Strings;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Config;               use Config;
 with Commands;             use Commands;
@@ -55,7 +55,7 @@ with Glib.Convert;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.LSP_Client.Editors.Semantic_Tokens;
@@ -64,20 +64,20 @@ with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
 with VSS.Unicode;
 
-with Default_Preferences; use Default_Preferences;
+with Default_Preferences;            use Default_Preferences;
 with GPS.Core_Kernels;
 with GPS.Default_Styles;
 with GPS.Editors;
-with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
-with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
-with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.References;    use GPS.Kernel.Messages.References;
-with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
-with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 
 with GPS.LSP_Client.Call_Tree;
@@ -121,27 +121,22 @@ with Language.C;
 package body GPS.LSP_Module is
 
    Me_Ada_Support : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.On);
    --  General ALS support for Ada
 
    Me_GPR_Support : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.GPR_SUPPORT", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create ("GPS.LSP.GPR_SUPPORT", GNATCOLL.Traces.On);
    --  General ALS support for GPR
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create ("GPS.LSP.CPP_SUPPORT", GNATCOLL.Traces.On);
 
    Me_Code_Actions : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.CODE_ACTIONS", GNATCOLL.Traces.On);
+     GNATCOLL.Traces.Create ("GPS.LSP.CODE_ACTIONS", GNATCOLL.Traces.On);
    --  Whether to support code actions
 
-   Me_LSP_Logs  : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
+   Me_LSP_Logs : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
    --  Whether to log the LSP notifications that arrive with the 'log' type
 
    Progress_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
@@ -152,10 +147,11 @@ package body GPS.LSP_Module is
      VSS.Regular_Expressions.To_Regular_Expression
        ("Log file is: ([^\n]*)");  --  &1 - path
 
-   type Listener_Factory is
-     new GPS.Core_Kernels.Editor_Listener_Factory with null record;
+   type Listener_Factory is new GPS.Core_Kernels.Editor_Listener_Factory
+   with null record;
 
-   overriding function Create
+   overriding
+   function Create
      (Self    : Listener_Factory;
       Editor  : GPS.Editors.Editor_Buffer'Class;
       Factory : GPS.Editors.Editor_Buffer_Factory'Class;
@@ -176,80 +172,86 @@ package body GPS.LSP_Module is
    --  running for a given language.
 
    function Hash (Value : Language_Access) return Ada.Containers.Hash_Type
-   is
-     (if Value = Language.Cpp.Cpp_Lang then
-         Language.Hash (Language.C.C_Lang)
-      else
-         Language.Hash (Value));
+   is (if Value = Language.Cpp.Cpp_Lang
+       then Language.Hash (Language.C.C_Lang)
+       else Language.Hash (Value));
    --  Use a custom hash function for our language server maps: C and C++
    --  should be considered as the same language for clangd.
 
-   package Language_Server_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Language_Access,
-      Element_Type    => Language_Server_Access,
-      Hash            => Hash,
-      Equivalent_Keys => Share_Same_Server,
-      "="             => GPS.LSP_Client.Language_Servers."=");
+   package Language_Server_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Language_Access,
+        Element_Type    => Language_Server_Access,
+        Hash            => Hash,
+        Equivalent_Keys => Share_Same_Server,
+        "="             => GPS.LSP_Client.Language_Servers."=");
 
    -------------------------
    -- Monitoring commands --
    -------------------------
 
    type Language_Server_Progress_Command is new Root_Command with record
-      Title  : VSS.Strings.Virtual_String;
+      Title : VSS.Strings.Virtual_String;
       --  The title that should show in the progress bar
 
-      Key    : LSP_Number_Or_String;
+      Key : LSP_Number_Or_String;
       --  The key of the Command in Module.Token_To_Command
 
       Action : Command_Return_Type := Execute_Again;
       --  What to do at the next call to Execute
    end record;
 
-   type Language_Server_Progress_Command_Access is access all
-     Language_Server_Progress_Command;
+   type Language_Server_Progress_Command_Access is
+     access all Language_Server_Progress_Command;
    --  A command that does nothing except materialize the progress of a given
    --  progressToken in the language server.
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Language_Server_Progress_Command)
-      return Command_Return_Type is (Command.Action);
+      return Command_Return_Type
+   is (Command.Action);
    --  TODO: make the command self-destruct when it no longer finds itself
    --  in the associated array
 
-   overriding procedure Interrupt
-     (Command : in out Language_Server_Progress_Command);
+   overriding
+   procedure Interrupt (Command : in out Language_Server_Progress_Command);
 
    type Restart_Command is new Interactive_Command with record
       Kernel        : Kernel_Handle;
       Language_Name : Unbounded_String;
    end record;
-   overriding function Execute
-     (Self    : access Restart_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Restart_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
-   overriding function Name
-     (Command : access Language_Server_Progress_Command) return String is
-      (VSS.Strings.Conversions.To_UTF_8_String (Command.Title));
+   overriding
+   function Name
+     (Command : access Language_Server_Progress_Command) return String
+   is (VSS.Strings.Conversions.To_UTF_8_String (Command.Title));
 
-   package Token_Command_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => LSP_Number_Or_String,
-      Element_Type    => Scheduled_Command_Access,
-      Hash            => Hash,
-      Equivalent_Keys => "=");
+   package Token_Command_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => LSP_Number_Or_String,
+        Element_Type    => Scheduled_Command_Access,
+        Hash            => Hash,
+        Equivalent_Keys => "=");
 
-   package Source_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => VSS.Strings.Virtual_String,
-      Hash                => Hash,
-      Equivalent_Elements => VSS.Strings."=",
-      "="                 => VSS.Strings."=");
+   package Source_Sets is new
+     Ada.Containers.Hashed_Sets
+       (Element_Type        => VSS.Strings.Virtual_String,
+        Hash                => Hash,
+        Equivalent_Elements => VSS.Strings."=",
+        "="                 => VSS.Strings."=");
 
-   package Language_Diagnostic_Sources is new Ada.Containers.Hashed_Maps
-     (Key_Type        => VSS.Strings.Virtual_String,
-      Element_Type    => Source_Sets.Set,
-      Hash            => Hash,
-      Equivalent_Keys => VSS.Strings."=",
-      "="             => Source_Sets."=");
+   package Language_Diagnostic_Sources is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => VSS.Strings.Virtual_String,
+        Element_Type    => Source_Sets.Set,
+        Hash            => Hash,
+        Equivalent_Keys => VSS.Strings."=",
+        "="             => Source_Sets."=");
 
    ------------
    -- Module --
@@ -260,14 +262,14 @@ package body GPS.LSP_Module is
      and LSP.Client_Notification_Receivers_3_16.Client_Notification_Receiver
      and GPS.LSP_Client.Language_Servers.Interceptors.Server_Listener
    with record
-      Language_Servers   : Language_Server_Maps.Map;
+      Language_Servers : Language_Server_Maps.Map;
       --  Map from language to LSP client
 
-      Unknown_Server     : Language_Server_Access;
+      Unknown_Server : Language_Server_Access;
       --  Pseudo-server to handle managed text documents of language not
       --  supported by any configured language servers.
 
-      Token_To_Command   : Token_Command_Maps.Map;
+      Token_To_Command : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
 
       Diagnostic_Sources : Language_Diagnostic_Sources.Map;
@@ -277,7 +279,8 @@ package body GPS.LSP_Module is
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
 
-   overriding procedure Destroy (Self : in out Module_Id_Record);
+   overriding
+   procedure Destroy (Self : in out Module_Id_Record);
    --  Stops all language server processes and cleanup data structures.
 
    Diagnostics_Messages_Category_Prefix :
@@ -299,69 +302,75 @@ package body GPS.LSP_Module is
    function Is_Language_Diagnostic_Category
      (Self     : Module_Id_Record'Class;
       Language : VSS.Strings.Virtual_String;
-      Category : VSS.Strings.Virtual_String)
-      return Boolean;
+      Category : VSS.Strings.Virtual_String) return Boolean;
    --  Return True if category match a source of Language
 
    function Get_Diagnostics_Message_Flags return Message_Flags
-   is
-     (case LSP_Diagnostics_Display_Policy'(LSP_Diagnostics_Display.Get_Pref)
-      is
+   is (case LSP_Diagnostics_Display_Policy'(LSP_Diagnostics_Display.Get_Pref)
+       is
          when Editor_And_Locations => Side_And_Locations,
          when Editor_Only          => Sides_Only);
    --  Return the message flags for diagnostics, depending on the corresponding
    --  preference.
 
-   overriding procedure On_Server_Started
+   overriding
+   procedure On_Server_Started
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access);
 
-   overriding procedure On_Server_Stopped
+   overriding
+   procedure On_Server_Stopped
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access);
 
-   overriding procedure On_Response_Processed
+   overriding
+   procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
       Data   : Unbounded_String;
       Method : Unbounded_String);
 
-   overriding procedure On_Response_Sent
+   overriding
+   procedure On_Response_Sent
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
       Data   : Unbounded_String);
 
-   overriding procedure On_Publish_Diagnostics
+   overriding
+   procedure On_Publish_Diagnostics
      (Self     : access Module_Id_Record;
       Params   : LSP.Messages.PublishDiagnosticsParams;
       Language : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Show_Message
+   overriding
+   procedure On_Show_Message
      (Self     : access Module_Id_Record;
       Value    : LSP.Messages.ShowMessageParams;
       Language : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Log_Message
+   overriding
+   procedure On_Log_Message
      (Self     : access Module_Id_Record;
       Value    : LSP.Messages.LogMessageParams;
       Language : VSS.Strings.Virtual_String);
 
-   overriding function Get_Progress_Type
-     (Self  : access Module_Id_Record;
-      Token : LSP.Types.LSP_Number_Or_String)
+   overriding
+   function Get_Progress_Type
+     (Self : access Module_Id_Record; Token : LSP.Types.LSP_Number_Or_String)
       return LSP.Client_Notification_Receivers_3_16.Progress_Value_Kind;
 
-   overriding procedure On_Progress
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.Progress_Params);
+   overriding
+   procedure On_Progress
+     (Self : access Module_Id_Record; Value : LSP.Messages.Progress_Params);
 
-   overriding procedure On_Progress_SymbolInformation_Vector
+   overriding
+   procedure On_Progress_SymbolInformation_Vector
      (Self   : access Module_Id_Record;
       Params : LSP.Messages.Progress_SymbolInformation_Vector);
 
    procedure Initiate_Server_Shutdown
-     (Server         : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access;
+     (Server         :
+        not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
       In_Destruction : Boolean);
    --  Initiate shutdown of the given language server for given language.
    --  In_Destruction should be set to True if the GS kernel is being
@@ -375,37 +384,41 @@ package body GPS.LSP_Module is
    --  the set.
 
    function Lookup_Language
-     (Self   : Module_Id_Record'Class;
-      Server : not null Language_Server_Access) return Language_Access;
+     (Self : Module_Id_Record'Class; Server : not null Language_Server_Access)
+      return Language_Access;
    --  Lookup for language associated with givent language server.
 
    Module : LSP_Module_Id;
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been opened
 
    type On_File_Closed is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called before closing a buffer.
 
    type On_File_Renamed is new File2_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Renamed;
       Kernel : not null access Kernel_Handle_Record'Class;
       From   : GNATCOLL.VFS.Virtual_File;
       To     : GNATCOLL.VFS.Virtual_File);
    --  Called when file buffer is renamed.
 
-   type On_Location_Changed is new File_Location_Hooks_Function with
-     null record;
-   overriding procedure Execute
+   type On_Location_Changed is new File_Location_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -415,44 +428,49 @@ package body GPS.LSP_Module is
    --  Code Actions at the point of the cursor.
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Project_Changing;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : GNATCOLL.VFS.Virtual_File);
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project will be unloaded.
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Project_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_Variable_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Variable_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Send didConfigurationChanage notification to language servers when a
    --  scenario variable changes.
 
-   type On_Preference_Changed is
-     new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   type On_Preference_Changed is new Preferences_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self   : On_Preference_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
    --  Detect change of default encoding and send didConfigurationChanage
    --  notification to language servers.
 
-   type On_Server_Stopped_Hook is
-     new Language_Server_Lifecycle_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Server_Stopped_Hook;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Language : String);
+   type On_Server_Stopped_Hook is new Language_Server_Lifecycle_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Server_Stopped_Hook;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Language : String);
    --  Called when the language server for the given language has stopped
 
    function Get_Server_For_File
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Language_Server_Access;
+     (Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Language_Server_Access;
    --  Return the running server supporting File if it exists, or null
 
    -----------------------
@@ -465,10 +483,10 @@ package body GPS.LSP_Module is
    begin
       if A /= null and then B /= null then
          declare
-            Lang_Name_A : constant String :=  Ada.Characters.Handling.To_Lower
-              (A.Get_Name);
-            Lang_Name_B : constant String := Ada.Characters.Handling.To_Lower
-              (B.Get_Name);
+            Lang_Name_A : constant String :=
+              Ada.Characters.Handling.To_Lower (A.Get_Name);
+            Lang_Name_B : constant String :=
+              Ada.Characters.Handling.To_Lower (B.Get_Name);
          begin
             if Lang_Name_A in "c" | "cpp" | "c++"
               and then Lang_Name_B in "c" | "cpp" | "c++"
@@ -487,7 +505,8 @@ package body GPS.LSP_Module is
    -- Create --
    ------------
 
-   overriding function Create
+   overriding
+   function Create
      (Self    : Listener_Factory;
       Editor  : GPS.Editors.Editor_Buffer'Class;
       Factory : GPS.Editors.Editor_Buffer_Factory'Class;
@@ -500,14 +519,14 @@ package body GPS.LSP_Module is
       --  Create, initialize and return object to integrate source editor and
       --  language server.
 
-      return Result : constant GPS.Editors.Editor_Listener_Access :=
-        new GPS.LSP_Client.Editors.Src_Editor_Handler
-          (GPS.Kernel.Kernel_Handle (Kernel))
+      return
+         Result : constant GPS.Editors.Editor_Listener_Access :=
+           new GPS.LSP_Client.Editors.Src_Editor_Handler
+                 (GPS.Kernel.Kernel_Handle (Kernel))
       do
          declare
-            Handler : GPS.LSP_Client.Editors.Src_Editor_Handler'Class
-            renames GPS.LSP_Client.Editors.Src_Editor_Handler'Class
-              (Result.all);
+            Handler : GPS.LSP_Client.Editors.Src_Editor_Handler'Class renames
+              GPS.LSP_Client.Editors.Src_Editor_Handler'Class (Result.all);
          begin
             Handler.Initialize (Editor.File);
          end;
@@ -518,7 +537,8 @@ package body GPS.LSP_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : in out Module_Id_Record) is
+   overriding
+   procedure Destroy (Self : in out Module_Id_Record) is
    begin
       Self.Initiate_Servers_Shutdown (Self.Language_Servers, True);
    end Destroy;
@@ -527,7 +547,8 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -547,13 +568,13 @@ package body GPS.LSP_Module is
    -------------------------
 
    function Get_Server_For_File
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Language_Server_Access
+     (Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Language_Server_Access
    is
-      Lang     : constant not null Language.Language_Access :=
+      Lang   : constant not null Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Cursor   : constant Language_Server_Maps.Cursor :=
-                   Module.Language_Servers.Find (Lang);
+      Cursor : constant Language_Server_Maps.Cursor :=
+        Module.Language_Servers.Find (Lang);
    begin
       if Language_Server_Maps.Has_Element (Cursor) then
          return Language_Server_Maps.Element (Cursor);
@@ -565,7 +586,8 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -584,7 +606,8 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Renamed;
       Kernel : not null access Kernel_Handle_Record'Class;
       From   : GNATCOLL.VFS.Virtual_File;
@@ -612,7 +635,8 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Preference_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -623,11 +647,11 @@ package body GPS.LSP_Module is
       --  Send the 'didChangeConfiguration' notitification to the running LSP
       --  servers when the changed preference can affect them.
       if Pref /= null
-        and then (Pref.Get_Name = "General-Charset"
-                  or Pref.Get_Name = "Doc-Search-Before-First"
-                  or Pref.Get_Name = "Src-Editor-Fold-Comments"
-                  or GNATCOLL.Utils.Starts_With
-                    (Pref.Get_Name, "LSP-"))
+        and then
+          (Pref.Get_Name = "General-Charset"
+           or Pref.Get_Name = "Doc-Search-Before-First"
+           or Pref.Get_Name = "Src-Editor-Fold-Comments"
+           or GNATCOLL.Utils.Starts_With (Pref.Get_Name, "LSP-"))
       then
          for Server of Module.Language_Servers loop
             Server.Configuration_Changed;
@@ -639,7 +663,8 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Variable_Changed;
       Kernel : not null access Kernel_Handle_Record'Class) is
    begin
@@ -652,10 +677,12 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Project_Changing;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : GNATCOLL.VFS.Virtual_File) is
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
+   is
       pragma Unreferenced (Self, Kernel, File);
    begin
       --  Shutdown all running language servers.
@@ -667,14 +694,15 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Location_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
+   overriding
+   procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
       Line, Column : Integer;
       Project      : GNATCOLL.Projects.Project_Type)
    is
-      Server  : Language_Server_Access;
+      Server : Language_Server_Access;
    begin
       --  Sanity check that we do have a language server for this language
       Server := Get_Server_For_File (Kernel, File);
@@ -702,14 +730,16 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Restart_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Restart_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Server : constant Language_Server_Access :=
         Get_Language_Server
-          (Language => Get_Language_Handler (Self.Kernel).Get_Language_By_Name
-           (To_String (Self.Language_Name)));
+          (Language =>
+             Get_Language_Handler (Self.Kernel).Get_Language_By_Name
+               (To_String (Self.Language_Name)));
    begin
       if Server /= null then
          Restart_Server (Server);
@@ -730,42 +760,40 @@ package body GPS.LSP_Module is
       --  The prerence used to add custom arguments to the server's command
       --  line.
 
-      procedure Create_Preferences
-        (Server_Program : Virtual_File);
+      procedure Create_Preferences (Server_Program : Virtual_File);
       --  Create the preferences for the given server.
 
       ------------------------
       -- Create_Preferences --
       ------------------------
 
-      procedure Create_Preferences
-        (Server_Program : Virtual_File)
-      is
-         Server_Base_Name   : constant String :=
+      procedure Create_Preferences (Server_Program : Virtual_File) is
+         Server_Base_Name : constant String :=
            Server_Program.Display_Base_Name;
-         Preferences        : constant Preferences_Manager :=
+         Preferences      : constant Preferences_Manager :=
            Kernel.Get_Preferences;
       begin
-         Cmd_Line_Args_Pref := Create
-           (Manager    => Preferences,
-            Path       =>
-              "LSP:" & Server_Base_Name,
-            Name       => "lsp-cmd_line-" & Server_Base_Name,
-            Label      => "Command line arguments",
-            Doc        => "Arguments for " & Server_Base_Name & " server. "
-            & "You will need to restart GNAT Studio to take changes into "
-            & "account.",
-            Default    => "",
-            Multi_Line => False);
+         Cmd_Line_Args_Pref :=
+           Create
+             (Manager    => Preferences,
+              Path       => "LSP:" & Server_Base_Name,
+              Name       => "lsp-cmd_line-" & Server_Base_Name,
+              Label      => "Command line arguments",
+              Doc        =>
+                "Arguments for "
+                & Server_Base_Name
+                & " server. "
+                & "You will need to restart GNAT Studio to take changes into "
+                & "account.",
+              Default    => "",
+              Multi_Line => False);
       end Create_Preferences;
 
       Language_Name : constant String :=
-                        Ada.Characters.Handling.To_Lower
-                          (Language.Get_Name);
+        Ada.Characters.Handling.To_Lower (Language.Get_Name);
       Configuration :
         GPS.LSP_Client.Configurations.Server_Configuration_Access;
-      Server        :
-        GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Server        : GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
       Libexec_GPS : constant Virtual_File :=
         Kernel.Get_System_Dir / "libexec" / "gnatstudio";
@@ -788,18 +816,18 @@ package body GPS.LSP_Module is
          --  in GNAT Studio's install libexec directory.
          --  If not, fallback on the PATH.
 
-         From_Env       : constant String :=
+         From_Env        : constant String :=
            VSS.Strings.Conversions.To_UTF_8_String
              (VSS.Application.System_Environment.Value ("GPS_ALS"));
-         Libexec_ALS    : constant Virtual_File := Libexec_GPS
+         Libexec_ALS     : constant Virtual_File :=
+           Libexec_GPS
            / "als"
-           / ("ada_language_server"
-              & (if Host = Windows then ".exe" else ""));
+           / ("ada_language_server" & (if Host = Windows then ".exe" else ""));
          Language_Prefix : constant String :=
            (if For_GPR then "gpr" else "ada");
-         Tracefile      : constant Virtual_File :=
-           Kernel.Get_Home_Dir / Filesystem_String
-             (Language_Prefix & "_ls_traces.cfg");
+         Tracefile       : constant Virtual_File :=
+           Kernel.Get_Home_Dir
+           / Filesystem_String (Language_Prefix & "_ls_traces.cfg");
       begin
          if From_Env /= "" then
             Configuration.Server_Program := Create (+From_Env);
@@ -825,16 +853,13 @@ package body GPS.LSP_Module is
       end Setup_ALS;
 
    begin
-      if Language_Name = "ada"
-        and then Me_Ada_Support.Is_Active
-      then
+      if Language_Name = "ada" and then Me_Ada_Support.Is_Active then
          Configuration :=
            new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
 
          Setup_ALS (For_GPR => False);
 
-      elsif Language_Name = "project file"
-        and then Me_GPR_Support.Is_Active
+      elsif Language_Name = "project file" and then Me_GPR_Support.Is_Active
       then
          Configuration :=
            new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
@@ -844,11 +869,12 @@ package body GPS.LSP_Module is
       elsif Language_Name in "c" | "cpp" | "c++"
         and then Me_Cpp_Support.Is_Active
       then
-         Configuration := new GPS.LSP_Client.Configurations.Clangd.
-           Clangd_Configuration (Kernel);
+         Configuration :=
+           new GPS.LSP_Client.Configurations.Clangd.Clangd_Configuration
+                 (Kernel);
 
-         On_Server_Capabilities := GPS.LSP_Client.Configurations.Clangd.
-           On_Server_Capabilities'Access;
+         On_Server_Capabilities :=
+           GPS.LSP_Client.Configurations.Clangd.On_Server_Capabilities'Access;
 
          declare
             --  Allow the environment variable "GPS_CLANGD" to override
@@ -858,8 +884,10 @@ package body GPS.LSP_Module is
             From_Env       : constant String :=
               VSS.Strings.Conversions.To_UTF_8_String
                 (VSS.Application.System_Environment.Value ("GPS_CLANGD"));
-            Libexec_Clangd : constant Virtual_File := Libexec_GPS
-              / "clang" / "bin"
+            Libexec_Clangd : constant Virtual_File :=
+              Libexec_GPS
+              / "clang"
+              / "bin"
               / ("clangd" & (if Host = Windows then ".exe" else ""));
          begin
             if From_Env /= "" then
@@ -867,8 +895,7 @@ package body GPS.LSP_Module is
             elsif Libexec_Clangd.Is_Regular_File then
                Configuration.Server_Program := Libexec_Clangd;
             else
-               Configuration.Server_Program :=
-                 Locate_On_Path ("clangd");
+               Configuration.Server_Program := Locate_On_Path ("clangd");
             end if;
          end;
 
@@ -886,8 +913,7 @@ package body GPS.LSP_Module is
 
       declare
          User_Cmd_Line_Args : constant String_List_Access :=
-           GNATCOLL.Utils.Split
-             (Cmd_Line_Args_Pref.Get_Pref, ' ');
+           GNATCOLL.Utils.Split (Cmd_Line_Args_Pref.Get_Pref, ' ');
       begin
          if User_Cmd_Line_Args /= null then
             for Arg of User_Cmd_Line_Args.all loop
@@ -897,8 +923,7 @@ package body GPS.LSP_Module is
       end;
 
       Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
-        (Tooltip_Factory =>
-           Create_LSP_Client_Editor_Tooltip_Handler'Access);
+        (Tooltip_Factory => Create_LSP_Client_Editor_Tooltip_Handler'Access);
 
       Configuration.Prepare_Configuration_Settings;
 
@@ -909,12 +934,16 @@ package body GPS.LSP_Module is
            Server_Interceptor  => Module,
            Request_Interceptor =>
              GPS.LSP_Client.Tasks.New_Task_Manager_Integration
-             (Kernel, Language_Name),
+               (Kernel, Language_Name),
            Language            => Language);
 
       declare
-         S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-           renames
+         S :
+           GPS
+             .LSP_Client
+             .Language_Servers
+             .Real
+             .Real_Language_Server'Class renames
              GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
                (Server.all);
       begin
@@ -935,15 +964,17 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
 
-      Languages       : GNAT.Strings.String_List :=
-        GPS.Kernel.Project.Get_Root_Project_View
-          (Kernel).Get_Project_Type.Languages (True)
+      Languages : GNAT.Strings.String_List :=
+        GPS.Kernel.Project.Get_Root_Project_View (Kernel)
+          .Get_Project_Type
+          .Languages (True)
         & new String'("project file");
       --  Append the 'project file' language (i.e: GPR files) to the project's
       --  own languages: we want to spawn the Ada Language Server for GPR files
@@ -956,10 +987,10 @@ package body GPS.LSP_Module is
       for Language_Name of Languages loop
          declare
             Lang     : constant not null Language.Language_Access :=
-                         Kernel.Get_Language_Handler.Get_Language_By_Name
-                           (Language_Name.all);
+              Kernel.Get_Language_Handler.Get_Language_By_Name
+                (Language_Name.all);
             Position : Language_Server_Maps.Cursor :=
-                         Running_Servers.Find (Lang);
+              Running_Servers.Find (Lang);
             Server   : Language_Server_Access;
 
          begin
@@ -979,8 +1010,13 @@ package body GPS.LSP_Module is
                     GPS.Kernel.Kernel_Handle (Kernel);
 
                   Reload_Project : GPS.LSP_Client.Requests.Request_Access :=
-                    new GPS.LSP_Client.Requests.Execute_Command.Reload_Project
-                      .Reload_Project_Command_Request (Handle);
+                    new GPS
+                          .LSP_Client
+                          .Requests
+                          .Execute_Command
+                          .Reload_Project
+                          .Reload_Project_Command_Request
+                          (Handle);
                begin
                   --  Ask ALS reload the project.
 
@@ -989,9 +1025,7 @@ package body GPS.LSP_Module is
             elsif not Module.Language_Servers.Contains (Lang) then
 
                --  Spawn a new language server for the given language
-               Spawn_LSP_Server
-                 (Language => Lang,
-                  Kernel   => Kernel);
+               Spawn_LSP_Server (Language => Lang, Kernel => Kernel);
             end if;
 
             GNAT.Strings.Free (Language_Name);
@@ -1012,7 +1046,7 @@ package body GPS.LSP_Module is
       return GPS.LSP_Client.Language_Servers.Language_Server_Access
    is
       Position : constant Language_Server_Maps.Cursor :=
-                   Module.Language_Servers.Find (Language);
+        Module.Language_Servers.Find (Language);
 
    begin
       if Language_Server_Maps.Has_Element (Position) then
@@ -1032,9 +1066,10 @@ package body GPS.LSP_Module is
       Id     : LSP.Types.LSP_Number_Or_String)
       return GPS.LSP_Client.Requests.Request_Access
    is
-      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-          (Server.all);
+      S :
+        GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class renames
+          GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+            (Server.all);
    begin
       return GPS.LSP_Client.Language_Servers.Real.Get_Running_Request (S, Id);
    end Get_Running_Request;
@@ -1044,12 +1079,12 @@ package body GPS.LSP_Module is
    --------------------
 
    procedure Restart_Server
-     (Server : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access)
+     (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access)
    is
-      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-          (Server.all);
+      S :
+        GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class renames
+          GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+            (Server.all);
    begin
       S.Restart;
    end Restart_Server;
@@ -1059,13 +1094,14 @@ package body GPS.LSP_Module is
    ------------------------------
 
    procedure Initiate_Server_Shutdown
-     (Server         : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access;
+     (Server         :
+        not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
       In_Destruction : Boolean)
    is
-      S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-        renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-          (Server.all);
+      S :
+        GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class renames
+          GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+            (Server.all);
 
    begin
       --  Initiate shutdown sequence.
@@ -1101,8 +1137,8 @@ package body GPS.LSP_Module is
    ---------------------
 
    function Lookup_Language
-     (Self   : Module_Id_Record'Class;
-      Server : not null Language_Server_Access) return Language_Access
+     (Self : Module_Id_Record'Class; Server : not null Language_Server_Access)
+      return Language_Access
    is
       Position : Language_Server_Maps.Cursor := Self.Language_Servers.First;
 
@@ -1174,8 +1210,7 @@ package body GPS.LSP_Module is
    function Is_Language_Diagnostic_Category
      (Self     : Module_Id_Record'Class;
       Language : VSS.Strings.Virtual_String;
-      Category : VSS.Strings.Virtual_String)
-      return Boolean
+      Category : VSS.Strings.Virtual_String) return Boolean
    is
       use type VSS.Strings.Virtual_String;
    begin
@@ -1229,7 +1264,8 @@ package body GPS.LSP_Module is
    -- On_Response_Processed --
    ---------------------------
 
-   overriding procedure On_Response_Processed
+   overriding
+   procedure On_Response_Processed
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
       Data   : Unbounded_String;
@@ -1254,7 +1290,8 @@ package body GPS.LSP_Module is
    -- On_Response_Sent --
    ----------------------
 
-   overriding procedure On_Response_Sent
+   overriding
+   procedure On_Response_Sent
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access;
       Data   : Unbounded_String)
@@ -1275,9 +1312,9 @@ package body GPS.LSP_Module is
    -- On_Server_Started --
    -----------------------
 
-   overriding procedure On_Server_Started
-     (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access)
+   overriding
+   procedure On_Server_Started
+     (Self : in out Module_Id_Record; Server : not null Language_Server_Access)
    is
       Kernel   : constant Kernel_Handle := Self.Get_Kernel;
       Language : constant Language_Access := Self.Lookup_Language (Server);
@@ -1289,23 +1326,24 @@ package body GPS.LSP_Module is
       -- Create_Restart_Action_If_Needed --
       -------------------------------------
 
-      procedure Create_Restart_Action_If_Needed (Language_Name : String)
-      is
-         Action_Name : constant String := "restart "
-           & Language_Name & " language server";
-         Action      : constant Action_Access := Lookup_Action
-           (Kernel, Action_Name);
+      procedure Create_Restart_Action_If_Needed (Language_Name : String) is
+         Action_Name : constant String :=
+           "restart " & Language_Name & " language server";
+         Action      : constant Action_Access :=
+           Lookup_Action (Kernel, Action_Name);
       begin
          if Action = null then
             Register_Action
               (Kernel      => Kernel,
                Name        => Action_Name,
-               Command     => new Restart_Command'
-                 (Interactive_Command with
-                  Kernel        => Kernel,
-                  Language_Name => To_Unbounded_String (Language_Name)),
-               Description => "Restart the language server for "
-               & Language_Name,
+               Command     =>
+                 new Restart_Command'
+                   (Interactive_Command
+                    with
+                      Kernel        => Kernel,
+                      Language_Name => To_Unbounded_String (Language_Name)),
+               Description =>
+                 "Restart the language server for " & Language_Name,
                Category    => "LSP");
             Register_Menu
               (Kernel,
@@ -1331,17 +1369,16 @@ package body GPS.LSP_Module is
       Create_Restart_Action_If_Needed (Language.Get_Name);
 
       GPS.Kernel.Hooks.Language_Server_Started_Hook.Run
-        (Kernel   => Self.Get_Kernel,
-         Language => Language.Get_Name);
+        (Kernel => Self.Get_Kernel, Language => Language.Get_Name);
    end On_Server_Started;
 
    -----------------------
    -- On_Server_Stopped --
    -----------------------
 
-   overriding procedure On_Server_Stopped
-     (Self   : in out Module_Id_Record;
-      Server : not null Language_Server_Access)
+   overriding
+   procedure On_Server_Stopped
+     (Self : in out Module_Id_Record; Server : not null Language_Server_Access)
    is
       Language : constant Language_Access := Server.Get_Client.Language;
    begin
@@ -1353,14 +1390,13 @@ package body GPS.LSP_Module is
          Language_Name : constant String := Language.Get_Name;
       begin
          GPS.Kernel.Hooks.Language_Server_Stopped_Hook.Run
-           (Kernel   => Self.Get_Kernel,
-            Language => Language_Name);
+           (Kernel => Self.Get_Kernel, Language => Language_Name);
 
          if not Self.Language_Servers.Contains (Language) then
             Unregister_Action
               (Kernel                    => Self.Get_Kernel,
-               Name                      => "restart "
-               & Language_Name & " language server",
+               Name                      =>
+                 "restart " & Language_Name & " language server",
                Remove_Menus_And_Toolbars => True);
          end if;
       end;
@@ -1370,10 +1406,11 @@ package body GPS.LSP_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Server_Stopped_Hook;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Language : String) is
+   overriding
+   procedure Execute
+     (Self     : On_Server_Stopped_Hook;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Language : String) is
    begin
       --  A server has stopped: cancel all the progress bars.
       --  Note: we do this for all servers because at the moment we cannot
@@ -1384,8 +1421,7 @@ package body GPS.LSP_Module is
       for E of Module.Token_To_Command loop
          declare
             Command : constant Language_Server_Progress_Command_Access :=
-              Language_Server_Progress_Command_Access
-                (E.Get_Command);
+              Language_Server_Progress_Command_Access (E.Get_Command);
          begin
             if Command /= null then
                Command.Action := Failure;
@@ -1399,7 +1435,8 @@ package body GPS.LSP_Module is
    -- Publish_Diagnostics --
    -------------------------
 
-   overriding procedure On_Publish_Diagnostics
+   overriding
+   procedure On_Publish_Diagnostics
      (Self     : access Module_Id_Record;
       Params   : LSP.Messages.PublishDiagnosticsParams;
       Language : VSS.Strings.Virtual_String)
@@ -1412,8 +1449,7 @@ package body GPS.LSP_Module is
 
       function Get_Editor_Side_Icon
         (Importance : Message_Importance_Type) return String
-      is
-        (case Importance is
+      is (case Importance is
             when High          => "gps-emblem-build-error",
             when Medium        => "gps-emblem-build-warning",
             when Low           => "gps-emblem-build-style",
@@ -1427,28 +1463,25 @@ package body GPS.LSP_Module is
       --  Return the message category of Diag
 
       function Contains
-        (Messages : Message_Array;
-         Diag     : LSP.Messages.Diagnostic)
+        (Messages : Message_Array; Diag : LSP.Messages.Diagnostic)
          return Boolean;
       --  Return True if Diag is already in messages
 
       function Contains
         (Messages : Message_Array;
-         Info     : LSP.Messages.DiagnosticRelatedInformation)
-         return Boolean;
+         Info     : LSP.Messages.DiagnosticRelatedInformation) return Boolean;
       --  Return True if Info is already in messages
 
       function Compare_Diagnostics
         (Diagnostics : LSP.Messages.Diagnostic_Vector;
-         File        : GNATCOLL.VFS.Virtual_File)
-         return Boolean;
+         File        : GNATCOLL.VFS.Virtual_File) return Boolean;
       --  Return True if the Diagnostics are still the same
 
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
         Self.Get_Kernel.Get_Messages_Container;
       File      : constant GNATCOLL.VFS.Virtual_File :=
         GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder    : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
 
       -------------------
@@ -1464,28 +1497,27 @@ package body GPS.LSP_Module is
 
          else
             case Item.Value is
-            when LSP.Messages.Error =>
-               return GPS.Kernel.Messages.High;
+               when LSP.Messages.Error       =>
+                  return GPS.Kernel.Messages.High;
 
-            when LSP.Messages.Warning =>
-               return GPS.Kernel.Messages.Medium;
+               when LSP.Messages.Warning     =>
+                  return GPS.Kernel.Messages.Medium;
 
-            when LSP.Messages.Information =>
-               return GPS.Kernel.Messages.Low;
+               when LSP.Messages.Information =>
+                  return GPS.Kernel.Messages.Low;
 
-            when LSP.Messages.Hint =>
-               return GPS.Kernel.Messages.Informational;
+               when LSP.Messages.Hint        =>
+                  return GPS.Kernel.Messages.Informational;
             end case;
          end if;
-      end  To_Importance;
+      end To_Importance;
 
       --------------
       -- Contains --
       --------------
 
       function Contains
-        (Messages : Message_Array;
-         Diag     : LSP.Messages.Diagnostic)
+        (Messages : Message_Array; Diag : LSP.Messages.Diagnostic)
          return Boolean
       is
          use type Basic_Types.Visible_Column_Type;
@@ -1532,15 +1564,14 @@ package body GPS.LSP_Module is
 
       function Contains
         (Messages : Message_Array;
-         Info     : LSP.Messages.DiagnosticRelatedInformation)
-         return Boolean
+         Info     : LSP.Messages.DiagnosticRelatedInformation) return Boolean
       is
          use GPS.Editors;
          use type Basic_Types.Visible_Column_Type;
          use type VSS.Strings.Virtual_String;
 
-         Holder    : constant Controlled_Editor_Buffer_Holder
-           := Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+         Holder    : constant Controlled_Editor_Buffer_Holder :=
+           Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
          Start_Loc : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
              (Holder.Editor, Info.location.span.first);
@@ -1567,10 +1598,10 @@ package body GPS.LSP_Module is
       is
          use type VSS.Strings.Virtual_String;
       begin
-         return Diagnostics_Messages_Category_Prefix & ": "
-           & (if Diag.source.Is_Set
-              then Diag.source.Value
-              else Language);
+         return
+           Diagnostics_Messages_Category_Prefix
+           & ": "
+           & (if Diag.source.Is_Set then Diag.source.Value else Language);
       end Get_Category;
 
       -------------------------
@@ -1579,8 +1610,7 @@ package body GPS.LSP_Module is
 
       function Compare_Diagnostics
         (Diagnostics : LSP.Messages.Diagnostic_Vector;
-         File        : GNATCOLL.VFS.Virtual_File)
-         return Boolean
+         File        : GNATCOLL.VFS.Virtual_File) return Boolean
       is
          use type VSS.Strings.Virtual_String;
          --  Count the number of diagnostics in the messages view
@@ -1628,63 +1658,66 @@ package body GPS.LSP_Module is
               (Language, Diagnostic.source.Value);
          else
             --  Use Language as the backup source
-            Module.Register_Diagnostic_Source
-              (Language, Language);
+            Module.Register_Diagnostic_Source (Language, Language);
          end if;
 
          declare
             use type VSS.Unicode.UTF16_Code_Unit_Count;
 
-            Location : constant GPS.Editors.Editor_Location'Class :=
+            Location   : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Diagnostic.span.first);
             Importance : constant Message_Importance_Type :=
               To_Importance (Diagnostic.severity);
             Flags      : constant Message_Flags :=
-              (if not Diagnostic.relatedInformation.Is_Empty then
-                  Side_And_Locations
-               else
-                 Get_Diagnostics_Message_Flags);
+              (if not Diagnostic.relatedInformation.Is_Empty
+               then Side_And_Locations
+               else Get_Diagnostics_Message_Flags);
             Category   : constant VSS.Strings.Virtual_String :=
               Get_Category (Diagnostic);
             M          : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
-                (Container    => Container,
-                 Category     => Category,
-                 File         => File,
-                 Line         => Location.Line,
-                 Column       => Location.Column,
-                 Text         => Diagnostic.message,
-                 Importance   => Importance,
-                 Flags        => Flags,
+                (Container                => Container,
+                 Category                 => Category,
+                 File                     => File,
+                 Line                     => Location.Line,
+                 Column                   => Location.Column,
+                 Text                     => Diagnostic.message,
+                 Importance               => Importance,
+                 Flags                    => Flags,
                  Allow_Auto_Jump_To_First => False);
 
-            Action : constant GPS.Editors.Line_Information.
-              Line_Information_Access :=
+            Action :
+              constant GPS.Editors.Line_Information.Line_Information_Access :=
                 new Line_Information_Record'
-                 ((Text                     => Null_Unbounded_String,
-                   Display_Popup_When_Alone => False,
-                   Tooltip_Text             => To_Unbounded_String
-                     (Glib.Convert.Escape_Text
-                          (VSS.Strings.Conversions.To_UTF_8_String
-                               (Diagnostic.message))),
-                   Image                    =>
-                     To_Unbounded_String (Get_Editor_Side_Icon (Importance)),
-                   Message                  => Create (Message_Access (M)),
-                   Category                 => <>,
-                   Associated_Command       => null));
+                  ((Text                     => Null_Unbounded_String,
+                    Display_Popup_When_Alone => False,
+                    Tooltip_Text             =>
+                      To_Unbounded_String
+                        (Glib.Convert.Escape_Text
+                           (VSS.Strings.Conversions.To_UTF_8_String
+                              (Diagnostic.message))),
+                    Image                    =>
+                      To_Unbounded_String (Get_Editor_Side_Icon (Importance)),
+                    Message                  => Create (Message_Access (M)),
+                    Category                 => <>,
+                    Associated_Command       => null));
 
          begin
             M.Set_Action (Action);
             M.Set_Highlighting
-              (Style  => GPS.Default_Styles.Messages_Styles
-                    (To_Importance (Diagnostic.severity)),
+              (Style  =>
+                 GPS.Default_Styles.Messages_Styles
+                   (To_Importance (Diagnostic.severity)),
                Length =>
-                  (if Diagnostic.span.last.line = Diagnostic.span.first.line
-                   then Highlight_Length'Min
-                     (1, Highlight_Length (Diagnostic.span.last.character -
-                          Diagnostic.span.first.character))
-                   else Highlight_Whole_Line));
+                 (if Diagnostic.span.last.line = Diagnostic.span.first.line
+                  then
+                    Highlight_Length'Min
+                      (1,
+                       Highlight_Length
+                         (Diagnostic.span.last.character
+                          - Diagnostic.span.first.character))
+                  else Highlight_Whole_Line));
 
             --  For each related information, create a secondary message
             for Info of Diagnostic.relatedInformation loop
@@ -1711,9 +1744,9 @@ package body GPS.LSP_Module is
                   --  Prefix of the message used to indicate the SLOC of the
                   --  relatedInformation, displayed as an hyperlink.
 
-                  Info_Msg  : constant String :=
+                  Info_Msg : constant String :=
                     VSS.Strings.Conversions.To_UTF_8_String (Info.message);
-                  Text      : constant String := SLOC_Prefix & Info_Msg;
+                  Text     : constant String := SLOC_Prefix & Info_Msg;
                begin
                   GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
                     (Parent => GPS.Kernel.Messages.Message_Access (M),
@@ -1734,7 +1767,8 @@ package body GPS.LSP_Module is
    -- Show_Message --
    ------------------
 
-   overriding procedure On_Show_Message
+   overriding
+   procedure On_Show_Message
      (Self     : access Module_Id_Record;
       Value    : LSP.Messages.ShowMessageParams;
       Language : VSS.Strings.Virtual_String)
@@ -1745,10 +1779,17 @@ package body GPS.LSP_Module is
    begin
       --  Convert the message type to a GNAT STudio type
       case Value.a_type is
-         when LSP.Messages.Error   => Mode := GPS.Messages_Windows.Error;
-         when LSP.Messages.Warning => Mode := GPS.Messages_Windows.Info;
-         when LSP.Messages.Info    => Mode := GPS.Messages_Windows.Info;
-         when LSP.Messages.Log     => Is_Log := True;
+         when LSP.Messages.Error   =>
+            Mode := GPS.Messages_Windows.Error;
+
+         when LSP.Messages.Warning =>
+            Mode := GPS.Messages_Windows.Info;
+
+         when LSP.Messages.Info    =>
+            Mode := GPS.Messages_Windows.Info;
+
+         when LSP.Messages.Log     =>
+            Is_Log := True;
       end case;
 
       if Is_Log then
@@ -1769,7 +1810,8 @@ package body GPS.LSP_Module is
    -- On_Log_Message --
    --------------------
 
-   overriding procedure On_Log_Message
+   overriding
+   procedure On_Log_Message
      (Self     : access Module_Id_Record;
       Value    : LSP.Messages.LogMessageParams;
       Language : VSS.Strings.Virtual_String)
@@ -1779,25 +1821,28 @@ package body GPS.LSP_Module is
       case Value.a_type is
          when LSP.Messages.Log =>
             declare
-               File  : GNATCOLL.VFS.Virtual_File;
+               File : GNATCOLL.VFS.Virtual_File;
 
-               Match : constant
-                 VSS.Regular_Expressions.Regular_Expression_Match :=
+               Match :
+                 constant VSS.Regular_Expressions.Regular_Expression_Match :=
                    Log_File_Pattern.Match (Value.message);
             begin
                if Match.Has_Match then
-                  File := GNATCOLL.VFS.Create_From_UTF8
-                    (VSS.Strings.Conversions.To_UTF_8_String
-                       (Match.Captured (1)));
+                  File :=
+                    GNATCOLL.VFS.Create_From_UTF8
+                      (VSS.Strings.Conversions.To_UTF_8_String
+                         (Match.Captured (1)));
 
-                  for Server of Module.Language_Servers
+                  for Server of
+                    Module.Language_Servers
                     when Server.Get_Client.Language.Get_Name = "Ada"
                   loop
                      Server.Get_Client.Set_Standard_Errors_File (File);
                   end loop;
                end if;
             end;
-         when others =>
+
+         when others           =>
             null;
       end case;
    end On_Log_Message;
@@ -1806,9 +1851,9 @@ package body GPS.LSP_Module is
    -- Get_Progress_Type --
    -----------------------
 
-   overriding function Get_Progress_Type
-     (Self  : access Module_Id_Record;
-      Token : LSP.Types.LSP_Number_Or_String)
+   overriding
+   function Get_Progress_Type
+     (Self : access Module_Id_Record; Token : LSP.Types.LSP_Number_Or_String)
       return LSP.Client_Notification_Receivers_3_16.Progress_Value_Kind is
    begin
       return LSP.Client_Notification_Receivers_3_16.ProgressParams;
@@ -1818,17 +1863,17 @@ package body GPS.LSP_Module is
    -- On_Progress --
    -----------------
 
-   overriding procedure On_Progress
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.Progress_Params)
+   overriding
+   procedure On_Progress
+     (Self : access Module_Id_Record; Value : LSP.Messages.Progress_Params)
    is
       use LSP.Messages;
 
       S : Scheduled_Command_Access;
 
       function Get_Or_Create_Scheduled_Command
-        (Key   : LSP_Number_Or_String;
-         Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access;
+        (Key : LSP_Number_Or_String; Title : VSS.Strings.Virtual_String)
+         return Scheduled_Command_Access;
       --  Get the scheduled command for the given key, creating it if needed
 
       -------------------------------------
@@ -1836,8 +1881,8 @@ package body GPS.LSP_Module is
       -------------------------------------
 
       function Get_Or_Create_Scheduled_Command
-        (Key   : LSP_Number_Or_String;
-         Title : VSS.Strings.Virtual_String) return Scheduled_Command_Access
+        (Key : LSP_Number_Or_String; Title : VSS.Strings.Virtual_String)
+         return Scheduled_Command_Access
       is
          S      : Scheduled_Command_Access;
          C      : Language_Server_Progress_Command_Access;
@@ -1851,16 +1896,17 @@ package body GPS.LSP_Module is
             --  Start a monitoring command...
             C := new Language_Server_Progress_Command;
             C.Title := Title;
-            C.Key   := Key;
-            S := Launch_Background_Command
-              (Kernel            => Self.Get_Kernel,
-               Command           => C,
-               Active            => False,
-               Show_Bar          => True,
-               Queue_Id          =>
-                 VSS.Strings.Conversions.To_UTF_8_String
-                   (LSP.Types.To_Virtual_String (Key)),
-               Block_Exit        => False);
+            C.Key := Key;
+            S :=
+              Launch_Background_Command
+                (Kernel     => Self.Get_Kernel,
+                 Command    => C,
+                 Active     => False,
+                 Show_Bar   => True,
+                 Queue_Id   =>
+                   VSS.Strings.Conversions.To_UTF_8_String
+                     (LSP.Types.To_Virtual_String (Key)),
+                 Block_Exit => False);
 
             --  ... and store it by its token identifier
             Self.Token_To_Command.Insert (Key, S);
@@ -1868,24 +1914,23 @@ package body GPS.LSP_Module is
          end if;
       end Get_Or_Create_Scheduled_Command;
 
-      Default_Title : constant VSS.Strings.Virtual_String :=
-        "Indexing";
+      Default_Title : constant VSS.Strings.Virtual_String := "Indexing";
       Progress_Set  : Boolean := False;
 
    begin
       case Value.Kind is
-         when Progress_Begin =>
-            S := Get_Or_Create_Scheduled_Command
-              (Value.Begin_Param.token,
-               Value.Begin_Param.value.title);
+         when Progress_Begin  =>
+            S :=
+              Get_Or_Create_Scheduled_Command
+                (Value.Begin_Param.token, Value.Begin_Param.value.title);
 
          when Progress_Report =>
             --  It could happen that the progress bar was cancelled when
             --  a language server died. If this happens, we create a
             --  scheduled command with a "fallback" value for the title.
-            S := Get_Or_Create_Scheduled_Command
-              (Value.Report_Param.token,
-               Default_Title);
+            S :=
+              Get_Or_Create_Scheduled_Command
+                (Value.Report_Param.token, Default_Title);
 
             if Value.Report_Param.value.message.Is_Set then
                --  processed/total files may be in a message
@@ -1894,20 +1939,24 @@ package body GPS.LSP_Module is
                   Message : constant VSS.Strings.Virtual_String :=
                     Value.Report_Param.value.message.Value;
 
-                  Match : constant VSS.Regular_Expressions
-                    .Regular_Expression_Match
-                      := Progress_Pattern.Match (Message);
+                  Match :
+                    constant VSS
+                               .Regular_Expressions
+                               .Regular_Expression_Match :=
+                      Progress_Pattern.Match (Message);
 
                begin
                   if Match.Has_Match then
                      declare
-                        Processed : constant Integer := Integer'Wide_Wide_Value
-                          (VSS.Strings.Conversions.To_Wide_Wide_String
-                            (Match.Captured (1)));
+                        Processed : constant Integer :=
+                          Integer'Wide_Wide_Value
+                            (VSS.Strings.Conversions.To_Wide_Wide_String
+                               (Match.Captured (1)));
 
-                        Total : constant Integer := Integer'Wide_Wide_Value
-                          (VSS.Strings.Conversions.To_Wide_Wide_String
-                            (Match.Captured (2)));
+                        Total : constant Integer :=
+                          Integer'Wide_Wide_Value
+                            (VSS.Strings.Conversions.To_Wide_Wide_String
+                               (Match.Captured (2)));
                      begin
                         S.Set_Progress
                           ((Activity => Running,
@@ -1925,12 +1974,12 @@ package body GPS.LSP_Module is
                  ((Activity => Running,
                    --  The LSP supports giving the value as percentage, not
                    --  as current/total.
-                   Current  => Integer
-                     (Value.Report_Param.value.percentage.Value),
+                   Current  =>
+                     Integer (Value.Report_Param.value.percentage.Value),
                    Total    => 100));
             end if;
 
-         when Progress_End =>
+         when Progress_End    =>
             --  Make the action self-destruct at the next call to Execute,
             --  and remove it right now from the associating array.
             declare
@@ -1939,8 +1988,9 @@ package body GPS.LSP_Module is
             begin
                if Token_Command_Maps.Has_Element (Cursor) then
                   Language_Server_Progress_Command_Access
-                    (Token_Command_Maps.Element
-                       (Cursor).Get_Command).Action := Success;
+                    (Token_Command_Maps.Element (Cursor).Get_Command)
+                    .Action :=
+                    Success;
                   Self.Token_To_Command.Delete (Cursor);
 
                else
@@ -1955,8 +2005,8 @@ package body GPS.LSP_Module is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt
-     (Command : in out Language_Server_Progress_Command) is
+   overriding
+   procedure Interrupt (Command : in out Language_Server_Progress_Command) is
    begin
       if Module = null then
          return;
@@ -1971,7 +2021,8 @@ package body GPS.LSP_Module is
    -- On_Progress_SymbolInformation_Vector --
    ------------------------------------------
 
-   overriding procedure On_Progress_SymbolInformation_Vector
+   overriding
+   procedure On_Progress_SymbolInformation_Vector
      (Self   : access Module_Id_Record;
       Params : LSP.Messages.Progress_SymbolInformation_Vector) is
    begin

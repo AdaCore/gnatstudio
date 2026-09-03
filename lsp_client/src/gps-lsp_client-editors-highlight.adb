@@ -17,28 +17,29 @@
 
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 
-with Basic_Types;                use Basic_Types;
-with Glib.Main;                  use Glib.Main;
-with Glib;                       use Glib;
-with GPS.Default_Styles;         use GPS.Default_Styles;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with Basic_Types;                                use Basic_Types;
+with Glib.Main;                                  use Glib.Main;
+with Glib;                                       use Glib;
+with GPS.Default_Styles;                         use GPS.Default_Styles;
+with GPS.Kernel.Contexts;                        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                           use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Simple;
+use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages;                        use GPS.Kernel.Messages;
+with GPS.Kernel.Modules;                         use GPS.Kernel.Modules;
 with GPS.LSP_Client.Requests.Document_Highlight;
 use GPS.LSP_Client.Requests.Document_Highlight;
-with GPS.LSP_Client.Requests;    use GPS.LSP_Client.Requests;
-with GPS.LSP_Client.Utilities;   use GPS.LSP_Client.Utilities;
-with GUI_Utils;                  use GUI_Utils;
-with Language;                   use Language;
-with Language_Handlers;          use Language_Handlers;
-with GPS.Editors; use GPS.Editors;
+with GPS.LSP_Client.Requests;                    use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Utilities;                   use GPS.LSP_Client.Utilities;
+with GUI_Utils;                                  use GUI_Utils;
+with Language;                                   use Language;
+with Language_Handlers;                          use Language_Handlers;
+with GPS.Editors;                                use GPS.Editors;
 
 package body GPS.LSP_Client.Editors.Highlight is
 
@@ -48,27 +49,32 @@ package body GPS.LSP_Client.Editors.Highlight is
      Create ("GPS.LSP.DOCUMENT_HIGHLIGHT.ADVANCED", Off);
 
    type GPS_LSP_Document_Highlight_Request is
-     new Abstract_Document_Highlight_Request with null record;
+     new Abstract_Document_Highlight_Request
+   with null record;
    type GPS_LSP_Document_Highlight_Request_Access is
      access all GPS_LSP_Document_Highlight_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Document_Highlight_Request;
       Result : LSP.Messages.DocumentHighlight_Vector);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out GPS_LSP_Document_Highlight_Request;
       Reason : Reject_Reason);
 
-   type On_Location_Changed is new File_Location_Hooks_Function with
-     null record;
-   overriding procedure Execute
+   type On_Location_Changed is new File_Location_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -79,7 +85,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    --  unless we were already highlighting it.
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -89,36 +96,29 @@ package body GPS.LSP_Client.Editors.Highlight is
    Document_Highlight_Message_Category : constant VSS.Strings.Virtual_String :=
      "Autohighlight";
    Document_Highlight_Message_Flags    : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => False,
-      Editor_Line => True);
+     (Editor_Side => True, Locations => False, Editor_Line => True);
 
    type Highlighting_Context_Type is record
-      Line   : Integer             := 0;
+      Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
       Word   : VSS.Strings.Virtual_String;
    end record;
 
    Null_Highlighting_Context : constant Highlighting_Context_Type :=
-     Highlighting_Context_Type'
-       (Line   => 0,
-        Column => 0,
-        Word   => <>);
+     Highlighting_Context_Type'(Line => 0, Column => 0, Word => <>);
 
-   type Document_Highlight_Module_ID_Record is
-     new Module_ID_Record with record
-      Highlighting_Context      : Highlighting_Context_Type;
+   type Document_Highlight_Module_ID_Record is new Module_ID_Record with record
+      Highlighting_Context : Highlighting_Context_Type;
       --  The current highlighting context.
 
-      Locations                 : LSP.Messages.DocumentHighlight_Vector;
+      Locations : LSP.Messages.DocumentHighlight_Vector;
       --  The locations to highlight.
 
-      Loc_Index                 : Positive := 1;
+      Loc_Index : Positive := 1;
       --  The index of the location to highlight. Used by the Idle/Timeout
       --  function.
 
-      Highlighter_Source_ID     : Glib.Main.G_Source_Id :=
-        Glib.Main.No_Source_Id;
+      Highlighter_Source_ID : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  The ID of the Idle/Timeout function that highlights the locations
       --  in a non-blocking way.
 
@@ -126,7 +126,7 @@ package body GPS.LSP_Client.Editors.Highlight is
       --  The line from where the textual search should start to find the
       --  next occurrence.
 
-      Textual_Search_Start_Col  : Visible_Column_Type := 1;
+      Textual_Search_Start_Col : Visible_Column_Type := 1;
       --  The column from where the textual search should start to find the
       --  next occurrence.
    end record;
@@ -139,8 +139,8 @@ package body GPS.LSP_Client.Editors.Highlight is
       Kernel : Kernel_Handle;
       File   : Virtual_File;
    end record;
-   package LSP_Highlight_Sources is
-     new Glib.Main.Generic_Sources (Highlight_Timeout_Parameter_Type);
+   package LSP_Highlight_Sources is new
+     Glib.Main.Generic_Sources (Highlight_Timeout_Parameter_Type);
 
    function LSP_Highlighting_Source
      (Params : Highlight_Timeout_Parameter_Type) return Boolean;
@@ -162,10 +162,10 @@ package body GPS.LSP_Client.Editors.Highlight is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out GPS_LSP_Document_Highlight_Request;
-      Result : LSP.Messages.DocumentHighlight_Vector)
-   is
+      Result : LSP.Messages.DocumentHighlight_Vector) is
    begin
       Module.Locations := Result;
       Module.Loc_Index := 1;
@@ -178,11 +178,11 @@ package body GPS.LSP_Client.Editors.Highlight is
       declare
          Timeout_Params : constant Highlight_Timeout_Parameter_Type :=
            Highlight_Timeout_Parameter_Type'
-             (Kernel => Self.Kernel,
-              File   => Self.File);
+             (Kernel => Self.Kernel, File => Self.File);
       begin
-         Module.Highlighter_Source_ID := LSP_Highlight_Sources.Idle_Add
-           (LSP_Highlighting_Source'Access, Timeout_Params);
+         Module.Highlighter_Source_ID :=
+           LSP_Highlight_Sources.Idle_Add
+             (LSP_Highlighting_Source'Access, Timeout_Params);
       end;
    end On_Result_Message;
 
@@ -190,7 +190,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -209,9 +210,10 @@ package body GPS.LSP_Client.Editors.Highlight is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
-     (Self   : in out GPS_LSP_Document_Highlight_Request;
-      Reason : Reject_Reason) is null;
+   overriding
+   procedure On_Rejected
+     (Self : in out GPS_LSP_Document_Highlight_Request; Reason : Reject_Reason)
+   is null;
 
    -----------------------------------------
    -- Cleanup_Document_Highlight_Messages --
@@ -241,39 +243,40 @@ package body GPS.LSP_Client.Editors.Highlight is
          use type LSP.Messages.DocumentHighlightKind;
          use type Basic_Types.Visible_Column_Type;
 
-         Loc     : constant LSP.Messages.DocumentHighlight :=
+         Loc  : constant LSP.Messages.DocumentHighlight :=
            Module.Locations (Module.Loc_Index);
-         Kind    : constant LSP.Messages.DocumentHighlightKind :=
+         Kind : constant LSP.Messages.DocumentHighlightKind :=
            (if Loc.kind.Is_Set then Loc.kind.Value else LSP.Messages.Read);
 
-         Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+         Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
            Params.Kernel.Get_Buffer_Factory.Get_Holder (File => Params.File);
-         From    : constant GPS.Editors.Editor_Location'Class :=
+         From   : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
              (Holder.Editor, Loc.span.first);
-         To      : constant GPS.Editors.Editor_Location'Class :=
+         To     : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
              (Holder.Editor, Loc.span.last);
 
          Message : Simple_Message_Access;
       begin
-         Message := Create_Simple_Message
-           (Get_Messages_Container (Params.Kernel),
-            Category                 => Document_Highlight_Message_Category,
-            File                     => Params.File,
-            Line                     => From.Line,
-            Column                   => From.Column,
-            Text                     => "",
-            Importance               => Unspecified,
-            Flags                    => Document_Highlight_Message_Flags,
-            Allow_Auto_Jump_To_First => False);
+         Message :=
+           Create_Simple_Message
+             (Get_Messages_Container (Params.Kernel),
+              Category                 => Document_Highlight_Message_Category,
+              File                     => Params.File,
+              Line                     => From.Line,
+              Column                   => From.Column,
+              Text                     => "",
+              Importance               => Unspecified,
+              Flags                    => Document_Highlight_Message_Flags,
+              Allow_Auto_Jump_To_First => False);
 
          GPS.Kernel.Messages.Set_Highlighting
            (Self   => Message,
-            Style  => (if Kind = LSP.Messages.Write then
-                          Editor_Ephemeral_Highlighting_Smart
-                       else
-                          Editor_Ephemeral_Highlighting_Simple),
+            Style  =>
+              (if Kind = LSP.Messages.Write
+               then Editor_Ephemeral_Highlighting_Smart
+               else Editor_Ephemeral_Highlighting_Simple),
             Length => Highlight_Length (To.Column - From.Column));
 
          Module.Loc_Index := Module.Loc_Index + 1;
@@ -327,16 +330,18 @@ package body GPS.LSP_Client.Editors.Highlight is
             End_Column   : constant Visible_Column_Type :=
               Occurrence_End_Loc.Column;
          begin
-            Message := Create_Simple_Message
-              (Get_Messages_Container (Params.Kernel),
-               Category                 => Document_Highlight_Message_Category,
-               File                     => Params.File,
-               Line                     => Start_Line,
-               Column                   => Start_Column,
-               Text                     => "",
-               Importance               => Unspecified,
-               Flags                    => Document_Highlight_Message_Flags,
-               Allow_Auto_Jump_To_First => False);
+            Message :=
+              Create_Simple_Message
+                (Get_Messages_Container (Params.Kernel),
+                 Category                 =>
+                   Document_Highlight_Message_Category,
+                 File                     => Params.File,
+                 Line                     => Start_Line,
+                 Column                   => Start_Column,
+                 Text                     => "",
+                 Importance               => Unspecified,
+                 Flags                    => Document_Highlight_Message_Flags,
+                 Allow_Auto_Jump_To_First => False);
 
             GPS.Kernel.Messages.Set_Highlighting
               (Self   => Message,
@@ -358,7 +363,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -370,8 +376,8 @@ package body GPS.LSP_Client.Editors.Highlight is
         Kernel.Get_Current_Context;
       Lang                     : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Current_Word             : constant String := Entity_Name_Information
-        (Context);
+      Current_Word             : constant String :=
+        Entity_Name_Information (Context);
       Request_Success          : Boolean := False;
       New_Highlighting_Context : constant Highlighting_Context_Type :=
         Highlighting_Context_Type'
@@ -408,7 +414,7 @@ package body GPS.LSP_Client.Editors.Highlight is
          Module.Highlighting_Context := New_Highlighting_Context;
 
          declare
-            Holder   : constant Controlled_Editor_Buffer_Holder :=
+            Holder : constant Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder (File);
 
             --  Highlighting the entity under the cursor, so use
@@ -423,20 +429,21 @@ package body GPS.LSP_Client.Editors.Highlight is
             --  Return immediately if the location is not valid
             if Location = Nil_Editor_Location then
                Trace
-                 (Me_Advanced,
-                  "Location is invalid: avoid auto-highlighting");
+                 (Me_Advanced, "Location is invalid: avoid auto-highlighting");
                return;
             end if;
 
-            Request := new GPS_LSP_Document_Highlight_Request'
-              (LSP_Request with
-               Kernel   => Kernel_Handle (Kernel),
-               File     => File,
-               Position => Location_To_LSP_Position (Location));
+            Request :=
+              new GPS_LSP_Document_Highlight_Request'
+                (LSP_Request
+                 with
+                   Kernel   => Kernel_Handle (Kernel),
+                   File     => File,
+                   Position => Location_To_LSP_Position (Location));
          end;
 
-         Request_Success := GPS.LSP_Client.Requests.Execute
-           (Lang, Request_Access (Request));
+         Request_Success :=
+           GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
 
          --  The request failed to execute (no LSP, or request not supported):
          --  perform the highlighting based on a textual search.
@@ -445,11 +452,11 @@ package body GPS.LSP_Client.Editors.Highlight is
             declare
                Timeout_Params : constant Highlight_Timeout_Parameter_Type :=
                  Highlight_Timeout_Parameter_Type'
-                   (Kernel => Kernel_Handle (Kernel),
-                    File   => File);
+                   (Kernel => Kernel_Handle (Kernel), File => File);
             begin
-               Module.Highlighter_Source_ID := LSP_Highlight_Sources.Idle_Add
-                 (Textual_Highlighting_Source'Access, Timeout_Params);
+               Module.Highlighter_Source_ID :=
+                 LSP_Highlight_Sources.Idle_Add
+                   (Textual_Highlighting_Source'Access, Timeout_Params);
                Module.Textual_Search_Start_Line := 1;
                Module.Textual_Search_Start_Col := 1;
             end;
@@ -461,7 +468,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File) is

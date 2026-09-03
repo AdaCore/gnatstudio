@@ -22,12 +22,12 @@ with Ada.Strings.Unbounded;
 
 with Interfaces;
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.JSON;
 with GNATCOLL.Xref;
 with GNATCOLL.Utils;
 
-with Glib.Main;               use Glib.Main;
+with Glib.Main; use Glib.Main;
 with Glib.Values;
 
 with Gtk.Handlers;
@@ -37,11 +37,11 @@ with Gtk.Separator;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;
-with GPS.Editors;             use GPS.Editors;
+with GPS.Editors;        use GPS.Editors;
 
 with LSP.Types;
 
@@ -67,14 +67,16 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --------------------
 
    type On_File_Edited_Or_Reloaded is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited_Or_Reloaded;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Used to highlight code.
 
    type On_Highlight_Range is new Highlight_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : On_Highlight_Range;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -84,7 +86,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  corresponding to given File.
 
    type On_Clear_Highlighting is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Clear_Highlighting;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
@@ -114,22 +117,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    end record;
    --  Store result data
 
-   package Request_Data_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Request_Data);
+   package Request_Data_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Request_Data);
 
-   package Result_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Result_Type);
+   package Result_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Result_Type);
 
-   type Semantic_Tokens_Module_ID_Record is
-     new Module_ID_Record
-   with record
+   type Semantic_Tokens_Module_ID_Record is new Module_ID_Record with record
       Postponed : Request_Data_Vectors.Vector;
       --  Store requests data that did not send
 
-      Data      : Result_Vectors.Vector;
+      Data : Result_Vectors.Vector;
       --  To store results
 
-      Idle_ID   : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Idle_ID : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  To store Idle id
 
       --  Indexes that are used for parsing results
@@ -138,7 +139,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Prev_Char : Basic_Types.Visible_Column_Type := 1;
    end record;
 
-   overriding procedure Destroy (Id : in out Semantic_Tokens_Module_ID_Record);
+   overriding
+   procedure Destroy (Id : in out Semantic_Tokens_Module_ID_Record);
 
    type Semantic_Tokens_Module_ID is
      access all Semantic_Tokens_Module_ID_Record'Class;
@@ -147,8 +149,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
-     (Id : in out Semantic_Tokens_Module_ID_Record) is
+   overriding
+   procedure Destroy (Id : in out Semantic_Tokens_Module_ID_Record) is
    begin
       Id.Postponed.Clear;
       Id.Data.Clear;
@@ -164,14 +166,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ---------------------------------
 
    type SemanticTokens_Full_Request is
-     new GPS.LSP_Client.Requests.SemanticTokens_Full.
-       Abstract_SemanticTokens_Full_Request with null record;
+     new GPS
+          .LSP_Client
+          .Requests
+          .SemanticTokens_Full
+          .Abstract_SemanticTokens_Full_Request
+   with null record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out SemanticTokens_Full_Request;
       Result : LSP.Messages.SemanticTokens);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out SemanticTokens_Full_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -182,8 +190,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ----------------------------------
 
    type SemanticTokens_Range_Request is
-     new GPS.LSP_Client.Requests.SemanticTokens_Range.
-       Abstract_SemanticTokens_Range_Request
+     new GPS
+          .LSP_Client
+          .Requests
+          .SemanticTokens_Range
+          .Abstract_SemanticTokens_Range_Request
    with record
       Vbox_Destroyed_Handler_ID : Gtk.Handlers.Handler_Id;
       --  Handler ID waiting for tooltip's box destruction
@@ -195,22 +206,26 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    type SemanticTokens_Range_Request_Access is
      access all SemanticTokens_Range_Request'Class;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
       Result : LSP.Messages.SemanticTokens);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out SemanticTokens_Range_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out SemanticTokens_Range_Request; Reason : Reject_Reason);
 
-   package Tooltip_Destroyed_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type  => Gtk_Widget_Record,
-      User_Type    => SemanticTokens_Range_Request_Access);
+   package Tooltip_Destroyed_Callback is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Gtk_Widget_Record,
+        User_Type   => SemanticTokens_Range_Request_Access);
 
    procedure On_Tooltip_Destroyed
      (Widget    : access Gtk_Widget_Record'Class;
@@ -227,9 +242,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Called on Idle to parse results
 
    procedure Remove_Highlighting_On_Lines
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer);
+     (Buffer : GPS.Editors.Editor_Buffer'Class; From : Integer; To : Integer);
    --  Remove highlighting from the buffer
 
    function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String;
@@ -239,8 +252,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Style
      (Token_Type      : LSP.Messages.uinteger;
       Token_Modifiers : LSP.Messages.uinteger;
-      Legend          : LSP.Messages.SemanticTokensLegend)
-      return String;
+      Legend          : LSP.Messages.SemanticTokensLegend) return String;
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
@@ -254,9 +266,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    Empty_Modifiers_Array : Modifiers_Array (1 .. 0);
 
    function Check_Style_Name
-     (Name      : String;
-      Modifiers : Modifiers_Array)
-      return String;
+     (Name : String; Modifiers : Modifiers_Array) return String;
    --  Returns empty string if style name does not exist.
 
    procedure Send_Request
@@ -297,9 +307,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ----------------------
 
    function Check_Style_Name
-     (Name      : String;
-      Modifiers : Modifiers_Array)
-      return String
+     (Name : String; Modifiers : Modifiers_Array) return String
    is
       use Ada.Strings.Unbounded;
       use Interfaces;
@@ -337,14 +345,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       function Mask_Name (Value : String) return String is
          N : constant String := Ada.Characters.Handling.To_Lower (Value);
       begin
-         if N'Length > 2
-           and then N (N'First .. N'First + 1) = "a_"
-         then
+         if N'Length > 2 and then N (N'First .. N'First + 1) = "a_" then
             return N (N'First + 2 .. N'Last);
 
-         elsif N'Length > 3
-           and then N (N'First .. N'First + 2) = "an_"
-         then
+         elsif N'Length > 3 and then N (N'First .. N'First + 2) = "an_" then
             return N (N'First + 3 .. N'Last);
 
          else
@@ -356,16 +360,15 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       -- Get_Modifiers --
       -------------------
 
-      function Get_Modifiers (Modifiers : Modifiers_Array) return String
-      is
+      function Get_Modifiers (Modifiers : Modifiers_Array) return String is
          use Ada.Strings.Unbounded;
 
          M : Unbounded_String;
       begin
          for Index in Modifiers'Range loop
             M.Append
-              ("-" & Mask_Name
-                 (SemanticTokenModifiers'Image (Modifiers (Index))));
+              ("-"
+               & Mask_Name (SemanticTokenModifiers'Image (Modifiers (Index))));
          end loop;
 
          return To_String (M);
@@ -375,8 +378,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Type_Modifiers_Name : constant String :=
         Type_Name & Get_Modifiers (Modifiers);
 
-      Arr     : Modifiers_Array
-        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Arr     :
+        Modifiers_Array
+          (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
       Last    : Natural := 0;
       Mask    : Unsigned_128;
       Current : SemanticTokenModifiers;
@@ -385,8 +389,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Selected_Style_Priority : Natural := 0;
 
       procedure Check_Style_Priority
-        (Name      : String;
-         Modifiers : Modifiers_Array);
+        (Name : String; Modifiers : Modifiers_Array);
       --  Select one style from several possible based on the style
       --  priorities, for example aspect style should override others
 
@@ -395,8 +398,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       --------------------------
 
       procedure Check_Style_Priority
-        (Name      : String;
-         Modifiers : Modifiers_Array)
+        (Name : String; Modifiers : Modifiers_Array)
       is
          Current : Natural := 0;
       begin
@@ -404,9 +406,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             Current := Current + Modifiers_Priorities (M);
          end loop;
 
-         if Selected_Style = ""
-           or else Selected_Style_Priority < Current
-         then
+         if Selected_Style = "" or else Selected_Style_Priority < Current then
             Selected_Style_Priority := Current;
             Selected_Style := To_Unbounded_String (Name);
          end if;
@@ -468,11 +468,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             --  special case to force show deprecated modificator
             if M = deprecated then
                declare
-                  Style_Name : constant String := Type_Name &
-                    Get_Modifiers (Modifiers_Array'(1 => deprecated));
+                  Style_Name : constant String :=
+                    Type_Name
+                    & Get_Modifiers (Modifiers_Array'(1 => deprecated));
                begin
                   if Check (Style_Name) /= "" then
                      return Style_Name;  --  the style has been found
+
                   else
                      --  return "fallback" deprecated when no other style
                      --  has been found
@@ -484,8 +486,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
          for M of Modifiers loop
             declare
-               Style_Name : constant String := Type_Name &
-                 Get_Modifiers (Modifiers_Array'(1 => M));
+               Style_Name : constant String :=
+                 Type_Name & Get_Modifiers (Modifiers_Array'(1 => M));
             begin
                if Check (Style_Name) /= "" then
                   --  the style has been found, check priority
@@ -510,7 +512,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    procedure Clear_Indexes is
    begin
-      Module.Index     := 1;
+      Module.Index := 1;
       Module.Prev_Line := 1;
       Module.Prev_Char := 1;
    end Clear_Indexes;
@@ -519,7 +521,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited_Or_Reloaded;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -545,7 +548,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : On_Highlight_Range;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -571,7 +575,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Clear_Highlighting;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
@@ -590,21 +595,21 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ---------------------------
 
    function Get_Supported_Options
-     return Optional_SemanticTokensClientCapabilities
+      return Optional_SemanticTokensClientCapabilities
    is
 
       function Get_Supported_Token_Types
-        return LSP.Messages.SemanticTokenTypes_Vector;
+         return LSP.Messages.SemanticTokenTypes_Vector;
 
       function Get_Supported_Token_Modifiers
-        return LSP.Messages.SemanticTokenModifiers_Vector;
+         return LSP.Messages.SemanticTokenModifiers_Vector;
 
       -------------------------------
       -- Get_Supported_Token_Types --
       -------------------------------
 
       function Get_Supported_Token_Types
-        return LSP.Messages.SemanticTokenTypes_Vector
+         return LSP.Messages.SemanticTokenTypes_Vector
       is
          use LSP.Messages;
 
@@ -628,7 +633,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       -----------------------------------
 
       function Get_Supported_Token_Modifiers
-        return LSP.Messages.SemanticTokenModifiers_Vector
+         return LSP.Messages.SemanticTokenModifiers_Vector
       is
          use LSP.Messages;
 
@@ -655,15 +660,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
         (Is_Set => True,
          Value  =>
            (requests       =>
-                (span => (Is_Set => True, Value => True),
-                 full =>
-                   (Is_Set => True,
-                    Value  =>
-                      (diff => (Is_Set => False)))),
+              (span => (Is_Set => True, Value => True),
+               full => (Is_Set => True, Value => (diff => (Is_Set => False)))),
             tokenTypes     => Get_Supported_Token_Types,
             tokenModifiers => Get_Supported_Token_Modifiers,
             formats        => Formats,
-            others => <>));
+            others         => <>));
    end Get_Supported_Options;
 
    --------------------
@@ -673,8 +675,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String
    is
    begin
-      return Check_Style_Name
-        (LSP.Messages.SemanticTokenTypes'Image (T), Empty_Modifiers_Array);
+      return
+        Check_Style_Name
+          (LSP.Messages.SemanticTokenTypes'Image (T), Empty_Modifiers_Array);
    end Get_Style_Name;
 
    ---------------
@@ -684,13 +687,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Style
      (Token_Type      : LSP.Messages.uinteger;
       Token_Modifiers : LSP.Messages.uinteger;
-      Legend          : LSP.Messages.SemanticTokensLegend)
-      return String
+      Legend          : LSP.Messages.SemanticTokensLegend) return String
    is
       use Interfaces;
 
-      Modifiers : Modifiers_Array
-        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Modifiers :
+        Modifiers_Array
+          (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
       Last      : Natural := 0;
       UInt      : Unsigned_32 := Unsigned_32 (Token_Modifiers);
       Index     : Positive := 1;
@@ -721,14 +724,15 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             end;
          end if;
 
-         UInt  := Shift_Right (UInt, 1);
+         UInt := Shift_Right (UInt, 1);
          Index := Index + 1;
       end loop;
 
-      return Check_Style_Name
-        (VSS.Strings.Conversions.To_UTF_8_String
-           (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
-         Modifiers (1 .. Last));
+      return
+        Check_Style_Name
+          (VSS.Strings.Conversions.To_UTF_8_String
+             (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
+           Modifiers (1 .. Last));
    end Get_Style;
 
    -------------------------------
@@ -754,8 +758,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- On_Idle --
    -------------
 
-   function On_Idle return Boolean
-   is
+   function On_Idle return Boolean is
       use LSP.Types;
       use LSP.Messages;
       use Result_Vectors;
@@ -795,9 +798,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
       R := Module.Data.First_Element;
 
-      Server := GPS.LSP_Module.Get_Language_Server
-        (Module.Get_Kernel.Get_Language_Handler.
-           Get_Language_From_File (R.Request.File));
+      Server :=
+        GPS.LSP_Module.Get_Language_Server
+          (Module.Get_Kernel.Get_Language_Handler.Get_Language_From_File
+             (R.Request.File));
 
       if Server = null then
          Module.Data.Clear;
@@ -907,7 +911,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out SemanticTokens_Full_Request;
       Result : LSP.Messages.SemanticTokens)
    is
@@ -956,7 +961,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out SemanticTokens_Full_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -982,7 +988,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
       Result : LSP.Messages.SemanticTokens)
    is
@@ -995,8 +1002,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       -- Fill_Semantic_Tooltip --
       ---------------------------
 
-      procedure Fill_Semantic_Tooltip
-      is
+      procedure Fill_Semantic_Tooltip is
          use VSS.Strings;
 
          use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
@@ -1004,18 +1010,19 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          use type Interfaces.Unsigned_32;
          use type Gtk.Label.Gtk_Label;
 
-         Server          : GPS.LSP_Client.Language_Servers.
-           Language_Server_Access;
+         Server          :
+           GPS.LSP_Client.Language_Servers.Language_Server_Access;
          Legend          : SemanticTokensLegend;
-         Index, M_Index  : Integer  := 1;
+         Index, M_Index  : Integer := 1;
          Line, Prev_Line : Positive := 1;
          Char, Prev_Char : Basic_Types.Visible_Column_Type := 1;
          UInt            : Interfaces.Unsigned_32;
          Txt             : VSS.String_Vectors.Virtual_String_Vector;
       begin
-         Server := GPS.LSP_Module.Get_Language_Server
-           (Module.Get_Kernel.Get_Language_Handler.
-              Get_Language_From_File (Self.File));
+         Server :=
+           GPS.LSP_Module.Get_Language_Server
+             (Module.Get_Kernel.Get_Language_Handler.Get_Language_From_File
+                (Self.File));
 
          if Server = null then
             return;
@@ -1042,30 +1049,36 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
                   if Line = Prev_Line then
                      --  relative char position
-                     Char := Prev_Char + Visible_Column_Type
-                       (Result.data.Element (Index + 1));
+                     Char :=
+                       Prev_Char
+                       + Visible_Column_Type (Result.data.Element (Index + 1));
                   else
-                     Char := Visible_Column_Type
-                       (Result.data.Element (Index + 1) + 1);
+                     Char :=
+                       Visible_Column_Type
+                         (Result.data.Element (Index + 1) + 1);
                   end if;
 
                   --  Find the token for the tooltip's queried location
                   --  e.g. starts before the needed column and end after
                   if Char <= Self.Column
-                    and then Char + Visible_Column_Type
-                      (Result.data.Element (Index + 2) - 1) >= Self.Column
+                    and then
+                      Char
+                      + Visible_Column_Type
+                          (Result.data.Element (Index + 2) - 1)
+                      >= Self.Column
                   then
                      --  Found a token for the queried tooltip's location
 
                      --  Add Semantic type information
                      Txt.Append
                        (VSS.Strings.Conversions.To_Virtual_String
-                          ("Semantic type: ") &
-                          Legend.tokenTypes.Element
-                          (Natural (Result.data.Element (Index + 3)) + 1));
+                          ("Semantic type: ")
+                        & Legend.tokenTypes.Element
+                            (Natural (Result.data.Element (Index + 3)) + 1));
 
-                     UInt := Interfaces.Unsigned_32
-                       (Result.data.Element (Index + 4));
+                     UInt :=
+                       Interfaces.Unsigned_32
+                         (Result.data.Element (Index + 4));
 
                      --  Check if we have modifiers
                      if UInt /= 0 then
@@ -1078,8 +1091,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                               --  this modifier
                               Txt.Append
                                 (VSS.Strings.Conversions.To_Virtual_String
-                                   ("          ") &
-                                   Legend.tokenModifiers.Element (M_Index));
+                                   ("          ")
+                                 & Legend.tokenModifiers.Element (M_Index));
                            end if;
 
                            --  shift (discard) current bit to handle next one
@@ -1096,7 +1109,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
                Prev_Line := Line;
                Prev_Char := Char;
-               Index     := Index + 5;
+               Index := Index + 5;
             end loop;
          end;
 
@@ -1157,8 +1170,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          --  have the Vbox (i.e: tooltip was not destroyed)
 
          Gtk.Handlers.Disconnect
-           (Object => Self.Vbox,
-            Id     => Self.Vbox_Destroyed_Handler_ID);
+           (Object => Self.Vbox, Id => Self.Vbox_Destroyed_Handler_ID);
 
          Fill_Semantic_Tooltip;
       end if;
@@ -1168,7 +1180,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out SemanticTokens_Range_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
@@ -1178,32 +1191,33 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    begin
       if Self.Vbox /= null then
          Gtk.Handlers.Disconnect
-           (Object => Self.Vbox,
-            Id     => Self.Vbox_Destroyed_Handler_ID);
+           (Object => Self.Vbox, Id => Self.Vbox_Destroyed_Handler_ID);
       end if;
 
       Abstract_SemanticTokens_Range_Request'Class (Self).On_Error_Message
-        (Code    => Code,
-         Message => Message,
-         Data    => Data);
+        (Code => Code, Message => Message, Data => Data);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self : in out SemanticTokens_Range_Request; Reason : Reject_Reason) is
    begin
       if Self.Vbox /= null then
          Gtk.Handlers.Disconnect
-           (Object => Self.Vbox,
-            Id     => Self.Vbox_Destroyed_Handler_ID);
+           (Object => Self.Vbox, Id => Self.Vbox_Destroyed_Handler_ID);
       end if;
 
       GPS.LSP_Client.Requests.SemanticTokens_Range.On_Rejected
-        (Self   => GPS.LSP_Client.Requests.SemanticTokens_Range.
-           Abstract_SemanticTokens_Range_Request (Self),
+        (Self   =>
+           GPS
+             .LSP_Client
+             .Requests
+             .SemanticTokens_Range
+             .Abstract_SemanticTokens_Range_Request (Self),
          Reason => Reason);
    end On_Rejected;
 
@@ -1212,9 +1226,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ----------------------------------
 
    procedure Remove_Highlighting_On_Lines
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
-      From   : Integer;
-      To     : Integer)
+     (Buffer : GPS.Editors.Editor_Buffer'Class; From : Integer; To : Integer)
    is
       use type GPS.Kernel.Style_Manager.Style_Access;
 
@@ -1257,10 +1269,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Remove;
 
-      Style_Manager : constant GPS.Kernel.Style_Manager.Style_Manager_Access :=
-        GPS.Kernel.Style_Manager.Get_Style_Manager (Module.Get_Kernel);
-      Styles : constant GPS.Kernel.Style_Manager.Style_Vector.Vector :=
-        Style_Manager.List_Styles;
+      Style_Manager    :
+        constant GPS.Kernel.Style_Manager.Style_Manager_Access :=
+          GPS.Kernel.Style_Manager.Get_Style_Manager (Module.Get_Kernel);
+      Styles           :
+        constant GPS.Kernel.Style_Manager.Style_Vector.Vector :=
+          Style_Manager.List_Styles;
       Deprecated_Style : constant GPS.Kernel.Style_Manager.Style_Access :=
         Style_Manager.Get (LSP_Deprecated_Style_Name, True);
    begin
@@ -1275,8 +1289,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             if N /= "" then
                for Style of Styles loop
                   if GNATCOLL.Utils.Starts_With
-                    (Style.Get_Name,
-                     N & (if In_Clear (J) then "" else "-"))
+                       (Style.Get_Name, N & (if In_Clear (J) then "" else "-"))
                   then
                      Remove (Style.Get_Name);
                   end if;
@@ -1304,16 +1317,14 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
-         File   : Virtual_File)
-      return Boolean;
+         File   : Virtual_File) return Boolean;
       --  Send textDocument/semanticTokens/full request
 
       function Send_Range_Request
         (Kernel    : not null access Kernel_Handle_Record'Class;
          File      : Virtual_File;
          From_Line : Integer;
-         To_Line   : Integer)
-      return Boolean;
+         To_Line   : Integer) return Boolean;
       --  Send textDocument/semanticTokens/range request
 
       -----------------------
@@ -1322,19 +1333,21 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
-         File   : Virtual_File)
-         return Boolean is
+         File   : Virtual_File) return Boolean is
       begin
-         Request := new SemanticTokens_Full_Request'
-           (LSP_Request with
-              Kernel => Kernel_Handle (Kernel),
-            File     => File,
-            Version  => Version);
+         Request :=
+           new SemanticTokens_Full_Request'
+             (LSP_Request
+              with
+                Kernel  => Kernel_Handle (Kernel),
+                File    => File,
+                Version => Version);
 
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
-            return GPS.LSP_Client.Requests.Execute
-              (Kernel.Get_Language_Handler.Get_Language_From_File (File),
-               Request_Access (Request));
+            return
+              GPS.LSP_Client.Requests.Execute
+                (Kernel.Get_Language_Handler.Get_Language_From_File (File),
+                 Request_Access (Request));
          else
             --  Not supported, do not send
             return True;
@@ -1349,22 +1362,24 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
         (Kernel    : not null access Kernel_Handle_Record'Class;
          File      : Virtual_File;
          From_Line : Integer;
-         To_Line   : Integer)
-         return Boolean is
+         To_Line   : Integer) return Boolean is
       begin
-         Request := new SemanticTokens_Range_Request'
-           (LSP_Request with
-              Kernel => Kernel_Handle (Kernel),
-            File     => File,
-            From     => From_Line,
-            To       => To_Line,
-            Version  => Version,
-            others   => <>);
+         Request :=
+           new SemanticTokens_Range_Request'
+             (LSP_Request
+              with
+                Kernel  => Kernel_Handle (Kernel),
+                File    => File,
+                From    => From_Line,
+                To      => To_Line,
+                Version => Version,
+                others  => <>);
 
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
-            return GPS.LSP_Client.Requests.Execute
-              (Kernel.Get_Language_Handler.Get_Language_From_File (File),
-               Request_Access (Request));
+            return
+              GPS.LSP_Client.Requests.Execute
+                (Kernel.Get_Language_Handler.Get_Language_From_File (File),
+                 Request_Access (Request));
          else
             --  Not supported, do not send
             return True;
@@ -1374,9 +1389,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    begin
       Request := null;
       Is_Sent := False;
-      Server  := GPS.LSP_Module.Get_Language_Server
-        (Module.Get_Kernel.Get_Language_Handler.
-           Get_Language_From_File (Data.File));
+      Server :=
+        GPS.LSP_Module.Get_Language_Server
+          (Module.Get_Kernel.Get_Language_Handler.Get_Language_From_File
+             (Data.File));
 
       if Server = null then
          Is_Sent := True;
@@ -1391,7 +1407,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Is_Sent := True;
                return;
             else
-               Version    := Buffer.Version;
+               Version := Buffer.Version;
                Line_Count := Natural (Buffer.Lines_Count);
             end if;
          end;
@@ -1400,9 +1416,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             if Data.From = 0 then
                Is_Sent := Send_Full_Request (Kernel, Data.File);
             else
-               Is_Sent := Send_Range_Request
-                 (Kernel, Data.File, Data.From,
-                  Integer'Min (Data.To, Line_Count));
+               Is_Sent :=
+                 Send_Range_Request
+                   (Kernel,
+                    Data.File,
+                    Data.From,
+                    Integer'Min (Data.To, Line_Count));
             end if;
 
          else
@@ -1444,9 +1463,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             Request => Request,
             Is_Sent => Result);
 
-         if Result
-           and then Request /= null
-         then
+         if Result and then Request /= null then
             declare
                R : constant SemanticTokens_Range_Request_Access :=
                  SemanticTokens_Range_Request_Access (Request);
@@ -1501,9 +1518,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Kernel      => Kernel,
          Module_Name => "LSP_Semantic_Tokens");
 
-      File_Edited_Hook.Add        (new On_File_Edited_Or_Reloaded);
-      File_Reloaded_Hook.Add      (new On_File_Edited_Or_Reloaded);
-      Highlight_Range_Hook.Add    (new On_Highlight_Range);
+      File_Edited_Hook.Add (new On_File_Edited_Or_Reloaded);
+      File_Reloaded_Hook.Add (new On_File_Edited_Or_Reloaded);
+      Highlight_Range_Hook.Add (new On_Highlight_Range);
       Clear_Highlighting_Hook.Add (new On_Clear_Highlighting);
    end Register;
 

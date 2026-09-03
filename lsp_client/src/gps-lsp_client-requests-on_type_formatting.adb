@@ -25,7 +25,8 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    -- Method --
    ------------
 
-   overriding function Method
+   overriding
+   function Method
      (Self : Abstract_On_Type_Formatting_Request)
       return VSS.Strings.Virtual_String
    is
@@ -39,7 +40,8 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self   : in out Abstract_On_Type_Formatting_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
    is
@@ -47,8 +49,8 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
 
    begin
       LSP.Messages.TextEdit_Vector'Read (Stream, Response);
-      Abstract_On_Type_Formatting_Request'Class
-        (Self).On_Result_Message (Response);
+      Abstract_On_Type_Formatting_Request'Class (Self).On_Result_Message
+        (Response);
    end On_Result_Message;
 
    ------------
@@ -60,11 +62,11 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
       return LSP.Messages.DocumentOnTypeFormattingParams is
    begin
       return
-        (textDocument  =>
+        (textDocument =>
            (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         position      => Self.Position,
-         ch            => Self.Text,
-         options       =>
+         position     => Self.Position,
+         ch           => Self.Text,
+         options      =>
            GPS.LSP_Client.Utilities.Get_Formatting_Options
              (Self.Kernel, Self.Text_Document));
    end Params;
@@ -73,10 +75,10 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    -- Is_Request_Supported --
    --------------------------
 
-   overriding function Is_Request_Supported
+   overriding
+   function Is_Request_Supported
      (Self    : Abstract_On_Type_Formatting_Request;
-      Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      Options : LSP.Messages.ServerCapabilities) return Boolean is
    begin
       return Options.documentOnTypeFormattingProvider.Is_Set;
    end Is_Request_Supported;
@@ -85,7 +87,8 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    -- Params --
    ------------
 
-   overriding procedure Params
+   overriding
+   procedure Params
      (Self   : Abstract_On_Type_Formatting_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
    begin

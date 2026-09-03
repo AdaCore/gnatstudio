@@ -17,24 +17,24 @@
 
 with Ada.Characters.Handling;
 
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with GNATCOLL.Tribooleans;          use GNATCOLL.Tribooleans;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
-with GNATCOLL.Xref;                 use GNATCOLL.Xref;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with GNATCOLL.Xref;        use GNATCOLL.Xref;
 
 with VSS.Characters;
 
-with GPS.Editors;                   use GPS.Editors;
-with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
+with GPS.Editors;           use GPS.Editors;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.LSP_Module;
 with GPS.LSP_Client.Utilities;
 
-with Basic_Types;                   use Basic_Types;
-with Commands;                      use Commands;
-with Commands.Interactive;          use Commands.Interactive;
-with Language;                      use Language;
+with Basic_Types;          use Basic_Types;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
+with Language;             use Language;
 with Xref;
 
 with GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
@@ -42,40 +42,41 @@ use GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;
 
 package body GPS.LSP_Client.Refactoring.Name_Parameters is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.REFACTORING.LSP_NAME_PARAMETERS");
+   Me : constant Trace_Handle :=
+     Create ("GPS.REFACTORING.LSP_NAME_PARAMETERS");
 
    type Name_Parameters_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Name_Parameters_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Name parameters" menu
 
-   type Filter_Name_Parameters is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Name_Parameters;
-      Context : Selection_Context)
+   type Filter_Name_Parameters is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Filter_Name_Parameters; Context : Selection_Context)
       return Boolean;
 
    Is_LSP_Enabled : Triboolean := Indeterminate;
    --  Used by Filter_Name_Parameters to store setting
 
    type Named_Parameters_Command is
-     new Abstract_Named_Parameters_Command_Request with null record;
-   type Named_Parameters_Command_Access is
-     access all Named_Parameters_Command;
+     new Abstract_Named_Parameters_Command_Request
+   with null record;
+   type Named_Parameters_Command_Access is access all Named_Parameters_Command;
    --  Used for communicate with LSP
 
    overriding
-   procedure On_Result_Message
-     (Self : in out Named_Parameters_Command) is null;
+   procedure On_Result_Message (Self : in out Named_Parameters_Command)
+   is null;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Name_Parameters_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -83,30 +84,28 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
 
       use type VSS.Characters.Virtual_Character;
 
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File     : constant GNATCOLL.VFS.Virtual_File :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File   : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
-      Buf      : constant Editor_Buffer'Class :=
+      Buf    : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Lang     : constant Language.Language_Access :=
+      Lang   : constant Language.Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File
           (File_Information (Context.Context));
 
-      Line     : Integer :=
-        Integer (Entity_Line_Information (Context.Context));
+      Line : Integer := Integer (Entity_Line_Information (Context.Context));
 
-      Column   : Basic_Types.Visible_Column_Type :=
+      Column : Basic_Types.Visible_Column_Type :=
         Entity_Column_Information (Context.Context);
 
-      Loc      : Editor_Location'Class := Buf.New_Location
-        (Line, Column);
-      EoB      : constant Editor_Location'Class := Buf.End_Of_Buffer;
+      Loc : Editor_Location'Class := Buf.New_Location (Line, Column);
+      EoB : constant Editor_Location'Class := Buf.End_Of_Buffer;
 
       Char     : VSS.Characters.Virtual_Character'Base;
       Is_Param : Boolean := False;
 
    begin
-      Line   := 0;
+      Line := 0;
       Column := 0;
 
       --  Find the position of the first parameter
@@ -119,10 +118,9 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
          elsif Char = '(' then
             Is_Param := True;
 
-         elsif Is_Param
-           and then Lang.Is_Word_Char (Wide_Wide_Character (Char))
+         elsif Is_Param and then Lang.Is_Word_Char (Wide_Wide_Character (Char))
          then
-            Line   := Loc.Line;
+            Line := Loc.Line;
             Column := Loc.Column;
             exit;
          end if;
@@ -130,28 +128,28 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
          Loc := Loc.Forward_Char (1);
       end loop;
 
-      if Line = 0
-        or else Column = 0
-      then
+      if Line = 0 or else Column = 0 then
          return Success;
       end if;
 
       declare
-         Location : constant Editor_Location'Class := Buf.New_Location
-           (Line, Column);
+         Location : constant Editor_Location'Class :=
+           Buf.New_Location (Line, Column);
 
          Command : Named_Parameters_Command_Access :=
            new Named_Parameters_Command'
-             (GPS.LSP_Client.Requests.LSP_Request with
+             (GPS.LSP_Client.Requests.LSP_Request
+              with
                 Kernel   => Kernel,
                 Project  => Kernel.Get_Project_Tree.Root_Project,
                 File     => File,
-                Position => GPS.LSP_Client.Utilities.
-                  Location_To_LSP_Position (Location));
+                Position =>
+                  GPS.LSP_Client.Utilities.Location_To_LSP_Position
+                    (Location));
 
       begin
          if GPS.LSP_Client.Requests.Execute
-           (Lang, GPS.LSP_Client.Requests.Request_Access (Command))
+              (Lang, GPS.LSP_Client.Requests.Request_Access (Command))
          then
             return Success;
          else
@@ -169,9 +167,9 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter : access Filter_Name_Parameters;
-      Context : Selection_Context)
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Filter_Name_Parameters; Context : Selection_Context)
       return Boolean is
    begin
       if Is_LSP_Enabled = To_TriBoolean (False) then
@@ -190,8 +188,8 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
          end if;
 
          if Is_LSP_Enabled = Indeterminate then
-            Is_LSP_Enabled := To_TriBoolean
-              (GPS.LSP_Module.LSP_Is_Enabled (Lang));
+            Is_LSP_Enabled :=
+              To_TriBoolean (GPS.LSP_Module.LSP_Is_Enabled (Lang));
          end if;
       end;
 
@@ -227,17 +225,17 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
    --------------
 
    procedure Register
-     (Kernel : Kernel_Handle;
-      Id     : GPS.Kernel.Modules.Module_ID)
+     (Kernel : Kernel_Handle; Id : GPS.Kernel.Modules.Module_ID)
    is
       pragma Unreferenced (Id);
 
-      Name_Parameters_Filter  : constant Action_Filter :=
+      Name_Parameters_Filter : constant Action_Filter :=
         new Filter_Name_Parameters;
 
    begin
       Register_Action
-        (Kernel, "refactoring name parameters",
+        (Kernel,
+         "refactoring name parameters",
          Command      => new Name_Parameters_Command,
          Description  => "Name parameters in a call",
          Category     => "Refactoring",

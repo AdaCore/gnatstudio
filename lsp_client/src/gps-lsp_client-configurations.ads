@@ -29,16 +29,17 @@ package GPS.LSP_Client.Configurations is
    type Server_Configuration
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is tagged limited record
-      Server_Program    : Virtual_File;
+      Server_Program : Virtual_File;
       --  The executable to launch for this server
 
-      Server_Arguments  : Spawn.String_Vectors.UTF_8_String_Vector;
+      Server_Arguments : Spawn.String_Vectors.UTF_8_String_Vector;
    end record;
 
    type Server_Configuration_Access is access all Server_Configuration'Class;
 
    procedure Prepare_Configuration_Settings
-     (Self : in out Server_Configuration) is null;
+     (Self : in out Server_Configuration)
+   is null;
    --  Prepare configuration settings.
 
    function Configuration_Settings
@@ -55,18 +56,17 @@ package GPS.LSP_Client.Configurations is
 
    type Setting_Kind is
      (
-      --  Refactoring  --
-      --  Refactoring/Renaming  --
-      Rename_In_Comments,
+     --  Refactoring  --
+     --  Refactoring/Renaming  --
+     Rename_In_Comments,
 
       -- Folding --
       Fold_Comments);
 
    type Configuration_Value_Type is (None_Type, Boolean_Type);
 
-   type Configuration_Value
-     (Kind : Configuration_Value_Type := None_Type)
-   is record
+   type Configuration_Value (Kind : Configuration_Value_Type := None_Type) is
+   record
       case Kind is
          when Boolean_Type =>
             vBoolean : Boolean;
@@ -77,9 +77,7 @@ package GPS.LSP_Client.Configurations is
    end record;
 
    function Is_Configuration_Supported
-     (Self    : Server_Configuration;
-      Setting : Setting_Kind)
-      return Boolean;
+     (Self : Server_Configuration; Setting : Setting_Kind) return Boolean;
    --  Return True if server supports the setting.
 
    function Set_Configuration_Option

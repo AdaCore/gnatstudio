@@ -21,7 +21,8 @@ package body GPS.LSP_Client.Requests.Base is
    -- Text_Document --
    -------------------
 
-   overriding function Text_Document
+   overriding
+   function Text_Document
      (Self : Text_Document_Request) return GNATCOLL.VFS.Virtual_File is
    begin
       return Self.File;
