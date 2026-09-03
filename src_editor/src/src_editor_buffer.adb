@@ -40,6 +40,7 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
+with VSS.Unicode;
 
 with Gdk.Keyval;
 with Gdk.RGBA;                            use Gdk.RGBA;
@@ -212,6 +213,7 @@ package body Src_Editor_Buffer is
    --------------------------
 
    generic
+      type Item_Offset_Type is range <>;
       with function Line_Length (Iter : Gtk_Text_Iter) return Gint;
       with procedure Set_Pos (Iter : in out Gtk_Text_Iter; Pos : Gint);
    procedure Generic_Valid_Position
@@ -219,7 +221,7 @@ package body Src_Editor_Buffer is
       Iter   : out Gtk_Text_Iter;
       Found  : out Boolean;
       Line   : Gint;
-      Column : Gint := 0);
+      Column : Item_Offset_Type := 0);
    --  Generic version of Is_Valid_Position
 
    procedure Changed_Handler
@@ -2983,7 +2985,7 @@ package body Src_Editor_Buffer is
       Iter   : out Gtk_Text_Iter;
       Found  : out Boolean;
       Line   : Gint;
-      Column : Gint := 0) is
+      Column : Item_Offset_Type := 0) is
    begin
       --  First check that Line does not exceed the number of lines
       --  in the buffer.
@@ -2999,8 +3001,8 @@ package body Src_Editor_Buffer is
 
       if Column = 0 then
          Found := True;
-      elsif Line_Length (Iter) >= Column then
-         Set_Pos (Iter, Column);
+      elsif Item_Offset_Type (Line_Length (Iter)) >= Column then
+         Set_Pos (Iter, Gint (Column));
          Found := True;
       else
          Found := False;
@@ -3012,7 +3014,8 @@ package body Src_Editor_Buffer is
    ------------------
 
    procedure Is_Valid_Pos is new
-     Generic_Valid_Position (Get_Chars_In_Line, Set_Line_Offset);
+     Generic_Valid_Position
+       (VSS.Strings.Character_Count, Get_Chars_In_Line, Set_Line_Offset);
    --  Column should be given in characters, not in bytes
 
    -----------------------
@@ -3027,7 +3030,12 @@ package body Src_Editor_Buffer is
       Iter  : Gtk_Text_Iter;
       Found : Boolean;
    begin
-      Is_Valid_Pos (Source_Buffer (Buffer), Iter, Found, Line, Column);
+      Is_Valid_Pos
+        (Source_Buffer (Buffer),
+         Iter,
+         Found,
+         Line,
+         VSS.Strings.Character_Offset (Column));
       return Found;
    end Is_Valid_Position;
 
@@ -8072,11 +8080,12 @@ package body Src_Editor_Buffer is
          Amount := -Length;
       end if;
 
-      Is_Valid_Pos (Buffer => Source_Buffer (Buffer),
-                    Iter   => Iter,
-                    Found  => Found,
-                    Line   => Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
-                    Column => Gint (Start_Column - 1));
+      Is_Valid_Pos
+        (Buffer => Source_Buffer (Buffer),
+         Iter   => Iter,
+         Found  => Found,
+         Line   => Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
+         Column => VSS.Strings.Character_Count (Start_Column - 1));
 
       if not Found then
          return;
@@ -9171,7 +9180,10 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
       procedure Is_Valid_Index is new
-        Generic_Valid_Position (Get_Bytes_In_Line, Set_Line_Index);
+        Generic_Valid_Position
+          (VSS.Unicode.UTF8_Code_Unit_Count,
+           Get_Bytes_In_Line,
+           Set_Line_Index);
       --  Column should be given in bytes, not characters
 
       function Highlight_Cb
@@ -9263,7 +9275,12 @@ package body Src_Editor_Buffer is
          end if;
 
          Line := Gint (Buffer_Line - 1);
-         Is_Valid_Index (Self.Buffer, Entity_Start, Success, Line, Col);
+         Is_Valid_Index
+           (Self.Buffer,
+            Entity_Start,
+            Success,
+            Line,
+            VSS.Unicode.UTF8_Code_Unit_Count (Col));
 
          if not Success then
             Trace (Me, "invalid position");
@@ -9297,7 +9314,12 @@ package body Src_Editor_Buffer is
                   Col := Col - Gint (Sloc_End.Index - Start);
                end if;
 
-               Is_Valid_Index (Self.Buffer, Entity_End, Success, Line, Col);
+               Is_Valid_Index
+                 (Self.Buffer,
+                  Entity_End,
+                  Success,
+                  Line,
+                  VSS.Unicode.UTF8_Code_Unit_Count (Col));
 
                if not Success then
                   Trace (Me, "invalid position """
