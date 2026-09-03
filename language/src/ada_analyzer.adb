@@ -4511,17 +4511,41 @@ package body Ada_Analyzer is
                   then
                      Set_Prev_Token (Tok_Apostrophe);
                   else
-                     if P = End_Of_Line - 1 then
-                        P := P + 1;
-                     else
-                        P := P + 2;
-                     end if;
+                     declare
+                        Nxt : Natural;
 
-                     while P < End_Of_Line
-                       and then Buffer (P) /= '''
-                     loop
-                        P := Next_Char (P);
-                     end loop;
+                     begin
+                        --  Step over the apostrophe and the character it
+                        --  quotes -- two steps, so that the apostrophe of
+                        --  ''' is not taken for the closing one -- then look
+                        --  for the closing apostrophe.
+                        --
+                        --  Every step advances by a whole character and
+                        --  stops on the last character of the line. The
+                        --  quoted character may be multi-byte, in which case
+                        --  plain byte arithmetic landed in the middle of it
+                        --  and the scan then ran past the end of the line:
+                        --  the enclosing loop stepped over the line
+                        --  terminator without counting the line, and every
+                        --  entity reported afterwards carried a stale line
+                        --  number.
+
+                        for Skip in 1 .. 2 loop
+                           Nxt := Next_Char (P);
+                           exit when Nxt > End_Of_Line;
+
+                           P := Nxt;
+                        end loop;
+
+                        loop
+                           exit when Buffer (P) = ''';
+
+                           Nxt := Next_Char (P);
+                           exit when Nxt > End_Of_Line;
+
+                           P := Nxt;
+                        end loop;
+                     end;
 
                      Set_Prev_Token (Tok_Char_Literal);
 
