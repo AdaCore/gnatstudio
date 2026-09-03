@@ -16,21 +16,18 @@
 ------------------------------------------------------------------------------
 
 with Ada.Tags;
-
 with GNAT.Strings;            use GNAT.Strings;
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with VSS.Characters;
 
 with Glib.Object;             use Glib.Object;
 
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Messages;     use GPS.Kernel.Messages;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
@@ -197,24 +194,42 @@ package body Src_Editor_Buffer.Debug is
    function Dump_Text_For_Tag
      (Buffer : Source_Buffer; Tag : Gtk_Text_Tag) return String
    is
-      Iter : Gtk_Text_Iter;
-      R    : Unbounded_String;
-      C    : Character;
+      Iter    : Gtk_Text_Iter;
+      R       : Unbounded_String;
+      C       : VSS.Characters.Virtual_Character;
       Success : Boolean;
    begin
       Get_Start_Iter (Buffer, Iter);
 
       while not Is_End (Iter) loop
-         C := Get_Char (Iter);
+         C := VSS.Characters.Virtual_Character'Val (Get_Char (Iter));
 
-         if Is_Graphic (C) then
+         if VSS.Characters.Is_Graphic (C) then
+            --  Any graphics character, including a multi-byte one, contributes
+            --  exactly one marker.
+
             if Has_Tag (Iter, Tag) then
                Append (R, '#');
             else
                Append (R, '.');
             end if;
+
+         elsif VSS.Characters.Is_Control (C) then
+            --  An ASCII control character, the line terminators and the
+            --  horizontal tabulations in particular: echo it as it is, so
+            --  that the dump keeps the shape of the buffer.
+            --
+            --  As of Unicode 17, all control characters are inside `Character`
+            --  range.
+
+            Append
+              (R,
+               Character'Val (VSS.Characters.Virtual_Character'Pos (C)));
+
          else
-            Append (R, C);
+            --  Mark other cases, which should not happened.
+
+            Append (R, '?');
          end if;
 
          Forward_Char (Iter, Success);
