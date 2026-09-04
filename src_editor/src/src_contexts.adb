@@ -249,6 +249,22 @@ package body Src_Contexts is
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
 
+   function Match_Start
+     (Match : GPS.Search.Search_Context) return Editor_Coordinates
+   is ((Editable_Line_Type (Match.Start.Line),
+        Character_Index (Match.Start.Column)));
+   --  Position of the first character of Match
+
+   function Match_End
+     (Match : GPS.Search.Search_Context) return Editor_Coordinates
+   is (if Is_Empty_Match (Match)
+       then Match_Start (Match)
+       else (Editable_Line_Type (Match.Finish.Line),
+             Character_Index (Match.Finish.Column + 1)));
+   --  Position just after the last character of Match. Select_Region and the
+   --  cursor location subprograms are given an exclusive end, and an empty
+   --  match has no end of its own: it reports its start.
+
    function Auxiliary_Search
      (Context              : access Current_File_Context'Class;
       Editor               : Source_Editor_Box;
@@ -1655,12 +1671,8 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line),
-               Character_Index (Match.Start.Column)),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line),
-               Character_Index (Match.Finish.Column)));
+            Match_From   => Match_Start (Match),
+            Match_Up_To  => Match_End (Match));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2184,18 +2196,10 @@ package body Src_Contexts is
          End_Column       => End_Column);
 
       Found := Context.Current /= GPS.Search.No_Match;
-      if Found then
-         Match_From :=
-           (Line => Editable_Line_Type (Context.Current.Start.Line),
-            Col  => Character_Index (Context.Current.Start.Column));
 
-         if Is_Empty_Match (Context.Current) then
-            Match_Up_To := Match_From;
-         else
-            Match_Up_To :=
-              (Line => Editable_Line_Type (Context.Current.Finish.Line),
-               Col => Character_Index (Context.Current.Finish.Column + 1));
-         end if;
+      if Found then
+         Match_From  := Match_Start (Context.Current);
+         Match_Up_To := Match_End (Context.Current);
       end if;
    end Search_In_Editor;
 
@@ -2349,12 +2353,8 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line),
-               Character_Index (Match.Start.Column)),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line),
-               Character_Index (Match.Finish.Column)));
+            Match_From   => Match_Start (Match),
+            Match_Up_To  => Match_End (Match));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -3143,12 +3143,8 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Find_Editor (Kernel, File, No_Project),
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line),
-               Character_Index (Match.Start.Column)),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line),
-               Character_Index (Match.Finish.Column)));
+            Match_From   => Match_Start (Match),
+            Match_Up_To  => Match_End (Match));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
