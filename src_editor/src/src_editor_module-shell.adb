@@ -1090,18 +1090,28 @@ package body Src_Editor_Module.Shell is
             Child  : constant MDI_Child :=
               Find_Editor (Kernel, Create (File, Kernel), No_Project);
 
-            Real_Col : Character_Index;
+            Real_Col : Optional_Character_Index;
          begin
-            Real_Col := Collapse_Tabs
-              (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
-               Editable_Line_Type (Line),
-               Visible_Column_Type (Column));
+            --  A Column of 0 means that the shell was given no column;
+            --  decide that here rather than relying on how Collapse_Tabs
+            --  answers for an out of range visible column.
+
+            Real_Col :=
+              (if Column = 0
+               then No_Index
+               else As_Optional
+                      (Collapse_Tabs
+                         (Get_Buffer
+                            (Source_Editor_Box (Get_Widget (Child))),
+                          Editable_Line_Type (Line),
+                          Visible_Column_Type (Column))));
+
             Set_Return_Value
               (Data,
                Get_Chars
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Editable_Line_Type (Line),
-                  As_Optional (Real_Col),
+                  Real_Col,
                   Before, After));
          end;
 
@@ -1117,20 +1127,26 @@ package body Src_Editor_Module.Shell is
               (Kernel, Create (File, Kernel), No_Project, Create_New => False,
                Line => 0, Column => 0, Column_End => 0);
 
-            Real_Col : Character_Index;
+            Real_Col : Optional_Character_Index;
          begin
             if Editor /= null then
                if Get_Writable (Get_Buffer (Editor)) then
-                  Real_Col := Collapse_Tabs
-                    (Get_Buffer (Editor),
-                     Editable_Line_Type (Line),
-                     Visible_Column_Type (Column));
+                  --  A Column of 0 means that the shell was given no column
+
+                  Real_Col :=
+                    (if Column = 0
+                     then No_Index
+                     else As_Optional
+                            (Collapse_Tabs
+                               (Get_Buffer (Editor),
+                                Editable_Line_Type (Line),
+                                Visible_Column_Type (Column))));
 
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Text,
                      Editable_Line_Type (Line),
-                     As_Optional (Real_Col),
+                     Real_Col,
                      Before, After);
                else
                   Set_Error_Msg
