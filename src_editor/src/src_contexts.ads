@@ -138,7 +138,7 @@ package Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Search for Context in an editor. The search starts at the given
    --  location and only applies to that buffer.

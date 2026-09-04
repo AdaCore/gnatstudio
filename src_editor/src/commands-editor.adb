@@ -167,7 +167,7 @@ package body Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : Basic_Types.UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Character_Offset_Type := 0) is
+      Start_Column : Optional_Character_Index := No_Index) is
    begin
       if Item.Edition_Mode = Insertion then
          Item.Current_Text := Item.Current_Text & To_Unbounded_String (UTF8);
@@ -189,8 +189,8 @@ package body Commands.Editor is
             Item.Locs.Start_Loc.Line := Start_Line;
          end if;
 
-         if Start_Column /= 0 then
-            Item.Locs.Start_Loc.Col := Character_Index (Start_Column);
+         if Start_Column.Has_Index then
+            Item.Locs.Start_Loc.Col := Start_Column.Index;
          end if;
       end if;
    end Add_Text;
@@ -549,7 +549,7 @@ package body Commands.Editor is
            Start_Line,
            Start_Column,
            End_Line,
-           Character_Offset_Type (End_Column));
+           As_Optional (End_Column));
       Item.Text_After := To_Unbounded_String (Text);
       Item.Move_Cursor := Move_Cursor;
    end Create;

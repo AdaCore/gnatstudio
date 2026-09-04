@@ -161,10 +161,10 @@ package Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Character_Offset_Type := 0);
+      Start_Column : Optional_Character_Index := No_Index);
    --  Add some text (in UTF-8 format) to the current action.
-   --  If values other than -1 are specified, they override the
-   --  current values in Item.
+   --  A Start_Line of 0, and a Start_Column with no index, leave the
+   --  corresponding value in Item unchanged.
 
    function Get_Text (Item : Editor_Command) return UTF8_String;
    --  Return the text (in UTF-8 format) associated with Item

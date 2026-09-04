@@ -376,8 +376,8 @@ package body Src_Editor_Box is
                  Line,
                  Char_Column,
                  Line,
-                 Character_Offset_Type (Char_Column)
-                   + Character_Offset_Type (Length))),
+                 As_Optional
+                   (Char_Column + Character_Index'Base (Length)))),
               Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 

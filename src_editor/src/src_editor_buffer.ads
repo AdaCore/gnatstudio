@@ -481,7 +481,7 @@ package Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Index := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access;
@@ -490,7 +490,7 @@ package Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return VSS.Strings.Virtual_String;
@@ -499,7 +499,7 @@ package Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Unbounded_String;
@@ -507,8 +507,7 @@ package Src_Editor_Buffer is
    --  If Include_Last, return [start, end] else [start, end).
    --  If End_Line is 0, get the entire range between start position and end
    --  of text.
-   --  If End_Column is 0, then return all the characters in End_Line, which
-   --  is why it is an offset and not a Character_Index.
+   --  When End_Column has no index, return all the characters in End_Line.
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
@@ -1181,13 +1180,12 @@ package Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       End_Line             : Editable_Line_Type;
       Start_Column         : Character_Index := 1;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access;
    --  Return the text from Start_Line to End_Line, included.
-   --  An End_Column of 0 means the whole of End_Line, which is why it is an
-   --  offset and not a Character_Index.
+   --  When End_Column has no index, the whole of End_Line is returned.
 
    function Get_Byte_Index
      (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Natural;
@@ -1267,13 +1265,12 @@ package Src_Editor_Buffer is
      (Buffer               : Source_Buffer;
       Line                 : Editable_Line_Type;
       Start_Column         : Character_Index := 1;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Src_String;
    --  Return the string at line Line, without the line terminator.
-   --  An End_Column of 0 means the whole line, which is why it is an offset
-   --  and not a Character_Index.
+   --  When End_Column has no index, the whole line is returned.
    --  Return null if the Line is not a valid line or there is no contents
    --  associated with the line.
    --  The caller is responsible for freeing the returned value..

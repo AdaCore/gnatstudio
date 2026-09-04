@@ -38,7 +38,7 @@ package body Src_Editor_Buffer.Text_Handling is
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Character_Offset_Type;
+      Col          : Optional_Character_Index;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
@@ -55,7 +55,7 @@ package body Src_Editor_Buffer.Text_Handling is
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Character_Offset_Type;
+      Col          : Optional_Character_Index;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
@@ -68,13 +68,13 @@ package body Src_Editor_Buffer.Text_Handling is
       Result : Boolean := True;
 
       Start_Col : constant Character_Index :=
-        (if Col = 0 then 1 else Character_Index (Col));
-      --  A Col of 0 means that no column is known: start of the line.
+        (if Col.Has_Index then Col.Index else 1);
+      --  When no column is known, the start of the line is used.
 
       Valid_Location : constant Boolean :=
-        (if Col = 0
-         then Is_Valid_Line (Buffer, Line)
-         else Is_Valid_Position (Buffer, Line, Start_Col));
+        (if Col.Has_Index
+         then Is_Valid_Position (Buffer, Line, Start_Col)
+         else Is_Valid_Line (Buffer, Line));
 
    begin
       if not Valid_Location then
@@ -199,7 +199,7 @@ package body Src_Editor_Buffer.Text_Handling is
    function Get_Chars
      (Buffer               : access Source_Buffer_Record'Class;
       Line                 : Editable_Line_Type := 0;
-      Column               : Character_Offset_Type := 0;
+      Column               : Optional_Character_Index := No_Index;
       Before               : Integer := -1;
       After                : Integer := -1;
       Include_Hidden_Chars : Boolean := True) return Basic_Types.UTF8_String
@@ -245,7 +245,7 @@ package body Src_Editor_Buffer.Text_Handling is
                Line_Begin,
                Column_Begin,
                Line_End,
-               Character_Offset_Type (Column_End),
+               As_Optional (Column_End),
                Include_Hidden_Chars));
       end if;
    end Get_Chars;
@@ -258,7 +258,7 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Text   : String;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 0;
+      Column : Optional_Character_Index := No_Index;
       Before : Integer := -1;
       After  : Integer := -1)
    is
@@ -405,15 +405,14 @@ package body Src_Editor_Buffer.Text_Handling is
             if Get_Text
               (Buffer, Line, First,
                Line,
-               Character_Offset_Type (First)
-                 + Character_Offset_Type (Length)) /= Replace
+               As_Optional (First + Character_Index'Base (Length)))
+              /= Replace
             then
                declare
                   G : Group_Block := Current_Group (Buffer.Queue);
                begin
                   Replace_Slice
-                    (Buffer, Replace, Line,
-                     Character_Offset_Type (First),
+                    (Buffer, Replace, Line, As_Optional (First),
                      Before => 0, After => Length);
                   Text_Replaced := True;
                end;

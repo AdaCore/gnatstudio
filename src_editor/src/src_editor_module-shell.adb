@@ -1095,7 +1095,7 @@ package body Src_Editor_Module.Shell is
                Get_Chars
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Editable_Line_Type (Line),
-                  Character_Offset_Type (Real_Col),
+                  As_Optional (Real_Col),
                   Before, After));
          end;
 
@@ -1124,7 +1124,7 @@ package body Src_Editor_Module.Shell is
                     (Get_Buffer (Editor),
                      Text,
                      Editable_Line_Type (Line),
-                     Character_Offset_Type (Real_Col),
+                     As_Optional (Real_Col),
                      Before, After);
                else
                   Set_Error_Msg

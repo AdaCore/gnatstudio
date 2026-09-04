@@ -570,7 +570,7 @@ package body Src_Editor_View.Commands is
          Text : constant String (1 .. Num) := (others => ' ');
       begin
          Replace_Slice
-           (Buffer, Text, Line, Character_Offset_Type (Column),
+           (Buffer, Text, Line, As_Optional (Column),
             Before => 0, After => 0);
       end;
 
@@ -689,7 +689,7 @@ package body Src_Editor_View.Commands is
 
          --  Insert the string prepared text
          Replace_Slice
-           (Buffer, Text, Line, Character_Offset_Type (Column),
+           (Buffer, Text, Line, As_Optional (Column),
             Before => 0, After => 0);
       end;
 
@@ -747,7 +747,7 @@ package body Src_Editor_View.Commands is
 
       if Buffer.Is_In_String (Iter) then
          Replace_Slice
-           (Buffer, """ &  & """, Line, Character_Offset_Type (Column),
+           (Buffer, """ &  & """, Line, As_Optional (Column),
             Before => 0, After => 0);
 
          --  Set cursor inside the inserted text
@@ -808,7 +808,7 @@ package body Src_Editor_View.Commands is
             Txt : constant String := """ & " & List (List'First).all & " & """;
          begin
             Replace_Slice
-              (Buffer, Txt, Line, Character_Offset_Type (Column),
+              (Buffer, Txt, Line, As_Optional (Column),
                Before => 0, After => 0);
 
             --  Set cursor after the inserted text

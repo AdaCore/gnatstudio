@@ -2553,7 +2553,7 @@ package body Src_Editor_Module.Editors is
                Start_Line           => Begin_Line,
                Start_Column         => Begin_Col,
                End_Line             => End_Line,
-               End_Column           => Character_Offset_Type (End_Col),
+               End_Column           => As_Optional (End_Col),
                Include_Hidden_Chars => Include_Hidden_Chars));
       else
          return Null_Unbounded_String;
@@ -2591,7 +2591,7 @@ package body Src_Editor_Module.Editors is
               Start_Line           => Begin_Line,
               Start_Column         => Begin_Col,
               End_Line             => End_Line,
-              End_Column           => Character_Offset_Type (End_Col),
+              End_Column           => As_Optional (End_Col),
               Include_Hidden_Chars => Include_Hidden_Chars);
 
       else
@@ -2633,7 +2633,7 @@ package body Src_Editor_Module.Editors is
            Start_Line   => Begin_Line,
            Start_Column => Begin_Col,
            End_Line     => End_Line,
-           End_Column   => Character_Offset_Type (End_Col)));
+           End_Column   => As_Optional (End_Col)));
    end Get_Entity_Name;
 
    ------------

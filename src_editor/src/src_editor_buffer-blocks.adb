@@ -170,7 +170,7 @@ package body Src_Editor_Buffer.Blocks is
 
       function Match (First, Last : Editable_Line_Type) return Boolean is
          Text : constant String := To_String
-           (Buffer.Get_Text (First, 1, Last, 0));
+           (Buffer.Get_Text (First, 1, Last, No_Index));
       begin
          return (Fold_Comment_Reg1.Get_Pref /= ""
              and then GNAT.Regpat.Match (Fold_Comment_Reg1.Get_Pref, Text))

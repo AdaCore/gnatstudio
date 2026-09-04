@@ -116,13 +116,33 @@ package Basic_Types is
 
    subtype Character_Index is VSS.Strings.Character_Index;
    --  Character_Index indicates the index of a character in the line. The
-   --  first character of the line has index 1. Use it for a position that
-   --  is always known; when a position can be absent, or when a distance
-   --  between two positions is meant, use Character_Offset_Type below.
+   --  first character of the line has index 1. Use it for a position that is
+   --  always known; use Optional_Character_Index below when a position can be
+   --  absent, and Character_Offset_Type when a distance between two positions
+   --  is meant.
    --
    --  Arithmetic on an index yields VSS.Strings.Character_Offset, which is
    --  signed; storing the result back into a Character_Index checks that it
    --  still designates a character.
+
+   type Optional_Character_Index (Has_Index : Boolean := False) is record
+      case Has_Index is
+         when False =>
+            null;
+
+         when True =>
+            Index : Character_Index;
+      end case;
+   end record;
+   --  A character index in the line, or the absence of one. Use it where a
+   --  position may be unknown, instead of encoding that as an out of range
+   --  index; what the absence of an index means is up to each subprogram.
+
+   No_Index : constant Optional_Character_Index := (Has_Index => False);
+
+   function As_Optional
+     (Index : Character_Index) return Optional_Character_Index
+   is (Has_Index => True, Index => Index);
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

@@ -36,14 +36,14 @@ package Src_Editor_Buffer.Text_Handling is
    function Get_Chars
      (Buffer               : access Source_Buffer_Record'Class;
       Line                 : Editable_Line_Type := 0;
-      Column               : Character_Offset_Type := 0;
+      Column               : Optional_Character_Index := No_Index;
       Before               : Integer := -1;
       After                : Integer := -1;
       Include_Hidden_Chars : Boolean := True) return Basic_Types.UTF8_String;
    --  Return the characters around given position.
    --  If Line is 0, then the contents of the current selection is returned.
-   --  A Column of 0 means that no column is given, which is why it is an
-   --  offset and not a Character_Index.
+   --  When Column has no index, the position is taken to be the start of the
+   --  line.
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record'Class;
@@ -58,12 +58,12 @@ package Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Text   : String;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 0;
+      Column : Optional_Character_Index := No_Index;
       Before : Integer := -1;
       After  : Integer := -1);
    --  Replace the characters around given position.
-   --  A Column of 0 means that no column is given, which is why it is an
-   --  offset and not a Character_Index.
+   --  When Column has no index, the position is taken to be the start of the
+   --  line.
 
    procedure Autocase_Text
      (Buffer    : access Source_Buffer_Record'Class;

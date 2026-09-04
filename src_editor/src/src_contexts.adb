@@ -183,7 +183,7 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
@@ -258,7 +258,7 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0)
+      End_Column           : Optional_Character_Index := No_Index)
       return Source_Search_Occurrence;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success.
@@ -878,7 +878,7 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Continue_Till_End : Boolean := False;
@@ -1702,7 +1702,7 @@ package body Src_Contexts is
                Begin_Line,
                Character_Offset_Type (Begin_Column),
                End_Line,
-               Character_Offset_Type (End_Column));
+               As_Optional (End_Column));
             Found := Occurrence /= null;
 
             if not Found then
@@ -1788,7 +1788,7 @@ package body Src_Contexts is
               (Begin_Line,
                Begin_Column,
                End_Line,
-               Character_Offset_Type (End_Column)));
+               As_Optional (End_Column)));
             Ref          : constant Buffer_Position :=
               (Text'First,
                Integer (Begin_Line),
@@ -2134,7 +2134,7 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
@@ -2231,7 +2231,7 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0)
+      End_Column           : Optional_Character_Index := No_Index)
       return Source_Search_Occurrence
    is
       Selection_Start : Gtk_Text_Iter;
@@ -2445,7 +2445,8 @@ package body Src_Contexts is
                      Editable_Line_Type (M.Start.Line),
                      Character_Index (M.Start.Column),
                      Editable_Line_Type (M.Finish.Line),
-                     M.Finish.Column + 1));
+                     As_Optional
+                       (Character_Index (M.Finish.Column + 1))));
                begin
                   Replace_Slice
                     (Buffer,
@@ -2551,7 +2552,9 @@ package body Src_Contexts is
                        (Editable_Line_Type (Context.Current.Start.Line),
                         Character_Index (Context.Current.Start.Column),
                         Editable_Line_Type (Context.Current.Finish.Line),
-                        Context.Current.Finish.Column + 1)));
+                        As_Optional
+                          (Character_Index
+                             (Context.Current.Finish.Column + 1)))));
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text

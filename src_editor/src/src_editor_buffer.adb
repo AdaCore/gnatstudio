@@ -947,7 +947,7 @@ package body Src_Editor_Buffer is
      (Buffer               : Source_Buffer;
       Line                 : Editable_Line_Type;
       Start_Column         : Character_Index := 1;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Src_String
@@ -959,7 +959,8 @@ package body Src_Editor_Buffer is
 
    begin
       if Line not in 1 .. Buffer.Last_Editable_Line
-        or else End_Column = Character_Offset_Type (Start_Column)
+        or else (End_Column.Has_Index
+                 and then End_Column.Index = Start_Column)
       then
          return Result;
       end if;
@@ -970,12 +971,12 @@ package body Src_Editor_Buffer is
          Gint (Buffer.Editable_Lines (Line) - 1),
          Gint (Start_Column) - 1);
 
-      if End_Column /= 0 then
+      if End_Column.Has_Index then
          Get_Iter_At_Line_Offset
            (Buffer,
             End_Iter,
             Gint (Buffer.Editable_Lines (Line) - 1),
-            Gint (End_Column - 1));
+            Gint (End_Column.Index) - 1);
       else
          Copy (Start_Iter, End_Iter);
          Forward_To_Line_End (End_Iter, Success);
@@ -1009,7 +1010,7 @@ package body Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Index := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access
@@ -1028,12 +1029,12 @@ package body Src_Editor_Buffer is
             Gint (Start_Column) - 1);
 
          if End_Line /= 0 then
-            if End_Column /= 0 then
+            if End_Column.Has_Index then
                Get_Iter_At_Line_Offset
                  (Buffer,
                   End_Iter,
                   Gint (Get_Buffer_Line (Buffer, End_Line) - 1),
-                  Gint (End_Column - 1));
+                  Gint (End_Column.Index) - 1);
             else
                Get_Iter_At_Line
                  (Buffer,
@@ -1161,7 +1162,7 @@ package body Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       End_Line             : Editable_Line_Type;
       Start_Column         : Character_Index := 1;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access
@@ -1189,7 +1190,7 @@ package body Src_Editor_Buffer is
                                        else 1),
               End_Column           => (if J = Lines'Last
                                        then End_Column
-                                       else 0),
+                                       else No_Index),
               Include_Hidden_Chars => Include_Hidden_Chars,
               Include_Last         =>  J /= Lines'Last or else Include_Last);
          Len := Len + Lines (J).Length;
@@ -2877,7 +2878,7 @@ package body Src_Editor_Buffer is
                   Slice,
                   Get_Editable_Line
                     (Buffer, Buffer_Line_Type (Line_Start + 1)),
-                  Character_Offset_Type (Column_Start + 1));
+                  As_Optional (Character_Index (Column_Start + 1)));
             else
                Add_Text (Command, Slice);
             end if;
@@ -5312,7 +5313,8 @@ package body Src_Editor_Buffer is
          Start_Line           => Editable_Line_Type (Start_Line + 1),
          Start_Column         => Character_Index (Start_Column + 1),
          End_Line             => Editable_Line_Type (End_Line + 1),
-         End_Column           => Character_Offset_Type (End_Column + 1),
+         End_Column           =>
+           As_Optional (Character_Index (End_Column + 1)),
          Include_Hidden_Chars => Include_Hidden_Chars,
          Include_Last         => Include_Last);
    end Get_Text;
@@ -8194,7 +8196,7 @@ package body Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Unbounded_String
@@ -8221,7 +8223,7 @@ package body Src_Editor_Buffer is
       Start_Line           : Editable_Line_Type;
       Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return VSS.Strings.Virtual_String
