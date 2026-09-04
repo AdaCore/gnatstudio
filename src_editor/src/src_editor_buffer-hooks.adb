@@ -34,7 +34,7 @@ package body Src_Editor_Buffer.Hooks is
         Find_Editor (Get_Kernel (Buffer), Buffer.Filename, Project);
       Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
       Line : Editable_Line_Type;
-      Column : Character_Offset_Type;
+      Column : Character_Index;
    begin
       if Box /= null then
          Get_Cursor_Position (Get_Buffer (Box), Line, Column);

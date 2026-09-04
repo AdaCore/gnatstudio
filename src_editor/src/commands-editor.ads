@@ -109,9 +109,9 @@ package Commands.Editor is
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
+      Start_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
       Text         : UTF8_String;
       Force_End    : Boolean := False;
       Move_Cursor  : Boolean := True);
@@ -145,7 +145,7 @@ package Commands.Editor is
       Buffer              : Source_Buffer;
       User_Executed       : Boolean;
       Cursor_Loc, Sel_Loc : Loc_T;
-      End_Loc             : Loc_T := (0, 0);
+      End_Loc             : Loc_T := Nil_Loc;
       Direction           : Direction_Type := Forward;
       C                   : Cursor := Nil_Cursor);
    --  Create a new Editor_Command.
@@ -236,13 +236,15 @@ private
       Buffer            : Source_Buffer;
 
       Start_Line        : Editable_Line_Type;
-      Start_Column      : Character_Offset_Type;
+      Start_Column      : Character_Index;
 
       End_Line_Before   : Editable_Line_Type;
-      End_Column_Before : Character_Offset_Type;
+      End_Column_Before : Character_Index;
 
+      --  End_Line_After and End_Column_After are only known once the command
+      --  has been executed; End_Line_After is 0 until then.
       End_Line_After    : Editable_Line_Type := 0;
-      End_Column_After  : Character_Offset_Type := 0;
+      End_Column_After  : Character_Index := 1;
 
       Text_Before       : Unbounded_String;
       Text_After        : Unbounded_String;

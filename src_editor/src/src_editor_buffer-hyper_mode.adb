@@ -339,7 +339,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       Buffer.Set_Cursor_Position
         (Line             => Line,
-         Column           => Character_Offset_Type (Column),
+         Column           => Character_Index (Column),
          Internal         => False,
          Extend_Selection => False);
 

@@ -111,7 +111,7 @@ package body Commands.Editor is
       Buffer              : Source_Buffer;
       User_Executed       : Boolean;
       Cursor_Loc, Sel_Loc : Loc_T;
-      End_Loc             : Loc_T := (0, 0);
+      End_Loc             : Loc_T := Nil_Loc;
       Direction           : Direction_Type := Forward;
       C                   : Cursor := Nil_Cursor) is
    begin
@@ -190,7 +190,7 @@ package body Commands.Editor is
          end if;
 
          if Start_Column /= 0 then
-            Item.Locs.Start_Loc.Col := Start_Column;
+            Item.Locs.Start_Loc.Col := Character_Index (Start_Column);
          end if;
       end if;
    end Add_Text;
@@ -339,7 +339,7 @@ package body Commands.Editor is
          end case;
 
          if not Avoid_Move_Cursor (Command)
-           and then Command.Locs.End_Loc /= (0, 0)
+           and then Command.Locs.End_Loc /= Nil_Loc
          then
             Set_Cursor_Position
               (Command.Locs.End_Loc, Command.Locs.End_Sel_Loc, View);
@@ -390,7 +390,7 @@ package body Commands.Editor is
       Position : Gtk_Text_Iter)
    is
       L : Editable_Line_Type;
-      C : Character_Offset_Type;
+      C : Character_Index;
    begin
       Get_Iter_Position (Command.Buffer, Position, L, C);
       Command.Set_End_Location ((L, C), (L, C));
@@ -529,9 +529,9 @@ package body Commands.Editor is
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
+      Start_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
       Text         : Basic_Types.UTF8_String;
       Force_End    : Boolean := False;
       Move_Cursor  : Boolean := True)
@@ -545,7 +545,11 @@ package body Commands.Editor is
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
       Item.Text_Before := Get_Text
-          (Buffer, Start_Line, Start_Column, End_Line, End_Column);
+          (Buffer,
+           Start_Line,
+           Start_Column,
+           End_Line,
+           Character_Offset_Type (End_Column));
       Item.Text_After := To_Unbounded_String (Text);
       Item.Move_Cursor := Move_Cursor;
    end Create;

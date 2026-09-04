@@ -1084,7 +1084,7 @@ package body Src_Editor_Module.Shell is
             Child  : constant MDI_Child :=
               Find_Editor (Kernel, Create (File, Kernel), No_Project);
 
-            Real_Col : Character_Offset_Type;
+            Real_Col : Character_Index;
          begin
             Real_Col := Collapse_Tabs
               (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
@@ -1095,7 +1095,7 @@ package body Src_Editor_Module.Shell is
                Get_Chars
                  (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Editable_Line_Type (Line),
-                  Real_Col,
+                  Character_Offset_Type (Real_Col),
                   Before, After));
          end;
 
@@ -1111,7 +1111,7 @@ package body Src_Editor_Module.Shell is
               (Kernel, Create (File, Kernel), No_Project, Create_New => False,
                Line => 0, Column => 0, Column_End => 0);
 
-            Real_Col : Character_Offset_Type;
+            Real_Col : Character_Index;
          begin
             if Editor /= null then
                if Get_Writable (Get_Buffer (Editor)) then
@@ -1123,7 +1123,8 @@ package body Src_Editor_Module.Shell is
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Text,
-                     Editable_Line_Type (Line), Real_Col,
+                     Editable_Line_Type (Line),
+                     Character_Offset_Type (Real_Col),
                      Before, After);
                else
                   Set_Error_Msg
@@ -1142,7 +1143,7 @@ package body Src_Editor_Module.Shell is
             Buffer : Source_Buffer;
             Text   : constant String  := Nth_Arg (Data, 1);
             Line   : Editable_Line_Type;
-            Column : Character_Offset_Type;
+            Column : Character_Index;
          begin
             if Child /= null then
                Buffer := Get_Buffer (Source_Editor_Box (Get_Widget (Child)));
@@ -1288,7 +1289,7 @@ package body Src_Editor_Module.Shell is
                        Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
             Column : Visible_Column_Type :=
                        Visible_Column_Type (Nth_Arg (Data, 3, Default => 0));
-            Real_Col : Character_Offset_Type;
+            Real_Col : Character_Index;
          begin
             if Child = null then
                Set_Error_Msg

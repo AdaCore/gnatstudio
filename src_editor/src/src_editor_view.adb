@@ -2571,8 +2571,10 @@ package body Src_Editor_View is
             if Event.Key.Send_Event /= 0 then
                --  Handle BackSpace event mostly for test scripts purpose
                declare
+                  use type Basic_Types.Character_Index;
+
                   Line   : Editable_Line_Type;
-                  Column : Character_Offset_Type;
+                  Column : Character_Index;
                begin
                   Get_Cursor_Position (Buffer, Line, Column);
                   Delete (Buffer, Line, Column - 1, 1);
@@ -3072,7 +3074,7 @@ package body Src_Editor_View is
       Context                    : Selection_Context;
       Str                        : Src_String;
       The_Line                   : Editable_Line_Type;
-      The_Column                 : Character_Offset_Type;
+      The_Column                 : Character_Index;
       Success                    : Boolean;
    begin
       if Location = Location_Event
@@ -3238,7 +3240,7 @@ package body Src_Editor_View is
          --  Set the column to the start of the selection
 
          Column := Get_Line_Offset (Start_Iter);
-         Col := Expand_Tabs (B, EL, Character_Offset_Type (Column + 1));
+         Col := Expand_Tabs (B, EL, Character_Index (Column + 1));
 
          Set_File_Information
            (Context,

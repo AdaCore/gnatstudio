@@ -316,6 +316,8 @@ package body Src_Editor_Box is
       Entity_Name                 : String;
       Display_Msg_On_Non_Accurate : Boolean := True)
    is
+      use type Basic_Types.Character_Index;
+
       Length            : constant Natural := Entity_Name'Length;
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
@@ -323,7 +325,7 @@ package body Src_Editor_Box is
       Is_Case_Sensitive : Boolean;
       Iter              : Gtk_Text_Iter;
 
-      Char_Column       : Character_Offset_Type;
+      Char_Column       : Character_Index;
       Indent_Level      : constant Integer :=
         Kernel.Get_Language_Handler.Get_Language_From_File
           (Filename).Get_Indentation_Level;
@@ -362,7 +364,7 @@ package body Src_Editor_Box is
              (Source.Source_Buffer, Line, Char_Column)
            and then Is_Valid_Position
              (Source.Source_Buffer, Line,
-              Char_Column + Character_Offset_Type (Length));
+              Char_Column + Character_Index'Base (Length));
 
          Is_Case_Sensitive := Get_Language_Context
            (Get_Language (Source.Source_Buffer)).Case_Sensitive;
@@ -374,7 +376,8 @@ package body Src_Editor_Box is
                  Line,
                  Char_Column,
                  Line,
-                 Char_Column + Character_Offset_Type (Length))),
+                 Character_Offset_Type (Char_Column)
+                   + Character_Offset_Type (Length))),
               Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 
@@ -408,7 +411,7 @@ package body Src_Editor_Box is
                L := Convert (Line);
                Buffer := Get_Text (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Char_Column, Found,
+                 (Buffer.all, L, Character_Offset_Type (Char_Column), Found,
                   Entity_Name,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive,
@@ -463,9 +466,9 @@ package body Src_Editor_Box is
    -- To_Box_Column --
    -------------------
 
-   function To_Box_Column (Col : Gint) return Character_Offset_Type is
+   function To_Box_Column (Col : Gint) return Character_Index is
    begin
-      return Character_Offset_Type (Col + 1);
+      return Character_Index (Col + 1);
    end To_Box_Column;
 
    ----------------------------
@@ -940,7 +943,7 @@ package body Src_Editor_Box is
       Is_Load_Desktop : Boolean := False)
    is
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    begin
       --  Capture the current position before we create a new view for the
       --  buffer, or we lost that information.
@@ -1367,13 +1370,15 @@ package body Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor                : access Source_Editor_Box_Record;
       Line                  : Editable_Line_Type;
-      Column                : Character_Offset_Type := 1;
+      Column                : Character_Index := 1;
       Force_Focus           : Boolean := True;
       Raise_Child           : Boolean := False;
       Centering             : Centering_Type := Minimal;
       Extend_Selection      : Boolean := False;
       Synchronous_Scrolling : Boolean := True)
    is
+      use type Basic_Types.Character_Index;
+
       Editable_Line : Editable_Line_Type renames Line;
 
       procedure Raise_And_Focus;

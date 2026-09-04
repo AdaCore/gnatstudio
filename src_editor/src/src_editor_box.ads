@@ -158,7 +158,7 @@ package Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor                : access Source_Editor_Box_Record;
       Line                  : Editable_Line_Type;
-      Column                : Character_Offset_Type := 1;
+      Column                : Character_Index := 1;
       Force_Focus           : Boolean := True;
       Raise_Child           : Boolean := False;
       Centering             : GPS.Editors.Centering_Type := Minimal;
@@ -365,7 +365,7 @@ private
    --  from 1 in the Source Box (this is the natural numbering for humans),
    --  whereas it starts from 0 in the Source Box.
 
-   function To_Box_Column (Col : Glib.Gint) return Character_Offset_Type;
+   function To_Box_Column (Col : Glib.Gint) return Character_Index;
    pragma Inline (To_Box_Column);
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.

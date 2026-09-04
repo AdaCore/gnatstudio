@@ -1298,10 +1298,10 @@ package body Completion_Module is
          M.Insert_Buffer,
          Get_Editable_Line
            (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
-         Character_Offset_Type (Get_Line_Offset (Prev) + 1),
+         Character_Index (Get_Line_Offset (Prev) + 1),
          Get_Editable_Line
            (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
-         Character_Offset_Type (Get_Line_Offset (Iter) + 1),
+         Character_Index (Get_Line_Offset (Iter) + 1),
          Text.all,
          True);
 

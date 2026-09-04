@@ -113,7 +113,7 @@ package Src_Contexts is
 
    type Editor_Coordinates is record
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    end record;
 
    type Search_Failure_Response is (None, Dialog, Informational_Popup);

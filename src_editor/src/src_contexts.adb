@@ -733,7 +733,8 @@ package body Src_Contexts is
 
       Lang := Get_Language_From_File (Handler, Get_Filename (Box));
 
-      if not Is_Valid_Position (Get_Buffer (Box), Start_Line, Start_Column)
+      if not Is_Valid_Position
+        (Get_Buffer (Box), Start_Line, Character_Index (Start_Column))
       then
          return;
       end if;
@@ -1609,9 +1610,9 @@ package body Src_Contexts is
       Editor       : Source_Editor_Box;
       Occurrence   : Source_Search_Occurrence;
       Begin_Line   : Editable_Line_Type;
-      Begin_Column : Character_Offset_Type;
+      Begin_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
 
       --------------------------
       -- Interactive_Callback --
@@ -1624,7 +1625,7 @@ package body Src_Contexts is
       begin
          if Match.Start.Line > Natural (End_Line) or else
            (Match.Start.Line = Natural (End_Line) and then
-                Match.Start.Column > End_Column)
+                Match.Start.Column > Character_Offset_Type (End_Column))
          then
             return False;
          end if;
@@ -1655,9 +1656,11 @@ package body Src_Contexts is
            (Search_Occurrence_Record with
             Editor_Child => Child,
             Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+              (Editable_Line_Type (Match.Start.Line),
+               Character_Index (Match.Start.Column)),
             Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+              (Editable_Line_Type (Match.Finish.Line),
+               Character_Index (Match.Finish.Column)));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -1689,14 +1692,17 @@ package body Src_Contexts is
          Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
          End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
          Begin_Column :=
-           Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+           Character_Index (Get_Line_Offset (Range_Start) + 1);
          End_Column :=
-           Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+           Character_Index (Get_Line_Offset (Range_End) + 1);
 
          if not Context.All_Occurrences then
             Occurrence := Auxiliary_Search
               (Context, Editor, Kernel, Search_Backward, From_Selection_Start,
-               Begin_Line, Begin_Column, End_Line, End_Column);
+               Begin_Line,
+               Character_Offset_Type (Begin_Column),
+               End_Line,
+               Character_Offset_Type (End_Column));
             Found := Occurrence /= null;
 
             if not Found then
@@ -1715,7 +1721,7 @@ package body Src_Contexts is
                   Interactive_Callback'Unrestricted_Access,
                   Context.Scope,
                   Start_Line    => Begin_Line,
-                  Start_Column  => Begin_Column,
+                  Start_Column  => Character_Offset_Type (Begin_Column),
                   Lexical_State => State,
                   Was_Partial   => Continue);
 
@@ -1750,9 +1756,9 @@ package body Src_Contexts is
       Editor       : Source_Editor_Box;
       Matches      : Match_Vectors.Vector;
       Begin_Line   : Editable_Line_Type;
-      Begin_Column : Character_Offset_Type;
+      Begin_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
    begin
       if Context.All_Occurrences then
          if Child = null then
@@ -1772,16 +1778,21 @@ package body Src_Contexts is
             Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
             End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
             Begin_Column :=
-              Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+              Character_Index (Get_Line_Offset (Range_Start) + 1);
             End_Column :=
-              Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+              Character_Index (Get_Line_Offset (Range_End) + 1);
          end;
 
          declare
             Text : constant String := To_String (Buffer.Get_Text
-              (Begin_Line, Begin_Column, End_Line, End_Column));
+              (Begin_Line,
+               Begin_Column,
+               End_Line,
+               Character_Offset_Type (End_Column)));
             Ref          : constant Buffer_Position :=
-              (Text'First, Integer (Begin_Line), Begin_Column,
+              (Text'First,
+               Integer (Begin_Line),
+               Character_Offset_Type (Begin_Column),
                Visible_Column_Type (Begin_Column));
          begin
             Scan_And_Store
@@ -2128,7 +2139,7 @@ package body Src_Contexts is
    is
       Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
       Lang   : Language_Access;
-      Column : Character_Offset_Type;
+      Column : Character_Index;
       Line   : Editable_Line_Type;
    begin
       Assert (Me, not Context.All_Occurrences,
@@ -2163,7 +2174,7 @@ package body Src_Contexts is
          Lexical_State    => Context.Current_Lexical,
          Lang             => Lang,
          Current_Line     => Line,
-         Current_Column   => Column,
+         Current_Column   => Character_Offset_Type (Column),
          Failure_Response => Failure_Response,
          Backward         => Search_Backward,
          Result           => Context.Current,
@@ -2176,14 +2187,14 @@ package body Src_Contexts is
       if Found then
          Match_From :=
            (Line => Editable_Line_Type (Context.Current.Start.Line),
-            Col  => Context.Current.Start.Column);
+            Col  => Character_Index (Context.Current.Start.Column));
 
          if Is_Empty_Match (Context.Current) then
             Match_Up_To := Match_From;
          else
             Match_Up_To :=
               (Line => Editable_Line_Type (Context.Current.Finish.Line),
-               Col => Context.Current.Finish.Column + 1);
+               Col => Character_Index (Context.Current.Finish.Column + 1));
          end if;
       end if;
    end Search_In_Editor;
@@ -2339,9 +2350,11 @@ package body Src_Contexts is
            (Search_Occurrence_Record with
             Editor_Child => Child,
             Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+              (Editable_Line_Type (Match.Start.Line),
+               Character_Index (Match.Start.Column)),
             Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+              (Editable_Line_Type (Match.Finish.Line),
+               Character_Index (Match.Finish.Column)));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2422,7 +2435,7 @@ package body Src_Contexts is
                Insert
                  (Buffer,
                   Editable_Line_Type (M.Start.Line),
-                  M.Start.Column,
+                  Character_Index (M.Start.Column),
                   Replacement.Replacement_Text
                     (M, "", Buffer.Get_Language.Keywords));
             else
@@ -2430,16 +2443,16 @@ package body Src_Contexts is
                   Text : constant String := To_String (Get_Text
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
-                     M.Start.Column,
+                     Character_Index (M.Start.Column),
                      Editable_Line_Type (M.Finish.Line),
                      M.Finish.Column + 1));
                begin
                   Replace_Slice
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
-                     M.Start.Column,
+                     Character_Index (M.Start.Column),
                      Editable_Line_Type (M.Finish.Line),
-                     M.Finish.Column + 1,
+                     Character_Index (M.Finish.Column + 1),
                      Replacement.Replacement_Text
                        (M, Text, Buffer.Get_Language.Keywords));
                end;
@@ -2536,7 +2549,7 @@ package body Src_Contexts is
                   else
                      To_String (Editor.Get_Buffer.Get_Text
                        (Editable_Line_Type (Context.Current.Start.Line),
-                        Context.Current.Start.Column,
+                        Character_Index (Context.Current.Start.Column),
                         Editable_Line_Type (Context.Current.Finish.Line),
                         Context.Current.Finish.Column + 1)));
 
@@ -2550,25 +2563,35 @@ package body Src_Contexts is
                   Insert
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
-                     Context.Current.Start.Column,
+                     Character_Index (Context.Current.Start.Column),
                      Text);
                else
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
-                     Context.Current.Start.Column,
+                     Character_Index (Context.Current.Start.Column),
                      Editable_Line_Type (Context.Current.Finish.Line),
-                     Context.Current.Finish.Column + 1,
+                     Character_Index (Context.Current.Finish.Column + 1),
                      Text);
                end if;
 
-               Forward_Position
-                 (Get_Buffer (Editor),
-                  Editable_Line_Type (Context.Current.Start.Line),
-                  Context.Current.Start.Column,
-                  Text'Length,
-                  Editable_Line_Type (Context.Current.Finish.Line),
-                  Context.Current.Finish.Column);
+               declare
+                  End_Line : Editable_Line_Type;
+                  End_Col  : Character_Index;
+
+               begin
+                  Forward_Position
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type (Context.Current.Start.Line),
+                     Character_Index (Context.Current.Start.Column),
+                     Text'Length,
+                     End_Line,
+                     End_Col);
+
+                  Context.Current.Finish.Line := Natural (End_Line);
+                  Context.Current.Finish.Column :=
+                    Character_Offset_Type (End_Col);
+               end;
 
                Context.Current.Finish.Index :=
                  Context.Current.Start.Index + Text'Length;
@@ -2587,7 +2610,7 @@ package body Src_Contexts is
             Set_Cursor_Position
               (Get_Buffer (Editor),
                Editable_Line_Type (Context.Current.Finish.Line),
-               Context.Current.Finish.Column,
+               Character_Index (Context.Current.Finish.Column),
                Internal => True);
 
             Get_View (Editor).Set_Position_Set_Explicitely;
@@ -3118,9 +3141,11 @@ package body Src_Contexts is
            (Search_Occurrence_Record with
             Editor_Child => Find_Editor (Kernel, File, No_Project),
             Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+              (Editable_Line_Type (Match.Start.Line),
+               Character_Index (Match.Start.Column)),
             Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+              (Editable_Line_Type (Match.Finish.Line),
+               Character_Index (Match.Finish.Column)));
          Initialize (Occurrence, Pattern => Text);
 
          return True;

@@ -19,11 +19,13 @@ with Ada.Calendar;
 with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-
 with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
+
+with VSS.Strings;
+
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
@@ -111,6 +113,16 @@ package Basic_Types is
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
    --  Columns are counted in terms of UTF8 characters.
+
+   subtype Character_Index is VSS.Strings.Character_Index;
+   --  Character_Index indicates the index of a character in the line. The
+   --  first character of the line has index 1. Use it for a position that
+   --  is always known; when a position can be absent, or when a distance
+   --  between two positions is meant, use Character_Offset_Type below.
+   --
+   --  Arithmetic on an index yields VSS.Strings.Character_Offset, which is
+   --  signed; storing the result back into a Character_Index checks that it
+   --  still designates a character.
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

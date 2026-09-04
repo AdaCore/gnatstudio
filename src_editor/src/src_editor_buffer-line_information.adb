@@ -1542,7 +1542,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Line                 : Editable_Line_Type := 0;
       Ignored_A            : Editable_Line_Type;
-      Ignored_B, Ignored_C : Character_Offset_Type;
+      Ignored_B, Ignored_C : Character_Index;
       Found                : Boolean;
    begin
       --  If the buffer has a selection, consider the first line of selection;
