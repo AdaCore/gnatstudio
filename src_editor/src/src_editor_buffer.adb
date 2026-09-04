@@ -39,6 +39,7 @@ with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
+with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 with VSS.Unicode;
 
@@ -8282,6 +8283,8 @@ package body Src_Editor_Buffer is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Character_Offset_Type
    is
+      use type VSS.Characters.Virtual_Character;
+
       Iter        : Gtk_Text_Iter;
       Current     : Visible_Column_Type := 1;
       Count       : Character_Offset_Type := 1;
@@ -8301,7 +8304,9 @@ package body Src_Editor_Buffer is
             Gint (Buffer_Line - 1));
 
          while Result and then Current < Column  loop
-            if Get_Char (Iter) = ASCII.HT then
+            if VSS.Characters.Virtual_Character'Base'Val (Get_Char (Iter))
+              = VSS.Characters.Latin.Character_Tabulation
+            then
                Current := Current + Tab_Len - (Current - 1) mod Tab_Len;
             else
                Current := Current + 1;
