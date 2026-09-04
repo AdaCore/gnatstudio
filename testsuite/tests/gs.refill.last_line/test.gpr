@@ -1,0 +1,3 @@
+project Test is
+   for Source_Files use ("main.adb", "utf8.adb");
+end Test;
