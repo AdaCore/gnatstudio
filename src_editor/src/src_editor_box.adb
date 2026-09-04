@@ -407,19 +407,30 @@ package body Src_Editor_Box is
                Buffer       : GNAT.Strings.String_Access;
                Col, Col_End : Visible_Column_Type;
                Found        : Boolean;
+
+               Match_Column : Character_Offset_Type :=
+                 Character_Offset_Type (Char_Column);
+               --  Find_Closest_Match reports line and column 0 when it finds
+               --  no match, which is not a Character_Index.
+
             begin
                L := Convert (Line);
                Buffer := Get_Text (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Character_Offset_Type (Char_Column), Found,
+                 (Buffer.all, L, Match_Column, Found,
                   Entity_Name,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive,
                   Tab_Width      => Indent_Level);
                Free (Buffer);
 
-               Col := Expand_Tabs
-                 (Source.Source_Buffer, Line, Char_Column);
+               Col :=
+                 (if Match_Column = 0
+                  then 1
+                  else Expand_Tabs
+                         (Source.Source_Buffer,
+                          Line,
+                          Character_Index (Match_Column)));
 
                if Found then
                   Col_End := Col + Visible_Column_Type (Length);
