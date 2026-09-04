@@ -7240,12 +7240,12 @@ package body Src_Editor_Buffer is
             Line := Get_String_At_Line (Buffer, K);
 
             if K = To_Line then
-               --  An empty last line has no character to point at: use the
-               --  first position of the line.
+               --  The replaced range ends just after the last character of
+               --  the line. Line.Length counts UTF-8 bytes, so the characters
+               --  have to be counted; an empty line gives the first position.
 
                To_Length :=
-                 Character_Index'Max
-                   (1, Character_Index'Base (Line.Length));
+                 Character_Index (UTF8_Strlen (To_String (Line)) + 1);
             end if;
 
             --  Handle continuation of multi-line comment
@@ -7497,10 +7497,20 @@ package body Src_Editor_Buffer is
 
          Acumulating : Boolean := False;
          Line        : Src_String;
+         To_Length   : Character_Index := 1;
 
       begin  --  Refill_Plain_Text
          for K in From_Line .. To_Line loop
             Line := Get_String_At_Line (Buffer, K);
+
+            if K = To_Line then
+               --  The replaced range ends just after the last character of
+               --  the line. Line.Length counts UTF-8 bytes, so the characters
+               --  have to be counted; an empty line gives the first position.
+
+               To_Length :=
+                 Character_Index (UTF8_Strlen (To_String (Line)) + 1);
+            end if;
 
             --  Empty line
 
@@ -7573,10 +7583,7 @@ package body Src_Editor_Buffer is
               (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
          else
             Replace_Slice
-              (Buffer, From_Line, 1,
-               To_Line,
-               Character_Index'Max
-                 (1, Character_Index'Base (Length (New_Text))),
+              (Buffer, From_Line, 1, To_Line, To_Length,
                To_String (New_Text));
          end if;
 
