@@ -3096,17 +3096,14 @@ package body Src_Editor_Buffer is
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Visible_Column_Type) return Boolean
-   is
-      Char_Column : constant Character_Offset_Type :=
-                      Collapse_Tabs (Buffer, Line, Column);
-
+      Column : Visible_Column_Type) return Boolean is
    begin
-      --  Collapse_Tabs maps a Column of 0, as well as a Line out of range,
-      --  to a character position of 0, which is not a valid position.
+      --  The first visible column of a line is 1, thus 0 is not a valid
+      --  position. Use Is_Valid_Line when no column is known.
 
-      return Char_Column /= 0
-        and then Is_Valid_Position (Buffer, Line, Char_Column);
+      return Column /= 0
+        and then Is_Valid_Position
+                   (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
    end Is_Valid_Position;
 
    -----------------------
@@ -8345,7 +8342,12 @@ package body Src_Editor_Buffer is
         (Line);
    begin
       if Column = 0 or else Line not in 1 .. Buffer.Last_Editable_Line then
-         return 0;
+         --  No tab expansion can be computed: return the first position of
+         --  the line, as is done below for an editable line that is not
+         --  displayed in the buffer. Returning 0 would be out of range and
+         --  callers turn it into a -1 offset for gtk+.
+
+         return Count;
       end if;
 
       if Buffer_Line /= 0 then

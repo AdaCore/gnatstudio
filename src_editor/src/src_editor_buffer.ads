@@ -143,13 +143,20 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type;
-   --  Return the visible column corresponding to the position
+   --  Return the visible column corresponding to the position. The result
+   --  always designates a column of the line, starting at 1: when no tab
+   --  expansion can be computed, because Line is not an editable line of the
+   --  buffer, the first column of the line is returned.
 
    function Collapse_Tabs
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Character_Offset_Type;
-   --  Return the character position corresponding to the visible column
+   --  Return the character position corresponding to the visible column. The
+   --  result always designates a character of the line, starting at 1: when
+   --  no tab expansion can be computed, because Column is 0 or because Line
+   --  is not an editable line of the buffer, the first position of the line
+   --  is returned.
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
