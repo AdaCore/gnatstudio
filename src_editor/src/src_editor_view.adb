@@ -2577,8 +2577,15 @@ package body Src_Editor_View is
                   Column : Character_Index;
                begin
                   Get_Cursor_Position (Buffer, Line, Column);
-                  Delete (Buffer, Line, Column - 1, 1);
-                  Graph_Key := True;
+
+                  --  On the first column of a line there is no character to
+                  --  delete on that line: leave the deletion, which joins the
+                  --  line with the previous one, to gtk+.
+
+                  if Column > 1 then
+                     Delete (Buffer, Line, Column - 1, 1);
+                     Graph_Key := True;
+                  end if;
                end;
             end if;
 
