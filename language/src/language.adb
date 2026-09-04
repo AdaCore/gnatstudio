@@ -304,8 +304,9 @@ package body Language is
            and then Buffer (Next_Char + 1) /= ASCII.LF
          then
             loop
-               Next_Char := UTF8_Next_Char (Buffer, Next_Char);
-               Column := Column + 1;
+               Tmp := UTF8_Next_Char (Buffer, Next_Char);
+               Column := Column + (Tmp - Next_Char);
+               Next_Char := Tmp;
 
                exit when Next_Char >= Buffer'Last
                  or else Buffer (Next_Char + 1) = ASCII.LF

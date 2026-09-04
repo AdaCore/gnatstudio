@@ -4084,20 +4084,45 @@ package body Ada_Analyzer is
                when '"' =>
                   declare
                      Len    : Natural;
+                     Nxt    : Natural;
                      Entity : Language_Entity;
                   begin
                      First := P;
 
-                     while P < End_Of_Line loop
-                        P := Next_Char (P);
+                     loop
+                        Nxt := Next_Char (P);
+                        exit when Nxt > End_Of_Line;
+                        --  Exit the loop if we've gone past the end of the
+                        --  line. `End_Of_Line` is the last *byte* of the
+                        --  line while `Next_Char` steps over a whole
+                        --  character, so this is where the step lands beyond
+                        --  the line when it ends with a multi-byte character.
+                        --
+                        --  Leaving P on the first byte of that character
+                        --  keeps the invariant the enclosing loop relies on:
+                        --  it advances by one character, which then lands
+                        --  exactly on the line terminator and gets the line
+                        --  counted. Left on or past the terminator, P would
+                        --  make it step over the terminator without counting
+                        --  the line, and every entity reported afterwards
+                        --  would carry a stale line number.
+
+                        P := Nxt;
 
                         exit when Buffer (P) = '"';
                      end loop;
 
-                     if Buffer (P) /= '"' then
+                     if P = First or else Buffer (P) /= '"' then
                         --  Syntax error: the string was not terminated
                         --  Try to recover properly, and in particular, try
                         --  to reset the parentheses stack.
+                        --
+                        --  `P = First` means the loop exited without
+                        --  advancing, i.e. the opening delimiter is itself
+                        --  the last character of the line. `Buffer (P)` alone
+                        --  cannot tell that case from a terminated literal:
+                        --  the character it tests is then the opening
+                        --  delimiter.
 
                         if Num_Parens > 0 then
                            Close_Parenthesis;
@@ -4486,17 +4511,41 @@ package body Ada_Analyzer is
                   then
                      Set_Prev_Token (Tok_Apostrophe);
                   else
-                     if P = End_Of_Line - 1 then
-                        P := P + 1;
-                     else
-                        P := P + 2;
-                     end if;
+                     declare
+                        Nxt : Natural;
 
-                     while P < End_Of_Line
-                       and then Buffer (P) /= '''
-                     loop
-                        P := Next_Char (P);
-                     end loop;
+                     begin
+                        --  Step over the apostrophe and the character it
+                        --  quotes -- two steps, so that the apostrophe of
+                        --  ''' is not taken for the closing one -- then look
+                        --  for the closing apostrophe.
+                        --
+                        --  Every step advances by a whole character and
+                        --  stops on the last character of the line. The
+                        --  quoted character may be multi-byte, in which case
+                        --  plain byte arithmetic landed in the middle of it
+                        --  and the scan then ran past the end of the line:
+                        --  the enclosing loop stepped over the line
+                        --  terminator without counting the line, and every
+                        --  entity reported afterwards carried a stale line
+                        --  number.
+
+                        for Skip in 1 .. 2 loop
+                           Nxt := Next_Char (P);
+                           exit when Nxt > End_Of_Line;
+
+                           P := Nxt;
+                        end loop;
+
+                        loop
+                           exit when Buffer (P) = ''';
+
+                           Nxt := Next_Char (P);
+                           exit when Nxt > End_Of_Line;
+
+                           P := Nxt;
+                        end loop;
+                     end;
 
                      Set_Prev_Token (Tok_Char_Literal);
 
