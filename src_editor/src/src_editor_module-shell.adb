@@ -1009,8 +1009,14 @@ package body Src_Editor_Module.Shell is
 
                Buffer := Get_Buffer (Source_Editor_Box (Get_Widget (Child)));
 
+               --  Validate the position with the same coordinates that
+               --  Select_Region below is given; a First_Line or a
+               --  Start_Column of 0 designates no position.
+
                if Is_Valid_Position
-                 (Buffer, Gint (First_Line - 1), Gint (Start_Column - 1))
+                 (Buffer,
+                  Editable_Line_Type (First_Line),
+                  Visible_Column_Type (Start_Column))
                then
                   Select_Region
                     (Buffer,
