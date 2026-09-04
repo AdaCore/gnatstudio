@@ -707,7 +707,7 @@ package body Src_Editor_Module is
          --  synchronous scrolling since the editor may need to be refreshed
          --  in some idle functions after reloading the file.
 
-         if Is_Valid_Position (Buffer, Line) then
+         if Is_Valid_Line (Buffer, Line) then
             Set_Cursor_Location
               (Editor,
                Line,
@@ -1757,7 +1757,7 @@ package body Src_Editor_Module is
          Real_Column, Real_Column_End : Character_Offset_Type;
       begin
          if Line /= 0
-           and then Is_Valid_Position (Get_Buffer (Editor), Line)
+           and then Is_Valid_Line (Get_Buffer (Editor), Line)
          then
             Real_Column := Collapse_Tabs
               (Get_Buffer (Editor), Line, Column);

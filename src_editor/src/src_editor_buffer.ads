@@ -276,17 +276,22 @@ package Src_Editor_Buffer is
    --  available when only the Line number needs to be checked.
    --  Obsolete, should use Is_Valid_Position below.
 
+   function Is_Valid_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Boolean;
+   pragma Inline (Is_Valid_Line);
+   --  Return True if Line is a line of the buffer, without looking at any
+   --  column. Use it instead of Is_Valid_Position below when no column is
+   --  known: the first column of a line always exists.
+
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1) return Boolean;
+      Column : Character_Offset_Type) return Boolean;
    pragma Inline (Is_Valid_Position);
-   --  Return True if the given cursor position is valid. If Column is
-   --  set to 0, then this function just verifies the given line number
-   --  (column 0 of a given line always exists).
-   --
-   --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
-   --  available when only the Line number needs to be checked.
+   --  Return True if the given cursor position is valid. Column is the
+   --  position of a character on the line and starts at 1; when no column
+   --  is known, call Is_Valid_Line above rather than passing 0.
 
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
@@ -295,11 +300,17 @@ package Src_Editor_Buffer is
    pragma Inline (Is_Valid_Position);
    --  Same as above
 
+   procedure Ensure_Valid_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type);
+   --  Wrapper around Is_Valid_Line which raises a Location_Exception if the
+   --  line is invalid.
+
    procedure Ensure_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1);
-   --  Wrapper around Is_Valide_Postion which raises an Location_Exception
+      Column : Character_Offset_Type);
+   --  Wrapper around Is_Valid_Position which raises a Location_Exception
    --  if the location is invalid.
 
    procedure Ensure_Valid_Position

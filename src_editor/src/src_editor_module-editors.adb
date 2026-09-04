@@ -2688,11 +2688,11 @@ package body Src_Editor_Module.Editors is
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
          if From /= Nil_Editor_Location then
-            Ensure_Valid_Position
+            Ensure_Valid_Line
               (This.Contents.Buffer, Editable_Line_Type (From.Line));
          end if;
          if To /= Nil_Editor_Location then
-            Ensure_Valid_Position
+            Ensure_Valid_Line
               (This.Contents.Buffer, Editable_Line_Type (To.Line));
          end if;
 

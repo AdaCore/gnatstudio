@@ -3040,10 +3040,13 @@ package body Src_Editor_Buffer is
       return Found;
    end Is_Valid_Position;
 
-   function Is_Valid_Position
+   -------------------
+   -- Is_Valid_Line --
+   -------------------
+
+   function Is_Valid_Line
      (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1) return Boolean
+      Line   : Editable_Line_Type) return Boolean
    is
       Buffer_Line : constant Buffer_Line_Type :=
                       Get_Buffer_Line (Buffer, Line);
@@ -3058,6 +3061,33 @@ package body Src_Editor_Buffer is
          end if;
 
       else
+         --  Column 0 at Gtk level means that only presence of the line is
+         --  checked
+
+         return Is_Valid_Position (Buffer, Gint (Buffer_Line - 1), 0);
+      end if;
+   end Is_Valid_Line;
+
+   -----------------------
+   -- Is_Valid_Position --
+   -----------------------
+
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type) return Boolean
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+                      Get_Buffer_Line (Buffer, Line);
+
+   begin
+      if Buffer_Line = 0 then
+         --  The line is not displayed in the buffer, thus the column can't
+         --  be checked and only the line itself is looked at.
+
+         return Is_Valid_Line (Buffer, Line);
+
+      else
          return Is_Valid_Position
            (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
       end if;
@@ -3066,11 +3096,31 @@ package body Src_Editor_Buffer is
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Visible_Column_Type) return Boolean is
+      Column : Visible_Column_Type) return Boolean
+   is
+      Char_Column : constant Character_Offset_Type :=
+                      Collapse_Tabs (Buffer, Line, Column);
+
    begin
-      return Is_Valid_Position
-        (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
+      --  Collapse_Tabs maps a Column of 0, as well as a Line out of range,
+      --  to a character position of 0, which is not a valid position.
+
+      return Char_Column /= 0
+        and then Is_Valid_Position (Buffer, Line, Char_Column);
    end Is_Valid_Position;
+
+   -----------------------
+   -- Ensure_Valid_Line --
+   -----------------------
+
+   procedure Ensure_Valid_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) is
+   begin
+      if not Is_Valid_Line (Buffer, Line) then
+         raise Location_Exception with (-"Invalid Buffer Line");
+      end if;
+   end Ensure_Valid_Line;
 
    ---------------------------
    -- Ensure_Valid_Position --
@@ -3079,7 +3129,7 @@ package body Src_Editor_Buffer is
    procedure Ensure_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1) is
+      Column : Character_Offset_Type) is
    begin
       if not Is_Valid_Position (Buffer, Line, Column) then
          raise Location_Exception with (-"Invalid Buffer Line");

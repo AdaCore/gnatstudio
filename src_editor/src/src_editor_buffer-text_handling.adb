@@ -66,8 +66,16 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       Iter   : Gtk_Text_Iter;
       Result : Boolean := True;
+
+      Valid_Location : constant Boolean :=
+        (if Col = 0
+         then Is_Valid_Line (Buffer, Line)
+         else Is_Valid_Position (Buffer, Line, Col));
+      --  A Col of 0 means that no column is known; Get_Iter below maps it to
+      --  the start of the line, so only the line has to be checked.
+
    begin
-      if not Is_Valid_Position (Buffer, Line, Col) then
+      if not Valid_Location then
          Valid        := False;
          Line_Begin   := Editable_Line_Type'First;
          Column_Begin := Character_Offset_Type'First;
@@ -124,7 +132,7 @@ package body Src_Editor_Buffer.Text_Handling is
             if Ends_Line (Iter) then
                Line_End := Line_End + 1;
 
-               exit when not Is_Valid_Position (Buffer, Line_End);
+               exit when not Is_Valid_Line (Buffer, Line_End);
 
                --  After unfolding the line, Iter might be invalid, therefore
                --  we re-generate it here.

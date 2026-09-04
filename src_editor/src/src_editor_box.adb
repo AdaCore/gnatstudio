@@ -1421,7 +1421,7 @@ package body Src_Editor_Box is
             Centering   => Centering,
             Synchronous => Synchronous_Scrolling);
 
-      elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
+      elsif Is_Valid_Line (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
          --  but this was too intrusive: in the case of e.g. loading the
          --  desktop, if it often the case that the files have been modified
