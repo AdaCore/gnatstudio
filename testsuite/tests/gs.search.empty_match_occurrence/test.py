@@ -13,6 +13,16 @@ import gs_utils.internal.dialogs as dialogs
 def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
 
+    def selection():
+        Start = buf.selection_start()
+        End = buf.selection_end()
+        return (Start.line(), Start.column(), End.line(), End.column())
+
+    #  Select something first, so that the empty match collapsing the
+    #  selection is an observable outcome and not the initial state.
+    buf.select(buf.at(2, 1), buf.at(2, 3))
+    gps_assert(selection(), (2, 1, 2, 3), "wrong initial selection")
+
     s = dialogs.Search()
     yield s.open_and_yield()
     s.set_scope(dialogs.Search.Context.FILES_FROM_PROJECT)
@@ -22,11 +32,10 @@ def test_driver():
     GPS.execute_action("find next")
     yield wait_tasks(other_than=known_tasks)
 
-    Start = buf.selection_start()
-    End = buf.selection_end()
-
+    #  The match is empty, so it selects nothing: the selection collapses
+    #  onto the position of the match.
     gps_assert(
-        (Start.line(), Start.column()),
-        (End.line(), End.column()),
-        "an empty match should select nothing, got %s .. %s" % (Start, End),
+        selection(),
+        (2, 1, 2, 1),
+        "wrong selection after an empty match",
     )

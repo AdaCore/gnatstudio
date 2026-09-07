@@ -48,12 +48,19 @@ def test_driver():
     #  select_text: a start column of 0 designates no position, so nothing
     #  gets selected; an end column of 0 means the whole line.
 
+    def selection():
+        Start = buf.selection_start()
+        End = buf.selection_end()
+        return (Start.line(), Start.column(), End.line(), End.column())
+
     buf.select(buf.at(2, 1), buf.at(2, 3))
+    Before = selection()
+
     GPS.Editor.select_text(first_line=4, last_line=4, start_column=0, end_column=0)
     gps_assert(
-        buf.selection_start().line(),
-        buf.selection_end().line(),
-        "select_text with a start column of 0 selected something",
+        selection(),
+        Before,
+        "select_text with a start column of 0 changed the selection",
     )
 
     GPS.Editor.select_text(first_line=4, last_line=4, start_column=4, end_column=5)
