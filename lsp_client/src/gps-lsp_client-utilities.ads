@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.JSON;
 with GNATCOLL.VFS;
 
 with Language;
-with LSP.Messages;
+with LSP.Structures;
+with LSP.Enumerations;
 
 with GPS.Editors;
 with GPS.Kernel;
@@ -26,38 +28,46 @@ with GPS.Kernel;
 package GPS.LSP_Client.Utilities is
 
    function To_URI
-     (Item : GNATCOLL.VFS.Virtual_File) return LSP.Messages.DocumentUri;
+     (Item : GNATCOLL.VFS.Virtual_File) return LSP.Structures.DocumentUri;
    --  Converts Virtual_File to DocumentUri.
 
    function To_Virtual_File
-     (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File;
+     (Item : LSP.Structures.DocumentUri) return GNATCOLL.VFS.Virtual_File;
    --  Converts DocumentUri to Virtual_File.
 
    function LSP_Position_To_Location
      (Editor   : GPS.Editors.Editor_Buffer'Class;
-      Position : LSP.Messages.Position)
+      Position : LSP.Structures.Position)
       return GPS.Editors.Editor_Location'Class;
    --  Converts the given LSP position to an editor location.
 
    function Location_To_LSP_Position
      (Location : GPS.Editors.Editor_Location'Class)
-      return LSP.Messages.Position;
+      return LSP.Structures.Position;
    --  Converts the given editor location to a LSP position.
 
    function To_Language_Category
-     (K : LSP.Messages.SymbolKind; Is_Procedure : Boolean := False)
+     (K : LSP.Enumerations.SymbolKind; Is_Procedure : Boolean := False)
       return Language.Language_Category;
    --  Converts SymbolKind to an appropriate Language_Category.
    --  Is_Procedure should be True if the Symbol is a function without a return
    --  statement (The LSP doesn't have the concept of Procedure).
 
    function To_Construct_Visibility
-     (V : LSP.Messages.Als_Visibility) return Language.Construct_Visibility;
+     (V : LSP.Enumerations.AlsVisibility) return Language.Construct_Visibility;
    --  Converts AlsVisibility to Construct_Visibility.
 
    function Get_Formatting_Options
      (Kernel : GPS.Kernel.Kernel_Handle; File : GNATCOLL.VFS.Virtual_File)
-      return LSP.Messages.FormattingOptions;
+      return LSP.Structures.FormattingOptions;
    --  Return the formatting options used for LSP Formatting for Document
+
+   function To_LSP_Any
+     (Value : GNATCOLL.JSON.JSON_Value) return LSP.Structures.LSPAny;
+   --  Converts a GNATCOLL.JSON value into the LSP "any" wire representation.
+
+   function From_LSP_Any
+     (Value : LSP.Structures.LSPAny) return GNATCOLL.JSON.JSON_Value;
+   --  Converts the LSP "any" wire representation into a GNATCOLL.JSON value.
 
 end GPS.LSP_Client.Utilities;

@@ -17,8 +17,13 @@
 
 --  This package implements the custom request "$/alsCheckSyntax"
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 with VSS.Strings;
 with VSS.String_Vectors;
+
+with LSP.Enumerations;
+with LSP.Structures;
 
 package GPS.LSP_Client.Requests.Check_Syntax is
 
@@ -34,25 +39,24 @@ package GPS.LSP_Client.Requests.Check_Syntax is
 
    overriding
    procedure Params
-     (Self   : Check_Syntax_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Check_Syntax_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Check_Syntax_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Check_Syntax_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    overriding
    procedure On_Error_Message
      (Self    : in out Check_Syntax_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is null;
 
    overriding
    function Is_Request_Supported
-     (Self : Check_Syntax_Request; Options : LSP.Messages.ServerCapabilities)
+     (Self : Check_Syntax_Request; Options : LSP.Structures.ServerCapabilities)
       return Boolean
    is (True);
 

@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Structures;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Highlight is
@@ -22,17 +27,17 @@ package GPS.LSP_Client.Requests.Document_Highlight is
    type Abstract_Document_Highlight_Request is abstract
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
-      Position : LSP.Messages.Position;
+      Position : LSP.Structures.Position;
    end record;
 
    function Params
      (Self : Abstract_Document_Highlight_Request)
-      return LSP.Messages.DocumentHighlightParams;
+      return LSP.Structures.DocumentHighlightParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Document_Highlight_Request;
-      Result : LSP.Messages.DocumentHighlight_Vector)
+      Result : LSP.Structures.DocumentHighlight_Vector)
    is abstract;
    --  Called when a result response is received from the server.
 
@@ -43,17 +48,17 @@ package GPS.LSP_Client.Requests.Document_Highlight is
 
    overriding
    procedure Params
-     (Self   : Abstract_Document_Highlight_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Document_Highlight_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Document_Highlight_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Document_Highlight_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Document_Highlight_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Document_Highlight;

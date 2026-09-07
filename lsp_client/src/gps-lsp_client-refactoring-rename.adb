@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNATCOLL.JSON;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
@@ -57,7 +56,8 @@ with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Requests.Rename;
 with GPS.LSP_Client.Configurations;
 with GPS.LSP_Client.Utilities;
-with LSP.Messages;
+with LSP.Enumerations;
+with LSP.Structures;
 
 package body GPS.LSP_Client.Refactoring.Rename is
 
@@ -87,14 +87,13 @@ package body GPS.LSP_Client.Refactoring.Rename is
 
    overriding
    procedure On_Result_Message
-     (Self : in out Rename_Request; Result : LSP.Messages.WorkspaceEdit);
+     (Self : in out Rename_Request; Result : LSP.Structures.WorkspaceEdit);
 
    overriding
    procedure On_Error_Message
      (Self    : in out Rename_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    -- Entity_Renaming_Dialog_Record --
 
@@ -354,7 +353,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
 
    overriding
    procedure On_Result_Message
-     (Self : in out Rename_Request; Result : LSP.Messages.WorkspaceEdit)
+     (Self : in out Rename_Request; Result : LSP.Structures.WorkspaceEdit)
    is
       use type VSS.Strings.Virtual_String;
 
@@ -393,9 +392,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
    overriding
    procedure On_Error_Message
      (Self    : in out Rename_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       Holder : constant Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (Self.File);

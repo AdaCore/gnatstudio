@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;    use LSP.Types;
-with LSP.Messages; use LSP.Messages;
+with GNATCOLL.JSON; use GNATCOLL.JSON;
+
+with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
@@ -31,18 +33,21 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
    overriding
    function Params
      (Self : Abstract_Named_Parameters_Command_Request)
-      return LSP.Messages.ExecuteCommandParams
+      return LSP.Structures.ExecuteCommandParams
    is
-      Arguments : Any_Vector;
+      Arguments : JSON_Array;
 
-      Argument : constant LSP.Types.LSP_Any := Create_Object;
-      Where    : constant LSP.Types.LSP_Any := Create_Object;
-      Document : constant LSP.Types.LSP_Any := Create_Object;
-      Position : constant LSP.Types.LSP_Any := Create_Object;
+      Argument : constant JSON_Value := Create_Object;
+      Where    : constant JSON_Value := Create_Object;
+      Document : constant JSON_Value := Create_Object;
+      Position : constant JSON_Value := Create_Object;
 
    begin
       Document.Set_Field
-        ("uri", Create (To_UTF_8_String (To_URI (Self.Text_Document))));
+        ("uri",
+         Create
+           (VSS.Strings.Conversions.To_UTF_8_String
+              (VSS.Strings.Virtual_String (To_URI (Self.Text_Document)))));
 
       Position.Set_Field ("line", Create (Integer (Self.Position.line)));
       Position.Set_Field
@@ -61,10 +66,10 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
       Arguments.Append (Argument);
 
       return
-        (Is_Unknown => True,
-         Base       => <>,
-         command    => Self.Command_Name,
-         arguments  => (Is_Set => True, Value => Arguments));
+        (workDoneToken => (Is_Set => False),
+         command       => Self.Command_Name,
+         arguments     =>
+           GPS.LSP_Client.Utilities.To_LSP_Any (Create (Arguments)));
    end Params;
 
    -------------------

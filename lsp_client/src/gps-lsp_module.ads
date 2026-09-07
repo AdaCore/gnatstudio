@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
+with LSP.Structures;
 
 with GPS.Kernel; use GPS.Kernel;
 with GPS.LSP_Client.Language_Servers;
@@ -52,7 +52,7 @@ package GPS.LSP_Module is
 
    function Get_Running_Request
      (Server : not null GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Id     : LSP.Types.LSP_Number_Or_String)
+      Id     : LSP.Structures.Integer_Or_Virtual_String)
       return GPS.LSP_Client.Requests.Request_Access;
    --  If a request with the given Id is currently running, return it.
    --  Return null otherwise.

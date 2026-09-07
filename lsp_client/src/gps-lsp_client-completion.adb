@@ -23,7 +23,6 @@ with GNAT.Strings;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.JSON;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
@@ -36,7 +35,7 @@ with Glib.Convert;           use Glib.Convert;
 with Glib.Convert.VSS_Utils; use Glib.Convert.VSS_Utils;
 with Gtkada.Style;
 
-with LSP.Types; use LSP.Types;
+with LSP.Enumerations; use LSP.Enumerations;
 
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
@@ -81,12 +80,13 @@ package body GPS.LSP_Client.Completion is
 
    function To_LSP_Completion_Trigger_Kind
      (Trigger_Kind : Completion_Trigger_Kind)
-      return LSP.Messages.CompletionTriggerKind
+      return LSP.Enumerations.CompletionTriggerKind
    is (case Trigger_Kind is
-         when Invoked                         => LSP.Messages.Invoked,
-         when TriggerCharacter                => LSP.Messages.TriggerCharacter,
+         when Invoked                         => LSP.Enumerations.Invoked,
+         when TriggerCharacter                =>
+           LSP.Enumerations.TriggerCharacter,
          when TriggerForIncompleteCompletions =>
-           LSP.Messages.TriggerForIncompleteCompletions);
+           LSP.Enumerations.TriggerForIncompleteCompletions);
 
    ----------------------------
    -- LSP Completion Request --
@@ -103,7 +103,7 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Result_Message
      (Self   : in out LSP_Completion_Request;
-      Result : LSP.Messages.CompletionList);
+      Result : LSP.Structures.CompletionList);
 
    overriding
    procedure On_Rejected
@@ -112,9 +112,8 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    procedure Finalize (Self : in out LSP_Completion_Request) is null;
@@ -139,14 +138,13 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Result_Message
      (Self   : in out LSP_CompletionItem_Resolve_Request;
-      Result : LSP.Messages.CompletionItem);
+      Result : LSP.Structures.CompletionItem);
 
    overriding
    procedure On_Error_Message
      (Self    : in out LSP_CompletionItem_Resolve_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is null;
 
    ----------------------
@@ -486,7 +484,7 @@ package body GPS.LSP_Client.Completion is
       Range_Start : out File_Location;
       Range_End   : out File_Location) return Boolean is
    begin
-      if Proposal.Span = Empty_Span then
+      if Proposal.Span = LSP.Constants.Empty then
          return False;
       end if;
 
@@ -500,10 +498,10 @@ package body GPS.LSP_Client.Completion is
            Kernel.Get_Buffer_Factory.Get_Holder (File);
          Start_Loc      : constant Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Proposal.Span.first);
+             (Holder.Editor, Proposal.Span.start);
          End_Loc        : constant Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Proposal.Span.last);
+             (Holder.Editor, Proposal.Span.an_end);
       begin
          Range_Start := (File, Line (Start_Loc), Column (Start_Loc));
          Range_End := (File, Line (End_Loc), Column (End_Loc));
@@ -519,12 +517,7 @@ package body GPS.LSP_Client.Completion is
    function Get_Detail
      (Item : CompletionItem) return VSS.Strings.Virtual_String is
    begin
-      if Item.detail.Is_Set then
-         return Item.detail.Value;
-
-      else
-         return VSS.Strings.Empty_Virtual_String;
-      end if;
+      return Item.detail;
    end Get_Detail;
 
    -----------------------
@@ -537,10 +530,10 @@ package body GPS.LSP_Client.Completion is
       --  When set, extract the documentation, either in plain text or
       --  markdown format.
       if Item.documentation.Is_Set then
-         if Item.documentation.Value.Is_String then
-            return Item.documentation.Value.String;
+         if Item.documentation.Value.Is_Virtual_String then
+            return Item.documentation.Value.Virtual_String;
          else
-            return Item.documentation.Value.Content.value;
+            return Item.documentation.Value.MarkupContent.value;
          end if;
       end if;
 
@@ -583,17 +576,17 @@ package body GPS.LSP_Client.Completion is
             Lang     : constant Language_Access :=
               Kernel.Get_Language_Handler.Get_Language_By_Name
                 (VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
-            Command  : constant LSP.Messages.Command := Proposal.Command.Value;
+            Command  : constant LSP.Structures.Command :=
+              Proposal.Command.Value;
             Request  : Code_Actions.Execute_Command_Request_Access :=
               new Code_Actions.Execute_Command_Request'
                 (LSP_Request
                  with
                    Kernel => Kernel,
                    Params =>
-                     (Is_Unknown => True,
-                      Base       => (workDoneToken => (Is_Set => False)),
-                      command    => Command.command,
-                      arguments  => Command.arguments));
+                     (command   => Command.command,
+                      arguments => Command.arguments,
+                      others    => <>));
          begin
             Code_Actions.Dialog.Execute_Request_Via_Dialog
               (Kernel => Kernel, Lang => Lang, Request => Request);
@@ -690,7 +683,7 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Result_Message
      (Self   : in out LSP_Completion_Request;
-      Result : LSP.Messages.CompletionList)
+      Result : LSP.Structures.CompletionList)
    is
       Component : constant LSP_Completion_Component :=
         LSP_Completion_Component'(Resolver => Self.Resolver);
@@ -714,15 +707,20 @@ package body GPS.LSP_Client.Completion is
       Trace
         (Advanced_Me,
          "completions received, ID "
-         & VSS.Strings.Conversions.To_UTF_8_String
-             (To_Virtual_String (Self.Id))
+         & (case Self.Id.Is_Integer is
+              when True  => Integer'Image (Self.Id.Integer),
+              when False =>
+                VSS.Strings.Conversions.To_UTF_8_String
+                  (Self.Id.Virtual_String))
          & ": "
          & Integer (Result.items.Length)'Img);
       Trace (Advanced_Me, "Is list incomplete: " & Result.isIncomplete'Img);
 
       Self.Resolver.Completions :=
         CompletionList'
-          (isIncomplete => Result.isIncomplete, items => Result.items.Copy);
+          (isIncomplete => Result.isIncomplete,
+           items        => Result.items.Copy,
+           others       => <>);
 
       Append (Self.Result, Component);
 
@@ -764,9 +762,8 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       pragma Unreferenced (Self);
 
@@ -790,7 +787,7 @@ package body GPS.LSP_Client.Completion is
    overriding
    procedure On_Result_Message
      (Self   : in out LSP_CompletionItem_Resolve_Request;
-      Result : LSP.Messages.CompletionItem)
+      Result : LSP.Structures.CompletionItem)
    is
       Window : constant Completion_Display_Interface_Access :=
         Get_Completion_Display;
@@ -867,22 +864,22 @@ package body GPS.LSP_Client.Completion is
                    and then Item.textEdit.Value.Is_TextEdit
                  then Item.textEdit.Value.TextEdit.newText
                  else
-                   (if Item.insertText.Is_Set
-                    then Item.insertText.Value
+                   (if not Item.insertText.Is_Empty
+                    then Item.insertText
                     else Item.label)),
               Span                 =>
                 (if Item.textEdit.Is_Set
                    and then Item.textEdit.Value.Is_TextEdit
-                 then Item.textEdit.Value.TextEdit.span
-                 else Empty_Span),
+                 then Item.textEdit.Value.TextEdit.a_range
+                 else LSP.Constants.Empty),
               Label                => Item.label,
               Sort_Text            =>
-                (if Item.sortText.Is_Set
-                 then Item.sortText.Value
+                (if not Item.sortText.Is_Empty
+                 then Item.sortText
                  else Item.label),
               Filter_Text          =>
-                (if Item.filterText.Is_Set
-                 then Item.filterText.Value
+                (if not Item.filterText.Is_Empty
+                 then Item.filterText
                  else Item.label),
               Detail               => Get_Detail (Item),
               Highlightable_Detail => It.Resolver.Lang_Name = "ada",
@@ -998,8 +995,11 @@ package body GPS.LSP_Client.Completion is
          Trace
            (Advanced_Me,
             "queriying completions with ID "
-            & VSS.Strings.Conversions.To_UTF_8_String
-                (To_Virtual_String (Request.Id)));
+            & (if Request.Id.Is_Integer
+               then Request.Id.Integer'Image
+               else
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (Request.Id.Virtual_String)));
       end if;
    end Query_Completion_List;
 
@@ -1149,23 +1149,20 @@ package body GPS.LSP_Client.Completion is
       --  triggerCharacters list, if any.
 
       declare
-         Capabilities : constant LSP.Messages.ServerCapabilities :=
+         Capabilities : constant LSP.Structures.ServerCapabilities :=
            Server.Get_Client.Capabilities;
 
       begin
          if Capabilities.completionProvider.Is_Set then
             declare
                S                  : VSS.Strings.Virtual_String;
-               Completion_Options : LSP.Messages.CompletionOptions renames
+               Completion_Options : LSP.Structures.CompletionOptions renames
                  Capabilities.completionProvider.Value;
 
             begin
                S.Append (C);
 
-               return
-                 Completion_Options.triggerCharacters.Is_Set
-                 and then
-                   Completion_Options.triggerCharacters.Value.Contains (S);
+               return Completion_Options.triggerCharacters.Contains (S);
             end;
          end if;
       end;

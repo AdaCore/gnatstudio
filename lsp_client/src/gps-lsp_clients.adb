@@ -22,6 +22,7 @@ with Interfaces;
 with GNAT.OS_Lib;
 
 with VSS.JSON.Pull_Readers.Simple;
+with VSS.JSON.Push_Writers;
 with VSS.JSON.Streams;
 with VSS.Stream_Element_Vectors.Conversions;
 with VSS.String_Vectors;
@@ -32,8 +33,12 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
+with LSP.Constants;
+with LSP.Enumerations;
+with LSP.Errors;
 with LSP.JSON_Streams;
-with LSP.Messages;
+with LSP.Progress_Report_Readers;
+with LSP.Progress_Reports;
 
 with GPS.Editors;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -41,6 +46,7 @@ with GPS.Kernel.Project;
 with GPS.LSP_Client.Editors.Semantic_Tokens;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Partial_Results;
+with GPS.LSP_Client.Requests.Symbols;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients.Shutdowns;
 
@@ -78,6 +84,16 @@ package body GPS.LSP_Clients is
    procedure Clear_Change_Requests
      (Self : in out LSP_Client'Class; File : Virtual_File);
    --  Remove any pending change request for the given file
+
+   function To_Token
+     (Id : LSP.Structures.Integer_Or_Virtual_String)
+      return LSP.Structures.ProgressToken
+   is (case Id.Is_Integer is
+         when True  => (Is_Integer => True, Integer => Id.Integer),
+         when False =>
+           (Is_Integer => False, Virtual_String => Id.Virtual_String));
+   --  LSP.Structures.Integer_Or_Virtual_String and LSP.Structures.
+   --  ProgressToken have the same shape but are distinct types.
 
    package LSP_Client_Sources is new
      Glib.Main.Generic_Sources (LSP_Client_Access);
@@ -136,8 +152,8 @@ package body GPS.LSP_Clients is
 
       declare
          Position      : Request_Maps.Cursor := Self.Requests.First;
-         Request_Id    : LSP.Types.LSP_Number_Or_String;
-         Partial_Token : LSP.Types.LSP_Number_Or_String;
+         Request_Id    : LSP.Structures.Integer_Or_Virtual_String;
+         Partial_Token : LSP.Structures.ProgressToken;
          Item          : Command;
 
       begin
@@ -196,7 +212,8 @@ package body GPS.LSP_Clients is
    -------------------------
 
    function Get_Running_Request
-     (Self : LSP_Client'Class; Request_Id : LSP.Types.LSP_Number_Or_String)
+     (Self       : LSP_Client'Class;
+      Request_Id : LSP.Structures.Integer_Or_Virtual_String)
       return GPS.LSP_Client.Requests.Request_Access is
    begin
       if not Self.Requests.Contains (Request_Id) then
@@ -227,7 +244,7 @@ package body GPS.LSP_Clients is
    ------------------
 
    function Capabilities
-     (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities is
+     (Self : LSP_Client'Class) return LSP.Structures.ServerCapabilities is
    begin
       return Self.Server_Capabilities;
    end Capabilities;
@@ -313,20 +330,19 @@ package body GPS.LSP_Clients is
       end if;
    end Enqueue;
 
-   -------------------------
-   -- Initialize_Response --
-   -------------------------
+   -----------------------------
+   -- On_Initialize_Response --
+   -----------------------------
 
    overriding
-   procedure Initialize_Response
-     (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number_Or_String;
-      Response : LSP.Messages.Server_Responses.Initialize_Response)
+   procedure On_Initialize_Response
+     (Self  : in out Response_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.InitializeResult)
    is
-      pragma Unreferenced (Request);
+      pragma Unreferenced (Id);
 
-      Capabilities : LSP.Messages.ServerCapabilities :=
-        Response.result.capabilities;
+      Capabilities : LSP.Structures.ServerCapabilities := Value.capabilities;
    begin
       if Self.Client.On_Server_Capabilities /= null then
          Self.Client.On_Server_Capabilities (Capabilities);
@@ -335,17 +351,18 @@ package body GPS.LSP_Clients is
       Self.Client.Server_Capabilities := Capabilities;
 
       if Capabilities.textDocumentSync.Is_Set then
-         if Capabilities.textDocumentSync.Is_Number then
-            case Capabilities.textDocumentSync.Value is
-               when LSP.Messages.None        =>
+         if not Capabilities.textDocumentSync.Value.Is_TextDocumentSyncOptions
+         then
+            case Capabilities.textDocumentSync.Value.TextDocumentSyncKind is
+               when LSP.Enumerations.None        =>
                   Self.Client.Text_Document_Synchronization :=
                     GPS.LSP_Client.Text_Documents.Full;
 
-               when LSP.Messages.Full        =>
+               when LSP.Enumerations.Full        =>
                   Self.Client.Text_Document_Synchronization :=
                     GPS.LSP_Client.Text_Documents.Full;
 
-               when LSP.Messages.Incremental =>
+               when LSP.Enumerations.Incremental =>
                   Self.Client.Text_Document_Synchronization :=
                     GPS.LSP_Client.Text_Documents.Incremental;
             end case;
@@ -360,75 +377,157 @@ package body GPS.LSP_Clients is
            GPS.LSP_Client.Text_Documents.Full;
       end if;
 
-      --  Retrieve the server's log file, if any
-      if Response.result.serverInfo.Is_Set
-        and then Response.result.serverInfo.Value.log_filename.Is_Set
-      then
-         Self.Client.Standard_Errors_File :=
-           Create
-             (+VSS.Strings.Conversions.To_UTF_8_String
-                 (Response.result.serverInfo.Value.log_filename.Value));
-      end if;
-
       Self.Client.Is_Ready := True;
-      Self.Client.On_Initialized_Notification;
+      Self.Client.Send_Notification.On_Initialized_Notification
+        ((null record));
 
       Self.Client.Listener.On_Server_Started;
 
       Process_Command_Queue (Self.Client.all);
-   end Initialize_Response;
+   end On_Initialize_Response;
 
-   --------------------------
-   -- Workspace_Apply_Edit --
-   --------------------------
+   ---------------------------
+   -- On_ApplyEdit_Request --
+   ---------------------------
+
+   function To_Kernel_Handle
+     (Self : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GPS.Kernel.Kernel_Handle
+   is (GPS.Kernel.Kernel_Handle (Self));
+   --  Self.Client.Kernel (an access discriminant) cannot be converted to
+   --  the named Kernel_Handle type directly, even though it was itself
+   --  built from a Kernel_Handle when the LSP_Client was constructed and
+   --  is guaranteed to outlive this handler. Routing the value through a
+   --  regular anonymous-access parameter first makes the conversion legal.
 
    overriding
-   procedure Workspace_Apply_Edit
-     (Self    : not null access Request_Handler;
-      Request : LSP.Types.LSP_Number_Or_String;
-      Params  : LSP.Messages.ApplyWorkspaceEditParams)
+   procedure On_ApplyEdit_Request
+     (Self  : in out Request_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.ApplyWorkspaceEditParams)
    is
       On_Error : Boolean;
    begin
       GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel                   =>
-           GPS.Kernel.Kernel_Handle (Self.Client.Kernel),
-         Workspace_Edit           => Params.edit,
+        (Kernel                   => To_Kernel_Handle (Self.Client.Kernel),
+         Workspace_Edit           => Value.edit,
          Title                    => "Apply Workspace Edit",
          Make_Writable            => False,
          Auto_Save                => False,
          Allow_File_Renaming      => False,
-         Locations_Message_Markup =>
-           (if Params.label.Is_Set then Params.label.Value else ""),
+         Locations_Message_Markup => Value.label,
          Error                    => On_Error);
 
       declare
-         Failure : LSP.Types.Optional_Virtual_String (Is_Set => On_Error);
+         Result : LSP.Structures.ApplyWorkspaceEditResult;
 
       begin
+         Result.applied := not On_Error;
+
          if On_Error then
-            Failure.Value := "Internal error";
+            Result.failureReason := "Internal error";
          end if;
 
-         Self.Client.Workspace_Apply_Edit (Request, Failure);
+         Self.Client.Send_Response.On_ApplyEdit_Response (Id, Result);
          Self.Client.Listener.On_Response_Sent
            (To_Unbounded_String ("ApplyWorkspaceEditResponse"));
       end;
-   end Workspace_Apply_Edit;
+   end On_ApplyEdit_Request;
 
-   --------------------------------------
-   -- Window_Work_Done_Progress_Create --
-   --------------------------------------
+   --------------------------------
+   -- On_Progress_Create_Request --
+   --------------------------------
 
    overriding
-   procedure Window_Work_Done_Progress_Create
-     (Self    : not null access Request_Handler;
-      Request : LSP.Types.LSP_Number_Or_String;
-      Params  : LSP.Messages.WorkDoneProgressCreateParams) is
+   procedure On_Progress_Create_Request
+     (Self  : in out Request_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.WorkDoneProgressCreateParams)
+   is
+      pragma Unreferenced (Value);
    begin
       --  Do nothing here except send an empty response to the server
-      Self.Client.Void_Response (Request);
-   end Window_Work_Done_Progress_Create;
+      Self.Client.Send_Response.On_Progress_Create_Response
+        (Id, (null record));
+   end On_Progress_Create_Request;
+
+   ------------------------------
+   -- On_Symbol_Partial_Result --
+   ------------------------------
+
+   overriding
+   procedure On_Symbol_Partial_Result
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.Symbol_Progress_Report)
+   is
+      use type GPS.LSP_Client.Requests.Request_Access;
+      use type LSP.Structures.Symbol_Progress_Report_Variant;
+
+      Position : constant Partial_Token_Maps.Cursor :=
+        Self.Client.Partials.Find (Token);
+      Request  : GPS.LSP_Client.Requests.Request_Access;
+
+   begin
+      if not Partial_Token_Maps.Has_Element (Position)
+        or else Value.Kind /= LSP.Structures.Variant_1
+      then
+         return;
+      end if;
+
+      Request :=
+        Self.Client.Get_Running_Request
+          (Partial_Token_Maps.Element (Position));
+
+      if Request /= null
+        and then
+          Request.all
+          in GPS.LSP_Client.Requests.Symbols.Abstract_Symbol_Request'Class
+      then
+         GPS.LSP_Client.Requests.Symbols.Abstract_Symbol_Request'Class
+           (Request.all)
+           .On_Partial_Result_Message (Value.Variant_1);
+      end if;
+   end On_Symbol_Partial_Result;
+
+   --------------------------------
+   -- On_ProgressBegin_Work_Done --
+   --------------------------------
+
+   overriding
+   procedure On_ProgressBegin_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressBegin) is
+   begin
+      Self.Client.Listener.On_Progress_Begin (Token, Value);
+   end On_ProgressBegin_Work_Done;
+
+   ---------------------------------
+   -- On_ProgressReport_Work_Done --
+   ---------------------------------
+
+   overriding
+   procedure On_ProgressReport_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressReport) is
+   begin
+      Self.Client.Listener.On_Progress_Report (Token, Value);
+   end On_ProgressReport_Work_Done;
+
+   ------------------------------
+   -- On_ProgressEnd_Work_Done --
+   ------------------------------
+
+   overriding
+   procedure On_ProgressEnd_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressEnd) is
+   begin
+      Self.Client.Listener.On_Progress_End (Token, Value);
+   end On_ProgressEnd_Work_Done;
 
    --------------
    -- Is_Ready --
@@ -462,10 +561,9 @@ package body GPS.LSP_Clients is
    -- On_Exit_Notification --
    --------------------------
 
-   overriding
-   procedure On_Exit_Notification (Self : access LSP_Client) is
+   procedure On_Exit_Notification (Self : in out LSP_Client'Class) is
    begin
-      LSP.Clients_3_16.Client (Self.all).On_Exit_Notification;
+      Self.Send_Notification.On_Exits_Notification;
       Self.Exiting := True;
    end On_Exit_Notification;
 
@@ -481,7 +579,7 @@ package body GPS.LSP_Clients is
          GNATCOLL.VFS.Write (Self.Errors_Writable_File, Text);
 
       else
-         LSP.Clients_3_16.Client (Self).On_Standard_Error_Message (Text);
+         LSP.Clients.Client (Self).On_Standard_Error_Message (Text);
       end if;
    end On_Standard_Error_Message;
 
@@ -521,13 +619,23 @@ package body GPS.LSP_Clients is
       pragma Unreferenced (Success);
 
       procedure Look_Ahead
-        (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_Virtual_String;
-         Token      : out LSP.Messages.Optional_ProgressToken;
-         error      : out LSP.Messages.Optional_ResponseError;
+        (Id         : out LSP.Structures.Integer_Or_Virtual_String;
+         Id_Found   : out Boolean;
+         Method     : out VSS.Strings.Virtual_String;
+         Token      : out LSP.Structures.ProgressToken_Optional;
+         error      : out LSP.Errors.ResponseError_Optional;
          Has_Result : out Boolean);
       --  Parse message to find significant fields of the message: "id",
       --  "method", "error", and "result". First three are unparsed too.
+
+      procedure Look_Ahead_Work_Done_Progress_Kind
+        (Method_Name : out VSS.Strings.Virtual_String);
+      --  Parse a "$/progress" notification's "params"."value"."kind" field
+      --  to determine which generated WorkDoneProgress* message this is.
+      --  This uses a Reader dedicated to this single pass: a
+      --  JSON_Simple_Pull_Reader cannot be reused across passes, since
+      --  Set_Stream only rebinds the input stream and does not reset the
+      --  parser's own internal state.
 
       Text_Stream :
         aliased VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
@@ -537,22 +645,22 @@ package body GPS.LSP_Clients is
       ----------------
 
       procedure Look_Ahead
-        (Id         : out LSP.Types.LSP_Number_Or_String;
-         Method     : out LSP.Types.Optional_Virtual_String;
-         Token      : out LSP.Messages.Optional_ProgressToken;
-         error      : out LSP.Messages.Optional_ResponseError;
+        (Id         : out LSP.Structures.Integer_Or_Virtual_String;
+         Id_Found   : out Boolean;
+         Method     : out VSS.Strings.Virtual_String;
+         Token      : out LSP.Structures.ProgressToken_Optional;
+         error      : out LSP.Errors.ResponseError_Optional;
          Has_Result : out Boolean)
       is
          use all type VSS.JSON.Streams.JSON_Stream_Element_Kind;
 
-         Reader   :
-           aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-         JS       :
+         Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
+         JS     :
            aliased LSP.JSON_Streams.JSON_Stream
                      (False, Reader'Unchecked_Access);
-         Id_Found : Boolean := False;
 
       begin
+         Id_Found := False;
          Reader.Set_Stream (Text_Stream'Unchecked_Access);
          JS.R.Read_Next;
          pragma Assert (JS.R.Is_Start_Document);
@@ -589,13 +697,14 @@ package body GPS.LSP_Clients is
                   case JS.R.Element_Kind is
                      when String_Value =>
                         Id :=
-                          (Is_Number => False, String => JS.R.String_Value);
+                          (Is_Integer     => False,
+                           Virtual_String => JS.R.String_Value);
 
                      when Number_Value =>
                         Id :=
-                          (Is_Number => True,
-                           Number    =>
-                             LSP.Types.LSP_Number
+                          (Is_Integer => True,
+                           Integer    =>
+                             Standard.Integer
                                (JS.R.Number_Value.Integer_Value));
 
                      when others       =>
@@ -607,14 +716,55 @@ package body GPS.LSP_Clients is
                elsif Key = "method" then
                   pragma Assert (JS.R.Is_String_Value);
 
-                  Method := (True, JS.R.String_Value);
+                  Method := JS.R.String_Value;
 
                   exit when Id_Found;
 
                   JS.R.Read_Next;
 
                elsif Key = "error" then
-                  LSP.Messages.Optional_ResponseError'Read (JS'Access, error);
+                  pragma Assert (JS.R.Is_Start_Object);
+
+                  JS.R.Read_Next;
+
+                  declare
+                     Code    : LSP.Enumerations.ErrorCodes := 0;
+                     Message : VSS.Strings.Virtual_String;
+
+                  begin
+                     while not JS.R.Is_End_Object loop
+                        pragma Assert (JS.R.Is_Key_Name);
+
+                        declare
+                           Error_Key : constant String :=
+                             VSS.Strings.Conversions.To_UTF_8_String
+                               (JS.R.Key_Name);
+
+                        begin
+                           JS.R.Read_Next;
+
+                           if Error_Key = "code" then
+                              Code :=
+                                LSP.Enumerations.ErrorCodes
+                                  (JS.R.Number_Value.Integer_Value);
+                              JS.R.Read_Next;
+
+                           elsif Error_Key = "message" then
+                              Message := JS.R.String_Value;
+                              JS.R.Read_Next;
+
+                           else
+                              JS.Skip_Value;
+                           end if;
+                        end;
+                     end loop;
+
+                     error :=
+                       (Is_Set => True,
+                        Value  => (code => Code, message => Message));
+                  end;
+
+                  JS.R.Read_Next;
                   --  Just need to report the error, stop here
 
                   exit when Id_Found;
@@ -652,16 +802,16 @@ package body GPS.LSP_Clients is
                                  Token :=
                                    (Is_Set => True,
                                     Value  =>
-                                      (Is_Number => False,
-                                       String    => JS.R.String_Value));
+                                      (Is_Integer     => False,
+                                       Virtual_String => JS.R.String_Value));
 
                               when Number_Value =>
                                  Token :=
                                    (Is_Set => True,
                                     Value  =>
-                                      (Is_Number => True,
-                                       Number    =>
-                                         LSP.Types.LSP_Number
+                                      (Is_Integer => True,
+                                       Integer    =>
+                                         Standard.Integer
                                            (JS.R.Number_Value.Integer_Value)));
 
                               when others       =>
@@ -684,21 +834,105 @@ package body GPS.LSP_Clients is
          Text_Stream.Rewind;
       end Look_Ahead;
 
-      Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-      Stream :
+      -----------------------------------------
+      -- Look_Ahead_Work_Done_Progress_Kind --
+      -----------------------------------------
+
+      procedure Look_Ahead_Work_Done_Progress_Kind
+        (Method_Name : out VSS.Strings.Virtual_String)
+      is
+         Reader    :
+           aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
+         JS        :
+           aliased LSP.JSON_Streams.JSON_Stream
+                     (False, Reader'Unchecked_Access);
+         Kind_Name : VSS.Strings.Virtual_String;
+
+      begin
+         Method_Name := VSS.Strings.Empty_Virtual_String;
+
+         Reader.Set_Stream (Text_Stream'Unchecked_Access);
+
+         loop
+            JS.R.Read_Next;
+
+            exit when
+              JS.R.Is_Key_Name
+              and then
+                VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name)
+                = "params";
+         end loop;
+
+         JS.R.Read_Next;
+         pragma Assert (JS.R.Is_Start_Object);
+         JS.R.Read_Next;
+
+         while not JS.R.Is_End_Object loop
+            pragma Assert (JS.R.Is_Key_Name);
+
+            declare
+               Param_Key : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+
+            begin
+               JS.R.Read_Next;
+
+               if Param_Key = "value" then
+                  pragma Assert (JS.R.Is_Start_Object);
+                  JS.R.Read_Next;
+
+                  while not JS.R.Is_End_Object loop
+                     pragma Assert (JS.R.Is_Key_Name);
+
+                     declare
+                        Value_Key : constant String :=
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (JS.R.Key_Name);
+
+                     begin
+                        JS.R.Read_Next;
+
+                        if Value_Key = "kind" then
+                           Kind_Name := JS.R.String_Value;
+                        end if;
+
+                        JS.Skip_Value;
+                     end;
+                  end loop;
+
+               else
+                  JS.Skip_Value;
+               end if;
+            end;
+         end loop;
+
+         Text_Stream.Rewind;
+
+         if Kind_Name = "begin" then
+            Method_Name := "WorkDoneProgressBegin";
+         elsif Kind_Name = "report" then
+            Method_Name := "WorkDoneProgressReport";
+         elsif Kind_Name = "end" then
+            Method_Name := "WorkDoneProgressEnd";
+         end if;
+      end Look_Ahead_Work_Done_Progress_Kind;
+
+      Reader   : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
+      Stream   :
         aliased LSP.JSON_Streams.JSON_Stream
                   (Is_Server_Side => False, R => Reader'Unchecked_Access);
-      Id     : LSP.Types.LSP_Number_Or_String;
-      Token  : LSP.Messages.Optional_ProgressToken;
-      Method : LSP.Types.Optional_Virtual_String;
+      Id       : LSP.Structures.Integer_Or_Virtual_String;
+      Id_Found : Boolean;
+      Token    : LSP.Structures.ProgressToken_Optional;
+      Method   : VSS.Strings.Virtual_String;
 
       Request_Position : Request_Maps.Cursor;
-      Partial_Position : Request_Id_Maps.Cursor;
+      Partial_Position : Partial_Token_Maps.Cursor;
       Request          : GPS.LSP_Client.Requests.Request_Access := null;
       Req_Method       : VSS.Strings.Virtual_String;
       --  The method for the request to which this response corresponds, if any
 
-      error      : LSP.Messages.Optional_ResponseError;
+      error      : LSP.Errors.ResponseError_Optional;
       Processed  : Boolean := False;
       Has_Result : Boolean := False;
 
@@ -707,9 +941,9 @@ package body GPS.LSP_Clients is
         (VSS.Stream_Element_Vectors.Conversions.Unchecked_From_Unbounded_String
            (Data));
 
-      Look_Ahead (Id, Method, Token, error, Has_Result);
+      Look_Ahead (Id, Id_Found, Method, Token, error, Has_Result);
 
-      if LSP.Types.Assigned (Id) and not Method.Is_Set then
+      if Id_Found and Method.Is_Empty then
          --  Process response message when request was send by this object
 
          Request_Position := Self.Requests.Find (Id);
@@ -750,9 +984,7 @@ package body GPS.LSP_Clients is
             if error.Is_Set then
                begin
                   Request.On_Error_Message
-                    (Code    => error.Value.code,
-                     Message => error.Value.message,
-                     Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
+                    (Code => error.Value.code, Message => error.Value.message);
 
                exception
                   when E : others =>
@@ -788,7 +1020,7 @@ package body GPS.LSP_Clients is
                   if Request.Kernel = null
                     or else not Request.Kernel.Is_In_Destruction
                   then
-                     Request.On_Result_Message (Stream'Access);
+                     Request.On_Result_Message (Reader);
                   end if;
 
                exception
@@ -813,53 +1045,31 @@ package body GPS.LSP_Clients is
             Processed := True;
          end if;
 
-      elsif Method.Is_Set
-        and then Method.Value = "$/progress"
+      elsif not Method.Is_Empty
+        and then Method = "$/progress"
         and then Token.Is_Set
       then
-         --  Partial result notification
+         --  Partial result notification, or generic work-done progress
+         --  notification not tied to any of our own pending requests.
 
          Partial_Position := Self.Partials.Find (Token.Value);
 
-         if Request_Id_Maps.Has_Element (Partial_Position) then
+         if Partial_Token_Maps.Has_Element (Partial_Position) then
             Request_Position :=
-              Self.Requests.Find (Request_Id_Maps.Element (Partial_Position));
+              Self.Requests.Find
+                (Partial_Token_Maps.Element (Partial_Position));
 
             if Request_Maps.Has_Element (Request_Position) then
                Request := Request_Maps.Element (Request_Position);
 
                Reader.Set_Stream (Text_Stream'Unchecked_Access);
 
-               --  Rewind Stream to "params"."value" key
+               --  Rewind Reader to the start of the message: Read_Progress_
+               --  Report (below) expects to be positioned on the top-level
+               --  message object and parses the "jsonrpc"/"method"/"params"
+               --  keys (and, inside "params", "token"/"value") itself.
 
-               Outer : loop
-                  Stream.R.Read_Next;
-
-                  if Stream.R.Is_Key_Name
-                    and then
-                      VSS.Strings.Conversions.To_UTF_8_String
-                        (Stream.R.Key_Name)
-                      = "params"
-                  then
-                     Stream.R.Read_Next;
-                     pragma Assert (Stream.R.Is_Start_Object);
-
-                     Stream.R.Read_Next;
-
-                     loop
-                        pragma Assert (Stream.R.Is_Key_Name);
-
-                        exit Outer when
-                          VSS.Strings.Conversions.To_UTF_8_String
-                            (Stream.R.Key_Name)
-                          = "value";
-
-                        Stream.R.Read_Next;
-                        Stream.Skip_Value;
-                     end loop;
-                  end if;
-               end loop Outer;
-
+               Stream.R.Read_Next;
                Stream.R.Read_Next;
 
                declare
@@ -869,11 +1079,9 @@ package body GPS.LSP_Clients is
                   if Request.Kernel = null
                     or else not Request.Kernel.Is_In_Destruction
                   then
-                     GPS
-                       .LSP_Client
-                       .Partial_Results
-                       .LSP_Request_Partial_Result'Class (Request.all)
-                       .On_Partial_Result_Message (Stream'Access);
+                     LSP.Progress_Report_Readers.Read_Progress_Report
+                       (Reader, Request.Method)
+                       .Visit_Receiver (Self.Progress_Handler);
                   end if;
 
                exception
@@ -885,8 +1093,38 @@ package body GPS.LSP_Clients is
                pragma
                  Assert
                    (Self.Canceled_Requests.Contains
-                      (Request_Id_Maps.Element (Partial_Position)));
+                      (Partial_Token_Maps.Element (Partial_Position)));
             end if;
+
+            Processed := True;
+
+         else
+            --  Not one of our own pending requests: this is a generic
+            --  work-done progress notification (e.g. background indexing).
+
+            declare
+               Method_Name : VSS.Strings.Virtual_String;
+
+            begin
+               Look_Ahead_Work_Done_Progress_Kind (Method_Name);
+
+               if not Method_Name.Is_Empty then
+                  Reader.Set_Stream (Text_Stream'Unchecked_Access);
+
+                  --  Rewind Reader to the start of the message:
+                  --  Read_Progress_Report (below) expects to be positioned
+                  --  on the top-level message object and parses the
+                  --  "jsonrpc"/"method"/"params" keys (and, inside
+                  --  "params", "token"/"value") itself.
+
+                  Stream.R.Read_Next;
+                  Stream.R.Read_Next;
+
+                  LSP.Progress_Report_Readers.Read_Progress_Report
+                    (Reader, Method_Name)
+                    .Visit_Receiver (Self.Progress_Handler);
+               end if;
+            end;
 
             Processed := True;
          end if;
@@ -921,7 +1159,7 @@ package body GPS.LSP_Clients is
             OK : Boolean := True;
 
          begin
-            LSP.Clients_3_16.Client (Self).On_Raw_Message (Data, OK);
+            LSP.Clients.Client (Self).On_Raw_Message (Data, OK);
 
             if not OK then
                if Self.Is_Ready then
@@ -1014,37 +1252,36 @@ package body GPS.LSP_Clients is
    procedure On_Started (Self : in out LSP_Client) is
 
       function Get_Completion_Documentation_Formats
-         return LSP.Messages.MarkupKind_Vector;
+         return LSP.Structures.MarkupKind_Vector;
 
       function Get_CompletionItem_Resolve_Properties
          return VSS.String_Vectors.Virtual_String_Vector;
 
       function Get_Supported_ResourceOperations
-         return LSP.Messages.ResourceOperationKindSet;
+         return LSP.Structures.ResourceOperationKind_Set;
 
       function Get_Supported_CodeActionKinds
-         return LSP.Messages.CodeActionKindSet;
+         return LSP.Structures.CodeActionKind_Set;
 
-      function Get_Supported_Symbols return LSP.Messages.SymbolKindSet;
+      function Get_Supported_Symbols return LSP.Structures.SymbolKind_Set;
 
-      function Get_Experimental_Features return LSP.Types.LSP_Any;
+      function Get_Experimental_Features return LSP.Structures.LSPAny;
       --  Return the selection of experimental features that are supported
 
       -------------------------------
       -- Get_Experimental_Features --
       -------------------------------
 
-      function Get_Experimental_Features return LSP.Types.LSP_Any is
+      function Get_Experimental_Features return LSP.Structures.LSPAny is
          --  Craft something like:
          --     {"advanced_refactorings":["add_parameter"
          use GNATCOLL.JSON;
-         use LSP.Types;
-         Result       : constant LSP_Any := Create_Object;
+         Result       : constant JSON_Value := Create_Object;
          Refactorings : JSON_Array;
       begin
          Refactorings.Append (Create ("add_parameter"));
          Result.Set_Field ("advanced_refactorings", Refactorings);
-         return Result;
+         return GPS.LSP_Client.Utilities.To_LSP_Any (Result);
       end Get_Experimental_Features;
 
       ------------------------------------------
@@ -1052,12 +1289,12 @@ package body GPS.LSP_Clients is
       ------------------------------------------
 
       function Get_Completion_Documentation_Formats
-         return LSP.Messages.MarkupKind_Vector
+         return LSP.Structures.MarkupKind_Vector
       is
-         Completion_Doc_Format : LSP.Messages.MarkupKind_Vector;
+         Completion_Doc_Format : LSP.Structures.MarkupKind_Vector;
       begin
-         Completion_Doc_Format.Append (LSP.Messages.plaintext);
-         Completion_Doc_Format.Append (LSP.Messages.markdown);
+         Completion_Doc_Format.Append (LSP.Enumerations.PlainText);
+         Completion_Doc_Format.Append (LSP.Enumerations.Markdown);
 
          return Completion_Doc_Format;
       end Get_Completion_Documentation_Formats;
@@ -1082,18 +1319,9 @@ package body GPS.LSP_Clients is
       --------------------------------------
 
       function Get_Supported_ResourceOperations
-         return LSP.Messages.ResourceOperationKindSet
-      is
-         Result : LSP.Messages.ResourceOperationKindSets.Set;
+         return LSP.Structures.ResourceOperationKind_Set is
       begin
-         LSP.Messages.ResourceOperationKindSets.Include
-           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.create));
-         LSP.Messages.ResourceOperationKindSets.Include
-           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.rename));
-         LSP.Messages.ResourceOperationKindSets.Include
-           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.delete));
-
-         return LSP.Messages.ResourceOperationKindSet (Result);
+         return (others => True);
       end Get_Supported_ResourceOperations;
 
       -----------------------------------
@@ -1101,29 +1329,28 @@ package body GPS.LSP_Clients is
       -----------------------------------
 
       function Get_Supported_CodeActionKinds
-         return LSP.Messages.CodeActionKindSet
+         return LSP.Structures.CodeActionKind_Set
       is
-         Result : LSP.Messages.CodeActionKindSets.Set;
+         Result : LSP.Structures.CodeActionKind_Set;
       begin
-         for Kind in LSP.Messages.CodeActionKind loop
-            LSP.Messages.CodeActionKindSets.Include (Result, Kind);
-         end loop;
+         Result.Append (LSP.Enumerations.QuickFix);
+         Result.Append (LSP.Enumerations.Refactor);
+         Result.Append (LSP.Enumerations.RefactorExtract);
+         Result.Append (LSP.Enumerations.RefactorInline);
+         Result.Append (LSP.Enumerations.RefactorRewrite);
+         Result.Append (LSP.Enumerations.Source);
+         Result.Append (LSP.Enumerations.SourceOrganizeImports);
 
-         return LSP.Messages.CodeActionKindSet (Result);
+         return Result;
       end Get_Supported_CodeActionKinds;
 
       ---------------------------
       -- Get_Supported_Symbols --
       ---------------------------
 
-      function Get_Supported_Symbols return LSP.Messages.SymbolKindSet is
-         Result : LSP.Messages.SymbolKindSets.Set;
+      function Get_Supported_Symbols return LSP.Structures.SymbolKind_Set is
       begin
-         for Kind in LSP.Messages.SymbolKind loop
-            LSP.Messages.SymbolKindSets.Include (Result, Kind);
-         end loop;
-
-         return LSP.Messages.SymbolKindSet (Result);
+         return (others => True);
       end Get_Supported_Symbols;
 
       Root   : constant GNATCOLL.VFS.Virtual_File :=
@@ -1132,115 +1359,123 @@ package body GPS.LSP_Clients is
       --  project file is stored.
       --  ??? Must be synchronized with ada.projectFile passed in
       --  WorkspaceDidChangeConfiguration notification.
-      Id     : LSP.Types.LSP_Number_Or_String;
-      My_PID : constant LSP.Types.LSP_Number :=
-        LSP.Types.LSP_Number
-          (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
+      Id     : LSP.Structures.Integer_Or_Virtual_String;
+      My_PID : constant Standard.Integer :=
+        GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id);
 
-      Request : constant LSP.Messages.InitializeParams :=
-        (processId             => (True, My_PID),
+      Base : constant LSP.Structures.An_InitializeParams :=
+        (workDoneToken         => (Is_Set => False),
+         processId             => (Is_Null => False, Value => My_PID),
+         clientInfo            => (Is_Set => False),
+         locale                => VSS.Strings.Empty_Virtual_String,
          rootPath              => (Is_Set => False),
          rootUri               =>
-           (True,
-
-            LSP.Types.To_Virtual_String
-              (GPS.LSP_Client.Utilities.To_URI (Root))),
-         initializationOptions => Self.Initialization_Options,
+           (Is_Null => False, Value => GPS.LSP_Client.Utilities.To_URI (Root)),
          capabilities          =>
            (workspace    =>
-              (applyEdit      => LSP.Types.True,
-               workspaceEdit  =>
-                 (documentChanges    => (True, True),
-                  resourceOperations =>
-                    (True, Value => Get_Supported_ResourceOperations),
-                  others             => <>),
-               fileOperations =>
-                 (Is_Set => True,
-                  Value  => (didRename => (True, True), others => <>)),
-               symbol         =>
-                 (Is_Set => True,
-                  Value  =>
-                    (symbolKind =>
-                       (Is_Set => True,
-                        Value  =>
-                          (valueSet =>
-                             (Is_Set => True,
-                              Value  => Get_Supported_Symbols))),
-                     others     => <>)),
-               others         => <>),
-            textDocument =>
-              (hover              => (Is_Set => True, others => <>),
-               signatureHelp      => (Is_Set => True, others => <>),
-               declaration        => (Is_Set => True, others => <>),
-               definition         => (Is_Set => True, others => <>),
-               typeDefinition     => (Is_Set => True, others => <>),
-               implementation     => (Is_Set => True, others => <>),
-               publishDiagnostics =>
-                 (Is_Set => True,
-                  Value  =>
-                    (relatedInformation => (True, True), others => <>)),
-               codeAction         =>
-                 (Is_Set => True,
-                  Value  =>
-                    (codeActionLiteralSupport =>
-                       (Is_Set => True,
-                        Value  =>
-                          (codeActionKind =>
-                             (valueSet => Get_Supported_CodeActionKinds))),
-                     others                   => <>)),
-               completion         =>
-                 (dynamicRegistration => (Is_Set => True, Value => True),
-                  completionItem      =>
+              (Is_Set => True,
+               Value  =>
+                 (applyEdit      => LSP.Constants.True,
+                  workspaceEdit  =>
                     (Is_Set => True,
                      Value  =>
-                       (snippetSupport      =>
-                          (Is_Set => True, Value => LSP_Use_Snippets.Get_Pref),
-                        documentationFormat =>
-                          Get_Completion_Documentation_Formats,
-                        resolveSupport      =>
-                          (True,
-
-                           (properties =>
-                              Get_CompletionItem_Resolve_Properties)),
+                       (documentChanges    => LSP.Constants.True,
+                        resourceOperations => Get_Supported_ResourceOperations,
+                        others             => <>)),
+                  fileOperations =>
+                    (Is_Set => True,
+                     Value  =>
+                       (didRename => LSP.Constants.True, others => <>)),
+                  symbol         =>
+                    (Is_Set => True,
+                     Value  =>
+                       (symbolKind =>
+                          (Is_Set => True,
+                           Value  => (valueSet => Get_Supported_Symbols)),
+                        others     => <>)),
+                  others         => <>)),
+            textDocument =>
+              (Is_Set => True,
+               Value  =>
+                 (hover              => (Is_Set => True, others => <>),
+                  signatureHelp      => (Is_Set => True, others => <>),
+                  declaration        => (Is_Set => True, others => <>),
+                  definition         => (Is_Set => True, others => <>),
+                  typeDefinition     => (Is_Set => True, others => <>),
+                  implementation     => (Is_Set => True, others => <>),
+                  publishDiagnostics =>
+                    (Is_Set => True,
+                     Value  =>
+                       (relatedInformation => LSP.Constants.True,
+                        others             => <>)),
+                  codeAction         =>
+                    (Is_Set => True,
+                     Value  =>
+                       (codeActionLiteralSupport =>
+                          (Is_Set => True,
+                           Value  =>
+                             (codeActionKind =>
+                                (valueSet => Get_Supported_CodeActionKinds))),
+                        others                   => <>)),
+                  completion         =>
+                    (Is_Set => True,
+                     Value  =>
+                       (dynamicRegistration => LSP.Constants.True,
+                        completionItem      =>
+                          (Is_Set => True,
+                           Value  =>
+                             (snippetSupport      =>
+                                (Is_Set => True,
+                                 Value  => LSP_Use_Snippets.Get_Pref),
+                              documentationFormat =>
+                                Get_Completion_Documentation_Formats,
+                              resolveSupport      =>
+                                (Is_Set => True,
+                                 Value  =>
+                                   (properties =>
+                                      Get_CompletionItem_Resolve_Properties)),
+                              others              => <>)),
                         others              => <>)),
-                  completionItemKind  => <>,
-                  contextSupport      => <>),
-               --  Right now we support only whole line folding
-               foldingRange       =>
-                 (Is_Set => True,
-                  Value  =>
-                    (lineFoldingOnly => (Is_Set => True, Value => True),
-                     others          => <>)),
-               documentSymbol     =>
-                 (Is_Set => True,
-                  Value  =>
-                    (hierarchicalDocumentSymbolSupport =>
-                       (Is_Set => True, Value => True),
-                     others                            => <>)),
-               formatting         =>
-                 (Is_Set => True,
-                  Value  => (dynamicRegistration => LSP.Types.False)),
-               rangeFormatting    =>
-                 (Is_Set => True,
-                  Value  => (dynamicRegistration => LSP.Types.False)),
-               onTypeFormatting   =>
-                 (Is_Set => True,
-                  Value  => (dynamicRegistration => LSP.Types.False)),
-               semanticTokens     =>
-                 GPS.LSP_Client.Editors.Semantic_Tokens.Get_Supported_Options,
-               others             => <>),
+                  --  Right now we support only whole line folding
+                  foldingRange       =>
+                    (Is_Set => True,
+                     Value  =>
+                       (lineFoldingOnly => LSP.Constants.True, others => <>)),
+                  documentSymbol     =>
+                    (Is_Set => True,
+                     Value  =>
+                       (hierarchicalDocumentSymbolSupport =>
+                          LSP.Constants.True,
+                        others                            => <>)),
+                  formatting         =>
+                    (Is_Set => True,
+                     Value  => (dynamicRegistration => LSP.Constants.False)),
+                  rangeFormatting    =>
+                    (Is_Set => True,
+                     Value  => (dynamicRegistration => LSP.Constants.False)),
+                  onTypeFormatting   =>
+                    (Is_Set => True,
+                     Value  => (dynamicRegistration => LSP.Constants.False)),
+                  semanticTokens     =>
+                    GPS
+                      .LSP_Client
+                      .Editors
+                      .Semantic_Tokens
+                      .Get_Supported_Options,
+                  others             => <>)),
             window       => (Is_Set => False),
             general      => (Is_Set => False),
-            experimental =>
-              (Is_Set => True, Value => Get_Experimental_Features)),
-         trace                 => (Is_Set => False),
-         workspaceFolders      => (Is_Set => False),
-         workDoneToken         => (Is_Set => False),
-         clientInfo            => (Is_Set => False),
-         locale                => (Is_Set => False));
+            experimental => Get_Experimental_Features,
+            others       => <>),
+         initializationOptions => Self.Initialization_Options,
+         trace                 => (Is_Set => False));
+
+      Request : constant LSP.Structures.InitializeParams :=
+        (Base with Parent => (workspaceFolders => (Is_Set => False)));
 
    begin
-      Self.Initialize_Request (Id, Request);
+      Id := Self.Allocate_Request_Id;
+      Self.Send_Request.On_Initialize_Request (Id, Request);
    end On_Started;
 
    ---------------------
@@ -1262,7 +1497,8 @@ package body GPS.LSP_Clients is
 
       procedure Process_Cancel_Request is
       begin
-         Self.On_Cancel_Notification ((id => Item.Id));
+         Self.Send_Notification.On_CancelRequest_Notification
+           ((id => Item.Id));
       end Process_Cancel_Request;
 
       --------------------------
@@ -1271,7 +1507,7 @@ package body GPS.LSP_Clients is
 
       procedure Process_Changed_File is
       begin
-         Self.On_DidChangeTextDocument_Notification
+         Self.Send_Notification.On_DidChange_Notification
            (Item.Handler.Get_Did_Change_Message
               (Self.Text_Document_Synchronization));
       end Process_Changed_File;
@@ -1283,7 +1519,7 @@ package body GPS.LSP_Clients is
       procedure Process_Close_File is
          use GPS.Editors;
 
-         Value : constant LSP.Messages.DidCloseTextDocumentParams :=
+         Value : constant LSP.Structures.DidCloseTextDocumentParams :=
            (textDocument =>
               (uri => GPS.LSP_Client.Utilities.To_URI (Item.File)));
 
@@ -1294,7 +1530,7 @@ package body GPS.LSP_Clients is
          if Buffer /= Nil_Editor_Buffer then
             Buffer.Set_Opened_On_LSP_Server (False);
          end if;
-         Self.On_DidCloseTextDocument_Notification (Value);
+         Self.Send_Notification.On_DidClose_Notification (Value);
       end Process_Close_File;
 
       -----------------------
@@ -1309,7 +1545,7 @@ package body GPS.LSP_Clients is
              (File => Item.File, Open_Buffer => True, Open_View => False);
          Lang    : constant not null Language.Language_Access :=
            Buffer.Get_Language;
-         Value   : constant LSP.Messages.DidOpenTextDocumentParams :=
+         Value   : constant LSP.Structures.DidOpenTextDocumentParams :=
            (textDocument =>
               (uri        => GPS.LSP_Client.Utilities.To_URI (Item.File),
                languageId =>
@@ -1318,7 +1554,7 @@ package body GPS.LSP_Clients is
                text       => Buffer.Get_Text));
 
       begin
-         Self.On_DidOpenTextDocument_Notification (Value);
+         Self.Send_Notification.On_DidOpen_Notification (Value);
          Buffer.Set_Opened_On_LSP_Server (True);
       end Process_Open_File;
 
@@ -1327,17 +1563,17 @@ package body GPS.LSP_Clients is
       -------------------------
 
       procedure Process_Rename_File is
-         Value : LSP.Messages.RenameFilesParams;
+         Value : LSP.Structures.RenameFilesParams;
       begin
          Value.files.Append
-           (LSP.Messages.FileRename'
+           (LSP.Structures.FileRename'
               (oldUri =>
-                 LSP.Types.To_Virtual_String
+                 LSP.Structures.Virtual_String
                    (GPS.LSP_Client.Utilities.To_URI (Item.Old_URI)),
                newUri =>
-                 LSP.Types.To_Virtual_String
+                 LSP.Structures.Virtual_String
                    (GPS.LSP_Client.Utilities.To_URI (Item.New_URI))));
-         Self.On_DidRenameFiles_Notification (Value);
+         Self.Send_Notification.On_DidRenameFiles_Notification (Value);
       end Process_Rename_File;
 
       ---------------------
@@ -1345,9 +1581,9 @@ package body GPS.LSP_Clients is
       ---------------------
 
       procedure Process_Request is
-         Id     : constant LSP.Types.LSP_Number_Or_String :=
+         Id     : constant LSP.Structures.Integer_Or_Virtual_String :=
            Self.Allocate_Request_Id;
-         Stream : aliased LSP.JSON_Streams.JSON_Stream;
+         Writer : aliased VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
          Output :
            aliased VSS
                      .Text_Streams
@@ -1365,8 +1601,8 @@ package body GPS.LSP_Clients is
             in GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
          then
             declare
-               Token : constant LSP.Types.LSP_Number_Or_String :=
-                 Self.Allocate_Request_Id;
+               Token : constant LSP.Structures.ProgressToken :=
+                 To_Token (Self.Allocate_Request_Id);
 
             begin
                GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
@@ -1376,37 +1612,38 @@ package body GPS.LSP_Clients is
             end;
          end if;
 
-         Stream.Set_Stream (Output'Unchecked_Access);
-         Stream.Start_Object;
+         Writer.Set_Stream (Output'Unchecked_Access);
+         Writer.Start_Document;
+         Writer.Start_Object;
 
          --  Serialize "jsonrpc" member
 
-         Stream.Key ("jsonrpc");
-         Stream.Write_String ("2.0");
+         Writer.Key_Name ("jsonrpc");
+         Writer.String_Value ("2.0");
 
          --  Serialize "id" memeber
 
-         Stream.Key ("id");
+         Writer.Key_Name ("id");
 
-         if Id.Is_Number then
-            Stream.Write_Integer (Interfaces.Integer_64 (Id.Number));
+         if Id.Is_Integer then
+            Writer.Integer_Value (Interfaces.Integer_64 (Id.Integer));
 
          else
-            Stream.Write_String (Id.String);
+            Writer.String_Value (Id.Virtual_String);
          end if;
 
          --  Serialize "method" member
 
-         Stream.Key ("method");
-         Stream.Write_String (Item.Request.Method);
+         Writer.Key_Name ("method");
+         Writer.String_Value (Item.Request.Method);
 
          --  Serialize "params" member
 
-         Stream.Key ("params");
-         Item.Request.Params (Stream'Access);
+         Writer.Key_Name ("params");
+         Item.Request.Params (Writer);
 
-         Stream.End_Object;
-         Stream.End_Document;
+         Writer.End_Object;
+         Writer.End_Document;
 
          --  Send request's message
 
@@ -1693,7 +1930,7 @@ package body GPS.LSP_Clients is
      (Self                   : aliased in out LSP_Client;
       Executable             : String;
       Arguments              : Spawn.String_Vectors.UTF_8_String_Vector;
-      Initialization_Options : LSP.Types.Optional_LSP_Any)
+      Initialization_Options : LSP.Structures.LSPAny)
    is
 
       function Get_Arguments_As_String
@@ -1776,7 +2013,7 @@ package body GPS.LSP_Clients is
 
    procedure Restart
      (Self                   : in out LSP_Client'Class;
-      Initialization_Options : LSP.Types.Optional_LSP_Any) is
+      Initialization_Options : LSP.Structures.LSPAny) is
    begin
       --  Reset the initialization options
       Self.Initialization_Options := Initialization_Options;

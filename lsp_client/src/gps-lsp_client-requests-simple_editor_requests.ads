@@ -20,6 +20,14 @@
 --  as parameter a TextDocumentPositionParams and their return type is
 --  Location | Location[] | LocationLink[] | null
 
+with Ada.Containers.Vectors;
+
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
+with LSP.Enumerations;
+with LSP.Structures;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Simple_Editor_Requests is
@@ -28,18 +36,49 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
      (Goto_Body, Goto_Spec, Goto_Spec_Or_Body, Goto_Type_Decl);
    --  The command kinds that we support
 
+   package LocationLink_Vectors is new
+     Ada.Containers.Vectors
+       (Positive,
+        LSP.Structures.LocationLink,
+        LSP.Structures."=");
+
+   type LocationLink_Vector is new LocationLink_Vectors.Vector
+   with null record;
+   --  LSP.Structures has no single vector type for LocationLink: 3.17
+   --  generates a distinct DeclarationLink_Vector/DefinitionLink_Vector per
+   --  request kind even though DeclarationLink/DefinitionLink are both
+   --  subtypes of LocationLink. This is the common vector used to normalize
+   --  across all the "..._Result" variants handled by this package.
+
+   type Location_Or_Link_Vector_Kind is
+     (Location_Vector_Kind, LocationLink_Vector_Kind);
+
+   type Location_Or_Link_Vector
+     (Kind : Location_Or_Link_Vector_Kind := Location_Vector_Kind)
+   is record
+      case Kind is
+         when Location_Vector_Kind =>
+            Locations : LSP.Structures.Location_Vector;
+
+         when LocationLink_Vector_Kind =>
+            Links : LocationLink_Vector;
+      end case;
+   end record;
+   --  Normalized shape of the "Location | Location[] | LocationLink[] |
+   --  null" result returned by the declaration/definition/implementation/
+   --  typeDefinition requests.
+
    type Abstract_Simple_Request is abstract
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
       Command                        : Command_Kind;
-      Position                       : LSP.Messages.Position;
+      Position                       : LSP.Structures.Position;
       Display_Ancestry_On_Navigation :
-        LSP.Messages.AlsDisplayMethodAncestryOnNavigationPolicy;
+        LSP.Enumerations.AlsDisplayMethodAncestryOnNavigationPolicy;
    end record;
 
    procedure On_Result_Message
-     (Self   : in out Abstract_Simple_Request;
-      Result : LSP.Messages.Location_Or_Link_Vector)
+     (Self : in out Abstract_Simple_Request; Result : Location_Or_Link_Vector)
    is abstract;
    --  Children need to override this, this is what takes care of the actual
    --  processing.
@@ -54,18 +93,18 @@ package GPS.LSP_Client.Requests.Simple_Editor_Requests is
 
    overriding
    procedure Params
-     (Self   : Abstract_Simple_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Simple_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Simple_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Simple_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Simple_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    overriding
    function Method

@@ -57,14 +57,14 @@
 with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Finalization;
 
-with GNATCOLL.JSON;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 with VSS.Strings;
 
-with LSP.JSON_Streams;
-with LSP.Messages;
-with LSP.Types;
+with LSP.Enumerations;
+with LSP.Structures;
 
 with GPS.Kernel; use GPS.Kernel;
 limited private with GPS.LSP_Client.Language_Servers;
@@ -106,11 +106,13 @@ package GPS.LSP_Client.Requests is
    --  cancel the previous request, for example, when Next_Request is for the
    --  same file.
 
-   function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String;
+   function Id
+     (Self : LSP_Request) return LSP.Structures.Integer_Or_Virtual_String;
    --  Return the Id of the request
 
    procedure Set_Id
-     (Self : in out LSP_Request; Id : LSP.Types.LSP_Number_Or_String);
+     (Self : in out LSP_Request;
+      Id   : LSP.Structures.Integer_Or_Virtual_String);
    --  Set the Id of this request
 
    function Get_Task_Label (Self : LSP_Request) return String
@@ -119,28 +121,27 @@ package GPS.LSP_Client.Requests is
    --  Return an empty string if the task should not be shown (default).
 
    procedure Params
-     (Self   : LSP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : LSP_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class)
    is abstract;
-   --  Fill the stream with the request parameters.
+   --  Fill the handler with the request parameters.
 
    function Is_Request_Supported
-     (Self : LSP_Request; Options : LSP.Messages.ServerCapabilities)
+     (Self : LSP_Request; Options : LSP.Structures.ServerCapabilities)
       return Boolean
    is abstract;
    --  Returns False when server does not support the request
 
    procedure On_Result_Message
-     (Self   : in out LSP_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out LSP_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is abstract;
    --  Called when a "result" response is received from the server.
 
    procedure On_Error_Message
      (Self    : in out LSP_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is abstract;
    --  Called when an "error" response is received from the server.
 
@@ -230,7 +231,7 @@ private
 
    type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
    abstract tagged limited record
-      Id : LSP.Types.LSP_Number_Or_String;
+      Id : LSP.Structures.Integer_Or_Virtual_String;
       --  Identifier of the processing request.
 
       References : Reference_Lists.List;

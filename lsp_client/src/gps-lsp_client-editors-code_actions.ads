@@ -19,11 +19,11 @@
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.JSON;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;   use GPS.Kernel;
 
-with LSP.Messages;
+with LSP.Enumerations;
+with LSP.Structures;
 with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Execute_Command;
 
@@ -49,14 +49,15 @@ package GPS.LSP_Client.Editors.Code_Actions is
           .Execute_Command
           .Abstract_Execute_Command_Request
    with record
-      Params : LSP.Messages.ExecuteCommandParams (True);
+      Params : LSP.Structures.ExecuteCommandParams;
    end record;
    type Execute_Command_Request_Access is
      access all Execute_Command_Request'Class;
 
    overriding
    function Params
-     (Self : Execute_Command_Request) return LSP.Messages.ExecuteCommandParams
+     (Self : Execute_Command_Request)
+      return LSP.Structures.ExecuteCommandParams
    is (Self.Params);
 
    overriding
@@ -65,9 +66,8 @@ package GPS.LSP_Client.Editors.Code_Actions is
    overriding
    procedure On_Error_Message
      (Self    : in out Execute_Command_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is null;
 
    overriding

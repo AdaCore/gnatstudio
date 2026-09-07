@@ -19,7 +19,7 @@
 
 with GNATCOLL.VFS;
 
-with LSP.Messages;
+with LSP.Structures;
 
 package GPS.LSP_Client.Text_Documents is
 
@@ -49,7 +49,7 @@ package GPS.LSP_Client.Text_Documents is
 
    function Get_Did_Change_Message
      (Self : in out Text_Document_Handler; Mode : Text_Document_Sync_Kind_Type)
-      return LSP.Messages.DidChangeTextDocumentParams
+      return LSP.Structures.DidChangeTextDocumentParams
    is abstract;
    --  Returns message to be send to the server. Called by server manager
    --  when it is ready to send update to the server. Mode is active text

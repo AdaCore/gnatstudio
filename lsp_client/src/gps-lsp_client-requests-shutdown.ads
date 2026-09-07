@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 --  Shutdown request. For internal use only, should not be used by application.
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
 package GPS.LSP_Client.Requests.Shutdown is
 
    type Abstract_Shutdown_Request is abstract new LSP_Request (Kernel => null)
@@ -31,17 +34,17 @@ package GPS.LSP_Client.Requests.Shutdown is
 
    overriding
    procedure Params
-     (Self   : Abstract_Shutdown_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Shutdown_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Shutdown_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Shutdown_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Shutdown_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Shutdown;

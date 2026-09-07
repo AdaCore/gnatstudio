@@ -32,11 +32,12 @@ with GPS.Kernel;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
-with LSP.Clients_3_16.Response_Handlers;
-with LSP.Clients_3_16.Request_Handlers;
-with LSP.Clients_3_16;
-with LSP.Messages.Server_Responses;
-with LSP.Types;
+with LSP.Client_Request_Receivers;
+with LSP.Client_Response_Receivers;
+private with LSP.Progress_Report_Receivers;
+with LSP.Clients;
+with LSP.Structures;
+private with LSP.Structures.Hashes;
 with Spawn.String_Vectors;
 with Language; use Language;
 
@@ -90,6 +91,24 @@ package GPS.LSP_Clients is
       Request : GPS.LSP_Client.Requests.Request_Access)
    is null;
 
+   procedure On_Progress_Begin
+     (Self  : in out LSP_Client_Listener;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressBegin)
+   is null;
+
+   procedure On_Progress_Report
+     (Self  : in out LSP_Client_Listener;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressReport)
+   is null;
+
+   procedure On_Progress_End
+     (Self  : in out LSP_Client_Listener;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressEnd)
+   is null;
+
    ----------------
    -- LSP_Client --
    ----------------
@@ -99,7 +118,7 @@ package GPS.LSP_Clients is
       Listener : not null access LSP_Client_Listener'Class;
       Language : not null access Language_Root'Class)
    is limited
-     new LSP.Clients_3_16.Client
+     new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy with private;
    --  Client represents a connect to LSP server for some language
 
@@ -109,7 +128,7 @@ package GPS.LSP_Clients is
      (Self                   : aliased in out LSP_Client;
       Executable             : String;
       Arguments              : Spawn.String_Vectors.UTF_8_String_Vector;
-      Initialization_Options : LSP.Types.Optional_LSP_Any);
+      Initialization_Options : LSP.Structures.LSPAny);
    --  Use given command line to start LSP server.
    --  When set, Initialization_Options will be sent to the server via the
    --  LSP 'initialize' request.
@@ -123,7 +142,7 @@ package GPS.LSP_Clients is
 
    procedure Restart
      (Self                   : in out LSP_Client'Class;
-      Initialization_Options : LSP.Types.Optional_LSP_Any);
+      Initialization_Options : LSP.Structures.LSPAny);
    --  Restart the language server process.
    --  Initialization_Options will be sent to the server via the
    --  LSP 'initialize' request.
@@ -143,7 +162,8 @@ package GPS.LSP_Clients is
    --  Cancel given request.
 
    function Get_Running_Request
-     (Self : LSP_Client'Class; Request_Id : LSP.Types.LSP_Number_Or_String)
+     (Self       : LSP_Client'Class;
+      Request_Id : LSP.Structures.Integer_Or_Virtual_String)
       return GPS.LSP_Client.Requests.Request_Access;
    --  If a request with the given Id is currently running, return it.
    --  Return null otherwise.
@@ -156,10 +176,11 @@ package GPS.LSP_Clients is
    --  Do not free the results
 
    function Capabilities
-     (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities;
+     (Self : LSP_Client'Class) return LSP.Structures.ServerCapabilities;
 
    type On_Server_Capabilities_Proc is
-     access procedure (Capabilities : in out LSP.Messages.ServerCapabilities);
+     access procedure
+       (Capabilities : in out LSP.Structures.ServerCapabilities);
 
    procedure Set_On_Server_Capabilities
      (Self : in out LSP_Client'Class; Proc : On_Server_Capabilities_Proc);
@@ -179,52 +200,96 @@ private
 
    package Request_Maps is new
      Ada.Containers.Hashed_Maps
-       (Key_Type        => LSP.Types.LSP_Number_Or_String,
+       (Key_Type        => LSP.Structures.Integer_Or_Virtual_String,
         Element_Type    => GPS.LSP_Client.Requests.Request_Access,
-        Hash            => LSP.Types.Hash,
-        Equivalent_Keys => LSP.Types."=",
+        Hash            => LSP.Structures.Hashes.Hash,
+        Equivalent_Keys => LSP.Structures."=",
         "="             => GPS.LSP_Client.Requests."=");
 
    package Request_Id_Maps is new
      Ada.Containers.Hashed_Maps
-       (Key_Type        => LSP.Types.LSP_Number_Or_String,
-        Element_Type    => LSP.Types.LSP_Number_Or_String,
-        Hash            => LSP.Types.Hash,
-        Equivalent_Keys => LSP.Types."=",
-        "="             => LSP.Types."=");
+       (Key_Type        => LSP.Structures.Integer_Or_Virtual_String,
+        Element_Type    => LSP.Structures.Integer_Or_Virtual_String,
+        Hash            => LSP.Structures.Hashes.Hash,
+        Equivalent_Keys => LSP.Structures."=",
+        "="             => LSP.Structures."=");
+
+   package Partial_Token_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => LSP.Structures.ProgressToken,
+        Element_Type    => LSP.Structures.Integer_Or_Virtual_String,
+        Hash            => LSP.Structures.Hashes.Hash,
+        Equivalent_Keys => LSP.Structures."=",
+        "="             => LSP.Structures."=");
+
+   package Canceled_Token_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => LSP.Structures.Integer_Or_Virtual_String,
+        Element_Type    => LSP.Structures.ProgressToken,
+        Hash            => LSP.Structures.Hashes.Hash,
+        Equivalent_Keys => LSP.Structures."=",
+        "="             => LSP.Structures."=");
 
    package Request_Id_Sets is new
      Ada.Containers.Hashed_Sets
-       (Element_Type        => LSP.Types.LSP_Number_Or_String,
-        Hash                => LSP.Types.Hash,
-        Equivalent_Elements => LSP.Types."=",
-        "="                 => LSP.Types."=");
+       (Element_Type        => LSP.Structures.Integer_Or_Virtual_String,
+        Hash                => LSP.Structures.Hashes.Hash,
+        Equivalent_Elements => LSP.Structures."=",
+        "="                 => LSP.Structures."=");
 
    type Response_Handler (Client : access LSP_Client) is
-     new LSP.Clients_3_16.Response_Handlers.Response_Handler
+     new LSP.Client_Response_Receivers.Client_Response_Receiver
    with null record;
 
    overriding
-   procedure Initialize_Response
-     (Self     : not null access Response_Handler;
-      Request  : LSP.Types.LSP_Number_Or_String;
-      Response : LSP.Messages.Server_Responses.Initialize_Response);
+   procedure On_Initialize_Response
+     (Self  : in out Response_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.InitializeResult);
 
    type Request_Handler (Client : access LSP_Client) is
-     new LSP.Clients_3_16.Request_Handlers.Request_Handler
+     new LSP.Client_Request_Receivers.Client_Request_Receiver
    with null record;
 
    overriding
-   procedure Workspace_Apply_Edit
-     (Self    : not null access Request_Handler;
-      Request : LSP.Types.LSP_Number_Or_String;
-      Params  : LSP.Messages.ApplyWorkspaceEditParams);
+   procedure On_ApplyEdit_Request
+     (Self  : in out Request_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.ApplyWorkspaceEditParams);
 
    overriding
-   procedure Window_Work_Done_Progress_Create
-     (Self    : not null access Request_Handler;
-      Request : LSP.Types.LSP_Number_Or_String;
-      Params  : LSP.Messages.WorkDoneProgressCreateParams);
+   procedure On_Progress_Create_Request
+     (Self  : in out Request_Handler;
+      Id    : LSP.Structures.Integer_Or_Virtual_String;
+      Value : LSP.Structures.WorkDoneProgressCreateParams);
+
+   type Progress_Handler (Client : access LSP_Client) is
+     new LSP.Progress_Report_Receivers.Progress_Report_Receiver
+   with null record;
+
+   overriding
+   procedure On_Symbol_Partial_Result
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.Symbol_Progress_Report);
+
+   overriding
+   procedure On_ProgressBegin_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressBegin);
+
+   overriding
+   procedure On_ProgressReport_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressReport);
+
+   overriding
+   procedure On_ProgressEnd_Work_Done
+     (Self  : in out Progress_Handler;
+      Token : LSP.Structures.ProgressToken;
+      Value : LSP.Structures.WorkDoneProgressEnd);
 
    type Command_Kinds is
      (Open_File,
@@ -251,7 +316,7 @@ private
             Request : GPS.LSP_Client.Requests.Request_Access;
 
          when Cancel_GPS_Request =>
-            Id : LSP.Types.LSP_Number_Or_String;
+            Id : LSP.Structures.Integer_Or_Virtual_String;
       end case;
    end record;
 
@@ -267,7 +332,7 @@ private
       Listener : not null access LSP_Client_Listener'Class;
       Language : not null access Language_Root'Class)
    is limited
-     new LSP.Clients_3_16.Client
+     new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record
       Is_Ready : Boolean := False;
@@ -291,23 +356,25 @@ private
         aliased LSP_Clients.Response_Handler (LSP_Client'Unchecked_Access);
       Request_Handler  :
         aliased LSP_Clients.Request_Handler (LSP_Client'Unchecked_Access);
+      Progress_Handler :
+        aliased LSP_Clients.Progress_Handler (LSP_Client'Unchecked_Access);
 
       Commands               : Command_Lists.List;
       --  Command Queue
-      Server_Capabilities    : LSP.Messages.ServerCapabilities;
+      Server_Capabilities    : LSP.Structures.ServerCapabilities;
       On_Server_Capabilities : On_Server_Capabilities_Proc := null;
 
       Requests : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.
 
-      Partials : Request_Id_Maps.Map;
+      Partials : Partial_Token_Maps.Map;
       --  Map from sent request's partial result token to request's id to
       --  handle partial result messages.
 
       Canceled_Requests : Request_Id_Sets.Set;
       --  Set of canceled requests for which reply message is still expected.
 
-      Canceled_Tokens : Request_Id_Maps.Map;
+      Canceled_Tokens : Canceled_Token_Maps.Map;
       --  Map from request's id to partial result token.
 
       Text_Document_Synchronization :
@@ -323,7 +390,7 @@ private
       --  all notifications for currently shutting down language server
       --  process.
 
-      Initialization_Options : LSP.Types.Optional_LSP_Any := (others => <>);
+      Initialization_Options : LSP.Structures.LSPAny;
       --  User provided initialization options. Will be sent via the LSP
       --  'initialize' request.
    end record;
@@ -363,8 +430,8 @@ private
      (Self       : in out LSP_Client;
       Occurrence : Ada.Exceptions.Exception_Occurrence);
 
-   overriding
-   procedure On_Exit_Notification (Self : access LSP_Client);
+   procedure On_Exit_Notification (Self : in out LSP_Client'Class);
+   --  Send the "exit" notification to the language server.
 
    overriding
    function Request_Id_Prefix

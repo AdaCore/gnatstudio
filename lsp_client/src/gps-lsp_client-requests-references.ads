@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.References is
@@ -22,17 +25,18 @@ package GPS.LSP_Client.Requests.References is
    type Abstract_References_Request is abstract
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
-      Position            : LSP.Messages.Position;
+      Position            : LSP.Structures.Position;
       Include_Declaration : Boolean;
    end record;
 
    function Params
-     (Self : Abstract_References_Request) return LSP.Messages.ReferenceParams;
+     (Self : Abstract_References_Request)
+      return LSP.Structures.ReferenceParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_References_Request;
-      Result : LSP.Messages.Location_Vector)
+      Result : LSP.Structures.Location_Vector)
    is abstract;
    --  Called when a result response is received from the server.
 
@@ -42,17 +46,17 @@ package GPS.LSP_Client.Requests.References is
 
    overriding
    procedure Params
-     (Self   : Abstract_References_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_References_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_References_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_References_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_References_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.References;

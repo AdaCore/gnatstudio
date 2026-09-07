@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 
 with GPS.LSP_Client.Partial_Results;
 
@@ -26,24 +27,29 @@ package GPS.LSP_Client.Requests.Symbols is
      and GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result
    with record
       Query              : VSS.Strings.Virtual_String;
-      Case_Sensitive     : LSP.Types.Optional_Boolean;
-      Whole_Word         : LSP.Types.Optional_Boolean;
-      Negate             : LSP.Types.Optional_Boolean;
-      Kind               : LSP.Messages.Optional_Search_Kind;
-      partialResultToken : LSP.Messages.Optional_ProgressToken;
+      Case_Sensitive     : LSP.Structures.Boolean_Optional;
+      Whole_Word         : LSP.Structures.Boolean_Optional;
+      Negate             : LSP.Structures.Boolean_Optional;
+      Kind               : LSP.Structures.AlsSearchKind_Optional;
+      partialResultToken : LSP.Structures.ProgressToken_Optional;
    end record;
 
    procedure On_Partial_Result_Message
      (Self   : in out Abstract_Symbol_Request;
-      Result : LSP.Messages.SymbolInformation_Vector)
+      Result : LSP.Structures.SymbolInformation_Vector)
    is abstract;
    --  Called when a partial result response is received from the server.
+   --  Only the SymbolInformation shape of the Symbol_Progress_Report variant
+   --  is routed here (see GPS.LSP_Clients.Progress_Handler); the newer
+   --  WorkspaceSymbol shape is not currently handled.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Symbol_Request;
-      Result : LSP.Messages.SymbolInformation_Vector)
+      Result : LSP.Structures.SymbolInformation_Vector)
    is abstract;
-   --  Called when a result response is received from the server.
+   --  Called when a result response is received from the server. Only the
+   --  SymbolInformation variant of Symbol_Result is handled; the
+   --  WorkspaceSymbol and null variants are treated as an empty vector.
 
    overriding
    function Method
@@ -51,23 +57,18 @@ package GPS.LSP_Client.Requests.Symbols is
 
    overriding
    procedure Params
-     (Self   : Abstract_Symbol_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Symbol_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Symbol_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Symbol_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
-
-   overriding
-   procedure On_Partial_Result_Message
-     (Self   : in out Abstract_Symbol_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Symbol_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
    overriding
    function Get_Task_Label (Self : Abstract_Symbol_Request) return String
@@ -75,11 +76,12 @@ package GPS.LSP_Client.Requests.Symbols is
 
    overriding
    procedure Set_Partial_Result_Token
-     (Self : in out Abstract_Symbol_Request; To : LSP.Types.ProgressToken);
+     (Self : in out Abstract_Symbol_Request;
+      To   : LSP.Structures.ProgressToken);
 
    overriding
    function Partial_Result_Token
-     (Self : Abstract_Symbol_Request) return LSP.Types.ProgressToken
+     (Self : Abstract_Symbol_Request) return LSP.Structures.ProgressToken
    is (Self.partialResultToken.Value);
 
 end GPS.LSP_Client.Requests.Symbols;

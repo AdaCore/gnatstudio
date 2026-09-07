@@ -15,8 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;    use LSP.Types;
-with LSP.Messages; use LSP.Messages;
+with GNATCOLL.JSON; use GNATCOLL.JSON;
+
+with VSS.Strings.Conversions;
 
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
@@ -28,8 +29,8 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
 
    overriding
    procedure On_Result_Message
-     (Self : in out Abstract_Show_Dependencies_Command_Request;
-      JS   : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Show_Dependencies_Command_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
       procedure Read_Item (Item : out Unit_Description);
 
@@ -39,35 +40,37 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
 
       procedure Read_Item (Item : out Unit_Description) is
       begin
-         pragma Assert (JS.R.Is_Start_Object);
-         JS.R.Read_Next;
+         pragma Assert (Handler.Is_Start_Object);
+         Handler.Read_Next;
 
-         while not JS.R.Is_End_Object loop
-            pragma Assert (JS.R.Is_Key_Name);
+         while not Handler.Is_End_Object loop
+            pragma Assert (Handler.Is_Key_Name);
             declare
                use type VSS.Strings.Virtual_String;
 
-               Key : constant VSS.Strings.Virtual_String := JS.R.Key_Name;
+               Key : constant VSS.Strings.Virtual_String := Handler.Key_Name;
             begin
-               JS.R.Read_Next;
+               Handler.Read_Next;
                if Key = "uri" then
-                  LSP.Types.Read_LSP_URI (JS, Item.uri);
+                  Item.uri := (Handler.String_Value with null record);
+                  Handler.Read_Next;
                elsif Key = "projectUri" then
-                  LSP.Types.Read_LSP_URI (JS, Item.projectUri);
+                  Item.projectUri := (Handler.String_Value with null record);
+                  Handler.Read_Next;
                else
-                  JS.Skip_Value;
+                  Handler.Skip_Current_Value;
                end if;
             end;
          end loop;
-         JS.R.Read_Next;
+         Handler.Read_Next;
       end Read_Item;
 
       Result : Unit_Description_Vectors.Vector;
    begin
-      pragma Assert (JS.R.Is_Start_Array);
-      JS.R.Read_Next;
+      pragma Assert (Handler.Is_Start_Array);
+      Handler.Read_Next;
 
-      while not JS.R.Is_End_Array loop
+      while not Handler.Is_End_Array loop
          declare
             Next : Unit_Description;
          begin
@@ -75,7 +78,7 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
             Result.Append (Next);
          end;
       end loop;
-      JS.R.Read_Next;
+      Handler.Read_Next;
 
       Abstract_Show_Dependencies_Command_Request'Class (Self).On_Result_Message
         (Result);
@@ -88,13 +91,15 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
    overriding
    function Params
      (Self : Abstract_Show_Dependencies_Command_Request)
-      return LSP.Messages.ExecuteCommandParams
+      return LSP.Structures.ExecuteCommandParams
    is
-      Arguments : Any_Vector;
+      Arguments : JSON_Array;
 
-      Argument : constant LSP.Types.LSP_Any := Create_Object;
+      Argument : constant JSON_Value := Create_Object;
 
-      URI : constant String := To_UTF_8_String (To_URI (Self.Text_Document));
+      URI : constant String :=
+        VSS.Strings.Conversions.To_UTF_8_String
+          (VSS.Strings.Virtual_String (To_URI (Self.Text_Document)));
 
       Kind : constant Positive := ALS_ShowDependenciesKind'Pos (Self.Kind) + 1;
    begin
@@ -106,10 +111,10 @@ package body GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies is
       Arguments.Append (Argument);
 
       return
-        (Is_Unknown => True,
-         Base       => <>,
-         command    => Self.Command_Name,
-         arguments  => (Is_Set => True, Value => Arguments));
+        (workDoneToken => (Is_Set => False),
+         command       => Self.Command_Name,
+         arguments     =>
+           GPS.LSP_Client.Utilities.To_LSP_Any (Create (Arguments)));
    end Params;
 
 end GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies;

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Outputs;
 with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Requests.Execute_Command is
@@ -41,10 +41,10 @@ package body GPS.LSP_Client.Requests.Execute_Command is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Execute_Command_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Execute_Command_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      pragma Unreferenced (Stream);
+      pragma Unreferenced (Handler);
 
    begin
       Abstract_Execute_Command_Request'Class (Self).On_Result_Message;
@@ -57,9 +57,8 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    overriding
    procedure On_Error_Message
      (Self    : in out Abstract_Execute_Command_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
         ("Failed to execute command: "
@@ -72,11 +71,11 @@ package body GPS.LSP_Client.Requests.Execute_Command is
 
    overriding
    procedure Params
-     (Self   : Abstract_Execute_Command_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Execute_Command_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.ExecuteCommandParams'Write
-        (Stream, Abstract_Execute_Command_Request'Class (Self).Params);
+      LSP.Outputs.Write_ExecuteCommandParams
+        (Handler, Abstract_Execute_Command_Request'Class (Self).Params);
    end Params;
 
    --------------------------
@@ -86,7 +85,7 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Execute_Command_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean
+      Options : LSP.Structures.ServerCapabilities) return Boolean
    is
       Command_Name : constant VSS.Strings.Virtual_String :=
         Abstract_Execute_Command_Request'Class (Self).Command_Name;

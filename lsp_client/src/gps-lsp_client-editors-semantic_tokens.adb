@@ -23,7 +23,6 @@ with Ada.Strings.Unbounded;
 with Interfaces;
 
 with GNATCOLL.Traces; use GNATCOLL.Traces;
-with GNATCOLL.JSON;
 with GNATCOLL.Xref;
 with GNATCOLL.Utils;
 
@@ -43,7 +42,8 @@ with GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;
 with GPS.Editors;        use GPS.Editors;
 
-with LSP.Types;
+with LSP.Constants;
+with LSP.Enumerations; use LSP.Enumerations;
 
 with GPS.LSP_Module;
 with GPS.LSP_Client.Language_Servers;
@@ -113,7 +113,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    type Result_Type is record
       Request : Request_Data;
-      Data    : LSP.Messages.uinteger_Vector;
+      Data    : LSP.Structures.Natural_Vector;
    end record;
    --  Store result data
 
@@ -176,14 +176,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Result_Message
      (Self   : in out SemanticTokens_Full_Request;
-      Result : LSP.Messages.SemanticTokens);
+      Result : LSP.Structures.SemanticTokens_Or_Null);
 
    overriding
    procedure On_Error_Message
      (Self    : in out SemanticTokens_Full_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    ----------------------------------
    -- SemanticTokens_Range_Request --
@@ -209,14 +208,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
-      Result : LSP.Messages.SemanticTokens);
+      Result : LSP.Structures.SemanticTokens_Or_Null);
 
    overriding
    procedure On_Error_Message
      (Self    : in out SemanticTokens_Range_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    procedure On_Rejected
@@ -245,14 +243,15 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
      (Buffer : GPS.Editors.Editor_Buffer'Class; From : Integer; To : Integer);
    --  Remove highlighting from the buffer
 
-   function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String;
+   function Get_Style_Name
+     (T : LSP.Enumerations.SemanticTokenTypes) return String;
    --  Convert SemanticTokenTypes to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
    function Get_Style
-     (Token_Type      : LSP.Messages.uinteger;
-      Token_Modifiers : LSP.Messages.uinteger;
-      Legend          : LSP.Messages.SemanticTokensLegend) return String;
+     (Token_Type      : Natural;
+      Token_Modifiers : Natural;
+      Legend          : LSP.Structures.SemanticTokensLegend) return String;
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
@@ -595,25 +594,97 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ---------------------------
 
    function Get_Supported_Options
-      return Optional_SemanticTokensClientCapabilities
+      return LSP.Structures.SemanticTokensClientCapabilities_Optional
    is
 
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenTypes)
+         return VSS.Strings.Virtual_String;
+      --  Convert a SemanticTokenTypes literal to its LSP wire name. This
+      --  cannot be derived from 'Image (which upper-cases identifiers,
+      --  losing the wire protocol's camelCase spelling, e.g.
+      --  "typeParameter"/"enumMember"), so it must mirror the spelling
+      --  used by the generated LSP.Outputs.Write_SemanticTokenTypes.
+
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenModifiers)
+         return VSS.Strings.Virtual_String;
+      --  Likewise for SemanticTokenModifiers (e.g. "globalVariable",
+      --  "dispatchingCall", "defaultLibrary"), mirroring
+      --  LSP.Outputs.Write_SemanticTokenModifiers.
+
       function Get_Supported_Token_Types
-         return LSP.Messages.SemanticTokenTypes_Vector;
+         return VSS.String_Vectors.Virtual_String_Vector;
 
       function Get_Supported_Token_Modifiers
-         return LSP.Messages.SemanticTokenModifiers_Vector;
+         return VSS.String_Vectors.Virtual_String_Vector;
+
+      ------------------
+      -- To_Wire_Name --
+      ------------------
+
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenTypes)
+         return VSS.Strings.Virtual_String
+      is
+        (VSS.Strings.Conversions.To_Virtual_String
+           (case Value is
+               when namespace     => "namespace",
+               when a_type        => "type",
+               when class         => "class",
+               when enum          => "enum",
+               when an_interface  => "interface",
+               when struct        => "struct",
+               when typeParameter => "typeParameter",
+               when parameter     => "parameter",
+               when variable      => "variable",
+               when property      => "property",
+               when enumMember    => "enumMember",
+               when event         => "event",
+               when a_function    => "function",
+               when method        => "method",
+               when macro         => "macro",
+               when keyword       => "keyword",
+               when modifier      => "modifier",
+               when comment       => "comment",
+               when LSP.Enumerations.string => "string",
+               when number        => "number",
+               when regexp        => "regexp",
+               when operator      => "operator",
+               when decorator     => "decorator"));
+
+      ------------------
+      -- To_Wire_Name --
+      ------------------
+
+      function To_Wire_Name
+        (Value : LSP.Enumerations.SemanticTokenModifiers)
+         return VSS.Strings.Virtual_String
+      is
+        (VSS.Strings.Conversions.To_Virtual_String
+           (case Value is
+               when LSP.Enumerations.declaration    => "declaration",
+               when LSP.Enumerations.definition     => "definition",
+               when LSP.Enumerations.readonly       => "readonly",
+               when LSP.Enumerations.static         => "static",
+               when LSP.Enumerations.deprecated     => "deprecated",
+               when LSP.Enumerations.an_abstract    => "abstract",
+               when LSP.Enumerations.async          => "async",
+               when LSP.Enumerations.modification   => "modification",
+               when LSP.Enumerations.documentation  => "documentation",
+               when LSP.Enumerations.defaultLibrary => "defaultLibrary",
+               when LSP.Enumerations.globalVariable => "globalVariable",
+               when LSP.Enumerations.localVariable  => "localVariable",
+               when LSP.Enumerations.dispatchingCall => "dispatchingCall"));
 
       -------------------------------
       -- Get_Supported_Token_Types --
       -------------------------------
 
       function Get_Supported_Token_Types
-         return LSP.Messages.SemanticTokenTypes_Vector
+         return VSS.String_Vectors.Virtual_String_Vector
       is
-         use LSP.Messages;
-
-         Result : SemanticTokenTypes_Vector;
+         Result : VSS.String_Vectors.Virtual_String_Vector;
       begin
          for Item in SemanticTokenTypes'Range loop
             if Item /= event  --  skip unsupported
@@ -621,7 +692,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               and then Item /= macro
               and then Item /= regexp
             then
-               Result.Append (Item);
+               Result.Append (To_Wire_Name (Item));
             end if;
          end loop;
 
@@ -633,35 +704,34 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       -----------------------------------
 
       function Get_Supported_Token_Modifiers
-         return LSP.Messages.SemanticTokenModifiers_Vector
+         return VSS.String_Vectors.Virtual_String_Vector
       is
-         use LSP.Messages;
-
-         Result : SemanticTokenModifiers_Vector;
+         Result : VSS.String_Vectors.Virtual_String_Vector;
 
       begin
          for Item in SemanticTokenModifiers'Range loop
             --  skip unsupported
             if Item /= async then
-               Result.Append (Item);
+               Result.Append (To_Wire_Name (Item));
             end if;
          end loop;
 
          return Result;
       end Get_Supported_Token_Modifiers;
 
-      Formats : constant LSP.Messages.TokenFormatSet :=
-        LSP.Messages.TokenFormatSet
-          (LSP.Messages.TokenFormatSets.To_Set
-             (LSP.Messages.relative, LSP.Messages.relative));
+      Formats : constant LSP.Structures.TokenFormat_Set :=
+        (LSP.Enumerations.Relative => True);
 
    begin
       return
         (Is_Set => True,
          Value  =>
            (requests       =>
-              (span => (Is_Set => True, Value => True),
-               full => (Is_Set => True, Value => (diff => (Is_Set => False)))),
+              (a_range => LSP.Constants.True,
+               full    =>
+                 (Is_Set => True,
+                  Value  =>
+                    (Is_Boolean => False, a_delta => (Is_Set => False)))),
             tokenTypes     => Get_Supported_Token_Types,
             tokenModifiers => Get_Supported_Token_Modifiers,
             formats        => Formats,
@@ -672,12 +742,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Get_Style_Name --
    --------------------
 
-   function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String
-   is
+   function Get_Style_Name
+     (T : LSP.Enumerations.SemanticTokenTypes) return String is
    begin
       return
         Check_Style_Name
-          (LSP.Messages.SemanticTokenTypes'Image (T), Empty_Modifiers_Array);
+          (LSP.Enumerations.SemanticTokenTypes'Image (T),
+           Empty_Modifiers_Array);
    end Get_Style_Name;
 
    ---------------
@@ -685,9 +756,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    ---------------
 
    function Get_Style
-     (Token_Type      : LSP.Messages.uinteger;
-      Token_Modifiers : LSP.Messages.uinteger;
-      Legend          : LSP.Messages.SemanticTokensLegend) return String
+     (Token_Type      : Natural;
+      Token_Modifiers : Natural;
+      Legend          : LSP.Structures.SemanticTokensLegend) return String
    is
       use Interfaces;
 
@@ -731,7 +802,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       return
         Check_Style_Name
           (VSS.Strings.Conversions.To_UTF_8_String
-             (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
+             (Legend.tokenTypes.Element (Token_Type + 1)),
            Modifiers (1 .. Last));
    end Get_Style;
 
@@ -745,13 +816,27 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
    begin
-      return
-        (if Server /= null
-           and then
-             Server.Get_Client.Capabilities.semanticTokensProvider.Is_Set
-         then
-           Server.Get_Client.Capabilities.semanticTokensProvider.Value.legend
-         else (others => <>));
+      if Server = null
+        or else
+          not Server.Get_Client.Capabilities.semanticTokensProvider.Is_Set
+      then
+         return (others => <>);
+      end if;
+
+      declare
+         subtype Options_Or_Registration is
+           LSP
+             .Structures
+             .SemanticTokensOptions_Or_SemanticTokensRegistrationOptions;
+
+         V : constant Options_Or_Registration :=
+           Server.Get_Client.Capabilities.semanticTokensProvider.Value;
+      begin
+         return
+           (if V.Is_SemanticTokensOptions
+            then V.SemanticTokensOptions.legend
+            else V.SemanticTokensRegistrationOptions.legend);
+      end;
    end Get_SemanticTokens_Legend;
 
    -------------
@@ -759,8 +844,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -------------
 
    function On_Idle return Boolean is
-      use LSP.Types;
-      use LSP.Messages;
       use Result_Vectors;
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
@@ -823,23 +906,23 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          -------------
 
          procedure Process
-           (Delta_Line      : uinteger;
-            Delta_Start     : uinteger;
-            Length          : uinteger;
-            Token_Type      : uinteger;
-            Token_Modifiers : uinteger);
+           (Delta_Line      : Natural;
+            Delta_Start     : Natural;
+            Length          : Natural;
+            Token_Type      : Natural;
+            Token_Modifiers : Natural);
 
          procedure Process
-           (Delta_Line      : uinteger;
-            Delta_Start     : uinteger;
-            Length          : uinteger;
-            Token_Type      : uinteger;
-            Token_Modifiers : uinteger)
+           (Delta_Line      : Natural;
+            Delta_Start     : Natural;
+            Length          : Natural;
+            Token_Type      : Natural;
+            Token_Modifiers : Natural)
          is
             use Basic_Types;
             use type GNATCOLL.Xref.Visible_Column;
 
-            Line : constant Integer := Module.Prev_Line + Natural (Delta_Line);
+            Line : constant Integer := Module.Prev_Line + Delta_Line;
             Char : Visible_Column_Type;
             Len  : Visible_Column_Type;
          begin
@@ -914,7 +997,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Result_Message
      (Self   : in out SemanticTokens_Full_Request;
-      Result : LSP.Messages.SemanticTokens)
+      Result : LSP.Structures.SemanticTokens_Or_Null)
    is
       use Result_Vectors;
       Idx     : Positive := 1;
@@ -933,6 +1016,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end loop;
 
+      if Result.Is_Null then
+         return;
+      end if;
+
       declare
          Buffer : constant Editor_Buffer'Class :=
            Module.Get_Kernel.Get_Buffer_Factory.Get
@@ -943,7 +1030,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
          elsif Self.Version = Buffer.Version then
             --  store new result
-            Module.Data.Append (Result_Type'((Self.File, 0, 0), Result.data));
+            Module.Data.Append
+              (Result_Type'((Self.File, 0, 0), Result.Value.data));
 
             if Module.Idle_ID = Glib.Main.No_Source_Id then
                --  register Idle
@@ -964,11 +1052,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Error_Message
      (Self    : in out SemanticTokens_Full_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
-      pragma Unreferenced (Code, Message, Data);
+      pragma Unreferenced (Code, Message);
       Idx : Positive := 1;
    begin
       --  delete previous results for the same file
@@ -991,7 +1078,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
-      Result : LSP.Messages.SemanticTokens)
+      Result : LSP.Structures.SemanticTokens_Or_Null)
    is
       use type Basic_Types.Visible_Column_Type;
 
@@ -1006,7 +1093,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          use VSS.Strings;
 
          use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
-         use type uinteger;
+
          use type Interfaces.Unsigned_32;
          use type Gtk.Label.Gtk_Label;
 
@@ -1039,11 +1126,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
             Legend := Get_SemanticTokens_Legend (Server);
 
-            while Index < Natural (Result.data.Length) loop
+            while Index < Natural (Result.Value.data.Length) loop
                --  iterate over response lines to find the line we need
                --   (line for which the tooltip is triggered)
 
-               Line := Prev_Line + Natural (Result.data.Element (Index));
+               Line := Prev_Line + Natural (Result.Value.data.Element (Index));
 
                if Line = Self.From then
 
@@ -1051,11 +1138,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                      --  relative char position
                      Char :=
                        Prev_Char
-                       + Visible_Column_Type (Result.data.Element (Index + 1));
+                       + Visible_Column_Type
+                           (Result.Value.data.Element (Index + 1));
                   else
                      Char :=
                        Visible_Column_Type
-                         (Result.data.Element (Index + 1) + 1);
+                         (Result.Value.data.Element (Index + 1) + 1);
                   end if;
 
                   --  Find the token for the tooltip's queried location
@@ -1064,7 +1152,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                     and then
                       Char
                       + Visible_Column_Type
-                          (Result.data.Element (Index + 2) - 1)
+                          (Result.Value.data.Element (Index + 2) - 1)
                       >= Self.Column
                   then
                      --  Found a token for the queried tooltip's location
@@ -1074,11 +1162,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                        (VSS.Strings.Conversions.To_Virtual_String
                           ("Semantic type: ")
                         & Legend.tokenTypes.Element
-                            (Natural (Result.data.Element (Index + 3)) + 1));
+                            (Natural (Result.Value.data.Element (Index + 3))
+                             + 1));
 
                      UInt :=
                        Interfaces.Unsigned_32
-                         (Result.data.Element (Index + 4));
+                         (Result.Value.data.Element (Index + 4));
 
                      --  Check if we have modifiers
                      if UInt /= 0 then
@@ -1141,6 +1230,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Request : GPS.LSP_Client.Requests.Request_Access;
       Dummy   : Boolean;
    begin
+      if Result.Is_Null then
+         return;
+      end if;
+
       if Self.Column = 0 then
          --  Column is 0 so it is regular (not for tooltip) request
          --  to highlight source code
@@ -1150,7 +1243,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
          elsif Self.Version = Buffer.Version then
             Module.Data.Append
-              (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+              (Result_Type'
+                 ((Self.File, Self.From, Self.To), Result.Value.data));
 
             if Module.Idle_ID = Glib.Main.No_Source_Id then
                --  register Idle
@@ -1183,9 +1277,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding
    procedure On_Error_Message
      (Self    : in out SemanticTokens_Range_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       use GPS.LSP_Client.Requests.SemanticTokens_Range;
    begin
@@ -1195,7 +1288,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       end if;
 
       Abstract_SemanticTokens_Range_Request'Class (Self).On_Error_Message
-        (Code => Code, Message => Message, Data => Data);
+        (Code => Code, Message => Message);
    end On_Error_Message;
 
    -----------------

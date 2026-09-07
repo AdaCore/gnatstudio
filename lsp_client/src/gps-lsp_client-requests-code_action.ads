@@ -17,25 +17,30 @@
 
 with GNATCOLL.VFS;
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
 package GPS.LSP_Client.Requests.Code_Action is
 
    type Abstract_Code_Action_Request is abstract new LSP_Request with record
       Text_Document    : GNATCOLL.VFS.Virtual_File;
-      Start_Position   : LSP.Messages.Position;
-      End_Position     : LSP.Messages.Position;
+      Start_Position   : LSP.Structures.Position;
+      End_Position     : LSP.Structures.Position;
       Document_Version : Integer;
    end record;
 
    function Params
      (Self : Abstract_Code_Action_Request)
-      return LSP.Messages.CodeActionParams;
+      return LSP.Structures.CodeActionParams;
    --  Return parameters of the request to be sent to the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Code_Action_Request;
-      Result : LSP.Messages.CodeAction_Vector)
+      Result : LSP.Structures.Command_Or_CodeAction_Vector)
    is abstract;
-   --  Called when a result response is received from the server.
+   --  Called when a result response is received from the server. The
+   --  response may contain either Command or CodeAction entries; passed
+   --  through unnormalized.
 
    overriding
    function Method
@@ -43,12 +48,12 @@ package GPS.LSP_Client.Requests.Code_Action is
 
    overriding
    procedure Params
-     (Self   : Abstract_Code_Action_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Abstract_Code_Action_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Code_Action_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Abstract_Code_Action_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Code_Action;

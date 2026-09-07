@@ -33,9 +33,9 @@ with Gtk.Label;  use Gtk.Label;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Style_Context;
 
-with GNATCOLL.JSON; use GNATCOLL.JSON;
-with LSP.Types;     use LSP.Types;
-with LSP.Messages;  use LSP.Messages;
+with GNATCOLL.JSON;  use GNATCOLL.JSON;
+with LSP.Structures; use LSP.Structures;
+with GPS.LSP_Client.Utilities;
 
 with GPS.Kernel; use GPS.Kernel;
 with GUI_Utils;  use GUI_Utils;
@@ -219,11 +219,18 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
             --  Enter: validate and send the request...
             if Win.Request.Params.command = "als-refactor-add-parameters" then
                declare
-                  Obj : LSP_Any;
+                  Args : GNATCOLL.JSON.JSON_Value :=
+                    GPS.LSP_Client.Utilities.From_LSP_Any
+                      (Win.Request.Params.arguments);
+                  Arr  : GNATCOLL.JSON.JSON_Array := Args.Get;
+                  Obj  : constant GNATCOLL.JSON.JSON_Value :=
+                    GNATCOLL.JSON.Array_Element (Arr, 1);
                begin
-                  Obj := Win.Request.Params.arguments.Value.First_Element;
                   Obj.Set_Field ("newParameter", Create (Win.Input.Get_Text));
-                  Win.Request.Params.arguments.Value.Replace_Element (1, Obj);
+                  GNATCOLL.JSON.Set_Element (Arr, 1, Obj);
+                  Args := GNATCOLL.JSON.Create (Arr);
+                  Win.Request.Params.arguments :=
+                    GPS.LSP_Client.Utilities.To_LSP_Any (Args);
                   GPS.LSP_Client.Requests.Execute
                     (Win.Lang, Request_Access (Win.Request));
                end;
@@ -394,14 +401,15 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
    ------------------------
 
    procedure Set_Result_Message
-     (Response : LSP.Messages.ALS_Check_Syntax_Result) is
+     (Response : LSP.Structures.AlsCheckSyntaxResult) is
    begin
       if The_Win = null then
          return;
       end if;
 
-      if Response.Is_Set then
-         The_Win.Response_Label.Set_Text (To_UTF_8_String (Response.Value));
+      if not Response.diagnostic.Is_Empty then
+         The_Win.Response_Label.Set_Text
+           (To_UTF_8_String (Response.diagnostic));
       else
          The_Win.Response_Label.Set_Text ("");
       end if;

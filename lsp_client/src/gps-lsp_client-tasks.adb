@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Types;
+with LSP.Structures;
 with Language; use Language;
 with Commands;
 
@@ -37,7 +37,7 @@ package body GPS.LSP_Client.Tasks is
    type Language_Server_Monitor is new Commands.Root_Command with record
       Label      : Ada.Strings.Unbounded.Unbounded_String;
       Lang       : Language.Language_Access;
-      Request_Id : LSP.Types.LSP_Number_Or_String;
+      Request_Id : LSP.Structures.Integer_Or_Virtual_String;
    end record;
 
    type Language_Server_Monitor_Access is

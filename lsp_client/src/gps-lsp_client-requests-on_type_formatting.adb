@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -42,13 +43,13 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_On_Type_Formatting_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_On_Type_Formatting_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Response : LSP.Messages.TextEdit_Vector;
+      Response : LSP.Structures.TextEdit_Vector;
 
    begin
-      LSP.Messages.TextEdit_Vector'Read (Stream, Response);
+      LSP.Inputs.Read_TextEdit_Vector_Or_Null (Handler, Response);
       Abstract_On_Type_Formatting_Request'Class (Self).On_Result_Message
         (Response);
    end On_Result_Message;
@@ -59,7 +60,7 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
 
    function Params
      (Self : Abstract_On_Type_Formatting_Request)
-      return LSP.Messages.DocumentOnTypeFormattingParams is
+      return LSP.Structures.DocumentOnTypeFormattingParams is
    begin
       return
         (textDocument =>
@@ -78,7 +79,7 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_On_Type_Formatting_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.documentOnTypeFormattingProvider.Is_Set;
    end Is_Request_Supported;
@@ -89,10 +90,10 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
 
    overriding
    procedure Params
-     (Self   : Abstract_On_Type_Formatting_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_On_Type_Formatting_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.DocumentOnTypeFormattingParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_DocumentOnTypeFormattingParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.On_Type_Formatting;

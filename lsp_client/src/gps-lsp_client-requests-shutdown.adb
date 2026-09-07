@@ -37,9 +37,19 @@ package body GPS.LSP_Client.Requests.Shutdown is
 
    overriding
    procedure Params
-     (Self   : Abstract_Shutdown_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
-   is null;
+     (Self    : Abstract_Shutdown_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class)
+   is
+      pragma Unreferenced (Self);
+
+   begin
+      --  The "shutdown" request takes no parameters, but the "params"
+      --  member is unconditionally written by the caller, so this must
+      --  still produce a valid JSON value (an empty object).
+
+      Handler.Start_Object;
+      Handler.End_Object;
+   end Params;
 
    --------------------------
    -- Is_Request_Supported --
@@ -48,7 +58,7 @@ package body GPS.LSP_Client.Requests.Shutdown is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Shutdown_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return True;
    end Is_Request_Supported;
@@ -59,10 +69,10 @@ package body GPS.LSP_Client.Requests.Shutdown is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Shutdown_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Shutdown_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      pragma Unreferenced (Stream);
+      pragma Unreferenced (Handler);
 
    begin
       Abstract_Shutdown_Request'Class (Self).On_Result_Message;

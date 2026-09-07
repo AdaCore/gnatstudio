@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
+
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Symbols is
@@ -23,17 +26,19 @@ package GPS.LSP_Client.Requests.Document_Symbols is
      new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
       Query          : VSS.Strings.Virtual_String;
-      Case_Sensitive : LSP.Types.Optional_Boolean;
-      Whole_Word     : LSP.Types.Optional_Boolean;
-      Negate         : LSP.Types.Optional_Boolean;
-      Kind           : LSP.Messages.Optional_Search_Kind;
+      Case_Sensitive : LSP.Structures.Boolean_Optional;
+      Whole_Word     : LSP.Structures.Boolean_Optional;
+      Negate         : LSP.Structures.Boolean_Optional;
+      Kind           : LSP.Structures.AlsSearchKind_Optional;
    end record;
 
    procedure On_Result_Message
      (Self   : in out Document_Symbols_Request;
-      Result : LSP.Messages.Symbol_Vector)
+      Result : LSP.Structures.DocumentSymbol_Result)
    is abstract;
-   --  Called when a result response is received from the server.
+   --  Called when a result response is received from the server. Result may
+   --  be a flat SymbolInformation list or a hierarchical DocumentSymbol
+   --  tree, passed through unnormalized.
 
    overriding
    function Method
@@ -41,17 +46,17 @@ package GPS.LSP_Client.Requests.Document_Symbols is
 
    overriding
    procedure Params
-     (Self   : Document_Symbols_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : Document_Symbols_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding
    function Is_Request_Supported
      (Self    : Document_Symbols_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean;
+      Options : LSP.Structures.ServerCapabilities) return Boolean;
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Document_Symbols_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+     (Self    : in out Document_Symbols_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class);
 
 end GPS.LSP_Client.Requests.Document_Symbols;

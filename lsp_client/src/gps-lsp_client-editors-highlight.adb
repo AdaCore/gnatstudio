@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
@@ -40,6 +39,8 @@ with GUI_Utils;                                  use GUI_Utils;
 with Language;                                   use Language;
 with Language_Handlers;                          use Language_Handlers;
 with GPS.Editors;                                use GPS.Editors;
+with LSP.Enumerations;
+with LSP.Structures;
 
 package body GPS.LSP_Client.Editors.Highlight is
 
@@ -57,14 +58,13 @@ package body GPS.LSP_Client.Editors.Highlight is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Document_Highlight_Request;
-      Result : LSP.Messages.DocumentHighlight_Vector);
+      Result : LSP.Structures.DocumentHighlight_Vector);
 
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    overriding
    procedure On_Rejected
@@ -111,7 +111,7 @@ package body GPS.LSP_Client.Editors.Highlight is
       Highlighting_Context : Highlighting_Context_Type;
       --  The current highlighting context.
 
-      Locations : LSP.Messages.DocumentHighlight_Vector;
+      Locations : LSP.Structures.DocumentHighlight_Vector;
       --  The locations to highlight.
 
       Loc_Index : Positive := 1;
@@ -165,7 +165,7 @@ package body GPS.LSP_Client.Editors.Highlight is
    overriding
    procedure On_Result_Message
      (Self   : in out GPS_LSP_Document_Highlight_Request;
-      Result : LSP.Messages.DocumentHighlight_Vector) is
+      Result : LSP.Structures.DocumentHighlight_Vector) is
    begin
       Module.Locations := Result;
       Module.Loc_Index := 1;
@@ -193,9 +193,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    overriding
    procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       pragma Unreferenced (Code, Self);
    begin
@@ -203,7 +202,6 @@ package body GPS.LSP_Client.Editors.Highlight is
         (Me,
          "Error received on hover request: "
          & VSS.Strings.Conversions.To_UTF_8_String (Message));
-      Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
    end On_Error_Message;
 
    -----------------
@@ -240,22 +238,22 @@ package body GPS.LSP_Client.Editors.Highlight is
       end if;
 
       declare
-         use type LSP.Messages.DocumentHighlightKind;
          use type Basic_Types.Visible_Column_Type;
+         use type LSP.Enumerations.DocumentHighlightKind;
 
-         Loc  : constant LSP.Messages.DocumentHighlight :=
+         Loc  : constant LSP.Structures.DocumentHighlight :=
            Module.Locations (Module.Loc_Index);
-         Kind : constant LSP.Messages.DocumentHighlightKind :=
-           (if Loc.kind.Is_Set then Loc.kind.Value else LSP.Messages.Read);
+         Kind : constant LSP.Enumerations.DocumentHighlightKind :=
+           (if Loc.kind.Is_Set then Loc.kind.Value else LSP.Enumerations.Read);
 
          Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
            Params.Kernel.Get_Buffer_Factory.Get_Holder (File => Params.File);
          From   : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Loc.span.first);
+             (Holder.Editor, Loc.a_range.start);
          To     : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Loc.span.last);
+             (Holder.Editor, Loc.a_range.an_end);
 
          Message : Simple_Message_Access;
       begin
@@ -274,7 +272,7 @@ package body GPS.LSP_Client.Editors.Highlight is
          GPS.Kernel.Messages.Set_Highlighting
            (Self   => Message,
             Style  =>
-              (if Kind = LSP.Messages.Write
+              (if Kind = LSP.Enumerations.Write
                then Editor_Ephemeral_Highlighting_Smart
                else Editor_Ephemeral_Highlighting_Simple),
             Length => Highlight_Length (To.Column - From.Column));

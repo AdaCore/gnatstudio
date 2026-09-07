@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with LSP.Inputs;
+with LSP.Outputs;
+
 with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Requests.Called_By is
@@ -25,11 +28,11 @@ package body GPS.LSP_Client.Requests.Called_By is
 
    overriding
    procedure Params
-     (Self   : Abstract_Prepare_Call_Hierarchy_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Prepare_Call_Hierarchy_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.CallHierarchyPrepareParams'Write
-        (Stream,
+      LSP.Outputs.Write_CallHierarchyPrepareParams
+        (Handler,
          (textDocument => (uri => GPS.LSP_Client.Utilities.To_URI (Self.File)),
           position     => Self.Position,
           others       => <>));
@@ -41,12 +44,12 @@ package body GPS.LSP_Client.Requests.Called_By is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Prepare_Call_Hierarchy_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Prepare_Call_Hierarchy_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Result : LSP.Messages.CallHierarchyItem_Vector;
+      Result : LSP.Structures.CallHierarchyItem_Vector;
    begin
-      LSP.Messages.CallHierarchyItem_Vector'Read (Stream, Result);
+      LSP.Inputs.Read_CallHierarchyItem_Vector_Or_Null (Handler, Result);
       Abstract_Prepare_Call_Hierarchy_Request'Class (Self).On_Result_Message
         (Result);
    end On_Result_Message;
@@ -68,7 +71,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Prepare_Call_Hierarchy_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.callHierarchyProvider.Is_Set;
    end Is_Request_Supported;
@@ -87,18 +90,33 @@ package body GPS.LSP_Client.Requests.Called_By is
       return "callHierarchy/incomingCalls";
    end Method;
 
+   ------------
+   -- Params --
+   ------------
+
+   overriding
+   procedure Params
+     (Self    : Abstract_Called_By_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
+   begin
+      LSP.Outputs.Write_CallHierarchyIncomingCallsParams
+        (Handler, (item => Self.Item, others => <>));
+   end Params;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_Called_By_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_Called_By_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Result : LSP.Messages.CallHierarchyIncomingCall_Vector;
+      Result : LSP.Structures.CallHierarchyIncomingCall_Vector;
    begin
-      LSP.Messages.CallHierarchyIncomingCall_Vector'Read (Stream, Result);
+      --  Result is "CallHierarchyIncomingCall[] | null" per the LSP spec.
+      LSP.Inputs.Read_CallHierarchyIncomingCall_Vector_Or_Null
+        (Handler, Result);
       Abstract_Called_By_Request'Class (Self).On_Result_Message (Result);
    end On_Result_Message;
 
@@ -116,33 +134,35 @@ package body GPS.LSP_Client.Requests.Called_By is
       return "callHierarchy/outgoingCalls";
    end Method;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding
-   procedure On_Result_Message
-     (Self   : in out Abstract_Calls_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
-   is
-      Result : LSP.Messages.CallHierarchyOutgoingCall_Vector;
-   begin
-      LSP.Messages.CallHierarchyOutgoingCall_Vector'Read (Stream, Result);
-      Abstract_Calls_Request'Class (Self).On_Result_Message (Result);
-   end On_Result_Message;
-
    ------------
    -- Params --
    ------------
 
    overriding
    procedure Params
-     (Self   : Abstract_Calls_Or_Called_By_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_Calls_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.CallHierarchyIncomingCallsParams'Write
-        (Stream, (item => Self.Item, others => <>));
+      LSP.Outputs.Write_CallHierarchyOutgoingCallsParams
+        (Handler, (item => Self.Item, others => <>));
    end Params;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding
+   procedure On_Result_Message
+     (Self    : in out Abstract_Calls_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
+   is
+      Result : LSP.Structures.CallHierarchyOutgoingCall_Vector;
+   begin
+      --  Result is "CallHierarchyOutgoingCall[] | null" per the LSP spec.
+      LSP.Inputs.Read_CallHierarchyOutgoingCall_Vector_Or_Null
+        (Handler, Result);
+      Abstract_Calls_Request'Class (Self).On_Result_Message (Result);
+   end On_Result_Message;
 
    --------------------------
    -- Is_Request_Supported --
@@ -151,7 +171,7 @@ package body GPS.LSP_Client.Requests.Called_By is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_Calls_Or_Called_By_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return Options.callHierarchyProvider.Is_Set;
    end Is_Request_Supported;

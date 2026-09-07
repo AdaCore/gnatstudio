@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.JSON_Streams;
+with LSP.Inputs;
+with LSP.Outputs;
 
 with GPS.LSP_Client.Utilities;
 
@@ -42,12 +43,12 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Full is
 
    overriding
    procedure On_Result_Message
-     (Self   : in out Abstract_SemanticTokens_Full_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+     (Self    : in out Abstract_SemanticTokens_Full_Request;
+      Handler : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class)
    is
-      Tokens : LSP.Messages.SemanticTokens;
+      Tokens : LSP.Structures.SemanticTokens_Or_Null;
    begin
-      LSP.Messages.SemanticTokens'Read (Stream, Tokens);
+      LSP.Inputs.Read_SemanticTokens_Or_Null (Handler, Tokens);
       Abstract_SemanticTokens_Full_Request'Class (Self).On_Result_Message
         (Tokens);
    end On_Result_Message;
@@ -58,7 +59,7 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Full is
 
    function Params
      (Self : Abstract_SemanticTokens_Full_Request)
-      return LSP.Messages.SemanticTokensParams is
+      return LSP.Structures.SemanticTokensParams is
    begin
       return
         (textDocument =>
@@ -73,11 +74,26 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Full is
    overriding
    function Is_Request_Supported
      (Self    : Abstract_SemanticTokens_Full_Request;
-      Options : LSP.Messages.ServerCapabilities) return Boolean is
+      Options : LSP.Structures.ServerCapabilities) return Boolean is
    begin
       return
         Options.semanticTokensProvider.Is_Set
-        and then Options.semanticTokensProvider.Value.full.Is_Set;
+        and then
+          (if Options.semanticTokensProvider.Value.Is_SemanticTokensOptions
+           then
+             Options
+               .semanticTokensProvider
+               .Value
+               .SemanticTokensOptions
+               .full
+               .Is_Set
+           else
+             Options
+               .semanticTokensProvider
+               .Value
+               .SemanticTokensRegistrationOptions
+               .full
+               .Is_Set);
    end Is_Request_Supported;
 
    ------------
@@ -86,10 +102,10 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Full is
 
    overriding
    procedure Params
-     (Self   : Abstract_SemanticTokens_Full_Request;
-      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is
+     (Self    : Abstract_SemanticTokens_Full_Request;
+      Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      LSP.Messages.SemanticTokensParams'Write (Stream, Self.Params);
+      LSP.Outputs.Write_SemanticTokensParams (Handler, Self.Params);
    end Params;
 
 end GPS.LSP_Client.Requests.SemanticTokens_Full;

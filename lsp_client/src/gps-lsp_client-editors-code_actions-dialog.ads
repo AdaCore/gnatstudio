@@ -19,7 +19,7 @@
 --  require input.
 
 with Language; use Language;
-with LSP.Messages;
+with LSP.Structures;
 
 package GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
@@ -39,7 +39,7 @@ package GPS.LSP_Client.Editors.Code_Actions.Dialog is
    --  If a dialog is not required, execute the request immediately.
 
    procedure Set_Result_Message
-     (Response : LSP.Messages.ALS_Check_Syntax_Result);
+     (Response : LSP.Structures.AlsCheckSyntaxResult);
    --  If the input window is still up, populate it with the contents
    --  of Response.
 

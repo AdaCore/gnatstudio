@@ -22,20 +22,17 @@
 --    - List of real reference kinds for an entity
 --    - all entities in project/file
 
+with Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Hashed_Maps;
 
-with GNATCOLL.JSON;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
-with VSS.JSON.Pull_Readers.Simple;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory_UTF8_Input;
-with VSS.Text_Streams.Memory_UTF8_Output;
 
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Stock_Labels;
@@ -74,8 +71,8 @@ with Language;
 with Src_Editor_Module.Shell;
 
 with Basic_Types;  use Basic_Types;
-with LSP.JSON_Streams;
-with LSP.Messages;
+with LSP.Enumerations;
+with LSP.Structures;
 with String_Utils; use String_Utils;
 with UTF8_Utils;
 
@@ -109,7 +106,7 @@ package body GPS.LSP_Client.References is
    -- References_Command --
 
    type References_Command is new Abstract_References_Command with record
-      Locations : LSP.Messages.Location_Vector;
+      Locations : LSP.Structures.Location_Vector;
    end record;
    type Ref_Command_Access is access all References_Command'Class;
    --  Used to transfer references lists via python API
@@ -147,14 +144,14 @@ package body GPS.LSP_Client.References is
 
    overriding
    procedure On_Result_Message
-     (Self : in out References_Request; Result : LSP.Messages.Location_Vector);
+     (Self   : in out References_Request;
+      Result : LSP.Structures.Location_Vector);
 
    overriding
    procedure On_Error_Message
      (Self    : in out References_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value);
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String);
 
    -- Others --
 
@@ -198,6 +195,15 @@ package body GPS.LSP_Client.References is
       return VSS.String_Vectors.Virtual_String_Vector;
    --  Returns list of all supported reference kinds.
 
+   function To_Display_Name (Value : String) return String;
+   --  Lower-case an AlsReferenceKind literal's spelling and strip the "an_"
+   --  prefix (added to dodge Ada reserved words).
+
+   function As_Strings
+     (Set : LSP.Structures.AlsReferenceKind_Set)
+      return VSS.String_Vectors.Virtual_String_Vector;
+   --  Return the display names of the reference kinds set in Set.
+
    Message_Flag : constant Message_Flags :=
      (Editor_Side => True, Editor_Line => False, Locations => True);
 
@@ -206,13 +212,13 @@ package body GPS.LSP_Client.References is
    package File_To_Location_Maps is new
      Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => GNATCOLL.VFS.Virtual_File,
-        Element_Type    => LSP.Messages.Location_Vectors.Vector,
+        Element_Type    => LSP.Structures.Location_Vectors.Vector,
         Hash            => GNATCOLL.VFS.Full_Name_Hash,
         Equivalent_Keys => GNATCOLL.VFS."=",
-        "="             => LSP.Messages.Location_Vectors."=");
+        "="             => LSP.Structures.Location_Vectors."=");
 
    procedure Group_By_File
-     (V                : LSP.Messages.Location_Vector;
+     (V                : LSP.Structures.Location_Vector;
       File_Vector      : in out GNATCOLL.VFS.File_Array_Access;
       File_To_Locs_Map : in out File_To_Location_Maps.Map);
    --  Transform a Location_Vector into a map of Location_Vectors indexed
@@ -241,7 +247,7 @@ package body GPS.LSP_Client.References is
 
       Kernel    : Kernel_Handle;
       File      : GNATCOLL.VFS.Virtual_File;
-      Position  : LSP.Messages.Position;
+      Position  : LSP.Structures.Position;
       Titles    : VSS.String_Vectors.Virtual_String_Vector;
       Name      : VSS.Strings.Virtual_String;
       Filter    : Result_Filter;
@@ -325,44 +331,54 @@ package body GPS.LSP_Client.References is
       return Result;
    end All_Refs_Category;
 
+   ---------------------
+   -- To_Display_Name --
+   ---------------------
+
+   function To_Display_Name (Value : String) return String is
+      N : constant String := Ada.Characters.Handling.To_Lower (Value);
+   begin
+      if N'Length > 3 and then N (N'First .. N'First + 2) = "an_" then
+         return N (N'First + 3 .. N'Last);
+      else
+         return N;
+      end if;
+   end To_Display_Name;
+
+   ----------------
+   -- As_Strings --
+   ----------------
+
+   function As_Strings
+     (Set : LSP.Structures.AlsReferenceKind_Set)
+      return VSS.String_Vectors.Virtual_String_Vector
+   is
+      Result : VSS.String_Vectors.Virtual_String_Vector;
+   begin
+      for K in Set'Range loop
+         if Set (K) then
+            Result.Append
+              (VSS.Strings.Conversions.To_Virtual_String
+                 (To_Display_Name
+                    (LSP.Enumerations.AlsReferenceKind'Image (K))));
+         end if;
+      end loop;
+
+      return Result;
+   end As_Strings;
+
    -------------------------
    -- All_Reference_Kinds --
    -------------------------
 
    function All_Reference_Kinds return VSS.String_Vectors.Virtual_String_Vector
    is
-      Interesting_Kinds : constant LSP.Messages.AlsReferenceKind_Set :=
-        (Is_Server_Side => True,
-         As_Flags       => (LSP.Messages.Parent => False, others => True));
-      Interesting_Strs  : LSP.Messages.AlsReferenceKind_Set;
-
-      JS     : aliased LSP.JSON_Streams.JSON_Stream;
-      Output :
-        aliased VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
-
+      Interesting_Kinds : LSP.Structures.AlsReferenceKind_Set :=
+        (others => True);
    begin
-      JS.Set_Stream (Output'Unchecked_Access);
-      LSP.Messages.AlsReferenceKind_Set'Write (JS'Access, Interesting_Kinds);
-      JS.End_Document;
+      Interesting_Kinds (LSP.Enumerations.parent) := False;
 
-      declare
-         Memory :
-           aliased VSS.Text_Streams.Memory_UTF8_Input.Memory_UTF8_Input_Stream;
-         Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
-         Input  :
-           aliased LSP.JSON_Streams.JSON_Stream
-                     (False, Reader'Unchecked_Access);
-      begin
-         Memory.Set_Data (Output.Buffer);
-         Reader.Set_Stream (Memory'Unchecked_Access);
-         Reader.Read_Next;
-         pragma Assert (Reader.Is_Start_Document);
-         Reader.Read_Next;
-         LSP.Messages.AlsReferenceKind_Set'Read
-           (Input'Access, Interesting_Strs);
-
-         return Interesting_Strs.As_Strings;
-      end;
+      return As_Strings (Interesting_Kinds);
    end All_Reference_Kinds;
 
    -------------
@@ -709,7 +725,8 @@ package body GPS.LSP_Client.References is
 
    overriding
    procedure On_Result_Message
-     (Self : in out References_Request; Result : LSP.Messages.Location_Vector)
+     (Self   : in out References_Request;
+      Result : LSP.Structures.Location_Vector)
    is
       Locations    : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel);
@@ -767,9 +784,8 @@ package body GPS.LSP_Client.References is
    overriding
    procedure On_Error_Message
      (Self    : in out References_Request;
-      Code    : LSP.Messages.ErrorCodes;
-      Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
+      Code    : LSP.Enumerations.ErrorCodes;
+      Message : VSS.Strings.Virtual_String)
    is
       Locations : constant GPS.Location_View.Location_View_Access :=
         GPS.Location_View.Get_Or_Create_Location_View
@@ -796,9 +812,7 @@ package body GPS.LSP_Client.References is
            (Locations_View, Visible => False);
       end if;
 
-      GPS.LSP_Client.Requests.References.Finalize
-        (GPS.LSP_Client.Requests.References.Abstract_References_Request
-           (Self));
+      GPS.LSP_Client.Requests.LSP_Request (Self).Finalize;
    end Finalize;
 
    ------------------------
@@ -937,7 +951,7 @@ package body GPS.LSP_Client.References is
               Get_Kernel (Data).Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Loc.span.first);
+                (Holder.Editor, Loc.a_range.start);
          begin
             Inst :=
               Create_File_Location
@@ -955,7 +969,7 @@ package body GPS.LSP_Client.References is
    -------------------
 
    procedure Group_By_File
-     (V                : LSP.Messages.Location_Vector;
+     (V                : LSP.Structures.Location_Vector;
       File_Vector      : in out GNATCOLL.VFS.File_Array_Access;
       File_To_Locs_Map : in out File_To_Location_Maps.Map) is
    begin
@@ -966,7 +980,7 @@ package body GPS.LSP_Client.References is
          begin
             if not File_To_Locs_Map.Contains (File) then
                File_To_Locs_Map.Include
-                 (File, LSP.Messages.Location_Vectors.Empty);
+                 (File, LSP.Structures.Location_Vectors.Empty_Vector);
                GNATCOLL.VFS.Append (File_Vector, File);
             end if;
             File_To_Locs_Map (File).Append (Loc);
@@ -987,9 +1001,8 @@ package body GPS.LSP_Client.References is
       use GNATCOLL.VFS;
       use GNATCOLL.Xref;
       use GPS.Editors;
-      use LSP.Messages;
 
-      function Match (Item : LSP.Messages.Location) return Boolean;
+      function Match (Item : LSP.Structures.Location) return Boolean;
       --  Return True when one of reference kinds of the given location match
       --  selected filter criteria.
 
@@ -997,19 +1010,20 @@ package body GPS.LSP_Client.References is
       -- Match --
       -----------
 
-      function Match (Item : LSP.Messages.Location) return Boolean is
+      function Match (Item : LSP.Structures.Location) return Boolean is
          use type VSS.Strings.Virtual_String;
 
+         Item_Kinds : constant VSS.String_Vectors.Virtual_String_Vector :=
+           As_Strings (Item.alsKind);
       begin
          --  Return True if there is no filter or if the reference has not
          --  any associated kind.
-         if not Data.Filter.Is_Set or else Item.alsKind.As_Strings.Is_Empty
-         then
+         if not Data.Filter.Is_Set or else Item_Kinds.Is_Empty then
             return True;
          end if;
 
          --  Try to match the filter otherwise
-         for K of Item.alsKind.As_Strings loop
+         for K of Item_Kinds loop
             for F of Data.Filter.Ref_Kinds loop
                if K = F then
                   return True;
@@ -1050,30 +1064,38 @@ package body GPS.LSP_Client.References is
 
                      Kinds.Clear;
 
-                     if Loc.alsKind /= Empty_Set
-                       and then not Loc.alsKind.As_Strings.Is_Empty
-                     then
-                        for S of Loc.alsKind.As_Strings loop
-                           if Kinds.Is_Empty then
-                              Kinds.Append ('[');
+                     declare
+                        Loc_Kinds :
+                          constant VSS.String_Vectors.Virtual_String_Vector :=
+                            As_Strings (Loc.alsKind);
+                     begin
+                        if not Loc_Kinds.Is_Empty then
+                           for S of Loc_Kinds loop
+                              if Kinds.Is_Empty then
+                                 Kinds.Append ('[');
 
-                           else
-                              Kinds.Append (", ");
-                           end if;
+                              else
+                                 Kinds.Append
+                                   (VSS.Strings.Conversions.To_Virtual_String
+                                      (", "));
+                              end if;
 
-                           Kinds.Append (S);
-                        end loop;
+                              Kinds.Append (S);
+                           end loop;
 
-                        Kinds.Append ("] ");
-                     end if;
+                           Kinds.Append
+                             (VSS.Strings.Conversions.To_Virtual_String
+                                ("] "));
+                        end if;
+                     end;
 
                      declare
                         From : constant GPS.Editors.Editor_Location'Class :=
                           GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                            (Buffer.Editor, Loc.span.first);
+                            (Buffer.Editor, Loc.a_range.start);
                         To   : constant GPS.Editors.Editor_Location'Class :=
                           GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                            (Buffer.Editor, Loc.span.last);
+                            (Buffer.Editor, Loc.a_range.an_end);
 
                         Start_Loc  :
                           constant GPS.Editors.Editor_Location'Class :=
@@ -1108,13 +1130,14 @@ package body GPS.LSP_Client.References is
                           + UTF8_Utils.Column_To_Index
                               (Whole_Line,
                                Character_Offset_Type
-                                 (Loc.span.first.character));
+                                 (Loc.a_range.start.character));
 
                         After_Idx :=
                           (Whole_Line'First - 1)
                           + UTF8_Utils.Column_To_Index
                               (Whole_Line,
-                               Character_Offset_Type (Loc.span.last.character)
+                               Character_Offset_Type
+                                 (Loc.a_range.an_end.character)
                                + 1);
 
                         --  Ensure that Before_Idx and After_Idx are within
