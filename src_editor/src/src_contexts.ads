@@ -424,11 +424,13 @@ private
       Editor_Child : MDI_Child;
       --  The editor in which the occurrence has been matched
 
-      Match_From   : Editor_Coordinates;
-      --  The editor coordinates for the match's start
-
-      Match_Up_To  : Editor_Coordinates;
-      --  The editor coordinates for the match's end
+      Match        : GPS.Search.Search_Context;
+      --  The match itself.
+      --
+      --  Its editor coordinates are derived when the occurrence is used
+      --  rather than stored here: normalizing the exclusive end of a match
+      --  requires the buffer holding it, and the file may well have had no
+      --  editor when the match was found.
    end record;
 
    overriding function Search

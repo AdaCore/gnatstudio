@@ -257,14 +257,14 @@ package body Src_Contexts is
    --  Position of the first character of Match
 
    function Match_End
-     (Buffer : Source_Buffer;
+     (Buffer : not null Source_Buffer;
       Match  : GPS.Search.Search_Context) return Editor_Coordinates;
    --  Position just after the last character of Match. Select_Region and the
    --  cursor location subprograms are given an exclusive end, and an empty
    --  match has no end of its own: it reports its start.
-   --  Buffer may be null, when the file holding the match has no editor; the
-   --  position can then not be normalized, and is only ever used once an
-   --  editor exists.
+   --  Buffer holds the match: normalizing the position just after the last
+   --  matched character needs it, so this can only be called for a file that
+   --  has an editor.
 
    function Auxiliary_Search
      (Context              : access Current_File_Context'Class;
@@ -349,8 +349,8 @@ package body Src_Contexts is
       Right : not null access Source_Search_Occurrence_Record)
       return Boolean is
    begin
-      return (Left.Match_From = Right.Match_From
-              and then Left.Match_Up_To = Right.Match_Up_To);
+      return Left.Match.Start = Right.Match.Start
+        and then Left.Match.Finish = Right.Match.Finish;
    end Is_Equal;
 
    ---------------
@@ -358,7 +358,7 @@ package body Src_Contexts is
    ---------------
 
    function Match_End
-     (Buffer : Source_Buffer;
+     (Buffer : not null Source_Buffer;
       Match  : GPS.Search.Search_Context) return Editor_Coordinates
    is
       Line   : Editable_Line_Type;
@@ -367,11 +367,6 @@ package body Src_Contexts is
    begin
       if Is_Empty_Match (Match) then
          return Match_Start (Match);
-
-      elsif Buffer = null then
-         return
-           (Editable_Line_Type (Match.Finish.Line),
-            Character_Index (Match.Finish.Column + 1));
       end if;
 
       --  Advance one character from the last matched character, rather than
@@ -1713,8 +1708,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   => Match_Start (Match),
-            Match_Up_To  => Match_End (Get_Buffer (Editor), Match));
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2312,8 +2306,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Find_Child (Kernel, Editor),
-            Match_From   => Match_From,
-            Match_Up_To  => Match_Up_To);
+            Match        => Context.Current);
          Initialize (Occurrence, Pattern => Context_Look_For (Context));
 
          Push_Current_Editor_Location_In_History (Kernel);
@@ -2396,8 +2389,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   => Match_Start (Match),
-            Match_Up_To  => Match_End (Get_Buffer (Editor), Match));
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2870,19 +2862,25 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
 
-      Editor.Set_Cursor_Location
-        (Line             => Source_Occurrence.Match_From.Line,
-         Column           => Source_Occurrence.Match_From.Col,
-         Force_Focus      => False,
-         Centering        => GPS.Editors.Minimal,
-         Extend_Selection => False);
+      declare
+         Match_From  : constant Editor_Coordinates :=
+           Match_Start (Source_Occurrence.Match);
+         Match_Up_To : constant Editor_Coordinates :=
+           Match_End (Get_Buffer (Editor), Source_Occurrence.Match);
 
-      Select_Region
-        (Get_Buffer (Editor),
-         Source_Occurrence.Match_From.Line,
-         Source_Occurrence.Match_From.Col,
-         Source_Occurrence.Match_Up_To.Line,
-         Source_Occurrence.Match_Up_To.Col);
+      begin
+         Editor.Set_Cursor_Location
+           (Line             => Match_From.Line,
+            Column           => Match_From.Col,
+            Force_Focus      => False,
+            Centering        => GPS.Editors.Minimal,
+            Extend_Selection => False);
+
+         Select_Region
+           (Get_Buffer (Editor),
+            Match_From.Line, Match_From.Col,
+            Match_Up_To.Line, Match_Up_To.Col);
+      end;
 
       Center_Cursor (Get_View (Editor));
    end Highlight_Occurrence;
@@ -2907,12 +2905,18 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
 
-      Editor.Set_Cursor_Location
-        (Line             => Source_Occurrence.Match_Up_To.Line,
-         Column           => Source_Occurrence.Match_Up_To.Col,
-         Force_Focus      => False,
-         Centering        => GPS.Editors.Minimal,
-         Extend_Selection => False);
+      declare
+         Match_Up_To : constant Editor_Coordinates :=
+           Match_End (Get_Buffer (Editor), Source_Occurrence.Match);
+
+      begin
+         Editor.Set_Cursor_Location
+           (Line             => Match_Up_To.Line,
+            Column           => Match_Up_To.Col,
+            Force_Focus      => False,
+            Centering        => GPS.Editors.Minimal,
+            Extend_Selection => False);
+      end;
 
       Center_Cursor (Get_View (Editor));
    end Give_Focus_To_Occurrence;
@@ -3194,23 +3198,10 @@ package body Src_Contexts is
             Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
 
-         declare
-            Child : constant MDI_Child :=
-              Find_Editor (Kernel, File, No_Project);
-            Box   : constant Source_Editor_Box :=
-              (if Child = null
-               then null
-               else Get_Source_Box_From_MDI (Child));
-
-         begin
-            Occurrence := new Source_Search_Occurrence_Record'
-              (Search_Occurrence_Record with
-               Editor_Child => Child,
-               Match_From   => Match_Start (Match),
-               Match_Up_To  =>
-                 Match_End
-                   ((if Box = null then null else Get_Buffer (Box)), Match));
-         end;
+         Occurrence := new Source_Search_Occurrence_Record'
+           (Search_Occurrence_Record with
+            Editor_Child => Find_Editor (Kernel, File, No_Project),
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
