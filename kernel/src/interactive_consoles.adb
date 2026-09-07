@@ -1819,18 +1819,34 @@ package body Interactive_Consoles is
                      Context => Console.Search_Context);
 
             else
-               --  Continue after the previous match. An empty match has
-               --  no end of its own, and the search restarts from the
-               --  beginning of the buffer.
+               declare
+                  --  Continue after the previous match. An empty match has
+                  --  no end of its own, so the search resumes one character
+                  --  after its start: resuming at the match itself would
+                  --  keep finding that very same match.
 
-               Console.Search_Context := Pattern.Start
-                 (Buffer      => Buffer.all,
-                  Start_Index =>
+                  Continue_At : constant Natural :=
                     (if Is_Empty_Match (Console.Search_Context)
-                     then Buffer'First
-                     else Byte_Index (Console.Search_Context.Finish)),
-                  End_Index   => Buffer'Last,
-                  Ref         => Ref);
+                     then UTF8_Next_Char
+                            (Buffer.all,
+                             Byte_Index (Console.Search_Context.Start))
+                     else Byte_Index (Console.Search_Context.Finish));
+
+               begin
+                  if Continue_At > Buffer'Last then
+                     --  The previous match ended the buffer: the search
+                     --  fails here and starts over on the next request.
+
+                     Console.Search_Context := GPS.Search.No_Match;
+
+                  else
+                     Console.Search_Context := Pattern.Start
+                       (Buffer      => Buffer.all,
+                        Start_Index => Continue_At,
+                        End_Index   => Buffer'Last,
+                        Ref         => Ref);
+                  end if;
+               end;
             end if;
 
             GNAT.Strings.Free (Buffer);
