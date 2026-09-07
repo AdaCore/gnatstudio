@@ -34,6 +34,7 @@ with Gdk.Rectangle;                  use Gdk.Rectangle;
 with Gdk.Window;                     use Gdk.Window;
 
 with Glib.Object;                    use Glib.Object;
+with Glib.Unicode;                   use Glib.Unicode;
 with Glib.Values;                    use Glib.Values;
 
 with Gtk;                            use Gtk;
@@ -318,7 +319,10 @@ package body Src_Editor_Box is
    is
       use type Basic_Types.Character_Index;
 
-      Length            : constant Natural := Entity_Name'Length;
+      Length            : constant Natural :=
+        Natural (UTF8_Strlen (Entity_Name));
+      --  Number of characters, not bytes, of Entity_Name: it is used below
+      --  to compute character positions and visible columns.
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
       L                 : Natural;
@@ -433,9 +437,15 @@ package body Src_Editor_Box is
                           Character_Index (Match_Column)));
 
                if Found then
-                  Col_End := Col + Visible_Column_Type (Length);
-                  --  ??? Computation for the end column is wrong if there is
-                  --  an ASCII.HT within Length distance of Col.
+                  --  Expand the character position just after the match,
+                  --  rather than adding a length to a visible column, so
+                  --  that a tab within the match is accounted for.
+
+                  Col_End := Expand_Tabs
+                    (Source.Source_Buffer,
+                     Line,
+                     Character_Index (Match_Column)
+                       + Character_Index'Base (Length));
                else
                   Col_End := 0;
                end if;
