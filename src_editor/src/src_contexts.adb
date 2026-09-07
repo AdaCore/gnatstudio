@@ -896,14 +896,23 @@ package body Src_Contexts is
             Length     => Highlight_Length
               (Match.Finish.Visible_Column - Match.Start.Visible_Column) + 1);
       else
-         --  When the location spans on multiple lines, we base the length
-         --  to highlight on the pattern length.
-         --  ??? This is not compatible with UTF-8
+         --  The match runs past the end of its first line, so what has to be
+         --  highlighted on that line is all of it from the start of the
+         --  match. Neither consumer can be told that directly: the length
+         --  below is turned into an end column, and the hook only ever
+         --  selects within a single line.
+         --
+         --  Any length reaching past the end of the line does say it, and
+         --  that is what the size of the match gives: the match covers the
+         --  rest of the line plus its terminator, so its size in bytes
+         --  always exceeds the columns left on the line. Highlight_Range
+         --  then extends the highlighting to the end of the line.
+         --
+         --  The hook cannot express a selection that spans lines, so it is
+         --  given no end at all and only places the cursor on the match.
+
          Do_Highlight
-           (Column_End =>
-               Match.Start.Visible_Column
-                 + Visible_Column_Type
-                   (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1),
+           (Column_End => 0,
             Length     => Highlight_Length
               (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1));
       end if;
