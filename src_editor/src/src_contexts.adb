@@ -34,6 +34,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with Glib;                       use Glib;
 with Glib.Convert;
 with Glib.Error;                 use Glib.Error;
+with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
@@ -2598,6 +2599,13 @@ package body Src_Contexts is
                    (Context.Current,
                     Original,
                     Editor.Get_Buffer.Get_Language.Keywords);
+
+               Text_Length : constant Natural :=
+                 Natural (UTF8_Strlen (Text));
+               --  Number of characters of Text. Text'Length counts UTF-8
+               --  bytes, which is what Finish.Index below is expressed in,
+               --  but Forward_Position advances by characters.
+
             begin
                if Is_Empty_Match (Context.Current) then
                   Insert
@@ -2624,7 +2632,7 @@ package body Src_Contexts is
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
                      Character_Index (Context.Current.Start.Column),
-                     Text'Length,
+                     Text_Length,
                      End_Line,
                      End_Col);
 
@@ -2632,6 +2640,8 @@ package body Src_Contexts is
                   Context.Current.Finish.Column :=
                     Character_Offset_Type (End_Col);
                end;
+
+               --  Index is a byte index in the buffer
 
                Context.Current.Finish.Index :=
                  Context.Current.Start.Index + Text'Length;
