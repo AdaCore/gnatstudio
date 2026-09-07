@@ -26,7 +26,6 @@ with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
 
 package body Find_Utils is
-   use type Basic_Types.Visible_Column_Type;
 
    -----------
    -- Match --
@@ -102,7 +101,7 @@ package body Find_Utils is
          Ref  := Result.Ref;
 
          After := Index_After_Match (Result);
-         BOL := Line_Start (Buffer, Result.Start.Index);
+         BOL := Line_Start (Buffer, Byte_Index (Result.Start));
          EOL := Line_End (Buffer, After);
 
          --  Don't use GPS.Search.Highlight_Match, since that would only show
@@ -112,11 +111,14 @@ package body Find_Utils is
          Matched_Text :=
            To_Unbounded_String ("<b>"
                                 & Glib.Convert.Escape_Text
-                                  (Buffer (Result.Start.Index .. After - 1))
+                                  (Buffer
+                                     (Byte_Index (Result.Start)
+                                      .. After - 1))
                                 & "</b>");
          if not Display_Matched_Only then
             Matched_Text :=
-              Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
+              Glib.Convert.Escape_Text
+                (Buffer (BOL .. Byte_Index (Result.Start) - 1))
               & Matched_Text
               & Glib.Convert.Escape_Text (Buffer (After .. EOL));
          end if;
@@ -311,7 +313,7 @@ package body Find_Utils is
       Pattern     : Search_Pattern_Access;
       Result      : GPS.Search.Search_Context;
       Line_Diff, Col_Diff : Integer;
-      Ref         : constant Buffer_Position := (Buffer'First, 1, 1, 1);
+      Ref         : constant Buffer_Position := At_Index (Buffer'First);
 
    begin
       Pattern := Build

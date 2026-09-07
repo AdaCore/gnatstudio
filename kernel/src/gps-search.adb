@@ -199,6 +199,8 @@ package body GPS.Search is
      (Context : in out Search_Context;
       Buffer  : String)
    is
+      use type Basic_Types.UTF8_Code_Unit_Count;
+
       Tab_Width : constant Visible_Column_Type :=
         Visible_Column_Type (Context.Tab_Width);
 
@@ -206,9 +208,10 @@ package body GPS.Search is
 
       C : Character;
       C2 : Unicode_Char;
-      Len : Integer;
+      Len : UTF8_Code_Unit_Count;
 
-      M : Positive := Index_After_Match (Context);
+      M : UTF8_Code_Unit_Count :=
+        UTF8_Code_Unit_Count (Index_After_Match (Context));
    begin
       if Is_Empty_Match (Context) then
          M := M + 1;
@@ -219,15 +222,16 @@ package body GPS.Search is
         or else Context.Ref.Index > Context.Start.Index
       then
          --  Assume beginning of buffer is first line and column
-         Context.Ref := (Buffer'First, 1, 1, 1);
+         Context.Ref := At_Index (Buffer'First);
       end if;
 
       while Context.Ref.Index < M
-        and then Context.Ref.Index <= Context.Buffer_End
+        and then Context.Ref.Index
+                   <= UTF8_Code_Unit_Count (Context.Buffer_End)
       loop
          --  UTF-8 decoding for the current character.
 
-         C := Buffer (Context.Ref.Index);
+         C := Buffer (Byte_Index (Context.Ref));
          C2 := Character'Pos (C);
          if C2 < 128 then
             Len := 1;
@@ -263,8 +267,10 @@ package body GPS.Search is
 
          if C = ASCII.LF
            or else (C = ASCII.CR
-                    and then Context.Ref.Index < Context.Buffer_End
-                    and then Buffer (Context.Ref.Index + 1) /= ASCII.LF)
+                    and then Context.Ref.Index
+                               < UTF8_Code_Unit_Count (Context.Buffer_End)
+                    and then Buffer (Byte_Index (Context.Ref) + 1)
+                               /= ASCII.LF)
          then
             Context.Ref.Line := Context.Ref.Line + 1;
             Context.Ref.Column := 1;
@@ -342,7 +348,7 @@ package body GPS.Search is
       S : constant Natural := Start_Index;
       F : constant Natural := End_Index;
       R : constant Buffer_Position :=
-        (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
+        (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context;
       S2      : Integer := S;
    begin
@@ -366,8 +372,8 @@ package body GPS.Search is
       if Index = -1 then
          if Self.Negate then
             Context := Search_Context'
-              (Start        => (S, 1, 1, 1),  --  line/col updated below
-               Finish       => (F, 1, 1, 1),  --  line/col updated below
+              (Start        => At_Index (S),  --  line/col updated below
+               Finish       => At_Index (F),  --  line/col updated below
                Score        => 50,
                Groups       => (others => GNAT.Regpat.No_Match),
                Color_String => Get_Default_Fg,
@@ -383,8 +389,8 @@ package body GPS.Search is
          Context := No_Match;
       else
          Context := Search_Context'
-           (Start        => (Index, 1, 1, 1),  --  line/col updated below
-            Finish       => (Index + Self.Length - 1, 1, 1, 1),
+           (Start        => At_Index (Index),  --  line/col updated below
+            Finish       => At_Index (Index + Self.Length - 1),
             Score        => 100,
             Groups       => (others => GNAT.Regpat.No_Match),
             Color_String => Get_Default_Fg,
@@ -413,7 +419,7 @@ package body GPS.Search is
       S : constant Natural := Start_Index;
       F : constant Natural := End_Index;
       R : constant Buffer_Position :=
-        (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
+        (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context :=
           (Start              => <>,
            Finish             => <>,
@@ -436,8 +442,8 @@ package body GPS.Search is
         or else Context.Groups (0).First > Buffer'Last
       then
          if Self.Negate then
-            Context.Start  := (Context.Buffer_Start, 1, 1, 1);
-            Context.Finish := (Context.Buffer_End, 1, 1, 1);
+            Context.Start  := At_Index (Context.Buffer_Start);
+            Context.Finish := At_Index (Context.Buffer_End);
             Update_Location (Context, Buffer);
             return Context;
          else
@@ -451,10 +457,10 @@ package body GPS.Search is
       if Context.Groups (0).Last < Context.Groups (0).First then
          Context.Finish := Unknown_Position;
       else
-         Context.Finish := (Context.Groups (0).Last, 1, 1, 1);
+         Context.Finish := At_Index (Context.Groups (0).Last);
       end if;
 
-      Context.Start  := (Context.Groups (0).First, 1, 1, 1);
+      Context.Start  := At_Index (Context.Groups (0).First);
       Update_Location (Context, Buffer);
       return Context;
    end Start;
@@ -474,7 +480,7 @@ package body GPS.Search is
       S : constant Natural := Start_Index;
       F : constant Natural := End_Index;
       R : constant Buffer_Position :=
-        (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
+        (if Ref.Defined then Ref else At_Index (Buffer'First));
       Start : Natural := Natural'Last;
       Score, Malus : Integer := 0;
 
@@ -488,8 +494,8 @@ package body GPS.Search is
    begin
       if Self.Text.all = "" then
          Context := Search_Context'
-           (Start              => (S, 1, 1, 1),
-            Finish             => (F, 1, 1, 1),
+           (Start              => At_Index (S),
+            Finish             => At_Index (F),
             Score              => Score,
             Groups             => (others => GNAT.Regpat.No_Match),
             Color_String       => Get_Default_Fg,
@@ -537,8 +543,8 @@ package body GPS.Search is
                   return GPS.Search.No_Match;
                else
                   Context := Search_Context'
-                    (Start              => (Start, 1, 1, 1),
-                     Finish             => (B - 1, 1, 1, 1),
+                    (Start              => At_Index (Start),
+                     Finish             => At_Index (B - 1),
                      Score              => Score,
                      Groups             => (others => GNAT.Regpat.No_Match),
                      Color_String       => Get_Default_Fg,
@@ -560,8 +566,8 @@ package body GPS.Search is
 
       if Self.Negate then
          Context := Search_Context'
-           (Start              => (S, 1, 1, 1),
-            Finish             => (F, 1, 1, 1),
+           (Start              => At_Index (S),
+            Finish             => At_Index (F),
             Score              => 100,
             Groups             => (others => GNAT.Regpat.No_Match),
             Color_String       => Get_Default_Fg,
@@ -597,10 +603,10 @@ package body GPS.Search is
       S : constant Natural := Start_Index;
       F : constant Natural := End_Index;
       R : constant Buffer_Position :=
-        (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
+        (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context :=
-        (Start        => (S, 1, 1, 1),  --  first byte matched
-         Finish       => (S - 1, 1, 1, 1), --  last byte of last char read
+        (Start        => At_Index (S),  --  first byte matched
+         Finish       => At_Index (S - 1), --  last byte of last char read
          Score        => 100,
          Groups       => (others => GNAT.Regpat.No_Match),
          Color_String       => Get_Default_Fg,
@@ -619,8 +625,8 @@ package body GPS.Search is
 
       if Context = No_Match then
          if Self.Negate then
-            Context.Start := (S, 1, 1, 1);
-            Context.Finish := (F, 1, 1, 1);
+            Context.Start := At_Index (S);
+            Context.Finish := At_Index (F);
             Update_Location (Context, Buffer);
          end if;
          return Context;
@@ -646,9 +652,10 @@ package body GPS.Search is
       Tmp_R : Approximate_Status;
       Offset : Mask;
    begin
-      Context.Ref := (Buffer'First, 1, 1, 1);
+      Context.Ref := At_Index (Buffer'First);
 
-      P := Context.Finish.Index + 1;  --  points to first byte of first char
+      P := Byte_Index (Context.Finish) + 1;
+      --  points to first byte of first char
 
       while P <= Context.Buffer_End loop
          P1 := P;
@@ -680,13 +687,14 @@ package body GPS.Search is
             if P - Self.Text'Length - K + 1 >= Buffer'First
               and then (Self.Result (K) and Self.Matched) /= 0
             then
-               Context.Start.Index := P1;
+               Context.Start := At_Index (P1);
                for N in 1 .. Utf8_Length (Self.Text.all) - 1 loop
-                  Context.Start.Index :=
-                    Utf8_Prev_Char (Buffer, Context.Start.Index);
+                  Context.Start :=
+                    At_Index
+                      (Utf8_Prev_Char (Buffer, Byte_Index (Context.Start)));
                end loop;
 
-               Context.Finish.Index := P - 1;
+               Context.Finish := At_Index (P - 1);
                --  last byte of last significant char
 
                Context.Score := 100 - K;
@@ -723,7 +731,7 @@ package body GPS.Search is
       Context : in out Search_Context)
    is
       T : Natural := Self.Text'First;
-      B : Natural := Context.Finish.Index + 1;
+      B : Natural := Byte_Index (Context.Finish) + 1;
       B1 : Natural;
       C, C2 : Unicode_Char;
    begin
@@ -732,7 +740,7 @@ package body GPS.Search is
          C2 := To_Lower (C2);
       end if;
 
-      Context.Start.Index := Natural'Last;
+      Context.Start := Unknown_Position;
 
       while B <= Context.Buffer_End loop
          B1 := B;
@@ -742,13 +750,13 @@ package body GPS.Search is
          end if;
 
          if C = C2 then
-            if Context.Start.Index = Natural'Last then
-               Context.Start.Index := B1;
+            if not Context.Start.Defined then
+               Context.Start := At_Index (B1);
             end if;
 
             if T > Self.Text'Last then
-               Context.Score := 101 - (B - Context.Start.Index);
-               Context.Finish.Index := B - 1;
+               Context.Score := 101 - (B - Byte_Index (Context.Start));
+               Context.Finish := At_Index (B - 1);
                Update_Location (Context, Buffer);
                return;
             end if;
@@ -773,7 +781,7 @@ package body GPS.Search is
    is
       T : Natural := Self.Text'First;
       Result : Unbounded_String;
-      B : Natural := Context.Start.Index;
+      B : Natural := Byte_Index (Context.Start);
       B1 : Natural;
       C, C2 : Unicode_Char;
    begin
@@ -792,7 +800,7 @@ package body GPS.Search is
       Result := To_Unbounded_String
          (Glib.Convert.Escape_Text (Buffer (Buffer'First .. B - 1)));
 
-      while B <= Context.Finish.Index loop
+      while B <= Byte_Index (Context.Finish) loop
          B1 := B;
          Utf8_Get_Char (Buffer, B, C);  --  moves B forward
          if not Self.Case_Sensitive then
@@ -837,7 +845,9 @@ package body GPS.Search is
          --  ending until the end of the buffer.
          Index := GNATCOLL.Boyer_Moore.Search
            (Self.Pattern.all,
-            Buffer (Context.Finish.Index + 1 .. Context.Buffer_End));
+            Buffer
+               (Byte_Index (Context.Finish) + 1
+                .. Context.Buffer_End));
 
          --  Check if we match a whole word. Exit in that case.
          exit when not Self.Whole_Word
@@ -852,14 +862,14 @@ package body GPS.Search is
 
          --  If we did not match a whole word, continue the search, starting
          --  from the character next to the match's ending.
-         Context.Finish.Index := Index + Self.Length - 1;
+         Context.Finish := At_Index (Index + Self.Length - 1);
       end loop;
 
       if Index = -1 then
          Context := No_Match;
       else
-         Context.Start.Index := Index;
-         Context.Finish.Index := Index + Self.Length - 1;
+         Context.Start := At_Index (Index);
+         Context.Finish := At_Index (Index + Self.Length - 1);
          Update_Location (Context, Buffer);
       end if;
    end Next;
@@ -895,10 +905,10 @@ package body GPS.Search is
          if Context.Groups (0).Last < Context.Groups (0).First then
             Context.Finish := Unknown_Position;
          else
-            Context.Finish := (Context.Groups (0).Last, 1, 1, 1);
+            Context.Finish := At_Index (Context.Groups (0).Last);
          end if;
 
-         Context.Start.Index := Context.Groups (0).First;
+         Context.Start := At_Index (Context.Groups (0).First);
          Update_Location (Context, Buffer);
       end if;
    end Next;
@@ -939,7 +949,7 @@ package body GPS.Search is
 
       B := Integer'Max (Context.Buffer_Start, Buffer'First);
       F := Integer'Min (Context.Buffer_End, Buffer'Last);
-      S := Integer'Max (Context.Start.Index, Buffer'First);
+      S := Integer'Max (Byte_Index (Context.Start), Buffer'First);
       E := Index_After_Match (Context) - 1;
       E := Integer'Min (E, Buffer'Last);
 
@@ -1438,20 +1448,20 @@ package body GPS.Search is
    begin
       if T = "" then
          Suffix := To_Unbounded_String
-           (Text (Context.Finish.Index + 1 .. Text'Last));
+           (Text (Byte_Index (Context.Finish) + 1 .. Text'Last));
          Suffix_Last := Length (Suffix);
       else
          for S in 1 .. Suffix_Last loop
-            if Context.Finish.Index + S > Text'Last then
+            if Byte_Index (Context.Finish) + S > Text'Last then
                Suffix_Last := S - 1;
                exit;
             else
                if (Self.Case_Sensitive
-                   and then T (S) /= Text (Context.Finish.Index + S))
+                   and then T (S) /= Text (Byte_Index (Context.Finish) + S))
                  or else
                    (not Self.Case_Sensitive
                     and then To_Lower (T (S)) /=
-                      To_Lower (Text (Context.Finish.Index + S)))
+                      To_Lower (Text (Byte_Index (Context.Finish) + S)))
                then
                   Suffix_Last := S - 1;
                   exit;
@@ -1482,6 +1492,10 @@ package body GPS.Search is
 
    function Image (Pos : Buffer_Position) return String is
    begin
+      if not Pos.Defined then
+         return "(undefined)";
+      end if;
+
       return '(' & Pos.Index'Img & "," & Pos.Line'Img
         & "," & Pos.Column'Img & "," & Pos.Visible_Column'Img & ')';
    end Image;
@@ -1508,9 +1522,9 @@ package body GPS.Search is
    function Index_After_Match (Self : Search_Context) return Positive is
    begin
       if Is_Empty_Match (Self) then
-         return Self.Start.Index;
+         return Byte_Index (Self.Start);
       else
-         return Self.Finish.Index + 1;
+         return Byte_Index (Self.Finish) + 1;
       end if;
    end Index_After_Match;
 

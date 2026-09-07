@@ -400,13 +400,15 @@ package body GPS.Kernel.Search.Sources is
       declare
          Matched_Line : constant String :=
            (if not Is_Empty_Match (Self.Context) then
-                 Get_Surrounding_Line (Self.Text.all,
-              Self.Context.Start.Index,
-              Self.Context.Finish.Index)
+                 Get_Surrounding_Line
+                   (Self.Text.all,
+                    Byte_Index (Self.Context.Start),
+                    Byte_Index (Self.Context.Finish))
             else
-               Get_Surrounding_Line (Self.Text.all,
-              Self.Context.Start.Index,
-              Self.Context.Start.Index));
+               Get_Surrounding_Line
+                 (Self.Text.all,
+                  Byte_Index (Self.Context.Start),
+                  Byte_Index (Self.Context.Start)));
 
          P_Name       : constant String :=
            (if Self.Project = No_Project

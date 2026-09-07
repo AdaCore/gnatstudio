@@ -1784,10 +1784,12 @@ package body Interactive_Consoles is
 
       if Pattern /= null and then Pattern.Get_Text /= "" then
          declare
+            use type Basic_Types.UTF8_Code_Unit_Count;
+
             Buffer : GNAT.Strings.String_Access := GUI_Utils.Get_Text
               (Console.Buffer, Begin_Iter, End_Iter);
             Ref    : constant Buffer_Position :=
-              (Buffer'First, 1, 1, 1);
+              At_Index (Buffer'First);
             Ignore : Boolean;
 
             use GNATCOLL.Xref;
@@ -1826,7 +1828,7 @@ package body Interactive_Consoles is
                   Start_Index =>
                     (if Is_Empty_Match (Console.Search_Context)
                      then Buffer'First
-                     else Console.Search_Context.Finish.Index),
+                     else Byte_Index (Console.Search_Context.Finish)),
                   End_Index   => Buffer'Last,
                   Ref         => Ref);
             end if;

@@ -111,8 +111,8 @@ package body GPS.Kernel.Search.Preferences is
            (Self.Pattern.Highlight_Match
               (Buffer  => Get_Surrounding_Line
                    (Doc,
-                    Doc_Context.Start.Index,
-                    Doc_Context.Finish.Index),
+                    Byte_Index (Doc_Context.Start),
+                    Byte_Index (Doc_Context.Finish)),
                Context => Doc_Context));
 
          Result := Preferences_Search_Provider'Class

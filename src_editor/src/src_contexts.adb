@@ -741,7 +741,7 @@ package body Src_Contexts is
                Start := Start + 1;
             end loop;
 
-            Ref := (Start, Integer (Line), 1, 1);
+            Ref := At_Position (Start, Integer (Line));
             Scan_Buffer
               (Tmp (Start .. Tmp'Last), 1, Context, Callback, Scope,
                Lexical_State, Lang,
@@ -801,7 +801,7 @@ package body Src_Contexts is
 
       begin
          Get_String (Unbounded_Buffer, Buffer, Len);
-         Ref := (1, Integer (Start_Line), 1, 1);
+         Ref := At_Position (1, Integer (Start_Line));
          Scan_Buffer
            (Buffer (1 .. Len),
             Start_Column,
@@ -908,9 +908,9 @@ package body Src_Contexts is
            (Column_End =>
                Match.Start.Visible_Column
                  + Visible_Column_Type
-                   (Match.Finish.Index - Match.Start.Index + 1),
+                   (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1),
             Length     => Highlight_Length
-              (Match.Finish.Index - Match.Start.Index + 1));
+              (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1));
       end if;
    end Highlight_Result;
 
@@ -1079,7 +1079,7 @@ package body Src_Contexts is
 
          begin
             Get_String (Buffer, Text, Len);
-            Ref := (1, Integer (Start_Line), 1, 1);
+            Ref := At_Position (1, Integer (Start_Line));
             Scan_Buffer
               (Buffer        => Text (1 .. Len),
                From          => Start_Column,
@@ -1135,7 +1135,7 @@ package body Src_Contexts is
 
          begin
             Get_String (Buffer, Text, Len);
-            Ref := (1, Integer (Begin_Line), 1, 1);
+            Ref := At_Position (1, Integer (Begin_Line));
             Scan_Buffer
               (Buffer        => Text (1 .. Len),
                From          => Begin_Column,
@@ -1175,7 +1175,7 @@ package body Src_Contexts is
 
             begin
                Get_String (Buffer, Text, Len);
-               Ref := (1, Integer (Start_Line), 1, 1);
+               Ref := At_Position (1, Integer (Start_Line));
                Scan_Buffer
                  (Text (1 .. Len),
                   Start_Column,
@@ -1840,10 +1840,11 @@ package body Src_Contexts is
                End_Line,
                As_Optional (End_Column)));
             Ref          : constant Buffer_Position :=
-              (Text'First,
-               Integer (Begin_Line),
-               Character_Offset_Type (Begin_Column),
-               Visible_Column_Type (Begin_Column));
+              At_Position
+                (Index          => Text'First,
+                 Line           => Integer (Begin_Line),
+                 Column         => Character_Offset_Type (Begin_Column),
+                 Visible_Column => Visible_Column_Type (Begin_Column));
          begin
             Scan_And_Store
               (Context => Context,
@@ -2539,7 +2540,7 @@ package body Src_Contexts is
          Editor.Get_Buffer.Freeze_Context;
          declare
             Text : constant String := Get_Buffer (Editor);
-            Ref  : constant Buffer_Position := (Text'First, 1, 1, 1);
+            Ref  : constant Buffer_Position := At_Index (Text'First);
             Matches : Match_Vectors.Vector;
          begin
             Scan_And_Store
@@ -2636,15 +2637,15 @@ package body Src_Contexts is
                      End_Line,
                      End_Col);
 
-                  Context.Current.Finish.Line := Natural (End_Line);
-                  Context.Current.Finish.Column :=
-                    Character_Offset_Type (End_Col);
+                  --  Index is a byte index in the buffer
+
+                  Context.Current.Finish :=
+                    At_Position
+                      (Index  =>
+                         Byte_Index (Context.Current.Start) + Text'Length,
+                       Line   => Natural (End_Line),
+                       Column => Character_Offset_Type (End_Col));
                end;
-
-               --  Index is a byte index in the buffer
-
-               Context.Current.Finish.Index :=
-                 Context.Current.Start.Index + Text'Length;
             end;
 
             Push_Current_Editor_Location_In_History (Kernel);
@@ -2760,13 +2761,15 @@ package body Src_Contexts is
 
                   for M of Matches loop
                      Append
-                       (Output_Buffer, Buffer (Last .. M.Start.Index - 1));
+                       (Output_Buffer,
+                          Buffer (Last .. Byte_Index (M.Start) - 1));
                      Append
                        (Output_Buffer,
                         Context.Replacement.Replacement_Text
                           (Result       => M,
                            Matched_Text => Buffer
-                             (M.Start.Index .. M.Finish.Index),
+                             (Byte_Index (M.Start)
+                                .. Byte_Index (M.Finish)),
                            Keywords     =>
                              Kernel.Get_Language_Handler.Get_Language_From_File
                                (File).Keywords));
@@ -3047,7 +3050,7 @@ package body Src_Contexts is
                Context.Current := GPS.Search.No_Match;
 
                --  make sure that Search_From_File will perform some search
-               Context.Current.Start := (1, 1, 1, 1);
+               Context.Current.Start := At_Index (1);
 
                if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
