@@ -256,14 +256,14 @@ package body Src_Contexts is
    --  Position of the first character of Match
 
    function Match_End
-     (Match : GPS.Search.Search_Context) return Editor_Coordinates
-   is (if Is_Empty_Match (Match)
-       then Match_Start (Match)
-       else (Editable_Line_Type (Match.Finish.Line),
-             Character_Index (Match.Finish.Column + 1)));
+     (Buffer : Source_Buffer;
+      Match  : GPS.Search.Search_Context) return Editor_Coordinates;
    --  Position just after the last character of Match. Select_Region and the
    --  cursor location subprograms are given an exclusive end, and an empty
    --  match has no end of its own: it reports its start.
+   --  Buffer may be null, when the file holding the match has no editor; the
+   --  position can then not be normalized, and is only ever used once an
+   --  editor exists.
 
    function Auxiliary_Search
      (Context              : access Current_File_Context'Class;
@@ -351,6 +351,43 @@ package body Src_Contexts is
       return (Left.Match_From = Right.Match_From
               and then Left.Match_Up_To = Right.Match_Up_To);
    end Is_Equal;
+
+   ---------------
+   -- Match_End --
+   ---------------
+
+   function Match_End
+     (Buffer : Source_Buffer;
+      Match  : GPS.Search.Search_Context) return Editor_Coordinates
+   is
+      Line   : Editable_Line_Type;
+      Column : Character_Index;
+
+   begin
+      if Is_Empty_Match (Match) then
+         return Match_Start (Match);
+
+      elsif Buffer = null then
+         return
+           (Editable_Line_Type (Match.Finish.Line),
+            Character_Index (Match.Finish.Column + 1));
+      end if;
+
+      --  Advance one character from the last matched character, rather than
+      --  adding one to its column: when that character is a line terminator
+      --  the position just after it is the first one of the next line, and
+      --  not an extra column on the line that holds the terminator.
+
+      Forward_Position
+        (Buffer       => Buffer,
+         Start_Line   => Editable_Line_Type (Match.Finish.Line),
+         Start_Column => Character_Index (Match.Finish.Column),
+         Length       => 1,
+         End_Line     => Line,
+         End_Column   => Column);
+
+      return (Line, Column);
+   end Match_End;
 
    -----------------
    -- Scan_Buffer --
@@ -1672,7 +1709,7 @@ package body Src_Contexts is
            (Search_Occurrence_Record with
             Editor_Child => Child,
             Match_From   => Match_Start (Match),
-            Match_Up_To  => Match_End (Match));
+            Match_Up_To  => Match_End (Get_Buffer (Editor), Match));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2199,7 +2236,7 @@ package body Src_Contexts is
 
       if Found then
          Match_From  := Match_Start (Context.Current);
-         Match_Up_To := Match_End (Context.Current);
+         Match_Up_To := Match_End (Editor, Context.Current);
       end if;
    end Search_In_Editor;
 
@@ -2354,7 +2391,7 @@ package body Src_Contexts is
            (Search_Occurrence_Record with
             Editor_Child => Child,
             Match_From   => Match_Start (Match),
-            Match_Up_To  => Match_End (Match));
+            Match_Up_To  => Match_End (Get_Buffer (Editor), Match));
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -3140,11 +3177,23 @@ package body Src_Contexts is
             Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
 
-         Occurrence := new Source_Search_Occurrence_Record'
-           (Search_Occurrence_Record with
-            Editor_Child => Find_Editor (Kernel, File, No_Project),
-            Match_From   => Match_Start (Match),
-            Match_Up_To  => Match_End (Match));
+         declare
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
+            Box   : constant Source_Editor_Box :=
+              (if Child = null
+               then null
+               else Get_Source_Box_From_MDI (Child));
+
+         begin
+            Occurrence := new Source_Search_Occurrence_Record'
+              (Search_Occurrence_Record with
+               Editor_Child => Child,
+               Match_From   => Match_Start (Match),
+               Match_Up_To  =>
+                 Match_End
+                   ((if Box = null then null else Get_Buffer (Box)), Match));
+         end;
          Initialize (Occurrence, Pattern => Text);
 
          return True;
