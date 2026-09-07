@@ -35,8 +35,8 @@ package body Find_Utils is
    function Match
      (Context     : access Root_Search_Context;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1)
+      Start_Index : Natural;
+      End_Index   : Natural)
       return GPS.Search.Search_Context
    is
    begin

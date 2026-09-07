@@ -107,29 +107,29 @@ package body GPS.Search is
    overriding function Start
      (Self        : Full_Text_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Regexp_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Fuzzy_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Approximate_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding procedure Next
@@ -333,16 +333,14 @@ package body GPS.Search is
    overriding function Start
      (Self        : Full_Text_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
       Index : Integer;
-      S : constant Integer :=
-        (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : constant Integer :=
-        (if End_Index = -1 then Buffer'Last else End_Index);
+      S : constant Natural := Start_Index;
+      F : constant Natural := End_Index;
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Context : Search_Context;
@@ -407,15 +405,13 @@ package body GPS.Search is
    overriding function Start
      (Self        : Regexp_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Integer :=
-        (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : constant Integer :=
-        (if End_Index = -1 then Buffer'Last else End_Index);
+      S : constant Natural := Start_Index;
+      F : constant Natural := End_Index;
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Context : Search_Context :=
@@ -470,15 +466,13 @@ package body GPS.Search is
    overriding function Start
      (Self        : Fuzzy_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Integer :=
-        (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : constant Integer :=
-        (if End_Index = -1 then Buffer'Last else End_Index);
+      S : constant Natural := Start_Index;
+      F : constant Natural := End_Index;
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Start : Natural := Natural'Last;
@@ -595,15 +589,13 @@ package body GPS.Search is
    overriding function Start
      (Self        : Approximate_Search;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Integer :=
-        (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : constant Integer :=
-        (if End_Index = -1 then Buffer'Last else End_Index);
+      S : constant Natural := Start_Index;
+      F : constant Natural := End_Index;
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Context : Search_Context :=

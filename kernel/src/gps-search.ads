@@ -218,8 +218,8 @@ package GPS.Search is
    function Start
      (Self        : Search_Pattern;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width)
       return Search_Context
@@ -228,7 +228,6 @@ package GPS.Search is
    --  Note: it is important to pass the full file contents in Buffer, since
    --  otherwise regular expressions starting with "^" or ending with "$" will
    --  not workproperly.
-   --  Start_Index and End_Index default to the string bounds.
    --
    --  Ref provides a reference point for the computation of line/column
    --  information. It is assumed to be located before Start_Index.
@@ -236,6 +235,15 @@ package GPS.Search is
    --  Tab_Width should match the current size of tabs use in the buffer.
    --
    --  Return value is No_Match if the Buffer did not match.
+
+   function Start
+     (Self      : Search_Pattern'Class;
+      Buffer    : String;
+      Ref       : Buffer_Position := Unknown_Position;
+      Tab_Width : Natural := Default_Tab_Width)
+      return Search_Context
+   is (Start (Self, Buffer, Buffer'First, Buffer'Last, Ref, Tab_Width));
+   --  Same as above, searching the whole of Buffer
 
    procedure Next
      (Self    : Search_Pattern;

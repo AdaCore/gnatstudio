@@ -1817,9 +1817,16 @@ package body Interactive_Consoles is
                      Context => Console.Search_Context);
 
             else
+               --  Continue after the previous match. An empty match has
+               --  no end of its own, and the search restarts from the
+               --  beginning of the buffer.
+
                Console.Search_Context := Pattern.Start
                  (Buffer      => Buffer.all,
-                  Start_Index => Console.Search_Context.Finish.Index,
+                  Start_Index =>
+                    (if Is_Empty_Match (Console.Search_Context)
+                     then Buffer'First
+                     else Console.Search_Context.Finish.Index),
                   End_Index   => Buffer'Last,
                   Ref         => Ref);
             end if;
