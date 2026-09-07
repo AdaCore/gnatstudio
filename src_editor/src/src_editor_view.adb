@@ -3209,7 +3209,7 @@ package body Src_Editor_View is
       Search_Entity_Bounds
         (Entity_Start, Entity_End,
          Maybe_File => Str.Contents /= null
-         and then Has_Include_Directive (Str.Contents (1 .. Str.Length)));
+         and then Has_Include_Directive (Str.Contents (1 .. Str.Last)));
       Selection_Is_Single_Entity :=
         Has_Selection
         and then Equal (Entity_Start, Start_Iter)
@@ -3314,7 +3314,7 @@ package body Src_Editor_View is
                      From_Expression =>
                        Parse_Reference_Backwards
                          (Get_Language (B),
-                          Buffer       => Str.Contents (1 .. Str.Length),
+                          Buffer       => Str.Contents (1 .. Str.Last),
                           Start_Offset =>
                             String_Index_Type (Get_Line_Index (Entity_End))));
                end if;

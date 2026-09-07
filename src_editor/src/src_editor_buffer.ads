@@ -37,6 +37,7 @@ with GNATCOLL.VFS;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 
 with VSS.Strings;
+with VSS.Unicode;
 
 with Gdk.RGBA;
 with Glib;                            use Glib;
@@ -65,6 +66,9 @@ package Src_Editor_Buffer is
 
    use type VSS.Strings.Character_Offset;
    --  Arithmetic and comparison on Basic_Types.Character_Index
+
+   use type VSS.Unicode.UTF8_Code_Unit_Offset;
+   --  Arithmetic and comparison on Basic_Types.UTF8_Code_Unit_Count
 
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
@@ -1243,14 +1247,18 @@ package Src_Editor_Buffer is
 
    type Src_String is record
       Contents  : Unchecked_String_Access;
-      Length    : Natural := 0;
+      Length    : UTF8_Code_Unit_Count := 0;
       Read_Only : Boolean := False;
    end record;
    --  Special purpose string type to avoid extra copies and string allocation
    --  as much as possible.
    --  The actual contents of a Src_String is represented by
-   --  Contents (1 .. Length) (as utf8-encoded string)
+   --  Contents (1 .. Last) (as utf8-encoded string)
    --  Never use Free (Contents) directly, use the Free procedure below.
+
+   function Last (S : Src_String) return Natural is (Natural (S.Length));
+   --  Index in S.Contents of the last code unit of S. Contents is a String,
+   --  indexed by Integer, while Length counts UTF-8 code units.
 
    function To_String (S : Src_String) return String;
    --  Return the string in Src_String, and the empty string if S is null

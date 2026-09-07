@@ -25,6 +25,7 @@ with GNAT.Regpat;
 with GNAT.Strings;
 
 with VSS.Strings;
+with VSS.Unicode;
 
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.Xref;
@@ -149,6 +150,9 @@ package Basic_Types is
    function As_Optional
      (Index : Character_Index) return Optional_Character_Index
    is (Has_Index => True, Index => Index);
+
+   subtype UTF8_Code_Unit_Count is VSS.Unicode.UTF8_Code_Unit_Count;
+   --  Type to represent amount of UTF-8 code units in the string
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

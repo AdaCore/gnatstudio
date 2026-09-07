@@ -41,7 +41,6 @@ with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
-with VSS.Unicode;
 
 with Gdk.Keyval;
 with Gdk.RGBA;                            use Gdk.RGBA;
@@ -996,7 +995,7 @@ package body Src_Editor_Buffer is
       Chars :=
         Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
       Result.Contents := To_Unchecked_String (Chars);
-      Result.Length := Integer (Strlen (Chars));
+      Result.Length := UTF8_Code_Unit_Count (Strlen (Chars));
 
       return Result;
    end Get_String_At_Line;
@@ -1087,7 +1086,7 @@ package body Src_Editor_Buffer is
       if S.Length = 0 then
          return "";
       else
-         return S.Contents (1 .. S.Length);
+         return S.Contents (1 .. S.Last);
       end if;
    end To_String;
 
@@ -1193,13 +1192,13 @@ package body Src_Editor_Buffer is
                                        else No_Index),
               Include_Hidden_Chars => Include_Hidden_Chars,
               Include_Last         =>  J /= Lines'Last or else Include_Last);
-         Len := Len + Lines (J).Length;
+         Len := Len + Lines (J).Last;
       end loop;
 
       Output := new String (1 .. Len);
 
       for J in Lines'Range loop
-         Len := Lines (J).Length;
+         Len := Lines (J).Last;
 
          if Len /= 0 then
             Output (Index .. Index + Len - 1) := Lines (J).Contents (1 .. Len);
@@ -1232,7 +1231,7 @@ package body Src_Editor_Buffer is
             Str : Src_String :=
               Get_String_At_Line (Source_Buffer (Get_Buffer (Iter)), J + 1);
          begin
-            Index := Index + Str.Length;
+            Index := Index + Str.Last;
             Index := Index + 1;
 
             Free (Str);
@@ -4295,7 +4294,7 @@ package body Src_Editor_Buffer is
                     Get_String_At_Line (Buffer, Line);
                begin
                   if Str.Contents /= null
-                    and then not Is_Blank_Line (Str.Contents (1 .. Str.Length))
+                    and then not Is_Blank_Line (Str.Contents (1 .. Str.Last))
                   then
                      Last_Line := Line;
                      exit;
@@ -4316,12 +4315,12 @@ package body Src_Editor_Buffer is
                   end if;
 
                else
-                  Index := Str.Length;
+                  Index := Str.Last;
 
                   if Buffer.Strip_Trailing_Blanks then
                      --  Safe to use 1 here as Str.Contents'First as this is
                      --  the type definition
-                     for J in reverse 1 .. Str.Length loop
+                     for J in reverse 1 .. Str.Last loop
                         --  No need for special utf8 handling, as we are just
                         --  looking for spaces.
 
@@ -6388,9 +6387,9 @@ package body Src_Editor_Buffer is
       Index : Natural    := 1;
    begin
       if Str.Contents /= null and then
-        not Is_Blank_Line (Str.Contents (1 .. Str.Length))
+        not Is_Blank_Line (Str.Contents (1 .. Str.Last))
       then
-         Skip_Blanks (Str.Contents (1 .. Str.Length), Index);
+         Skip_Blanks (Str.Contents (1 .. Str.Last), Index);
       end if;
       Free (Str);
       return Visible_Column_Type (Index);
@@ -7113,7 +7112,7 @@ package body Src_Editor_Buffer is
             Result : Boolean := True;
 
          begin
-            for K in 1 .. Line.Length loop
+            for K in 1 .. Line.Last loop
                if Line.Contents (K) /= ' '
                  and then Line.Contents (K) /= ASCII.HT
                then
@@ -7263,7 +7262,7 @@ package body Src_Editor_Buffer is
 
                else
                   declare
-                     S : String renames Line.Contents (1 .. Line.Length);
+                     S : String renames Line.Contents (1 .. Line.Last);
 
                   begin
                      EC_Last := ML_End_Comment_Last (S);
@@ -7289,9 +7288,9 @@ package body Src_Editor_Buffer is
                         --  If there is some text after the end-comment
                         --  delimiter then move it to the next line
 
-                        if EC_Last < Line.Length then
+                        if EC_Last < Line.Last then
                            Append (New_Text,
-                             S (EC_Last + 1 .. Line.Length) & ASCII.LF);
+                             S (EC_Last + 1 .. Line.Last) & ASCII.LF);
                         end if;
 
                         In_ML_Comment := False;
@@ -7320,7 +7319,7 @@ package body Src_Editor_Buffer is
 
             else
                declare
-                  S    : String renames Line.Contents (1 .. Line.Length);
+                  S    : String renames Line.Contents (1 .. Line.Last);
                   Kind : Comment_Kind;
 
                begin
@@ -7373,7 +7372,7 @@ package body Src_Editor_Buffer is
 
                      if In_ML_Comment then
                         EC_Last :=
-                          ML_End_Comment_Last (S (BC_Last .. Line.Length));
+                          ML_End_Comment_Last (S (BC_Last .. Line.Last));
                      else
                         EC_Last := 0;
                      end if;
@@ -7382,7 +7381,7 @@ package body Src_Editor_Buffer is
 
                      if EC_Last = 0 then
                         Comment :=
-                          To_Unbounded_String (S (BC_Last .. Line.Length));
+                          To_Unbounded_String (S (BC_Last .. Line.Last));
                         In_Comment := True;
                      else
                         Comment :=
@@ -7392,9 +7391,9 @@ package body Src_Editor_Buffer is
                         --  If there is some text after the end-comment
                         --  delimiter then move it to the next line
 
-                        if EC_Last < Line.Length then
+                        if EC_Last < Line.Last then
                            Append (New_Text,
-                             S (EC_Last + 1 .. Line.Length) & ASCII.LF);
+                             S (EC_Last + 1 .. Line.Last) & ASCII.LF);
                         end if;
                      end if;
 
@@ -7404,7 +7403,7 @@ package body Src_Editor_Buffer is
                   else
                      Append (Comment,
                        To_Unbounded_String
-                         (ASCII.LF & S (BC_Last .. Line.Length)));
+                         (ASCII.LF & S (BC_Last .. Line.Last)));
                   end if;
                end;
             end if;
@@ -7531,7 +7530,7 @@ package body Src_Editor_Buffer is
 
             else
                declare
-                  S    : String renames Line.Contents (1 .. Line.Length);
+                  S    : String renames Line.Contents (1 .. Line.Last);
 
                begin
                   --  If we are acumulating text then let's continue
@@ -7563,7 +7562,7 @@ package body Src_Editor_Buffer is
 
                         Max_Line := Max_Line_Length - Prefix_Length;
                         Prefix   := To_Unbounded_String (S (1 .. J - 1));
-                        Comment  := To_Unbounded_String (S (J .. Line.Length));
+                        Comment  := To_Unbounded_String (S (J .. Line.Last));
                      end;
 
                      Acumulating := True;
@@ -7896,7 +7895,7 @@ package body Src_Editor_Buffer is
 
          L := Get_String_At_Line (Source_Buffer (Buffer), Line);
          return L.Contents /= null and then Match
-           (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length));
+           (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last));
       end Is_Comment_Line;
 
       -----------------
@@ -7908,15 +7907,15 @@ package body Src_Editor_Buffer is
            Get_String_At_Line (Source_Buffer (Buffer), Line);
       begin
          return L.Contents = null
-           or else Match (Is_Empty_Re.all, L.Contents (1 .. L.Length))
+           or else Match (Is_Empty_Re.all, L.Contents (1 .. L.Last))
            or else
              (Non_Empty_Comment_Re /= null
               and then Match  --  in a single line comment
-                (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Length)))
+                (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last)))
            or else    --  boundary of comment block
              (Comment_Start_End_Re /= null
               and then Match (Comment_Start_End_Re.all,
-                              L.Contents (1 .. L.Length)));
+                              L.Contents (1 .. L.Last)));
       end Is_Boundary;
 
    begin
