@@ -1013,11 +1013,15 @@ package body Src_Contexts is
          --  current position but don't have any match yet, we have to return
          --  the last match.
          if Match.Start.Line > Integer (Current_Line)
-           or else (Is_Empty_Match (Match)
-                    and then Match.Start.Line = Integer (Current_Line)
-                    and then Match.Start.Column >= Current_Column)
-           or else (Match.Finish.Line = Integer (Current_Line)
-                    and then Match.Finish.Column + 1 >= Current_Column)
+           or else (if Is_Empty_Match (Match)
+                    then
+                      --  An empty match has no end of its own: it ends
+                      --  where it starts.
+                      Match.Start.Line = Integer (Current_Line)
+                        and then Match.Start.Column >= Current_Column
+                    else
+                      Match.Finish.Line = Integer (Current_Line)
+                        and then Match.Finish.Column + 1 >= Current_Column)
          then
             if not Continue_Till_End
               and then Result /= GPS.Search.No_Match
@@ -2769,7 +2773,7 @@ package body Src_Contexts is
                           (Result       => M,
                            Matched_Text => Buffer
                              (Byte_Index (M.Start)
-                                .. Byte_Index (M.Finish)),
+                                .. Index_After_Match (M) - 1),
                            Keywords     =>
                              Kernel.Get_Language_Handler.Get_Language_From_File
                                (File).Keywords));

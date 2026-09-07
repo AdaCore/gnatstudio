@@ -398,8 +398,10 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       declare
+         Empty        : constant Boolean := Is_Empty_Match (Self.Context);
+
          Matched_Line : constant String :=
-           (if not Is_Empty_Match (Self.Context) then
+           (if not Empty then
                  Get_Surrounding_Line
                    (Self.Text.all,
                     Byte_Index (Self.Context.Start),
@@ -409,6 +411,14 @@ package body GPS.Kernel.Search.Sources is
                  (Self.Text.all,
                   Byte_Index (Self.Context.Start),
                   Byte_Index (Self.Context.Start)));
+
+         --  An empty match has no end of its own: report no end position
+         --  at all, which is how Full knows there is nothing to highlight.
+
+         Line_End     : constant Natural :=
+           (if Empty then 0 else Self.Context.Finish.Line);
+         Column_End   : constant Natural :=
+           (if Empty then 0 else Natural (Self.Context.Finish.Column));
 
          P_Name       : constant String :=
            (if Self.Project = No_Project
@@ -439,8 +449,8 @@ package body GPS.Kernel.Search.Sources is
             Project    => Self.Project,
             Line       => Self.Context.Start.Line,
             Column     => Integer (Self.Context.Start.Column),
-            Line_End   => Self.Context.Finish.Line,
-            Column_End => Integer (Self.Context.Finish.Column));
+            Line_End   => Line_End,
+            Column_End => Column_End);
          Self.Adjust_Score (Result);
          Has_Next := True;
       end;
