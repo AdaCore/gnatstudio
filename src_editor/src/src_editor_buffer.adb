@@ -5538,7 +5538,7 @@ package body Src_Editor_Buffer is
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
       Column      : Character_Index;
-      Length      : Natural;
+      Length      : Character_Count;
       Enable_Undo : Boolean := True)
    is
       Buffer_Line : Buffer_Line_Type;

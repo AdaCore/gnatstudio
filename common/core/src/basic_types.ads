@@ -117,6 +117,9 @@ package Basic_Types is
    subtype Character_Offset is VSS.Strings.Character_Offset;
    --  Relative value between position of two characters.
 
+   subtype Character_Count is VSS.Strings.Character_Count;
+   --  Amount of characters
+
    subtype Character_Index is VSS.Strings.Character_Index;
    --  Character_Index indicates the index of a character in the line. The
    --  first character of the line has index 1. Use it for a position that is

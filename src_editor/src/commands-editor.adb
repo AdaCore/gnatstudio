@@ -324,7 +324,8 @@ package body Commands.Editor is
                  (Command.Buffer,
                   First_Loc.Line,
                   First_Loc.Col,
-                  Natural (UTF8_Strlen (To_String (Command.Current_Text))),
+                  Character_Count
+                    (UTF8_Strlen (To_String (Command.Current_Text))),
                   False);
 
          end case;
