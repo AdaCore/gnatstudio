@@ -2600,8 +2600,8 @@ package body Src_Contexts is
                     Original,
                     Editor.Get_Buffer.Get_Language.Keywords);
 
-               Text_Length : constant Natural :=
-                 Natural (UTF8_Strlen (Text));
+               Text_Length : constant Character_Offset :=
+                 Character_Offset (UTF8_Strlen (Text));
                --  Number of characters of Text. Text'Length counts UTF-8
                --  bytes, which is what Finish.Index below is expressed in,
                --  but Forward_Position advances by characters.

@@ -114,6 +114,9 @@ package Basic_Types is
    --  after TAB expansion. The first character in the line has a value of 1.
    --  Columns are counted in terms of UTF8 characters.
 
+   subtype Character_Offset is VSS.Strings.Character_Offset;
+   --  Relative value between position of two characters.
+
    subtype Character_Index is VSS.Strings.Character_Index;
    --  Character_Index indicates the index of a character in the line. The
    --  first character of the line has index 1. Use it for a position that is

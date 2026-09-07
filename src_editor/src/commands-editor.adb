@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with Glib.Unicode;          use Glib.Unicode;
 with Gtk.Text_Buffer;       use Gtk.Text_Buffer;
-with Interfaces.C;
 
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Src_Editor_Box;                  use Src_Editor_Box;
@@ -27,11 +27,6 @@ with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
 
 package body Commands.Editor is
-
-   function g_utf8_strlen
-     (P : String; Max : Interfaces.C.size_t) return Long_Integer;
-   pragma Import (C, g_utf8_strlen);
-   --  Return the text size of an UTF8 string
 
    function Avoid_Move_Cursor
      (Command : access Editor_Command_Type) return Boolean;
@@ -329,11 +324,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   First_Loc.Line,
                   First_Loc.Col,
-                  Natural
-                    (g_utf8_strlen
-                         (To_String (Command.Current_Text),
-                          Interfaces.C.size_t
-                            (Length (Command.Current_Text)))),
+                  Natural (UTF8_Strlen (To_String (Command.Current_Text))),
                   False);
 
          end case;
@@ -438,10 +429,7 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Integer (g_utf8_strlen
-              (To_String (Command.Text_After),
-                   Interfaces.C.size_t
-                     (Length (Command.Text_After)))),
+            Character_Offset (UTF8_Strlen (To_String (Command.Text_After))),
             Command.End_Line_After,
             Command.End_Column_After);
       end if;

@@ -1548,7 +1548,7 @@ package body Src_Editor_Module.Editors is
         (Buffer       => This.Buffer.Contents.Buffer,
          Start_Line   => This.Line,
          Start_Column => Begin_Col,
-         Length       => Count,
+         Length       => Character_Offset (Count),
          End_Line     => End_Line,
          End_Column   => End_Col);
 
@@ -1577,7 +1577,7 @@ package body Src_Editor_Module.Editors is
         (Buffer       => This.Buffer.Contents.Buffer,
          Start_Line   => This.Line,
          Start_Column => Begin_Col,
-         Length       => Count,
+         Length       => Character_Offset (Count),
          End_Line     => End_Line,
          End_Column   => End_Col);
 

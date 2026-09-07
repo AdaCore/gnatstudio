@@ -8125,14 +8125,14 @@ package body Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
       Start_Column : Character_Index;
-      Length       : Integer;
+      Length       : Character_Offset;
       End_Line     : out Editable_Line_Type;
       End_Column   : out Character_Index)
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
-      Amount  : Integer := Length;
+      Amount  : Character_Offset := Length;
 
       Found   : Boolean;
       Forward : constant Boolean := Length > 0;

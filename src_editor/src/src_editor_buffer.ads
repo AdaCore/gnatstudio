@@ -513,7 +513,7 @@ package Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
       Start_Column : Character_Index;
-      Length       : Integer;
+      Length       : Character_Offset;
       End_Line     : out Editable_Line_Type;
       End_Column   : out Character_Index);
    --  Return the position Length characters after Start_Line/Start_Column
