@@ -2475,20 +2475,28 @@ package body Src_Contexts is
                     (M, "", Buffer.Get_Language.Keywords));
             else
                declare
-                  Text : constant String := To_String (Get_Text
+                  --  The range to replace ends just after the last matched
+                  --  character, which is not always one column further on
+                  --  the same line: a match running through a line
+                  --  terminator ends at the first position of the next
+                  --  line.
+
+                  Match_Up_To : constant Editor_Coordinates :=
+                    Match_End (Buffer, M);
+
+                  Text        : constant String := To_String (Get_Text
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
                      Character_Index (M.Start.Column),
-                     Editable_Line_Type (M.Finish.Line),
-                     As_Optional
-                       (Character_Index (M.Finish.Column + 1))));
+                     Match_Up_To.Line,
+                     As_Optional (Match_Up_To.Col)));
                begin
                   Replace_Slice
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
                      Character_Index (M.Start.Column),
-                     Editable_Line_Type (M.Finish.Line),
-                     Character_Index (M.Finish.Column + 1),
+                     Match_Up_To.Line,
+                     Match_Up_To.Col,
                      Replacement.Replacement_Text
                        (M, Text, Buffer.Get_Language.Keywords));
                end;
@@ -2579,6 +2587,14 @@ package body Src_Contexts is
 
          if Context.Current /= GPS.Search.No_Match then
             declare
+               --  The range to replace ends just after the last matched
+               --  character, which is not always one column further on the
+               --  same line: a match running through a line terminator ends
+               --  at the first position of the next line.
+
+               Match_Up_To : constant Editor_Coordinates :=
+                 Match_End (Get_Buffer (Editor), Context.Current);
+
                Original : constant String :=
                  (if Is_Empty_Match (Context.Current) then
                      ""
@@ -2586,10 +2602,8 @@ package body Src_Contexts is
                      To_String (Editor.Get_Buffer.Get_Text
                        (Editable_Line_Type (Context.Current.Start.Line),
                         Character_Index (Context.Current.Start.Column),
-                        Editable_Line_Type (Context.Current.Finish.Line),
-                        As_Optional
-                          (Character_Index
-                             (Context.Current.Finish.Column + 1)))));
+                        Match_Up_To.Line,
+                        As_Optional (Match_Up_To.Col))));
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text
@@ -2615,8 +2629,8 @@ package body Src_Contexts is
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
                      Character_Index (Context.Current.Start.Column),
-                     Editable_Line_Type (Context.Current.Finish.Line),
-                     Character_Index (Context.Current.Finish.Column + 1),
+                     Match_Up_To.Line,
+                     Match_Up_To.Col,
                      Text);
                end if;
 
