@@ -3,6 +3,10 @@
 exclusive, so a one-character match is the boundary case; a match holding or
 following multi-byte characters checks that the positions count characters,
 and a match at the end of a line checks the end-of-line boundary.
+
+A regexp match can also run through a line terminator. The position just
+after such a match is the first one of the next line, and not an extra column
+on the line holding the terminator.
 """
 
 import GPS
@@ -45,6 +49,32 @@ def test_driver():
             buf.get_chars(Start, End.forward_char(-1)),
             Pattern,
             "'find next' selected %s:%s..%s:%s for '%s'"
+            % (Start.line(), Start.column(), End.line(), End.column(), Pattern),
+        )
+
+    #  Regexp matches that run through a line terminator. The pattern is
+    #  written with an escaped newline; the expected selection is the text it
+    #  matches.
+    s.regexp.set_active(True)
+
+    for Pattern, Expected in (
+        ("Integer := 0;\\n", "Integer := 0;\n"),
+        ("and .*\\nbegin", "and \u00e9\u00e9\u00e9\nbegin"),
+        ("end Main;\\n", "end Main;\n"),
+    ):
+        buf.current_view().goto(buf.at(1, 1))
+        s.pattern.set_text(Pattern)
+
+        GPS.execute_action("find next")
+        yield wait_tasks(other_than=known_tasks)
+
+        Start = buf.selection_start()
+        End = buf.selection_end()
+
+        gps_assert(
+            buf.get_chars(Start, End.forward_char(-1)),
+            Expected,
+            "'find next' selected %s:%s..%s:%s for the regexp '%s'"
             % (Start.line(), Start.column(), End.line(), End.column(), Pattern),
         )
 
