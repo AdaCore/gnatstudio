@@ -891,6 +891,15 @@ package body GPS.Search is
          First := First + 1;
       end if;
 
+      --  Stop once the whole range has been searched. Handing GNAT.Regpat a
+      --  range that starts after its end makes it match anywhere in Buffer,
+      --  which reports matches outside the range that was asked for.
+
+      if First > Context.Buffer_End or else First > Buffer'Last then
+         Context := No_Match;
+         return;
+      end if;
+
       Match
         (Self.Pattern.all, Buffer, Context.Groups, First, Context.Buffer_End);
 
