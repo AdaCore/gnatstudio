@@ -1843,13 +1843,22 @@ package body Interactive_Consoles is
                     Gint (Console.Search_Context.Start.Line - 1),
                   Char_Offset =>
                     Gint (Console.Search_Context.Start.Column - 1));
-               Console.Buffer.Get_Iter_At_Line_Offset
-                 (Iter        =>
-                    End_Iter,
-                  Line_Number =>
-                    Gint (Console.Search_Context.Finish.Line - 1),
-                  Char_Offset =>
-                    Gint (Console.Search_Context.Finish.Column));
+
+               if Is_Empty_Match (Console.Search_Context) then
+                  --  An empty match has no end of its own: the range to
+                  --  highlight is empty and ends where it starts.
+
+                  Copy (Source => Begin_Iter, Dest => End_Iter);
+
+               else
+                  Console.Buffer.Get_Iter_At_Line_Offset
+                    (Iter        =>
+                       End_Iter,
+                     Line_Number =>
+                       Gint (Console.Search_Context.Finish.Line - 1),
+                     Char_Offset =>
+                       Gint (Console.Search_Context.Finish.Column));
+               end if;
 
                Console.Buffer.Apply_Tag
                  (Console.Tags (Search_Tag), Begin_Iter, End_Iter);
