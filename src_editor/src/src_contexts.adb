@@ -887,9 +887,13 @@ package body Src_Contexts is
 
    begin
       if Is_Empty_Match (Match) then
+         --  An empty match has no end of its own, so there is nothing to
+         --  highlight and nothing to select: the character it is in front of
+         --  is not part of it.
+
          Do_Highlight
-           (Column_End => Match.Start.Visible_Column + 1,
-            Length     => 1);
+           (Column_End => 0,
+            Length     => Highlight_None);
       elsif Match.Start.Line = Match.Finish.Line then
          Do_Highlight
            (Column_End => Match.Finish.Visible_Column + 1,
