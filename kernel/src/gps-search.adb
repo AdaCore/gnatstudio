@@ -431,6 +431,14 @@ package body GPS.Search is
            Ref                => R,
            Tab_Width          => Tab_Width);
    begin
+      --  An empty range has nothing to match. GNAT.Regpat given a start
+      --  after its end reports matches taken from elsewhere in Buffer, so
+      --  the range is checked rather than handed over.
+
+      if Context.Buffer_Start > Context.Buffer_End then
+         return No_Match;
+      end if;
+
       Match
         (Self.Pattern.all, Buffer, Context.Groups,
          Data_First => Context.Buffer_Start,

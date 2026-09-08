@@ -80,13 +80,19 @@ package body Find_Utils is
    begin
       Was_Partial := False;
 
-      --  Special case here: If we have an empty section, do nothing. In
-      --  fact, End_Index might be 0 in the following case: we search in
-      --  one of the GNAT Studio source files for "all but comments". The
-      --  first section is empty, and End_Index is 0. However, it is
-      --  legitimate, if inefficient, to have an empty section
+      --  Nothing to do for an empty section, and it is legitimate, if
+      --  inefficient, to have one: scanning one of the GNAT Studio source
+      --  files for "all but comments" starts with an empty section, whose
+      --  End_Index is 0. A section that is empty anywhere else has its end
+      --  just before its start, as sections are delimited by the position
+      --  at which the state changes.
+      --
+      --  Such a range must not be handed to the pattern: it has no
+      --  characters to match, and GNAT.Regpat given a start after its end
+      --  reports matches taken from elsewhere in the buffer, which would
+      --  leave the scope the caller asked for.
 
-      if End_Index = 0 then
+      if End_Index = 0 or else Start_Index > End_Index then
          return;
       end if;
 
