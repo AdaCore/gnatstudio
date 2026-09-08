@@ -427,7 +427,7 @@ package body GPS.Search is
            Groups             => <>,
            Color_String       => Get_Default_Fg,
            Buffer_Start       => S,
-           Buffer_End         => (if F = 0 then Positive'Last else F),
+           Buffer_End         => F,
            Ref                => R,
            Tab_Width          => Tab_Width);
    begin

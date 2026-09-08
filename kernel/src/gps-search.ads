@@ -262,6 +262,9 @@ package GPS.Search is
    --
    --  Tab_Width should match the current size of tabs use in the buffer.
    --
+   --  The range is inclusive, and holds no character at all when End_Index
+   --  comes before Start_Index: nothing can match in it.
+   --
    --  Return value is No_Match if the Buffer did not match.
 
    function Start
