@@ -2248,6 +2248,10 @@ package body Src_Contexts is
 
       Found := Context.Current /= GPS.Search.No_Match;
 
+      --  What a search stores is a match of its own, and so can be replaced
+
+      Context.Replace_Valid := Found;
+
       if Found then
          Match_From  := Match_Start (Context.Current);
          Match_Up_To := Match_End (Editor, Context.Current);
@@ -2599,7 +2603,14 @@ package body Src_Contexts is
          --  selection in the source buffer will be erased when the focus is
          --  given to the search dialog.
 
-         if Context.Current /= GPS.Search.No_Match then
+         --  Context.Current is also where the next search resumes from, and
+         --  it keeps holding that position once the match it named has been
+         --  replaced. Replace_Valid tells the two apart: only a position a
+         --  search has just reported is a match that can be replaced.
+
+         if Context.Replace_Valid
+           and then Context.Current /= GPS.Search.No_Match
+         then
             declare
                --  The range to replace ends just after the last matched
                --  character, which is not always one column further on the
@@ -2699,6 +2710,12 @@ package body Src_Contexts is
                end if;
 
                Push_Current_Editor_Location_In_History (Kernel);
+
+               --  The match named by Context.Current has been replaced, so
+               --  what is left below is only the position the next search
+               --  resumes from.
+
+               Context.Replace_Valid := False;
 
                if Search_Backward then
                   Context.Current.Finish := Context.Current.Start;
@@ -3019,6 +3036,7 @@ package body Src_Contexts is
 
             if not GPS.Search.Failed (Match) then
                Context.Current := Match;
+               Context.Replace_Valid := True;
                More_Matches := Callback (Context.Current, Text.all);
                Matches_Found := True;
                Free (Text);
@@ -3101,6 +3119,7 @@ package body Src_Contexts is
 
                   if Match /= GPS.Search.No_Match then
                      Context.Current := Match;
+                     Context.Replace_Valid := True;
                      Matches_Found := Callback (Context.Current, Text.all);
                   end if;
 
