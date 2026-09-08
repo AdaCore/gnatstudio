@@ -885,10 +885,15 @@ package body GPS.Search is
    is
       First : Positive := Index_After_Match (Context);
    begin
-      --  We need to skip extra position in case of empty match to avoid
-      --  endless search loop
+      --  An empty match does not move the search forward by itself, so a
+      --  position has to be skipped to avoid an endless search loop. Buffer
+      --  holds UTF-8, and the whole encoding of the character has to be
+      --  skipped: starting the next search on a continuation byte would have
+      --  Update_Location resolve it back to the very same character, and the
+      --  same match would be reported over and over.
+
       if Is_Empty_Match (Context) then
-         First := First + 1;
+         First := Utf8_Find_Next_Char (Buffer, First + 1);
       end if;
 
       --  Stop once the whole range has been searched. Handing GNAT.Regpat a
