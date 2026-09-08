@@ -79,6 +79,7 @@ with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
 
+   use type Basic_Types.Character_Offset;
    use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.CONTEXTS");
@@ -2630,6 +2631,12 @@ package body Src_Contexts is
                --  bytes, which is what Finish.Index below is expressed in,
                --  but Forward_Position advances by characters.
 
+               End_Line    : Editable_Line_Type;
+               End_Col     : Character_Index;
+               --  Position just after the replacement. The cursor
+               --  subprograms are given an exclusive end, so this is not the
+               --  position of the last character of the replacement.
+
             begin
                if Is_Empty_Match (Context.Current) then
                   Insert
@@ -2647,49 +2654,70 @@ package body Src_Contexts is
                      Text);
                end if;
 
-               declare
-                  End_Line : Editable_Line_Type;
-                  End_Col  : Character_Index;
+               Forward_Position
+                 (Get_Buffer (Editor),
+                  Editable_Line_Type (Context.Current.Start.Line),
+                  Character_Index (Context.Current.Start.Column),
+                  Text_Length,
+                  End_Line,
+                  End_Col);
 
-               begin
-                  Forward_Position
-                    (Get_Buffer (Editor),
-                     Editable_Line_Type (Context.Current.Start.Line),
-                     Character_Index (Context.Current.Start.Column),
-                     Text_Length,
-                     End_Line,
-                     End_Col);
+               --  The replacement is the current match from now on, and
+               --  Finish is the position of its last character: one byte and
+               --  one character before the position just after it.
 
-                  --  Index is a byte index in the buffer
+               if Text_Length = 0 then
+                  --  Nothing was put in place of the match, so its start is
+                  --  all there is left to point at.
 
-                  Context.Current.Finish :=
-                    At_Position
-                      (Index  =>
-                         Byte_Index (Context.Current.Start) + Text'Length,
-                       Line   => Natural (End_Line),
-                       Column => Character_Offset_Type (End_Col));
-               end;
+                  Context.Current.Finish := Context.Current.Start;
+
+               else
+                  declare
+                     Last_Line : Editable_Line_Type;
+                     Last_Col  : Character_Index;
+
+                  begin
+                     Forward_Position
+                       (Get_Buffer (Editor),
+                        Editable_Line_Type (Context.Current.Start.Line),
+                        Character_Index (Context.Current.Start.Column),
+                        Text_Length - 1,
+                        Last_Line,
+                        Last_Col);
+
+                     --  Index is a byte index in the buffer
+
+                     Context.Current.Finish :=
+                       At_Position
+                         (Index  =>
+                            Byte_Index (Context.Current.Start)
+                              + Text'Length - 1,
+                          Line   => Natural (Last_Line),
+                          Column => Character_Offset_Type (Last_Col));
+                  end;
+               end if;
+
+               Push_Current_Editor_Location_In_History (Kernel);
+
+               if Search_Backward then
+                  Context.Current.Finish := Context.Current.Start;
+               else
+                  Context.Current.Start.Line := Natural (End_Line);
+                  Context.Current.Start.Column :=
+                    Character_Offset_Type (End_Col) - 1;
+               end if;
+
+               Set_Cursor_Position
+                 (Get_Buffer (Editor),
+                  End_Line,
+                  End_Col,
+                  Internal => True);
+
+               Get_View (Editor).Set_Position_Set_Explicitely;
+
+               Save_Cursor_Position (Get_View (Editor));
             end;
-
-            Push_Current_Editor_Location_In_History (Kernel);
-
-            if Search_Backward then
-               Context.Current.Finish := Context.Current.Start;
-            else
-               Context.Current.Start.Line := Context.Current.Finish.Line;
-               Context.Current.Start.Column :=
-                 Context.Current.Finish.Column - 1;
-            end if;
-
-            Set_Cursor_Position
-              (Get_Buffer (Editor),
-               Editable_Line_Type (Context.Current.Finish.Line),
-               Character_Index (Context.Current.Finish.Column),
-               Internal => True);
-
-            Get_View (Editor).Set_Position_Set_Explicitely;
-
-            Save_Cursor_Position (Get_View (Editor));
          end if;
       end if;
 
