@@ -536,6 +536,9 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
+
+      use type Basic_Types.Character_Index;
+
       Kernel     : constant Kernel_Handle := Get_Kernel
         (Src_Editor_Module_Id.all);
       Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -546,7 +549,7 @@ package body Src_Editor_View.Commands is
       Tab_Width  : Natural;
 
       Line       : Editable_Line_Type;
-      Column     : Character_Offset_Type;
+      Column     : Character_Index;
       Num        : Natural;
    begin
       if View = null then
@@ -566,7 +569,9 @@ package body Src_Editor_View.Commands is
       declare
          Text : constant String (1 .. Num) := (others => ' ');
       begin
-         Replace_Slice (Buffer, Text, Line, Column, Before => 0, After => 0);
+         Replace_Slice
+           (Buffer, Text, Line, As_Optional (Column),
+            Before => 0, After => 0);
       end;
 
       Grab_Toplevel_Focus
@@ -616,9 +621,9 @@ package body Src_Editor_View.Commands is
       View            : constant Source_View := Source_Box.Get_View;
       Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
       Line            : Editable_Line_Type;
-      Column          : Character_Offset_Type;
+      Column          : Character_Index;
       Iter            : Gtk_Text_Iter;
-      Cursor_Position : Character_Offset_Type := 4;
+      Cursor_Position : Character_Index := 4;
       --  Set cursor after the `& "` pattern on the new line
 
       Dummy           : Boolean;
@@ -683,7 +688,9 @@ package body Src_Editor_View.Commands is
          end if;
 
          --  Insert the string prepared text
-         Replace_Slice (Buffer, Text, Line, Column, Before => 0, After => 0);
+         Replace_Slice
+           (Buffer, Text, Line, As_Optional (Column),
+            Before => 0, After => 0);
       end;
 
       --  Set cursor after the inserted text
@@ -714,6 +721,9 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
+
+      use type Basic_Types.Character_Index;
+
       Kernel          : constant Kernel_Handle := Get_Kernel
         (Src_Editor_Module_Id.all);
       Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -722,7 +732,7 @@ package body Src_Editor_View.Commands is
       View            : constant Source_View := Source_Box.Get_View;
       Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
       Line            : Editable_Line_Type;
-      Column          : Character_Offset_Type;
+      Column          : Character_Index;
       Iter            : Gtk_Text_Iter;
       Dummy           : Boolean;
 
@@ -737,7 +747,8 @@ package body Src_Editor_View.Commands is
 
       if Buffer.Is_In_String (Iter) then
          Replace_Slice
-           (Buffer, """ &  & """, Line, Column, Before => 0, After => 0);
+           (Buffer, """ &  & """, Line, As_Optional (Column),
+            Before => 0, After => 0);
 
          --  Set cursor inside the inserted text
          Buffer.Set_Cursor_Position
@@ -764,6 +775,9 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
+
+      use type Basic_Types.Character_Index;
+
       Kernel          : constant Kernel_Handle := Get_Kernel
         (Src_Editor_Module_Id.all);
       Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -772,7 +786,7 @@ package body Src_Editor_View.Commands is
       View            : constant Source_View := Source_Box.Get_View;
       Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
       Line            : Editable_Line_Type;
-      Column          : Character_Offset_Type;
+      Column          : Character_Index;
       Iter            : Gtk_Text_Iter;
       Dummy           : Boolean;
 
@@ -794,7 +808,8 @@ package body Src_Editor_View.Commands is
             Txt : constant String := """ & " & List (List'First).all & " & """;
          begin
             Replace_Slice
-              (Buffer, Txt, Line, Column, Before => 0, After => 0);
+              (Buffer, Txt, Line, As_Optional (Column),
+               Before => 0, After => 0);
 
             --  Set cursor after the inserted text
             Buffer.Set_Cursor_Position

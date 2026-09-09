@@ -113,7 +113,7 @@ package Src_Contexts is
 
    type Editor_Coordinates is record
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    end record;
 
    type Search_Failure_Response is (None, Dialog, Informational_Popup);
@@ -138,7 +138,7 @@ package Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Search for Context in an editor. The search starts at the given
    --  location and only applies to that buffer.
@@ -424,11 +424,13 @@ private
       Editor_Child : MDI_Child;
       --  The editor in which the occurrence has been matched
 
-      Match_From   : Editor_Coordinates;
-      --  The editor coordinates for the match's start
-
-      Match_Up_To  : Editor_Coordinates;
-      --  The editor coordinates for the match's end
+      Match        : GPS.Search.Search_Context;
+      --  The match itself.
+      --
+      --  Its editor coordinates are derived when the occurrence is used
+      --  rather than stored here: normalizing the exclusive end of a match
+      --  requires the buffer holding it, and the file may well have had no
+      --  editor when the match was found.
    end record;
 
    overriding function Search

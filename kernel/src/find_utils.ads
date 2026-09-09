@@ -119,12 +119,11 @@ package Find_Utils is
    function Match
      (Context     : access Root_Search_Context;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1)
+      Start_Index : Natural;
+      End_Index   : Natural)
       return GPS.Search.Search_Context;
    --  Check if Context matches Buffer (Start_Index .. End_Index), and return
-   --  the index of the first match, or -1 if there is no match. Start_Index
-   --  defaults to Buffer'First, and End_Index defaults to Buffer'Last.
+   --  the index of the first match, or -1 if there is no match.
    --  It is important that Buffer contains the whole file,
    --  since otherwise regular expressions starting with "^" or ending with "$"
    --  will not be properly recognized.

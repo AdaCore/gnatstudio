@@ -111,8 +111,12 @@ package body GPS.Kernel.Search.Preferences is
            (Self.Pattern.Highlight_Match
               (Buffer  => Get_Surrounding_Line
                    (Doc,
-                    Doc_Context.Start.Index,
-                    Doc_Context.Finish.Index),
+                    Byte_Index (Doc_Context.Start),
+                    --  An empty match has no end of its own: it ends
+                    --  where it starts.
+                    (if Is_Empty_Match (Doc_Context)
+                     then Byte_Index (Doc_Context.Start)
+                     else Byte_Index (Doc_Context.Finish))),
                Context => Doc_Context));
 
          Result := Preferences_Search_Provider'Class

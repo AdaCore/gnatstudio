@@ -34,6 +34,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with Glib;                       use Glib;
 with Glib.Convert;
 with Glib.Error;                 use Glib.Error;
+with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
@@ -78,6 +79,7 @@ with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
 
+   use type Basic_Types.Character_Offset;
    use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.CONTEXTS");
@@ -183,7 +185,7 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
@@ -249,6 +251,22 @@ package body Src_Contexts is
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
 
+   function Match_Start
+     (Match : GPS.Search.Search_Context) return Editor_Coordinates
+   is ((Editable_Line_Type (Match.Start.Line),
+        Character_Index (Match.Start.Column)));
+   --  Position of the first character of Match
+
+   function Match_End
+     (Buffer : not null Source_Buffer;
+      Match  : GPS.Search.Search_Context) return Editor_Coordinates;
+   --  Position just after the last character of Match. Select_Region and the
+   --  cursor location subprograms are given an exclusive end, and an empty
+   --  match has no end of its own: it reports its start.
+   --  Buffer holds the match: normalizing the position just after the last
+   --  matched character needs it, so this can only be called for a file that
+   --  has an editor.
+
    function Auxiliary_Search
      (Context              : access Current_File_Context'Class;
       Editor               : Source_Editor_Box;
@@ -258,7 +276,7 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0)
+      End_Column           : Optional_Character_Index := No_Index)
       return Source_Search_Occurrence;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success.
@@ -332,9 +350,41 @@ package body Src_Contexts is
       Right : not null access Source_Search_Occurrence_Record)
       return Boolean is
    begin
-      return (Left.Match_From = Right.Match_From
-              and then Left.Match_Up_To = Right.Match_Up_To);
+      return Left.Match.Start = Right.Match.Start
+        and then Left.Match.Finish = Right.Match.Finish;
    end Is_Equal;
+
+   ---------------
+   -- Match_End --
+   ---------------
+
+   function Match_End
+     (Buffer : not null Source_Buffer;
+      Match  : GPS.Search.Search_Context) return Editor_Coordinates
+   is
+      Line   : Editable_Line_Type;
+      Column : Character_Index;
+
+   begin
+      if Is_Empty_Match (Match) then
+         return Match_Start (Match);
+      end if;
+
+      --  Advance one character from the last matched character, rather than
+      --  adding one to its column: when that character is a line terminator
+      --  the position just after it is the first one of the next line, and
+      --  not an extra column on the line that holds the terminator.
+
+      Forward_Position
+        (Buffer       => Buffer,
+         Start_Line   => Editable_Line_Type (Match.Finish.Line),
+         Start_Column => Character_Index (Match.Finish.Column),
+         Length       => 1,
+         End_Line     => Line,
+         End_Column   => Column);
+
+      return (Line, Column);
+   end Match_End;
 
    -----------------
    -- Scan_Buffer --
@@ -687,7 +737,7 @@ package body Src_Contexts is
                Start := Start + 1;
             end loop;
 
-            Ref := (Start, Integer (Line), 1, 1);
+            Ref := At_Position (Start, Integer (Line));
             Scan_Buffer
               (Tmp (Start .. Tmp'Last), 1, Context, Callback, Scope,
                Lexical_State, Lang,
@@ -733,7 +783,8 @@ package body Src_Contexts is
 
       Lang := Get_Language_From_File (Handler, Get_Filename (Box));
 
-      if not Is_Valid_Position (Get_Buffer (Box), Start_Line, Start_Column)
+      if not Is_Valid_Position
+        (Get_Buffer (Box), Start_Line, Character_Index (Start_Column))
       then
          return;
       end if;
@@ -746,7 +797,7 @@ package body Src_Contexts is
 
       begin
          Get_String (Unbounded_Buffer, Buffer, Len);
-         Ref := (1, Integer (Start_Line), 1, 1);
+         Ref := At_Position (1, Integer (Start_Line));
          Scan_Buffer
            (Buffer (1 .. Len),
             Start_Column,
@@ -837,25 +888,38 @@ package body Src_Contexts is
 
    begin
       if Is_Empty_Match (Match) then
+         --  An empty match has no end of its own, so there is nothing to
+         --  highlight and nothing to select: the character it is in front of
+         --  is not part of it.
+
          Do_Highlight
-           (Column_End => Match.Start.Visible_Column + 1,
-            Length     => 1);
+           (Column_End => 0,
+            Length     => Highlight_None);
       elsif Match.Start.Line = Match.Finish.Line then
          Do_Highlight
            (Column_End => Match.Finish.Visible_Column + 1,
             Length     => Highlight_Length
               (Match.Finish.Visible_Column - Match.Start.Visible_Column) + 1);
       else
-         --  When the location spans on multiple lines, we base the length
-         --  to highlight on the pattern length.
-         --  ??? This is not compatible with UTF-8
+         --  The match runs past the end of its first line, so what has to be
+         --  highlighted on that line is all of it from the start of the
+         --  match. Neither consumer can be told that directly: the length
+         --  below is turned into an end column, and the hook only ever
+         --  selects within a single line.
+         --
+         --  Any length reaching past the end of the line does say it, and
+         --  that is what the size of the match gives: the match covers the
+         --  rest of the line plus its terminator, so its size in bytes
+         --  always exceeds the columns left on the line. Highlight_Range
+         --  then extends the highlighting to the end of the line.
+         --
+         --  The hook cannot express a selection that spans lines, so it is
+         --  given no end at all and only places the cursor on the match.
+
          Do_Highlight
-           (Column_End =>
-               Match.Start.Visible_Column
-                 + Visible_Column_Type
-                   (Match.Finish.Index - Match.Start.Index + 1),
+           (Column_End => 0,
             Length     => Highlight_Length
-              (Match.Finish.Index - Match.Start.Index + 1));
+              (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1));
       end if;
    end Highlight_Result;
 
@@ -877,7 +941,7 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Continue_Till_End : Boolean := False;
@@ -958,11 +1022,15 @@ package body Src_Contexts is
          --  current position but don't have any match yet, we have to return
          --  the last match.
          if Match.Start.Line > Integer (Current_Line)
-           or else (Is_Empty_Match (Match)
-                    and then Match.Start.Line = Integer (Current_Line)
-                    and then Match.Start.Column >= Current_Column)
-           or else (Match.Finish.Line = Integer (Current_Line)
-                    and then Match.Finish.Column + 1 >= Current_Column)
+           or else (if Is_Empty_Match (Match)
+                    then
+                      --  An empty match has no end of its own: it ends
+                      --  where it starts.
+                      Match.Start.Line = Integer (Current_Line)
+                        and then Match.Start.Column >= Current_Column
+                    else
+                      Match.Finish.Line = Integer (Current_Line)
+                        and then Match.Finish.Column + 1 >= Current_Column)
          then
             if not Continue_Till_End
               and then Result /= GPS.Search.No_Match
@@ -1024,7 +1092,7 @@ package body Src_Contexts is
 
          begin
             Get_String (Buffer, Text, Len);
-            Ref := (1, Integer (Start_Line), 1, 1);
+            Ref := At_Position (1, Integer (Start_Line));
             Scan_Buffer
               (Buffer        => Text (1 .. Len),
                From          => Start_Column,
@@ -1080,7 +1148,7 @@ package body Src_Contexts is
 
          begin
             Get_String (Buffer, Text, Len);
-            Ref := (1, Integer (Begin_Line), 1, 1);
+            Ref := At_Position (1, Integer (Begin_Line));
             Scan_Buffer
               (Buffer        => Text (1 .. Len),
                From          => Begin_Column,
@@ -1120,7 +1188,7 @@ package body Src_Contexts is
 
             begin
                Get_String (Buffer, Text, Len);
-               Ref := (1, Integer (Start_Line), 1, 1);
+               Ref := At_Position (1, Integer (Start_Line));
                Scan_Buffer
                  (Text (1 .. Len),
                   Start_Column,
@@ -1609,9 +1677,9 @@ package body Src_Contexts is
       Editor       : Source_Editor_Box;
       Occurrence   : Source_Search_Occurrence;
       Begin_Line   : Editable_Line_Type;
-      Begin_Column : Character_Offset_Type;
+      Begin_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
 
       --------------------------
       -- Interactive_Callback --
@@ -1624,7 +1692,7 @@ package body Src_Contexts is
       begin
          if Match.Start.Line > Natural (End_Line) or else
            (Match.Start.Line = Natural (End_Line) and then
-                Match.Start.Column > End_Column)
+                Match.Start.Column > Character_Offset_Type (End_Column))
          then
             return False;
          end if;
@@ -1654,10 +1722,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -1689,14 +1754,17 @@ package body Src_Contexts is
          Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
          End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
          Begin_Column :=
-           Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+           Character_Index (Get_Line_Offset (Range_Start) + 1);
          End_Column :=
-           Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+           Character_Index (Get_Line_Offset (Range_End) + 1);
 
          if not Context.All_Occurrences then
             Occurrence := Auxiliary_Search
               (Context, Editor, Kernel, Search_Backward, From_Selection_Start,
-               Begin_Line, Begin_Column, End_Line, End_Column);
+               Begin_Line,
+               Character_Offset_Type (Begin_Column),
+               End_Line,
+               As_Optional (End_Column));
             Found := Occurrence /= null;
 
             if not Found then
@@ -1715,7 +1783,7 @@ package body Src_Contexts is
                   Interactive_Callback'Unrestricted_Access,
                   Context.Scope,
                   Start_Line    => Begin_Line,
-                  Start_Column  => Begin_Column,
+                  Start_Column  => Character_Offset_Type (Begin_Column),
                   Lexical_State => State,
                   Was_Partial   => Continue);
 
@@ -1750,9 +1818,9 @@ package body Src_Contexts is
       Editor       : Source_Editor_Box;
       Matches      : Match_Vectors.Vector;
       Begin_Line   : Editable_Line_Type;
-      Begin_Column : Character_Offset_Type;
+      Begin_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
    begin
       if Context.All_Occurrences then
          if Child = null then
@@ -1772,17 +1840,23 @@ package body Src_Contexts is
             Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
             End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
             Begin_Column :=
-              Character_Offset_Type (Get_Line_Offset (Range_Start) + 1);
+              Character_Index (Get_Line_Offset (Range_Start) + 1);
             End_Column :=
-              Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
+              Character_Index (Get_Line_Offset (Range_End) + 1);
          end;
 
          declare
             Text : constant String := To_String (Buffer.Get_Text
-              (Begin_Line, Begin_Column, End_Line, End_Column));
+              (Begin_Line,
+               Begin_Column,
+               End_Line,
+               As_Optional (End_Column)));
             Ref          : constant Buffer_Position :=
-              (Text'First, Integer (Begin_Line), Begin_Column,
-               Visible_Column_Type (Begin_Column));
+              At_Position
+                (Index          => Text'First,
+                 Line           => Integer (Begin_Line),
+                 Column         => Character_Offset_Type (Begin_Column),
+                 Visible_Column => Visible_Column_Type (Begin_Column));
          begin
             Scan_And_Store
               (Context => Context,
@@ -2123,12 +2197,12 @@ package body Src_Contexts is
       Start_Line       : Editable_Line_Type := 1;
       Start_Column     : Character_Offset_Type := 1;
       End_Line         : Editable_Line_Type := 0;
-      End_Column       : Character_Offset_Type := 0;
+      End_Column       : Optional_Character_Index := No_Index;
       Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
       Lang   : Language_Access;
-      Column : Character_Offset_Type;
+      Column : Character_Index;
       Line   : Editable_Line_Type;
    begin
       Assert (Me, not Context.All_Occurrences,
@@ -2163,7 +2237,7 @@ package body Src_Contexts is
          Lexical_State    => Context.Current_Lexical,
          Lang             => Lang,
          Current_Line     => Line,
-         Current_Column   => Column,
+         Current_Column   => Character_Offset_Type (Column),
          Failure_Response => Failure_Response,
          Backward         => Search_Backward,
          Result           => Context.Current,
@@ -2173,18 +2247,14 @@ package body Src_Contexts is
          End_Column       => End_Column);
 
       Found := Context.Current /= GPS.Search.No_Match;
-      if Found then
-         Match_From :=
-           (Line => Editable_Line_Type (Context.Current.Start.Line),
-            Col  => Context.Current.Start.Column);
 
-         if Is_Empty_Match (Context.Current) then
-            Match_Up_To := Match_From;
-         else
-            Match_Up_To :=
-              (Line => Editable_Line_Type (Context.Current.Finish.Line),
-               Col => Context.Current.Finish.Column + 1);
-         end if;
+      --  What a search stores is a match of its own, and so can be replaced
+
+      Context.Replace_Valid := Found;
+
+      if Found then
+         Match_From  := Match_Start (Context.Current);
+         Match_Up_To := Match_End (Editor, Context.Current);
       end if;
    end Search_In_Editor;
 
@@ -2220,7 +2290,7 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0)
+      End_Column           : Optional_Character_Index := No_Index)
       return Source_Search_Occurrence
    is
       Selection_Start : Gtk_Text_Iter;
@@ -2254,8 +2324,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Find_Child (Kernel, Editor),
-            Match_From   => Match_From,
-            Match_Up_To  => Match_Up_To);
+            Match        => Context.Current);
          Initialize (Occurrence, Pattern => Context_Look_For (Context));
 
          Push_Current_Editor_Location_In_History (Kernel);
@@ -2338,10 +2407,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Child,
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2422,24 +2488,33 @@ package body Src_Contexts is
                Insert
                  (Buffer,
                   Editable_Line_Type (M.Start.Line),
-                  M.Start.Column,
+                  Character_Index (M.Start.Column),
                   Replacement.Replacement_Text
                     (M, "", Buffer.Get_Language.Keywords));
             else
                declare
-                  Text : constant String := To_String (Get_Text
+                  --  The range to replace ends just after the last matched
+                  --  character, which is not always one column further on
+                  --  the same line: a match running through a line
+                  --  terminator ends at the first position of the next
+                  --  line.
+
+                  Match_Up_To : constant Editor_Coordinates :=
+                    Match_End (Buffer, M);
+
+                  Text        : constant String := To_String (Get_Text
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
-                     M.Start.Column,
-                     Editable_Line_Type (M.Finish.Line),
-                     M.Finish.Column + 1));
+                     Character_Index (M.Start.Column),
+                     Match_Up_To.Line,
+                     As_Optional (Match_Up_To.Col)));
                begin
                   Replace_Slice
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
-                     M.Start.Column,
-                     Editable_Line_Type (M.Finish.Line),
-                     M.Finish.Column + 1,
+                     Character_Index (M.Start.Column),
+                     Match_Up_To.Line,
+                     Match_Up_To.Col,
                      Replacement.Replacement_Text
                        (M, Text, Buffer.Get_Language.Keywords));
                end;
@@ -2487,7 +2562,7 @@ package body Src_Contexts is
          Editor.Get_Buffer.Freeze_Context;
          declare
             Text : constant String := Get_Buffer (Editor);
-            Ref  : constant Buffer_Position := (Text'First, 1, 1, 1);
+            Ref  : constant Buffer_Position := At_Index (Text'First);
             Matches : Match_Vectors.Vector;
          begin
             Scan_And_Store
@@ -2528,71 +2603,138 @@ package body Src_Contexts is
          --  selection in the source buffer will be erased when the focus is
          --  given to the search dialog.
 
-         if Context.Current /= GPS.Search.No_Match then
+         --  Context.Current is also where the next search resumes from, and
+         --  it keeps holding that position once the match it named has been
+         --  replaced. Replace_Valid tells the two apart: only a position a
+         --  search has just reported is a match that can be replaced.
+
+         if Context.Replace_Valid
+           and then Context.Current /= GPS.Search.No_Match
+         then
             declare
+               --  The range to replace ends just after the last matched
+               --  character, which is not always one column further on the
+               --  same line: a match running through a line terminator ends
+               --  at the first position of the next line.
+
+               Match_Up_To : constant Editor_Coordinates :=
+                 Match_End (Get_Buffer (Editor), Context.Current);
+
                Original : constant String :=
                  (if Is_Empty_Match (Context.Current) then
                      ""
                   else
                      To_String (Editor.Get_Buffer.Get_Text
                        (Editable_Line_Type (Context.Current.Start.Line),
-                        Context.Current.Start.Column,
-                        Editable_Line_Type (Context.Current.Finish.Line),
-                        Context.Current.Finish.Column + 1)));
+                        Character_Index (Context.Current.Start.Column),
+                        Match_Up_To.Line,
+                        As_Optional (Match_Up_To.Col))));
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text
                    (Context.Current,
                     Original,
                     Editor.Get_Buffer.Get_Language.Keywords);
+
+               Text_Length : constant Character_Offset :=
+                 Character_Offset (UTF8_Strlen (Text));
+               --  Number of characters of Text. Text'Length counts UTF-8
+               --  bytes, which is what Finish.Index below is expressed in,
+               --  but Forward_Position advances by characters.
+
+               End_Line    : Editable_Line_Type;
+               End_Col     : Character_Index;
+               --  Position just after the replacement. The cursor
+               --  subprograms are given an exclusive end, so this is not the
+               --  position of the last character of the replacement.
+
             begin
                if Is_Empty_Match (Context.Current) then
                   Insert
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
-                     Context.Current.Start.Column,
+                     Character_Index (Context.Current.Start.Column),
                      Text);
                else
                   Replace_Slice
                     (Get_Buffer (Editor),
                      Editable_Line_Type (Context.Current.Start.Line),
-                     Context.Current.Start.Column,
-                     Editable_Line_Type (Context.Current.Finish.Line),
-                     Context.Current.Finish.Column + 1,
+                     Character_Index (Context.Current.Start.Column),
+                     Match_Up_To.Line,
+                     Match_Up_To.Col,
                      Text);
                end if;
 
                Forward_Position
                  (Get_Buffer (Editor),
                   Editable_Line_Type (Context.Current.Start.Line),
-                  Context.Current.Start.Column,
-                  Text'Length,
-                  Editable_Line_Type (Context.Current.Finish.Line),
-                  Context.Current.Finish.Column);
+                  Character_Index (Context.Current.Start.Column),
+                  Text_Length,
+                  End_Line,
+                  End_Col);
 
-               Context.Current.Finish.Index :=
-                 Context.Current.Start.Index + Text'Length;
+               --  The replacement is the current match from now on, and
+               --  Finish is the position of its last character: one byte and
+               --  one character before the position just after it.
+
+               if Text_Length = 0 then
+                  --  Nothing was put in place of the match, so its start is
+                  --  all there is left to point at.
+
+                  Context.Current.Finish := Context.Current.Start;
+
+               else
+                  declare
+                     Last_Line : Editable_Line_Type;
+                     Last_Col  : Character_Index;
+
+                  begin
+                     Forward_Position
+                       (Get_Buffer (Editor),
+                        Editable_Line_Type (Context.Current.Start.Line),
+                        Character_Index (Context.Current.Start.Column),
+                        Text_Length - 1,
+                        Last_Line,
+                        Last_Col);
+
+                     --  Index is a byte index in the buffer
+
+                     Context.Current.Finish :=
+                       At_Position
+                         (Index  =>
+                            Byte_Index (Context.Current.Start)
+                              + Text'Length - 1,
+                          Line   => Natural (Last_Line),
+                          Column => Character_Offset_Type (Last_Col));
+                  end;
+               end if;
+
+               Push_Current_Editor_Location_In_History (Kernel);
+
+               --  The match named by Context.Current has been replaced, so
+               --  what is left below is only the position the next search
+               --  resumes from.
+
+               Context.Replace_Valid := False;
+
+               if Search_Backward then
+                  Context.Current.Finish := Context.Current.Start;
+               else
+                  Context.Current.Start.Line := Natural (End_Line);
+                  Context.Current.Start.Column :=
+                    Character_Offset_Type (End_Col) - 1;
+               end if;
+
+               Set_Cursor_Position
+                 (Get_Buffer (Editor),
+                  End_Line,
+                  End_Col,
+                  Internal => True);
+
+               Get_View (Editor).Set_Position_Set_Explicitely;
+
+               Save_Cursor_Position (Get_View (Editor));
             end;
-
-            Push_Current_Editor_Location_In_History (Kernel);
-
-            if Search_Backward then
-               Context.Current.Finish := Context.Current.Start;
-            else
-               Context.Current.Start.Line := Context.Current.Finish.Line;
-               Context.Current.Start.Column :=
-                 Context.Current.Finish.Column - 1;
-            end if;
-
-            Set_Cursor_Position
-              (Get_Buffer (Editor),
-               Editable_Line_Type (Context.Current.Finish.Line),
-               Context.Current.Finish.Column,
-               Internal => True);
-
-            Get_View (Editor).Set_Position_Set_Explicitely;
-
-            Save_Cursor_Position (Get_View (Editor));
          end if;
       end if;
 
@@ -2687,13 +2829,15 @@ package body Src_Contexts is
 
                   for M of Matches loop
                      Append
-                       (Output_Buffer, Buffer (Last .. M.Start.Index - 1));
+                       (Output_Buffer,
+                          Buffer (Last .. Byte_Index (M.Start) - 1));
                      Append
                        (Output_Buffer,
                         Context.Replacement.Replacement_Text
                           (Result       => M,
                            Matched_Text => Buffer
-                             (M.Start.Index .. M.Finish.Index),
+                             (Byte_Index (M.Start)
+                                .. Index_After_Match (M) - 1),
                            Keywords     =>
                              Kernel.Get_Language_Handler.Get_Language_From_File
                                (File).Keywords));
@@ -2790,19 +2934,25 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
 
-      Editor.Set_Cursor_Location
-        (Line             => Source_Occurrence.Match_From.Line,
-         Column           => Source_Occurrence.Match_From.Col,
-         Force_Focus      => False,
-         Centering        => GPS.Editors.Minimal,
-         Extend_Selection => False);
+      declare
+         Match_From  : constant Editor_Coordinates :=
+           Match_Start (Source_Occurrence.Match);
+         Match_Up_To : constant Editor_Coordinates :=
+           Match_End (Get_Buffer (Editor), Source_Occurrence.Match);
 
-      Select_Region
-        (Get_Buffer (Editor),
-         Source_Occurrence.Match_From.Line,
-         Source_Occurrence.Match_From.Col,
-         Source_Occurrence.Match_Up_To.Line,
-         Source_Occurrence.Match_Up_To.Col);
+      begin
+         Editor.Set_Cursor_Location
+           (Line             => Match_From.Line,
+            Column           => Match_From.Col,
+            Force_Focus      => False,
+            Centering        => GPS.Editors.Minimal,
+            Extend_Selection => False);
+
+         Select_Region
+           (Get_Buffer (Editor),
+            Match_From.Line, Match_From.Col,
+            Match_Up_To.Line, Match_Up_To.Col);
+      end;
 
       Center_Cursor (Get_View (Editor));
    end Highlight_Occurrence;
@@ -2827,12 +2977,18 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
 
-      Editor.Set_Cursor_Location
-        (Line             => Source_Occurrence.Match_Up_To.Line,
-         Column           => Source_Occurrence.Match_Up_To.Col,
-         Force_Focus      => False,
-         Centering        => GPS.Editors.Minimal,
-         Extend_Selection => False);
+      declare
+         Match_Up_To : constant Editor_Coordinates :=
+           Match_End (Get_Buffer (Editor), Source_Occurrence.Match);
+
+      begin
+         Editor.Set_Cursor_Location
+           (Line             => Match_Up_To.Line,
+            Column           => Match_Up_To.Col,
+            Force_Focus      => False,
+            Centering        => GPS.Editors.Minimal,
+            Extend_Selection => False);
+      end;
 
       Center_Cursor (Get_View (Editor));
    end Give_Focus_To_Occurrence;
@@ -2880,6 +3036,7 @@ package body Src_Contexts is
 
             if not GPS.Search.Failed (Match) then
                Context.Current := Match;
+               Context.Replace_Valid := True;
                More_Matches := Callback (Context.Current, Text.all);
                Matches_Found := True;
                Free (Text);
@@ -2962,6 +3119,7 @@ package body Src_Contexts is
 
                   if Match /= GPS.Search.No_Match then
                      Context.Current := Match;
+                     Context.Replace_Valid := True;
                      Matches_Found := Callback (Context.Current, Text.all);
                   end if;
 
@@ -2974,7 +3132,7 @@ package body Src_Contexts is
                Context.Current := GPS.Search.No_Match;
 
                --  make sure that Search_From_File will perform some search
-               Context.Current.Start := (1, 1, 1, 1);
+               Context.Current.Start := At_Index (1);
 
                if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
@@ -3117,10 +3275,7 @@ package body Src_Contexts is
          Occurrence := new Source_Search_Occurrence_Record'
            (Search_Occurrence_Record with
             Editor_Child => Find_Editor (Kernel, File, No_Project),
-            Match_From   =>
-              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
-            Match_Up_To  =>
-              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+            Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;

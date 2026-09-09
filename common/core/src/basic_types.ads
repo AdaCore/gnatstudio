@@ -19,11 +19,14 @@ with Ada.Calendar;
 with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-
 with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
+
+with VSS.Strings;
+with VSS.Unicode;
+
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
@@ -111,6 +114,45 @@ package Basic_Types is
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
    --  Columns are counted in terms of UTF8 characters.
+
+   subtype Character_Offset is VSS.Strings.Character_Offset;
+   --  Relative value between position of two characters.
+
+   subtype Character_Count is VSS.Strings.Character_Count;
+   --  Amount of characters
+
+   subtype Character_Index is VSS.Strings.Character_Index;
+   --  Character_Index indicates the index of a character in the line. The
+   --  first character of the line has index 1. Use it for a position that is
+   --  always known; use Optional_Character_Index below when a position can be
+   --  absent, and Character_Offset_Type when a distance between two positions
+   --  is meant.
+   --
+   --  Arithmetic on an index yields VSS.Strings.Character_Offset, which is
+   --  signed; storing the result back into a Character_Index checks that it
+   --  still designates a character.
+
+   type Optional_Character_Index (Has_Index : Boolean := False) is record
+      case Has_Index is
+         when False =>
+            null;
+
+         when True =>
+            Index : Character_Index;
+      end case;
+   end record;
+   --  A character index in the line, or the absence of one. Use it where a
+   --  position may be unknown, instead of encoding that as an out of range
+   --  index; what the absence of an index means is up to each subprogram.
+
+   No_Index : constant Optional_Character_Index := (Has_Index => False);
+
+   function As_Optional
+     (Index : Character_Index) return Optional_Character_Index
+   is (Has_Index => True, Index => Index);
+
+   subtype UTF8_Code_Unit_Count is VSS.Unicode.UTF8_Code_Unit_Count;
+   --  Type to represent amount of UTF-8 code units in the string
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

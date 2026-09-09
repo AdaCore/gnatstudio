@@ -37,6 +37,7 @@ with GNATCOLL.VFS;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 
 with VSS.Strings;
+with VSS.Unicode;
 
 with Gdk.RGBA;
 with Glib;                            use Glib;
@@ -62,6 +63,13 @@ with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Gtkada.Types;
 
 package Src_Editor_Buffer is
+
+   use type VSS.Strings.Character_Offset;
+   --  Arithmetic and comparison on Basic_Types.Character_Index
+
+   use type VSS.Unicode.UTF8_Code_Unit_Offset;
+   --  Arithmetic and comparison on Basic_Types.UTF8_Code_Unit_Count
+
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
@@ -106,8 +114,11 @@ package Src_Editor_Buffer is
 
    type Loc_T is record
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    end record;
+
+   Nil_Loc : constant Loc_T := (Line => 0, Col => 1);
+   --  Designates no location: line 0 is not an editable line.
 
    function "<" (A, B : Loc_T) return Boolean
    is ((A.Line <= B.Line and then A.Col < B.Col) or else A.Line < B.Line);
@@ -142,14 +153,21 @@ package Src_Editor_Buffer is
    function Expand_Tabs
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) return Visible_Column_Type;
-   --  Return the visible column corresponding to the position
+      Column : Character_Index) return Visible_Column_Type;
+   --  Return the visible column corresponding to the position. The result
+   --  always designates a column of the line, starting at 1: when no tab
+   --  expansion can be computed, because Line is not an editable line of the
+   --  buffer, the first column of the line is returned.
 
    function Collapse_Tabs
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Visible_Column_Type) return Character_Offset_Type;
-   --  Return the character position corresponding to the visible column
+      Column : Visible_Column_Type) return Character_Index;
+   --  Return the character position corresponding to the visible column. The
+   --  result always designates a character of the line, starting at 1: when
+   --  no tab expansion can be computed, because Column is 0 or because Line
+   --  is not an editable line of the buffer, the first position of the line
+   --  is returned.
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
@@ -276,17 +294,21 @@ package Src_Editor_Buffer is
    --  available when only the Line number needs to be checked.
    --  Obsolete, should use Is_Valid_Position below.
 
+   function Is_Valid_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Boolean;
+   pragma Inline (Is_Valid_Line);
+   --  Return True if Line is a line of the buffer, without looking at any
+   --  column. Use it instead of Is_Valid_Position below when no column is
+   --  known: the first column of a line always exists.
+
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1) return Boolean;
+      Column : Character_Index) return Boolean;
    pragma Inline (Is_Valid_Position);
-   --  Return True if the given cursor position is valid. If Column is
-   --  set to 0, then this function just verifies the given line number
-   --  (column 0 of a given line always exists).
-   --
-   --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
-   --  available when only the Line number needs to be checked.
+   --  Return True if the given cursor position is valid. When no column is
+   --  known, call Is_Valid_Line above.
 
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
@@ -295,11 +317,17 @@ package Src_Editor_Buffer is
    pragma Inline (Is_Valid_Position);
    --  Same as above
 
+   procedure Ensure_Valid_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type);
+   --  Wrapper around Is_Valid_Line which raises a Location_Exception if the
+   --  line is invalid.
+
    procedure Ensure_Valid_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 1);
-   --  Wrapper around Is_Valide_Postion which raises an Location_Exception
+      Column : Character_Index);
+   --  Wrapper around Is_Valid_Position which raises a Location_Exception
    --  if the location is invalid.
 
    procedure Ensure_Valid_Position
@@ -311,7 +339,7 @@ package Src_Editor_Buffer is
    procedure Set_Cursor_Position
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
-      Column    : Character_Offset_Type;
+      Column    : Character_Index;
       Internal  : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
@@ -343,7 +371,7 @@ package Src_Editor_Buffer is
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : out Editable_Line_Type;
-      Column : out Character_Offset_Type);
+      Column : out Character_Index);
    --  Return the current editable cursor position
 
    procedure Get_Cursor_Position
@@ -376,7 +404,7 @@ package Src_Editor_Buffer is
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : out Editable_Line_Type;
-      Column : out Character_Offset_Type);
+      Column : out Character_Index);
    --  Return the current editable cursor position for Iter
 
    procedure Get_Iter_Position
@@ -426,9 +454,9 @@ package Src_Editor_Buffer is
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Editable_Line_Type;
-      Start_Column : out Character_Offset_Type;
+      Start_Column : out Character_Index;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Character_Offset_Type;
+      End_Column   : out Character_Index;
       Found        : out Boolean);
    --  If a portion of the buffer is currently selected, then return the
    --  position of the beginning and the end of the selection. Otherwise,
@@ -455,27 +483,27 @@ package Src_Editor_Buffer is
    function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type := 1;
-      Start_Column         : Character_Offset_Type := 1;
+      Start_Column         : Character_Index := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access;
    function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type;
-      Start_Column         : Character_Offset_Type;
+      Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return VSS.Strings.Virtual_String;
    function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type;
-      Start_Column         : Character_Offset_Type;
+      Start_Column         : Character_Index;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Unbounded_String;
@@ -483,15 +511,15 @@ package Src_Editor_Buffer is
    --  If Include_Last, return [start, end] else [start, end).
    --  If End_Line is 0, get the entire range between start position and end
    --  of text.
-   --  If End_Column is 0, then return all the characters in End_Line.
+   --  When End_Column has no index, return all the characters in End_Line.
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
-      Length       : Integer;
+      Start_Column : Character_Index;
+      Length       : Character_Offset;
       End_Line     : out Editable_Line_Type;
-      End_Column   : out Character_Offset_Type);
+      End_Column   : out Character_Index);
    --  Return the position Length characters after Start_Line/Start_Column
    --  Negative values for Length are supported, moving the position
    --  backwards.
@@ -499,7 +527,7 @@ package Src_Editor_Buffer is
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Character_Offset_Type;
+      Column      : Character_Index;
       Text        : String;
       Enable_Undo : Boolean := True);
    --  Insert the given text in at the specified position.
@@ -513,8 +541,8 @@ package Src_Editor_Buffer is
    procedure Delete
      (Buffer      : access Source_Buffer_Record;
       Line        : Editable_Line_Type;
-      Column      : Character_Offset_Type;
-      Length      : Natural;
+      Column      : Character_Index;
+      Length      : Character_Count;
       Enable_Undo : Boolean := True);
    --  Delete Length characters after the specified position.
    --
@@ -532,9 +560,9 @@ package Src_Editor_Buffer is
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
+      Start_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
       Text         : String;
       Enable_Undo  : Boolean := True);
    --  Replace the text between the start and end positions by Text.
@@ -590,9 +618,9 @@ package Src_Editor_Buffer is
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
+      Start_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type);
+      End_Column   : Character_Index);
    --  Select the given region
 
    procedure Select_Region
@@ -1155,12 +1183,13 @@ package Src_Editor_Buffer is
      (Buffer               : access Source_Buffer_Record'Class;
       Start_Line           : Editable_Line_Type;
       End_Line             : Editable_Line_Type;
-      Start_Column         : Character_Offset_Type := 1;
-      End_Column           : Character_Offset_Type := 0;
+      Start_Column         : Character_Index := 1;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access;
-   --  Return the text from Start_Line to End_Line, included
+   --  Return the text from Start_Line to End_Line, included.
+   --  When End_Column has no index, the whole of End_Line is returned.
 
    function Get_Byte_Index
      (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Natural;
@@ -1208,7 +1237,7 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type);
+      Column : Character_Index);
    --  Return the iter at position (Line, Column), tab expansion included.
    --  If Line is not in the text, return the Iter at beginning of text.
 
@@ -1218,14 +1247,18 @@ package Src_Editor_Buffer is
 
    type Src_String is record
       Contents  : Unchecked_String_Access;
-      Length    : Natural := 0;
+      Length    : UTF8_Code_Unit_Count := 0;
       Read_Only : Boolean := False;
    end record;
    --  Special purpose string type to avoid extra copies and string allocation
    --  as much as possible.
    --  The actual contents of a Src_String is represented by
-   --  Contents (1 .. Length) (as utf8-encoded string)
+   --  Contents (1 .. Last) (as utf8-encoded string)
    --  Never use Free (Contents) directly, use the Free procedure below.
+
+   function Last (S : Src_String) return Natural is (Natural (S.Length));
+   --  Index in S.Contents of the last code unit of S. Contents is a String,
+   --  indexed by Integer, while Length counts UTF-8 code units.
 
    function To_String (S : Src_String) return String;
    --  Return the string in Src_String, and the empty string if S is null
@@ -1239,12 +1272,13 @@ package Src_Editor_Buffer is
    function Get_String_At_Line
      (Buffer               : Source_Buffer;
       Line                 : Editable_Line_Type;
-      Start_Column         : Character_Offset_Type := 1;
-      End_Column           : Character_Offset_Type := 0;
+      Start_Column         : Character_Index := 1;
+      End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return Src_String;
    --  Return the string at line Line, without the line terminator.
+   --  When End_Column has no index, the whole line is returned.
    --  Return null if the Line is not a valid line or there is no contents
    --  associated with the line.
    --  The caller is responsible for freeing the returned value..

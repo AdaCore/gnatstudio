@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with Glib.Unicode;          use Glib.Unicode;
 with Gtk.Text_Buffer;       use Gtk.Text_Buffer;
-with Interfaces.C;
 
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Src_Editor_Box;                  use Src_Editor_Box;
@@ -27,11 +27,6 @@ with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
 
 package body Commands.Editor is
-
-   function g_utf8_strlen
-     (P : String; Max : Interfaces.C.size_t) return Long_Integer;
-   pragma Import (C, g_utf8_strlen);
-   --  Return the text size of an UTF8 string
 
    function Avoid_Move_Cursor
      (Command : access Editor_Command_Type) return Boolean;
@@ -111,7 +106,7 @@ package body Commands.Editor is
       Buffer              : Source_Buffer;
       User_Executed       : Boolean;
       Cursor_Loc, Sel_Loc : Loc_T;
-      End_Loc             : Loc_T := (0, 0);
+      End_Loc             : Loc_T := Nil_Loc;
       Direction           : Direction_Type := Forward;
       C                   : Cursor := Nil_Cursor) is
    begin
@@ -167,7 +162,7 @@ package body Commands.Editor is
      (Item         : Editor_Command;
       UTF8         : Basic_Types.UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
-      Start_Column : Character_Offset_Type := 0) is
+      Start_Column : Optional_Character_Index := No_Index) is
    begin
       if Item.Edition_Mode = Insertion then
          Item.Current_Text := Item.Current_Text & To_Unbounded_String (UTF8);
@@ -189,8 +184,8 @@ package body Commands.Editor is
             Item.Locs.Start_Loc.Line := Start_Line;
          end if;
 
-         if Start_Column /= 0 then
-            Item.Locs.Start_Loc.Col := Start_Column;
+         if Start_Column.Has_Index then
+            Item.Locs.Start_Loc.Col := Start_Column.Index;
          end if;
       end if;
    end Add_Text;
@@ -329,17 +324,14 @@ package body Commands.Editor is
                  (Command.Buffer,
                   First_Loc.Line,
                   First_Loc.Col,
-                  Natural
-                    (g_utf8_strlen
-                         (To_String (Command.Current_Text),
-                          Interfaces.C.size_t
-                            (Length (Command.Current_Text)))),
+                  Character_Count
+                    (UTF8_Strlen (To_String (Command.Current_Text))),
                   False);
 
          end case;
 
          if not Avoid_Move_Cursor (Command)
-           and then Command.Locs.End_Loc /= (0, 0)
+           and then Command.Locs.End_Loc /= Nil_Loc
          then
             Set_Cursor_Position
               (Command.Locs.End_Loc, Command.Locs.End_Sel_Loc, View);
@@ -390,7 +382,7 @@ package body Commands.Editor is
       Position : Gtk_Text_Iter)
    is
       L : Editable_Line_Type;
-      C : Character_Offset_Type;
+      C : Character_Index;
    begin
       Get_Iter_Position (Command.Buffer, Position, L, C);
       Command.Set_End_Location ((L, C), (L, C));
@@ -438,10 +430,7 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Integer (g_utf8_strlen
-              (To_String (Command.Text_After),
-                   Interfaces.C.size_t
-                     (Length (Command.Text_After)))),
+            Character_Offset (UTF8_Strlen (To_String (Command.Text_After))),
             Command.End_Line_After,
             Command.End_Column_After);
       end if;
@@ -529,9 +518,9 @@ package body Commands.Editor is
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
       Start_Line   : Editable_Line_Type;
-      Start_Column : Character_Offset_Type;
+      Start_Column : Character_Index;
       End_Line     : Editable_Line_Type;
-      End_Column   : Character_Offset_Type;
+      End_Column   : Character_Index;
       Text         : Basic_Types.UTF8_String;
       Force_End    : Boolean := False;
       Move_Cursor  : Boolean := True)
@@ -545,7 +534,11 @@ package body Commands.Editor is
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
       Item.Text_Before := Get_Text
-          (Buffer, Start_Line, Start_Column, End_Line, End_Column);
+          (Buffer,
+           Start_Line,
+           Start_Column,
+           End_Line,
+           As_Optional (End_Column));
       Item.Text_After := To_Unbounded_String (Text);
       Item.Move_Cursor := Move_Cursor;
    end Create;

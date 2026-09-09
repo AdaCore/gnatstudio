@@ -72,17 +72,45 @@ package GPS.Search is
    --  It can also be used to do the actual matching using the appropriate
    --  algorithm, depending on the search kind.
 
-   type Buffer_Position is record
-      Index : Integer;   --  Index in the buffer string, in bytes
-      Line  : Natural;   --  line corresponding to this index (starting at 1)
-      Column         : Character_Offset_Type;  --  column for this index
-      Visible_Column : Visible_Column_Type; --  visible column for this index
+   type Buffer_Position (Defined : Boolean := False) is record
+      case Defined is
+         when False =>
+            null;
+
+         when True =>
+            Index : UTF8_Code_Unit_Count;
+            --  Index in the buffer string, in UTF-8 code units
+            Line  : Natural;   --  line corresponding to this index (from 1)
+            Column         : Character_Offset_Type;  --  column for this index
+            Visible_Column : Visible_Column_Type; --  visible column for this
+      end case;
    end record;
-   Unknown_Position : constant Buffer_Position;
    --  This record describes a position in the buffer, and its mapping to
-   --  user-visible line and columns.
+   --  user-visible line and columns, or the absence of a position.
    --  This is used for efficiency, to avoid recomputing these line/column
    --  information from the beginning of the buffer every time.
+
+   Unknown_Position : constant Buffer_Position := (Defined => False);
+   --  Designates no position at all
+
+   function At_Position
+     (Index          : Natural;
+      Line           : Natural;
+      Column         : Character_Offset_Type := 1;
+      Visible_Column : Visible_Column_Type := 1) return Buffer_Position
+   is (Buffer_Position'(True, UTF8_Code_Unit_Count (Index), Line, Column,
+                        Visible_Column));
+   --  A position at Index of Line. The search engines walk the buffer in
+   --  String indices, while a position records an offset in UTF-8 code units.
+
+   function At_Index (Index : Natural) return Buffer_Position
+   is (At_Position (Index, Line => 1));
+   --  A position at Index, whose line and column are not known yet;
+   --  Update_Location fills them in afterwards.
+
+   function Byte_Index (Self : Buffer_Position) return Natural
+   is (Natural (Self.Index));
+   --  Self as an index into the buffer String
 
    function Image (Pos : Buffer_Position) return String;
    --  ??? MANU temporary
@@ -127,13 +155,13 @@ package GPS.Search is
    --  highlighting search results.
 
    function Failed (Self : Search_Context) return Boolean
-      is (Self.Start.Index = -1);
+      is (not Self.Start.Defined);
    --  Whether Self failed to match. This is somewhat equivalent to comparing
    --  with No_Match, but is more efficient and does not require a
    --  "use type Search_Context.
 
    function Is_Empty_Match (Self : Search_Context) return Boolean
-      is (Self.Finish.Index <= 0);
+      is (not Self.Finish.Defined);
    --  Whether Self matches an empty string
 
    function Index_After_Match (Self : Search_Context) return Positive;
@@ -218,8 +246,8 @@ package GPS.Search is
    function Start
      (Self        : Search_Pattern;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1;
+      Start_Index : Natural;
+      End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width)
       return Search_Context
@@ -228,14 +256,25 @@ package GPS.Search is
    --  Note: it is important to pass the full file contents in Buffer, since
    --  otherwise regular expressions starting with "^" or ending with "$" will
    --  not workproperly.
-   --  Start_Index and End_Index default to the string bounds.
    --
    --  Ref provides a reference point for the computation of line/column
    --  information. It is assumed to be located before Start_Index.
    --
    --  Tab_Width should match the current size of tabs use in the buffer.
    --
+   --  The range is inclusive, and holds no character at all when End_Index
+   --  comes before Start_Index: nothing can match in it.
+   --
    --  Return value is No_Match if the Buffer did not match.
+
+   function Start
+     (Self      : Search_Pattern'Class;
+      Buffer    : String;
+      Ref       : Buffer_Position := Unknown_Position;
+      Tab_Width : Natural := Default_Tab_Width)
+      return Search_Context
+   is (Start (Self, Buffer, Buffer'First, Buffer'Last, Ref, Tab_Width));
+   --  Same as above, searching the whole of Buffer
 
    procedure Next
      (Self    : Search_Pattern;
@@ -554,8 +593,6 @@ private
       Allow_Highlight : Boolean := False;
       Negate         : Boolean := False;
    end record;
-
-   Unknown_Position : constant Buffer_Position := (-1, 0, 0, -1);
 
    No_Match : constant Search_Context :=
      (Start              => Unknown_Position,

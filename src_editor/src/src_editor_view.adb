@@ -2571,12 +2571,21 @@ package body Src_Editor_View is
             if Event.Key.Send_Event /= 0 then
                --  Handle BackSpace event mostly for test scripts purpose
                declare
+                  use type Basic_Types.Character_Index;
+
                   Line   : Editable_Line_Type;
-                  Column : Character_Offset_Type;
+                  Column : Character_Index;
                begin
                   Get_Cursor_Position (Buffer, Line, Column);
-                  Delete (Buffer, Line, Column - 1, 1);
-                  Graph_Key := True;
+
+                  --  On the first column of a line there is no character to
+                  --  delete on that line: leave the deletion, which joins the
+                  --  line with the previous one, to gtk+.
+
+                  if Column > 1 then
+                     Delete (Buffer, Line, Column - 1, 1);
+                     Graph_Key := True;
+                  end if;
                end;
             end if;
 
@@ -3072,7 +3081,7 @@ package body Src_Editor_View is
       Context                    : Selection_Context;
       Str                        : Src_String;
       The_Line                   : Editable_Line_Type;
-      The_Column                 : Character_Offset_Type;
+      The_Column                 : Character_Index;
       Success                    : Boolean;
    begin
       if Location = Location_Event
@@ -3200,7 +3209,7 @@ package body Src_Editor_View is
       Search_Entity_Bounds
         (Entity_Start, Entity_End,
          Maybe_File => Str.Contents /= null
-         and then Has_Include_Directive (Str.Contents (1 .. Str.Length)));
+         and then Has_Include_Directive (Str.Contents (1 .. Str.Last)));
       Selection_Is_Single_Entity :=
         Has_Selection
         and then Equal (Entity_Start, Start_Iter)
@@ -3238,7 +3247,7 @@ package body Src_Editor_View is
          --  Set the column to the start of the selection
 
          Column := Get_Line_Offset (Start_Iter);
-         Col := Expand_Tabs (B, EL, Character_Offset_Type (Column + 1));
+         Col := Expand_Tabs (B, EL, Character_Index (Column + 1));
 
          Set_File_Information
            (Context,
@@ -3305,7 +3314,7 @@ package body Src_Editor_View is
                      From_Expression =>
                        Parse_Reference_Backwards
                          (Get_Language (B),
-                          Buffer       => Str.Contents (1 .. Str.Length),
+                          Buffer       => Str.Contents (1 .. Str.Last),
                           Start_Offset =>
                             String_Index_Type (Get_Line_Index (Entity_End))));
                end if;

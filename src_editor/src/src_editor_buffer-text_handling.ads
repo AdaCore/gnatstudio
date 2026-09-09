@@ -30,36 +30,40 @@ package Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type);
+      Column : Character_Index);
    --  Return the iterator at Line, Col
 
    function Get_Chars
      (Buffer               : access Source_Buffer_Record'Class;
       Line                 : Editable_Line_Type := 0;
-      Column               : Character_Offset_Type := 0;
+      Column               : Optional_Character_Index := No_Index;
       Before               : Integer := -1;
       After                : Integer := -1;
       Include_Hidden_Chars : Boolean := True) return Basic_Types.UTF8_String;
    --  Return the characters around given position.
-   --  If Line is 0, then the contents of the current selection is returned
+   --  If Line is 0, then the contents of the current selection is returned.
+   --  When Column has no index, the position is taken to be the start of the
+   --  line.
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record'Class;
       Text         : String;
       Line_Begin   : Editable_Line_Type;
-      Column_Begin : Character_Offset_Type;
+      Column_Begin : Character_Index;
       Line_End     : Editable_Line_Type;
-      Column_End   : Character_Offset_Type);
+      Column_End   : Character_Index);
    --  Replace the characters between given positions
 
    procedure Replace_Slice
      (Buffer : access Source_Buffer_Record'Class;
       Text   : String;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 0;
+      Column : Optional_Character_Index := No_Index;
       Before : Integer := -1;
       After  : Integer := -1);
-   --  Replace the characters around given position
+   --  Replace the characters around given position.
+   --  When Column has no index, the position is taken to be the start of the
+   --  line.
 
    procedure Autocase_Text
      (Buffer    : access Source_Buffer_Record'Class;

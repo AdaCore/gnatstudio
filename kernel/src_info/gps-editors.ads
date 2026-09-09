@@ -504,11 +504,6 @@ package GPS.Editors is
       Column : Visible_Column_Type) return Editor_Location'Class is abstract;
    --  Return a new location
 
-   function New_Location_Offset
-     (This   : Editor_Buffer;
-      Line   : Integer;
-      Column : Character_Offset_Type) return Editor_Location'Class is abstract;
-
    function New_Location_At_Line
      (This   : Editor_Buffer'Class;
       Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class;
@@ -1352,13 +1347,6 @@ private
      (This   : Dummy_Editor_Buffer;
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
-
-   overriding function New_Location_Offset
-     (This         : Dummy_Editor_Buffer;
-      Dummy_Line   : Integer;
-      Dummy_Column : Character_Offset_Type) return Editor_Location'Class
-   is
-      (Nil_Editor_Location);
 
    overriding function New_Location
      (This         : Dummy_Editor_Buffer;

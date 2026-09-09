@@ -158,7 +158,7 @@ package body Src_Editor_Module.Editors is
    function Create_Editor_Location
      (Buffer : Src_Editor_Buffer'Class;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) return Src_Editor_Location'Class;
+      Column : Character_Index) return Src_Editor_Location'Class;
    --  Return an instance of EditorLocation
 
    function Create_Editor_Overlay
@@ -367,11 +367,6 @@ package body Src_Editor_Module.Editors is
      (This   : Src_Editor_Buffer;
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
-
-   overriding function New_Location_Offset
-     (This   : Src_Editor_Buffer;
-      Line   : Integer;
-      Column : Character_Offset_Type) return Editor_Location'Class;
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
@@ -730,7 +725,7 @@ package body Src_Editor_Module.Editors is
    function Create_Editor_Location
      (Buffer : Src_Editor_Buffer'Class;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) return Src_Editor_Location'Class
+      Column : Character_Index) return Src_Editor_Location'Class
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -793,7 +788,7 @@ package body Src_Editor_Module.Editors is
 
       procedure Forward_Iter (Iter : in out Gtk_Text_Iter) is
          Line, End_Line : Editable_Line_Type;
-         Col, End_Col   : Character_Offset_Type;
+         Col, End_Col   : Character_Index;
       begin
          Get_Iter_Position (Buffer, Iter, Line, Col);
          Forward_Position (Buffer, Line, Col, 1, End_Line, End_Col);
@@ -1270,7 +1265,7 @@ package body Src_Editor_Module.Editors is
 
          Get_Iter_At_Screen_Position
            (Source_Buffer (Get_Buffer (Iter)), Iter2, Block.Last_Line,
-            Character_Offset_Type'(1));
+            Character_Index'(1));
 
          Forward_To_Line_End (Iter2, Success);
 
@@ -1540,10 +1535,10 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class
    is
-      Begin_Col : Character_Offset_Type;
+      Begin_Col : Character_Index;
 
       End_Line : Editable_Line_Type;
-      End_Col  : Character_Offset_Type;
+      End_Col  : Character_Index;
 
    begin
       Begin_Col := Collapse_Tabs
@@ -1553,7 +1548,7 @@ package body Src_Editor_Module.Editors is
         (Buffer       => This.Buffer.Contents.Buffer,
          Start_Line   => This.Line,
          Start_Column => Begin_Col,
-         Length       => Count,
+         Length       => Character_Offset (Count),
          End_Line     => End_Line,
          End_Column   => End_Col);
 
@@ -1568,10 +1563,10 @@ package body Src_Editor_Module.Editors is
      (This  : in out Src_Editor_Location;
       Count : Integer)
    is
-      Begin_Col : Character_Offset_Type;
+      Begin_Col : Character_Index;
 
       End_Line : Editable_Line_Type;
-      End_Col  : Character_Offset_Type;
+      End_Col  : Character_Index;
       Iter     : Gtk_Text_Iter;
 
    begin
@@ -1582,7 +1577,7 @@ package body Src_Editor_Module.Editors is
         (Buffer       => This.Buffer.Contents.Buffer,
          Start_Line   => This.Line,
          Start_Column => Begin_Col,
-         Length       => Count,
+         Length       => Character_Offset (Count),
          End_Line     => End_Line,
          End_Column   => End_Col);
 
@@ -2067,36 +2062,6 @@ package body Src_Editor_Module.Editors is
          end;
    end New_Location;
 
-   -------------------------
-   -- New_Location_Offset --
-   -------------------------
-
-   overriding function New_Location_Offset
-     (This   : Src_Editor_Buffer;
-      Line   : Integer;
-      Column : Character_Offset_Type) return Editor_Location'Class
-   is
-      Iter : Gtk_Text_Iter;
-   begin
-      Get_Iter_At_Screen_Position
-        (This.Contents.Buffer,
-         Iter,
-         Editable_Line_Type (Line),
-         Column);
-      return Create_Editor_Location (This, Iter);
-   exception
-      when Editor_Exception =>
-         declare
-            Result : Src_Editor_Location;
-         begin
-            Result.Buffer := This;
-            Result.Line :=
-              Editable_Line_Type'Max (1, Editable_Line_Type (Line));
-            Result.Column := Visible_Column_Type (Column + 1);
-            return Result;
-         end;
-   end New_Location_Offset;
-
    ---------
    -- Get --
    ---------
@@ -2458,7 +2423,8 @@ package body Src_Editor_Module.Editors is
       Column : Character_Offset_Type) return Visible_Column_Type is
    begin
       if This.Contents.Buffer /= null then
-         return This.Contents.Buffer.Expand_Tabs (Line, Column);
+         return This.Contents.Buffer.Expand_Tabs
+           (Line, Character_Index'Max (1, Character_Index'Base (Column)));
       else
          return 0;
       end if;
@@ -2568,9 +2534,9 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
       Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Offset_Type;
+      Begin_Col  : Character_Index;
       End_Line   : Editable_Line_Type;
-      End_Col     : Character_Offset_Type;
+      End_Col     : Character_Index;
    begin
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
@@ -2587,7 +2553,7 @@ package body Src_Editor_Module.Editors is
                Start_Line           => Begin_Line,
                Start_Column         => Begin_Col,
                End_Line             => End_Line,
-               End_Column           => End_Col,
+               End_Column           => As_Optional (End_Col),
                Include_Hidden_Chars => Include_Hidden_Chars));
       else
          return Null_Unbounded_String;
@@ -2606,9 +2572,9 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
       Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Offset_Type;
+      Begin_Col  : Character_Index;
       End_Line   : Editable_Line_Type;
-      End_Col     : Character_Offset_Type;
+      End_Col     : Character_Index;
    begin
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
@@ -2625,7 +2591,7 @@ package body Src_Editor_Module.Editors is
               Start_Line           => Begin_Line,
               Start_Column         => Begin_Col,
               End_Line             => End_Line,
-              End_Column           => End_Col,
+              End_Column           => As_Optional (End_Col),
               Include_Hidden_Chars => Include_Hidden_Chars);
 
       else
@@ -2645,9 +2611,9 @@ package body Src_Editor_Module.Editors is
       Iter, Iter2 : Gtk_Text_Iter;
       Success    : Boolean;
       Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Offset_Type;
+      Begin_Col  : Character_Index;
       End_Line   : Editable_Line_Type;
-      End_Col    : Character_Offset_Type;
+      End_Col    : Character_Index;
 
    begin
       Get_Location (Iter, Location, Null_Text_Iter, Success);
@@ -2667,7 +2633,7 @@ package body Src_Editor_Module.Editors is
            Start_Line   => Begin_Line,
            Start_Column => Begin_Col,
            End_Line     => End_Line,
-           End_Column   => End_Col));
+           End_Column   => As_Optional (End_Col)));
    end Get_Entity_Name;
 
    ------------
@@ -2723,11 +2689,11 @@ package body Src_Editor_Module.Editors is
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
          if From /= Nil_Editor_Location then
-            Ensure_Valid_Position
+            Ensure_Valid_Line
               (This.Contents.Buffer, Editable_Line_Type (From.Line));
          end if;
          if To /= Nil_Editor_Location then
-            Ensure_Valid_Position
+            Ensure_Valid_Line
               (This.Contents.Buffer, Editable_Line_Type (To.Line));
          end if;
 
@@ -3454,7 +3420,7 @@ package body Src_Editor_Module.Editors is
             if Success then
                declare
                   Line : Editable_Line_Type;
-                  Col  : Character_Offset_Type;
+                  Col  : Character_Index;
                begin
                   Get_Iter_Position
                     (Get_Buffer (This.Contents.Box), Iter, Line, Col);

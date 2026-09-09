@@ -106,7 +106,7 @@ package body Src_Editor_Buffer.Cursors is
       Start_Loc, End_Loc : Gtk_Text_Iter;
       T : Gtk_Text_Tag;
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    begin
       Check_Mc_Selection_Tag (B);
       T := B.Get_Tag_Table.Lookup (Mc_Selection_Tag);

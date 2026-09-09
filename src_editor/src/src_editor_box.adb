@@ -34,6 +34,7 @@ with Gdk.Rectangle;                  use Gdk.Rectangle;
 with Gdk.Window;                     use Gdk.Window;
 
 with Glib.Object;                    use Glib.Object;
+with Glib.Unicode;                   use Glib.Unicode;
 with Glib.Values;                    use Glib.Values;
 
 with Gtk;                            use Gtk;
@@ -316,14 +317,19 @@ package body Src_Editor_Box is
       Entity_Name                 : String;
       Display_Msg_On_Non_Accurate : Boolean := True)
    is
-      Length            : constant Natural := Entity_Name'Length;
+      use type Basic_Types.Character_Index;
+
+      Length            : constant Natural :=
+        Natural (UTF8_Strlen (Entity_Name));
+      --  Number of characters, not bytes, of Entity_Name: it is used below
+      --  to compute character positions and visible columns.
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
       L                 : Natural;
       Is_Case_Sensitive : Boolean;
       Iter              : Gtk_Text_Iter;
 
-      Char_Column       : Character_Offset_Type;
+      Char_Column       : Character_Index;
       Indent_Level      : constant Integer :=
         Kernel.Get_Language_Handler.Get_Language_From_File
           (Filename).Get_Indentation_Level;
@@ -362,7 +368,7 @@ package body Src_Editor_Box is
              (Source.Source_Buffer, Line, Char_Column)
            and then Is_Valid_Position
              (Source.Source_Buffer, Line,
-              Char_Column + Character_Offset_Type (Length));
+              Char_Column + Character_Index'Base (Length));
 
          Is_Case_Sensitive := Get_Language_Context
            (Get_Language (Source.Source_Buffer)).Case_Sensitive;
@@ -374,7 +380,8 @@ package body Src_Editor_Box is
                  Line,
                  Char_Column,
                  Line,
-                 Char_Column + Character_Offset_Type (Length))),
+                 As_Optional
+                   (Char_Column + Character_Index'Base (Length)))),
               Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 
@@ -404,24 +411,41 @@ package body Src_Editor_Box is
                Buffer       : GNAT.Strings.String_Access;
                Col, Col_End : Visible_Column_Type;
                Found        : Boolean;
+
+               Match_Column : Character_Offset_Type :=
+                 Character_Offset_Type (Char_Column);
+               --  Find_Closest_Match reports line and column 0 when it finds
+               --  no match, which is not a Character_Index.
+
             begin
                L := Convert (Line);
                Buffer := Get_Text (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Char_Column, Found,
+                 (Buffer.all, L, Match_Column, Found,
                   Entity_Name,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive,
                   Tab_Width      => Indent_Level);
                Free (Buffer);
 
-               Col := Expand_Tabs
-                 (Source.Source_Buffer, Line, Char_Column);
+               Col :=
+                 (if Match_Column = 0
+                  then 1
+                  else Expand_Tabs
+                         (Source.Source_Buffer,
+                          Line,
+                          Character_Index (Match_Column)));
 
                if Found then
-                  Col_End := Col + Visible_Column_Type (Length);
-                  --  ??? Computation for the end column is wrong if there is
-                  --  an ASCII.HT within Length distance of Col.
+                  --  Expand the character position just after the match,
+                  --  rather than adding a length to a visible column, so
+                  --  that a tab within the match is accounted for.
+
+                  Col_End := Expand_Tabs
+                    (Source.Source_Buffer,
+                     Line,
+                     Character_Index (Match_Column)
+                       + Character_Index'Base (Length));
                else
                   Col_End := 0;
                end if;
@@ -463,9 +487,9 @@ package body Src_Editor_Box is
    -- To_Box_Column --
    -------------------
 
-   function To_Box_Column (Col : Gint) return Character_Offset_Type is
+   function To_Box_Column (Col : Gint) return Character_Index is
    begin
-      return Character_Offset_Type (Col + 1);
+      return Character_Index (Col + 1);
    end To_Box_Column;
 
    ----------------------------
@@ -940,7 +964,7 @@ package body Src_Editor_Box is
       Is_Load_Desktop : Boolean := False)
    is
       Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
+      Col  : Character_Index;
    begin
       --  Capture the current position before we create a new view for the
       --  buffer, or we lost that information.
@@ -1367,13 +1391,15 @@ package body Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor                : access Source_Editor_Box_Record;
       Line                  : Editable_Line_Type;
-      Column                : Character_Offset_Type := 1;
+      Column                : Character_Index := 1;
       Force_Focus           : Boolean := True;
       Raise_Child           : Boolean := False;
       Centering             : Centering_Type := Minimal;
       Extend_Selection      : Boolean := False;
       Synchronous_Scrolling : Boolean := True)
    is
+      use type Basic_Types.Character_Index;
+
       Editable_Line : Editable_Line_Type renames Line;
 
       procedure Raise_And_Focus;
@@ -1421,7 +1447,7 @@ package body Src_Editor_Box is
             Centering   => Centering,
             Synchronous => Synchronous_Scrolling);
 
-      elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line) then
+      elsif Is_Valid_Line (Editor.Source_Buffer, Editable_Line) then
          --  We used to generate an error message (Invalid column number),
          --  but this was too intrusive: in the case of e.g. loading the
          --  desktop, if it often the case that the files have been modified

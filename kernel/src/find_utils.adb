@@ -26,7 +26,6 @@ with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
 
 package body Find_Utils is
-   use type Basic_Types.Visible_Column_Type;
 
    -----------
    -- Match --
@@ -35,8 +34,8 @@ package body Find_Utils is
    function Match
      (Context     : access Root_Search_Context;
       Buffer      : String;
-      Start_Index : Integer := -1;
-      End_Index   : Integer := -1)
+      Start_Index : Natural;
+      End_Index   : Natural)
       return GPS.Search.Search_Context
    is
    begin
@@ -81,13 +80,19 @@ package body Find_Utils is
    begin
       Was_Partial := False;
 
-      --  Special case here: If we have an empty section, do nothing. In
-      --  fact, End_Index might be 0 in the following case: we search in
-      --  one of the GNAT Studio source files for "all but comments". The
-      --  first section is empty, and End_Index is 0. However, it is
-      --  legitimate, if inefficient, to have an empty section
+      --  Nothing to do for an empty section, and it is legitimate, if
+      --  inefficient, to have one: scanning one of the GNAT Studio source
+      --  files for "all but comments" starts with an empty section, whose
+      --  End_Index is 0. A section that is empty anywhere else has its end
+      --  just before its start, as sections are delimited by the position
+      --  at which the state changes.
+      --
+      --  Such a range must not be handed to the pattern: it has no
+      --  characters to match, and GNAT.Regpat given a start after its end
+      --  reports matches taken from elsewhere in the buffer, which would
+      --  leave the scope the caller asked for.
 
-      if End_Index = 0 then
+      if End_Index = 0 or else Start_Index > End_Index then
          return;
       end if;
 
@@ -102,7 +107,7 @@ package body Find_Utils is
          Ref  := Result.Ref;
 
          After := Index_After_Match (Result);
-         BOL := Line_Start (Buffer, Result.Start.Index);
+         BOL := Line_Start (Buffer, Byte_Index (Result.Start));
          EOL := Line_End (Buffer, After);
 
          --  Don't use GPS.Search.Highlight_Match, since that would only show
@@ -112,11 +117,14 @@ package body Find_Utils is
          Matched_Text :=
            To_Unbounded_String ("<b>"
                                 & Glib.Convert.Escape_Text
-                                  (Buffer (Result.Start.Index .. After - 1))
+                                  (Buffer
+                                     (Byte_Index (Result.Start)
+                                      .. After - 1))
                                 & "</b>");
          if not Display_Matched_Only then
             Matched_Text :=
-              Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
+              Glib.Convert.Escape_Text
+                (Buffer (BOL .. Byte_Index (Result.Start) - 1))
               & Matched_Text
               & Glib.Convert.Escape_Text (Buffer (After .. EOL));
          end if;
@@ -311,7 +319,7 @@ package body Find_Utils is
       Pattern     : Search_Pattern_Access;
       Result      : GPS.Search.Search_Context;
       Line_Diff, Col_Diff : Integer;
-      Ref         : constant Buffer_Position := (Buffer'First, 1, 1, 1);
+      Ref         : constant Buffer_Position := At_Index (Buffer'First);
 
    begin
       Pattern := Build

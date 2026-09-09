@@ -38,13 +38,13 @@ package body Src_Editor_Buffer.Text_Handling is
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Character_Offset_Type;
+      Col          : Optional_Character_Index;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
-      Column_Begin : out Character_Offset_Type;
+      Column_Begin : out Character_Index;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Character_Offset_Type;
+      Column_End   : out Character_Index;
       Valid        : out Boolean);
    --  Get the positions around the given position
 
@@ -55,30 +55,40 @@ package body Src_Editor_Buffer.Text_Handling is
    procedure Get_Location
      (Buffer       : access Source_Buffer_Record'Class;
       Line         : Editable_Line_Type;
-      Col          : Character_Offset_Type;
+      Col          : Optional_Character_Index;
       Before       : Integer;
       After        : Integer;
       Line_Begin   : out Editable_Line_Type;
-      Column_Begin : out Character_Offset_Type;
+      Column_Begin : out Character_Index;
       Line_End     : out Editable_Line_Type;
-      Column_End   : out Character_Offset_Type;
+      Column_End   : out Character_Index;
       Valid        : out Boolean)
    is
       Iter   : Gtk_Text_Iter;
       Result : Boolean := True;
+
+      Start_Col : constant Character_Index :=
+        (if Col.Has_Index then Col.Index else 1);
+      --  When no column is known, the start of the line is used.
+
+      Valid_Location : constant Boolean :=
+        (if Col.Has_Index
+         then Is_Valid_Position (Buffer, Line, Start_Col)
+         else Is_Valid_Line (Buffer, Line));
+
    begin
-      if not Is_Valid_Position (Buffer, Line, Col) then
+      if not Valid_Location then
          Valid        := False;
          Line_Begin   := Editable_Line_Type'First;
-         Column_Begin := Character_Offset_Type'First;
+         Column_Begin := Character_Index'First;
          Line_End     := Editable_Line_Type'First;
-         Column_End   := Character_Offset_Type'First;
+         Column_End   := Character_Index'First;
 
          return;
       end if;
 
       Valid := True;
-      Get_Iter (Buffer, Iter, Line, Col);
+      Get_Iter (Buffer, Iter, Line, Start_Col);
       Line_Begin := Line;
 
       if Before = -1 then
@@ -95,14 +105,14 @@ package body Src_Editor_Buffer.Text_Handling is
             exit when not Result;
          end loop;
 
-         Column_Begin := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
+         Column_Begin := Character_Index (Get_Line_Offset (Iter) + 1);
 
          if Line_Begin = 0 then
             Line_Begin := 1;
          end if;
       end if;
 
-      Get_Iter (Buffer, Iter, Line, Col);
+      Get_Iter (Buffer, Iter, Line, Start_Col);
       Line_End := Line;
 
       if After = -1 then
@@ -110,7 +120,7 @@ package body Src_Editor_Buffer.Text_Handling is
             Forward_To_Line_End (Iter, Result);
          end if;
 
-         Column_End := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
+         Column_End := Character_Index (Get_Line_Offset (Iter) + 1);
 
          Forward_Char (Iter, Result);
 
@@ -124,11 +134,11 @@ package body Src_Editor_Buffer.Text_Handling is
             if Ends_Line (Iter) then
                Line_End := Line_End + 1;
 
-               exit when not Is_Valid_Position (Buffer, Line_End);
+               exit when not Is_Valid_Line (Buffer, Line_End);
 
                --  After unfolding the line, Iter might be invalid, therefore
                --  we re-generate it here.
-               Get_Iter (Buffer, Iter, Line_End, 0);
+               Get_Iter (Buffer, Iter, Line_End, 1);
             else
                Forward_Char (Iter, Result);
             end if;
@@ -136,7 +146,7 @@ package body Src_Editor_Buffer.Text_Handling is
             exit when not Result;
          end loop;
 
-         Column_End := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
+         Column_End := Character_Index (Get_Line_Offset (Iter) + 1);
 
          if Line_End > Buffer.Last_Editable_Line then
             Line_End := Buffer.Last_Editable_Line;
@@ -152,18 +162,14 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type)
+      Column : Character_Index)
    is
       Buffer_Line : Buffer_Line_Type;
-      Col         : Gint := 0;
    begin
       Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
-      if Column /= 0 then
-         Col := Gint (Column - 1);
-      end if;
-
-      Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), Col);
+      Get_Iter_At_Line_Offset
+        (Buffer, Iter, Gint (Buffer_Line - 1), Gint (Column) - 1);
    end Get_Iter;
 
    -------------------
@@ -174,9 +180,9 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer       : access Source_Buffer_Record'Class;
       Text         : String;
       Line_Begin   : Editable_Line_Type;
-      Column_Begin : Character_Offset_Type;
+      Column_Begin : Character_Index;
       Line_End     : Editable_Line_Type;
-      Column_End   : Character_Offset_Type)
+      Column_End   : Character_Index)
    is
       C : Editor_Replace_Slice;
    begin
@@ -193,13 +199,13 @@ package body Src_Editor_Buffer.Text_Handling is
    function Get_Chars
      (Buffer               : access Source_Buffer_Record'Class;
       Line                 : Editable_Line_Type := 0;
-      Column               : Character_Offset_Type := 0;
+      Column               : Optional_Character_Index := No_Index;
       Before               : Integer := -1;
       After                : Integer := -1;
       Include_Hidden_Chars : Boolean := True) return Basic_Types.UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
-      Column_Begin, Column_End : Character_Offset_Type;
+      Column_Begin, Column_End : Character_Index;
       Start_Iter               : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Has_Selection            : Boolean;
@@ -239,7 +245,7 @@ package body Src_Editor_Buffer.Text_Handling is
                Line_Begin,
                Column_Begin,
                Line_End,
-               Column_End,
+               As_Optional (Column_End),
                Include_Hidden_Chars));
       end if;
    end Get_Chars;
@@ -252,12 +258,12 @@ package body Src_Editor_Buffer.Text_Handling is
      (Buffer : access Source_Buffer_Record'Class;
       Text   : String;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type := 0;
+      Column : Optional_Character_Index := No_Index;
       Before : Integer := -1;
       After  : Integer := -1)
    is
       Line_Begin, Line_End     : Editable_Line_Type;
-      Column_Begin, Column_End : Character_Offset_Type;
+      Column_Begin, Column_End : Character_Index;
       Valid                    : Boolean;
    begin
       if not Get_Writable (Buffer) then
@@ -362,8 +368,8 @@ package body Src_Editor_Buffer.Text_Handling is
 
       Lang              : Language_Access;
       Line              : Editable_Line_Type;
-      Column            : Character_Offset_Type;
-      First             : Character_Offset_Type;
+      Column            : Character_Index;
+      First             : Character_Index;
       W_Start, W_End    : Gtk_Text_Iter;
       Indent_Params     : Indent_Parameters;
       Indent_Kind       : Indentation_Kind;
@@ -398,13 +404,15 @@ package body Src_Editor_Buffer.Text_Handling is
 
             if Get_Text
               (Buffer, Line, First,
-               Line, First + Character_Offset_Type (Length)) /= Replace
+               Line,
+               As_Optional (First + Character_Index'Base (Length)))
+              /= Replace
             then
                declare
                   G : Group_Block := Current_Group (Buffer.Queue);
                begin
                   Replace_Slice
-                    (Buffer, Replace, Line, First,
+                    (Buffer, Replace, Line, As_Optional (First),
                      Before => 0, After => Length);
                   Text_Replaced := True;
                end;
@@ -413,7 +421,7 @@ package body Src_Editor_Buffer.Text_Handling is
             --  Compute position of the next insert point. This can happen only
             --  in the case of an attribute. In String'Access for example the
             --  first call is for String and the second for Access.
-            First := First + Character_Offset_Type (Length) + 1;
+            First := First + Character_Index'Base (Length) + 1;
          end if;
       end Replace_Text;
 

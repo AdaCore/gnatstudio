@@ -681,7 +681,7 @@ package body Src_Editor_Module is
       File    : constant Virtual_File := Buffer.Get_Filename;
       Success : Boolean;
       Line    : Editable_Line_Type;
-      Column  : Character_Offset_Type;
+      Column  : Basic_Types.Character_Index;
    begin
       if not File.Is_Regular_File then
          Open_File_Action_Hook.Run
@@ -707,7 +707,7 @@ package body Src_Editor_Module is
          --  synchronous scrolling since the editor may need to be refreshed
          --  in some idle functions after reloading the file.
 
-         if Is_Valid_Position (Buffer, Line) then
+         if Is_Valid_Line (Buffer, Line) then
             Set_Cursor_Location
               (Editor,
                Line,
@@ -1160,7 +1160,7 @@ package body Src_Editor_Module is
    is
       N, Child : Node_Ptr;
       Line     : Editable_Line_Type;
-      Column   : Character_Offset_Type;
+      Column   : Basic_Types.Character_Index;
       File     : Virtual_File;
       Pref     : Editor_Desktop_Policy;
       Editor   : constant Source_Editor_Box :=
@@ -1754,10 +1754,10 @@ package body Src_Editor_Module is
         (Child     : not null access MDI_Child_Record'Class;
          Is_Opened : Boolean)
       is
-         Real_Column, Real_Column_End : Character_Offset_Type;
+         Real_Column, Real_Column_End : Basic_Types.Character_Index;
       begin
          if Line /= 0
-           and then Is_Valid_Position (Get_Buffer (Editor), Line)
+           and then Is_Valid_Line (Get_Buffer (Editor), Line)
          then
             Real_Column := Collapse_Tabs
               (Get_Buffer (Editor), Line, Column);
@@ -2087,7 +2087,7 @@ package body Src_Editor_Module is
                  History           => Get_History (Kernel));
             Buffer : GNAT.Strings.String_Access;
             Line   : Editable_Line_Type;
-            Column : Character_Offset_Type;
+            Column : Basic_Types.Character_Index;
 
          begin
             if F /= GNATCOLL.VFS.No_File then
@@ -2457,7 +2457,7 @@ package body Src_Editor_Module is
       Box    : Source_Editor_Box;
       W      : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type;
+      Column : Basic_Types.Character_Index;
       Prj    : Project_Type;
    begin
       if W.all in Source_View_Record'Class then

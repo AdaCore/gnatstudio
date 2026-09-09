@@ -1784,10 +1784,12 @@ package body Interactive_Consoles is
 
       if Pattern /= null and then Pattern.Get_Text /= "" then
          declare
+            use type Basic_Types.UTF8_Code_Unit_Count;
+
             Buffer : GNAT.Strings.String_Access := GUI_Utils.Get_Text
               (Console.Buffer, Begin_Iter, End_Iter);
             Ref    : constant Buffer_Position :=
-              (Buffer'First, 1, 1, 1);
+              At_Index (Buffer'First);
             Ignore : Boolean;
 
             use GNATCOLL.Xref;
@@ -1817,11 +1819,34 @@ package body Interactive_Consoles is
                      Context => Console.Search_Context);
 
             else
-               Console.Search_Context := Pattern.Start
-                 (Buffer      => Buffer.all,
-                  Start_Index => Console.Search_Context.Finish.Index,
-                  End_Index   => Buffer'Last,
-                  Ref         => Ref);
+               declare
+                  --  Continue after the previous match. An empty match has
+                  --  no end of its own, so the search resumes one character
+                  --  after its start: resuming at the match itself would
+                  --  keep finding that very same match.
+
+                  Continue_At : constant Natural :=
+                    (if Is_Empty_Match (Console.Search_Context)
+                     then UTF8_Next_Char
+                            (Buffer.all,
+                             Byte_Index (Console.Search_Context.Start))
+                     else Byte_Index (Console.Search_Context.Finish));
+
+               begin
+                  if Continue_At > Buffer'Last then
+                     --  The previous match ended the buffer: the search
+                     --  fails here and starts over on the next request.
+
+                     Console.Search_Context := GPS.Search.No_Match;
+
+                  else
+                     Console.Search_Context := Pattern.Start
+                       (Buffer      => Buffer.all,
+                        Start_Index => Continue_At,
+                        End_Index   => Buffer'Last,
+                        Ref         => Ref);
+                  end if;
+               end;
             end if;
 
             GNAT.Strings.Free (Buffer);
@@ -1834,13 +1859,22 @@ package body Interactive_Consoles is
                     Gint (Console.Search_Context.Start.Line - 1),
                   Char_Offset =>
                     Gint (Console.Search_Context.Start.Column - 1));
-               Console.Buffer.Get_Iter_At_Line_Offset
-                 (Iter        =>
-                    End_Iter,
-                  Line_Number =>
-                    Gint (Console.Search_Context.Finish.Line - 1),
-                  Char_Offset =>
-                    Gint (Console.Search_Context.Finish.Column));
+
+               if Is_Empty_Match (Console.Search_Context) then
+                  --  An empty match has no end of its own: the range to
+                  --  highlight is empty and ends where it starts.
+
+                  Copy (Source => Begin_Iter, Dest => End_Iter);
+
+               else
+                  Console.Buffer.Get_Iter_At_Line_Offset
+                    (Iter        =>
+                       End_Iter,
+                     Line_Number =>
+                       Gint (Console.Search_Context.Finish.Line - 1),
+                     Char_Offset =>
+                       Gint (Console.Search_Context.Finish.Column));
+               end if;
 
                Console.Buffer.Apply_Tag
                  (Console.Tags (Search_Tag), Begin_Iter, End_Iter);
