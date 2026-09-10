@@ -57,8 +57,8 @@ with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 with GPS.Messages_Windows;
 
-with LSP.Types;
 with LSP.JSON_Streams;
+with LSP.Structures;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
@@ -1421,10 +1421,10 @@ package body DAP.Clients is
       use type DAP.Requests.DAP_Request_Access;
 
       procedure Look_Ahead
-        (Seq         : out LSP.Types.LSP_Number;
+        (Seq         : out Integer;
          Request_Seq : out Integer;
          A_Type      : out VSS.Strings.Virtual_String;
-         Success     : out LSP.Types.Optional_Boolean;
+         Success     : out LSP.Structures.Boolean_Optional;
          Message     : in out VSS.Strings.Virtual_String;
          Event       : in out VSS.Strings.Virtual_String);
 
@@ -1436,10 +1436,10 @@ package body DAP.Clients is
       ----------------
 
       procedure Look_Ahead
-        (Seq         : out LSP.Types.LSP_Number;
+        (Seq         : out Integer;
          Request_Seq : out Integer;
          A_Type      : out VSS.Strings.Virtual_String;
-         Success     : out LSP.Types.Optional_Boolean;
+         Success     : out LSP.Structures.Boolean_Optional;
          Message     : in out VSS.Strings.Virtual_String;
          Event       : in out VSS.Strings.Virtual_String)
       is
@@ -1472,7 +1472,7 @@ package body DAP.Clients is
 
                if Key = "seq" then
                   pragma Assert (JS.R.Is_Number_Value);
-                  Seq := LSP.Types.LSP_Number
+                  Seq := Integer
                     (JS.R.Number_Value.Integer_Value);
 
                   JS.R.Read_Next;
@@ -1524,10 +1524,10 @@ package body DAP.Clients is
       Stream : aliased LSP.JSON_Streams.JSON_Stream
         (Is_Server_Side => False, R => Reader'Unchecked_Access);
 
-      Seq         : LSP.Types.LSP_Number;
+      Seq         : Integer;
       A_Type      : VSS.Strings.Virtual_String;
       Request_Seq : Integer;
-      R_Success   : LSP.Types.Optional_Boolean;
+      R_Success   : LSP.Structures.Boolean_Optional;
       Message     : VSS.Strings.Virtual_String;
       Event       : VSS.Strings.Virtual_String;
 

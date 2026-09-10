@@ -38,7 +38,6 @@ with GPS.LSP_Module;                           use GPS.LSP_Module;
 with Basic_Types;
 with Language;         use Language;
 with LSP.Enumerations; use LSP.Enumerations;
-with LSP.Messages;
 with LSP.Structures;   use LSP.Structures;
 with Outline_View;     use Outline_View;
 
@@ -104,21 +103,6 @@ package body GPS.LSP_Client.Outline is
    function Support_Language
      (Self : access Outline_LSP_Provider; Lang : Language_Access)
       return Boolean;
-
-   overriding
-   function Get_Last_Result
-     (Self : access Outline_LSP_Provider; File : Virtual_File)
-      return LSP.Messages.Symbol_Vector;
-   --  Outline_View.Outline_Provider (a separate, out-of-scope project) still
-   --  declares this abstract function in terms of the 3.16
-   --  LSP.Messages.Symbol_Vector type. Rather than reintroduce a real 3.16
-   --  dependency here to build a faithful conversion, this always returns
-   --  the "no result" value: it disables the cross-feature reuse
-   --  optimization documented on Outline_Provider.Get_Last_Result (used by
-   --  GPS.LSP_Client.Search.Entities to skip a redundant documentSymbol
-   --  request), which now always re-queries instead. Properly restoring the
-   --  optimization requires migrating Outline_View itself (and
-   --  code_analysis's Outline_Provider implementation) to LSP.Structures.
 
    -----------------
    -- LSP Request --
@@ -640,20 +624,6 @@ package body GPS.LSP_Client.Outline is
 
       Trace (Me_Debug, "Free_Idle done");
    end Free_Idle;
-
-   ---------------------
-   -- Get_Last_Result --
-   ---------------------
-
-   overriding
-   function Get_Last_Result
-     (Self : access Outline_LSP_Provider; File : Virtual_File)
-      return LSP.Messages.Symbol_Vector
-   is
-      pragma Unreferenced (Self, File);
-   begin
-      return (Is_Tree => False, Vector => <>);
-   end Get_Last_Result;
 
    --------------------------
    -- Get_Optional_Boolean --
