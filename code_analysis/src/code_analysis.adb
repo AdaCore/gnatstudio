@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
 with Ada.Strings.Less_Case_Insensitive;
 with GNAT.Heap_Sort_G;
 with Ada.Strings.Equal_Case_Insensitive;
@@ -26,6 +27,201 @@ package body Code_Analysis is
       Key       : String) return Subprogram_Access;
    --  Like other Get subprogram in the specification, but declared here
    --  because it is not used outside of this package body.
+
+   package ASU renames Ada.Strings.Unbounded;
+
+   function Level_Component_Name (Kind : Metric_Kind) return String;
+   --  The name of Kind as a component of a GNATcoverage --level= switch.
+   --  Empty for the kinds no --level= component selects.
+
+   ----------------------
+   -- Metric_Kind_Name --
+   ----------------------
+
+   function Metric_Kind_Name (Kind : Metric_Kind) return String is
+   begin
+      --  These are the criterion names as printed by GNATcoverage in the
+      --  header of an .xcov file. "lines" is our own: GNATcoverage never
+      --  prints it.
+
+      case Kind is
+         when Unknown_Metric => return "";
+         when Line_Metric    => return "lines";
+         when Statement      => return "statement";
+         when Decision       => return "decision";
+         when MCDC           => return "MC/DC";
+         when ATC            => return "ATC";
+         when ATCC           => return "ATCC";
+      end case;
+   end Metric_Kind_Name;
+
+   --------------------------
+   -- Level_Component_Name --
+   --------------------------
+
+   function Level_Component_Name (Kind : Metric_Kind) return String is
+   begin
+      case Kind is
+         when Statement => return "stmt";
+         when Decision  => return "decision";
+         when MCDC      => return "mcdc";
+         when ATC       => return "atc";
+         when ATCC      => return "atcc";
+         when others    => return "";
+      end case;
+   end Level_Component_Name;
+
+   ---------------------------
+   -- Metric_Kind_From_Name --
+   ---------------------------
+
+   function Metric_Kind_From_Name (Name : String) return Metric_Kind is
+   begin
+      for Kind in Metric_Kind loop
+         if Metric_Kind_Name (Kind) /= ""
+           and then Ada.Strings.Equal_Case_Insensitive
+             (Name, Metric_Kind_Name (Kind))
+         then
+            return Kind;
+         end if;
+      end loop;
+
+      --  GNATcoverage prints "UC MC/DC" for the unique-cause variant of
+      --  MC/DC: it measures the same criterion.
+
+      if Ada.Strings.Equal_Case_Insensitive (Name, "UC MC/DC") then
+         return MCDC;
+      end if;
+
+      return Unknown_Metric;
+   end Metric_Kind_From_Name;
+
+   -----------------------
+   -- Level_Metric_Kind --
+   -----------------------
+
+   function Level_Metric_Kind (Level : String) return Metric_Kind is
+      Result : Metric_Kind := Unknown_Metric;
+      First  : Positive := Level'First;
+      Last   : Natural;
+
+      function Component_Kind (Name : String) return Metric_Kind;
+      --  The Metric_Kind selected by a single component of a level
+
+      --------------------
+      -- Component_Kind --
+      --------------------
+
+      function Component_Kind (Name : String) return Metric_Kind is
+      begin
+         for Kind in Metric_Kind loop
+            if Level_Component_Name (Kind) /= ""
+              and then Ada.Strings.Equal_Case_Insensitive
+                (Name, Level_Component_Name (Kind))
+            then
+               return Kind;
+            end if;
+         end loop;
+
+         --  "uc_mcdc" selects the unique-cause variant of MC/DC
+
+         if Ada.Strings.Equal_Case_Insensitive (Name, "uc_mcdc") then
+            return MCDC;
+         end if;
+
+         return Unknown_Metric;
+      end Component_Kind;
+
+   begin
+      if Level = "" then
+         return Unknown_Metric;
+      end if;
+
+      loop
+         Last := Ada.Strings.Fixed.Index (Level, "+", First);
+
+         declare
+            Component : constant String := Ada.Strings.Fixed.Trim
+              (Level (First .. (if Last = 0 then Level'Last else Last - 1)),
+               Ada.Strings.Both);
+            Kind      : constant Metric_Kind := Component_Kind (Component);
+         begin
+            if Kind > Result then
+               Result := Kind;
+            end if;
+         end;
+
+         exit when Last = 0 or else Last = Level'Last;
+         First := Last + 1;
+      end loop;
+
+      return Result;
+   end Level_Metric_Kind;
+
+   --------------------
+   -- Line_Metric_Of --
+   --------------------
+
+   function Line_Metric_Of
+     (Self : Node_Coverage'Class) return Coverage_Metric is
+   begin
+      return
+        (Kind     => Line_Metric,
+         Name     => ASU.To_Unbounded_String (Metric_Kind_Name (Line_Metric)),
+         Covered  => (if Self.Children >= Self.Coverage
+                      then Self.Children - Self.Coverage
+                      else 0),
+         Total    => Self.Children,
+         Nb_Files => Self.Nb_Files,
+         Missing  => <>);
+   end Line_Metric_Of;
+
+   ----------------------
+   -- Displayed_Metric --
+   ----------------------
+
+   function Displayed_Metric
+     (Self : Node_Coverage'Class) return Coverage_Metric
+   is
+      Announced : Metric_Kind;
+      Result    : Coverage_Metric := Line_Metric_Of (Self);
+      Found     : Boolean := False;
+   begin
+      if Self.Metrics.Is_Empty then
+         return Result;
+      end if;
+
+      --  Prefer the criterion the coverage tool was asked to measure, as long
+      --  as every contributing file actually reported it.
+
+      Announced := Level_Metric_Kind (ASU.To_String (Self.Level));
+
+      if Announced /= Unknown_Metric then
+         for Metric of Self.Metrics loop
+            if Metric.Kind = Announced
+              and then Metric.Nb_Files = Self.Nb_Files
+            then
+               return Metric;
+            end if;
+         end loop;
+      end if;
+
+      --  Either no level was announced, or the announced criterion is not
+      --  reported by every contributing file: fall back on the strictest
+      --  criterion that all of them do report.
+
+      for Metric of Self.Metrics loop
+         if Metric.Kind /= Unknown_Metric
+           and then Metric.Nb_Files = Self.Nb_Files
+           and then (not Found or else Metric.Kind > Result.Kind)
+         then
+            Result := Metric;
+            Found  := True;
+         end if;
+      end loop;
+
+      return Result;
+   end Displayed_Metric;
 
    ----------
    -- Less --

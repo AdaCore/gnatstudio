@@ -25,6 +25,8 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                           use GNAT.Strings;
 
@@ -58,6 +60,69 @@ package Code_Analysis is
       --  The gcov file could not be parsed.
       Undetermined);
       --  The status is undetermined.
+
+   ----------------------
+   -- Coverage metrics --
+   ----------------------
+
+   type Metric_Kind is
+     (Unknown_Metric,
+      Line_Metric,
+      Statement,
+      Decision,
+      MCDC,
+      ATC,
+      ATCC);
+   --  The coverage criteria we know how to recognize, in order of increasing
+   --  strictness: that order is what arbitrates between the criteria of
+   --  several files when they do not agree on a coverage level.
+   --
+   --  Line_Metric is GNAT Studio's own line-based computation, which every
+   --  node always has. Unknown_Metric is a criterion that a future coverage
+   --  tool may report: it is kept for display purposes but is never chosen to
+   --  drive the displayed percentage.
+
+   package Name_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Ada.Strings.Unbounded.Unbounded_String,
+      "="          => Ada.Strings.Unbounded."=");
+
+   type Coverage_Metric is record
+      Kind     : Metric_Kind := Unknown_Metric;
+      Name     : Ada.Strings.Unbounded.Unbounded_String;
+      --  The criterion's name as printed by the coverage tool, e.g. "MC/DC".
+      --  This is the only name available for Unknown_Metric criteria.
+      Covered  : Natural := 0;
+      Total    : Natural := 0;
+      --  Number of covered obligations out of the total number of obligations
+      Nb_Files : Natural := 0;
+      --  Number of source files this metric has been aggregated from
+      Missing  : Name_Vectors.Vector;
+      --  The base names of the node's source files that did not report this
+      --  criterion, i.e. the files this figure leaves out. Empty when every
+      --  file reported it, and always empty on a file node, which stands for
+      --  a single file.
+   end record;
+   --  A single coverage figure, as reported by the coverage tool itself
+
+   package Metric_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Coverage_Metric);
+
+   function Metric_Kind_Name (Kind : Metric_Kind) return String;
+   --  A short label naming Kind, e.g. "MC/DC". Returns an empty string for
+   --  Unknown_Metric, whose name is only known through Coverage_Metric.Name.
+
+   function Metric_Kind_From_Name (Name : String) return Metric_Kind;
+   --  The Metric_Kind for a criterion name as printed by GNATcoverage in the
+   --  header of an .xcov file (e.g. "MC/DC"). Unknown_Metric when the name is
+   --  not one we recognize.
+
+   function Level_Metric_Kind (Level : String) return Metric_Kind;
+   --  The strictest criterion of a GNATcoverage coverage level, i.e. of the
+   --  '+'-separated combination echoed by the "Coverage level:" line of an
+   --  .xcov file: "stmt+mcdc" yields MCDC, "stmt" yields Statement.
+   --  Unknown_Metric when no component of Level is recognized.
 
    type Coverage is abstract tagged record
       Coverage   : Natural := 0;
@@ -111,9 +176,36 @@ package Code_Analysis is
 
    type Node_Coverage is abstract new Coverage with record
       Children : Natural := 0;
+      --  The Subprogram, File or Project children count
+
+      Metrics  : Metric_Vectors.Vector;
+      --  The coverage figures reported by the coverage tool itself. Empty
+      --  when the tool reports none, in which case the line-based
+      --  Children / Coverage pair is the only figure available.
+
+      Level    : Ada.Strings.Unbounded.Unbounded_String;
+      --  The coverage level announced by the tool (the "Coverage level:"
+      --  line of an .xcov file). Empty when the tool announces none.
+
+      Nb_Files : Natural := 0;
+      --  The number of source files Metrics has been aggregated from: 1 for
+      --  a file node, the number of contributing files for a project node.
    end record;
    --  Extra node coverage information
-   --  Children is the Subprogram, File or Project children count
+
+   function Line_Metric_Of (Self : Node_Coverage'Class) return Coverage_Metric;
+   --  GNAT Studio's own line-based coverage figure, derived from the node's
+   --  Children / Coverage pair. Always available.
+
+   function Displayed_Metric
+     (Self : Node_Coverage'Class) return Coverage_Metric;
+   --  The metric that should drive the percentage displayed for Self:
+   --
+   --    * the criterion announced by Self.Level, when the level is known and
+   --      every contributing file reported that criterion;
+   --    * otherwise the strictest criterion that every contributing file
+   --      reported;
+   --    * otherwise Line_Metric_Of (Self).
 
    type File_Coverage is new Node_Coverage with record
       Status : File_Coverage_Status := Undetermined;

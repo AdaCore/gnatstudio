@@ -1,0 +1,4 @@
+project Default is
+   for Source_Files use ("pkg.ads", "pkg.adb");
+   for Object_Dir use "obj";
+end Default;
