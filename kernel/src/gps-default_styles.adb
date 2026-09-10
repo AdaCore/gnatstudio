@@ -26,7 +26,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with LSP.Messages;              use LSP.Messages;
+with LSP.Enumerations;          use LSP.Enumerations;
 
 package body GPS.Default_Styles is
 
@@ -217,7 +217,7 @@ package body GPS.Default_Styles is
                   Style   => Default_Style,
                   Variant => Aspects_Types_Style);
 
-            when a_string =>
+            when LSP.Enumerations.string =>
                Dummy := M.Create_From_Preferences
                  (Key     => "string-documentation",
                   Style   => Default_Style,
