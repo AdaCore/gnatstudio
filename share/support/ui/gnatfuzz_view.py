@@ -3,13 +3,13 @@
 import GPS
 from modules import Module
 from gs_utils import make_interactive
-import pygps
 import workflows
 from workflows.promises import ProcessWrapper
 
 import os
 import json
 import glob
+import sys
 from gi.repository import Gtk, Gdk
 
 # The columns in the model
@@ -36,22 +36,139 @@ EXC_MESSAGE = "Exception_Message"
 EXC_INFO = "Exception_Information"
 
 
-def fuzz_executable(is_verbose):
-    """Utility function, returns the executable instrumented for fuzzing"""
-    # We don't know which AFL mode was built (PLAIN, PERSIST, DEFER,
-    # DEFER_AND_PERSIST). They should be equivalent for the purposes of
-    # the GNAT Studio integration: try each in turn.
+# The names and locations below mirror gnatfuzz.core.harness_paths and
+# gnatfuzz.common.NamingConventions: we have to find the binaries that
+# "gnatfuzz build" produced, so they must be kept in step with the tool.
 
-    for mode in ("AFL_PERSIST", "AFL_PLAIN", "AFL_DEFER", "AFL_DEFER_AND_PERSIST"):
-        candidate = os.path.join(
-            os.path.dirname(GPS.Project.root().file().name()),
-            "build",
-            f"obj-{mode}",
-            "gnatfuzz-test_harness." + ("verbose" if is_verbose else "afl_fuzz"),
-        )
+EXECUTABLE_SUFFIX = ".exe" if sys.platform == "win32" else ""
+
+FUZZ_CONFIG_FILE = "fuzz_config.json"
+BUILD_HARNESS_DIRECTORY = "build"
+
+# The AFL modes, most likely first: DEFAULT_AFL_MODE is AFL_PERSIST. A
+# campaign builds exactly one of them.
+AFL_MODES = ("AFL_PERSIST", "AFL_DEFER_AND_PERSIST", "AFL_DEFER", "AFL_PLAIN")
+
+# The engines whose verbose harness is built against the TGen encoding,
+# in search-priority order. Everything the views decode comes from
+# session/results, which is TGen-encoded; the CMPLOG decoder is built
+# against encoding_standard and would render those files as nonsense, so
+# it is deliberately never a candidate here.
+AFL_ENGINE = "afl"
+LIBFUZZER_ENGINE = "libfuzzer"
+TGEN_ENGINES = (AFL_ENGINE, LIBFUZZER_ENGINE)
+
+AFL_HARNESS = "gnatfuzz-test_harness.afl_fuzz"
+AFL_VERBOSE_HARNESS = "gnatfuzz-test_harness.afl.verbose"
+LIBFUZZER_HARNESS = "gnatfuzz-test_harness.libfuzzer"
+LIBFUZZER_VERBOSE_HARNESS = "gnatfuzz-test_harness.libfuzzer.verbose"
+
+LIBFUZZER_OBJ_DIR = "obj-FUZZING_LIBFUZZER"
+LIBFUZZER_VERBOSE_OBJ_DIR = "obj-FUZZING_LIBFUZZER_verbose"
+
+
+def harness_root():
+    """Return the generated harness directory.
+
+    The views only run against a harness project, whose root project is
+    the generated fuzz_test.gpr.
+    """
+    return os.path.dirname(GPS.Project.root().file().name())
+
+
+def is_harness_project():
+    """Whether the root project is a generated GNATfuzz harness project.
+
+    "gnatfuzz generate" writes fuzz_config.json next to fuzz_test.gpr,
+    which is what the GNATfuzz plugin keys off too.
+    """
+    return os.path.exists(os.path.join(harness_root(), FUZZ_CONFIG_FILE))
+
+
+def fuzz_config(harness_root_dir):
+    """Return the decoded fuzz_config.json, or {} when it cannot be read"""
+    try:
+        with open(os.path.join(harness_root_dir, FUZZ_CONFIG_FILE)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def build_directory(harness_root_dir):
+    """Return the directory holding the per-configuration object directories.
+
+    "gnatfuzz build" records it in fuzz_config.json; fall back to the
+    conventional location when it is absent or names a directory that is
+    no longer there (a harness tree that was moved after being built).
+    """
+    build_config = fuzz_config(harness_root_dir).get("build_configuration", {})
+    recorded = build_config.get("build_directory")
+    if recorded:
+        if not os.path.isabs(recorded):
+            recorded = os.path.join(harness_root_dir, recorded)
+        if os.path.isdir(recorded):
+            return recorded
+    return os.path.join(harness_root_dir, BUILD_HARNESS_DIRECTORY)
+
+
+def harness_candidates(harness_root_dir, is_verbose):
+    """Return (object directory, executable name) pairs, most likely first.
+
+    Mirrors gnatfuzz.core.harness_paths.verbose_runner_candidates. A
+    campaign builds a single AFL mode and a single set of engines, both
+    recorded in fuzz_config.json, so the recorded ones are tried first
+    and the rest afterwards in case that file is stale or absent.
+    """
+    build_config = fuzz_config(harness_root_dir).get("build_configuration", {})
+
+    recorded_mode = build_config.get("afl_mode")
+    afl_modes = [mode for mode in AFL_MODES if mode != recorded_mode]
+    if recorded_mode:
+        afl_modes.insert(0, recorded_mode)
+
+    # Keep our own priority rather than the order the config lists.
+    recorded_engines = build_config.get("engines") or ()
+    engines = [e for e in TGEN_ENGINES if e in recorded_engines] or list(TGEN_ENGINES)
+
+    candidates = []
+    for engine in engines:
+        if engine == AFL_ENGINE:
+            name = AFL_VERBOSE_HARNESS if is_verbose else AFL_HARNESS
+            candidates.extend((f"obj-{mode}", name) for mode in afl_modes)
+        else:
+            candidates.append(
+                (
+                    LIBFUZZER_VERBOSE_OBJ_DIR if is_verbose else LIBFUZZER_OBJ_DIR,
+                    LIBFUZZER_VERBOSE_HARNESS if is_verbose else LIBFUZZER_HARNESS,
+                )
+            )
+    return candidates
+
+
+def fuzz_executable(is_verbose):
+    """Return the built harness to run, or None when there is none.
+
+    With is_verbose, this is the decoder that renders a test case's
+    parameters; otherwise it is the plain harness, which is what we
+    hand to the debugger.
+    """
+    root = harness_root()
+    build_dir = build_directory(root)
+    for obj_dir, name in harness_candidates(root, is_verbose):
+        candidate = os.path.join(build_dir, obj_dir, name + EXECUTABLE_SUFFIX)
         if os.path.exists(candidate):
             return candidate
     return None
+
+
+def no_decoder_error():
+    """Report that no verbose decoder is available"""
+    GPS.Console("Messages").write(
+        "Cannot find a built GNATfuzz verbose decoder: test cases and "
+        "crashes cannot be decoded. Run 'Start Fuzzing Session' to build "
+        "the harness.\n",
+        mode="error",
+    )
 
 
 class FuzzCrash(object):
@@ -127,7 +244,7 @@ class FuzzCrashList(object):
         exec = fuzz_executable(False)
         if exec is None:
             GPS.Console("Messages").write(
-                "Cannot find a built AFL harness to debug. "
+                "Cannot find a built GNATfuzz harness to debug. "
                 "Run 'Start Fuzzing Session' first.\n",
                 mode="error",
             )
@@ -185,6 +302,21 @@ class GNATfuzzView(Module):
     def __init__(self):
         self.crashes = {}  # The known FuzzCrashes indexed by filename
         self.fcl = FuzzCrashList()
+        # Whether we already reported a missing decoder for this session
+        self.decoder_reported = False
+        # Bumped every time the view is emptied. A decoding workflow
+        # captures it and stops if it changes while it was suspended.
+        self.generation = 0
+        # The session being displayed, and the harness that produced it.
+        # None means no workflow has run: refresh() then falls back to
+        # the default "session" layout of whatever harness is loaded.
+        self.session_dir = None
+        self.session_owner = None
+
+    def set_session(self, session_dir):
+        """Display the given session of the harness currently loaded"""
+        self.session_dir = session_dir
+        self.session_owner = harness_root()
 
     def setup(self):
         make_interactive(
@@ -194,19 +326,30 @@ class GNATfuzzView(Module):
             self.clear_view, category="Views", name="clear GNATfuzz fuzz crashes view"
         )
 
-    def clear_view(self):
-        """Clear the Fuzz crashes view"""
+    def empty_view(self):
+        """Remove everything on display, keeping the session we point at.
+
+        Clears the model directly: on a project switch the views are
+        recreated, so the widget may not be in the MDI yet when this runs.
+        """
         global counter
         counter = 1
         self.crashes.clear()
+        self.decoder_reported = False
+        self.fcl.store.clear()
+        # Invalidate any decoding workflow suspended on a decoder
+        # subprocess: on resume it would repopulate what we just cleared.
+        self.generation += 1
+
+    def clear_view(self):
+        """Clear the Fuzz crashes view"""
+        self.empty_view()
         # Mark the view as awaiting a new fuzzing session. Refresh()
         # treats the empty string as "skip disk read", so a refresh
         # that races with the workflow (e.g. a re-open) cannot pull
         # results from the previous run's session_dir back in.
         self.session_dir = ""
-        t = pygps.get_widget_by_name("fuzz_crash_list_view")
-        if t is not None:
-            t.get_model().clear()
+        self.session_owner = None
 
     def preferences_changed(self, name="", pref=None):
         """React to preferences changed"""
@@ -223,16 +366,37 @@ class GNATfuzzView(Module):
 
         global counter
 
+        # Nothing new to decode: skip the decoder lookup, since refresh()
+        # runs us on every tick whether or not the glob found anything.
+        if all(c in self.crashes for c in self.candidate_crash_files):
+            return
+
+        # The decoder is the same for every candidate, so look it up
+        # once. Without it there is nothing to do; report that once per
+        # session, since refresh() calls us on every monitoring tick.
+        executable = fuzz_executable(True)
+        if executable is None:
+            if not self.decoder_reported:
+                self.decoder_reported = True
+                no_decoder_error()
+            return
+
+        # The view generation we are filling. Decoding suspends this
+        # workflow while the decoder runs, and the view can be emptied
+        # meanwhile (a project switch, or a new session).
+        generation = self.generation
+
         while self.candidate_crash_files:
             candidate = self.candidate_crash_files.pop()
             if candidate not in self.crashes:
-                executable = fuzz_executable(True)
                 # We're actually launching the executable to get the
                 # parameters that were passed to the crash, along with
                 # the actual crash message.
                 cl = [executable, candidate]
                 p = ProcessWrapper(cl)
                 status, output = yield p.wait_until_terminate()
+                if self.generation != generation:
+                    return
                 c = FuzzCrash(candidate)
 
                 splits = candidate.split(os.sep)
@@ -340,6 +504,22 @@ class GNATfuzzView(Module):
 
     def refresh(self):
         """Refresh the view"""
+        # Outside a harness project there is nothing to read: session_dir
+        # still points into the harness tree, whose decoder this project
+        # cannot locate. session_dir is kept, so switching back to the
+        # harness project repopulates the view.
+        if not is_harness_project():
+            self.empty_view()
+            return
+
+        # A session belongs to the harness that produced it: this one
+        # would decode it with its own executable, which is generated
+        # for a different subprogram. It is kept rather than dropped, so
+        # that returning to its own harness displays it again.
+        if self.session_dir and self.session_owner != harness_root():
+            self.empty_view()
+            return
+
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
         self.candidate_crash_files = []
 
@@ -349,7 +529,7 @@ class GNATfuzzView(Module):
         # disk read so we do not surface results from the previous run.
         # None means standalone use (no workflow running); fall back to
         # the default "session" layout for backward compatibility.
-        session_dir = getattr(self, "session_dir", None)
+        session_dir = self.session_dir
         if session_dir == "":
             return
         if session_dir is None:

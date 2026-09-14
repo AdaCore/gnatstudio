@@ -12,5 +12,11 @@ gnatfuzz analyze -Pp.gpr > /dev/null
 # gnatfuzz generate to generate a fuzz harness
 gnatfuzz generate -Pp.gpr --analysis obj/gnatfuzz/analyze.json --subprogram-id 1 -o harness > /dev/null
 
-# Run the test
-$GNATSTUDIO --load=python:test.py -P harness/fuzz_testing/fuzz_test.gpr
+# Run the test. The generated harness directory is "fuzz"; older
+# gnatfuzz used "fuzz_testing". Accept either, as the plugin does.
+HARNESS_DIR=harness/fuzz
+if [ ! -d "$HARNESS_DIR" ] && [ -d harness/fuzz_testing ]; then
+  HARNESS_DIR=harness/fuzz_testing
+fi
+
+$GNATSTUDIO --load=python:test.py -P $HARNESS_DIR/fuzz_test.gpr

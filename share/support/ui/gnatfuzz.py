@@ -39,6 +39,72 @@ FUZZ_MONITOR_TIMEOUT = 1000
 
 FUZZ_TASK_NAME = "Fuzzing"
 
+# The directory "gnatfuzz generate" creates inside its output directory
+# to hold the generated harness. Older gnatfuzz used "fuzz_testing".
+HARNESS_DIR = "fuzz"
+LEGACY_HARNESS_DIR = "fuzz_testing"
+
+# Written by "gnatfuzz generate" next to the generated fuzz_test.gpr,
+# which is what makes a project a harness project.
+FUZZ_CONFIG_FILE = "fuzz_config.json"
+
+
+def harness_dir(output_dir):
+    """Return the generated harness directory inside output_dir.
+
+    The legacy name is used only when it is the one on disk; when
+    neither exists yet the current name is returned.
+    """
+    candidate = os.path.join(output_dir, HARNESS_DIR)
+    if not os.path.isdir(candidate):
+        legacy = os.path.join(output_dir, LEGACY_HARNESS_DIR)
+        if os.path.isdir(legacy):
+            return legacy
+    return candidate
+
+
+def resolve_under(base_dir, path):
+    """Return path as an absolute, normalized path.
+
+    Relative paths are resolved against base_dir.
+    """
+    if os.path.isabs(path):
+        return os.path.normpath(path)
+    return os.path.normpath(os.path.join(base_dir, path))
+
+
+def harness_config():
+    """Return (user project, output directory) of the harness loaded.
+
+    Both are None when the root project is not a generated harness
+    project. Relative paths in fuzz_config.json are resolved against the
+    harness project directory, where that file lives: resolving them
+    against GNAT Studio's CWD is unstable, and ends up polluting the
+    recent-projects list with paths like
+    session/coverage_output/user_project.gpr.
+    """
+    project_dir = os.path.dirname(GPS.Project.root().file().name())
+    try:
+        with open(os.path.join(project_dir, FUZZ_CONFIG_FILE), "r") as f:
+            decoded = json.load(f)
+        return (
+            resolve_under(project_dir, decoded["user_project"]),
+            resolve_under(project_dir, decoded["output_directory"]),
+        )
+    except (OSError, ValueError, KeyError):
+        return (None, None)
+
+
+def harness_output_dir():
+    """Return the directory "gnatfuzz generate" wrote the harness into.
+
+    This is the positional argument of the gnatfuzz subcommands that act
+    on a generated harness, and is expanded into their command lines by
+    a %python() macro. The empty string outside a harness project, which
+    contributes no argument at all.
+    """
+    return harness_config()[1] or ""
+
 
 def list_to_xml(items):
     return "\n".join(str(i) for i in items)
@@ -278,8 +344,8 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate-corpus"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
+                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -301,8 +367,8 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("minimize-corpus"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
+                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -324,8 +390,8 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("build"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
+                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -347,8 +413,8 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
+                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -554,43 +620,9 @@ class GNATfuzzPlugin(Module):
 
     def project_view_changed(self):
         """React to a project view change"""
-        project_dir = os.path.dirname(GPS.Project.root().file().name())
-        config_file = os.path.join(project_dir, "fuzz_config.json")
-
-        if os.path.exists(config_file):
-            # A config file has been found: this is a harness project
-
-            # Read the contents of the config field
-            with open(config_file, "r") as f:
-                decoded = json.load(f)
-
-            # Resolve any relative paths against the harness project
-            # directory (where fuzz_config.json lives). Without this,
-            # GPS.Project.load(self.user_project) and the workflow's
-            # session_dir computation would resolve relative paths
-            # against GS Studio's CWD, which is unstable and ends up
-            # polluting the recent-projects list with paths like
-            # session/coverage_output/user_project.gpr.
-            self.user_project = self._resolve_under(
-                project_dir, decoded["user_project"]
-            )
-            self.output_dir = self._resolve_under(
-                project_dir, decoded["output_directory"]
-            )
-        else:
-            # This is not a harness project
-            self.user_project = None
-            self.output_dir = None
-
-    @staticmethod
-    def _resolve_under(base_dir, path):
-        """Return ``path`` as an absolute, normalized path.
-
-        Relative paths are resolved against ``base_dir``.
-        """
-        if os.path.isabs(path):
-            return os.path.normpath(path)
-        return os.path.normpath(os.path.join(base_dir, path))
+        # Both are None outside a harness project, which is what
+        # is_harness_project() tests.
+        self.user_project, self.output_dir = harness_config()
 
     def error(self, msg):
         """Convenience function to log an error in the Messages"""
@@ -629,14 +661,20 @@ class GNATfuzzPlugin(Module):
         )
         # TODO: make this a workflow, in case this takes a long time.
 
-        harness_project = os.path.join(output_dir, "fuzz_testing", "fuzz_test.gpr")
-        if os.path.exists(harness_project):
-            r = GPS.MDI.yes_no_dialog(
-                "Harness generation successful.\n\nSwitch to harness project?"
+        harness_project = os.path.join(harness_dir(output_dir), "fuzz_test.gpr")
+        if not os.path.exists(harness_project):
+            self.error(
+                "Harness generation did not produce a project file at "
+                f"{harness_project}: not switching to the harness project."
             )
+            return
 
-            if r:
-                GPS.Project.load(harness_project)
+        r = GPS.MDI.yes_no_dialog(
+            "Harness generation successful.\n\nSwitch to harness project?"
+        )
+
+        if r:
+            GPS.Project.load(harness_project)
 
     def create_messages_from_analyze_json_entry(self, entry):
         """Create a GS Messages from one toplevel entry in "fuzzable_subprograms"
@@ -848,12 +886,12 @@ class GNATfuzzPlugin(Module):
         GPS.execute_action("clear GNATfuzz fuzz crashes view")
         GPS.execute_action("clear GNATfuzz test cases view")
 
-        # Snapshot existing session* directories. The new GNATfuzz CLI
+        # Snapshot existing session* directories. The GNATfuzz CLI
         # auto-renames the session directory to session_1, session_2, ...
         # if "session" already exists (preserving prior runs), so we
         # cannot assume the new run lands in "session". We diff against
         # this snapshot below to discover the live session directory.
-        fuzz_testing_dir = os.path.join(self.output_dir, "fuzz_testing")
+        fuzz_testing_dir = harness_dir(self.output_dir)
         existing_session_dirs = self._snapshot_session_dirs(fuzz_testing_dir)
 
         # Forward all scenario variables as -X switches.
@@ -881,7 +919,7 @@ class GNATfuzzPlugin(Module):
         # remove any leftover minimized_corpus from a previous run before
         # invoking minimize-corpus.
         minimized_corpus_dir = os.path.join(
-            self.output_dir, "fuzz_testing", "minimized_corpus"
+            harness_dir(self.output_dir), "minimized_corpus"
         )
         if os.path.exists(minimized_corpus_dir):
             shutil.rmtree(minimized_corpus_dir)
@@ -929,10 +967,10 @@ class GNATfuzzPlugin(Module):
                 # refresh() looks at the right session.
                 view = get_gnatfuzz_view()
                 if view is not None:
-                    view.session_dir = fuzz_session_dir
+                    view.set_session(fuzz_session_dir)
                 test_case_view = get_gnatfuzz_test_case_view()
                 if test_case_view is not None:
-                    test_case_view.session_dir = fuzz_session_dir
+                    test_case_view.set_session(fuzz_session_dir)
                 break
             # Check if the fuzz process is still running
             tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
