@@ -3,10 +3,9 @@
 import GPS
 from modules import Module
 from gs_utils import make_interactive
-import pygps
 import workflows
 from workflows.promises import ProcessWrapper
-from gnatfuzz_view import fuzz_executable
+from gnatfuzz_view import fuzz_executable, is_harness_project, no_decoder_error
 
 import os
 import json
@@ -106,7 +105,7 @@ class FuzzTestCaseList(object):
         exec = fuzz_executable(False)
         if exec is None:
             GPS.Console("Messages").write(
-                "Cannot find a built AFL harness to debug. "
+                "Cannot find a built GNATfuzz harness to debug. "
                 "Run 'Start Fuzzing Session' first.\n",
                 mode="error",
             )
@@ -168,6 +167,11 @@ class GNATfuzzTestCaseView(Module):
     def __init__(self):
         self.test_cases = {}  # The known test cases indexed by filename
         self.fcl = FuzzTestCaseList()
+        # Whether we already reported a missing decoder for this session
+        self.decoder_reported = False
+        # Bumped every time the view is emptied. A decoding workflow
+        # captures it and stops if it changes while it was suspended.
+        self.generation = 0
 
     def setup(self):
         make_interactive(
@@ -177,19 +181,29 @@ class GNATfuzzTestCaseView(Module):
             self.clear_view, category="Views", name="clear GNATfuzz test cases view"
         )
 
-    def clear_view(self):
-        """Clear the Fuzz test cases view"""
+    def empty_view(self):
+        """Remove everything on display, keeping the session we point at.
+
+        Clears the model directly: on a project switch the views are
+        recreated, so the widget may not be in the MDI yet when this runs.
+        """
         global counter
         counter = 1
         self.test_cases.clear()
+        self.decoder_reported = False
+        self.fcl.store.clear()
+        # Invalidate any decoding workflow suspended on a decoder
+        # subprocess: on resume it would repopulate what we just cleared.
+        self.generation += 1
+
+    def clear_view(self):
+        """Clear the Fuzz test cases view"""
+        self.empty_view()
         # Mark the view as awaiting a new fuzzing session. Refresh()
         # treats the empty string as "skip disk read", so a refresh
         # that races with the workflow (e.g. a re-open) cannot pull
         # results from the previous run's session_dir back in.
         self.session_dir = ""
-        t = pygps.get_widget_by_name("fuzz_test_case_view")
-        if t is not None:
-            t.get_model().clear()
 
     def preferences_changed(self, name="", pref=None):
         """React to preferences changed"""
@@ -206,15 +220,36 @@ class GNATfuzzTestCaseView(Module):
 
         global counter
 
+        # Nothing new to decode: skip the decoder lookup, since refresh()
+        # runs us on every tick whether or not the glob found anything.
+        if all(c in self.test_cases for c in self.candidate_test_case_files):
+            return
+
+        # The decoder is the same for every candidate, so look it up
+        # once. Without it there is nothing to do; report that once per
+        # session, since refresh() calls us on every monitoring tick.
+        executable = fuzz_executable(True)
+        if executable is None:
+            if not self.decoder_reported:
+                self.decoder_reported = True
+                no_decoder_error()
+            return
+
+        # The view generation we are filling. Decoding suspends this
+        # workflow while the decoder runs, and the view can be emptied
+        # meanwhile (a project switch, or a new session).
+        generation = self.generation
+
         while self.candidate_test_case_files:
             candidate = self.candidate_test_case_files.pop()
             if candidate not in self.test_cases:
-                executable = fuzz_executable(True)
                 # We're actually launching the executable to get the
                 # parameters that were passed to the test case
                 cl = [executable, candidate]
                 p = ProcessWrapper(cl)
                 status, output = yield p.wait_until_terminate()
+                if self.generation != generation:
+                    return
                 c = FuzzTestCase(candidate)
 
                 # Derive and set the test ID and test case details
@@ -316,6 +351,14 @@ class GNATfuzzTestCaseView(Module):
 
     def refresh(self):
         """Refresh the view"""
+        # Outside a harness project there is nothing to read: session_dir
+        # still points into the harness tree, whose decoder this project
+        # cannot locate. session_dir is kept, so switching back to the
+        # harness project repopulates the view.
+        if not is_harness_project():
+            self.empty_view()
+            return
+
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
         self.candidate_test_case_files = []
 

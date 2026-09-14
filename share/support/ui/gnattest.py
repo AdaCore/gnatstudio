@@ -17,6 +17,7 @@ import traceback
 import libadalang as lal
 
 from gnatemulator import GNATemulator
+from gnatfuzz import harness_dir
 import GPS
 from gs_utils import hook, interactive
 from os_utils import locate_exec_on_path
@@ -481,11 +482,11 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
     """The 'gnatfuzz fuzz' workflow"""
     # Move away the previous fuzzing session dir
 
-    fuzz_session_dir = os.path.join(fuzz_dir, "fuzz_testing", "session")
+    fuzz_harness_dir = harness_dir(fuzz_dir)
+    fuzz_session_dir = os.path.join(fuzz_harness_dir, "session")
     if os.path.exists(fuzz_session_dir):
         shutil.rmtree(fuzz_session_dir)
 
-    harness_gpr = os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr")
     console = GPS.Console("GNATtest")
 
     # If gnattest's test_runner produced no test vectors for this
@@ -500,7 +501,7 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
         )
         p = TargetWrapper("gnattest generate-corpus")
         r = yield p.wait_on_execute(
-            extra_args=["-P", harness_gpr],
+            extra_args=[fuzz_dir],
             force=force,
         )
         if r != 0:
@@ -509,15 +510,14 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
                 mode="error",
             )
             return
-        # gnatfuzz generate-corpus writes to fuzz_testing/generated_corpus/
-        corpus_dir = os.path.join(fuzz_dir, "fuzz_testing", "generated_corpus")
+        # gnatfuzz generate-corpus writes to <harness dir>/generated_corpus/
+        corpus_dir = os.path.join(fuzz_harness_dir, "generated_corpus")
 
     # TODO! account for scenario variables as done in the gnatfuzz plugin
     args = [
-        "-P",
-        harness_gpr,
+        fuzz_dir,
         f"--corpus-path={corpus_dir}",
-        f"--stop-criteria={fuzz_dir}/fuzz_testing/user_configuration/stop_criteria.xml",
+        f"--stop-criteria={fuzz_harness_dir}/user_configuration/stop_criteria.xml",
         "--tgen-gnattest-test-generator",
     ]
 
@@ -827,10 +827,9 @@ def fuzz_subp_workflow():
     # "fuzz": the build configuration it writes into fuzz_config.json is
     # what "fuzz" reads to know which harnesses to run. Without this,
     # "gnatfuzz fuzz" exits with "No build configuration found".
-    harness_gpr = os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr")
     p = TargetWrapper("gnattest gnatfuzz build")
     r = yield p.wait_on_execute(
-        extra_args=["-P", harness_gpr],
+        extra_args=[fuzz_dir],
         force=force,
     )
     if r != 0:

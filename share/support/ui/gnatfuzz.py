@@ -39,6 +39,25 @@ FUZZ_MONITOR_TIMEOUT = 1000
 
 FUZZ_TASK_NAME = "Fuzzing"
 
+# The directory "gnatfuzz generate" creates inside its output directory
+# to hold the generated harness. Older gnatfuzz used "fuzz_testing".
+HARNESS_DIR = "fuzz"
+LEGACY_HARNESS_DIR = "fuzz_testing"
+
+
+def harness_dir(output_dir):
+    """Return the generated harness directory inside output_dir.
+
+    The legacy name is used only when it is the one on disk; when
+    neither exists yet the current name is returned.
+    """
+    candidate = os.path.join(output_dir, HARNESS_DIR)
+    if not os.path.isdir(candidate):
+        legacy = os.path.join(output_dir, LEGACY_HARNESS_DIR)
+        if os.path.isdir(legacy):
+            return legacy
+    return candidate
+
 
 def list_to_xml(items):
     return "\n".join(str(i) for i in items)
@@ -278,7 +297,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate-corpus"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
             ),
         ),
@@ -301,7 +319,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("minimize-corpus"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
             ),
         ),
@@ -324,7 +341,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("build"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
             ),
         ),
@@ -347,7 +363,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
-                X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
             ),
         ),
@@ -629,14 +644,20 @@ class GNATfuzzPlugin(Module):
         )
         # TODO: make this a workflow, in case this takes a long time.
 
-        harness_project = os.path.join(output_dir, "fuzz_testing", "fuzz_test.gpr")
-        if os.path.exists(harness_project):
-            r = GPS.MDI.yes_no_dialog(
-                "Harness generation successful.\n\nSwitch to harness project?"
+        harness_project = os.path.join(harness_dir(output_dir), "fuzz_test.gpr")
+        if not os.path.exists(harness_project):
+            self.error(
+                "Harness generation did not produce a project file at "
+                f"{harness_project}: not switching to the harness project."
             )
+            return
 
-            if r:
-                GPS.Project.load(harness_project)
+        r = GPS.MDI.yes_no_dialog(
+            "Harness generation successful.\n\nSwitch to harness project?"
+        )
+
+        if r:
+            GPS.Project.load(harness_project)
 
     def create_messages_from_analyze_json_entry(self, entry):
         """Create a GS Messages from one toplevel entry in "fuzzable_subprograms"
@@ -805,7 +826,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_build_workflow(self, task):
         """The 'gnatfuzz build' workflow"""
         p = promises.TargetWrapper("gnatfuzz build")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ##################
@@ -815,7 +836,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_generate_corpus_workflow(self, task):
         """The 'gnatfuzz generate-corpus' workflow"""
         p = promises.TargetWrapper("gnatfuzz generate-corpus")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ##################
@@ -825,7 +846,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_minimize_corpus_workflow(self, task):
         """The 'gnatfuzz minimize-corpus' workflow"""
         p = promises.TargetWrapper("gnatfuzz minimize-corpus")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ########
@@ -848,12 +869,12 @@ class GNATfuzzPlugin(Module):
         GPS.execute_action("clear GNATfuzz fuzz crashes view")
         GPS.execute_action("clear GNATfuzz test cases view")
 
-        # Snapshot existing session* directories. The new GNATfuzz CLI
+        # Snapshot existing session* directories. The GNATfuzz CLI
         # auto-renames the session directory to session_1, session_2, ...
         # if "session" already exists (preserving prior runs), so we
         # cannot assume the new run lands in "session". We diff against
         # this snapshot below to discover the live session directory.
-        fuzz_testing_dir = os.path.join(self.output_dir, "fuzz_testing")
+        fuzz_testing_dir = harness_dir(self.output_dir)
         existing_session_dirs = self._snapshot_session_dirs(fuzz_testing_dir)
 
         # Forward all scenario variables as -X switches.
@@ -881,7 +902,7 @@ class GNATfuzzPlugin(Module):
         # remove any leftover minimized_corpus from a previous run before
         # invoking minimize-corpus.
         minimized_corpus_dir = os.path.join(
-            self.output_dir, "fuzz_testing", "minimized_corpus"
+            harness_dir(self.output_dir), "minimized_corpus"
         )
         if os.path.exists(minimized_corpus_dir):
             shutil.rmtree(minimized_corpus_dir)
@@ -896,6 +917,10 @@ class GNATfuzzPlugin(Module):
         # gnatfuzz fuzz defaults to the generated_corpus directory. Point it
         # at the minimized corpus we just produced.
         args.append(f"--corpus-path={minimized_corpus_dir}")
+
+        # "gnatfuzz fuzz" takes the harness directory positionally: the
+        # directory "gnatfuzz generate" wrote into.
+        args.append(self.output_dir)
 
         GPS.BuildTarget("gnatfuzz fuzz").execute(
             extra_args=args,
