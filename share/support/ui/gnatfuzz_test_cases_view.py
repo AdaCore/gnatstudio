@@ -5,7 +5,12 @@ from modules import Module
 from gs_utils import make_interactive
 import workflows
 from workflows.promises import ProcessWrapper
-from gnatfuzz_view import fuzz_executable, is_harness_project, no_decoder_error
+from gnatfuzz_view import (
+    fuzz_executable,
+    harness_root,
+    is_harness_project,
+    no_decoder_error,
+)
 
 import os
 import json
@@ -172,6 +177,16 @@ class GNATfuzzTestCaseView(Module):
         # Bumped every time the view is emptied. A decoding workflow
         # captures it and stops if it changes while it was suspended.
         self.generation = 0
+        # The session being displayed, and the harness that produced it.
+        # None means no workflow has run: refresh() then falls back to
+        # the default "session" layout of whatever harness is loaded.
+        self.session_dir = None
+        self.session_owner = None
+
+    def set_session(self, session_dir):
+        """Display the given session of the harness currently loaded"""
+        self.session_dir = session_dir
+        self.session_owner = harness_root()
 
     def setup(self):
         make_interactive(
@@ -204,6 +219,7 @@ class GNATfuzzTestCaseView(Module):
         # that races with the workflow (e.g. a re-open) cannot pull
         # results from the previous run's session_dir back in.
         self.session_dir = ""
+        self.session_owner = None
 
     def preferences_changed(self, name="", pref=None):
         """React to preferences changed"""
@@ -359,6 +375,14 @@ class GNATfuzzTestCaseView(Module):
             self.empty_view()
             return
 
+        # A session belongs to the harness that produced it: this one
+        # would decode it with its own executable, which is generated
+        # for a different subprogram. It is kept rather than dropped, so
+        # that returning to its own harness displays it again.
+        if self.session_dir and self.session_owner != harness_root():
+            self.empty_view()
+            return
+
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
         self.candidate_test_case_files = []
 
@@ -368,7 +392,7 @@ class GNATfuzzTestCaseView(Module):
         # disk read so we do not surface results from the previous run.
         # None means standalone use (no workflow running); fall back to
         # the default "session" layout for backward compatibility.
-        session_dir = getattr(self, "session_dir", None)
+        session_dir = self.session_dir
         if session_dir == "":
             return
         if session_dir is None:
