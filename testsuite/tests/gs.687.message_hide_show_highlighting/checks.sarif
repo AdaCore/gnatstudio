@@ -1,0 +1,51 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "TestChecker",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "redundant_null",
+              "name": "redundant_null",
+              "shortDescription": {
+                "text": "redundant null statement"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "redundant_null",
+          "level": "warning",
+          "message": {
+            "text": "redundant null statement"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 4,
+                  "endLine": 7,
+                  "endColumn": 9
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

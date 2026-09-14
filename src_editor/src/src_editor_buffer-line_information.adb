@@ -123,6 +123,12 @@ package body Src_Editor_Buffer.Line_Information is
    --  Add Message in the given Column in Buffer, taking care of the
    --- highlighting when necessary.
 
+   procedure Remove_Message_Reference
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : not null Message_Access);
+   --  Remove the reference to Message from the side information of the line
+   --  it sits on, if present. Counterpart of the Prepend done by Add_Message.
+
    function Message_Is_On_Line
      (Buffer  : access Source_Buffer_Record'Class;
       Message : Message_Access;
@@ -680,14 +686,29 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
 
             --  If there are messages in the column being removed, remove the
-            --  messages
+            --  messages. Removing a message leads to Remove_Message deleting
+            --  its reference from this very list, so drain the list one
+            --  element at a time instead of iterating over it: a "for ... of"
+            --  loop would have its cursor invalidated by that deletion.
 
-            for M_Ref of D.Side_Info_Data (Column).Messages loop
-               if not M_Ref.Is_Empty then
-                  M := M_Ref.Message;
-                  M.Remove;
-               end if;
-            end loop;
+            declare
+               Messages : Message_Reference_List.List renames
+                 D.Side_Info_Data (Column).Messages;
+            begin
+               while not Messages.Is_Empty loop
+                  declare
+                     M_Ref : constant Message_Reference :=
+                       Messages.First_Element;
+                  begin
+                     Messages.Delete_First;
+
+                     if not M_Ref.Is_Empty then
+                        M := M_Ref.Message;
+                        M.Remove;
+                     end if;
+                  end;
+               end loop;
+            end;
 
             declare
                A : Line_Info_Width_Array
@@ -835,10 +856,77 @@ package body Src_Editor_Buffer.Line_Information is
          if Has_Note (M, Line_Info_Note_Record'Tag) then
             M.Remove_Note (Line_Info_Note_Record'Tag);
          end if;
+
+         --  Drop the reference registered by Add_Message too. A message is
+         --  not necessarily destroyed when it stops being displayed: it can
+         --  be hidden and shown again later, either because a listener
+         --  refused its destruction or because its flags changed (GNAThub's
+         --  loader hides every message it has loaded before letting the
+         --  filter decide which ones to show). Keeping the reference around
+         --  would make Add_Message register the message a second time, and
+         --  its action would then be listed twice in the side column's popup
+         --  menu.
+
+         Remove_Message_Reference (Buffer, M);
       end if;
 
       Side_Column_Configuration_Changed (Buffer);
    end Remove_Message;
+
+   ------------------------------
+   -- Remove_Message_Reference --
+   ------------------------------
+
+   procedure Remove_Message_Reference
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : not null Message_Access)
+   is
+      The_Data : Line_Info_Width_Array_Access;
+      BL       : Buffer_Line_Type;
+      EL       : Editable_Line_Type :=
+        Editable_Line_Type (Message.Get_Line);
+      Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
+   begin
+      --  Find the line the same way Add_Message does, through the message's
+      --  mark: it follows the text as the buffer gets edited.
+
+      if Mark /= Nil_Editor_Mark then
+         EL := Editable_Line_Type (Mark.Line);
+      end if;
+
+      BL := Buffer.Get_Buffer_Line (EL);
+
+      if BL not in Buffer.Line_Data'Range then
+         return;
+      end if;
+
+      The_Data := Buffer.Line_Data (BL).Side_Info_Data;
+
+      if The_Data = null then
+         return;
+      end if;
+
+      for Column in The_Data'Range loop
+         declare
+            Position : Message_Reference_List.Cursor :=
+              The_Data (Column).Messages.First;
+         begin
+            --  This code doesn't use a "for ... of" loop: deleting during
+            --  such an iteration would trip the container's tampering check.
+
+            while Message_Reference_List.Has_Element (Position) loop
+               if Message_Reference_List.Element (Position).Message = Message
+               then
+                  The_Data (Column).Messages.Delete (Position);
+
+                  return;
+               end if;
+
+               Message_Reference_List.Next (Position);
+            end loop;
+         end;
+      end loop;
+   end Remove_Message_Reference;
 
    ---------------------------
    -- Column_For_Identifier --
