@@ -97,8 +97,17 @@ package GPS.Globals is
    Batch_File                 : String_Access;
    Batch_Script               : String_Access;
    DAP_GDB_Adapter            : VSS.Strings.Virtual_String;
+   Debug_Session              : Boolean := False;
+   --  Set by the --debug switch: start a debug session on Debug_Executable,
+   --  which may be unset
+   Debug_Executable           : VSS.Strings.Virtual_String;
+   --  Program to debug, as given to the --debug switch, empty when the
+   --  switch was given without a value
+   Debug_Args                 : VSS.Strings.Virtual_String;
+   --  Arguments to pass to Debug_Executable, exactly as written on the
+   --  command line: they are left unsplit, the debugger itself performs
+   --  quote and word splitting
    Passed_Project_Name        : String_Access;
-   Program_Args               : String_Access;
    Protocol                   : String_Access;
    Startup_Dir                : String_Access;
    Target                     : String_Access;
