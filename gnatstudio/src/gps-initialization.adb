@@ -974,12 +974,34 @@ package body GPS.Initialization is
          Handle_X_Switch (ICS.Value (Value));
 
       elsif Switch = "--debug" then
-         Free (Program_Args);
+         Debug_Session := True;
+         Debug_Executable.Clear;
+         Debug_Args.Clear;
 
          if Value /= ICS.Null_Ptr then
-            Program_Args := new String'(ICS.Value (Value));
-         else
-            Program_Args := new String'("");
+            --  Split the value into the executable to debug and the arguments
+            --  to pass to it. The arguments are kept unsplit: the debugger
+            --  itself performs quote and word splitting.
+
+            declare
+               Args  : constant String := ICS.Value (Value);
+               Blank : constant Natural :=
+                 Ada.Strings.Fixed.Index (Args, " ");
+
+            begin
+               if Blank = 0 then
+                  Debug_Executable :=
+                    VSS.Strings.Conversions.To_Virtual_String (Args);
+
+               else
+                  Debug_Executable :=
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Args (Args'First .. Blank - 1));
+                  Debug_Args :=
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Args (Blank + 1 .. Args'Last));
+               end if;
+            end;
          end if;
 
       elsif Switch = "--hide" then

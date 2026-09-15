@@ -753,7 +753,6 @@ procedure GPS.Main is
       Free (GPS.Globals.Target);
       Free (Protocol);
       Free (Passed_Project_Name);
-      Free (Program_Args);
 
       if Memory_Monitor then
          GNATCOLL.Memory.Dump
@@ -1800,7 +1799,7 @@ procedure GPS.Main is
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
 
-      if Program_Args /= null then
+      if Debug_Session then
          --  --debug has been specified
          --  Load project, and set debugger-related project attributes
 
@@ -1900,37 +1899,65 @@ procedure GPS.Main is
       --  Check if we have some autosaved files in the opened editors
       Src_Editor_Buffer.Check_Auto_Saved_Files (GPS_Main.Kernel);
 
-      if Program_Args /= null then
+      if Debug_Session then
          --  Initialize the debugger after having executed scripts if any,
          --  so that it is possible to set up the environment before starting
          --  a debug session.
          --  Needs to be done after the call to Show, so that the GNAT Studio
          --  window already has a proper size, otherwise we might end up with
          --  windows with height=0 or width=0
-         if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
-            declare
-               File : Virtual_File := Create_From_Base (+Program_Args.all);
-            begin
-               --  If we are on Windows ahd the file does not exist, try to
-               --  append the file extension.
-               --  This can be useful on Cygwin, where the extension if often
-               --  omitted.
-               if Config.Host = Windows and then not File.Is_Regular_File then
-                  File := Create_From_Base (+Program_Args.all & ".exe");
+
+         declare
+            Executable : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String (Debug_Executable);
+            Arguments  : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String (Debug_Args);
+
+         begin
+            if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
+               if Arguments /= "" then
+                  GPS_Main.Kernel.Insert
+                    ("--debug: passing arguments to the debugged program is"
+                     & " not supported by the DAP debugger, ignoring '"
+                     & Arguments & "'",
+                     Mode => Error);
                end if;
 
-               GNATCOLL.VFS.Normalize_Path (File);
-               DAP.Module.Initialize_Debugger
-                 (Kernel  => GPS_Main.Kernel,
-                  Project =>
-                    (if Empty_Project then No_Project
-                     else Get_Project (GPS_Main.Kernel)),
-                  File    => File);
-            end;
-         else
-            GVD_Module.Initialize_Debugger
-              (Kernel => GPS_Main.Kernel, Args => Program_Args.all);
-         end if;
+               declare
+                  File : Virtual_File :=
+                    (if Executable = ""
+                     then No_File
+                     else Create_From_Base (+Executable));
+               begin
+                  --  If we are on Windows ahd the file does not exist, try to
+                  --  append the file extension.
+                  --  This can be useful on Cygwin, where the extension if
+                  --  often omitted.
+                  if Config.Host = Windows
+                    and then File /= No_File
+                    and then not File.Is_Regular_File
+                  then
+                     File := Create_From_Base (+Executable & ".exe");
+                  end if;
+
+                  GNATCOLL.VFS.Normalize_Path (File);
+                  DAP.Module.Initialize_Debugger
+                    (Kernel  => GPS_Main.Kernel,
+                     Project =>
+                       (if Empty_Project then No_Project
+                        else Get_Project (GPS_Main.Kernel)),
+                     File    => File);
+               end;
+
+            else
+               GVD_Module.Initialize_Debugger
+                 (Kernel => GPS_Main.Kernel,
+                  Args   =>
+                    (if Arguments = ""
+                     then Executable
+                     else Executable & " " & Arguments));
+            end if;
+         end;
       end if;
 
       --  Execute the startup scripts now, even though it is recommended that

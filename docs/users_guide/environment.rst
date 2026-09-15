@@ -47,6 +47,11 @@ The command line options are::
                                     must be used with relocate-build-tree
      --ignore-saved-scenario-values Ignore the scenario values saved in .gnatstudio
 
+Arguments for the program to debug are passed along with its name, as in
+:command:`gnatstudio --debug="program arg1 arg2"`. This is supported by the
+GDB debuggers only: when the DAP debugger is selected, the arguments are
+ignored and an error is reported in the :guilabel:`Messages` view.
+
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
 searched anywhere on the project's source path
