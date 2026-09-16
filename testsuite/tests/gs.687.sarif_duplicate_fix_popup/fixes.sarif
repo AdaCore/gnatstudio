@@ -1,0 +1,195 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "TestChecker",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "redundant_null",
+              "name": "redundant_null",
+              "shortDescription": {
+                "text": "redundant null statement"
+              }
+            },
+            {
+              "id": "missing_statement",
+              "name": "missing_statement",
+              "shortDescription": {
+                "text": "missing null statement"
+              }
+            },
+            {
+              "id": "use_for_of",
+              "name": "use_for_of",
+              "shortDescription": {
+                "text": "FOR loop may be replaced by a FOR OF loop"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "redundant_null",
+          "level": "warning",
+          "message": {
+            "text": "redundant null statement"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 4,
+                  "endLine": 7,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "Remove redundant null statement"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "foo.adb"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 7,
+                        "startColumn": 1,
+                        "endLine": 8,
+                        "endColumn": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "missing_statement",
+          "level": "warning",
+          "message": {
+            "text": "missing null statement before Put_Line"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 4,
+                  "endLine": 14,
+                  "endColumn": 11
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "Insert null statement"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "foo.adb"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 14,
+                        "startColumn": 1,
+                        "endLine": 14,
+                        "endColumn": 1
+                      },
+                      "insertedContent": {
+                        "text": "   null;\n"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "ruleId": "use_for_of",
+          "level": "warning",
+          "message": {
+            "text": "FOR loop may be replaced by a FOR OF loop"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb"
+                },
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 4,
+                  "endLine": 12,
+                  "endColumn": 13
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "Use FOR OF loop"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "foo.adb"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 10,
+                        "startColumn": 10,
+                        "endLine": 10,
+                        "endColumn": 12
+                      },
+                      "insertedContent": {
+                        "text": "of"
+                      }
+                    },
+                    {
+                      "deletedRegion": {
+                        "startLine": 10,
+                        "startColumn": 14,
+                        "endLine": 10,
+                        "endColumn": 20
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

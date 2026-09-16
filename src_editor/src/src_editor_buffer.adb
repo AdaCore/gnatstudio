@@ -8109,10 +8109,20 @@ package body Src_Editor_Buffer is
       Free (X.Action);
 
       if Free_Messages then
-         for Reference of X.Messages loop
-            Remove_Message (Buffer, Reference);
+         --  Remove_Message now deletes the message's own reference from the
+         --  side information, that is from X.Messages itself. Drain the list
+         --  one element at a time instead of iterating over it: a cursor or
+         --  a "for ... of" loop would be invalidated by that deletion.
+
+         while not X.Messages.Is_Empty loop
+            declare
+               Reference : constant Message_Reference :=
+                 X.Messages.First_Element;
+            begin
+               X.Messages.Delete_First;
+               Remove_Message (Buffer, Reference);
+            end;
          end loop;
-         X.Messages.Clear;
       end if;
    end Free;
 
