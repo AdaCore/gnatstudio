@@ -1,0 +1,13 @@
+main.adb:
+100% of 3 lines covered
+100% statement coverage (3 out of 3)
+
+Coverage level: stmt
+   1 .: with Pkg;
+   2 .: 
+   3 .: procedure Main is
+   4 +:    Dummy : Boolean;
+   5 .: begin
+   6 +:    Dummy := Pkg.Check (True, True);
+   7 +:    Dummy := Pkg.Check (True, False);
+   8 .: end Main;

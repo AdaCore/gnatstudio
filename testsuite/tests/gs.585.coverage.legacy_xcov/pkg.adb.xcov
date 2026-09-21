@@ -1,0 +1,15 @@
+pkg.adb:
+50% of 2 lines covered
+   1 .: package body Pkg is
+   2 .: 
+   3 .:    function Check (A, B : Boolean) return Boolean is
+   4 .:    begin
+   5 +:       return A and then B;
+   6 .:    end Check;
+   7 .: 
+   8 .:    function Unused (A, B : Boolean) return Boolean is
+   9 .:    begin
+  10 -:       return A or else B;
+  11 .:    end Unused;
+  12 .: 
+  13 .: end Pkg;

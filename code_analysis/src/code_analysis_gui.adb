@@ -75,10 +75,13 @@ package body Code_Analysis_GUI is
           Cov_Col       => GType_String,
           Cov_Sort      => GType_Int,
           Cov_Bar_Txt   => GType_String,
-          Cov_Bar_Val   => GType_Int),
+          Cov_Bar_Val   => GType_Int,
+          Cov_Bar_Label => GType_String,
+          Cov_Tooltip   => GType_String),
          Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
       View.Model := View.Tree.Model;
+      View.Tree.Set_Tooltip_Column (Cov_Tooltip);
 
       ------------------
       --  Error_Board --
@@ -174,7 +177,10 @@ package body Code_Analysis_GUI is
       Set_Title (View.Cov_Percent_Text, -"%");
       Set_Reorderable (View.Cov_Percent_Text, True);
       Set_Resizable (View.Cov_Percent_Text, True);
-      Set_Sort_Column_Id (View.Cov_Percent_Text, Cov_Sort);
+      Set_Sort_Column_Id (View.Cov_Percent_Text, Cov_Bar_Val);
+      --  Sort by the percentage itself, as the progress bar column does: a
+      --  raw count of uncovered items would be actively misleading now that
+      --  one tree can mix criteria.
 
       Gtk_New (View.Cov_Percent);
       Dummy := Append_Column (View.Tree, View.Cov_Percent);
@@ -185,10 +191,7 @@ package body Code_Analysis_GUI is
          Progress_Bar_Width_Cst);
       Pack_Start (View.Cov_Percent, Bar_Render, False);
       Add_Attribute (View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
-      Glib.Properties.Set_Property
-        (Bar_Render,
-         Gtk.Cell_Renderer_Progress.Text_Property,
-         "");
+      Add_Attribute (View.Cov_Percent, Bar_Render, "text", Cov_Bar_Label);
       Set_Resizable (View.Cov_Percent, True);
       Set_Reorderable (View.Cov_Percent, True);
       Set_Sort_Column_Id (View.Cov_Percent, Cov_Bar_Val);

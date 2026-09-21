@@ -93,6 +93,15 @@ package Code_Analysis_GUI is
    Cov_Bar_Val : constant := 8;
    --  Gtk_Tree_Model column number dedicated to the raw coverage percentage
    --  values, in order to be use in sorting operations
+   Cov_Bar_Label : constant := 9;
+   --  Gtk_Tree_Model column number dedicated to the name of the coverage
+   --  criterion the displayed percentage was computed from (e.g. "MC/DC",
+   --  or "lines" for our own line-based computation). Displayed inside the
+   --  progress bar, so that percentages measuring different things are never
+   --  mistaken for one another.
+   Cov_Tooltip : constant := 10;
+   --  Gtk_Tree_Model column number dedicated to the full coverage breakdown
+   --  of a node, displayed as the row's tooltip
 
    Progress_Bar_Width_Cst : constant Gint := 150;
    --  Constant used to set the width of the progress bars of the analysis

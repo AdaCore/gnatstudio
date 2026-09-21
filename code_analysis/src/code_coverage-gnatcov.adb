@@ -107,6 +107,77 @@ package body Code_Coverage.GNATcov is
       Location_Regexp   : constant Pattern_Matcher := Compile
         ("\sat (\d+):(\d+)\s", Multiple_Lines);
       Location_Matches  : Match_Array (0 .. 2);
+
+      Metric_Regexp     : constant Pattern_Matcher := Compile
+        ("^\d+% (.+) coverage \((\d+) out of (\d+)\)", Multiple_Lines);
+      Level_Regexp      : constant Pattern_Matcher := Compile
+        ("^Coverage level: *(.*)$", Multiple_Lines);
+
+      procedure Parse_Header (Header : String);
+      --  Read from the .xcov header the coverage figures GNATcoverage reports
+      --  for itself, together with the coverage level it was invoked with.
+      --  Older artifacts carry neither, in which case nothing is stored and
+      --  the report falls back on our own line-based computation.
+
+      ------------------
+      -- Parse_Header --
+      ------------------
+
+      procedure Parse_Header (Header : String) is
+         Data    : constant access Node_Coverage := Node_Coverage
+           (File_Node.Analysis_Data.Coverage_Data.all)'Access;
+         Matches : Match_Array (0 .. 3);
+         Current : Natural := Header'First;
+      begin
+         Data.Metrics.Clear;
+         Data.Level    := Null_Unbounded_String;
+         Data.Nb_Files := 0;
+
+         while Current <= Header'Last loop
+            Match (Metric_Regexp, Header, Matches, Current);
+
+            exit when Matches (0) = No_Match;
+
+            declare
+               Name : constant String :=
+                 Header (Matches (1).First .. Matches (1).Last);
+            begin
+               Data.Metrics.Append
+                 (Coverage_Metric'
+                    (Kind     => Metric_Kind_From_Name (Name),
+                     Name     => To_Unbounded_String (Name),
+                     Covered  => Natural'Value
+                       (Header (Matches (2).First .. Matches (2).Last)),
+                     Total    => Natural'Value
+                       (Header (Matches (3).First .. Matches (3).Last)),
+                     Nb_Files => 1,
+                     Missing  => <>));
+            end;
+
+            Current := Matches (0).Last + 1;
+         end loop;
+
+         if not Data.Metrics.Is_Empty then
+            Data.Nb_Files := 1;
+
+            Match (Level_Regexp, Header, Matches, Header'First);
+
+            if Matches (0) /= No_Match then
+               Data.Level := To_Unbounded_String
+                 (Trim
+                    (Header (Matches (1).First .. Matches (1).Last), Both));
+            end if;
+         end if;
+
+      exception
+         when others =>
+            --  A surprise in the header must never cost us the line data
+
+            Data.Metrics.Clear;
+            Data.Level    := Null_Unbounded_String;
+            Data.Nb_Files := 0;
+      end Parse_Header;
+
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
          File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -166,11 +237,18 @@ package body Code_Coverage.GNATcov is
       File_Node.Lines.all := (others => Null_Line);
       Current := File_Contents'First;
 
-      --  Skip first two lines: file name and coverage statistic information
+      --  Parse the header, i.e. everything that precedes the first annotated
+      --  source line. Old artifacts only carry the file name and the
+      --  line-based statistic there; newer ones also report GNATcoverage's
+      --  own coverage figures and the level it was invoked with.
 
-      Current := Index (File_Contents.all, (1 => ASCII.LF), Current + 1);
-      Current := Index (File_Contents.all, (1 => ASCII.LF), Current + 1);
-      Current := Current + 1;
+      Match (Line_Regexp, File_Contents.all, Line_Matches, Current);
+      Parse_Header
+        (File_Contents
+           (Current
+            .. (if Line_Matches (0) = No_Match
+                then File_Contents'Last
+                else Line_Matches (0).First - 1)));
 
       loop
          Match (Line_Regexp, File_Contents.all, Line_Matches, Current);
