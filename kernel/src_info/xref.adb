@@ -979,7 +979,8 @@ package body Xref is
 
             if H_Loc /= No_Location
               and then
-                --  If we found nothing, use the information from the constructs.
+                --  If we found nothing, use the information from the
+                --  constructs.
                 (Candidate = No_Location
 
                  --  it's OK to return the first entity.

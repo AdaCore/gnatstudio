@@ -1547,7 +1547,7 @@ package body C_Analyzer is
       --  Start of processing for Analyze_C_Source
 
    begin
-      -- Analyze_C_Source
+      --  Analyze_C_Source
       Indent_Separate_Line (Tok_If) := Indent_Extra;
       Indent_Separate_Line (Tok_Else) := Indent_Extra;
       Indent_Separate_Line (Tok_For) := Indent_Extra;

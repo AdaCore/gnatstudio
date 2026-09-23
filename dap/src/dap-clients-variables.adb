@@ -463,9 +463,9 @@ package body DAP.Clients.Variables is
                Current :=
                  To_Lowercase.Transform (Element (Current_Cursor).Data.name);
                if Current = Part
-                 --  for Globals GDB sends variables' names prepended by module's
-                 --  name like `help_module.help_module_id` where actual
-                 --  variable's name is `help_module_id`
+                 --  for Globals GDB sends variables' names prepended by
+                 --  module's name like `help_module.help_module_id` where
+                 --  actual variable's name is `help_module_id`
                  or else (First and then Current.Ends_With ("." & Part))
                then
                   --  found `help_module.help_module_id` or `.help_module_id`

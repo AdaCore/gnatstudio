@@ -717,7 +717,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                         Next (T, 3);
                         while Element (T).Code /= R_Brace loop
-                           -- '}'
+                           --  '}'
                            if Is_Identifier (T, "name") then
                               Next (T, 2);
                               N_Name := Element (T).Text;
@@ -1806,7 +1806,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          --  Skip register-names=[
          Next (C, 3);
          while Element (C).Code /= R_Bracket loop
-            -- /= ']'
+            --  /= ']'
             Debugger.Registers.Append (Element (C).Text.all);
 
             if Element (C).Text.all /= "" then
@@ -1913,7 +1913,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          --  Skip register-values=[
          Next (C, 3);
          while Element (C).Code /= R_Bracket loop
-            -- /= ']'
+            --  /= ']'
             if Element (C).Code = L_Brace then
                Next (C, 1);
                while Element (C).Code /= R_Brace loop
@@ -2456,7 +2456,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          --       [frame={level="0",
          --               args=[{name="this",
          --                      value=
-         --                        "(layout => 0x0, side => 0, display => 0x64d010)"},
+         --                        "(layout => 0x0, side => 0,
+         --                          display => 0x64d010)"},
          --                     {name="size",value="5"}]},
          --        frame={level="1",args=[]}]
 
@@ -2949,7 +2950,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          --  Skip body=[
          Next (C, 3);
          if Element (C).Code = R_Bracket then
-            -- ']'
+            --  ']'
             return;
          end if;
 
@@ -2965,7 +2966,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                "name"]);
 
          loop
-            -- over elements
+            --  over elements
             if Element (C).Code = Comma then
                Next (C, 1); -- skip ',' between elements
 
@@ -2979,7 +2980,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
             --                             ^^^  replace by 7 * ""
 
             while Element (C).Code /= R_Brace loop
-               -- over elemet tags till '}'
+               --  over elemet tags till '}'
                if Element (C).Code = Comma then
                   Next (C, 1); -- skip ',' between tags
 
@@ -3154,7 +3155,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       while Element (C).Code /= R_Bracket loop
-         -- last ']'
+         --  last ']'
          --  over elements
 
          Next (C, 1); -- skip starting "{"

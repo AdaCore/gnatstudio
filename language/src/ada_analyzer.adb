@@ -1125,7 +1125,9 @@ package body Ada_Analyzer is
 
       begin
          if Align_On /= Tok_Colon and then Align_On /= Tok_Arrow
-           --  and then Align_On /= Tok_Colon_Equal  ??? not supported yet
+         --  !pp-off
+         --  and then Align_On /= Tok_Colon_Equal  ??? not supported yet
+         --  !pp-on
          then
             return 0;
          end if;

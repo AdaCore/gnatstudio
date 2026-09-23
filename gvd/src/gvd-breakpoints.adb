@@ -1533,10 +1533,10 @@ package body GVD.Breakpoints is
                   Unhandled : constant Boolean :=
                     Get_Active (Self.Stop_Not_Handled_Exception);
                begin
-                  --  Some of the strings below deal with the GUI, and thus should
-                  --  be translated for internationalization. Others come from
-                  --  gdb, and should not be translated. This explains why some
-                  --  are preceded by '-'.
+                  --  Some of the strings below deal with the GUI, and thus
+                  --  should be translated for internationalization.
+                  --  Others come from gdb, and should not be translated.
+                  --  This explains why some are preceded by '-'.
 
                   if Name = -"All Ada exceptions" then
                      Num :=
@@ -1576,8 +1576,8 @@ package body GVD.Breakpoints is
                      else GVD.Types.Write);
                begin
                   if Self.Process /= null then
-                     --  gdb don't set wachpoint when variable is not in the scope
-                     --  so it is not possible to pre-set such breakpoint
+                     --  gdb don't set wachpoint when variable is not in the
+                     --  scope so it is not possible to pre-set such breakpoint
                      Num :=
                        Watch
                          (Self.Process.Debugger,

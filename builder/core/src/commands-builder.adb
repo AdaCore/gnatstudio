@@ -101,13 +101,14 @@ package body Commands.Builder is
                 (Builder.Kernel,
                  Force_File,
 
-                 --  We want to recompile the given file in all possible contexts
-                 --  to detect errors as early as possible. For instance, when
-                 --  using an aggregate project we want to compile the file in
-                 --  all the projects to which it belongs.
+                 --  We want to recompile the given file in all possible
+                 --  contexts to detect errors as early as possible.
+                 --  For instance, when using an aggregate project we want
+                 --  to compile the file in all the projects to which
+                 --  it belongs.
                  --  The simplest is therefore to pass the root project.
-                 --  since using Info_Set (Force_File).First_Element.Project will
-                 --  only use one of the possible projects.
+                 --  since using Info_Set (Force_File).First_Element.Project
+                 --  will only use one of the possible projects.
 
                  Builder.Kernel.Registry.Tree.Root_Project);
          end if;

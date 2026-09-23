@@ -571,7 +571,7 @@ package body MI.Lexer is
                         Line   => Sh.Line,
                         Column => Sh.Column));
                else
-                  -- ...anything else is an invalid token.
+                  --  ...anything else is an invalid token.
                   Clear_Token_List (List);
 
                   raise Lexer_Error

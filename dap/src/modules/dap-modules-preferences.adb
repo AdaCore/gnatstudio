@@ -103,7 +103,8 @@ package body DAP.Modules.Preferences is
            Path    => "Debugger:Assembly",
            Label   => "Assembly range size",
            Doc     =>
-             "Number of lines to display initially (0 to show whole subprogram).",
+             "Number of lines to display initially "
+             & "(0 to show whole subprogram).",
            Minimum => 0,
            Maximum => 100000,
            Default => 200);

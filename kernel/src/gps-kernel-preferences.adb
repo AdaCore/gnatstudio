@@ -649,8 +649,8 @@ package body GPS.Kernel.Preferences is
            Name    => "General-Desktop-Backup-Save",
            Label   => -"Perform backup saves in case of crash/freeze.",
            Doc     =>
-             -("Save size and position of views in a backup file. Use this file"
-               & " in the next session to restore the desktop."),
+             -("Save size and position of views in a backup file. Use "
+               & "this file in the next session to restore the desktop."),
            Default => False);
 
       Save_Desktop_On_Exit :=
@@ -679,7 +679,8 @@ package body GPS.Kernel.Preferences is
            Label   => -"Default builder",
            Doc     =>
              -("Select the builder to use when compiling sources. Gprbuild is "
-               & "the recommend solution especially for multi-language builds."),
+               & "the recommend solution especially for multi-language "
+               & "builds."),
            Path    => -"General:Behavior",
            Default => Default_Builder);
 
@@ -848,10 +849,10 @@ package body GPS.Kernel.Preferences is
            Default => False,
            Doc     =>
              -("The selected region normally remains selected when the"
-               & " clipboard is modified by a Cut/Copy/Paste operation. If this"
-               & " option is set, the selection will become unset when the"
-               & " clipboard is modified. This is similar to the Emacs mode"
-               & " with the same name."),
+               & " clipboard is modified by a Cut/Copy/Paste operation. If"
+               & "this option is set, the selection will become unset when "
+               & "the clipboard is modified. This is similar to the Emacs "
+               & "mode with the same name."),
            Label   => -"Transient mark",
            Path    => -"Editor:Behavior");
 
@@ -1297,7 +1298,8 @@ package body GPS.Kernel.Preferences is
           (Name    => "Diff-Utils-Diff",
            Label   => -"Diff command",
            Doc     =>
-             -"Command and arguments to compute differences between two files.",
+             -("Command and arguments to compute differences between two "
+               & "files."),
            Default => Config.Default_Diff_Cmd,
            Path    => -"Visual diff:General");
 
@@ -1358,8 +1360,8 @@ package body GPS.Kernel.Preferences is
            Path    => -"Messages:GPS & Editors",
            Doc     =>
              -("Color for low priority messages (e.g: style errors). "
-               & "This preference is also used by external tools integrated in "
-               & "GNAT Studio (e.g: GNAT SAS)."),
+               & "This preference is also used by external tools integrated "
+               & "in GNAT Studio (e.g: GNAT SAS)."),
            Default => "#FFFFF0");
 
       Info_Messages_Highlight :=
@@ -1538,7 +1540,8 @@ package body GPS.Kernel.Preferences is
           (Name    => "GPS6-Messages-Alternate-Secondary-Regpat",
            Label   => -"Alternate secondary pattern",
            Doc     =>
-             -"Pattern used to detect alternate secondary locations in messages",
+             -("Pattern used to detect alternate secondary locations"
+               & " in messages"),
            Default => "(at line (\d+))",
            Path    => ":Compiler messages");
 
@@ -1547,7 +1550,8 @@ package body GPS.Kernel.Preferences is
           (Name    => "GPS6-Messages-Alternate-Secondary-Line",
            Label   => -"Alternate secondary line index",
            Doc     =>
-             -"Index of secondary location line number in the alternate pattern",
+             -("Index of secondary location line number "
+               & "in the alternate pattern"),
            Minimum => 1,
            Maximum => 99,
            Default => 2,
@@ -1567,7 +1571,8 @@ package body GPS.Kernel.Preferences is
            False,
            Label => -"Show only errors",
            Doc   =>
-             -"Only show the messages of high importance in the Locations view");
+             -("Only show the messages of high importance"
+               & " in the Locations view"));
 
       -- Project Editor --
 
@@ -1744,8 +1749,8 @@ package body GPS.Kernel.Preferences is
            Doc     =>
              -("Extract documentation"
                & " for an entity by first looking at the leading comments, and"
-               & " fallback to the comments after the entity declaration if not"
-               & " found (reversed when preference is disabled)."),
+               & " fallback to the comments after the entity declaratio"
+               & " if not found (reversed when preference is disabled)."),
            Default => False,
            Path    => -"Documentation:General");
 
@@ -1792,8 +1797,9 @@ package body GPS.Kernel.Preferences is
            Doc     =>
              -("When retrieving the data from the gnathub.db, "
                & "do a semantic pass to correct the locations and add extra "
-               & "information like the entity type icon. Disabling this preference"
-               & " will speedup the process at the cost of imprecise data."),
+               & "information like the entity type icon. Disabling this "
+               & "preference will speedup the process at the cost of "
+               & "imprecise data."),
            Default => True,
            Path    => -"GNAThub");
 
@@ -1944,9 +1950,9 @@ package body GPS.Kernel.Preferences is
            Default => True,
            Label   => -"Ada rename in comment",
            Doc     =>
-             -"Enable also rename a variable name in all the comments."
-             & " There are no semantic check so the name must be unique enough "
-             & "to avoid false positive.",
+             -"Enable also rename a variable name in all the comments. "
+             & "There are no semantic check so the name must be unique "
+             & "enough to avoid false positive.",
            Path    => "Editor/Ada:Renaming");
 
       LSP_Ada_Formatting_Fallback :=
@@ -1991,9 +1997,9 @@ package body GPS.Kernel.Preferences is
            Label   => "Display diagnostics",
            Doc     =>
              "Choose the display policy for diagnostics coming from"
-             & " LSP servers. Diagnostics with several locations accross multiple"
-             & " files will still appear in the Locations view for proper"
-             & " navigation.",
+             & " LSP servers. Diagnostics with several locations accross"
+             & " multiple files will still appear in the Locations view for"
+             & " proper navigation.",
            Default => Editor_And_Locations);
 
       Page :=

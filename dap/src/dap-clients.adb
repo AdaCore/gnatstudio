@@ -2096,7 +2096,7 @@ package body DAP.Clients is
             end if;
 
             if not VSS_Cmd.Is_Empty then
-               -- Command is not processed yet
+               --  Command is not processed yet
                Check_Ignore_Command;
             end if;
 

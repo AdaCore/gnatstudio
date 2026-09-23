@@ -59,7 +59,7 @@ package VSS.Implementation.Python3 is
      (Object : GNATCOLL.Python.PyObject) return GNATCOLL.Python.PyObject
    with Import, Convention => C, External_Name => "PyUnicode_AsUTF8String";
    --  Encode a Unicode object using UTF-8 and return the result as Python
-   --  bytes object. Error handling is âstrictâ. Return NULL if an
+   --  bytes object. Error handling is strict. Return NULL if an
    --  exception was raised by the codec.
    --
    --  The function fails if the string contains surrogate code points (U+D800

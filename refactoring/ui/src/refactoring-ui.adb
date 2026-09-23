@@ -138,7 +138,8 @@ package body Refactoring.UI is
              Dialog
                (Kernel,
                 -"Cross-references not up-to-date",
-                -("The following files contain references to the entity, but the"
+                -("The following files contain references to the entity, "
+                  & "but the"
                   & ASCII.LF
                   & "cross-reference information is not up-to-date."
                   & ASCII.LF

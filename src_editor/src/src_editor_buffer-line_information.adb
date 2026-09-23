@@ -1355,7 +1355,9 @@ package body Src_Editor_Buffer.Line_Information is
             if Visualize_Internal_Buffers.Is_Active
               or else
                 (Editable_Line > 0 and then Is_Iter_Visible (Buffer, Iter))
-              --  don't draw 0 (codepeer)
+            --  !pp-off
+            --  don't draw 0 (codepeer)
+            --  !pp-on
             then
                Draw_Number (Integer (Editable_Line), Num_Start_X, Y, 0.0);
             end if;

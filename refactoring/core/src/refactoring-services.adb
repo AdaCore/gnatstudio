@@ -1188,8 +1188,8 @@ package body Refactoring.Services is
                                  case PType is
                                     when Out_Parameter =>
                                        --  the entity is needed outside of the
-                                       --  extracted code (both to read its value
-                                       --  and set it for the caller)
+                                       --  extracted code (both to read its
+                                       --  value and set it for the caller)
                                        Flags (Flag_Modified_After) := True;
                                        Flags (Flag_Read_After) := True;
 

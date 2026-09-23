@@ -62,9 +62,9 @@ package body GVD.Preferences is
            Doc     =>
              -("Enable pending breakpoints. A pending breakpoint will be "
                & "re-evaluated every time a shared library is loaded.  If the "
-               & "location can be resolved to an address at one of those times, "
-               & "the pending breakpoint will become a real breakpoint at "
-               & "that address."),
+               & "location can be resolved to an address at one of those "
+               & "times, the pending breakpoint will become a real breakpoint "
+               & "at that address."),
            Default => True);
 
       Open_Main_Unit :=
@@ -158,7 +158,8 @@ package body GVD.Preferences is
            Path    => -"Debugger:Assembly",
            Label   => -"Assembly range size",
            Doc     =>
-             -"Number of lines to display initially (0 to show whole subprogram).",
+             -"Number of lines to display initially "
+             & "(0 to show whole subprogram).",
            Minimum => 0,
            Maximum => 100000,
            Default => 200);

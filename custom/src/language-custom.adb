@@ -363,7 +363,7 @@ package body Language.Custom is
       end Parse_Shared_Lib;
 
    begin
-      -- Initialize
+      --  Initialize
       Lang.Next := Custom_Root;
       Custom_Root := Lang;
 

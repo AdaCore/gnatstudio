@@ -1647,8 +1647,9 @@ package body GPS.Location_View is
            False,
            Label => -"Sort by subcategory",
            Doc   =>
-             -("Sort messages by their subcategory (error vs warning messages for"
-               & " instance). This also impacts the default sort order for files"));
+             -("Sort messages by their subcategory (error vs warning messages"
+               & " for instance). This also impacts the default sort order"
+               & " for files"));
       Auto_Jump_To_First :=
         Kernel.Get_Preferences.Create_Invisible_Pref
           ("locations-auto-jump-to-first",

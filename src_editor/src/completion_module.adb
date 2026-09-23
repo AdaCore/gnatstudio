@@ -1909,8 +1909,8 @@ package body Completion_Module is
              -("Control the completion filtering policy. "
                & ASCII.LF
                & "Setting it to 'Fuzzy' will allow the completion window to "
-               & "be more permissive when matching results (e.g: missing letters "
-               & "will be allowed)."),
+               & "be more permissive when matching results (e.g: missing "
+               & "letters will be allowed)."),
            Default => Fuzzy);
 
       Smart_Completion_Trigger_Timeout :=

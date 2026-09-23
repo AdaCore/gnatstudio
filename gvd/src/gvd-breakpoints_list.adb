@@ -1331,8 +1331,8 @@ package body GVD.Breakpoints_List is
                     & ASCII.LF
                     & "This can happen when the executable "
                     & "being debugged has not been compiled with the debug "
-                    & "flags or when the breakpoint's source file is not found "
-                    & "in the symbols table. This also can happen for "
+                    & "flags or when the breakpoint's source file is not "
+                    & "found in the symbols table. This also can happen for "
                     & "catchpoints."
                     & ASCII.LF
                     & "You should try to set them after a start command."

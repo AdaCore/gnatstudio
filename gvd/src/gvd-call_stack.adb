@@ -272,7 +272,9 @@ package body GVD.Call_Stack is
       --  Update the contents of the window
 
       if From < 1 or else Bt.First_Element.Frame_Id = 0
-        --  gdb returns frames only from the first one in CLI mode
+      --  !pp-off
+      --  gdb returns frames only from the first one in CLI mode
+      --  !pp-on
       then
          Clear (View.Model);
       end if;

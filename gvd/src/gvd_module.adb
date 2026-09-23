@@ -2389,9 +2389,9 @@ package body GVD_Module is
          new Load_File_Command,
          Description =>
            -("Opens a file selection dialog that allows you to choose a"
-             & " program to debug. The program to debug is either an executable"
-             & " for native debugging, or a partially linked module for cross"
-             & " environments (e.g VxWorks)."),
+             & " program to debug. The program to debug is either an"
+             & " executable for native debugging, or a partially linked module"
+             & " for cross environments (e.g VxWorks)."),
          Filter      => Debugger_Filter,
          Category    => -"Debug");
 

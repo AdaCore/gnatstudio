@@ -631,11 +631,11 @@ package body Tries is
                --  expect it to be filled later. However, this could be less
                --  drastric and controlled by a switch.
 
-               --                    Pointer.Cell_Parent.Children := Convert
-               --                      (Realloc
-               --                         (Convert (Pointer.Cell_Parent.Children),
-               --                          size_t (Pointer.Cell_Parent.Num_Children)
-               --                          * Component_Size));
+               --             Pointer.Cell_Parent.Children := Convert
+               --               (Realloc
+               --                   (Convert (Pointer.Cell_Parent.Children),
+               --                    size_t (Pointer.Cell_Parent.Num_Children)
+               --                    * Component_Size));
                end if;
             end if;
 

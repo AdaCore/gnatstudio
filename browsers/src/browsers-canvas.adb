@@ -451,7 +451,8 @@ package body Browsers.Canvas is
            Label => -"Use waypoints",
            Doc   =>
              (-("Insert waypoints in long edges when performing the"
-                & " layout of the graph. This might result in less edge crossings"
+                & " layout of the graph. This might result in less"
+                & " edge crossings"
                 & " but is sometimes harder to use interactively.")));
 
       --  Set css style for scrollbars
@@ -936,7 +937,8 @@ package body Browsers.Canvas is
               Tooltip =>
                 "Select the page format. You can use predefined "
                 & "formats (e.g: a4_portrait) via the combo box or specify "
-                & "a custom size with the following format: '<width>, <height>'");
+                & "a custom size with the following format: '<width>, "
+                & "<height>'");
 
          --  Add the predefined page formats to the combo box
          for P_Format in Predefined_Page_Format_Type loop

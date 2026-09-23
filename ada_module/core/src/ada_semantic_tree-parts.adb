@@ -285,11 +285,11 @@ package body Ada_Semantic_Tree.Parts is
          while Is_Parent_Scope (Scope_It, It) loop
 
             --  For each construct found in the scope:
-            --    If we found the corresponding construct in the dico, then
-            --      we create (or update) the parts record
-            --    If not, then we add the construct in the dico
-            --    If we are on a scope, then we call Analyze_Scope on recursively
-            --      on it.
+            --  If we found the corresponding construct in the dico, then
+            --  we create (or update) the parts record
+            --  If not, then we add the construct in the dico
+            --  If we are on a scope, then we call Analyze_Scope on recursively
+            --  on it.
 
             if Can_Have_Parts (Get_Construct (It).Category)
               and then Get_Construct (It).Name /= No_Symbol

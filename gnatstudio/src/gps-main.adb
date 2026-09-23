@@ -2040,7 +2040,8 @@ procedure GPS.Main is
          then
            Message
            & ASCII.LF
-           & "You will be asked to save modified files before GNAT Studio exits"
+           & "You will be asked to save modified files "
+           & "before GNAT Studio exits"
          else Message);
       Dead     : Boolean;
       pragma Unreferenced (Dead, Button);

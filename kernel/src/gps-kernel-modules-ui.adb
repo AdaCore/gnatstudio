@@ -3705,7 +3705,7 @@ package body GPS.Kernel.Modules.UI is
            Get_Attribute (Menu_Node, "label");
          Clean_Label   : constant String :=
            Parent_Path
-           & Escape_Menu_Name                        --  protect '/' in the name
+           & Escape_Menu_Name  --  protect '/' in the name
                   (Strip_Single_And_Unescape_Underscores
                      (Label));  --  remove '_' mnemonics
          Action        : constant DOM_String :=

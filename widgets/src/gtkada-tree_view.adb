@@ -946,8 +946,8 @@ package body Gtkada.Tree_View is
 
             Unref (Widget.Model);  --  owned by the filter
 
-            --  Create a Tree_Model_Sort wrapper around the Tree_Model_Filter to
-            --  when the tree view needs sorting capabilities.
+            --  Create a Tree_Model_Sort wrapper around the Tree_Model_Filter
+            --  to when the tree view needs sorting capabilities.
             if Capability_Type = Filtered_And_Sortable then
                Gtk_New_With_Model (Widget.Sortable_Model, +Widget.Filter);
                Initialize (Gtk_Tree_View (Widget), +Widget.Sortable_Model);

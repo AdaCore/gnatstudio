@@ -3791,9 +3791,10 @@ package body Vsearch is
            Path    => -":Search",
            Doc     =>
              -"Enable the incremental mode. In this mode, a search will be "
-             & "automatically performed whenever the search pattern is modified, "
-             & "starting from the current location to the next occurrence in the "
-             & "current file. It turns Close on Match off.",
+             & "automatically performed whenever the search pattern is "
+             & "modified,starting from the current location to the "
+             & "next occurrence in the current file. "
+             & "It turns Close on Match off.",
            Default => True);
 
       Select_On_Match :=
@@ -3803,11 +3804,11 @@ package body Vsearch is
            Label   => -"Select on match",
            Path    => -":Search",
            Doc     =>
-             -"When a match is found, give the focus to the matching editor. If"
-             & " unselected, the focus is left on the search window, which means"
-             & " you can keep typing Enter to go to the next search, but can't"
-             & " modify the editor directly. This option is ignored when the"
-             & " incremental mode is enabled.",
+             -"When a match is found, give the focus to the matching editor. "
+             & "If unselected, the focus is left on the search window, which "
+             & "means you can keep typing Enter to go to the next search, "
+             & "but can't modify the editor directly. This option is "
+             & "ignored when the incremental mode is enabled.",
            Default => False);
 
       Close_On_Match :=
@@ -3817,10 +3818,10 @@ package body Vsearch is
            Label   => -"Close on match",
            Path    => -":Search",
            Doc     =>
-             -"If this is selected, the search dialog is closed when a match is"
-             & " found. You can still search for the next occurrence by using"
-             & " the appropriate shortcut (Ctrl-N by default). It turns"
-             & " incremental mode off.",
+             -"If this is selected, the search dialog is closed when a match "
+             & "is found. You can still search for the next occurrence by "
+             & "using the appropriate shortcut (Ctrl-N by default). It turns "
+             & "incremental mode off.",
            Default => False);
 
       Ask_Confirmation_For_Replace_All :=

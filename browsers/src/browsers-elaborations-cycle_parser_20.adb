@@ -64,9 +64,9 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
    --      info:
    --      info:    Suggestions:
    --      info:
-   --      info:      remove pragma Elaborate for unit "b (body)" in unit "a
+   --      info:    remove pragma Elaborate for unit "b (body)" in unit "a
    --  (spec)"
-   --      info:      use the dynamic elaboration model (compiler switch -gnatE)
+   --      info:    use the dynamic elaboration model (compiler switch -gnatE)
    --      info:
 
    --  All units in all messages have the following structure
@@ -128,8 +128,10 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
    --        | aliasing of subprogram TARGET declared at UNIT:LINE:COLUMN
    --        | call to subprogram TARGET declared at UNIT:LINE:COLUMN
    --        | adjustment actions for type TARGET declared at UNIT:LINE:COLUMN
-   --        | finalization actions for type TARGET declared at UNIT:LINE:COLUMN
-   --        | initialization actions for type TARGET declared at UNIT:LINE:COLUMN
+   --        | finalization actions for type TARGET declared at
+   --          UNIT:LINE:COLUMN
+   --        | initialization actions for type TARGET declared at
+   --          UNIT:LINE:COLUMN
    --        | verification of Default_Initial_Condition for type TARGET
    --  declared at UNIT:LINE:COLUMN
    --        | verification of Initial_Condition declared at UNIT:LINE:COLUMN
@@ -183,7 +185,8 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
    --      TACTIC ::=
    --          diagnose all circularities (binder switch -d_C)
    --        | use the dynamic elaboration model (compiler switch -gnatE)
-   --        | change pragma Elaborate_All for unit UNIT to Elaborate in unit UNIT
+   --        | change pragma Elaborate_All for unit UNIT to Elaborate in unit
+   --        UNIT
    --        | remove pragma Elaborate_All for unit UNIT in unit UNIT
    --        | remove pragma Elaborate_Body in unit UNIT
    --        | remove pragma Elaborate for unit UNIT in unit UNIT

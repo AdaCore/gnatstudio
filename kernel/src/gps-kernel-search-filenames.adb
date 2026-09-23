@@ -342,8 +342,8 @@ package body GPS.Kernel.Search.Filenames is
            and then
              --  Other_Files is relying on Read_Dir without filtering the dir.
              --  Remove them at this point. The sources files should already be
-             --  in seen thus this check will impact only a minimal amount of files
-             --  put them in a buffer afterwards.
+             --  in seen thus this check will impact only a minimal amount of
+             --  files put them in a buffer afterwards.
              (Self.Data.Step /= Other_Files or else not F.Is_Directory)
          then
             C := Self.Pattern.Start (Text);

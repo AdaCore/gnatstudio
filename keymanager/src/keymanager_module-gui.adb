@@ -1338,7 +1338,8 @@ package body KeyManager_Module.GUI is
                                   & ASCII.LF
                                   & Old_Prefix
                                   & ASCII.LF
-                                  & (-"Do you want to remove other assignments?"),
+                                  & (-"Do you want to remove other"
+                                     & " assignments?"),
                                 Dialog_Type => Warning,
                                 Title       => -"Key shortcuts already exist",
                                 Parent      => Get_Main_Window (Ed.Kernel));

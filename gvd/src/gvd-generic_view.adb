@@ -121,7 +121,8 @@ package body GVD.Generic_View is
          --              if Kernel.Get_Main_Window /= null
          --                and then not Kernel.Get_Main_Window.In_Destruction
          --              then
-         --                 Views.Child_From_View (V).Close_Child (Force => True);
+         --                 Views.Child_From_View (V).Close_Child
+         --                    (Force => True);
          --              end if;
 
          end if;

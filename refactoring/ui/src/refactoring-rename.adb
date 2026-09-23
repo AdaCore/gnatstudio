@@ -222,8 +222,8 @@ package body Refactoring.Rename is
                   (Kernel,
                    Title         => -"References not replaced",
                    Msg           =>
-                     -("Some references could not be replaced because one or more files"
-                       & " were already modified"),
+                     -("Some references could not be replaced because one or "
+                       & "more files were already modified"),
                    Files         => Errors,
                    Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
                    Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)

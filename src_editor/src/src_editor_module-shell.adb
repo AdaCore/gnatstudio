@@ -809,7 +809,7 @@ package body Src_Editor_Module.Shell is
                   end if;
 
                else
-                  -- elsif Command = "create_mark" then <- always true
+                  --  elsif Command = "create_mark" then <- always true
                   Marker :=
                     Create_File_Marker
                       (Kernel,
@@ -3200,13 +3200,13 @@ package body Src_Editor_Module.Shell is
         (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
-      --        Register_Command
-      --          (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
-      --        Register_Command
-      --          (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
-      --        Register_Command
-      --          (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
-      --           EditorBuffer);
+      --     Register_Command
+      --       (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+      --     Register_Command
+      --       (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
+      --     Register_Command
+      --       (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
+      --        EditorBuffer);
       Register_Command
         (Kernel, "get_chars", 0, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

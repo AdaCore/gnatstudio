@@ -312,7 +312,7 @@ package Command_Lines is
         access function
           (Switch : String; Section : String; Parameter : Argument)
            return Boolean) return Command_Line;
-   --  This function creates a copy of given command line where some switÑhes
+   --  This function creates a copy of given command line where some switches
    --  are deleted according to Delete result.
 
    Invalid_Section : exception;

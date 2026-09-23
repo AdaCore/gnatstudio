@@ -918,7 +918,8 @@ package body Remote.View is
       else
          Ignore :=
            GPS_Message_Dialog
-             ("Remote configuration check has failed for the following reasons:"
+             ("Remote configuration check has failed for the"
+              & " following reasons:"
               & ASCII.LF
               & To_String (Reasons),
               Dialog_Type => Error,
@@ -930,7 +931,8 @@ package body Remote.View is
       when E : others =>
          Ignore :=
            GPS_Message_Dialog
-             ("Remote configuration check has failed for the following reasons:"
+             ("Remote configuration check has failed for the"
+              & " following reasons:"
               & ASCII.LF
               & "Exception received: "
               & ASCII.LF

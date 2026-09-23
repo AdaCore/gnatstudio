@@ -305,7 +305,9 @@ package body DAP.Views.Variables is
            or else
              (Params.Path /= Null_Gtk_Tree_Path
               and then Params.Item.Info.Id = Unknown_Id)
-           --  do not add child items when we are updating the view
+             --  !pp-off
+             --  do not add child items when we are updating the view
+             --  !pp-on
          then
             if Params.Path /= Null_Gtk_Tree_Path then
                Parent := View.Tree.Model.Get_Iter (Params.Path);

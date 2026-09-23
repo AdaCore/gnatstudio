@@ -376,8 +376,8 @@ package body Scenario_Views is
               GPS_Message_Dialog
                 (Msg         =>
                    "Your changes regarding scenario variables have not been "
-                   & "applied yet. Do you want to apply them before pursuing your "
-                   & "action?",
+                   & "applied yet. Do you want to apply them before pursuing "
+                   & "your action?",
                  Buttons     => Button_Yes or Button_No,
                  Dialog_Type => Confirmation,
                  Parent      => Kernel.Get_Main_Window);

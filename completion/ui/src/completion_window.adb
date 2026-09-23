@@ -1480,9 +1480,9 @@ package body Completion_Window is
                        constant GPS.Editors.Editor_Location'Class :=
                          Cursor_Loc.Forward_To_Word_End;
                   begin
-                     --  If we are in the middle of a word, we want to delete the
-                     --  text belonging to this word on right of the cursor too,
-                     --  so set Text_End after the last word character.
+                     --  If we are in the middle of a word, we want to delete
+                     --  the text belonging to this word on right of the cursor
+                     --  too, so set Text_End after the last word character.
                      --  Othwerise, set Text_End to the cursor location.
 
                      if End_Word_Loc.Offset > Cursor_Loc.Offset then

@@ -2664,7 +2664,9 @@ package body Src_Editor_Module is
       Lang_Name   : constant String := To_Lower (Lang.Get_Name);
       Pref_Suffix : constant String :=
         (if Lang_Name = "c" or else Lang_Name = "c++" or else Lang_Name = "cpp"
+           --  !pp-off
            --  Merge C and C++ together
+           --  !pp-on
          then "c++"
          else Lang_Name);
    begin

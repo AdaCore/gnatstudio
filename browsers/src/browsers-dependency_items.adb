@@ -998,8 +998,8 @@ package body Browsers.Dependency_Items is
          declare
             Info_Bar : constant Gtk_Info_Bar :=
               Create_Info_Bar
-                ("You need to re-compute the dependencies manually to take the "
-                 & "new value for ""Show implicit dependencies"" "
+                ("You need to re-compute the dependencies manually to take "
+                 & "the new value for ""Show implicit dependencies"" "
                  & "preference into account.",
                  Message_Warning);
          begin

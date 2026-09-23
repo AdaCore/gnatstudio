@@ -325,7 +325,8 @@ package body Log_File_Views is
                 (Msg         =>
                    "An exception has been raised while "
                    & "collecting traces for the Log view. Traces won't be  "
-                   & "available in the Log view during this GNAT Studio session.",
+                   & "available in the Log view during this GNAT Studio "
+                   & "session.",
                  Title       => "Problem detected with Log view",
                  Dialog_Type => Error);
          end;

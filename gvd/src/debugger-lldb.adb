@@ -2411,7 +2411,8 @@ package body Debugger.LLDB is
 
       Free (Lines);
 
-      --  Watchpoint 4: addr = 0x7fffffffd85c size = 4 state = enabled type = rw
+      --  Watchpoint 4: addr = 0x7fffffffd85c size = 4 state
+      --      = enabled type = rw
       --      declare @ '/gvd_testsuite/parse_c.c:44'
       --      watchpoint spec = 'A'
       --      new value: 1

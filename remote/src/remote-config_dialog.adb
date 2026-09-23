@@ -828,7 +828,8 @@ package body Remote.Config_Dialog is
       if not Dialog.Applied then
          Gtk_Resp :=
            GPS_Message_Dialog
-             (-"Cannot browse the selected server until Apply button is pressed",
+             (-"Cannot browse the selected server until Apply button"
+              & " is pressed",
               Dialog_Type => Error,
               Buttons     => Button_OK,
               Parent      => Gtk_Window (Widget.Widget.Get_Toplevel));
@@ -1807,8 +1808,8 @@ package body Remote.Config_Dialog is
            GPS_Message_Dialog
              (-"The server "
               & Dialog.Selected_Machine.all
-              & (-" has been modified. Do you want to save it before proceeding to"
-                 & " the next action ?"),
+              & (-" has been modified. Do you want to save it before "
+                 & "proceeding to the next action ?"),
               Dialog_Type => Confirmation,
               Buttons     => Button_OK or Button_Cancel,
               Parent      => Gtk_Window (Dialog));

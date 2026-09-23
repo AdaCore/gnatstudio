@@ -150,8 +150,8 @@ package Debugger.LLDB is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type);
 
-   --     overriding function Find_File
-   --       (Debugger : access LLDB_Debugger; File_Name : String) return String;
+   --  overriding function Find_File
+   --     (Debugger : access LLDB_Debugger; File_Name : String) return String;
 
    overriding
    procedure Set_Executable
