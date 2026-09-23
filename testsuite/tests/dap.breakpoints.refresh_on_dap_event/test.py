@@ -33,9 +33,10 @@ def test_driver():
     breakpoints = debug.breakpoints
     gps_assert(len(breakpoints), 3, "Should have 3 breakpoints")
 
-    # This will delete the breakpoint at the current location, so
-    # the first breakpoint we hit, a line 9.
-    debug.send("clear")
+    # Delete the breakpoint at the current location, line 9. Give it
+    # explicitly: in DAP mode GDB has no default source line for a bare
+    # "clear" and fails with "No source file specified.".
+    debug.send("clear main.adb:9")
     yield hook("debugger_breakpoint_deleted")
 
     debug.send("clear print")
