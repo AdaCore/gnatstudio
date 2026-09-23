@@ -23,9 +23,10 @@ package Completion.Ada is
 
    type Ada_Completion_Manager is new Completion_Manager with private;
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager;
-      Context : Completion_Context) return Completion_List;
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
+      return Completion_List;
    --  See inherited documentation
 
 private
@@ -34,9 +35,8 @@ private
       null;
    end record;
 
-   type Ada_Completion_Context is new Completion_Context_Record with
-      record
-         Expression : Parsed_Expression;
-      end record;
+   type Ada_Completion_Context is new Completion_Context_Record with record
+      Expression : Parsed_Expression;
+   end record;
 
 end Completion.Ada;

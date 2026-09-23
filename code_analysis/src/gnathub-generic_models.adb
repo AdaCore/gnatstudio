@@ -22,15 +22,16 @@ package body GNAThub.Generic_Models is
    use Glib;
 
    function History_Key
-     (Self : not null access Criteria_Model_Record'Class;
-      Item : Item_Access) return Histories.History_Key;
+     (Self : not null access Criteria_Model_Record'Class; Item : Item_Access)
+      return Histories.History_Key;
    --  Constructs history key for specified category
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear (Self : access Criteria_Model_Record) is
+   overriding
+   procedure Clear (Self : access Criteria_Model_Record) is
    begin
       Ordered_Set_Models.Ordered_Set_Model_Record (Self.all).Clear;
       Self.Selected_Items.Clear;
@@ -40,9 +41,9 @@ package body GNAThub.Generic_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Criteria_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Criteria_Model_Record; Index : Glib.Gint) return Glib.GType
    is
       pragma Unreferenced (Self);
 
@@ -62,7 +63,8 @@ package body GNAThub.Generic_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Criteria_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
@@ -75,7 +77,8 @@ package body GNAThub.Generic_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Criteria_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
@@ -125,8 +128,7 @@ package body GNAThub.Generic_Models is
    ----------
 
    procedure Hide
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access) is
    begin
       Self.Selected_Items.Exclude (Item);
       Histories.Set_History
@@ -165,14 +167,15 @@ package body GNAThub.Generic_Models is
    -----------------
 
    function History_Key
-     (Self : not null access Criteria_Model_Record'Class;
-      Item : Item_Access) return Histories.History_Key is
+     (Self : not null access Criteria_Model_Record'Class; Item : Item_Access)
+      return Histories.History_Key is
    begin
       return
         Histories.History_Key
           (Ada.Strings.Unbounded.To_String (Self.History_Prefix)
-             & '-'
-             & Get_History_Name (Item.all, Self.View) & "-active");
+           & '-'
+           & Get_History_Name (Item.all, Self.View)
+           & "-active");
    end History_Key;
 
    ----------------
@@ -202,7 +205,7 @@ package body GNAThub.Generic_Models is
            (Self.Kernel.Get_History.all, Self.History_Key (Item), Default);
 
          if Histories.Get_History
-             (Self.Kernel.Get_History.all, Self.History_Key (Item))
+              (Self.Kernel.Get_History.all, Self.History_Key (Item))
          then
             Self.Selected_Items.Insert (Item);
          end if;
@@ -211,7 +214,7 @@ package body GNAThub.Generic_Models is
    begin
       Ordered_Set_Models.Initialize (Self, Items);
       Self.Kernel := Kernel;
-      Self.View   := View;
+      Self.View := View;
       Self.History_Prefix :=
         Ada.Strings.Unbounded.To_Unbounded_String (History_Prefix);
       Items.Iterate (Restore'Access);
@@ -221,8 +224,8 @@ package body GNAThub.Generic_Models is
    -- Is_Empty --
    --------------
 
-   function Is_Empty
-     (Self : access Criteria_Model_Record'Class) return Boolean is
+   function Is_Empty (Self : access Criteria_Model_Record'Class) return Boolean
+   is
    begin
       return Self.Selected_Items.Is_Empty;
    end Is_Empty;
@@ -231,8 +234,7 @@ package body GNAThub.Generic_Models is
    -- Is_Full --
    -------------
 
-   function Is_Full
-     (Self : access Criteria_Model_Record'Class) return Boolean
+   function Is_Full (Self : access Criteria_Model_Record'Class) return Boolean
    is
       use type Ada.Containers.Count_Type;
 
@@ -245,13 +247,11 @@ package body GNAThub.Generic_Models is
    ----------
 
    procedure Show
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access) is
    begin
       Self.Selected_Items.Include (Item);
       Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Self.History_Key (Item), True);
+        (Self.Kernel.Get_History.all, Self.History_Key (Item), True);
 
       Self.Row_Changed (Item);
    end Show;

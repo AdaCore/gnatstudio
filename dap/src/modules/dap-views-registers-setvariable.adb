@@ -21,7 +21,8 @@ package body DAP.Views.Registers.SetVariable is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Variable_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetVariableResponse;
@@ -31,9 +32,7 @@ package body DAP.Views.Registers.SetVariable is
       pragma Unreferenced (Result);
 
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
    begin
       New_Request := null;
       View.Update;

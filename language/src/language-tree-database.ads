@@ -29,11 +29,11 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
 with GNATCOLL.Symbols;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
-with Language.Unknown;       use Language.Unknown;
-with Ada.Containers; use Ada.Containers;
+with Language.Unknown;           use Language.Unknown;
+with Ada.Containers;             use Ada.Containers;
 
 package Language.Tree.Database is
 
@@ -62,14 +62,14 @@ package Language.Tree.Database is
 
    type Tree_Language_Access is access all Tree_Language'Class;
 
-   function Get_Language
-     (Tree : access Tree_Language) return Language_Access is abstract;
+   function Get_Language (Tree : access Tree_Language) return Language_Access
+   is abstract;
    --  Return the language associated to this tree.
 
    procedure Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
-      Formater   : access Profile_Formater'Class;
+     (Lang         : access Tree_Language;
+      Entity       : Entity_Access;
+      Formater     : access Profile_Formater'Class;
       With_Aspects : Boolean := False);
    --  Return a formatted view of the profile of this construct - if any.
    --  For example, for subprogram, this would return
@@ -87,27 +87,29 @@ package Language.Tree.Database is
    --  its results in some cases.
 
    function Get_Declaration
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access;
+     (Lang : access Tree_Language; Entity : Entity_Access)
+      return Entity_Access;
    --  Return the declaration of the entity given in parameter.
 
-   overriding function Get_Name_Index
-     (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol;
+   overriding
+   function Get_Name_Index
+     (Lang : access Tree_Language; Construct : Simple_Construct_Information)
+      return GNATCOLL.Symbols.Symbol;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
 
-   overriding procedure Diff
+   overriding
+   procedure Diff
      (Lang               : access Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback);
 
    function Find_Declaration
-     (Lang     : access Tree_Language;
-      File     : Structured_File_Access;
-      Line     : Integer;
-      Column   : String_Index_Type) return Entity_Access;
+     (Lang   : access Tree_Language;
+      File   : Structured_File_Access;
+      Line   : Integer;
+      Column : String_Index_Type) return Entity_Access;
    --  Find a declaration for the location given in parameter - this is
    --  best effort based. The implementer is responsible to decide if the
    --  information he has is accurate enough or not. By default, just
@@ -124,7 +126,7 @@ package Language.Tree.Database is
       --  This will always be False for languages that do not support this
       --  feature.
 
-      Parenthesis_Loc    : String_Index_Type := 0;
+      Parenthesis_Loc : String_Index_Type := 0;
       --  Location of the parenthesis following the entity (for instance in a
       --  function call, or an Ada aggregate)
    end record;
@@ -133,33 +135,36 @@ package Language.Tree.Database is
    Invalid_Reference : constant Entity_Reference_Details;
 
    function Find_Reference_Details
-     (Lang    : access Tree_Language;
-      File    : Structured_File_Access;
-      Index   : String_Index_Type) return Entity_Reference_Details is abstract;
+     (Lang  : access Tree_Language;
+      File  : Structured_File_Access;
+      Index : String_Index_Type) return Entity_Reference_Details
+   is abstract;
    --  Return details about an entity reference within the given file
 
    function Find_First_Part
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access;
+     (Lang : access Tree_Language; Entity : Entity_Access)
+      return Entity_Access;
    --  Return the first part of the entity given in parameter. By default,
    --  return Entity.
 
    function Find_Next_Part
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access;
+     (Lang : access Tree_Language; Entity : Entity_Access)
+      return Entity_Access;
    --  Find the next part of the entity given in parameter if there is any.
    --  By default, return Entity.
 
    type Unknown_Tree_Language is new Tree_Language with private;
 
-   overriding function Get_Language
+   overriding
+   function Get_Language
      (Tree : access Unknown_Tree_Language) return Language_Access;
    --  See inherited documentation
 
-   overriding function Find_Reference_Details
-     (Lang    : access Unknown_Tree_Language;
-      File    : Structured_File_Access;
-      Index   : String_Index_Type) return Entity_Reference_Details;
+   overriding
+   function Find_Reference_Details
+     (Lang  : access Unknown_Tree_Language;
+      File  : Structured_File_Access;
+      Index : String_Index_Type) return Entity_Reference_Details;
    --  See inherited documentation
 
    Unknown_Tree_Lang : constant Tree_Language_Access;
@@ -169,8 +174,8 @@ package Language.Tree.Database is
    -------------------------
 
    type Abstract_Language_Handler_Record is abstract tagged null record;
-   type Abstract_Language_Handler
-     is access all Abstract_Language_Handler_Record'Class;
+   type Abstract_Language_Handler is
+     access all Abstract_Language_Handler_Record'Class;
    --  Type overridden in language_handlers.ads, which provide the necessary
    --  primitive operations to query the language associated with a file.
 
@@ -178,15 +183,15 @@ package Language.Tree.Database is
      (Handler           : access Abstract_Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language_Access
-      is abstract;
+   is abstract;
    --  Find the language of a given file.
    --  Return Unknown_Lang if no other language could be found.
 
    function Get_Tree_Language_From_File
      (Handler           : access Abstract_Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
-      From_Project_Only : Boolean := False)
-      return Tree_Language_Access is abstract;
+      From_Project_Only : Boolean := False) return Tree_Language_Access
+   is abstract;
    --  Same as above but returns the tree language
 
    ---------------------
@@ -202,15 +207,16 @@ package Language.Tree.Database is
    type Buffer_Provider_Access is access all Buffer_Provider'Class;
 
    function Get_Timestamp
-     (Provider : access Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return Integer is abstract;
+     (Provider : access Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return Integer
+   is abstract;
    --  Return a logical timestamp indicating the state of the buffer, so that
    --  clients can be spared the expensive calls to Get_Buffer
 
    function Get_Buffer
-     (Provider : access Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File)
-      return GNAT.Strings.String_Access is abstract;
+     (Provider : access Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return GNAT.Strings.String_Access
+   is abstract;
    --  Return the buffer corresponding to this buffer provider. The returned
    --  access type is supposed to be a copy of the actual buffer - it will be
    --  freed by the completion engine when needed.
@@ -221,14 +227,16 @@ package Language.Tree.Database is
 
    type File_Buffer_Provider is new Buffer_Provider with private;
 
-   overriding function Get_Timestamp
-     (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return Integer;
+   overriding
+   function Get_Timestamp
+     (Provider : access File_Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return Integer;
    --  See documentation of overridden declaration
 
-   overriding function Get_Buffer
-     (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
+   overriding
+   function Get_Buffer
+     (Provider : access File_Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return GNAT.Strings.String_Access;
    --  Return the buffer corresponding to the file given in parameter - by
    --  default just read the file.
    --  ??? What is the encoding of the returned data?
@@ -237,8 +245,8 @@ package Language.Tree.Database is
    -- Structured_File --
    ---------------------
 
-   overriding function "="
-     (Left, Right : Structured_File_Access) return Boolean;
+   overriding
+   function "=" (Left, Right : Structured_File_Access) return Boolean;
    pragma Inline ("=");
    --  This function performs a special equality between null pointers and
    --  "null" structured files (not associated with an actual file), which are
@@ -257,9 +265,8 @@ package Language.Tree.Database is
    --  Return true if the file is known to be referenced. Such files should
    --  not be deleted.
 
-   function Get_Tree
-     (File : Structured_File_Access) return Construct_Tree
-     with Inline;
+   function Get_Tree (File : Structured_File_Access) return Construct_Tree
+   with Inline;
    --  Return the complete tree corresponding to this file. It the tree is not
    --  cached, then it will be computed.
 
@@ -315,8 +322,7 @@ package Language.Tree.Database is
    --  Return the tree language associated to this file.
 
    procedure Update_Contents
-     (File  : Structured_File_Access;
-      Purge : Boolean := False);
+     (File : Structured_File_Access; Purge : Boolean := False);
    --  This function will re-analyze the full contents of the file.
    --  If Purge = True old content of File will be dropped and new one created
    --  from scratch. If there is a lot of changes it could be faster then
@@ -350,7 +356,8 @@ package Language.Tree.Database is
    --  Unlock the locked file, if any, and release update event if there's no
    --  more lock.
 
-   overriding procedure Finalize (This : in out Update_Lock);
+   overriding
+   procedure Finalize (This : in out Update_Lock);
    --  Same as before, but done automatically upon object finalization.
 
    -------------------
@@ -369,13 +376,14 @@ package Language.Tree.Database is
    function "<" (Left, Right : Entity_Access) return Boolean;
    --  Return a consistent order between the two entities.
 
-   overriding function "=" (Left, Right : Entity_Access) return Boolean;
+   overriding
+   function "=" (Left, Right : Entity_Access) return Boolean;
    pragma Inline ("=");
    --  Return true if the two entities actually point to the same construct
 
    function To_Entity_Access
-     (File       : Structured_File_Access;
-      Construct  : Construct_Tree_Iterator) return Entity_Access;
+     (File : Structured_File_Access; Construct : Construct_Tree_Iterator)
+      return Entity_Access;
    pragma Inline (To_Entity_Access);
    --  Created an entity access out of a construct and an iterator - the
    --  iterator has to come from the tree stored in the file.
@@ -408,11 +416,9 @@ package Language.Tree.Database is
    type Construct_Database_Access is access all Construct_Database;
 
    procedure Initialize
-     (Db         : Construct_Database_Access;
-      Lg_Handler : Abstract_Language_Handler);
+     (Db : Construct_Database_Access; Lg_Handler : Abstract_Language_Handler);
    procedure Set_Provider
-     (Db         : Construct_Database_Access;
-      Provider   : Buffer_Provider_Access);
+     (Db : Construct_Database_Access; Provider : Buffer_Provider_Access);
    --  This procedure has to be called before any other operation on the
    --  database. These are two separate procedures so that they can be called
    --  at different points in time.
@@ -421,7 +427,7 @@ package Language.Tree.Database is
      (Self    : access Construct_Database;
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access);
    function Symbols
-     (Self    : access Construct_Database)
+     (Self : access Construct_Database)
       return GNATCOLL.Symbols.Symbol_Table_Access;
    --  Set the symbol table to use to store entity names.
    --  This table is shared with the kernel, but the kernel is not visible
@@ -431,9 +437,9 @@ package Language.Tree.Database is
    --  Free the data associated to this database.
 
    function Get_Or_Create
-     (Db        : Construct_Database_Access;
-      File      : Virtual_File;
-      Project   : Project_Type := No_Project) return Structured_File_Access;
+     (Db      : Construct_Database_Access;
+      File    : Virtual_File;
+      Project : Project_Type := No_Project) return Structured_File_Access;
    --  Return the file node corresponding to the given file path, and create
    --  one if needed. The creation of the file implies the addition of all its
    --  contents. An empty file (not null) will be returned in case the input
@@ -442,19 +448,16 @@ package Language.Tree.Database is
    --  in parameter - othewise the project attribute will be ignored.
 
    function Get_File
-     (Db   : Construct_Database_Access;
-      File : Virtual_File) return Structured_File_Access;
+     (Db : Construct_Database_Access; File : Virtual_File)
+      return Structured_File_Access;
    --  Return a file already stored in the construct db, null if none.
 
-   procedure Remove_File
-     (Db        : Construct_Database_Access;
-      File      : Virtual_File);
+   procedure Remove_File (Db : Construct_Database_Access; File : Virtual_File);
    --  Remove the file from the database if is exist. If the file has external
    --  references, as set through the Ref primitive of Structured_File, then
    --  the removal will be aborted.
 
-   function Get_Project
-     (File : Structured_File_Access) return Project_Type;
+   function Get_Project (File : Structured_File_Access) return Project_Type;
    --  Return the project associated to this file.
 
    procedure Set_Project
@@ -534,12 +537,11 @@ package Language.Tree.Database is
    function "<" (Left, Right : Structured_File_Access) return Boolean;
    --  Needed by the file set package
 
-   package File_Set is new Ada.Containers.Ordered_Multisets
-     (Structured_File_Access);
+   package File_Set is new
+     Ada.Containers.Ordered_Multisets (Structured_File_Access);
    --  This package is used to index the file by their unit name
 
-   function Get_Identifier
-     (Entity : Entity_Access) return Normalized_Symbol;
+   function Get_Identifier (Entity : Entity_Access) return Normalized_Symbol;
    pragma Inline (Get_Identifier);
    --  Return the identifier of this entity.
 
@@ -564,8 +566,8 @@ package Language.Tree.Database is
 
    function Hash (Entity : Entity_Access) return Hash_Type;
 
-   type Entity_Persistent_Array is array (Integer range <>)
-   of Entity_Persistent_Access;
+   type Entity_Persistent_Array is
+     array (Integer range <>) of Entity_Persistent_Access;
 
    type Entity_Persistent_Array_Access is access all Entity_Persistent_Array;
 
@@ -626,17 +628,14 @@ package Language.Tree.Database is
    type Database_Listener_Access is access all Database_Listener'Class;
 
    type Update_Kind is
-     (Minor_Change,
-      Structural_Change,
-      Full_Change,
-      Project_Change,
-      Removed);
+     (Minor_Change, Structural_Change, Full_Change, Project_Change, Removed);
 
    procedure File_Updated
      (Listener : access Database_Listener;
       File     : Structured_File_Access;
       Old_Tree : Construct_Tree;
-      Kind     : Update_Kind) is null;
+      Kind     : Update_Kind)
+   is null;
    --  Called whenever a file is updated. This is called after the changes, so
    --  the state of the file is the result of the update.
    --  There are three kinds of update:
@@ -652,17 +651,16 @@ package Language.Tree.Database is
 
    procedure Before_Clear_Db
      (Listener : access Database_Listener;
-      Db       : access Construct_Database'Class) is null;
+      Db       : access Construct_Database'Class)
+   is null;
    --  Called before a clear of the database.
 
    procedure Add_Database_Listener
-     (Db       : Construct_Database_Access;
-      Listener : Database_Listener_Access);
+     (Db : Construct_Database_Access; Listener : Database_Listener_Access);
    --  Add a listener to the list of objects listenning to database changes
 
    procedure Remove_Database_Listener
-     (Db       : Construct_Database_Access;
-      Listener : Database_Listener_Access);
+     (Db : Construct_Database_Access; Listener : Database_Listener_Access);
    --  Removes a listener from the list of objects listenning to database
    --  changes
 
@@ -709,13 +707,10 @@ private
 
    Invalid_Reference : constant Entity_Reference_Details := (0, 0, False, 0);
 
-   type Tree_Language is abstract
-   new Abstract_Tree_Language with null record;
+   type Tree_Language is abstract new Abstract_Tree_Language with null record;
 
    function Get_Last_Relevant_Construct
-     (Tree   : Construct_Tree;
-      Offset : Natural)
-      return Construct_Tree_Iterator;
+     (Tree : Construct_Tree; Offset : Natural) return Construct_Tree_Iterator;
    --  Return the last construct representing the scope where the offset is.
    --  It can be either the last entity declared in the scope, or the scope
    --  itself.
@@ -755,27 +750,29 @@ private
    type File_Buffer_Provider is new Buffer_Provider with null record;
 
    type Trie_Additional_Data is record
-      File  : Structured_File_Access;
+      File : Structured_File_Access;
    end record;
 
    Null_Trie_Additional_Data : constant Trie_Additional_Data := (File => null);
 
-   package Construct_Db_Trie is new Construct_Tries
-     (Trie_Additional_Data, Null_Trie_Additional_Data);
+   package Construct_Db_Trie is new
+     Construct_Tries (Trie_Additional_Data, Null_Trie_Additional_Data);
 
    use Construct_Db_Trie;
    use Construct_Db_Trie.Construct_Trie_Trees;
 
-   type Construct_Db_Data_Array is array
-     (Natural range <>) of Construct_Db_Trie.Construct_Trie_Index;
+   type Construct_Db_Data_Array is
+     array (Natural range <>) of Construct_Db_Trie.Construct_Trie_Index;
 
    type Construct_Db_Data_Access is access all Construct_Db_Data_Array;
 
    type Line_Start_Indexes is array (Natural range <>) of String_Index_Type;
    type Line_Start_Indexes_Access is access all Line_Start_Indexes;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Line_Start_Indexes, Line_Start_Indexes_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Start_Indexes,
+        Line_Start_Indexes_Access);
 
    type Structured_File is record
       File      : Virtual_File;
@@ -792,17 +789,17 @@ private
 
       Cache_Buffer : GNAT.Strings.String_Access;
 
-      Line_Starts  : Line_Start_Indexes_Access;
+      Line_Starts : Line_Start_Indexes_Access;
 
-      Db           : access Construct_Database;
+      Db : access Construct_Database;
 
       Lock_Depth    : Natural := 0;
       Lock_Kind     : Lock_Kind_Type := Defer_Updates;
       Update_Locked : Boolean := False;
 
-      Ref           : Natural := 0;
+      Ref : Natural := 0;
 
-      Project       : Project_Type := No_Project;
+      Project : Project_Type := No_Project;
    end record;
 
    type Update_Lock is limited new Limited_Controlled with record
@@ -813,39 +810,43 @@ private
    function "=" (Left, Right : Structured_File) return Boolean;
    pragma Inline ("=");
 
-   package File_Map is new Ada.Containers.Hashed_Maps
-     (Virtual_File, Structured_File_Access,
-      Equivalent_Keys => "=",
-      Hash            => GNATCOLL.VFS.Full_Name_Hash);
+   package File_Map is new
+     Ada.Containers.Hashed_Maps
+       (Virtual_File,
+        Structured_File_Access,
+        Equivalent_Keys => "=",
+        Hash            => GNATCOLL.VFS.Full_Name_Hash);
    use File_Map;
 
-   package Assistant_Map is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Database_Assistant_Access);
+   package Assistant_Map is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String,
+        Database_Assistant_Access);
 
-   package Database_Listeners is new Ada.Containers.Doubly_Linked_Lists
-     (Database_Listener_Access);
+   package Database_Listeners is new
+     Ada.Containers.Doubly_Linked_Lists (Database_Listener_Access);
 
    use Assistant_Map;
 
    use Database_Listeners;
 
    type Construct_Database is tagged record
-      Files_Db           : File_Map.Map;
-      Provider           : Buffer_Provider_Access;
-      Entities_Db        : aliased Construct_Db_Trie.Construct_Trie;
-      Assistants         : Assistant_Map.Map;
-      Listeners          : Database_Listeners.List;
-      Tree_Registry      : aliased Tree_Annotations_Pckg.
-        Annotation_Key_Registry;
-      Construct_Registry : aliased Construct_Annotations_Pckg.
-        Annotation_Key_Registry;
+      Files_Db              : File_Map.Map;
+      Provider              : Buffer_Provider_Access;
+      Entities_Db           : aliased Construct_Db_Trie.Construct_Trie;
+      Assistants            : Assistant_Map.Map;
+      Listeners             : Database_Listeners.List;
+      Tree_Registry         :
+        aliased Tree_Annotations_Pckg.Annotation_Key_Registry;
+      Construct_Registry    :
+        aliased Construct_Annotations_Pckg.Annotation_Key_Registry;
       Persistent_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
 
       Null_Structured_File : aliased Structured_File;
 
-      Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
 
-      Lg_Handler    : Abstract_Language_Handler;
+      Lg_Handler : Abstract_Language_Handler;
    end record;
 
    type Construct_Db_Iterator is record
@@ -876,14 +877,13 @@ private
 
    Null_Entity_Persistent_Access : constant Entity_Persistent_Access := null;
 
-   type Entity_Persistent_Annotation is new
-     Construct_Annotations_Pckg.General_Annotation_Record
+   type Entity_Persistent_Annotation is
+     new Construct_Annotations_Pckg.General_Annotation_Record
    with record
       Info : Entity_Persistent_Access;
    end record;
 
    overriding
-   procedure Free
-     (Obj : in out Entity_Persistent_Annotation);
+   procedure Free (Obj : in out Entity_Persistent_Annotation);
 
 end Language.Tree.Database;

@@ -20,10 +20,10 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 
-with GPS.Kernel;            use GPS.Kernel;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package Learn is
 
@@ -40,41 +40,39 @@ package Learn is
    --  view.
 
    procedure Initialize
-     (Item       : not null access Learn_Item_Type;
-      Group_Name : String);
+     (Item : not null access Learn_Item_Type; Group_Name : String);
    --  Initialize the given item, associating it to a group.
 
    function Get_Group_Name
      (Item : not null access Learn_Item_Type) return String;
    --  Return the item's group name.
 
-   function Get_ID
-     (Item : not null access Learn_Item_Type) return String is abstract;
+   function Get_ID (Item : not null access Learn_Item_Type) return String
+   is abstract;
    --  Return a unique ID for the given learn item.
    --  Can be used by some listeners to identify easily learn items.
 
    function Get_Widget
-     (Item : not null access Learn_Item_Type)
-      return Gtk_Widget is abstract;
+     (Item : not null access Learn_Item_Type) return Gtk_Widget
+   is abstract;
    --  Return the widget corresponding to the given item and that will be
    --  displayed in the Learn view.
 
-   function Get_Help
-     (Item : not null access Learn_Item_Type) return String
-   is
-     ("");
+   function Get_Help (Item : not null access Learn_Item_Type) return String
+   is ("");
    --  Return an help string associated with the given item.
 
    function Is_Visible
      (Item        : not null access Learn_Item_Type;
       Context     : Selection_Context;
-      Filter_Text : String) return Boolean is abstract;
+      Filter_Text : String) return Boolean
+   is abstract;
    --  Return True if the given learn item should be displayed in the given
    --  context, False otherwise.
 
    procedure On_Double_Click
-     (Item    : not null access Learn_Item_Type;
-      Context : Selection_Context) is null;
+     (Item : not null access Learn_Item_Type; Context : Selection_Context)
+   is null;
    --  Called each time the user double-clicks on the given learn item.
    --  Override this function if you want to react to this event.
 
@@ -89,7 +87,7 @@ package Learn is
 
    function Get_Name
      (Provider : not null access Learn_Provider_Type) return String
-      is abstract;
+   is abstract;
    --  Return the name of the learn provider.
 
    procedure Add_Item
@@ -100,8 +98,7 @@ package Learn is
    --  If an item with the same ID has already been added, replace it.
 
    procedure Delete_Item
-     (Provider : not null access Learn_Provider_Type'Class;
-      ID       : String);
+     (Provider : not null access Learn_Provider_Type'Class; ID : String);
    --  Delete an item from the learn provider.
 
    procedure Register_Provider
@@ -120,13 +117,15 @@ package Learn is
    procedure On_Item_Added
      (Self     : not null access Learn_Listener_Type;
       Provider : not null access Learn_Provider_Type'Class;
-      Item     : not null access Learn_Item_Type'Class) is abstract;
+      Item     : not null access Learn_Item_Type'Class)
+   is abstract;
    --  Called when the given item is added to the learn provider.
 
    procedure On_Item_Deleted
      (Self     : not null access Learn_Listener_Type;
       Provider : not null access Learn_Provider_Type'Class;
-      Item     : not null access Learn_Item_Type'Class) is abstract;
+      Item     : not null access Learn_Item_Type'Class)
+   is abstract;
    --  Called when the given item is deleted from the learn provider.
 
    procedure Register_Listener
@@ -151,29 +150,31 @@ private
       Group_Name : Unbounded_String;
    end record;
 
-   package Learn_Item_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Learn_Item,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Learn_Item_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Learn_Item,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Learn_Provider_Type is abstract tagged record
       Items : Learn_Item_Maps.Map;
    end record;
 
-   package Learn_Provider_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Learn_Provider_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => Learn_Provider,
         Hash            => Ada.Strings.Hash_Case_Insensitive,
         Equivalent_Keys => "=",
         "="             => "=");
 
-   package Learn_Listener_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Learn_Listener,
-      "="          => "=");
+   package Learn_Listener_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Learn_Listener,
+        "="          => "=");
 
    function Get_Registered_Providers return Learn_Provider_Maps.Map;
 

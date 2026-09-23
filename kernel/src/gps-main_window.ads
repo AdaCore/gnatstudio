@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
-with Glib;                    use Glib;
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gtk.Application;         use Gtk.Application;
-with Gtk.Application_Window;  use Gtk.Application_Window;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
-with Gdk.Event;               use Gdk.Event;
-with Gtk.Toolbar;             use Gtk.Toolbar;
-with Gtk.Window;              use Gtk.Window;
+with Glib;                   use Glib;
+with Gtk.Accel_Group;        use Gtk.Accel_Group;
+with Gtk.Application;        use Gtk.Application;
+with Gtk.Application_Window; use Gtk.Application_Window;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Menu_Bar;           use Gtk.Menu_Bar;
+with Gdk.Event;              use Gdk.Event;
+with Gtk.Toolbar;            use Gtk.Toolbar;
+with Gtk.Window;             use Gtk.Window;
 
 with Gtkada.Application;       use Gtkada.Application;
 with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
@@ -42,7 +42,7 @@ package GPS.Main_Window is
    --  the gtk+ level.
 
    type GPS_Application_Record is new Gtkada_Application_Record with record
-      Kernel         : GPS.Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    type GPS_Application is access all GPS_Application_Record'Class;
 
@@ -51,7 +51,8 @@ package GPS.Main_Window is
    --  Returns True if any menu has been clicked on by the user (from the
    --  menu bars of any window)
 
-   overriding procedure Quit (Self : not null access GPS_Application_Record);
+   overriding
+   procedure Quit (Self : not null access GPS_Application_Record);
    --  Called when quitting GNAT Studio.
 
    -------------
@@ -77,22 +78,22 @@ package GPS.Main_Window is
 
    type GPS_Application_Window_Record is new Gtk_Application_Window_Record
    with record
-      Application       : access GPS_Application_Record'Class;
+      Application : access GPS_Application_Record'Class;
       --  The GNAT Studio Application (not owned by the window)
 
-      Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu_Bar : Gtk.Menu_Bar.Gtk_Menu_Bar;
 
-      Toolbar_Box       : Gtk_Box;
-      Toolbar           : Gtk_Toolbar;
+      Toolbar_Box : Gtk_Box;
+      Toolbar     : Gtk_Toolbar;
       --  The toolbar, and the box that contains it. The box is used to display
       --  additional items, like the omni-search or progress bars.
 
-      Main_Box          : Gtk.Box.Gtk_Box;
+      Main_Box : Gtk.Box.Gtk_Box;
       --  The box that contains the menubar, toolbar, and the rest of the
       --  window's content.
    end record;
-   type GPS_Application_Window
-     is access all GPS_Application_Window_Record'Class;
+   type GPS_Application_Window is
+     access all GPS_Application_Window_Record'Class;
    --  An application window with special handling for menubars:
    --  when not using the syste menus, an explicit menubar widget can be
    --  created and associated with the window.
@@ -111,14 +112,15 @@ package GPS.Main_Window is
    function Kernel
      (Self : not null access GPS_Application_Window_Record'Class)
       return GPS.Kernel.Kernel_Handle
-      is (if Self.Application = null then null else Self.Application.Kernel)
-      with Inline;
+   is (if Self.Application = null then null else Self.Application.Kernel)
+   with Inline;
    --  The kernel for the application
 
    procedure For_All_Open_Windows
      (App      : not null access Gtk_Application_Record'Class;
-      Callback : not null access procedure
-        (Win : not null access GPS_Application_Window_Record'Class));
+      Callback :
+        not null access procedure
+          (Win : not null access GPS_Application_Window_Record'Class));
    --  Calls Callback for all open windows
 
    ---------------------
@@ -126,12 +128,12 @@ package GPS.Main_Window is
    ---------------------
 
    type GPS_Window_Record is new GPS_Application_Window_Record with record
-      Main_Accel_Group  : Gtk_Accel_Group;
+      Main_Accel_Group : Gtk_Accel_Group;
       --  The default accelerators for the window
 
-      MDI               : Gtkada.MDI.MDI_Window;
+      MDI : Gtkada.MDI.MDI_Window;
 
-      Is_Destroyed      : Boolean := False;
+      Is_Destroyed : Boolean := False;
 
       Perspective_Selector : Gtkada_Combo_Tool_Button;
       --  The combo box to select the current perspective
@@ -139,8 +141,8 @@ package GPS.Main_Window is
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu
 
-      Desktop_Loaded    : Boolean := False;
-      Public_Version    : Boolean := True;
+      Desktop_Loaded : Boolean := False;
+      Public_Version : Boolean := True;
    end record;
    type GPS_Window is access all GPS_Window_Record'Class;
 
@@ -171,7 +173,7 @@ package GPS.Main_Window is
    --  Status is the exit status (0 is success)
 
    procedure Reset_Title
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Reset the title of the main window or the current floating window,
    --  depending on which child currently has the focus.
 

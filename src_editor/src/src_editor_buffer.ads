@@ -34,19 +34,19 @@ with System;
 
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
-with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with VSS.Strings;
 with VSS.Unicode;
 
 with Gdk.RGBA;
-with Glib;                            use Glib;
+with Glib;               use Glib;
 with Glib.Main;
 with Gtk;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark;                   use Gtk.Text_Mark;
+with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtkada.Text_Buffer;              use Gtkada.Text_Buffer;
+with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
 
 with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
@@ -89,8 +89,8 @@ package Src_Editor_Buffer is
 
    type Cursors_Sync_Type (Mode : Cursor_Sync_Mode_Type := Auto) is private;
 
-   package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Gtk.Text_Mark.Gtk_Text_Mark);
+   package Marks_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Gtk.Text_Mark.Gtk_Text_Mark);
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
@@ -122,11 +122,14 @@ package Src_Editor_Buffer is
 
    function "<" (A, B : Loc_T) return Boolean
    is ((A.Line <= B.Line and then A.Col < B.Col) or else A.Line < B.Line);
-   function "<=" (A, B : Loc_T) return Boolean is (A = B or else A < B);
-   function ">=" (A, B : Loc_T) return Boolean is (not (A < B));
-   function ">" (A, B : Loc_T) return Boolean is (not (A < B) and not (A = B));
-   function Min (A, B : Loc_T) return Loc_T is
-      (if A < B then A else B);
+   function "<=" (A, B : Loc_T) return Boolean
+   is (A = B or else A < B);
+   function ">=" (A, B : Loc_T) return Boolean
+   is (not (A < B));
+   function ">" (A, B : Loc_T) return Boolean
+   is (not (A < B) and not (A = B));
+   function Min (A, B : Loc_T) return Loc_T
+   is (if A < B then A else B);
 
    ------------------
    -- Column types --
@@ -136,17 +139,22 @@ package Src_Editor_Buffer is
    function Convert (L : Editable_Line_Type) return Natural;
    --  ??? temporary ?
 
-   overriding procedure Paste_Clipboard
-     (Buffer      : not null access Source_Buffer_Record;
-      Clipboard   : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+   overriding
+   procedure Paste_Clipboard
+     (Buffer           : not null access Source_Buffer_Record;
+      Clipboard        :
+        not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
       Default_Editable : Boolean := True);
 
-   overriding procedure Cut_Clipboard
-     (Buffer     : not null access Source_Buffer_Record;
-      Clipboard  : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+   overriding
+   procedure Cut_Clipboard
+     (Buffer           : not null access Source_Buffer_Record;
+      Clipboard        :
+        not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
       Default_Editable : Boolean);
 
-   overriding procedure Copy_Clipboard
+   overriding
+   procedure Copy_Clipboard
      (Buffer    : not null access Source_Buffer_Record;
       Clipboard : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class);
 
@@ -211,15 +219,13 @@ package Src_Editor_Buffer is
    --  Return True if a save operation is in progress (either executing
    --  the before_file_saved hook or waiting for async formatting).
 
-   procedure Set_Save_Deferred
-     (Buffer : access Source_Buffer_Record);
+   procedure Set_Save_Deferred (Buffer : access Source_Buffer_Record);
    --  Called during a save operation when an async action (e.g. formatting)
    --  needs to complete before the file can be written. This defers the
    --  actual file write until the action completes.
 
    procedure Complete_Deferred_Save
-     (Buffer  : access Source_Buffer_Record;
-      Success : out Boolean);
+     (Buffer : access Source_Buffer_Record; Success : out Boolean);
    --  Called when async formatting completes successfully. Performs the
    --  actual file save that was deferred.
 
@@ -228,8 +234,7 @@ package Src_Editor_Buffer is
    --  without saving.
 
    procedure Mark_Buffer_Writable
-     (Buffer   : not null access Source_Buffer_Record;
-      Writable : Boolean);
+     (Buffer : not null access Source_Buffer_Record; Writable : Boolean);
    --  Change the writable/read-only status of the buffer
    --  Update all attributes of the views to show whether the buffer is
    --  writable.
@@ -239,8 +244,7 @@ package Src_Editor_Buffer is
    --  Return True if the buffer is writable, False otherwise
 
    procedure Set_Language
-     (Buffer : access Source_Buffer_Record;
-      Lang   : Language.Language_Access);
+     (Buffer : access Source_Buffer_Record; Lang : Language.Language_Access);
    --  Set the language of the given buffer. The syntax highlighting
    --  is redone using the new language.
    --  It also memorize the language in the GNAT Studio properties, so that
@@ -251,8 +255,7 @@ package Src_Editor_Buffer is
    --  Get the current language. Return null if the language is not set
 
    procedure Set_Strip_Trailing_Blanks
-     (Buffer : access Source_Buffer_Record;
-      Value  : Boolean);
+     (Buffer : access Source_Buffer_Record; Value : Boolean);
    --  Set stripping behavior of the given buffer.
    --  It also memorize the setting in the GNAT Studio properties, so that
    --  future uses of the same file use the same setting automatically.
@@ -262,8 +265,7 @@ package Src_Editor_Buffer is
    --  Get stripping behavior of the given buffer.
 
    procedure Set_Strip_Trailing_Lines
-     (Buffer : access Source_Buffer_Record;
-      Value  : Boolean);
+     (Buffer : access Source_Buffer_Record; Value : Boolean);
    --  Set trailing empty lines stripping behavior of the given buffer.
    --  It also memorize the setting in the GNAT Studio properties, so that
    --  future uses of the same file use the same setting automatically.
@@ -283,9 +285,8 @@ package Src_Editor_Buffer is
    --  Return the charset used for the buffer
 
    function Is_Valid_Position
-     (Buffer       : access Source_Buffer_Record;
-      Line         : Gint;
-      Column       : Gint := 0) return Boolean;
+     (Buffer : access Source_Buffer_Record; Line : Gint; Column : Gint := 0)
+      return Boolean;
    --  Return True if the given cursor position is valid. If Column is
    --  set to 0, then this function just verifies the given line number
    --  (column 0 of a given line always exists).
@@ -295,8 +296,8 @@ package Src_Editor_Buffer is
    --  Obsolete, should use Is_Valid_Position below.
 
    function Is_Valid_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Boolean;
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return Boolean;
    pragma Inline (Is_Valid_Line);
    --  Return True if Line is a line of the buffer, without looking at any
    --  column. Use it instead of Is_Valid_Position below when no column is
@@ -318,8 +319,7 @@ package Src_Editor_Buffer is
    --  Same as above
 
    procedure Ensure_Valid_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type);
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type);
    --  Wrapper around Is_Valid_Line which raises a Location_Exception if the
    --  line is invalid.
 
@@ -337,10 +337,10 @@ package Src_Editor_Buffer is
    --  Same as above
 
    procedure Set_Cursor_Position
-     (Buffer    : access Source_Buffer_Record;
-      Line      : Editable_Line_Type;
-      Column    : Character_Index;
-      Internal  : Boolean;
+     (Buffer           : access Source_Buffer_Record;
+      Line             : Editable_Line_Type;
+      Column           : Character_Index;
+      Internal         : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
    --
@@ -433,10 +433,9 @@ package Src_Editor_Buffer is
    --  Same as above, for the cursor position
 
    procedure Set_Extend_Existing_Selection
-     (Buffer : not null access Source_Buffer_Record;
-      Extend : Boolean);
+     (Buffer : not null access Source_Buffer_Record; Extend : Boolean);
    function Extend_Existing_Selection
-     (Buffer        : not null access Source_Buffer_Record) return Boolean;
+     (Buffer : not null access Source_Buffer_Record) return Boolean;
    --  See GPS.Editors.Set_Extend_Existing_Selection
 
    function Should_Extend_Selection
@@ -478,8 +477,7 @@ package Src_Editor_Buffer is
       End_Line             : Gint;
       End_Column           : Gint;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Unbounded_String;
+      Include_Last         : Boolean := False) return Unbounded_String;
    function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type := 1;
@@ -505,8 +503,7 @@ package Src_Editor_Buffer is
       End_Line             : Editable_Line_Type := 0;
       End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Unbounded_String;
+      Include_Last         : Boolean := False) return Unbounded_String;
    --  Return (as UTF-8) the text between start and end.
    --  If Include_Last, return [start, end] else [start, end).
    --  If End_Line is 0, get the entire range between start position and end
@@ -572,18 +569,15 @@ package Src_Editor_Buffer is
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    function Ends_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean;
 
    function Starts_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean;
 
    function Inside_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean;
    --  Whether the iterator ends or starts a word. This takes '_' properly
    --  into account
@@ -598,9 +592,9 @@ package Src_Editor_Buffer is
    --  selection.
 
    procedure Select_Region
-     (Buffer       : access Source_Buffer_Record;
-      Cursor_Iter  : Gtk.Text_Iter.Gtk_Text_Iter;
-      Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
+     (Buffer      : access Source_Buffer_Record;
+      Cursor_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      Bound_Iter  : Gtk.Text_Iter.Gtk_Text_Iter);
    --  Select the region between the two iterators, and leave the cursor on
    --  Cursor_Iter.
 
@@ -645,9 +639,9 @@ package Src_Editor_Buffer is
    --  Redo last undone command
 
    function On_Indent_Action
-     (Buffer     : Source_Buffer;
-      From, To   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Force      : Boolean := False) return Boolean;
+     (Buffer   : Source_Buffer;
+      From, To : Gtk.Text_Iter.Gtk_Text_Iter;
+      Force    : Boolean := False) return Boolean;
    --  Reindent a specific range of lines (the ones containing From to To).
    --  Indentation depend on the language and the setup the user has chosen
    --  (either simple or extended indentation).
@@ -672,8 +666,7 @@ package Src_Editor_Buffer is
    --  selected.
 
    procedure Newline_And_Indent
-     (Buffer : access Source_Buffer_Record;
-      As_Is : Boolean);
+     (Buffer : access Source_Buffer_Record; As_Is : Boolean);
    --  Insert a newline and indent atomically
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
@@ -681,8 +674,8 @@ package Src_Editor_Buffer is
    --  the user has activated it.
 
    function Is_In_Comment
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+     (Buffer : Source_Buffer; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
    --  Returns true if Iter is in a comment. This relies on syntax coloring and
    --  will return False if the syntax coloring has not been computed for Iter.
 
@@ -744,20 +737,17 @@ package Src_Editor_Buffer is
    --  the virtual file associated with the buffer.
 
    procedure Set_Filename
-     (Buffer : access Source_Buffer_Record;
-      Name   : GNATCOLL.VFS.Virtual_File);
+     (Buffer : access Source_Buffer_Record; Name : GNATCOLL.VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name
 
    procedure Set_Title
-      (Buffer : not null access Source_Buffer_Record;
-       Title  : String);
+     (Buffer : not null access Source_Buffer_Record; Title : String);
    function Get_Title
-      (Buffer : not null access Source_Buffer_Record) return String;
+     (Buffer : not null access Source_Buffer_Record) return String;
    --  Force the MDI tabs to use another name than the filename
 
    procedure Set_Initial_Dir
-     (Buffer : access Source_Buffer_Record;
-      Name   : GNATCOLL.VFS.Virtual_File);
+     (Buffer : access Source_Buffer_Record; Name : GNATCOLL.VFS.Virtual_File);
    --  Set the directory in which we are going to create the file. This is
    --  useful only when creating new files, and Name is used to determine
    --  the directory shown in the file selector.
@@ -766,8 +756,7 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the directory specified in Set_Initial_Dir
 
-   procedure Filename_Changed
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Filename_Changed (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "filename_changed" signal
 
    function Get_File_Identifier
@@ -775,8 +764,7 @@ package Src_Editor_Buffer is
    --  Return the identifier of the file associated with Buffer
 
    procedure Set_File_Identifier
-     (Buffer : access Source_Buffer_Record;
-      Name   : GNATCOLL.VFS.Virtual_File);
+     (Buffer : access Source_Buffer_Record; Name : GNATCOLL.VFS.Virtual_File);
    --  Set the file identifier for Buffer. This identifier is used for
    --  unnamed files, so that they can be uniquely identified.
    --
@@ -830,15 +818,13 @@ package Src_Editor_Buffer is
    --  only once even if multiple views exist.
 
    function Is_Inserting_Internally
-     (Buffer  : access Source_Buffer_Record) return Boolean;
+     (Buffer : access Source_Buffer_Record) return Boolean;
    --  Predicate to know if the buffer is in the middle of an internal
    --  insertion.
 
-   procedure Add_Listener_Factory
-     (Factory : Editor_Listener_Factory_Access);
+   procedure Add_Listener_Factory (Factory : Editor_Listener_Factory_Access);
 
-   procedure Set_Folding_Provider
-     (Provider : Editor_Folding_Provider_Access);
+   procedure Set_Folding_Provider (Provider : Editor_Folding_Provider_Access);
 
    ---------------------
    -- Automatic saves --
@@ -858,13 +844,11 @@ package Src_Editor_Buffer is
    --  Return the status of the buffer.
    --  Calculate the status from the queue position.
 
-   procedure Status_Changed
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Status_Changed (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "status_changed" signal
 
    procedure Set_Last_Status
-     (Buffer : access Source_Buffer_Record'Class;
-      Status : Status_Type);
+     (Buffer : access Source_Buffer_Record'Class; Status : Status_Type);
    --  Set the last calculated status.
 
    function Needs_To_Be_Saved
@@ -883,8 +867,7 @@ package Src_Editor_Buffer is
    --  Return True iff the blocks information computed in the buffer
 
    procedure Set_Opened_On_LSP_Server
-     (This  : access Source_Buffer_Record;
-      Value : Boolean);
+     (This : access Source_Buffer_Record; Value : Boolean);
 
    function Is_Opened_On_LSP_Server
      (This : access Source_Buffer_Record) return Boolean;
@@ -910,15 +893,17 @@ package Src_Editor_Buffer is
      array (Natural range <>) of Extra_Information_Access;
    type Extra_Information_Array_Access is access Extra_Information_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Extra_Information_Array, Extra_Information_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Extra_Information_Array,
+        Extra_Information_Array_Access);
 
    function Get_Extra_Information
      (Buffer : Source_Buffer) return Extra_Information_Array_Access;
    --  Return the extra information associated with the buffer
 
-   package Message_Reference_List is new Ada.Containers.Doubly_Linked_Lists
-     (Message_Reference);
+   package Message_Reference_List is new
+     Ada.Containers.Doubly_Linked_Lists (Message_Reference);
 
    --  The following is related to information to be put in the side column
 
@@ -930,8 +915,10 @@ package Src_Editor_Buffer is
 
    type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
    type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-    (Line_Info_Width_Array, Line_Info_Width_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Info_Width_Array,
+        Line_Info_Width_Array_Access);
 
    type Line_Info_Display_Record is record
       Identifier : GNAT.Strings.String_Access;
@@ -941,7 +928,7 @@ package Src_Editor_Buffer is
       --  The pixel distance between the left border of the column and
       --  the left border of the left window.
 
-      Width      : Integer;
+      Width : Integer;
       --  The pixel width of the column
 
       Every_Line : Boolean;
@@ -949,19 +936,23 @@ package Src_Editor_Buffer is
       --  this column.
    end record;
    type Line_Info_Display_Access is access Line_Info_Display_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Info_Display_Record, Line_Info_Display_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Info_Display_Record,
+        Line_Info_Display_Access);
 
-   type Line_Info_Display_Array is array (Positive range <>)
-     of Line_Info_Display_Access;
+   type Line_Info_Display_Array is
+     array (Positive range <>) of Line_Info_Display_Access;
 
    type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Info_Display_Array, Line_Info_Display_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Info_Display_Array,
+        Line_Info_Display_Array_Access);
 
    function Line_Needs_Refresh
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Boolean;
+     (Buffer : access Source_Buffer_Record; Line : Buffer_Line_Type)
+      return Boolean;
    --  Return True if Line needs to be refreshed
 
    function Get_Total_Column_Width
@@ -969,33 +960,32 @@ package Src_Editor_Buffer is
    --  Return the size of the total column width, in pixels
 
    function Get_Highlighter
-     (Editor : access Source_Buffer_Record)
-      return Source_Highlighter;
+     (Editor : access Source_Buffer_Record) return Source_Highlighter;
 
    type Block_Record is record
       Indentation_Level : Integer := 0;
       --  Represent the indentation level of the block
 
-      Offset_Start      : Integer := 0;
+      Offset_Start : Integer := 0;
       --  The indentation offset of the first line of the block, in characters
 
-      Stored_Offset     : Integer := 0;
+      Stored_Offset : Integer := 0;
       --  Stores the last calculated offset of this block. Mainly used to be
       --  able to draw the blocks almost correctly even as we are editing the
       --  text. Zero means that value is not calculated.
 
-      First_Line        : Editable_Line_Type := 0;
-      Last_Line         : Editable_Line_Type := 0;
+      First_Line : Editable_Line_Type := 0;
+      Last_Line  : Editable_Line_Type := 0;
       --  Indicate the lines that bound the block
 
-      Name              : GNATCOLL.Symbols.Symbol;
+      Name : GNATCOLL.Symbols.Symbol;
       --  The name of the block, this is the subprogram or package name. This
       --  pointer is null for a block where name has no meaning.
 
-      Block_Type        : Language.Language_Category := Language.Cat_Unknown;
+      Block_Type : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0
 
-      Color             : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The color to use when highlighting this block
    end record;
 
@@ -1012,21 +1002,20 @@ package Src_Editor_Buffer is
    --  If Column is 0: use the first non-whitespace character column at Line.
 
    function Get_Subprogram_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
+     (Editor      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
       Update_Tree : Boolean := False) return Block_Record;
    --  Same as above, with a filter that only selects blocks like subprograms
    --  and packages.
 
    function Get_Subprogram_Name
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return String;
+     (Editor : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return String;
    --  Same as above, with a filter that only selects blocks like subprograms
    --  and packages.
 
    function Get_Current_Block
-     (Editor : access Source_Buffer_Record;
-      Absolute : Boolean := False)
+     (Editor : access Source_Buffer_Record; Absolute : Boolean := False)
       return Block_Record;
    --  Return the block information at the cursor position.
    --  If Absolute is False, then can return the block defined after the cursor
@@ -1037,45 +1026,52 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information
 
-   type Completion_Context (Is_Line_Movement : Boolean) is new
-     GPS.Kernel.Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Context : access Completion_Context;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   type Completion_Context (Is_Line_Movement : Boolean) is
+     new GPS.Kernel.Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Completion_Context; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean;
 
-   type Signature_Context is new
-     GPS.Kernel.Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Context : access Signature_Context;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   type Signature_Context is new GPS.Kernel.Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Signature_Context; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean;
 
    type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the current widget is a source editor
 
-   type Writable_Src_Editor_Action_Context
-   is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   type Writable_Src_Editor_Action_Context is
+     new GPS.Kernel.Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Writable_Src_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the current widget is a writable
    --  source editor
 
-   type Has_Writable_Editor_Action_Context
-   is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   type Has_Writable_Editor_Action_Context is
+     new GPS.Kernel.Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Has_Writable_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if at least one writable editor is open
 
    type Last_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Last_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the last source editor is available
@@ -1088,19 +1084,16 @@ package Src_Editor_Buffer is
    --  toolbar buttons. This can however be expensive when doing lots of
    --  manipulation, so it is possible to temporary freeze the context.
 
-   procedure Freeze_Context
-     (Self : not null access Source_Buffer_Record'Class)
-     with Inline;
-   procedure Thaw_Context
-     (Self : not null access Source_Buffer_Record'Class)
-     with Inline;
+   procedure Freeze_Context (Self : not null access Source_Buffer_Record'Class)
+   with Inline;
+   procedure Thaw_Context (Self : not null access Source_Buffer_Record'Class)
+   with Inline;
    --  Stop refreshing the GNAT Studio context every time the cursor moves.
    --  The number of calls to Thaw should match the number of calls to Freeze
 
    function Context_Is_Frozen
-     (Self  : not null access Source_Buffer_Record'Class)
-      return Boolean
-     with Inline;
+     (Self : not null access Source_Buffer_Record'Class) return Boolean
+   with Inline;
    --  Whether the context should be refreshed when the cursor position
    --  changes.
 
@@ -1151,25 +1144,24 @@ package Src_Editor_Buffer is
    --  </signals>
 
    Signal_Cursor_Position_Changed           : constant Signal_Name :=
-                                                "cursor_position_changed";
+     "cursor_position_changed";
    Signal_Side_Column_Changed               : constant Signal_Name :=
-                                                "side_column_changed";
+     "side_column_changed";
    Signal_Side_Column_Configuration_Changed : constant Signal_Name :=
-                                          "side_column_configuration_changed";
+     "side_column_configuration_changed";
    Signal_Line_Highlights_Changed           : constant Signal_Name :=
-                                                "line_highlights_changed";
+     "line_highlights_changed";
    Signal_Buffer_Information_Changed        : constant Signal_Name :=
-                                                "buffer_information_changed";
+     "buffer_information_changed";
    Signal_Status_Changed                    : constant Signal_Name :=
-                                                "status_changed";
+     "status_changed";
    Signal_Filename_Changed                  : constant Signal_Name :=
-                                                "filename_changed";
-   Signal_Closed                            : constant Signal_Name :=
-                                                "closed";
+     "filename_changed";
+   Signal_Closed                            : constant Signal_Name := "closed";
 
    function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Buffer_Line_Type;
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return Buffer_Line_Type;
    pragma Inline (Get_Buffer_Line);
    --  Get the buffer line corresponding to Line.
    --  Return 0 if no buffer line was
@@ -1191,15 +1183,14 @@ package Src_Editor_Buffer is
    --  Return the text from Start_Line to End_Line, included.
    --  When End_Column has no index, the whole of End_Line is returned.
 
-   function Get_Byte_Index
-     (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Natural;
+   function Get_Byte_Index (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Natural;
    --  Return the byte index of the iterator given in parameter - as opposed
    --  to the character index (e.g. some UTF8 character are coded on more than
    --  one byte).
 
    function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return Editable_Line_Type;
+     (Buffer : access Source_Buffer_Record'Class; Line : Buffer_Line_Type)
+      return Editable_Line_Type;
    --  Return the editable line corresponding to Line.
    --  Return 0 if no editable line was found.
 
@@ -1220,8 +1211,7 @@ package Src_Editor_Buffer is
    --  Return the command queue associated to Buffer
 
    procedure Prevent_CR_Insertion
-     (Buffer  : access Source_Buffer_Record'Class;
-      Prevent : Boolean := True);
+     (Buffer : access Source_Buffer_Record'Class; Prevent : Boolean := True);
    --  Whether the buffer should monitor the next text insertion and strip any
    --  CRs.
 
@@ -1256,15 +1246,18 @@ package Src_Editor_Buffer is
    --  Contents (1 .. Last) (as utf8-encoded string)
    --  Never use Free (Contents) directly, use the Free procedure below.
 
-   function Last (S : Src_String) return Natural is (Natural (S.Length));
+   function Last (S : Src_String) return Natural
+   is (Natural (S.Length));
    --  Index in S.Contents of the last code unit of S. Contents is a String,
    --  indexed by Integer, while Length counts UTF-8 code units.
 
    function To_String (S : Src_String) return String;
    --  Return the string in Src_String, and the empty string if S is null
 
-   function To_Unchecked_String is new Ada.Unchecked_Conversion
-     (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
+   function To_Unchecked_String is new
+     Ada.Unchecked_Conversion
+       (Gtkada.Types.Chars_Ptr,
+        Unchecked_String_Access);
 
    procedure Free (S : in out Src_String);
    --  Free the memory associated with S
@@ -1275,8 +1268,7 @@ package Src_Editor_Buffer is
       Start_Column         : Character_Index := 1;
       End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Src_String;
+      Include_Last         : Boolean := False) return Src_String;
    --  Return the string at line Line, without the line terminator.
    --  When End_Column has no index, the whole line is returned.
    --  Return null if the Line is not a valid line or there is no contents
@@ -1285,8 +1277,7 @@ package Src_Editor_Buffer is
    --  The returned string is UTF8-encoded
 
    procedure Set_In_Completion
-     (Buffer        : Source_Buffer;
-      In_Completion : Boolean);
+     (Buffer : Source_Buffer; In_Completion : Boolean);
    function In_Completion (Buffer : Source_Buffer) return Boolean;
    --  Get/set the flag that indicates whether we are currently in a completion
 
@@ -1295,8 +1286,7 @@ package Src_Editor_Buffer is
    --------------------
 
    procedure Add_Typed_Char
-     (Buffer : access Source_Buffer_Record'Class;
-      C      : Gunichar);
+     (Buffer : access Source_Buffer_Record'Class; C : Gunichar);
    --  Add a character into the as-typed buffer
 
    procedure Delete_Last_Typed_Char
@@ -1308,8 +1298,8 @@ package Src_Editor_Buffer is
    --  Clear the whole buffer
 
    function Get_Typed_Chars
-     (Buffer : access Source_Buffer_Record'Class;
-      N      : Positive) return Basic_Types.UTF8_String;
+     (Buffer : access Source_Buffer_Record'Class; N : Positive)
+      return Basic_Types.UTF8_String;
    --  Returns the N last typed characters
 
    function Get_Version
@@ -1344,7 +1334,7 @@ package Src_Editor_Buffer is
    --  Source_Buffer_Record
 
    function Get_Global_Editor_Buffer_Factory
-     return access GPS.Editors.Editor_Buffer_Factory'Class;
+      return access GPS.Editors.Editor_Buffer_Factory'Class;
    --  Get the global Editor_Buffer_Factory. Useful to access buffers in an
    --  abstract way (for example, opening new buffers)
 
@@ -1370,9 +1360,9 @@ package Src_Editor_Buffer is
    --  See Src_Editor_Box.Add_Line_Highlighting.
 
    procedure Remove_Line_Highlighting
-     (Self   : access Source_Highlighter_Record;
-      Line   : Editable_Line_Type;
-      Style  : not null Style_Access);
+     (Self  : access Source_Highlighter_Record;
+      Line  : Editable_Line_Type;
+      Style : not null Style_Access);
    --  Disable the highlighting of Line using colors defined in Style.
    --  See Src_Editor_Box.Remove_Line_Highlighting.
 
@@ -1943,15 +1933,15 @@ private
       LSP_Opened : Boolean := False;
       --  True when the buffer is opened on the LSP server side
 
-      Save_In_Progress     : Boolean := False;
+      Save_In_Progress : Boolean := False;
       --  True from when a save starts running the 'before_file_saved' hook
       --  until the save completes (or is cancelled). Used both to signal
       --  formatting providers and to skip the hook on re-entry.
 
-      Save_Deferred         : Boolean := False;
+      Save_Deferred : Boolean := False;
       --  True if the save has been deferred pending an async operation
 
-      Deferred_Save_File   : GNATCOLL.VFS.Virtual_File;
+      Deferred_Save_File : GNATCOLL.VFS.Virtual_File;
       --  Target file for deferred save. This is needed to support
       --  "Save As" operations that require user input for the file name.
    end record;

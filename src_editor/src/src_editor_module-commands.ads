@@ -20,99 +20,113 @@
 with Commands.Interactive; use Commands.Interactive;
 with Commands;             use Commands;
 with GPS.Kernel;           use GPS.Kernel;
-with Glib.Object; use Glib.Object;
+with Glib.Object;          use Glib.Object;
 
 package Src_Editor_Module.Commands is
 
    type In_Line_Numbers_Area_Filter is new Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the event currently processed was in an editor's line numbers
    --  area
 
    type Has_Entity_Name_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Entity_Name_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity is an access type.
 
    type Goto_Line_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Ask the user on which line to jump to
 
    type Goto_Other_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the file spec/body, depending on what is currently open
 
    type Goto_Declaration_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Declaration_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the declaration of the entity in the context
 
    type Goto_Type_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Type_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the type declaration of the entity in the context
 
    type Type_Hierarchy_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Type_Hierarchy_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Output type hierarchy into the location view
 
    procedure On_Goto_Line
-     (Widget  : access GObject_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class);
+     (Widget : access GObject_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class);
    --  Callback for the "Goto Line" contextual menu
 
    type New_View_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access New_View_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access New_View_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  File->New View menu
 
    New_File_Command_Name : constant String := "new file";
    type New_File_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access New_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access New_File_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  File->New menu
 
    Save_Command_Name : constant String := "save";
    type Save_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Save_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Save_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  File->Save menu
 
    type Save_As_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Save_As_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Save_As_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  File->Save As... menu
 
    type Print_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Print_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Print_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  File->Print menu
 
    type Print_Selection_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Print_Selection_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Selection->Print Selection menu
 
    type Goto_Body_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Body_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Navigate->Goto Body menu
@@ -120,45 +134,52 @@ package Src_Editor_Module.Commands is
    --  editor.
 
    type Fold_All_Blocks_Command (Similar : Boolean := False) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Fold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Fold all blocks menu
 
    type Unfold_All_Blocks_Command (Similar : Boolean := False) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Unfold_All_Blocks_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Unfold all blocks menu
 
    type Refill_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Refill_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Refill_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Edit->Refill
 
    type Edit_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
    --  Edit a file (from a contextual menu)
 
    type Editor_Properties_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Editor_Properties_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
    --  Edit the properties of a file (from a contextual menu)
 
-   type Activate_Code_Actions_Menu_Command is new Interactive_Command with
-     null record;
-   overriding function Execute
+   type Activate_Code_Actions_Menu_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Activate_Code_Actions_Menu_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure Save_To_File
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -167,8 +188,7 @@ package Src_Editor_Module.Commands is
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
-   procedure New_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   procedure New_View (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.

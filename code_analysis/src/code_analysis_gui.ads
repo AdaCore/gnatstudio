@@ -22,75 +22,68 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Glib;                  use Glib;
-with Gdk.Event;             use Gdk.Event;
+with Glib;                 use Glib;
+with Gdk.Event;            use Gdk.Event;
 with Gtk.Menu;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Tree_Store;        use Gtk.Tree_Store;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
-with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Button;           use Gtk.Button;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Widget;           use Gtk.Widget;
 
-with Gtkada.Tree_View;      use Gtkada.Tree_View;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GPS.Kernel;            use GPS.Kernel;
-with Code_Analysis;         use Code_Analysis;
+with GPS.Kernel;    use GPS.Kernel;
+with Code_Analysis; use Code_Analysis;
 
 package Code_Analysis_GUI is
 
-   Prj_Pixbuf_Cst   : constant String :=
-     "gps-emblem-project-closed";
+   Prj_Pixbuf_Cst         : constant String := "gps-emblem-project-closed";
    --  Name of the icon used for project node in the analysis report
-   File_Pixbuf_Cst  : constant String :=
-     "gps-emblem-file-unmodified";
+   File_Pixbuf_Cst        : constant String := "gps-emblem-file-unmodified";
    --  Name of the icon used for file node in the analysis report
-   Hidden_File_Pixbuf_Cst  : constant String :=
+   Hidden_File_Pixbuf_Cst : constant String :=
      "gps-emblem-file-unmodified-locked";
    --  Name of the icon used for file node in the analysis report
-   Subp_Pixbuf_Cst  : constant String :=
-     "gps-emblem-entity-subprogram";
+   Subp_Pixbuf_Cst        : constant String := "gps-emblem-entity-subprogram";
    --  Name of the icon used for subprogram node in the analysis report
-   Grey_Analysis_Cst   : constant String :=
-     "gps-emblem-pencil-grey";
-   Purple_Analysis_Cst : constant String :=
-     "gps-emblem-pencil-purple";
-   Blue_Analysis_Cst   : constant String :=
-     "gps-emblem-pencil-blue";
-   Red_Analysis_Cst    : constant String :=
-     "gps-emblem-pencil-red";
+   Grey_Analysis_Cst      : constant String := "gps-emblem-pencil-grey";
+   Purple_Analysis_Cst    : constant String := "gps-emblem-pencil-purple";
+   Blue_Analysis_Cst      : constant String := "gps-emblem-pencil-blue";
+   Red_Analysis_Cst       : constant String := "gps-emblem-pencil-red";
    --  Name of the icons used for posting an analysis
 
-   Icon_Name_Col  : constant := 0;
+   Icon_Name_Col : constant := 0;
    --  Gtk_Tree_Model column number dedicated to the icons associated with each
    --  node of code_analysis data structure
-   Name_Col : constant := 1;
+   Name_Col      : constant := 1;
    --  Gtk_Tree_Model column number dedicated to the name of the nodes of
    --  code_analysis structure
    --  This is a UTF8 representation of the filesystem path.
-   Node_Col : constant := 2;
+   Node_Col      : constant := 2;
    --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
    --  structure
-   File_Col : constant := 3;
+   File_Col      : constant := 3;
    --  Gtk_Tree_Model column number dedicated to the node corresponding file
    --  of the code_analysis structure (usefull for flat views)
    --  It is filled with :
    --   - nothing if the node is a project
    --   - the file_node itself if its a file
    --   - the parent file_node if its a subprogram
-   Prj_Col  : constant := 4;
+   Prj_Col       : constant := 4;
    --  Gtk_Tree_Model column number dedicated to the node corresponding project
    --  of the code_analysis structure in every circumstance
    --  (usefull for flat views)
-   Cov_Col  : constant := 5;
+   Cov_Col       : constant := 5;
    --  Gtk_Tree_Model column number dedicated to the coverage information
    --  contained in the node coverage records
-   Cov_Sort : constant := 6;
+   Cov_Sort      : constant := 6;
    --  Gtk_Tree_Model column number dedicated to some raw coverage information
    --  used to sort rows by not covered lines amount order
-   Cov_Bar_Txt : constant := 7;
+   Cov_Bar_Txt   : constant := 7;
    --  Ctk_Tree_Model column number dedicated to the coverage percentage column
-   Cov_Bar_Val : constant := 8;
+   Cov_Bar_Val   : constant := 8;
    --  Gtk_Tree_Model column number dedicated to the raw coverage percentage
    --  values, in order to be use in sorting operations
    Cov_Bar_Label : constant := 9;
@@ -99,7 +92,7 @@ package Code_Analysis_GUI is
    --  or "lines" for our own line-based computation). Displayed inside the
    --  progress bar, so that percentages measuring different things are never
    --  mistaken for one another.
-   Cov_Tooltip : constant := 10;
+   Cov_Tooltip   : constant := 10;
    --  Gtk_Tree_Model column number dedicated to the full coverage breakdown
    --  of a node, displayed as the row's tooltip
 
@@ -108,16 +101,14 @@ package Code_Analysis_GUI is
    --  report
 
    Covered_Line_Pixbuf   : constant Unbounded_String :=
-     To_Unbounded_String
-       ("gps-emblem-gcov-covered-symbolic");
+     To_Unbounded_String ("gps-emblem-gcov-covered-symbolic");
    Uncovered_Line_Pixbuf : constant Unbounded_String :=
-     To_Unbounded_String
-       ("gps-emblem-gcov-uncovered-symbolic");
+     To_Unbounded_String ("gps-emblem-gcov-uncovered-symbolic");
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
 
-   type Code_Analysis_Tree_View_Record is
-     new Gtkada.Tree_View.Tree_View_Record with record
+   type Code_Analysis_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record
+   with record
       Show_Non_Analyzed : Boolean := True;
       --  Whether we should display nodes that don't have any coverage
       --  (i.e: "n/a" nodes).
@@ -126,7 +117,8 @@ package Code_Analysis_GUI is
      access all Code_Analysis_Tree_View_Record'Class;
    --  The tree view used for the coverage analysis report.
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access Code_Analysis_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean;
 
@@ -148,8 +140,8 @@ package Code_Analysis_GUI is
    type Code_Analysis_Report_Access is access all Code_Analysis_Report;
 
    function Build_Analysis_Report
-     (Kernel      : Kernel_Handle;
-      Binary_Mode : Boolean) return Code_Analysis_Report_Access;
+     (Kernel : Kernel_Handle; Binary_Mode : Boolean)
+      return Code_Analysis_Report_Access;
    --  Create a new analysis report.
    --  Binary_Mode determines wether we are in binary coverage mode or not. If
    --  True, then no line execution coverage count will be displayed.
@@ -167,15 +159,16 @@ package Code_Analysis_GUI is
    procedure Clear (View : access Code_Analysis_Report'Class);
    --  Clear data from the view.
 
-   function On_Double_Click (Object : access Gtk_Widget_Record'Class;
-                             Event  : Gdk_Event;
-                             Kernel : Kernel_Handle) return Boolean;
+   function On_Double_Click
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
+      Kernel : Kernel_Handle) return Boolean;
    --  Callback for the "2button_press" signal that show the File or Subprogram
    --  indicated by the selected Report of Analysis tree node
 
    procedure Setup_Local_Menu
-     (View  : not null access Code_Analysis_Report'Class;
-      Menu  : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+     (View : not null access Code_Analysis_Report'Class;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add custom entries to the given local menu.
 
    procedure Open_File_Editor_On_File
@@ -211,8 +204,7 @@ package Code_Analysis_GUI is
    --  Fill the Gtk_Tree_Store with only on level of subprograms
 
    procedure Set_Non_Analyzed_Visibility
-     (View    : not null access Code_Analysis_Report'Class;
-      Visible : Boolean);
+     (View : not null access Code_Analysis_Report'Class; Visible : Boolean);
    --  Show/hide the nodes that have not been analyzed, either because they
    --  don't contain executable code or because they have been explcitly
    --  excluded by the user.

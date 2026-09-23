@@ -25,20 +25,24 @@ package body Completion.History is
    -- Get_Completion_Root --
    -------------------------
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access Completion_History;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List)
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access Completion_History;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
    is
-      It : Proposal_Stack.Cursor := First (Resolver.Stack);
+      It         : Proposal_Stack.Cursor := First (Resolver.Stack);
       It_Garbage : Proposal_Stack.Cursor := First (Resolver.Stack);
 
-      List : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
+      List            :
+        Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Garbage_Element : Stored_Proposal_Access;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Stored_Proposal'Class, Stored_Proposal_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Stored_Proposal'Class,
+           Stored_Proposal_Access);
    begin
       It := First (Resolver.Stack);
 
@@ -79,7 +83,8 @@ package body Completion.History is
    -- Get_Id --
    ------------
 
-   overriding function Get_Id (Resolver : Completion_History) return String is
+   overriding
+   function Get_Id (Resolver : Completion_History) return String is
       pragma Unreferenced (Resolver);
    begin
       return Resolver_ID;
@@ -89,7 +94,8 @@ package body Completion.History is
    -- Free --
    ----------
 
-   overriding procedure Free (Resolver : in out Completion_History) is
+   overriding
+   procedure Free (Resolver : in out Completion_History) is
    begin
       Clear (Resolver.Stack);
    end Free;
@@ -106,8 +112,10 @@ package body Completion.History is
       It         : Proposal_Stack.Cursor;
       It_Element : Stored_Proposal_Access;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Stored_Proposal'Class, Stored_Proposal_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Stored_Proposal'Class,
+           Stored_Proposal_Access);
    begin
       if Proposal not in Storable_Proposal'Class then
          return;
@@ -122,7 +130,7 @@ package body Completion.History is
          return;
       end if;
 
-      It     := First (Resolver.Stack);
+      It := First (Resolver.Stack);
 
       --  Free all elements equals to the one given in parameter form the
       --  history - we only keep one instance of each choice.

@@ -16,19 +16,19 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gdk.Device;
-with Glib;                     use Glib;
+with Glib;      use Glib;
 with Glib.Main;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Enums; use Gtk.Enums;
+with Gtk.Menu;  use Gtk.Menu;
 with Gtk.Tool_Button;
 
 package Gtkada.Combo_Tool_Button is
 
-   type Gtkada_Combo_Tool_Button_Record is new
-     Gtk.Tool_Button.Gtk_Tool_Button_Record with private;
+   type Gtkada_Combo_Tool_Button_Record is
+     new Gtk.Tool_Button.Gtk_Tool_Button_Record with private;
    type Gtkada_Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
@@ -67,8 +67,7 @@ package Gtkada.Combo_Tool_Button is
    --  short.
 
    procedure Select_Item
-     (Widget      : access Gtkada_Combo_Tool_Button_Record;
-      Item        : String);
+     (Widget : access Gtkada_Combo_Tool_Button_Record; Item : String);
    --  Select Item from the list.
    --  Emits the Signal_Selection_Changed to let listeners
    --  know of the change.
@@ -78,23 +77,21 @@ package Gtkada.Combo_Tool_Button is
    --  Get the currently selected item
 
    function Get_Selected_Item_Data
-     (Widget : access Gtkada_Combo_Tool_Button_Record)
-      return User_Data;
+     (Widget : access Gtkada_Combo_Tool_Button_Record) return User_Data;
    --  Get the data attached to the selected item
 
-   procedure Clear_Items
-     (Widget : access Gtkada_Combo_Tool_Button_Record);
+   procedure Clear_Items (Widget : access Gtkada_Combo_Tool_Button_Record);
    --  Clear the Items list
 
    procedure Remove_If
-     (Self : not null access Gtkada_Combo_Tool_Button_Record;
-      Predicate : not null access function
-        (Item : String; Data : User_Data) return Boolean);
+     (Self      : not null access Gtkada_Combo_Tool_Button_Record;
+      Predicate :
+        not null access function
+          (Item : String; Data : User_Data) return Boolean);
    --  Remove the items for which the predicate is True
 
    function Has_Items
-     (Self : not null access Gtkada_Combo_Tool_Button_Record)
-      return Boolean;
+     (Self : not null access Gtkada_Combo_Tool_Button_Record) return Boolean;
    --  Whether at least one item is registered
 
    -------------
@@ -117,7 +114,7 @@ package Gtkada.Combo_Tool_Button is
    --
    --  </signals>
 
-   Signal_Clicked : constant Glib.Signal_Name := "clicked";
+   Signal_Clicked           : constant Glib.Signal_Name := "clicked";
    Signal_Selection_Changed : constant Glib.Signal_Name := "selection_changed";
 
 private
@@ -131,18 +128,18 @@ private
 
    package Item_Vector is new Ada.Containers.Vectors (Natural, Item_Record);
 
-   type Gtkada_Combo_Tool_Button_Record is new
-     Gtk.Tool_Button.Gtk_Tool_Button_Record
-    with record
-      Items       : Item_Vector.Vector;
-      Selected    : Unbounded_String;
+   type Gtkada_Combo_Tool_Button_Record is
+     new Gtk.Tool_Button.Gtk_Tool_Button_Record
+   with record
+      Items    : Item_Vector.Vector;
+      Selected : Unbounded_String;
 
-      Menu        : Gtk_Menu;
+      Menu : Gtk_Menu;
       --  null if the menu is not visible on the screen
 
       Click_Pops_Up : Boolean;
 
-      Icon_Name    : Unbounded_String;
+      Icon_Name : Unbounded_String;
       --  The default icon name, when items do not provide one
 
       Popup_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;

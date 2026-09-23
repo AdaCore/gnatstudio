@@ -25,22 +25,22 @@ package body Search_Provider is
    use GPS.Kernel.Search;
 
    -- Severity_Search_Result --
-   type Severity_Search_Result is
-     new GPS.Kernel.Search.Kernel_Search_Result with record
+   type Severity_Search_Result is new GPS.Kernel.Search.Kernel_Search_Result
+   with record
       Severity : GNAThub.Severity_Access;
    end record;
-   overriding procedure Execute
-     (Self       : not null access Severity_Search_Result;
-      Give_Focus : Boolean);
+   overriding
+   procedure Execute
+     (Self : not null access Severity_Search_Result; Give_Focus : Boolean);
 
    -- Rule_Search_Result --
-   type Rule_Search_Result is
-     new GPS.Kernel.Search.Kernel_Search_Result with record
+   type Rule_Search_Result is new GPS.Kernel.Search.Kernel_Search_Result
+   with record
       Rule : GNAThub.Rule_Access;
    end record;
-   overriding procedure Execute
-     (Self       : not null access Rule_Search_Result;
-      Give_Focus : Boolean);
+   overriding
+   procedure Execute
+     (Self : not null access Rule_Search_Result; Give_Focus : Boolean);
 
    ------------------
    -- Copy_Pattern --
@@ -55,19 +55,20 @@ package body Search_Provider is
       end if;
 
       --  Set Self.Pattern to Approximate if Pattern.Kind = Fuzzy
-      Self.Pattern := Pattern.Build_If_Needed
-        (Kind     => Fuzzy,
-         New_Kind => Approximate,
-         Built    => Self.Pattern_Needs_Free);
+      Self.Pattern :=
+        Pattern.Build_If_Needed
+          (Kind     => Fuzzy,
+           New_Kind => Approximate,
+           Built    => Self.Pattern_Needs_Free);
    end Copy_Pattern;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Severity_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Severity_Search_Result; Give_Focus : Boolean)
    is
       pragma Unreferenced (Give_Focus);
       View : constant Views.View_Access := Views.Retrieve_View (Self.Kernel);
@@ -82,9 +83,9 @@ package body Search_Provider is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Rule_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Rule_Search_Result; Give_Focus : Boolean)
    is
       pragma Unreferenced (Give_Focus);
       View : constant Views.View_Access := Views.Retrieve_View (Self.Kernel);
@@ -99,7 +100,8 @@ package body Search_Provider is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Provider) is
+   overriding
+   procedure Free (Self : in out Provider) is
    begin
       if Self.Pattern_Needs_Free then
          Free (Self.Pattern);
@@ -112,7 +114,8 @@ package body Search_Provider is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Severities_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
@@ -123,12 +126,10 @@ package body Search_Provider is
       View     : constant Views.View_Access :=
         Views.Retrieve_View (Self.Kernel);
    begin
-      Result   := null;
+      Result := null;
       Has_Next := False;
 
-      if View = null
-        or else not Has_Element (Self.Cursor)
-      then
+      if View = null or else not Has_Element (Self.Cursor) then
          return;
       end if;
 
@@ -141,17 +142,19 @@ package body Search_Provider is
             Context := Self.Pattern.Search_Best_Match (Name);
 
             if Context /= No_Match then
-               Result := new Severity_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => Context.Score,
-                  Short    => new String'
-                    (Self.Pattern.Highlight_Match
-                         (Buffer  => Name,
-                          Context => Context)),
-                  Long     => new String'("severity - " & Name),
-                  Id       => VSS.Strings.Conversions.To_Virtual_String (Name),
-                  Severity => Severity);
+               Result :=
+                 new Severity_Search_Result'
+                   (Kernel   => Self.Kernel,
+                    Provider => Self,
+                    Score    => Context.Score,
+                    Short    =>
+                      new String'
+                        (Self.Pattern.Highlight_Match
+                           (Buffer => Name, Context => Context)),
+                    Long     => new String'("severity - " & Name),
+                    Id       =>
+                      VSS.Strings.Conversions.To_Virtual_String (Name),
+                    Severity => Severity);
 
                Self.Adjust_Score (Result);
             end if;
@@ -166,7 +169,8 @@ package body Search_Provider is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Rules_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
@@ -174,15 +178,13 @@ package body Search_Provider is
       use GNAThub.Rule_Sets;
       Rule    : Rule_Access;
       Context : Search_Context;
-      View     : constant Views.View_Access :=
+      View    : constant Views.View_Access :=
         Views.Retrieve_View (Self.Kernel);
    begin
-      Result   := null;
+      Result := null;
       Has_Next := False;
 
-      if View = null
-        or else not Has_Element (Self.Cursor)
-      then
+      if View = null or else not Has_Element (Self.Cursor) then
          return;
       end if;
 
@@ -195,17 +197,19 @@ package body Search_Provider is
             Context := Self.Pattern.Search_Best_Match (Name);
 
             if Context /= No_Match then
-               Result := new Rule_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => Context.Score,
-                  Short    => new String'
-                    (Self.Pattern.Highlight_Match
-                         (Buffer  => Name,
-                          Context => Context)),
-                  Long     => new String'("rule - " & Name),
-                  Id       => VSS.Strings.Conversions.To_Virtual_String (Name),
-                  Rule     => Rule);
+               Result :=
+                 new Rule_Search_Result'
+                   (Kernel   => Self.Kernel,
+                    Provider => Self,
+                    Score    => Context.Score,
+                    Short    =>
+                      new String'
+                        (Self.Pattern.Highlight_Match
+                           (Buffer => Name, Context => Context)),
+                    Long     => new String'("rule - " & Name),
+                    Id       =>
+                      VSS.Strings.Conversions.To_Virtual_String (Name),
+                    Rule     => Rule);
 
                Self.Adjust_Score (Result);
             end if;
@@ -220,7 +224,8 @@ package body Search_Provider is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Severities_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -239,7 +244,8 @@ package body Search_Provider is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Rules_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)

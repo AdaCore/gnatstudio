@@ -17,9 +17,9 @@
 
 --  The History view
 
-with Commands;                use Commands;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GPS.Kernel;              use GPS.Kernel;
+with Commands;     use Commands;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Kernel;   use GPS.Kernel;
 
 package VCS2.History is
 

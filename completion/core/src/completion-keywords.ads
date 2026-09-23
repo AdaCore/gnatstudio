@@ -25,17 +25,18 @@ package Completion.Keywords is
 
    overriding
    procedure Get_Completion_Root
-     (Resolver   : access Completion_Keywords;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List);
+     (Resolver : access Completion_Keywords;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    overriding
    function Get_Id (Resolver : Completion_Keywords) return String;
    --  See inherited documentation
 
-   overriding procedure Free (Resolver : in out Completion_Keywords) is null;
+   overriding
+   procedure Free (Resolver : in out Completion_Keywords) is null;
    --  See inherited documentation
 
 private

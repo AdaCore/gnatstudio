@@ -136,16 +136,15 @@ package BT.Xml is
    --  defined in a corresponding file located both in CodePeer and in
    --  GNAT Studio repositories. If you change some of these names, you should
    --  update the corresponding definition in the other repository.
-   File_Tag      : constant String := "file";
-   Proc_Tag      : constant String := "proc";
-   Vn_Tag        : constant String := "vn";
-   Srcpos_Tag    : constant String := "srcpos";
+   File_Tag   : constant String := "file";
+   Proc_Tag   : constant String := "proc";
+   Vn_Tag     : constant String := "vn";
+   Srcpos_Tag : constant String := "srcpos";
 
-   Name_Attribute       : constant String := "name";
+   Name_Attribute : constant String := "name";
 
    function Xml_Vals_File_Name
-     (Output_Dir     : String;
-      File_Name      : String) return String;
+     (Output_Dir : String; File_Name : String) return String;
    --  Return the path to the xml file holding the value sets.
    --
    --  NOTE: This function is located both in CodePeer and in GNAT Studio

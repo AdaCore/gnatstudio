@@ -33,9 +33,10 @@ with Gtk.Widget;
 
 package GNATCOLL.Scripts.Gtkada is
 
-   package Subprogram_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
-      User_Type   => Subprogram_Type);
+   package Subprogram_Callback is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
+        User_Type   => Subprogram_Type);
    --  Callbacks that can be used to associate a GUI object (menu, toolbar
    --  button,...) with a script subprogram.
    --  This can for instance be used to make a menu item execute a python
@@ -87,16 +88,15 @@ package GNATCOLL.Scripts.Gtkada is
 
    function Get_Instance
      (Script : access Scripting_Language_Record'Class;
-      Widget : access Glib.Object.GObject_Record'Class)
-      return Class_Instance;
+      Widget : access Glib.Object.GObject_Record'Class) return Class_Instance;
    --  Return the class_instance associated with Widget in the given scripting
    --  language. No_Class_Instance is returned if Widget is not already
    --  associated, in which case you should create a new class instance and
    --  use Set_Data above.
 
    function Get_Data
-     (Instance : Class_Instance;
-      Name     : String := GUI_Data_Name) return Glib.Object.GObject;
+     (Instance : Class_Instance; Name : String := GUI_Data_Name)
+      return Glib.Object.GObject;
    --  Return the object associated with Instance.
 
 end GNATCOLL.Scripts.Gtkada;

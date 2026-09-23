@@ -18,8 +18,8 @@ with CodePeer.Bridge.Inspection_Readers.Base;
 
 private package CodePeer.Bridge.Inspection_Readers.V6 is
 
-   type Inspection_Reader_V6 is
-     limited new Base.Base_Inspection_Reader with private;
+   type Inspection_Reader_V6 is limited
+     new Base.Base_Inspection_Reader with private;
 
    function Create_Inspection_Reader_V6
      (Kernel          : not null GPS.Kernel.Kernel_Handle;
@@ -40,46 +40,49 @@ private
    --  Hash function to use Message_Subprogram_Pair in standard hashed
    --  containers.
 
-   package Message_Subprogram_Sets is
-     new Ada.Containers.Hashed_Sets
-       (Message_Subprogram_Pair, Hash, "=", "=");
+   package Message_Subprogram_Sets is new
+     Ada.Containers.Hashed_Sets (Message_Subprogram_Pair, Hash, "=", "=");
 
-   type Inspection_Reader_V6 is
-     limited new Base.Base_Inspection_Reader with record
+   type Inspection_Reader_V6 is limited new Base.Base_Inspection_Reader
+   with record
       Subprogram_Map  : Positive_Subprogram_Maps.Map;
       Subprogram_Node : Code_Analysis.Subprogram_Access;
 
-      Postponed       : Message_Subprogram_Sets.Set;
+      Postponed : Message_Subprogram_Sets.Set;
       --  Set of messages which is not associated to subprograms due to missing
       --  of subprogram mapping at message processing time.
 
-      Backtrace_Mode  : Boolean := False;
+      Backtrace_Mode : Boolean := False;
       --  Set inside of "backtrace" element.
    end record;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Inspection_Reader_V6;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   overriding procedure End_Element
-     (Self  : in out Inspection_Reader_V6;
-      Name  : String);
+   overriding
+   procedure End_Element (Self : in out Inspection_Reader_V6; Name : String);
 
-   overriding procedure Start_Message
-     (Self  : in out Inspection_Reader_V6;
-      Attrs : Sax.Attributes.Attributes'Class);
-
-   overriding procedure End_Message (Self : in out Inspection_Reader_V6);
-
-   overriding procedure Start_Subprogram
+   overriding
+   procedure Start_Message
      (Self  : in out Inspection_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   overriding function Subprogram_Node
-     (Self : Inspection_Reader_V6)
-      return Code_Analysis.Subprogram_Access;
+   overriding
+   procedure End_Message (Self : in out Inspection_Reader_V6);
 
-   overriding procedure End_Document (Self : in out Inspection_Reader_V6);
+   overriding
+   procedure Start_Subprogram
+     (Self  : in out Inspection_Reader_V6;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   overriding
+   function Subprogram_Node
+     (Self : Inspection_Reader_V6) return Code_Analysis.Subprogram_Access;
+
+   overriding
+   procedure End_Document (Self : in out Inspection_Reader_V6);
 
 end CodePeer.Bridge.Inspection_Readers.V6;

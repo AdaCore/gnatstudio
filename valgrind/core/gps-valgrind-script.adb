@@ -17,7 +17,7 @@
 
 with GNATCOLL.Scripts;
 
-with GPS.Valgrind.Binding;             use GPS.Valgrind.Binding;
+with GPS.Valgrind.Binding; use GPS.Valgrind.Binding;
 
 package body GPS.Valgrind.Script is
 
@@ -26,8 +26,7 @@ package body GPS.Valgrind.Script is
       return GNATCOLL.Scripts.Class_Type;
 
    procedure Command_Handler
-     (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
-      Command : String);
+     (Data : in out GNATCOLL.Scripts.Callback_Data'Class; Command : String);
 
    Valgrind_Class_Name : constant String := "Valgrind";
 
@@ -36,8 +35,7 @@ package body GPS.Valgrind.Script is
    ---------------------
 
    procedure Command_Handler
-     (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
-      Command : String)
+     (Data : in out GNATCOLL.Scripts.Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Data);
    begin
@@ -79,23 +77,23 @@ package body GPS.Valgrind.Script is
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("callgrind_zero_stats",
-         Class        => Get_Valgrind_Class (Kernel.Scripts),
-         Handler      => Command_Handler'Access,
+         Class         => Get_Valgrind_Class (Kernel.Scripts),
+         Handler       => Command_Handler'Access,
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("callgrind_toggle_collect",
-         Class        => Get_Valgrind_Class (Kernel.Scripts),
-         Handler      => Command_Handler'Access,
+         Class         => Get_Valgrind_Class (Kernel.Scripts),
+         Handler       => Command_Handler'Access,
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("callgrind_start_instrumentation",
-         Class        => Get_Valgrind_Class (Kernel.Scripts),
-         Handler      => Command_Handler'Access,
+         Class         => Get_Valgrind_Class (Kernel.Scripts),
+         Handler       => Command_Handler'Access,
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("callgrind_stop_instrumentation",
-         Class        => Get_Valgrind_Class (Kernel.Scripts),
-         Handler      => Command_Handler'Access,
+         Class         => Get_Valgrind_Class (Kernel.Scripts),
+         Handler       => Command_Handler'Access,
          Static_Method => True);
    end Register_Commands;
 

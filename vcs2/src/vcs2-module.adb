@@ -17,7 +17,8 @@
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Basic_Types;                  use Basic_Types;
-with Commands.Interactive;         use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -43,7 +44,8 @@ package body VCS2.Module is
    --  Id used when annotations editor lines.
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed.
@@ -51,45 +53,52 @@ package body VCS2.Module is
    --  reuse existing engines when possible, to benefit from their caches.
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the user loads a new project.
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
 
    type Annotate is new Interactive_Command with null record;
-   overriding function Execute
-     (Self   : access Annotate;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Annotate; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Remove_Annotate is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Remove_Annotate;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Remove_Annotate; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Is_Annotated_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Annotated_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Annotated_Filter; Context : Selection_Context)
+      return Boolean;
    --  Whether the current file is annotated to show the last modifications on
    --  each line.
 
    type On_Annotation_Visitor is new Task_Visitor with record
-      Kernel  : Kernel_Handle;
+      Kernel : Kernel_Handle;
    end record;
-   overriding procedure On_Annotation
+   overriding
+   procedure On_Annotation
      (Self       : not null access On_Annotation_Visitor;
       File       : Virtual_File;
       First_Line : Positive;
       Ids, Text  : GNAT.Strings.String_List);
 
    type On_File_Changed_Detected is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Changed_Detected;
       Kernel : not null access Kernel_Handle_Record'Class);
 
@@ -97,33 +106,34 @@ package body VCS2.Module is
    -- On_Annotation --
    -------------------
 
-   overriding procedure On_Annotation
+   overriding
+   procedure On_Annotation
      (Self       : not null access On_Annotation_Visitor;
       File       : Virtual_File;
       First_Line : Positive;
       Ids, Text  : GNAT.Strings.String_List)
    is
-      A         : Line_Information_Array (Editable_Line_Type (First_Line)
-                                          .. Editable_Line_Type
-                                            (First_Line + Text'Length) - 1);
-      Same_Info : constant Unbounded_String :=
-                    To_Unbounded_String ("   ...");
+      A         :
+        Line_Information_Array
+          (Editable_Line_Type (First_Line)
+           .. Editable_Line_Type (First_Line + Text'Length) - 1);
+      Same_Info : constant Unbounded_String := To_Unbounded_String ("   ...");
       Max_Len   : Natural := Length (Same_Info);
       Non_Null  : Natural := 1;
    begin
       for T in Text'Range loop
          if T > Text'First
-           and then (Text (T) = null
-                     or else Text (Non_Null).all = Text (T).all)
+           and then
+             (Text (T) = null or else Text (Non_Null).all = Text (T).all)
          then
             A (Editable_Line_Type (T - Text'First) + A'First).Text :=
               Same_Info;
          else
             A (Editable_Line_Type (T - Text'First) + A'First).Text :=
               To_Unbounded_String
-              ("<span underline='single'>" & Text (T).all & "</span>");
-            A (Editable_Line_Type
-               (T - Text'First) + A'First).Associated_Command :=
+                ("<span underline='single'>" & Text (T).all & "</span>");
+            A (Editable_Line_Type (T - Text'First) + A'First)
+              .Associated_Command :=
               VCS2.History.Create_Show_History_Command
                 (Kernel    => Self.Kernel,
                  File      => File,
@@ -138,8 +148,8 @@ package body VCS2.Module is
          File       => File,
          Identifier => Annotation_Id,
          Info       =>
-           (Text                     => To_Unbounded_String
-                (String'(1 .. Max_Len => ' ')),
+           (Text                     =>
+              To_Unbounded_String (String'(1 .. Max_Len => ' ')),
             Display_Popup_When_Alone => False,
             Tooltip_Text             => Null_Unbounded_String,
             Image                    => Null_Unbounded_String,
@@ -148,19 +158,17 @@ package body VCS2.Module is
             Associated_Command       => null),
          Every_Line => False);
       Add_Line_Information
-        (Self.Kernel,
-         File       => File,
-         Identifier => Annotation_Id,
-         Info       => A);
+        (Self.Kernel, File => File, Identifier => Annotation_Id, Info => A);
    end On_Annotation;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Annotate;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Annotate; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -169,8 +177,8 @@ package body VCS2.Module is
       VCS_Engine : VCS_Engine_Access;
    begin
       if File /= No_File and then VCS /= null then
-         VCS_Engine := VCS_Engine_Access
-           (VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS_Engine :=
+           VCS_Engine_Access (VCS.Guess_VCS_For_Directory (File.Dir));
          VCS_Engine.Queue_Annotations
            (new On_Annotation_Visitor'(Task_Visitor with Kernel => Kernel),
             File => File);
@@ -182,9 +190,10 @@ package body VCS2.Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Remove_Annotate;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Remove_Annotate; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -200,9 +209,10 @@ package body VCS2.Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Annotated_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Annotated_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -213,8 +223,7 @@ package body VCS2.Module is
       else
          declare
             Buffer : constant Editor_Buffer'Class :=
-              Kernel.Get_Buffer_Factory.Get
-                (File => File, Open_View => False);
+              Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
          begin
             return Buffer.Has_Information_Column (Annotation_Id);
          end;
@@ -225,7 +234,8 @@ package body VCS2.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -238,7 +248,8 @@ package body VCS2.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -251,17 +262,19 @@ package body VCS2.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      Info    : constant File_Info'Class := File_Info'Class
-         (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
+      Info    : constant File_Info'Class :=
+        File_Info'Class
+          (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       Project : constant Project_Type := Info.Project (True);
       V       : constant VCS_Engine_Access :=
-         VCS_Engine_Access (Kernel.VCS.Get_VCS (Project));
+        VCS_Engine_Access (Kernel.VCS.Get_VCS (Project));
    begin
       V.Invalidate_File_Status_Cache (File);
       Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => True);
@@ -271,7 +284,8 @@ package body VCS2.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Changed_Detected;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -290,8 +304,8 @@ package body VCS2.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       V : constant not null Abstract_VCS_System_Access :=
-            new VCS_System'
-              (Abstract_VCS_System with Kernel => Kernel_Handle (Kernel));
+        new VCS_System'
+          (Abstract_VCS_System with Kernel => Kernel_Handle (Kernel));
 
       Is_Annotated : constant Action_Filter := new Is_Annotated_Filter;
 
@@ -300,8 +314,8 @@ package body VCS2.Module is
 
       Register_Contextual_Submenu
         (Kernel => Kernel,
-         Name       => -"Version Control",
-         Group      => VCS_Contextual_Group);
+         Name   => -"Version Control",
+         Group  => VCS_Contextual_Group);
 
       VCS2.Scripts.Register_Scripts (Kernel);
 
@@ -312,33 +326,35 @@ package body VCS2.Module is
       File_Saved_Hook.Add (new On_File_Saved);
 
       Register_Action
-        (Kernel, "vcs annotate",
+        (Kernel,
+         "vcs annotate",
          Description =>
            -("For each line of the current file, show when the last"
              & " modification was done"),
-         Filter      => Kernel.Lookup_Filter ("Source editor")
-             and not Is_Annotated,
+         Filter      =>
+           Kernel.Lookup_Filter ("Source editor") and not Is_Annotated,
          Command     => new Annotate,
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs remove annotate",
+        (Kernel,
+         "vcs remove annotate",
          Description =>
            -("Remove annotations done on each line of the current file that"
              & " show when the last modification was done"),
-         Filter      => Kernel.Lookup_Filter ("Source editor")
-             and Is_Annotated,
+         Filter      =>
+           Kernel.Lookup_Filter ("Source editor") and Is_Annotated,
          Command     => new Remove_Annotate,
          Category    => "VCS2");
 
       Register_Contextual_Menu
         (Kernel,
-         Action   => "vcs annotate",
-         Label    => "Version Control/Show last modification for lines");
+         Action => "vcs annotate",
+         Label  => "Version Control/Show last modification for lines");
       Register_Contextual_Menu
         (Kernel,
-         Action   => "vcs remove annotate",
-         Label    => "Version Control/Hide last modification for lines");
+         Action => "vcs remove annotate",
+         Label  => "Version Control/Hide last modification for lines");
 
       VCS2.Commits.Register_Module (Kernel);
       VCS2.History.Register_Module (Kernel);

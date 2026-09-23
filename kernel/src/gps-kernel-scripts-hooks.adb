@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GPS.Intl;                  use GPS.Intl;
-with Glib.Object;               use Glib.Object;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GPS.Intl;       use GPS.Intl;
+with Glib.Object;    use Glib.Object;
 
 package body GPS.Kernel.Scripts.Hooks is
 
@@ -39,7 +39,8 @@ package body GPS.Kernel.Scripts.Hooks is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : in out Python_Hook_Function) is
+   overriding
+   procedure Destroy (Self : in out Python_Hook_Function) is
    begin
       if Self.Func /= null then
          Free (Self.Func);
@@ -65,8 +66,7 @@ package body GPS.Kernel.Scripts.Hooks is
             if Info = null then
                Set_Error_Msg (Data, -"No such hook: " & Name);
             else
-               Set_Data
-                 (Inst, Hook_Class_Name, Hook_Property'(Hook => Info));
+               Set_Data (Inst, Hook_Class_Name, Hook_Property'(Hook => Info));
             end if;
          end;
 
@@ -81,28 +81,23 @@ package body GPS.Kernel.Scripts.Hooks is
          declare
             Func : constant Subprogram_Type := Data.Nth_Arg (2);
             F    : constant Python_Hook_Function_Access :=
-                     new Python_Hook_Function'
-                       (Hook_Function with Func => Func);
+              new Python_Hook_Function'(Hook_Function with Func => Func);
 
          begin
             Info := Get_Hook (Data, 1);
-            Info.Add_Hook_Func
-               (Func  => F,
-                Last  => Data.Nth_Arg (3, True));
+            Info.Add_Hook_Func (Func => F, Last => Data.Nth_Arg (3, True));
          end;
 
       elsif Command = "add_debounce" then
          declare
             Func : constant Subprogram_Type := Data.Nth_Arg (2);
             F    : constant Python_Hook_Function_Access :=
-                     new Python_Hook_Function'
-                       (Hook_Function with Func => Func);
+              new Python_Hook_Function'(Hook_Function with Func => Func);
 
          begin
             Info := Get_Hook (Data, 1);
             Debounce_Hook_Types (Info.all).Add_Debounce_Hook_Func
-              (Func  => F,
-               Last  => Data.Nth_Arg (3, True));
+              (Func => F, Last => Data.Nth_Arg (3, True));
          end;
 
       elsif Command = "remove" then
@@ -120,13 +115,12 @@ package body GPS.Kernel.Scripts.Hooks is
             ----------------
 
             function If_Matches
-              (F : not null access Hook_Function'Class) return Boolean
-            is
+              (F : not null access Hook_Function'Class) return Boolean is
             begin
                if F.all in Python_Hook_Function'Class then
                   declare
                      Python_F : constant Python_Hook_Function :=
-                                  Python_Hook_Function (F.all);
+                       Python_Hook_Function (F.all);
                   begin
                      if Python_F.Func /= null and then Func /= null then
                         return Python_F.Func.all = Func.all;
@@ -146,7 +140,7 @@ package body GPS.Kernel.Scripts.Hooks is
             Name : constant String := Data.Nth_Arg (1);
             Typ  : constant String := Data.Nth_Arg (2, "simple_hooks");
             T    : constant Hook_Types_Access :=
-               Get_Hook (Get_Kernel (Data), Hook_Type_Prefix & Typ);
+              Get_Hook (Get_Kernel (Data), Hook_Type_Prefix & Typ);
             H    : Hook_Types_Access;
 
          begin
@@ -167,7 +161,7 @@ package body GPS.Kernel.Scripts.Hooks is
       elsif Command = "list" then
          declare
             use Hooks_Maps;
-            C    : Hooks_Maps.Cursor := Get_Kernel (Data).Hooks.First;
+            C : Hooks_Maps.Cursor := Get_Kernel (Data).Hooks.First;
          begin
             Data.Set_Return_Value_As_List;
             while Has_Element (C) loop
@@ -193,7 +187,7 @@ package body GPS.Kernel.Scripts.Hooks is
       elsif Command = "list_types" then
          declare
             use Hooks_Maps;
-            C    : Hooks_Maps.Cursor := Get_Kernel (Data).Hooks.First;
+            C : Hooks_Maps.Cursor := Get_Kernel (Data).Hooks.First;
          begin
             Data.Set_Return_Value_As_List;
             while Has_Element (C) loop
@@ -202,7 +196,7 @@ package body GPS.Kernel.Scripts.Hooks is
                begin
                   if Starts_With (N, Hook_Type_Prefix) then
                      Data.Set_Return_Value
-                        (N (N'First + Hook_Type_Prefix'Length .. N'Last));
+                       (N (N'First + Hook_Type_Prefix'Length .. N'Last));
                   end if;
                end;
                Next (C);
@@ -216,8 +210,8 @@ package body GPS.Kernel.Scripts.Hooks is
    --------------
 
    function Get_Hook
-      (Kernel : not null access Kernel_Handle_Record'Class;
-       Name   : String) return access Hook_Types'Class
+     (Kernel : not null access Kernel_Handle_Record'Class; Name : String)
+      return access Hook_Types'Class
    is
       use Hooks_Maps;
       C : constant Hooks_Maps.Cursor := Kernel.Hooks.Find (Name);
@@ -234,14 +228,16 @@ package body GPS.Kernel.Scripts.Hooks is
    --------------
 
    function Get_Hook
-      (Data : Callback_Data'Class; Param : Positive)
+     (Data : Callback_Data'Class; Param : Positive)
       return access Hook_Types'Class
    is
       Inst : constant Class_Instance :=
-         Data.Nth_Arg (Param, Get_Hook_Class (Get_Kernel (Data)));
+        Data.Nth_Arg (Param, Get_Hook_Class (Get_Kernel (Data)));
    begin
-      return Hook_Property_Access
-        (Instance_Property'(Get_Data (Inst, Hook_Class_Name))).Hook;
+      return
+        Hook_Property_Access
+          (Instance_Property'(Get_Data (Inst, Hook_Class_Name)))
+          .Hook;
    end Get_Hook;
 
    --------------------
@@ -266,9 +262,9 @@ package body GPS.Kernel.Scripts.Hooks is
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class        => Hook_Class,
-         Params       => (1 => Param ("name")),
-         Handler      => Default_Command_Handler'Access);
+         Class   => Hook_Class,
+         Params  => (1 => Param ("name")),
+         Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("run",
          Class        => Hook_Class,
@@ -286,27 +282,29 @@ package body GPS.Kernel.Scripts.Hooks is
          Handler      => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add",
-         Class        => Hook_Class,
-         Params       => (1 => Param ("function_name"),
-                          2 => Param ("last", Optional => True)),
-         Handler      => Default_Command_Handler'Access);
+         Class   => Hook_Class,
+         Params  =>
+           (1 => Param ("function_name"),
+            2 => Param ("last", Optional => True)),
+         Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add_debounce",
-         Class        => Hook_Class,
-         Params       => (1 => Param ("function_name"),
-                          2 => Param ("last", Optional => True)),
-         Handler      => Default_Command_Handler'Access);
+         Class   => Hook_Class,
+         Params  =>
+           (1 => Param ("function_name"),
+            2 => Param ("last", Optional => True)),
+         Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("remove",
-         Class        => Hook_Class,
-         Params       => (1 => Param ("function_name")),
-         Handler      => Default_Command_Handler'Access);
+         Class   => Hook_Class,
+         Params  => (1 => Param ("function_name")),
+         Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("register",
          Class         => Hook_Class,
          Static_Method => True,
-         Params        => (1 => Param ("name"),
-                           2 => Param ("type", Optional => True)),
+         Params        =>
+           (1 => Param ("name"), 2 => Param ("type", Optional => True)),
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("list",
@@ -315,8 +313,8 @@ package body GPS.Kernel.Scripts.Hooks is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("describe_functions",
-         Class        => Hook_Class,
-         Handler      => Default_Command_Handler'Access);
+         Class   => Hook_Class,
+         Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("list_types",
          Class         => Hook_Class,

@@ -43,8 +43,7 @@ package CodePeer.Reports is
       return CodePeer.Messages_Reports.Messages_Report;
 
    function Build_Context
-     (Self  : not null access Report_Record'Class;
-      Event : Gdk.Event.Gdk_Event)
+     (Self : not null access Report_Record'Class; Event : Gdk.Event.Gdk_Event)
       return GPS.Kernel.Selection_Context;
    --  Describe the current selection
 

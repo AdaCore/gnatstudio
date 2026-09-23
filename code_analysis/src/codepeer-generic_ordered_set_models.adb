@@ -22,8 +22,8 @@ with Gtk.Tree_Model.Utils;
 
 package body CodePeer.Generic_Ordered_Set_Models is
 
-   package Category_Conversions is
-     new System.Address_To_Access_Conversions (Item);
+   package Category_Conversions is new
+     System.Address_To_Access_Conversions (Item);
 
    ---------------
    -- All_Items --
@@ -49,8 +49,8 @@ package body CodePeer.Generic_Ordered_Set_Models is
    ----------------------
 
    function Create_Tree_Iter
-     (Self : access Ordered_Set_Model_Record'Class;
-      Item : Item_Access) return Gtk.Tree_Model.Gtk_Tree_Iter
+     (Self : access Ordered_Set_Model_Record'Class; Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       pragma Unreferenced (Self);
 
@@ -71,7 +71,8 @@ package body CodePeer.Generic_Ordered_Set_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Ordered_Set_Model_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
@@ -100,7 +101,8 @@ package body CodePeer.Generic_Ordered_Set_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Ordered_Set_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
@@ -113,8 +115,7 @@ package body CodePeer.Generic_Ordered_Set_Models is
    --------------
 
    function Get_Path
-     (Self : access Ordered_Set_Model_Record;
-      Item : Item_Access)
+     (Self : access Ordered_Set_Model_Record; Item : Item_Access)
       return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Result  : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -139,8 +140,7 @@ package body CodePeer.Generic_Ordered_Set_Models is
    ----------------
 
    procedure Initialize
-     (Self  : access Ordered_Set_Model_Record'Class;
-      Items : Item_Sets.Set) is
+     (Self : access Ordered_Set_Model_Record'Class; Items : Item_Sets.Set) is
    begin
       Gtkada.Abstract_List_Model.Initialize (Self);
       Self.Items := Items;
@@ -160,14 +160,15 @@ package body CodePeer.Generic_Ordered_Set_Models is
       return
         Item_Access
           (Category_Conversions.To_Pointer
-               (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter)));
+             (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter)));
    end Item_At;
 
    ----------------
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Ordered_Set_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint is
@@ -184,7 +185,8 @@ package body CodePeer.Generic_Ordered_Set_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Ordered_Set_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
@@ -206,7 +208,8 @@ package body CodePeer.Generic_Ordered_Set_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Ordered_Set_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
@@ -235,11 +238,10 @@ package body CodePeer.Generic_Ordered_Set_Models is
    -----------------
 
    procedure Row_Changed
-     (Self : access Ordered_Set_Model_Record'Class;
-      Item : Item_Access)
+     (Self : access Ordered_Set_Model_Record'Class; Item : Item_Access)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-               Self.Create_Tree_Iter (Item);
+        Self.Create_Tree_Iter (Item);
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin

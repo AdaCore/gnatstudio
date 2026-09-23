@@ -20,8 +20,8 @@
 
 with Gtkada.MDI;
 
-with Glib.Values;      use Glib.Values;
-with Gtk.Tree_Model;   use Gtk.Tree_Model;
+with Glib.Values;    use Glib.Values;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 
 package GPS.Editors.GtkAda is
 
@@ -32,8 +32,8 @@ package GPS.Editors.GtkAda is
    function Get_Editor_Mark_Type return Glib.GType;
    --  Return the GType to use for editor marks
 
-   procedure Set_Mark (Value : in out Glib.Values.GValue;
-                       Mark  : Editor_Mark'Class);
+   procedure Set_Mark
+     (Value : in out Glib.Values.GValue; Mark : Editor_Mark'Class);
    --  Store the mark in Value. Value must have been initialized through
    --  Glib.Values.Init with the type given by Get_Editor_Mark_Type.
 
@@ -41,8 +41,7 @@ package GPS.Editors.GtkAda is
    --  Retrieve the mark stored in the value
 
    function Get_Mark
-     (Model  : not null
-          access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
+     (Model  : not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return Editor_Mark'Class;
    --  Return the mark stored in the tree at the specified location

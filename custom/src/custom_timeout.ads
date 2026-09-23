@@ -17,7 +17,7 @@
 
 --  This package is used to register timeout actions in GNAT Studio shell
 
-with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Custom_Timeout is
 

@@ -21,7 +21,7 @@
 --  starting with the given prefix".
 
 with GNAT.Strings;
-with GNATCOLL.Utils;  use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 generic
    type Data_Type is private;
@@ -36,22 +36,21 @@ generic
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free the memory occupied by Data. No_Data might be passed as an argument
 
-package Tries is
+package Tries
+is
 
    type Trie_Tree (Case_Sensitive : Boolean) is private;
    --  The case sensitive cannot be changed once the trie tree has been created
 
    type Trie_Tree_Access is access all Trie_Tree;
 
-   Empty_Case_Sensitive_Trie_Tree : constant Trie_Tree;
+   Empty_Case_Sensitive_Trie_Tree   : constant Trie_Tree;
    Empty_Case_Insensitive_Trie_Tree : constant Trie_Tree;
 
    procedure Clear (Tree : in out Trie_Tree);
    --  Clear the full contents of the tree
 
-   procedure Insert
-     (Tree  : in out Trie_Tree;
-      Data  : Data_Type);
+   procedure Insert (Tree : in out Trie_Tree; Data : Data_Type);
    --  Insert a new entry in the tree.
    --  Index mustn't be the empty string.
 
@@ -142,23 +141,23 @@ private
    type Cell_Child is record
       First_Char_Of_Key : Character := 'a';
 
-      Index_Length      : Natural := 0;
+      Index_Length : Natural := 0;
       --  The number of characters that should be considered in
       --  Get_Index (Data) for this node.
 
-      Data              : Data_Type := No_Data;
+      Data : Data_Type := No_Data;
       --  If there is any data associated with that cell
 
-      Children          : Cell_Child_Array_Access;
+      Children : Cell_Child_Array_Access;
       --  The various children of the cell
 
-      Num_Children      : Natural := 0;
+      Num_Children : Natural := 0;
 
-      Children_Length   : Natural := 0;
+      Children_Length : Natural := 0;
 
-      Parent_Cell       : Cell_Child_Access;
+      Parent_Cell : Cell_Child_Access;
 
-      Number_In_Parent  : Natural := 0;
+      Number_In_Parent : Natural := 0;
    end record;
 
    type Cell_Child_Array is array (Positive) of aliased Cell_Child;
@@ -176,27 +175,23 @@ private
       --  trie tree. This way, if there is any change made during e.g. the
       --  iteration, it's detected.
 
-      Child     : Cell_Child_Access := null;
+      Child : Cell_Child_Access := null;
    end record;
 
-   Empty_Case_Sensitive_Trie_Tree : constant Trie_Tree :=
-     (Case_Sensitive => True,
-      Mod_Clock => null,
-      Child     => null);
+   Empty_Case_Sensitive_Trie_Tree   : constant Trie_Tree :=
+     (Case_Sensitive => True, Mod_Clock => null, Child => null);
    Empty_Case_Insensitive_Trie_Tree : constant Trie_Tree :=
-     (Case_Sensitive => False,
-      Mod_Clock => null,
-      Child     => null);
+     (Case_Sensitive => False, Mod_Clock => null, Child => null);
 
    type Data_Type_Array is array (Positive) of Data_Type;
 
    type Data_Type_Array_Access is access Data_Type_Array;
 
    type Iterator is record
-      Trie_Root_Cell    : Cell_Child_Access;
+      Trie_Root_Cell : Cell_Child_Access;
       --  This is the cell at the root of the whole trie tree.
 
-      Case_Sensitive    : Boolean;
+      Case_Sensitive : Boolean;
       --  A property of the tree, but needed to traverse
 
       Mod_Clock         : Mod_Access;

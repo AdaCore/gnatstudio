@@ -16,15 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Unicode; use Ada.Wide_Wide_Characters.Unicode;
 with Ada.Characters.Wide_Wide_Latin_1;
-with GNAT.Expect;                 use GNAT.Expect;
-with GNAT.Regpat;                 use GNAT.Regpat;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with String_Utils;                use String_Utils;
-with UTF8_Utils;                  use UTF8_Utils;
-with Language.Tree;               use Language.Tree;
+with GNAT.Expect;                      use GNAT.Expect;
+with GNAT.Regpat;                      use GNAT.Regpat;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with String_Utils;                     use String_Utils;
+with UTF8_Utils;                       use UTF8_Utils;
+with Language.Tree;                    use Language.Tree;
 with System.Storage_Elements;
 
 package body Language is
@@ -60,8 +60,7 @@ package body Language is
    ---------------------------
 
    function Can_Tooltip_On_Entity
-     (Lang   : access Language_Root;
-      Entity : String) return Boolean
+     (Lang : access Language_Root; Entity : String) return Boolean
    is
       pragma Unreferenced (Lang, Entity);
    begin
@@ -72,9 +71,7 @@ package body Language is
    -- Scope_Separator --
    ---------------------
 
-   function Scope_Separator
-     (Lang : access Language_Root) return String
-   is
+   function Scope_Separator (Lang : access Language_Root) return String is
       pragma Unreferenced (Lang);
    begin
       return ".";
@@ -98,8 +95,8 @@ package body Language is
    ----------
 
    procedure Free (Context : in out Language_Context_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Language_Context, Language_Context_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Language_Context, Language_Context_Access);
 
       Var : GNAT.Expect.Pattern_Matcher_Access;
    begin
@@ -118,8 +115,8 @@ package body Language is
    ----------
 
    procedure Free (Lang : in out Language_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Language_Root'Class, Language_Access);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation (Language_Root'Class, Language_Access);
    begin
       if Lang /= null then
          Free (Lang.all);
@@ -142,16 +139,16 @@ package body Language is
          Free (Tmp);
       end loop;
 
-      List.First   := null;
+      List.First := null;
       List.Current := null;
-      List.Last    := null;
+      List.Last := null;
    end Free;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Category   : in out Explorer_Category) is
+   procedure Free (Category : in out Explorer_Category) is
    begin
       Basic_Types.Unchecked_Free (Category.Regexp);
    end Free;
@@ -172,8 +169,7 @@ package body Language is
    --------------------
 
    function Is_System_File
-     (Lang      : access Language_Root;
-      File_Name : String) return Boolean
+     (Lang : access Language_Root; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang, File_Name);
    begin
@@ -206,9 +202,9 @@ package body Language is
       Column    : out Natural)
    is
       Context       : constant Language_Context_Access :=
-                        Get_Language_Context (Language_Access (Lang));
+        Get_Language_Context (Language_Access (Lang));
       Keys          : constant GNAT.Expect.Pattern_Matcher_Access :=
-                        Keywords (Language_Access (Lang));
+        Keywords (Language_Access (Lang));
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
       Matched       : Match_Array (0 .. 1);
       C             : Wide_Wide_Character;
@@ -218,7 +214,7 @@ package body Language is
       use GNAT.Strings;
 
    begin
-      Line   := 1;
+      Line := 1;
       Column := 1;
 
       if Buffer (First) = ASCII.LF then
@@ -232,8 +228,9 @@ package body Language is
       --  Do we have a comment start?
 
       if Context.Syntax.Comment_Start /= null
-        and then Starts_With
-          (Buffer (First .. Buffer'Last), Context.Syntax.Comment_Start.all)
+        and then
+          Starts_With
+            (Buffer (First .. Buffer'Last), Context.Syntax.Comment_Start.all)
       then
          Entity := Comment_Text;
          Next_Char := First + Context.Syntax.Comment_Start'Length;
@@ -244,12 +241,12 @@ package body Language is
          --  character while incrementing Next_Char.
 
          while Next_Char <= Buffer'Last
-           and then not Starts_With
-           (Buffer (Next_Char .. Buffer'Last),
-            Context.Syntax.Comment_End.all)
+           and then
+             not Starts_With
+                   (Buffer (Next_Char .. Buffer'Last),
+                    Context.Syntax.Comment_End.all)
          loop
-            if Next_Char <= Buffer'Last
-              and then Buffer (Next_Char) = ASCII.LF
+            if Next_Char <= Buffer'Last and then Buffer (Next_Char) = ASCII.LF
             then
                Column := 1;
                Line := Line + 1;
@@ -268,22 +265,24 @@ package body Language is
       --  Do we have a comment that ends on newline ?
 
       if Context.Syntax.New_Line_Comment_Start /= null then
-         Found := Starts_With
-           (Buffer (First .. Buffer'Last),
-            Context.Syntax.New_Line_Comment_Start.all);
+         Found :=
+           Starts_With
+             (Buffer (First .. Buffer'Last),
+              Context.Syntax.New_Line_Comment_Start.all);
       elsif Context.Syntax.New_Line_Comment_Start_Regexp /= null then
-         Found := Match (Context.Syntax.New_Line_Comment_Start_Regexp.all,
-                         Buffer (First .. Buffer'Last));
+         Found :=
+           Match
+             (Context.Syntax.New_Line_Comment_Start_Regexp.all,
+              Buffer (First .. Buffer'Last));
       else
          Found := False;
       end if;
 
-      if Found  then
+      if Found then
          Entity := Comment_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
 
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ASCII.LF
+         while Next_Char <= Buffer'Last and then Buffer (Next_Char) /= ASCII.LF
          loop
             Tmp := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + (Tmp - Next_Char);
@@ -300,22 +299,22 @@ package body Language is
          Entity := String_Text;
          Next_Char := First;
 
-         if Next_Char < Buffer'Last
-           and then Buffer (Next_Char + 1) /= ASCII.LF
+         if Next_Char < Buffer'Last and then Buffer (Next_Char + 1) /= ASCII.LF
          then
             loop
                Tmp := UTF8_Next_Char (Buffer, Next_Char);
                Column := Column + (Tmp - Next_Char);
                Next_Char := Tmp;
 
-               exit when Next_Char >= Buffer'Last
+               exit when
+                 Next_Char >= Buffer'Last
                  or else Buffer (Next_Char + 1) = ASCII.LF
                  or else
                    (Buffer (Next_Char) = Context.String_Delimiter
-                      and then
-                        (Context.Quote_Character = ASCII.NUL
-                         or else
-                           Buffer (Next_Char - 1) /= Context.Quote_Character));
+                    and then
+                      (Context.Quote_Character = ASCII.NUL
+                       or else
+                         Buffer (Next_Char - 1) /= Context.Quote_Character));
             end loop;
          end if;
 
@@ -375,8 +374,8 @@ package body Language is
       --  on the side might be displayed properly.
 
       if not Is_Word_Char
-        (Language_Access (Lang),
-           UTF8_Get_Char (Buffer (First .. Buffer'Last)))
+               (Language_Access (Lang),
+                UTF8_Get_Char (Buffer (First .. Buffer'Last)))
       then
          Entity := Normal_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
@@ -385,8 +384,8 @@ package body Language is
          while Next_Char <= Buffer'Last loop
             C := UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last));
 
-            exit when C = Ada.Characters.Wide_Wide_Latin_1.LF
-              or else not Is_Space (C);
+            exit when
+              C = Ada.Characters.Wide_Wide_Latin_1.LF or else not Is_Space (C);
 
             Tmp := UTF8_Next_Char (Buffer, Next_Char);
             Column := Column + (Tmp - Next_Char);
@@ -403,8 +402,7 @@ package body Language is
       Column := Column + (Next_Char - First);
       Entity := Normal_Text;
 
-      if Next_Char not in Buffer'Range
-        or else Buffer (Next_Char) = ASCII.LF
+      if Next_Char not in Buffer'Range or else Buffer (Next_Char) = ASCII.LF
       then
          return;
       end if;
@@ -415,8 +413,8 @@ package body Language is
       --  consider this as a single word when they are in fact several.
 
       while Next_Char <= Buffer'Last
-        and then Is_Entity_Letter
-          (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
+        and then
+          Is_Entity_Letter (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
          Tmp := UTF8_Next_Char (Buffer, Next_Char);
          Column := Column + (Tmp - Next_Char);
@@ -487,7 +485,7 @@ package body Language is
       pragma Unreferenced (File);
       Matches     : Match_Array (0 .. 10);
       Categories  : constant Explorer_Categories :=
-                      Explorer_Regexps (Language_Access (Lang));
+        Explorer_Regexps (Language_Access (Lang));
       First       : Natural;
       Line        : Natural;
       Line_Pos    : Natural;
@@ -498,27 +496,23 @@ package body Language is
       Match_Index : Natural;
       End_Index   : Natural;
 
-      procedure Forward
-        (Index : Natural;
-         Sloc  : in out Source_Location);
+      procedure Forward (Index : Natural; Sloc : in out Source_Location);
       --  Compute Line and Column fields in Sloc and update Line and Line_Pos
 
       -------------
       -- Forward --
       -------------
 
-      procedure Forward
-        (Index : Natural;
-         Sloc  : in out Source_Location) is
+      procedure Forward (Index : Natural; Sloc : in out Source_Location) is
       begin
          for J in Index .. Sloc.Index loop
             if Buffer (J) = ASCII.LF then
-               Line     := Line + 1;
+               Line := Line + 1;
                Line_Pos := J;
             end if;
          end loop;
 
-         Sloc.Line   := Line;
+         Sloc.Line := Line;
          Sloc.Column := Sloc.Index - Line_Pos;
       end Forward;
 
@@ -528,30 +522,31 @@ package body Language is
       --  For each category, parse the buffer
 
       for C in Categories'Range loop
-         First    := Buffer'First;
-         Line     := 1;
+         First := Buffer'First;
+         Line := 1;
          Line_Pos := 0;
 
          loop
-            Match (Categories (C).Regexp.all,
-                   Buffer (First .. Buffer'Last),
-                   Matches);
+            Match
+              (Categories (C).Regexp.all,
+               Buffer (First .. Buffer'Last),
+               Matches);
 
             exit when Matches (0) = No_Match;
 
             Match_Index := Categories (C).Position_Index;
-            End_Index   := Categories (C).End_Index;
+            End_Index := Categories (C).End_Index;
 
             if Matches (Match_Index) /= No_Match then
-               Sloc_Start.Index  := Matches (0).First;
+               Sloc_Start.Index := Matches (0).First;
                Sloc_Entity.Index := Matches (Match_Index).First;
-               Sloc_End.Index    := Matches (End_Index).Last;
+               Sloc_End.Index := Matches (End_Index).Last;
 
                Forward (First, Sloc_Start);
                Forward (Sloc_Start.Index + 1, Sloc_Entity);
                Forward (Sloc_Entity.Index + 1, Sloc_End);
 
-               Info           := Result.Current;
+               Info := Result.Current;
                Result.Current := new Construct_Information;
 
                if Result.First = null then
@@ -559,7 +554,7 @@ package body Language is
                else
                   Result.Current.Prev := Info;
                   Result.Current.Next := Info.Next;
-                  Info.Next           := Result.Current;
+                  Info.Next := Result.Current;
                end if;
 
                Result.Last := Result.Current;
@@ -571,11 +566,14 @@ package body Language is
                   Is_Declaration  => False,
                   Is_Generic_Spec => False,
                   Visibility      => Visibility_Public,
-                  Name            => Lang.Symbols.Find
-                    (if Categories (C).Make_Entry /= null
-                     then Categories (C).Make_Entry (Buffer, Matches)
-                     else Buffer (Matches (Match_Index).First ..
-                         Matches (Match_Index).Last)),
+                  Name            =>
+                    Lang.Symbols.Find
+                      (if Categories (C).Make_Entry /= null
+                       then Categories (C).Make_Entry (Buffer, Matches)
+                       else
+                         Buffer
+                           (Matches (Match_Index).First
+                            .. Matches (Match_Index).Last)),
                   Profile         => No_Symbol,
                   Unique_Id       => No_Symbol,
                   Sloc_Start      => Sloc_Start,
@@ -594,9 +592,7 @@ package body Language is
    --------------------
 
    procedure Parse_Entities
-     (Lang     : access Language_Root;
-      Buffer   : String;
-      Callback : Entity_Callback)
+     (Lang : access Language_Root; Buffer : String; Callback : Entity_Callback)
    is
       use type GNAT.Strings.String_Access;
       Index      : Natural := Buffer'First;
@@ -637,22 +633,27 @@ package body Language is
          --  character beyond.
 
          if Column_Inc > 1
-           and then (Entity = String_Text
-                     or else Entity = Character_Text
-                     or else Entity = Keyword_Text)
+           and then
+             (Entity = String_Text
+              or else Entity = Character_Text
+              or else Entity = Keyword_Text)
          then
             Col := Column_Inc - 1;
          else
             Col := Column_Inc;
          end if;
 
-         exit when Callback
-           (Entity,
-            (Line, Column, Index),
-            (Line + Line_Inc - 1, Col, End_Char),
-            Get_Language_Context
-              (Language_Access (Lang)).Syntax.Comment_Start /= null
-              and then Entity = Comment_Text and then Next_Char > Buffer'Last);
+         exit when
+           Callback
+             (Entity,
+              (Line, Column, Index),
+              (Line + Line_Inc - 1, Col, End_Char),
+              Get_Language_Context (Language_Access (Lang))
+                .Syntax
+                .Comment_Start
+              /= null
+              and then Entity = Comment_Text
+              and then Next_Char > Buffer'Last);
 
          Line := Line + Line_Inc - 1;
          Column := Column_Inc;
@@ -674,8 +675,9 @@ package body Language is
       Success    : out Boolean;
       From_Index : Natural := 0)
    is
-      pragma Unreferenced
-        (Lang, Buffer, Construct, Sloc_Start, Sloc_End, From_Index);
+      pragma
+        Unreferenced
+          (Lang, Buffer, Construct, Sloc_Start, Sloc_End, From_Index);
    begin
       Success := False;
    end Get_Referenced_Entity;
@@ -692,11 +694,10 @@ package body Language is
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
-      Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null)
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null)
    is
-      pragma Unreferenced
-        (Lang, Case_Exceptions, Is_Optional_Keyword);
+      pragma Unreferenced (Lang, Case_Exceptions, Is_Optional_Keyword);
 
       Use_Tabs        : Boolean renames Indent_Params.Use_Tabs;
       Index           : Natural;
@@ -718,9 +719,7 @@ package body Language is
       is
          Result : Natural := Index;
       begin
-         while Result > Buffer'First
-           and then Buffer (Result) /= ASCII.LF
-         loop
+         while Result > Buffer'First and then Buffer (Result) /= ASCII.LF loop
             Result := Result - 1;
          end loop;
 
@@ -732,7 +731,7 @@ package body Language is
          return;
       end if;
 
-      Start_Of_Line   := Find_Line_Start (Buffer, Buffer'Last - 1);
+      Start_Of_Line := Find_Line_Start (Buffer, Buffer'Last - 1);
       Start_Prev_Line := Find_Line_Start (Buffer, Start_Of_Line - 1);
 
       --  Compute the indentation level
@@ -741,8 +740,10 @@ package body Language is
          if Buffer (J) = ' ' then
             Indent := Indent + 1;
          elsif Buffer (J) = ASCII.HT then
-            Indent := Indent + Indent_Params.Indent_Level -
-              (Indent mod Indent_Params.Indent_Level);
+            Indent :=
+              Indent
+              + Indent_Params.Indent_Level
+              - (Indent mod Indent_Params.Indent_Level);
          else
             exit;
          end if;
@@ -759,7 +760,9 @@ package body Language is
       end loop;
 
       Replace
-        (To, 1, Index - Start_Of_Line,
+        (To,
+         1,
+         Index - Start_Of_Line,
          Blank_Slice (Indent, Use_Tabs, Indent_Params.Indent_Level));
    end Format_Buffer;
 
@@ -777,40 +780,107 @@ package body Language is
       end if;
 
       case Category is
-         when Cat_Unknown               => return "";
-         when Cat_Custom                => return "custom";
-         when Cat_Package               => return "package";
-         when Cat_Namespace             => return "namespace";
-         when Cat_Task                  => return "task";
-         when Cat_Procedure             => return "procedure";
-         when Cat_Function              => return "function";
-         when Cat_Method                => return "method";
-         when Cat_Constructor           => return "constructor";
-         when Cat_Destructor            => return "destructor";
-         when Cat_Protected             => return "protected";
-         when Cat_Entry                 => return "entry";
-         when Cat_Class                 => return "class";
-         when Cat_Structure             => return "structure";
-         when Cat_Case_Inside_Record    => return "structure variant part";
-         when Cat_Union                 => return "union";
-         when Cat_Type                  => return "type";
-         when Cat_Subtype               => return "subtype";
-         when Cat_Constant              => return "constant";
-         when Cat_Variable              => return "variable";
-         when Cat_Local_Variable        => return "variable";
-         when Cat_Parameter             => return "parameter";
-         when Cat_Discriminant          => return "discriminant";
-         when Cat_Field                 => return "field";
-         when Cat_Literal               => return "literal";
-         when Cat_Representation_Clause => return "representation clause";
-         when Cat_With                  => return "with";
-         when Cat_Use                   => return "use";
-         when Cat_Include               => return "include";
-         when Construct_Category        => return "";
-         when Cat_Exception_Handler     => return "";
-         when Cat_Pragma                => return "pragma";
-         when Cat_Aspect                => return "aspect";
-         when Cat_Snippet               => return "snippet";
+         when Cat_Unknown               =>
+            return "";
+
+         when Cat_Custom                =>
+            return "custom";
+
+         when Cat_Package               =>
+            return "package";
+
+         when Cat_Namespace             =>
+            return "namespace";
+
+         when Cat_Task                  =>
+            return "task";
+
+         when Cat_Procedure             =>
+            return "procedure";
+
+         when Cat_Function              =>
+            return "function";
+
+         when Cat_Method                =>
+            return "method";
+
+         when Cat_Constructor           =>
+            return "constructor";
+
+         when Cat_Destructor            =>
+            return "destructor";
+
+         when Cat_Protected             =>
+            return "protected";
+
+         when Cat_Entry                 =>
+            return "entry";
+
+         when Cat_Class                 =>
+            return "class";
+
+         when Cat_Structure             =>
+            return "structure";
+
+         when Cat_Case_Inside_Record    =>
+            return "structure variant part";
+
+         when Cat_Union                 =>
+            return "union";
+
+         when Cat_Type                  =>
+            return "type";
+
+         when Cat_Subtype               =>
+            return "subtype";
+
+         when Cat_Constant              =>
+            return "constant";
+
+         when Cat_Variable              =>
+            return "variable";
+
+         when Cat_Local_Variable        =>
+            return "variable";
+
+         when Cat_Parameter             =>
+            return "parameter";
+
+         when Cat_Discriminant          =>
+            return "discriminant";
+
+         when Cat_Field                 =>
+            return "field";
+
+         when Cat_Literal               =>
+            return "literal";
+
+         when Cat_Representation_Clause =>
+            return "representation clause";
+
+         when Cat_With                  =>
+            return "with";
+
+         when Cat_Use                   =>
+            return "use";
+
+         when Cat_Include               =>
+            return "include";
+
+         when Construct_Category        =>
+            return "";
+
+         when Cat_Exception_Handler     =>
+            return "";
+
+         when Cat_Pragma                =>
+            return "pragma";
+
+         when Cat_Aspect                =>
+            return "aspect";
+
+         when Cat_Snippet               =>
+            return "snippet";
       end case;
    end Category_Name;
 
@@ -823,7 +893,7 @@ package body Language is
       Params       : out Indent_Parameters;
       Indent_Style : out Indentation_Kind) is
    begin
-      Params       := Lang.Indent_Params;
+      Params := Lang.Indent_Params;
       Indent_Style := Lang.Indent_Style;
    end Get_Indentation_Parameters;
 
@@ -837,15 +907,15 @@ package body Language is
       Indent_Style : Indentation_Kind) is
    begin
       Lang.Indent_Params := Params;
-      Lang.Indent_Style  := Indent_Style;
+      Lang.Indent_Style := Indent_Style;
    end Set_Indentation_Parameters;
 
    ----------------------------
    --  Get_Indentation_Level --
    ----------------------------
 
-   function Get_Indentation_Level
-     (Lang : access Language_Root) return Integer is
+   function Get_Indentation_Level (Lang : access Language_Root) return Integer
+   is
    begin
       return Lang.Indent_Params.Indent_Level;
    end Get_Indentation_Level;
@@ -912,9 +982,7 @@ package body Language is
    --------------------
 
    function Is_Entity_Name
-     (Lang : access Language_Root;
-      Name : String)
-      return Boolean
+     (Lang : access Language_Root; Name : String) return Boolean
    is
       pragma Unreferenced (Lang, Name);
    begin
@@ -937,13 +1005,13 @@ package body Language is
    -- "=" --
    ---------
 
-   overriding function "=" (S1, S2 : Source_Location) return Boolean is
+   overriding
+   function "=" (S1, S2 : Source_Location) return Boolean is
    begin
       if S1.Index > 0 and then S2.Index > 0 then
          return S1.Index = S2.Index;
       else
-         return S1.Line = S2.Line
-           and then S1.Column = S2.Column;
+         return S1.Line = S2.Line and then S1.Column = S2.Column;
       end if;
    end "=";
 
@@ -994,14 +1062,13 @@ package body Language is
    ----------------------------
 
    procedure Parse_Tokens_Backwards
-     (Lang              : access Language_Root;
-      Buffer            : UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0;
+     (Lang         : access Language_Root;
+      Buffer       : UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0;
       --   ??? This analysis should be done when looking for comments !!!
-      Callback          :
-      access procedure (Token : Token_Record;
-                        Stop : in out Boolean))
+      Callback     :
+        access procedure (Token : Token_Record; Stop : in out Boolean))
    is
       pragma Unreferenced (Lang);
       Lowest : constant String_Index_Type :=
@@ -1030,22 +1097,17 @@ package body Language is
    -------------------------------
 
    function Parse_Reference_Backwards
-     (Lang              : access Language_Root;
-      Buffer            : UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0) return String
+     (Lang         : access Language_Root;
+      Buffer       : UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0) return String
    is
       Buf_Start : Integer := 1;
       Buf_End   : Integer := 0;
 
-      procedure Callback
-        (Token : Token_Record;
-         Stop  : in out Boolean);
+      procedure Callback (Token : Token_Record; Stop : in out Boolean);
 
-      procedure Callback
-        (Token : Token_Record;
-         Stop  : in out Boolean)
-      is
+      procedure Callback (Token : Token_Record; Stop : in out Boolean) is
       begin
          Buf_End := Integer (Token.Token_Last);
          Buf_Start := Integer (Token.Token_First);
@@ -1055,10 +1117,10 @@ package body Language is
    begin
 
       Lang.Parse_Tokens_Backwards
-        (Buffer            => Buffer,
-         Start_Offset      => Start_Offset,
-         End_Offset        => End_Offset,
-         Callback          => Callback'Access);
+        (Buffer       => Buffer,
+         Start_Offset => Start_Offset,
+         End_Offset   => End_Offset,
+         Callback     => Callback'Access);
 
       return Buffer (Buf_Start .. Buf_End);
    end Parse_Reference_Backwards;
@@ -1068,7 +1130,7 @@ package body Language is
    -----------------
 
    procedure Set_Symbols
-     (Self   : access Language_Root'Class;
+     (Self    : access Language_Root'Class;
       Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class) is
    begin
       Self.Symbols := Symbol_Table_Access (Symbols);

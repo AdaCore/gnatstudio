@@ -18,27 +18,27 @@
 --  This package provides a scrolled window for an text buffer,
 --  which displays tooltips while scrolling.
 
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
-with Gtk.Window;            use Gtk.Window;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Window;          use Gtk.Window;
 
 package Src_Editor_Box.Scrolled_Window is
 
    type Tooltip_Scrolled_Window_Record is
-      new Gtk_Scrolled_Window_Record with private;
-   type Tooltip_Scrolled_Window
-      is access all Tooltip_Scrolled_Window_Record'Class;
+     new Gtk_Scrolled_Window_Record with private;
+   type Tooltip_Scrolled_Window is
+     access all Tooltip_Scrolled_Window_Record'Class;
 
    procedure Gtk_New (Self : out Tooltip_Scrolled_Window);
    --  Create a new scrolled window.
    --  This must contain a Source_View.
 
 private
-   type Tooltip_Scrolled_Window_Record is new Gtk_Scrolled_Window_Record with
-      record
-         Has_Button_Press : Boolean := False;
-         Label            : Gtk_Label;
-         Window           : Gtk_Window;
-      end record;
+   type Tooltip_Scrolled_Window_Record is new Gtk_Scrolled_Window_Record
+   with record
+      Has_Button_Press : Boolean := False;
+      Label            : Gtk_Label;
+      Window           : Gtk_Window;
+   end record;
 
 end Src_Editor_Box.Scrolled_Window;

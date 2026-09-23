@@ -25,9 +25,9 @@ package body Builder_Facility_Module.Text_Splitters is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
       pragma Unreferenced (Self);
@@ -39,7 +39,8 @@ package body Builder_Facility_Module.Text_Splitters is
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Text_Splitter;
       Item    : String;
       Command : access Root_Command'Class)

@@ -18,7 +18,7 @@
 --  This package provides API to store cyclic elaboration dependencies
 --  parsed from gnatbind output
 
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
 
 package Elaboration_Cycles is
@@ -101,16 +101,11 @@ package Elaboration_Cycles is
    function Kind (Self : Link) return Link_Kind;
    --  Kind of link
 
-   function Create_Link
-     (Unit : String;
-      Kind : Link_Kind)
-      return Link;
+   function Create_Link (Unit : String; Kind : Link_Kind) return Link;
    --  Link constructor
 
    function Create_Dependency
-     (Before_Unit : String;
-      After_Unit  : String;
-      Reason      : Dependency_Reason)
+     (Before_Unit : String; After_Unit : String; Reason : Dependency_Reason)
       return Dependency;
    --  Dependency constructor
 
@@ -130,8 +125,8 @@ private
       Links          : Link_Vectors.Vector;
    end record;
 
-   package Dependency_Vectors is
-     new Ada.Containers.Vectors (Positive, Dependency);
+   package Dependency_Vectors is new
+     Ada.Containers.Vectors (Positive, Dependency);
 
    type Cycle is record
       Dependencies : Dependency_Vectors.Vector;

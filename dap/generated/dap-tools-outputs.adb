@@ -21,6 +21,7 @@
 --  DON'T EDIT THIS FILE! It was generated from JSON Schema.
 
 with Interfaces;
+
 package body DAP.Tools.Outputs is
    pragma Style_Checks (Off);
    procedure Output_Any_Value
@@ -29,33 +30,46 @@ package body DAP.Tools.Outputs is
    begin
       for Item of Value loop
          case Item.Kind is
-            when VSS.JSON.Streams.Start_Array =>
+            when VSS.JSON.Streams.Start_Array    =>
                Handler.Start_Array;
-            when VSS.JSON.Streams.End_Array =>
+
+            when VSS.JSON.Streams.End_Array      =>
                Handler.End_Array;
-            when VSS.JSON.Streams.Start_Object =>
+
+            when VSS.JSON.Streams.Start_Object   =>
                Handler.Start_Object;
-            when VSS.JSON.Streams.End_Object =>
+
+            when VSS.JSON.Streams.End_Object     =>
                Handler.End_Object;
-            when VSS.JSON.Streams.Key_Name =>
+
+            when VSS.JSON.Streams.Key_Name       =>
                Handler.Key_Name (Item.Key_Name);
-            when VSS.JSON.Streams.String_Value =>
+
+            when VSS.JSON.Streams.String_Value   =>
                Handler.String_Value (Item.String_Value);
-            when VSS.JSON.Streams.Number_Value =>
+
+            when VSS.JSON.Streams.Number_Value   =>
                Handler.Number_Value (Item.Number_Value);
-            when VSS.JSON.Streams.Boolean_Value =>
+
+            when VSS.JSON.Streams.Boolean_Value  =>
                Handler.Boolean_Value (Item.Boolean_Value);
-            when VSS.JSON.Streams.Null_Value =>
+
+            when VSS.JSON.Streams.Null_Value     =>
                Handler.Null_Value;
-            when VSS.JSON.Streams.None =>
+
+            when VSS.JSON.Streams.None           =>
                null;
-            when VSS.JSON.Streams.Invalid =>
+
+            when VSS.JSON.Streams.Invalid        =>
                raise Program_Error;
+
             when VSS.JSON.Streams.Start_Document =>
                raise Program_Error;
-            when VSS.JSON.Streams.End_Document =>
+
+            when VSS.JSON.Streams.End_Document   =>
                raise Program_Error;
-            when VSS.JSON.Streams.Comment =>
+
+            when VSS.JSON.Streams.Comment        =>
                raise Program_Error;
          end case;
       end loop;
@@ -66,10 +80,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.ModuleEvent_reason) is
    begin
       case Value is
-         when Enum.a_new =>
+         when Enum.a_new   =>
             Handler.String_Value ("new");
+
          when Enum.changed =>
             Handler.String_Value ("changed");
+
          when Enum.removed =>
             Handler.String_Value ("removed");
       end case;
@@ -80,12 +96,15 @@ package body DAP.Tools.Outputs is
       Value   : Enum.ColumnDescriptor_type) is
    begin
       case Value is
-         when Enum.string =>
+         when Enum.string           =>
             Handler.String_Value ("string");
-         when Enum.number =>
+
+         when Enum.number           =>
             Handler.String_Value ("number");
-         when Enum.a_boolean =>
+
+         when Enum.a_boolean        =>
             Handler.String_Value ("boolean");
+
          when Enum.unixTimestampUTC =>
             Handler.String_Value ("unixTimestampUTC");
       end case;
@@ -98,8 +117,10 @@ package body DAP.Tools.Outputs is
       case Value is
          when Enum.normal =>
             Handler.String_Value ("normal");
-         when Enum.label =>
+
+         when Enum.label  =>
             Handler.String_Value ("label");
+
          when Enum.subtle =>
             Handler.String_Value ("subtle");
       end case;
@@ -110,12 +131,15 @@ package body DAP.Tools.Outputs is
       Value   : Enum.ExceptionBreakMode) is
    begin
       case Value is
-         when Enum.never =>
+         when Enum.never         =>
             Handler.String_Value ("never");
-         when Enum.always =>
+
+         when Enum.always        =>
             Handler.String_Value ("always");
-         when Enum.unhandled =>
+
+         when Enum.unhandled     =>
             Handler.String_Value ("unhandled");
+
          when Enum.userUnhandled =>
             Handler.String_Value ("userUnhandled");
       end case;
@@ -126,25 +150,33 @@ package body DAP.Tools.Outputs is
       Value   : Enum.StoppedEvent_reason) is
    begin
       case Value.Kind is
-         when Enum.Custom_Value =>
+         when Enum.Custom_Value           =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.step =>
+         when Enum.step                   =>
             Handler.String_Value ("step");
-         when Enum.breakpoint =>
+
+         when Enum.breakpoint             =>
             Handler.String_Value ("breakpoint");
-         when Enum.a_exception =>
+
+         when Enum.a_exception            =>
             Handler.String_Value ("exception");
-         when Enum.pause =>
+
+         when Enum.pause                  =>
             Handler.String_Value ("pause");
-         when Enum.a_entry =>
+
+         when Enum.a_entry                =>
             Handler.String_Value ("entry");
-         when Enum.a_goto =>
+
+         when Enum.a_goto                 =>
             Handler.String_Value ("goto");
-         when Enum.function_breakpoint =>
+
+         when Enum.function_breakpoint    =>
             Handler.String_Value ("function breakpoint");
-         when Enum.data_breakpoint =>
+
+         when Enum.data_breakpoint        =>
             Handler.String_Value ("data breakpoint");
+
          when Enum.instruction_breakpoint =>
             Handler.String_Value ("instruction breakpoint");
       end case;
@@ -157,6 +189,7 @@ package body DAP.Tools.Outputs is
       case Value is
          when Enum.launch =>
             Handler.String_Value ("launch");
+
          when Enum.attach =>
             Handler.String_Value ("attach");
       end case;
@@ -170,15 +203,19 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.console =>
+         when Enum.console      =>
             Handler.String_Value ("console");
-         when Enum.important =>
+
+         when Enum.important    =>
             Handler.String_Value ("important");
-         when Enum.stdout =>
+
+         when Enum.stdout       =>
             Handler.String_Value ("stdout");
-         when Enum.stderr =>
+
+         when Enum.stderr       =>
             Handler.String_Value ("stderr");
-         when Enum.telemetry =>
+
+         when Enum.telemetry    =>
             Handler.String_Value ("telemetry");
       end case;
    end Output_OutputEvent_category;
@@ -188,11 +225,13 @@ package body DAP.Tools.Outputs is
       Value   : Enum.OutputEvent_group) is
    begin
       case Value is
-         when Enum.start =>
+         when Enum.start          =>
             Handler.String_Value ("start");
+
          when Enum.startCollapsed =>
             Handler.String_Value ("startCollapsed");
-         when Enum.a_end =>
+
+         when Enum.a_end          =>
             Handler.String_Value ("end");
       end case;
    end Output_OutputEvent_group;
@@ -202,12 +241,15 @@ package body DAP.Tools.Outputs is
       Value   : Enum.ChecksumAlgorithm) is
    begin
       case Value is
-         when Enum.MD5 =>
+         when Enum.MD5       =>
             Handler.String_Value ("MD5");
-         when Enum.SHA1 =>
+
+         when Enum.SHA1      =>
             Handler.String_Value ("SHA1");
-         when Enum.SHA256 =>
+
+         when Enum.SHA256    =>
             Handler.String_Value ("SHA256");
+
          when Enum.timestamp =>
             Handler.String_Value ("timestamp");
       end case;
@@ -218,10 +260,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.ProcessEvent_startMethod) is
    begin
       case Value is
-         when Enum.launch =>
+         when Enum.launch                   =>
             Handler.String_Value ("launch");
-         when Enum.attach =>
+
+         when Enum.attach                   =>
             Handler.String_Value ("attach");
+
          when Enum.attachForSuspendedLaunch =>
             Handler.String_Value ("attachForSuspendedLaunch");
       end case;
@@ -235,11 +279,13 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.arguments =>
+         when Enum.arguments    =>
             Handler.String_Value ("arguments");
-         when Enum.locals =>
+
+         when Enum.locals       =>
             Handler.String_Value ("locals");
-         when Enum.registers =>
+
+         when Enum.registers    =>
             Handler.String_Value ("registers");
       end case;
    end Output_Scope_presentationHint;
@@ -252,9 +298,10 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.cancelled =>
+         when Enum.cancelled    =>
             Handler.String_Value ("cancelled");
-         when Enum.notStopped =>
+
+         when Enum.notStopped   =>
             Handler.String_Value ("notStopped");
       end case;
    end Output_Response_message;
@@ -264,43 +311,61 @@ package body DAP.Tools.Outputs is
       Value   : Enum.CompletionItemType) is
    begin
       case Value is
-         when Enum.method =>
+         when Enum.method       =>
             Handler.String_Value ("method");
-         when Enum.a_function =>
+
+         when Enum.a_function   =>
             Handler.String_Value ("function");
-         when Enum.constructor =>
+
+         when Enum.constructor  =>
             Handler.String_Value ("constructor");
-         when Enum.field =>
+
+         when Enum.field        =>
             Handler.String_Value ("field");
-         when Enum.variable =>
+
+         when Enum.variable     =>
             Handler.String_Value ("variable");
-         when Enum.class =>
+
+         when Enum.class        =>
             Handler.String_Value ("class");
+
          when Enum.an_interface =>
             Handler.String_Value ("interface");
-         when Enum.module =>
+
+         when Enum.module       =>
             Handler.String_Value ("module");
-         when Enum.property =>
+
+         when Enum.property     =>
             Handler.String_Value ("property");
-         when Enum.unit =>
+
+         when Enum.unit         =>
             Handler.String_Value ("unit");
-         when Enum.value =>
+
+         when Enum.value        =>
             Handler.String_Value ("value");
-         when Enum.enum =>
+
+         when Enum.enum         =>
             Handler.String_Value ("enum");
-         when Enum.keyword =>
+
+         when Enum.keyword      =>
             Handler.String_Value ("keyword");
-         when Enum.snippet =>
+
+         when Enum.snippet      =>
             Handler.String_Value ("snippet");
-         when Enum.text =>
+
+         when Enum.text         =>
             Handler.String_Value ("text");
-         when Enum.color =>
+
+         when Enum.color        =>
             Handler.String_Value ("color");
-         when Enum.file =>
+
+         when Enum.file         =>
             Handler.String_Value ("file");
-         when Enum.reference =>
+
+         when Enum.reference    =>
             Handler.String_Value ("reference");
-         when Enum.customcolor =>
+
+         when Enum.customcolor  =>
             Handler.String_Value ("customcolor");
       end case;
    end Output_CompletionItemType;
@@ -313,13 +378,16 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.an_all =>
+         when Enum.an_all       =>
             Handler.String_Value ("all");
-         when Enum.stacks =>
+
+         when Enum.stacks       =>
             Handler.String_Value ("stacks");
-         when Enum.threads =>
+
+         when Enum.threads      =>
             Handler.String_Value ("threads");
-         when Enum.variables =>
+
+         when Enum.variables    =>
             Handler.String_Value ("variables");
       end case;
    end Output_InvalidatedAreas;
@@ -329,10 +397,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.Source_presentationHint) is
    begin
       case Value is
-         when Enum.normal =>
+         when Enum.normal      =>
             Handler.String_Value ("normal");
-         when Enum.emphasize =>
+
+         when Enum.emphasize   =>
             Handler.String_Value ("emphasize");
+
          when Enum.deemphasize =>
             Handler.String_Value ("deemphasize");
       end case;
@@ -343,10 +413,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.LoadedSourceEvent_reason) is
    begin
       case Value is
-         when Enum.a_new =>
+         when Enum.a_new   =>
             Handler.String_Value ("new");
+
          when Enum.changed =>
             Handler.String_Value ("changed");
+
          when Enum.removed =>
             Handler.String_Value ("removed");
       end case;
@@ -360,11 +432,13 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.request =>
+         when Enum.request      =>
             Handler.String_Value ("request");
-         when Enum.response =>
+
+         when Enum.response     =>
             Handler.String_Value ("response");
-         when Enum.event =>
+
+         when Enum.event        =>
             Handler.String_Value ("event");
       end case;
    end Output_ProtocolMessage_type;
@@ -376,7 +450,8 @@ package body DAP.Tools.Outputs is
       case Value is
          when Enum.integrated =>
             Handler.String_Value ("integrated");
-         when Enum.external =>
+
+         when Enum.external   =>
             Handler.String_Value ("external");
       end case;
    end Output_RunInTerminalRequestArguments_kind;
@@ -388,7 +463,8 @@ package body DAP.Tools.Outputs is
       case Value is
          when Enum.indexed =>
             Handler.String_Value ("indexed");
-         when Enum.named =>
+
+         when Enum.named   =>
             Handler.String_Value ("named");
       end case;
    end Output_VariablesArguments_filter;
@@ -398,30 +474,40 @@ package body DAP.Tools.Outputs is
       Value   : Enum.VariablePresentationHint_kind) is
    begin
       case Value.Kind is
-         when Enum.Custom_Value =>
+         when Enum.Custom_Value     =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.property =>
+         when Enum.property         =>
             Handler.String_Value ("property");
-         when Enum.method =>
+
+         when Enum.method           =>
             Handler.String_Value ("method");
-         when Enum.class =>
+
+         when Enum.class            =>
             Handler.String_Value ("class");
-         when Enum.data =>
+
+         when Enum.data             =>
             Handler.String_Value ("data");
-         when Enum.event =>
+
+         when Enum.event            =>
             Handler.String_Value ("event");
-         when Enum.baseClass =>
+
+         when Enum.baseClass        =>
             Handler.String_Value ("baseClass");
-         when Enum.innerClass =>
+
+         when Enum.innerClass       =>
             Handler.String_Value ("innerClass");
-         when Enum.an_interface =>
+
+         when Enum.an_interface     =>
             Handler.String_Value ("interface");
+
          when Enum.mostDerivedClass =>
             Handler.String_Value ("mostDerivedClass");
-         when Enum.virtual =>
+
+         when Enum.virtual          =>
             Handler.String_Value ("virtual");
-         when Enum.dataBreakpoint =>
+
+         when Enum.dataBreakpoint   =>
             Handler.String_Value ("dataBreakpoint");
       end case;
    end Output_VariablePresentationHint_kind;
@@ -431,23 +517,30 @@ package body DAP.Tools.Outputs is
       Value   : Enum.VariablePresentationHint_attributes) is
    begin
       case Value.Kind is
-         when Enum.Custom_Value =>
+         when Enum.Custom_Value      =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.static =>
+         when Enum.static            =>
             Handler.String_Value ("static");
-         when Enum.a_constant =>
+
+         when Enum.a_constant        =>
             Handler.String_Value ("constant");
-         when Enum.readOnly =>
+
+         when Enum.readOnly          =>
             Handler.String_Value ("readOnly");
-         when Enum.rawString =>
+
+         when Enum.rawString         =>
             Handler.String_Value ("rawString");
-         when Enum.hasObjectId =>
+
+         when Enum.hasObjectId       =>
             Handler.String_Value ("hasObjectId");
-         when Enum.canHaveObjectId =>
+
+         when Enum.canHaveObjectId   =>
             Handler.String_Value ("canHaveObjectId");
-         when Enum.hasSideEffects =>
+
+         when Enum.hasSideEffects    =>
             Handler.String_Value ("hasSideEffects");
+
          when Enum.hasDataBreakpoint =>
             Handler.String_Value ("hasDataBreakpoint");
       end case;
@@ -461,15 +554,19 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.public =>
+         when Enum.public       =>
             Handler.String_Value ("public");
-         when Enum.a_private =>
+
+         when Enum.a_private    =>
             Handler.String_Value ("private");
-         when Enum.a_protected =>
+
+         when Enum.a_protected  =>
             Handler.String_Value ("protected");
-         when Enum.internal =>
+
+         when Enum.internal     =>
             Handler.String_Value ("internal");
-         when Enum.final =>
+
+         when Enum.final        =>
             Handler.String_Value ("final");
       end case;
    end Output_VariablePresentationHint_visibility;
@@ -482,9 +579,10 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.path =>
+         when Enum.path         =>
             Handler.String_Value ("path");
-         when Enum.uri =>
+
+         when Enum.uri          =>
             Handler.String_Value ("uri");
       end case;
    end Output_InitializeRequestArguments_pathFormat;
@@ -497,9 +595,10 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.started =>
+         when Enum.started      =>
             Handler.String_Value ("started");
-         when Enum.exited =>
+
+         when Enum.exited       =>
             Handler.String_Value ("exited");
       end case;
    end Output_ThreadEvent_reason;
@@ -509,10 +608,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.DataBreakpointAccessType) is
    begin
       case Value is
-         when Enum.read =>
+         when Enum.read      =>
             Handler.String_Value ("read");
-         when Enum.write =>
+
+         when Enum.write     =>
             Handler.String_Value ("write");
+
          when Enum.readWrite =>
             Handler.String_Value ("readWrite");
       end case;
@@ -526,11 +627,13 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.changed =>
+         when Enum.changed      =>
             Handler.String_Value ("changed");
-         when Enum.a_new =>
+
+         when Enum.a_new        =>
             Handler.String_Value ("new");
-         when Enum.removed =>
+
+         when Enum.removed      =>
             Handler.String_Value ("removed");
       end case;
    end Output_BreakpointEvent_reason;
@@ -543,15 +646,19 @@ package body DAP.Tools.Outputs is
          when Enum.Custom_Value =>
             Handler.String_Value (Value.Custom_Value);
 
-         when Enum.watch =>
+         when Enum.watch        =>
             Handler.String_Value ("watch");
-         when Enum.repl =>
+
+         when Enum.repl         =>
             Handler.String_Value ("repl");
-         when Enum.hover =>
+
+         when Enum.hover        =>
             Handler.String_Value ("hover");
-         when Enum.clipboard =>
+
+         when Enum.clipboard    =>
             Handler.String_Value ("clipboard");
-         when Enum.variables =>
+
+         when Enum.variables    =>
             Handler.String_Value ("variables");
       end case;
    end Output_EvaluateArguments_context;
@@ -561,10 +668,12 @@ package body DAP.Tools.Outputs is
       Value   : Enum.SteppingGranularity) is
    begin
       case Value is
-         when Enum.statement =>
+         when Enum.statement   =>
             Handler.String_Value ("statement");
-         when Enum.line =>
+
+         when Enum.line        =>
             Handler.String_Value ("line");
+
          when Enum.instruction =>
             Handler.String_Value ("instruction");
       end case;
@@ -651,7 +760,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ModulesResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ModulesResponse) is
+      Value   : ModulesResponse)
+   is
       procedure Output_ModulesResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ModulesResponse_body) is
@@ -809,7 +919,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ModuleEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ModuleEvent) is
+      Value   : ModuleEvent)
+   is
       procedure Output_ModuleEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ModuleEvent_body) is
@@ -837,7 +948,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ContinuedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ContinuedEvent) is
+      Value   : ContinuedEvent)
+   is
       procedure Output_ContinuedEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ContinuedEvent_body) is
@@ -1151,7 +1263,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_StackTraceResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : StackTraceResponse) is
+      Value   : StackTraceResponse)
+   is
       procedure Output_StackTraceResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : StackTraceResponse_body) is
@@ -1220,7 +1333,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_StepInTargetsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : StepInTargetsResponse) is
+      Value   : StepInTargetsResponse)
+   is
       procedure Output_StepInTargetsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : StepInTargetsResponse_body) is
@@ -1416,7 +1530,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_MemoryEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : MemoryEvent) is
+      Value   : MemoryEvent)
+   is
       procedure Output_MemoryEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : MemoryEvent_body) is
@@ -1518,7 +1633,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ExitedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ExitedEvent) is
+      Value   : ExitedEvent)
+   is
       procedure Output_ExitedEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ExitedEvent_body) is
@@ -1630,7 +1746,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_StoppedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : StoppedEvent) is
+      Value   : StoppedEvent)
+   is
       procedure Output_StoppedEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : StoppedEvent_body) is
@@ -1728,7 +1845,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ScopesResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ScopesResponse) is
+      Value   : ScopesResponse)
+   is
       procedure Output_ScopesResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ScopesResponse_body) is
@@ -1813,7 +1931,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ProgressUpdateEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ProgressUpdateEvent) is
+      Value   : ProgressUpdateEvent)
+   is
       procedure Output_ProgressUpdateEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ProgressUpdateEvent_body) is
@@ -1848,7 +1967,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ExceptionInfoResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ExceptionInfoResponse) is
+      Value   : ExceptionInfoResponse)
+   is
       procedure Output_ExceptionInfoResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ExceptionInfoResponse_body) is
@@ -1911,7 +2031,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetExpressionResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetExpressionResponse) is
+      Value   : SetExpressionResponse)
+   is
       procedure Output_SetExpressionResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetExpressionResponse_body) is
@@ -2030,7 +2151,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_OutputEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : OutputEvent) is
+      Value   : OutputEvent)
+   is
       procedure Output_OutputEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : OutputEvent_body) is
@@ -2217,7 +2339,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ProcessEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ProcessEvent) is
+      Value   : ProcessEvent)
+   is
       procedure Output_ProcessEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ProcessEvent_body) is
@@ -2342,7 +2465,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_CapabilitiesEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : CapabilitiesEvent) is
+      Value   : CapabilitiesEvent)
+   is
       procedure Output_CapabilitiesEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : CapabilitiesEvent_body) is
@@ -2491,7 +2615,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_DataBreakpointInfoResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : DataBreakpointInfoResponse) is
+      Value   : DataBreakpointInfoResponse)
+   is
       procedure Output_DataBreakpointInfoResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : DataBreakpointInfoResponse_body) is
@@ -2703,7 +2828,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_WriteMemoryResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : WriteMemoryResponse) is
+      Value   : WriteMemoryResponse)
+   is
       procedure Output_WriteMemoryResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : WriteMemoryResponse_body) is
@@ -2762,7 +2888,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_RunInTerminalResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : RunInTerminalResponse) is
+      Value   : RunInTerminalResponse)
+   is
       procedure Output_RunInTerminalResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : RunInTerminalResponse_body) is
@@ -2890,7 +3017,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ThreadsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ThreadsResponse) is
+      Value   : ThreadsResponse)
+   is
       procedure Output_ThreadsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ThreadsResponse_body) is
@@ -2929,7 +3057,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetDataBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetDataBreakpointsResponse) is
+      Value   : SetDataBreakpointsResponse)
+   is
       procedure Output_SetDataBreakpointsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetDataBreakpointsResponse_body) is
@@ -3054,7 +3183,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SourceResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SourceResponse) is
+      Value   : SourceResponse)
+   is
       procedure Output_SourceResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SourceResponse_body) is
@@ -3093,7 +3223,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ContinueResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ContinueResponse) is
+      Value   : ContinueResponse)
+   is
       procedure Output_ContinueResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ContinueResponse_body) is
@@ -3381,7 +3512,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_CompletionsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : CompletionsResponse) is
+      Value   : CompletionsResponse)
+   is
       procedure Output_CompletionsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : CompletionsResponse_body) is
@@ -3584,7 +3716,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_LoadedSourceEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : LoadedSourceEvent) is
+      Value   : LoadedSourceEvent)
+   is
       procedure Output_LoadedSourceEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : LoadedSourceEvent_body) is
@@ -3668,7 +3801,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ReadMemoryResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ReadMemoryResponse) is
+      Value   : ReadMemoryResponse)
+   is
       procedure Output_ReadMemoryResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ReadMemoryResponse_body) is
@@ -3760,7 +3894,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_VariablesResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : VariablesResponse) is
+      Value   : VariablesResponse)
+   is
       procedure Output_VariablesResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : VariablesResponse_body) is
@@ -3894,7 +4029,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_BreakpointLocationsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : BreakpointLocationsResponse) is
+      Value   : BreakpointLocationsResponse)
+   is
       procedure Output_BreakpointLocationsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : BreakpointLocationsResponse_body) is
@@ -4115,7 +4251,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetInstructionBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetInstructionBreakpointsResponse) is
+      Value   : SetInstructionBreakpointsResponse)
+   is
       procedure Output_SetInstructionBreakpointsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetInstructionBreakpointsResponse_body) is
@@ -4172,7 +4309,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ProgressEndEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ProgressEndEvent) is
+      Value   : ProgressEndEvent)
+   is
       procedure Output_ProgressEndEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ProgressEndEvent_body) is
@@ -4254,7 +4392,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_TerminatedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : TerminatedEvent) is
+      Value   : TerminatedEvent)
+   is
       procedure Output_TerminatedEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : TerminatedEvent_body) is
@@ -4300,7 +4439,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ThreadEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ThreadEvent) is
+      Value   : ThreadEvent)
+   is
       procedure Output_ThreadEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ThreadEvent_body) is
@@ -4329,7 +4469,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_GotoTargetsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : GotoTargetsResponse) is
+      Value   : GotoTargetsResponse)
+   is
       procedure Output_GotoTargetsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : GotoTargetsResponse_body) is
@@ -4424,7 +4565,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ErrorResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ErrorResponse) is
+      Value   : ErrorResponse)
+   is
       procedure Output_ErrorResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ErrorResponse_body) is
@@ -4487,7 +4629,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_BreakpointEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : BreakpointEvent) is
+      Value   : BreakpointEvent)
+   is
       procedure Output_BreakpointEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : BreakpointEvent_body) is
@@ -4598,7 +4741,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_ProgressStartEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : ProgressStartEvent) is
+      Value   : ProgressStartEvent)
+   is
       procedure Output_ProgressStartEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : ProgressStartEvent_body) is
@@ -4644,7 +4788,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetVariableResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetVariableResponse) is
+      Value   : SetVariableResponse)
+   is
       procedure Output_SetVariableResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetVariableResponse_body) is
@@ -4930,7 +5075,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetFunctionBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetFunctionBreakpointsResponse) is
+      Value   : SetFunctionBreakpointsResponse)
+   is
       procedure Output_SetFunctionBreakpointsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetFunctionBreakpointsResponse_body) is
@@ -4995,7 +5141,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_EvaluateResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : EvaluateResponse) is
+      Value   : EvaluateResponse)
+   is
       procedure Output_EvaluateResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : EvaluateResponse_body) is
@@ -5088,7 +5235,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetBreakpointsResponse) is
+      Value   : SetBreakpointsResponse)
+   is
       procedure Output_SetBreakpointsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetBreakpointsResponse_body) is
@@ -5211,7 +5359,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_SetExceptionBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : SetExceptionBreakpointsResponse) is
+      Value   : SetExceptionBreakpointsResponse)
+   is
       procedure Output_SetExceptionBreakpointsResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : SetExceptionBreakpointsResponse_body) is
@@ -5282,7 +5431,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_DisassembleResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : DisassembleResponse) is
+      Value   : DisassembleResponse)
+   is
       procedure Output_DisassembleResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : DisassembleResponse_body) is
@@ -5323,7 +5473,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_InvalidatedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : InvalidatedEvent) is
+      Value   : InvalidatedEvent)
+   is
       procedure Output_InvalidatedEvent_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : InvalidatedEvent_body) is
@@ -5414,7 +5565,8 @@ package body DAP.Tools.Outputs is
 
    procedure Output_LoadedSourcesResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : LoadedSourcesResponse) is
+      Value   : LoadedSourcesResponse)
+   is
       procedure Output_LoadedSourcesResponse_body
         (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
          Value   : LoadedSourcesResponse_body) is

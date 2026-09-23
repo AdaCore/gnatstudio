@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;
-with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
 with Gtk.Widget;
 with GNAT.Strings;
 
@@ -29,8 +29,7 @@ package GPS.Kernel.Clipboard is
    type Selection_List is
      array (Natural range <>) of GNAT.Strings.String_Access;
 
-   procedure Create_Clipboard
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Create_Clipboard (Kernel : access Kernel_Handle_Record'Class);
    --  Create a new clipboard in the kernel
 
    procedure Destroy_Clipboard (Kernel : access Kernel_Handle_Record'Class);
@@ -52,8 +51,7 @@ package GPS.Kernel.Clipboard is
    --  The selection is deleted from the widget.
 
    procedure Copy_Text_In_Clipboard
-     (Clipboard : access Clipboard_Record;
-      Text      : String);
+     (Clipboard : access Clipboard_Record; Text : String);
    --  Copy a static text into the clipboard. This saves the previous contents
    --  of the clipboard
 
@@ -64,8 +62,7 @@ package GPS.Kernel.Clipboard is
    --  previous contents of the clipboard.
 
    procedure Paste_Clipboard
-     (Clipboard     : access Clipboard_Record;
-      Index_In_List : Natural := 0);
+     (Clipboard : access Clipboard_Record; Index_In_List : Natural := 0);
    --  Paste the last clipboard entry made by Cut or Copy (or the one last
    --  pasted by Paste_Previous).
    --  By default, the last entry is pasted, but you can force a specific
@@ -83,8 +80,7 @@ package GPS.Kernel.Clipboard is
    --  no the same where Paste_Clipboard last left it.
 
    procedure Merge_Clipboard
-     (Clipboard      : access Clipboard_Record;
-      Index1, Index2 : Natural);
+     (Clipboard : access Clipboard_Record; Index1, Index2 : Natural);
    --  Merge the two entries in the clipboard, and remove the second one
 
    procedure Remove_Clipboard_Entry
@@ -114,12 +110,13 @@ private
    type Selection_List_Access is access Selection_List;
 
    type Clipboard_Record is record
-      Kernel        : Kernel_Handle;
-      List          : Selection_List_Access;
-      Last_Paste    : Integer := Integer'Last; --  Index in List
+      Kernel     : Kernel_Handle;
+      List       : Selection_List_Access;
+      Last_Paste : Integer := Integer'Last; --  Index in List
 
-      First_Position : Gint;              --  last insertion point
-      Last_Position  : Gint;               --  Where the last paste occurred
+      First_Position      : Gint;              --  last insertion point
+      Last_Position       :
+        Gint;               --  Where the last paste occurred
       Last_Is_From_System : Boolean := False;
       --  True if the last paste was from the system clipboard
    end record;

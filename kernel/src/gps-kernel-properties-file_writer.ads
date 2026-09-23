@@ -22,8 +22,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package GPS.Kernel.Properties.File_Writer is
 
    function Constructor
-     (Kernel : access Kernel_Handle_Record'Class)
-      return GPS.Properties.Writer;
+     (Kernel : access Kernel_Handle_Record'Class) return GPS.Properties.Writer;
    --  Return a writer suitable for saving to file.
 
 private
@@ -36,21 +35,23 @@ private
    function Hash (Key : Key_Name) return Ada.Containers.Hash_Type;
    --  Hash function suitable for the container below
 
-   package Key_Value is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Key_Name,
-      Element_Type    => Unbounded_String,
-      Hash            => Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Key_Value is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Key_Name,
+        Element_Type    => Unbounded_String,
+        Hash            => Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
-   type File_Writer_Record
-     (Kernel : access Kernel_Handle_Record'Class) is new Writer_Record
+   type File_Writer_Record (Kernel : access Kernel_Handle_Record'Class) is
+     new Writer_Record
    with record
       Map : Key_Value.Map;
    end record;
    type File_Writer is access all File_Writer_Record'Class;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
@@ -58,52 +59,56 @@ private
       Found    : out Boolean);
    --  See inherited documentation
 
-   overriding procedure Get_Values
+   overriding
+   procedure Get_Values
      (Self     : not null access File_Writer_Record;
       Name     : String;
       Property : in out Property_Record'Class;
-      Callback : access procedure
-        (Key : String; Property : in out Property_Record'Class));
+      Callback :
+        access procedure
+          (Key : String; Property : in out Property_Record'Class));
    --  See inherited documentation
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description);
    --  See inherited documentation
 
-   overriding procedure Include
+   overriding
+   procedure Include
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description);
    --  See inherited documentation
 
-   overriding function Contains
-     (Self : not null access File_Writer_Record;
-      Key  : String;
-      Name : String)
+   overriding
+   function Contains
+     (Self : not null access File_Writer_Record; Key : String; Name : String)
       return Boolean;
 
-   overriding procedure Update
+   overriding
+   procedure Update
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description);
    --  See inherited documentation
 
-   overriding procedure Remove
-     (Self : not null access File_Writer_Record;
-      Key  : String;
-      Name : String);
+   overriding
+   procedure Remove
+     (Self : not null access File_Writer_Record; Key : String; Name : String);
    --  See inherited documentation
 
-   overriding procedure Dump_Database
-     (Self   : not null access File_Writer_Record);
+   overriding
+   procedure Dump_Database (Self : not null access File_Writer_Record);
    --  See inherited documentation
 
-   overriding procedure Finalize (Self : in out File_Writer_Record);
+   overriding
+   procedure Finalize (Self : in out File_Writer_Record);
    --  See inherited documentation
 
 end GPS.Kernel.Properties.File_Writer;

@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Gtk.Widget;
 with Gtkada.Handlers;
 
 with Generic_Views;
 with GPS.Debuggers;
-with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 
@@ -37,31 +37,35 @@ package DAP.Views is
    type View_Interface is interface;
 
    procedure Set_Client
-     (Self : not null access View_Interface;
-      Id   : Client_Id_Type) is abstract;
+     (Self : not null access View_Interface; Id : Client_Id_Type)
+   is abstract;
    function Get_Client
      (Self : not null access View_Interface)
-      return DAP.Clients.DAP_Client_Access is abstract;
+      return DAP.Clients.DAP_Client_Access
+   is abstract;
    --  Return the debugger associated with that view, or null if the view
    --  is not associated currently.
 
    procedure On_Attach
      (Self   : not null access View_Interface;
-      Client : not null access DAP.Clients.DAP_Client'Class) is null;
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is null;
    procedure On_Detach
      (Self   : not null access View_Interface;
-      Client : not null access DAP.Clients.DAP_Client'Class) is null;
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is null;
 
-   procedure On_Process_Terminated
-     (Self : not null access View_Interface) is null;
+   procedure On_Process_Terminated (Self : not null access View_Interface)
+   is null;
    --  Called when the debugged process has terminated.
 
    procedure On_Status_Changed
      (Self   : not null access View_Interface;
-      Status : GPS.Debuggers.Debugger_State) is null;
+      Status : GPS.Debuggers.Debugger_State)
+   is null;
 
-   procedure On_Location_Changed
-     (Self : not null access View_Interface) is null;
+   procedure On_Location_Changed (Self : not null access View_Interface)
+   is null;
 
    procedure Update (Self : not null access View_Interface) is null;
 
@@ -70,15 +74,16 @@ package DAP.Views is
    -----------------
 
    type View_Record is abstract
-      new Generic_Views.View_Record and View_Interface with private;
+     new Generic_Views.View_Record
+     and View_Interface with private;
    type View_Access is access all View_Record'Class;
 
-   overriding procedure Set_Client
-     (Self : not null access View_Record;
-      Id   : Client_Id_Type);
-   overriding function Get_Client
-     (Self : not null access View_Record)
-      return DAP.Clients.DAP_Client_Access;
+   overriding
+   procedure Set_Client
+     (Self : not null access View_Record; Id : Client_Id_Type);
+   overriding
+   function Get_Client
+     (Self : not null access View_Record) return DAP.Clients.DAP_Client_Access;
 
    generic
       Works_Without_Debugger : Boolean := False;
@@ -86,28 +91,31 @@ package DAP.Views is
       --  running.
 
       type Formal_View_Record is
-        new Generic_Views.View_Record and View_Interface with private;
+        new Generic_Views.View_Record
+        and View_Interface with private;
       --  The type used as a parent for the view, and used to store the view in
       --  a Visual_Debugger.
 
-      type Formal_MDI_Child is new GPS.Kernel.MDI.GPS_MDI_Child_Record
-         with private;
+      type Formal_MDI_Child is
+        new GPS.Kernel.MDI.GPS_MDI_Child_Record with private;
       --  ??? Seems to be needed because of a bug in GNAT, since we get errors
       --  when Formal_MDI_Child is not explicitly declared in Views below.
 
-      with package Formal_Views is new Generic_Views.Simple_Views
-        (Formal_View_Record              => Formal_View_Record,
-         Formal_MDI_Child                => Formal_MDI_Child,
-         Save_Duplicates_In_Perspectives => False,
-         Commands_Category               => "",
-         others                          => <>);
+      with package Formal_Views is new
+        Generic_Views.Simple_Views
+          (Formal_View_Record              => Formal_View_Record,
+           Formal_MDI_Child                => Formal_MDI_Child,
+           Save_Duplicates_In_Perspectives => False,
+           Commands_Category               => "",
+           others                          => <>);
       --  The description of the view in the MDI.
       --  The Commands_Category should be the empty string, since creating new
       --  views should attach them to the current debugger.
       --  ??? Can this be done via a primitive operation, rather than have to
       --  rewrite our own command.
 
-   package Simple_Views is
+   package Simple_Views
+   is
 
       procedure Attach_To_View
         (Client              : not null access DAP.Clients.DAP_Client'Class;
@@ -133,25 +141,28 @@ package DAP.Views is
       --  Raises the view and give the focus to it
 
    private
-      procedure On_Destroy
-        (View : access Gtk.Widget.Gtk_Widget_Record'Class);
-      Destroy_Access : constant Gtkada.Handlers.Widget_Callback.Simple_Handler
-         := On_Destroy'Access;
+      procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Destroy_Access :
+        constant Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Destroy'Access;
       --  Callback for the "destroy_event" signal on the Call Stack window.
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
 
-      type On_Debugger_Started is
-        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-      overriding procedure Execute
+      type On_Debugger_Started is new GPS.Kernel.Hooks.Debugger_Hooks_Function
+      with null record;
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Started;
          Kernel   : not null access Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
       --  Called when the debugger is started, to connect non-attached views
 
       type On_Debugger_State_Changed is
-        new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
-      overriding procedure Execute
+        new GPS.Kernel.Hooks.Debugger_States_Hooks_Function
+      with null record;
+      overriding
+      procedure Execute
         (Self      : On_Debugger_State_Changed;
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -159,24 +170,30 @@ package DAP.Views is
       --  Called when the state of the debugger changes
 
       type On_Debug_Location_Changed is
-        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-      overriding procedure Execute
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function
+      with null record;
+      overriding
+      procedure Execute
         (Self     : On_Debug_Location_Changed;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
       --  Called when the state of debugger's current location changes
 
       type On_Debug_Process_Terminated is
-        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-      overriding procedure Execute
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function
+      with null record;
+      overriding
+      procedure Execute
         (Self     : On_Debug_Process_Terminated;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
       --  Called when the process has terminated
 
       type On_Debugger_Terminated is
-        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-      overriding procedure Execute
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function
+      with null record;
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Terminated;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
@@ -187,8 +204,9 @@ package DAP.Views is
 private
 
    type View_Record is abstract
-      new Generic_Views.View_Record and View_Interface with
-   record
+     new Generic_Views.View_Record
+     and View_Interface
+   with record
       Client_Id : Client_Id_Type := No_Client;
       --  The DAP client's ID associated with the view
    end record;

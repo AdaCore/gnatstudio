@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Event;            use Gdk.Event;
+with Gdk.Event; use Gdk.Event;
 with Glib;
 with Gtk.Box;
 private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 
-with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with Filter_Panels;
 
 with Code_Analysis;
@@ -69,9 +69,8 @@ package CodePeer.Messages_Reports is
    procedure Update (Self : access Messages_Report_Record'Class);
 
    function Build_Context
-     (Self   : not null access Messages_Report_Record'Class;
-      Event  : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+     (Self  : not null access Messages_Report_Record'Class;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
    --  Return the context for Self (either the current context or the one
    --  for the given Event).
 
@@ -81,30 +80,30 @@ package CodePeer.Messages_Reports is
 private
 
    type Messages_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
-      Kernel              : GPS.Kernel.Kernel_Handle;
-      Tree                : Code_Analysis.Code_Analysis_Tree;
-      Analysis_Model      :
+      Kernel                    : GPS.Kernel.Kernel_Handle;
+      Tree                      : Code_Analysis.Code_Analysis_Tree;
+      Analysis_Model            :
         CodePeer.Messages_Summary_Models.Messages_Summary_Model;
-      Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
-      Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
+      Analysis_Sort_Model       : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
+      Analysis_View             : Gtk.Tree_View.Gtk_Tree_View;
       Warning_Categories_Editor :
         CodePeer.Categories_Criteria_Editors.Criteria_Editor;
-      Check_Categories_Editor :
+      Check_Categories_Editor   :
         CodePeer.Categories_Criteria_Editors.Criteria_Editor;
-      CWE_Editor          :
+      CWE_Editor                :
         CodePeer.CWE_Criteria_Editors.Criteria_Editor;
-      Lifeage_Editor      :
+      Lifeage_Editor            :
         CodePeer.Lifeage_Categories_Criteria_Editors.Criteria_Editor;
-      Ranking_Editor      :
+      Ranking_Editor            :
         CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor;
-      Audit_Editor        :
+      Audit_Editor              :
         CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor;
-      Filter              : Filter_Panels.Filter_Panel;
+      Filter                    : Filter_Panels.Filter_Panel;
 
-      Version             : Supported_Format_Version;
-      Show_Status         : Review_Status_Kinds_Flags := (others => False);
-      Show_Ranking        : Message_Ranking_Level_Flags;
-      Double_Click        : Boolean := False;
+      Version      : Supported_Format_Version;
+      Show_Status  : Review_Status_Kinds_Flags := (others => False);
+      Show_Ranking : Message_Ranking_Level_Flags;
+      Double_Click : Boolean := False;
       --  Used to handle double click by setting to True on mouse double-press
       --  event and checking of value on mouse release event.
    end record;

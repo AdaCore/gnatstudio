@@ -17,28 +17,31 @@
 
 with VSS.Strings.Conversions;
 
-with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;            use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Initialize;
 
 package body DAP.Clients.Initialize is
 
    type Initialize_Request is
-     new DAP.Requests.Initialize.Initialize_DAP_Request with null record;
+     new DAP.Requests.Initialize.Initialize_DAP_Request
+   with null record;
    type Initialize_Request_Access is access all Initialize_Request'Class;
 
    function Create
      (Kernel : not null Kernel_Handle) return Initialize_Request_Access;
    --  Create a new DAP 'initialize' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Initialize_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.InitializeResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Initialize_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
@@ -60,7 +63,8 @@ package body DAP.Clients.Initialize is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Initialize_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.InitializeResponse;
@@ -76,18 +80,19 @@ package body DAP.Clients.Initialize is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Initialize_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
-        ("[Debug]:" &
-           VSS.Strings.Conversions.To_UTF_8_String (Message));
+        ("[Debug]:" & VSS.Strings.Conversions.To_UTF_8_String (Message));
 
       DAP.Requests.Initialize.On_Error_Message
         (DAP.Requests.Initialize.Initialize_DAP_Request (Self),
-         Client, Message);
+         Client,
+         Message);
    end On_Error_Message;
 
    -----------------------------
@@ -98,8 +103,7 @@ package body DAP.Clients.Initialize is
      (Client : in out DAP.Clients.DAP_Client'Class)
    is
       Initialize_Req : Initialize_Request_Access :=
-        DAP.Clients.Initialize.Create
-          (Client.Kernel);
+        DAP.Clients.Initialize.Create (Client.Kernel);
    begin
       Client.Process (DAP.Requests.DAP_Request_Access (Initialize_Req));
    end Send_Initialize_Request;

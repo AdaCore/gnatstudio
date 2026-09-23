@@ -25,12 +25,10 @@ package body Projects.Views is
 
    function Create_Project_View_Reference
      (Kernel  : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Project : GNATCOLL.Projects.Project_Type)
-      return Project_View_Reference is
+      Project : GNATCOLL.Projects.Project_Type) return Project_View_Reference
+   is
    begin
-      return
-        (Kernel => Kernel,
-         File   => Project.Project_Path);
+      return (Kernel => Kernel, File => Project.Project_Path);
    end Create_Project_View_Reference;
 
    -------------------------
@@ -83,9 +81,7 @@ package body Projects.Views is
      (Self : Project_View_Reference'Class)
       return GNATCOLL.Projects.Project_Type is
    begin
-      if Self.Kernel /= null
-        and then Self.File /= No_File
-      then
+      if Self.Kernel /= null and then Self.File /= No_File then
          return Self.Kernel.Get_Project_Tree.Project_From_Path (Self.File);
 
       else

@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings;
 
-with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtkada.MDI; use Gtkada.MDI;
 
 with Basic_Types;
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
@@ -57,66 +57,58 @@ package body GVD.Code_Editors is
       Action : GPS.Editors.Line_Information.Line_Information_Access;
 
    begin
-      if File = GNATCOLL.VFS.No_File
-        and then P = null
-      then
+      if File = GNATCOLL.VFS.No_File and then P = null then
          return;
       end if;
 
       --  Highlight the current line if the debugger is active
 
-      if Highlight
-        and then P /= null
-      then
-         if P.Current_File /= File
-           or else P.Current_Line /= Line
-         then
+      if Highlight and then P /= null then
+         if P.Current_File /= File or else P.Current_Line /= Line then
             P.Current_File := File;
             P.Current_Line := Line;
 
             Unhighlight_Current_Line (Kernel);
 
-            if File /= GNATCOLL.VFS.No_File
-              and then Line /= 0
-            then
-               Msg := Create_Simple_Message
-                 (Get_Messages_Container (Kernel),
-                  Category                 =>
-                    Debugger_Messages_Category,
-                  File                     => File,
-                  Line                     => Line,
-                  Column                   => 1,
-                  Text                     => "",
-                  Importance               => Unspecified,
-                  Flags                    => GPS.Kernel.Messages.Sides_Only,
-                  Allow_Auto_Jump_To_First => False);
+            if File /= GNATCOLL.VFS.No_File and then Line /= 0 then
+               Msg :=
+                 Create_Simple_Message
+                   (Get_Messages_Container (Kernel),
+                    Category                 => Debugger_Messages_Category,
+                    File                     => File,
+                    Line                     => Line,
+                    Column                   => 1,
+                    Text                     => "",
+                    Importance               => Unspecified,
+                    Flags                    => GPS.Kernel.Messages.Sides_Only,
+                    Allow_Auto_Jump_To_First => False);
 
                Msg.Set_Highlighting
                  (Debugger_Current_Line_Style, Highlight_Whole_Line);
 
-               Action := new Line_Information_Record'
-                 (Text         => Null_Unbounded_String,
-                  Tooltip_Text =>
-                    To_Unbounded_String ("Current line in debugger"),
-                  Image        => Current_Line_Pixbuf,
-                  others       => <>);
+               Action :=
+                 new Line_Information_Record'
+                   (Text         => Null_Unbounded_String,
+                    Tooltip_Text =>
+                      To_Unbounded_String ("Current line in debugger"),
+                    Image        => Current_Line_Pixbuf,
+                    others       => <>);
                Msg.Set_Action (Action);
             end if;
          end if;
 
          if P.Debugger.Is_Started then
             Notify := True;
-            --  Postpone notification till complete of operations on source
-            --  code editor, some plugins (Qgen for instance) may use this
-            --  notification to open own views.
+         --  Postpone notification till complete of operations on source
+         --  code editor, some plugins (Qgen for instance) may use this
+         --  notification to open own views.
+
          end if;
       end if;
 
       --  Jump to current location
 
-      if File /= GNATCOLL.VFS.No_File
-        and then Line /= 0
-      then
+      if File /= GNATCOLL.VFS.No_File and then Line /= 0 then
          declare
             Buffer : constant Editor_Buffer'Class :=
               Kernel.Get_Buffer_Factory.Get
@@ -134,8 +126,8 @@ package body GVD.Code_Editors is
             if not Focus then
                --  raise the source editor without giving a focus
                declare
-                  C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-                    (Buffer.Current_View);
+                  C : constant MDI_Child :=
+                    GPS.Editors.GtkAda.Get_MDI_Child (Buffer.Current_View);
                begin
                   if C /= null then
                      Raise_Child (C, False);
@@ -160,10 +152,9 @@ package body GVD.Code_Editors is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      P    : constant Visual_Debugger := Visual_Debugger (Process);
+      P      : constant Visual_Debugger := Visual_Debugger (Process);
       Buffer : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get
-          (P.Current_File, Unlocked_Only => True);
+        Kernel.Get_Buffer_Factory.Get (P.Current_File, Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
         (Location   =>
@@ -177,7 +168,7 @@ package body GVD.Code_Editors is
    ------------------------------
 
    procedure Unhighlight_Current_Line
-     (Kernel  : not null access Kernel_Handle_Record'Class) is
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
         (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);

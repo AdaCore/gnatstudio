@@ -24,24 +24,29 @@ private with Ada.Containers.Vectors;
 
 package GPS.Kernel.Search.History is
 
-   type History_Search_Provider is new Kernel_Search_Provider
-     with private;
+   type History_Search_Provider is new Kernel_Search_Provider with private;
 
-   overriding procedure Free (Self : in out History_Search_Provider);
-   overriding function Documentation
-     (Self    : not null access History_Search_Provider) return String;
-   overriding procedure Set_Pattern
+   overriding
+   procedure Free (Self : in out History_Search_Provider);
+   overriding
+   function Documentation
+     (Self : not null access History_Search_Provider) return String;
+   overriding
+   procedure Set_Pattern
      (Self    : not null access History_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access History_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access History_Search_Provider) return String
-     is (Provider_History);
-   overriding function Get_Total_Progress
+   overriding
+   function Display_Name
+     (Self : not null access History_Search_Provider) return String
+   is (Provider_History);
+   overriding
+   function Get_Total_Progress
      (Self : not null access History_Search_Provider) return Integer;
 
    procedure Add_File_To_History
@@ -59,12 +64,13 @@ private
       Project      : GNATCOLL.Projects.Project_Type;
       Line, Column : Natural := 0;
    end record;
-   overriding procedure Execute
-     (Self       : not null access History_Search_Result;
-      Give_Focus : Boolean);
-   overriding function Full
-     (Self       : not null access History_Search_Result)
-     return Gtk.Widget.Gtk_Widget;
+   overriding
+   procedure Execute
+     (Self : not null access History_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
+     (Self : not null access History_Search_Result)
+      return Gtk.Widget.Gtk_Widget;
 
    type History is record
       Pattern : Unbounded_String := Null_Unbounded_String;

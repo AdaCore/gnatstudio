@@ -18,7 +18,7 @@
 --  This package enables the user to connect Undo / Redo buttons to a
 --  queue of commands
 
-with Gtk.Widget;   use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 
 package Commands.Controls is
 
@@ -64,13 +64,13 @@ package Commands.Controls is
 
 private
    type Undo_Redo_Information is record
-      Queue            : Commands.Command_Queue;
+      Queue : Commands.Command_Queue;
       --  The queue from which undo and redo information is read
 
-      Global_Command   : Command_Access := null;
+      Global_Command : Command_Access := null;
       --  Last global command
 
-      Redo_Global      : Boolean := False;
+      Redo_Global : Boolean := False;
       --  Can we undo or redo the last global command
 
       Executing_Global : Boolean := False;

@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with Gtk.Widget;         use Gtk.Widget;
-with GPS.Kernel;         use GPS.Kernel;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with Gtk.Widget;            use Gtk.Widget;
+with GPS.Kernel;            use GPS.Kernel;
 
 package Project_Viewers is
 

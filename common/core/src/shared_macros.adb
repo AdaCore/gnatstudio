@@ -36,8 +36,7 @@ package body Shared_Macros is
       Server              : Server_Type := GPS_Server;
       For_Shell           : Boolean := False;
       Opened_Files        : Basic_Types.File_Sets.Set :=
-        Basic_Types.File_Sets.Empty_Set)
-      return String
+        Basic_Types.File_Sets.Empty_Set) return String
    is
       Project                          : Project_Type := No_Project;
       Recurse, List_Dirs, List_Sources : Boolean;
@@ -54,26 +53,29 @@ package body Shared_Macros is
 
       if Param = "f" then
          if File_Information /= No_File then
-            return String_Utils.Protect
-              (+File_Information.Base_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (+File_Information.Base_Name,
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
          end if;
 
       elsif Param = "fd" then
          if File_Information /= No_File then
-            return String_Utils.Protect
-              (+File_Information.Dir_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (+File_Information.Dir_Name,
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
          end if;
 
       elsif Param = "fk" then
          if File_Information /= No_File then
-            return String_Utils.Protect
-              (Krunch (+File_Information.Base_Name),
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (Krunch (+File_Information.Base_Name),
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
          end if;
 
       elsif Param = "fo" then
@@ -86,40 +88,43 @@ package body Shared_Macros is
 
             for File of Opened_Files loop
                if File /= No_File then
-                  Append (Result,
-                          " "
-                          & To_Remote
-                            (File, Get_Nickname (Server)).Display_Full_Name);
+                  Append
+                    (Result,
+                     " "
+                     & To_Remote (File, Get_Nickname (Server))
+                         .Display_Full_Name);
                end if;
             end loop;
-            return String_Utils.Protect
-              (To_String (Result),
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (To_String (Result),
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
          end;
 
       elsif Param = "F" then
          if File_Information /= No_File then
-            return String_Utils.Protect
-              (+To_Remote
-                 (File_Information,
-                  Get_Nickname (Server)).Full_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (+To_Remote (File_Information, Get_Nickname (Server))
+                    .Full_Name,
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
          end if;
 
       elsif Param = "gnatmake" then
-         return Project_From_Kernel.Attribute_Value
-                  (Compiler_Command_Attribute,
-                   Default => "gnatmake",
-                   Index   => "Ada");
+         return
+           Project_From_Kernel.Attribute_Value
+             (Compiler_Command_Attribute,
+              Default => "gnatmake",
+              Index   => "Ada");
 
       elsif Param = "o" or else Param = "O" then
-         return String_Utils.Protect
-           (String (Full_Name (Object_Dir
-              (Project_From_Param)).all),
-            Protect_Quotes      => Quoted,
-            Protect_Backslashes => For_Shell);
+         return
+           String_Utils.Protect
+             (String (Full_Name (Object_Dir (Project_From_Param)).all),
+              Protect_Quotes      => Quoted,
+              Protect_Backslashes => For_Shell);
 
       elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
          Project := Project_From_Param;
@@ -129,12 +134,13 @@ package body Shared_Macros is
                return "";
 
             else
-               return "-P" &
-               String_Utils.Protect
-                 (+To_Remote (Project.Project_Path,
-                     Get_Nickname (Server)).Full_Name,
-                  Protect_Quotes      => Quoted,
-                  Protect_Backslashes => For_Shell);
+               return
+                 "-P"
+                 & String_Utils.Protect
+                     (+To_Remote (Project.Project_Path, Get_Nickname (Server))
+                         .Full_Name,
+                      Protect_Quotes      => Quoted,
+                      Protect_Backslashes => For_Shell);
             end if;
          end if;
 
@@ -143,16 +149,18 @@ package body Shared_Macros is
          end if;
 
          if Param = "p" or else Param = "P" then
-            return String_Utils.Protect
-              (Project.Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (Project.Name,
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
 
          elsif Param = "Pl" then
-            return String_Utils.Protect
-              (To_Lower (Project.Name),
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (To_Lower (Project.Name),
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
 
          elsif Param = "Pb" then
             declare
@@ -166,12 +174,12 @@ package body Shared_Macros is
             end;
 
          elsif Param = "pp" or else Param = "PP" then
-            return String_Utils.Protect
-              (+To_Remote
-                 (Project.Project_Path,
-                  Get_Nickname (Server)).Full_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+            return
+              String_Utils.Protect
+                (+To_Remote (Project.Project_Path, Get_Nickname (Server))
+                    .Full_Name,
+                 Protect_Quotes      => Quoted,
+                 Protect_Backslashes => For_Shell);
 
          else
             Recurse := Param (Param'First + 1) = 'r';
@@ -183,7 +191,7 @@ package body Shared_Macros is
             end if;
 
             if Index <= Param'Last then
-               List_Dirs    := Param (Index) = 'd';
+               List_Dirs := Param (Index) = 'd';
                List_Sources := Param (Index) = 's';
 
                if Index < Param'Last and then Param (Index + 1) = 'f' then
@@ -203,9 +211,8 @@ package body Shared_Macros is
                            for K in List'Range loop
                               Put_Line
                                 (File,
-                                 +To_Remote
-                                   (List (K),
-                                    Get_Nickname (Server)).Full_Name);
+                                 +To_Remote (List (K), Get_Nickname (Server))
+                                    .Full_Name);
                            end loop;
                         end;
 
@@ -216,8 +223,8 @@ package body Shared_Macros is
                               Put_Line
                                 (File,
                                  +To_Remote
-                                   (Files_List (K),
-                                    Get_Nickname (Server)).Full_Name);
+                                    (Files_List (K), Get_Nickname (Server))
+                                    .Full_Name);
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
@@ -225,15 +232,15 @@ package body Shared_Macros is
 
                      declare
                         N : constant Virtual_File :=
-                              To_Remote
-                                (Create (+Name (File)),
-                                 Get_Nickname (Server));
+                          To_Remote
+                            (Create (+Name (File)), Get_Nickname (Server));
                      begin
                         Close (File);
-                        return String_Utils.Protect
-                          (+N.Full_Name,
-                           Protect_Quotes      => Quoted,
-                           Protect_Backslashes => For_Shell);
+                        return
+                          String_Utils.Protect
+                            (+N.Full_Name,
+                             Protect_Quotes      => Quoted,
+                             Protect_Backslashes => For_Shell);
                      end;
                   end;
 
@@ -249,11 +256,12 @@ package body Shared_Macros is
                         begin
                            for K in List'Range loop
                               Append
-                                (Result, '"' &
-                                   (+To_Remote
-                                      (List (K),
-                                       Get_Nickname (Server)).Full_Name) &
-                                 """ ");
+                                (Result,
+                                 '"'
+                                 & (+To_Remote
+                                       (List (K), Get_Nickname (Server))
+                                       .Full_Name)
+                                 & """ ");
                            end loop;
                         end;
 
@@ -263,20 +271,21 @@ package body Shared_Macros is
                            for K in Files_List'Range loop
                               Append
                                 (Result,
-                                '"' &
-                                 (+To_Remote
-                                      (Files_List (K),
-                                       Get_Nickname (Server)).Full_Name) &
-                                 """ ");
+                                 '"'
+                                 & (+To_Remote
+                                       (Files_List (K), Get_Nickname (Server))
+                                       .Full_Name)
+                                 & """ ");
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
                      end if;
 
-                     return String_Utils.Protect
-                       (To_String (Result),
-                        Protect_Quotes      => Quoted,
-                        Protect_Backslashes => For_Shell);
+                     return
+                       String_Utils.Protect
+                         (To_String (Result),
+                          Protect_Quotes      => Quoted,
+                          Protect_Backslashes => For_Shell);
                   end;
                end if;
             end if;

@@ -17,12 +17,12 @@
 
 with CodePeer.Generic_Criteria_Editors;
 
-package CodePeer.CWE_Criteria_Editors is
-  new CodePeer.Generic_Criteria_Editors
-        (CodePeer.CWE_Category,
-         CodePeer.CWE_Category_Access,
-         CodePeer.Get_Name,
-         CodePeer.Get_Tooltip,
-         CodePeer.Less,
-         CodePeer.CWE_Category_Sets,
-         True);
+package CodePeer.CWE_Criteria_Editors is new
+  CodePeer.Generic_Criteria_Editors
+    (CodePeer.CWE_Category,
+     CodePeer.CWE_Category_Access,
+     CodePeer.Get_Name,
+     CodePeer.Get_Tooltip,
+     CodePeer.Less,
+     CodePeer.CWE_Category_Sets,
+     True);

@@ -19,15 +19,15 @@
 --  NOTE: this should remain independent from the GNAT Studio Kernel, so that
 --  it can be reused in GNATbench or in a stand-alone executable.
 
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 
 with Ada.Strings.Unbounded.Hash;
 
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package Project_Templates is
 
@@ -36,24 +36,24 @@ package Project_Templates is
    --  (".gpt" stands for GNAT Project Template).
 
    type Variable (Nb_Choices : Integer) is record
-      Label         : Unbounded_String;
+      Label : Unbounded_String;
       --  The label of the variable
 
       Default_Value : Unbounded_String;
       --  The default value
 
-      Description   : Unbounded_String;
+      Description : Unbounded_String;
       --  A one-line description
 
-      Choices       : Unbounded_String_Array (1 .. Nb_Choices);
+      Choices : Unbounded_String_Array (1 .. Nb_Choices);
       --  An optional choices' list
    end record;
 
-   package Variables_List is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Variable);
+   package Variables_List is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Variable);
 
    type Project_Template is record
-      Label    : Unbounded_String;
+      Label : Unbounded_String;
       --  The label of the template
 
       Category : Unbounded_String;
@@ -88,8 +88,8 @@ package Project_Templates is
       Null_Unbounded_String,
       No_File);
 
-   package Project_Templates_List is new Ada.Containers.Doubly_Linked_Lists
-     (Project_Template);
+   package Project_Templates_List is new
+     Ada.Containers.Doubly_Linked_Lists (Project_Template);
 
    procedure Read_Templates_File
      (File      : Virtual_File;
@@ -119,10 +119,12 @@ package Project_Templates is
    --  Look in all subdirectories of Dir and attempt to find all template files
    --  in those directories, and reads the results in Templates.
 
-   package Variable_Assignments is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Unbounded_String,
-      Ada.Strings.Unbounded.Hash,
-      Ada.Strings.Unbounded."=");
+   package Variable_Assignments is new
+     Ada.Containers.Hashed_Maps
+       (Unbounded_String,
+        Unbounded_String,
+        Ada.Strings.Unbounded.Hash,
+        Ada.Strings.Unbounded."=");
 
    procedure Instantiate_Template
      (Template    : Project_Template;

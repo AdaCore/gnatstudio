@@ -15,38 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Browsers.Canvas;           use Browsers.Canvas;
-with Cairo.Pattern;             use Cairo, Cairo.Pattern;
-with Glib;                      use Glib;
-with Glib.Error;                use Glib.Error;
-with Glib.Object;               use Glib.Object;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.RGBA;                  use Gdk.RGBA;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Browsers.Canvas;          use Browsers.Canvas;
+with Cairo.Pattern;
+use Cairo, Cairo.Pattern;
+with Glib;                     use Glib;
+with Glib.Error;               use Glib.Error;
+with Glib.Object;              use Glib.Object;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Gdk.RGBA;                 use Gdk.RGBA;
 with Generic_Views;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNAT.Strings;              use GNAT.Strings;
-with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Style;              use Gtkada.Style;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Widget;                use Gtk.Widget;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNAT.Strings;             use GNAT.Strings;
+with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Style;             use Gtkada.Style;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Widget;               use Gtk.Widget;
 
-with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
+with Pango.Enums;           use Pango.Enums;
+with Pango.Font;            use Pango.Font;
 
 package body Browsers.Scripts is
    Me : constant Trace_Handle := Create ("GPS.BROWSERS.BROWSERS");
@@ -87,26 +88,26 @@ package body Browsers.Scripts is
    P_Shadow_Offset_Y    : constant := 35;
    --  All the parameters to GPS.Browsers.Style.__init__
 
-   PA_Item              : constant := 2;
-   PA_Align             : constant := 3;
-   PA_Margin            : constant := 4;
-   PA_Float             : constant := 5;
-   PA_Overflow          : constant := 6;
+   PA_Item     : constant := 2;
+   PA_Align    : constant := 3;
+   PA_Margin   : constant := 4;
+   PA_Float    : constant := 5;
+   PA_Overflow : constant := 6;
    --  All the parameter to GPS.Browsers.Item.add
 
-   L_From               : constant := 2;
-   L_To                 : constant := 3;
-   L_Style              : constant := 4;
-   L_Routing            : constant := 5;
-   L_From_X             : constant := 6;
-   L_From_Y             : constant := 7;
-   L_From_Side          : constant := 8;
-   L_To_X               : constant := 9;
-   L_To_Y               : constant := 10;
-   L_To_Side            : constant := 11;
-   L_Label              : constant := 12;
-   L_From_Label         : constant := 13;
-   L_To_Label           : constant := 14;
+   L_From       : constant := 2;
+   L_To         : constant := 3;
+   L_Style      : constant := 4;
+   L_Routing    : constant := 5;
+   L_From_X     : constant := 6;
+   L_From_Y     : constant := 7;
+   L_From_Side  : constant := 8;
+   L_To_X       : constant := 9;
+   L_To_Y       : constant := 10;
+   L_To_Side    : constant := 11;
+   L_Label      : constant := 12;
+   L_From_Label : constant := 13;
+   L_To_Label   : constant := 14;
    --  All the parameters for GPS.Browsers.Link
 
    type Style_Properties_Record is new Instance_Property_Record with record
@@ -144,8 +145,7 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Text_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   procedure Hr_Handler
-     (Data : in out Callback_Data'Class; Command : String);
+   procedure Hr_Handler (Data : in out Callback_Data'Class; Command : String);
    procedure Editable_Text_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Image_Handler
@@ -161,30 +161,31 @@ package body Browsers.Scripts is
    --  Handles all commands for the python classes in this package.
 
    type Browser_View_Record is new Browsers.Canvas.General_Browser_Record
-     with null record;
+   with null record;
 
    function Initialize
      (Self : access Browser_View_Record'Class) return Gtk_Widget;
    --  Create a new browser
 
    type Script_Child_Record is new Browser_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Script_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
-   package Browser_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "browsers",
-      View_Name          => "Browser",
-      Formal_View_Record => Browser_View_Record,
-      Formal_MDI_Child   => Script_Child_Record,
-      Reuse_If_Exist     => False,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Initialize         => Initialize,
-      Position           => Position_Automatic,
-      Group              => Group_Default,
-      Commands_Category  => "Browsers");
+   package Browser_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "browsers",
+        View_Name          => "Browser",
+        Formal_View_Record => Browser_View_Record,
+        Formal_MDI_Child   => Script_Child_Record,
+        Reuse_If_Exist     => False,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Initialize         => Initialize,
+        Position           => Position_Automatic,
+        Group              => Group_Default,
+        Commands_Category  => "Browsers");
 
    subtype Browser_View is Browser_Views.View_Access;
 
@@ -192,30 +193,29 @@ package body Browsers.Scripts is
      (Self    : not null access Browser_View_Record'Class;
       Name    : String;
       Event   : Event_Details_Access;
-      Context : Selection_Context := No_Context)
-      return Boolean;
+      Context : Selection_Context := No_Context) return Boolean;
    --  Call a specific method of the view (if it exists).
    --  Returns True if the method could be called successfully
 
    function Points_From_Param
-     (Data : Callback_Data'Class;
-      N    : Positive) return Item_Point_Array;
+     (Data : Callback_Data'Class; N : Positive) return Item_Point_Array;
    --  Extract a list of point from a parameter to a python function
 
    function On_Item_Event
      (View  : not null access GObject_Record'Class;
-      Event : Event_Details_Access)
-      return Boolean;
+      Event : Event_Details_Access) return Boolean;
    --  Called when an unhandled event occurs in the view
 
    type PRect_Record is new Rect_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
    type PRect_Access is access all PRect_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PRect_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PRect_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PRect_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
@@ -223,10 +223,12 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
    end record;
    type PEllipse_Access is access all PEllipse_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PEllipse_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PEllipse_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PEllipse_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
@@ -234,37 +236,44 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
    end record;
    type PText_Access is access all PText_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PText_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PText_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PText_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PEditable_Text_Record is new Editable_Text_Item_Record and Python_Item
-     with record
-      Inst : aliased Item_Proxy;
+   with record
+      Inst      : aliased Item_Proxy;
       On_Edited : Subprogram_Type;
    end record;
    type PEditable_Text_Access is access all PEditable_Text_Record'Class;
-   overriding function Inst_List
+   overriding
+   function Inst_List
      (Self : not null access PEditable_Text_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+      return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PEditable_Text_Record;
       In_Model : not null access Canvas_Model_Record'Class);
-   overriding procedure On_Edited
-     (Self     : not null access PEditable_Text_Record;
-      Old_Text : String);
+   overriding
+   procedure On_Edited
+     (Self : not null access PEditable_Text_Record; Old_Text : String);
 
    type PHr_Record is new Hr_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
    end record;
    type PHr_Access is access all PHr_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PHr_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PHr_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PHr_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
@@ -272,10 +281,12 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
    end record;
    type PImage_Access is access all PImage_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PImage_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PImage_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
@@ -283,10 +294,12 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
    end record;
    type PLine_Access is access all PLine_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PLine_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PLine_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
@@ -294,23 +307,25 @@ package body Browsers.Scripts is
       Inst : aliased Item_Proxy;
    end record;
    type PLink_Access is access all PLink_Record'Class;
-   overriding function Inst_List
-     (Self : not null access PLink_Record)
-      return access Item_Proxy'Class is (Self.Inst'Access);
-   overriding procedure Destroy
+   overriding
+   function Inst_List
+     (Self : not null access PLink_Record) return access Item_Proxy'Class
+   is (Self.Inst'Access);
+   overriding
+   procedure Destroy
      (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    procedure On_Selection_Changed
-     (Model : not null access GObject_Record'Class;
-      Item  : Abstract_Item);
+     (Model : not null access GObject_Record'Class; Item : Abstract_Item);
    --  Called when the selection has changed
 
    -------------
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PRect_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -322,7 +337,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PEllipse_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -334,7 +350,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PText_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -346,7 +363,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PHr_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -358,7 +376,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PLine_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -370,7 +389,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PLink_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -382,7 +402,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PEditable_Text_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -395,22 +416,22 @@ package body Browsers.Scripts is
    -- On_Edited --
    ---------------
 
-   overriding procedure On_Edited
-     (Self     : not null access PEditable_Text_Record;
-      Old_Text : String) is
+   overriding
+   procedure On_Edited
+     (Self : not null access PEditable_Text_Record; Old_Text : String) is
    begin
       if Self.On_Edited /= null then
          declare
             Script : constant Scripting_Language := Self.On_Edited.Get_Script;
-            Data : Callback_Data'Class := Create (Script, 2);
-            Dummy : Boolean;
+            Data   : Callback_Data'Class := Create (Script, 2);
+            Dummy  : Boolean;
          begin
             Data.Set_Nth_Arg
-               (1,
-                Item_Proxies.Get_Or_Create_Instance
-                   (Self   => Self.Inst_List.all,
-                    Obj    => Abstract_Item (Self),
-                    Script => Script));
+              (1,
+               Item_Proxies.Get_Or_Create_Instance
+                 (Self   => Self.Inst_List.all,
+                  Obj    => Abstract_Item (Self),
+                  Script => Script));
             Data.Set_Nth_Arg (2, Old_Text);
             Dummy := Self.On_Edited.Execute (Data);
             Free (Data);
@@ -422,7 +443,8 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
+   overriding
+   procedure Destroy
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
@@ -437,8 +459,7 @@ package body Browsers.Scripts is
    procedure Set_Style (Inst : Class_Instance; Style : Drawing_Style) is
    begin
       Set_Data
-        (Inst, "Browsers.Style",
-         Style_Properties_Record'(Style => Style));
+        (Inst, "Browsers.Style", Style_Properties_Record'(Style => Style));
    end Set_Style;
 
    ---------------
@@ -582,9 +603,9 @@ package body Browsers.Scripts is
       elsif Command = "links" then
          declare
             procedure On_Link
-               (Item : not null access Abstract_Item_Record'Class);
+              (Item : not null access Abstract_Item_Record'Class);
             procedure On_Link
-               (Item : not null access Abstract_Item_Record'Class)
+              (Item : not null access Abstract_Item_Record'Class)
             is
                P : Python_Item_Access;
             begin
@@ -603,9 +624,7 @@ package body Browsers.Scripts is
             Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
             Set.Include (Item);
             Data.Set_Return_Value_As_List;
-            Model.For_Each_Link
-               (On_Link'Access,
-                From_Or_To => Set);
+            Model.For_Each_Link (On_Link'Access, From_Or_To => Set);
          end;
 
       elsif Command = "remove" then
@@ -634,15 +653,14 @@ package body Browsers.Scripts is
    --------------------------
 
    procedure On_Selection_Changed
-     (Model : not null access GObject_Record'Class;
-      Item  : Abstract_Item)
+     (Model : not null access GObject_Record'Class; Item : Abstract_Item)
    is
       Self    : constant Model_Type := Model_Type (Model);
       Inst    : Class_Instance := No_Class_Instance;
       Scripts : constant Scripting_Language_Array :=
         Self.Kernel.Scripts.Get_Scripting_Languages;
-      Subp   : Subprogram_Type;
-      Dummy  : Boolean;
+      Subp    : Subprogram_Type;
+      Dummy   : Boolean;
    begin
       for S in Scripts'Range loop
          Inst := Get_Instance (Scripts (S), Self);
@@ -662,7 +680,8 @@ package body Browsers.Scripts is
                     (1,
                      Item_Proxies.Get_Or_Create_Instance
                        (Python_Item_Access (Item).Inst_List.all,
-                        Item, Subp.Get_Script));
+                        Item,
+                        Subp.Get_Script));
                end if;
                Dummy := Subp.Execute (Args);
                Free (Args);
@@ -680,16 +699,15 @@ package body Browsers.Scripts is
      (Self    : not null access Browser_View_Record'Class;
       Name    : String;
       Event   : Event_Details_Access;
-      Context : Selection_Context := No_Context)
-      return Boolean
+      Context : Selection_Context := No_Context) return Boolean
    is
       Inst    : Class_Instance := No_Class_Instance;
       Scripts : constant Scripting_Language_Array :=
         Self.Kernel.Scripts.Get_Scripting_Languages;
-      Subp   : Subprogram_Type;
-      Dummy  : Boolean;
-      Count  : Integer;
-      First  : Integer;
+      Subp    : Subprogram_Type;
+      Dummy   : Boolean;
+      Count   : Integer;
+      First   : Integer;
    begin
       for S in Scripts'Range loop
          Inst := Get_Instance (Scripts (S), Self);
@@ -725,7 +743,8 @@ package body Browsers.Scripts is
                     (First,
                      Item_Proxies.Get_Or_Create_Instance
                        (Python_Item_Access (Event.Toplevel_Item).Inst_List.all,
-                        Event.Toplevel_Item, Subp.Get_Script));
+                        Event.Toplevel_Item,
+                        Subp.Get_Script));
                else
                   Set_Nth_Arg (Args, First, No_Class_Instance);
                end if;
@@ -735,8 +754,9 @@ package body Browsers.Scripts is
                      Args.Set_Nth_Arg
                        (First + 1,
                         Item_Proxies.Get_Or_Create_Instance
-                           (Python_Item_Access (Event.Item).Inst_List.all,
-                            Event.Item, Subp.Get_Script));
+                          (Python_Item_Access (Event.Item).Inst_List.all,
+                           Event.Item,
+                           Subp.Get_Script));
                   else
                      Args.Set_Nth_Arg (First + 1, No_Class_Instance);
                   end if;
@@ -748,8 +768,9 @@ package body Browsers.Scripts is
                      Args.Set_Nth_Arg
                        (First + 1,
                         Item_Proxies.Get_Or_Create_Instance
-                           (Python_Item_Access (Event.Item).Inst_List.all,
-                            Event.Item, Subp.Get_Script));
+                          (Python_Item_Access (Event.Item).Inst_List.all,
+                           Event.Item,
+                           Subp.Get_Script));
                      Args.Set_Nth_Arg (First + 2, Float (Event.I_Point.X));
                      Args.Set_Nth_Arg (First + 3, Float (Event.I_Point.Y));
                   else
@@ -775,10 +796,9 @@ package body Browsers.Scripts is
 
    function On_Item_Event
      (View  : not null access GObject_Record'Class;
-      Event : Event_Details_Access)
-      return Boolean
+      Event : Event_Details_Access) return Boolean
    is
-      Self   : constant Browser_View := Browser_View (View);
+      Self : constant Browser_View := Browser_View (View);
    begin
       if Event.Event_Type = Key_Press then
          return Call_Method (Self, "on_key", Event);
@@ -805,8 +825,7 @@ package body Browsers.Scripts is
    begin
       Browsers.Canvas.Initialize (Self);
       Setup_Contextual_Menu
-        (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.Get_View);
+        (Kernel => Self.Kernel, Event_On_Widget => Self.Get_View);
 
       --  Last event handler, so that the default behavior always takes
       --  precedence for consistency
@@ -819,10 +838,10 @@ package body Browsers.Scripts is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Script_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       View    : constant Browser_View :=
         Browser_View (GPS_MDI_Child (Self).Get_Actual_Widget);
@@ -832,10 +851,11 @@ package body Browsers.Scripts is
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
       declare
          Details : aliased Canvas_Event_Details :=
-            GPS.Kernel.Contexts.Browser_Information (Context);
+           GPS.Kernel.Contexts.Browser_Information (Context);
       begin
-         Dummy := Call_Method
-           (View, "on_create_context", Details'Unchecked_Access, Context);
+         Dummy :=
+           Call_Method
+             (View, "on_create_context", Details'Unchecked_Access, Context);
       end;
       return Context;
    end Build_Context;
@@ -844,15 +864,14 @@ package body Browsers.Scripts is
    -- View_Handler --
    ------------------
 
-   procedure View_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure View_Handler (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst   : Class_Instance;
-      Item   : Abstract_Item;
-      View   : Browser_View;
-      Model  : Model_Type;
-      C      : GPS_MDI_Child;
-      Pos    : Model_Point;
+      Inst  : Class_Instance;
+      Item  : Abstract_Item;
+      View  : Browser_View;
+      Model : Model_Type;
+      C     : GPS_MDI_Child;
+      Pos   : Model_Point;
    begin
       if Command = Constructor_Method then
          null;  --  nothing to do
@@ -866,8 +885,9 @@ package body Browsers.Scripts is
               (Get_Kernel (Data), Toolbar_Id, Inherits => "Browser");
 
             Model := Get_Model (Data.Nth_Arg (2));
-            View := Browser_Views.Get_Or_Create_View
-              (Get_Kernel (Data), Toolbar_Id => Toolbar_Id);
+            View :=
+              Browser_Views.Get_Or_Create_View
+                (Get_Kernel (Data), Toolbar_Id => Toolbar_Id);
             View.Get_View.Set_Model (Model);
 
             C := Browser_Views.Child_From_View (View);
@@ -887,8 +907,9 @@ package body Browsers.Scripts is
       elsif Command = "set_background" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.Get_View.Background := Background_Type'Val
-           (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
+         View.Get_View.Background :=
+           Background_Type'Val
+             (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
          View.Get_View.Grid_Style :=
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
          View.Get_View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
@@ -915,7 +936,7 @@ package body Browsers.Scripts is
          View := Browser_View (GObject'(Get_Data (Inst)));
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          View.Get_View.Scroll_Into_View
-            (Item, Duration (Data.Nth_Arg (3, 0.0)));
+           (Item, Duration (Data.Nth_Arg (3, 0.0)));
 
       elsif Command = "center_on" then
          declare
@@ -938,19 +959,20 @@ package body Browsers.Scripts is
          View := Browser_View (GObject'(Get_Data (Inst)));
 
          declare
-            F      : constant String := Nth_Arg (Data, 3, "a4");
-            Format : Page_Format;
+            F        : constant String := Nth_Arg (Data, 3, "a4");
+            Format   : Page_Format;
             Filename : Virtual_File;
             Success  : Boolean;
          begin
             Format := To_Page_Format (F);
 
             Filename := Nth_Arg (Data, 2);
-            Success := View.Get_View.Export
-              (Filename          => Filename.Display_Full_Name,
-               Page              => Format,
-               Format            => Export_PDF,
-               Visible_Area_Only => Nth_Arg (Data, 4, True));
+            Success :=
+              View.Get_View.Export
+                (Filename          => Filename.Display_Full_Name,
+                 Page              => Format,
+                 Format            => Export_PDF,
+                 Visible_Area_Only => Nth_Arg (Data, 4, True));
             Set_Return_Value (Data, Success);
          end;
 
@@ -1006,12 +1028,13 @@ package body Browsers.Scripts is
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
          Start
-            (Animate_Position
-               (Item          => Item_Proxies.From_Instance (Data.Nth_Arg (2)),
-                Final_Position => (Gdouble (Data.Nth_Arg (3, 0.0)),
-                                   Gdouble (Data.Nth_Arg (4, 0.0))),
-                Duration       => Duration (Data.Nth_Arg (5, 0.4))),
-             View.Get_View);
+           (Animate_Position
+              (Item           => Item_Proxies.From_Instance (Data.Nth_Arg (2)),
+               Final_Position =>
+                 (Gdouble (Data.Nth_Arg (3, 0.0)),
+                  Gdouble (Data.Nth_Arg (4, 0.0))),
+               Duration       => Duration (Data.Nth_Arg (5, 0.4))),
+            View.Get_View);
 
       elsif Command = "start_editing" then
          Inst := Nth_Arg (Data, 1);
@@ -1035,8 +1058,7 @@ package body Browsers.Scripts is
    -- Item_Handler --
    ------------------
 
-   procedure Item_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Item_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       function Get (Count : Integer) return Gtkada.Canvas_View.Size;
       --  Read a size from the parameter
@@ -1063,11 +1085,11 @@ package body Browsers.Scripts is
             return Fit_Size;
       end Get;
 
-      Inst : Class_Instance;
-      M    : Margins := No_Margins;
-      Item : Abstract_Item;
-      It   : Container_Item;
-      X, Y : Gdouble := Gdouble'First;
+      Inst             : Class_Instance;
+      M                : Margins := No_Margins;
+      Item             : Abstract_Item;
+      It               : Container_Item;
+      X, Y             : Gdouble := Gdouble'First;
       AnchorX, AnchorY : Gdouble;
    begin
       if Command = Constructor_Method then
@@ -1099,8 +1121,7 @@ package body Browsers.Scripts is
             procedure Add_Child
               (Child : not null access Container_Item_Record'Class);
             procedure Add_Child
-              (Child : not null access Container_Item_Record'Class)
-            is
+              (Child : not null access Container_Item_Record'Class) is
             begin
                if Child.all in Python_Item'Class then
                   Data.Set_Return_Value
@@ -1126,11 +1147,12 @@ package body Browsers.Scripts is
            (Min => Get (2), Max => Get (3));
 
       elsif Command = "set_size" then
-         Container_Item (Item).Set_Size (Width  => Get (2), Height => Get (3));
+         Container_Item (Item).Set_Size (Width => Get (2), Height => Get (3));
 
       elsif Command = "add" then
-         It := Container_Item
-            (Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item)));
+         It :=
+           Container_Item
+             (Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item)));
 
          begin
             declare
@@ -1161,13 +1183,16 @@ package body Browsers.Scripts is
 
          Container_Item (Item).Add_Child
            (It,
-            Align => Alignment_Style'Val
-              (Nth_Arg (Data, PA_Align, Alignment_Style'Pos (Align_Start))),
-            Margin => M,
-            Float  => Nth_Arg (Data, PA_Float, False),
-            Overflow => Overflow_Style'Val
-              (Nth_Arg
-                   (Data, PA_Overflow,
+            Align    =>
+              Alignment_Style'Val
+                (Nth_Arg (Data, PA_Align, Alignment_Style'Pos (Align_Start))),
+            Margin   => M,
+            Float    => Nth_Arg (Data, PA_Float, False),
+            Overflow =>
+              Overflow_Style'Val
+                (Nth_Arg
+                   (Data,
+                    PA_Overflow,
                     Overflow_Style'Pos (Overflow_Prevent))));
 
       elsif Command = "set_child_layout" then
@@ -1195,7 +1220,8 @@ package body Browsers.Scripts is
          if It.Parent /= null then
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
-                 (Python_Item_Access (It.Parent).Inst_List.all, It,
+                 (Python_Item_Access (It.Parent).Inst_List.all,
+                  It,
                   Data.Get_Script));
          end if;
 
@@ -1312,7 +1338,7 @@ package body Browsers.Scripts is
       end Color_From_Param;
 
       function Pattern_From_Param (N : Positive) return Cairo_Pattern is
-         V : constant String := Nth_Arg (Data, N, "");
+         V       : constant String := Nth_Arg (Data, N, "");
          C       : Gdk_RGBA;
          Success : Boolean;
          P       : Cairo_Pattern;
@@ -1326,11 +1352,12 @@ package body Browsers.Scripts is
          if Starts_With (V, "linear ") then
             Str := Split (V, ' ');
             if Str'Length >= 5 then
-               P := Create_Linear
-                 (X0  => Val (Str (Str'First + 1).all),
-                  Y0  => Val (Str (Str'First + 2).all),
-                  X1  => Val (Str (Str'First + 3).all),
-                  Y1  => Val (Str (Str'First + 4).all));
+               P :=
+                 Create_Linear
+                   (X0 => Val (Str (Str'First + 1).all),
+                    Y0 => Val (Str (Str'First + 2).all),
+                    X1 => Val (Str (Str'First + 3).all),
+                    Y1 => Val (Str (Str'First + 4).all));
 
                S := Str'First + 5;
                while S < Str'Length loop
@@ -1387,62 +1414,88 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1);
 
-         Style := Gtk_New
-           (Stroke     => Color_From_Param (P_Stroke, Black_RGBA),
-            Fill       => Pattern_From_Param (P_Fill),
-            Dashes     => List_From_Param (P_Dashes),
-            Line_Width => Gdouble (Nth_Arg (Data, P_Line_Width, 1.0)),
-            Sloppy     => Nth_Arg (Data, P_Sloppy, False),
-            Font => (Name  => From_String
-                       (Nth_Arg (Data, P_Font_Name, "sans 9")),
-                     Underline => Underline'Val
-                       (Integer'(Nth_Arg (Data, P_Font_Underline,
-                        Underline'Pos (Pango_Underline_None)))),
-                     Strikethrough =>
-                       Nth_Arg (Data, P_Font_Strikethrough, False),
-                     Color => Color_From_Param (P_Font_Color, Black_RGBA),
-                     Line_Spacing => Gint (Nth_Arg (Data, P_Font_LS, 0)),
-                     Halign => Alignment'Val
-                       (Integer'(Nth_Arg (Data, P_Font_Halign,
-                        Alignment'Pos (Pango_Align_Left))))),
-            Shadow     =>
-              (Color    => Color_From_Param (P_Shadow_Color, Null_RGBA),
-               X_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_X, 2.0)),
-               Y_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_Y, 2.0))),
+         Style :=
+           Gtk_New
+             (Stroke      => Color_From_Param (P_Stroke, Black_RGBA),
+              Fill        => Pattern_From_Param (P_Fill),
+              Dashes      => List_From_Param (P_Dashes),
+              Line_Width  => Gdouble (Nth_Arg (Data, P_Line_Width, 1.0)),
+              Sloppy      => Nth_Arg (Data, P_Sloppy, False),
+              Font        =>
+                (Name          =>
+                   From_String (Nth_Arg (Data, P_Font_Name, "sans 9")),
+                 Underline     =>
+                   Underline'Val
+                     (Integer'
+                        (Nth_Arg
+                           (Data,
+                            P_Font_Underline,
+                            Underline'Pos (Pango_Underline_None)))),
+                 Strikethrough => Nth_Arg (Data, P_Font_Strikethrough, False),
+                 Color         => Color_From_Param (P_Font_Color, Black_RGBA),
+                 Line_Spacing  => Gint (Nth_Arg (Data, P_Font_LS, 0)),
+                 Halign        =>
+                   Alignment'Val
+                     (Integer'
+                        (Nth_Arg
+                           (Data,
+                            P_Font_Halign,
+                            Alignment'Pos (Pango_Align_Left))))),
+              Shadow      =>
+                (Color    => Color_From_Param (P_Shadow_Color, Null_RGBA),
+                 X_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_X, 2.0)),
+                 Y_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_Y, 2.0))),
 
-            Arrow_From =>
-              (Head  => Arrow_Head'Val
-                 (Nth_Arg (Data, P_Arrow_From_Head, Arrow_Head'Pos (None))),
-               Length => Gdouble (Nth_Arg (Data, P_Arrow_From_Length, 8.0)),
-               Angle => Gdouble (Nth_Arg (Data, P_Arrow_From_Angle, 0.4)),
-               Stroke => Color_From_Param (P_Arrow_From_Stroke, Black_RGBA),
-               Line_Width => Gdouble (Nth_Arg (Data, P_Arrow_From_Width, 1.0)),
-               Fill   => Color_From_Param (P_Arrow_From_Fill)),
+              Arrow_From  =>
+                (Head       =>
+                   Arrow_Head'Val
+                     (Nth_Arg
+                        (Data, P_Arrow_From_Head, Arrow_Head'Pos (None))),
+                 Length     =>
+                   Gdouble (Nth_Arg (Data, P_Arrow_From_Length, 8.0)),
+                 Angle      =>
+                   Gdouble (Nth_Arg (Data, P_Arrow_From_Angle, 0.4)),
+                 Stroke     =>
+                   Color_From_Param (P_Arrow_From_Stroke, Black_RGBA),
+                 Line_Width =>
+                   Gdouble (Nth_Arg (Data, P_Arrow_From_Width, 1.0)),
+                 Fill       => Color_From_Param (P_Arrow_From_Fill)),
 
-            Arrow_To =>
-              (Head  => Arrow_Head'Val
-                   (Nth_Arg (Data, P_Arrow_To_Head, Arrow_Head'Pos (None))),
-               Length => Gdouble (Nth_Arg (Data, P_Arrow_To_Length, 8.0)),
-               Angle => Gdouble (Nth_Arg (Data, P_Arrow_To_Angle, 0.4)),
-               Stroke => Color_From_Param (P_Arrow_To_Stroke, Black_RGBA),
-               Line_Width => Gdouble (Nth_Arg (Data, P_Arrow_To_Width, 1.0)),
-               Fill   => Color_From_Param (P_Arrow_To_Fill)),
+              Arrow_To    =>
+                (Head       =>
+                   Arrow_Head'Val
+                     (Nth_Arg (Data, P_Arrow_To_Head, Arrow_Head'Pos (None))),
+                 Length     =>
+                   Gdouble (Nth_Arg (Data, P_Arrow_To_Length, 8.0)),
+                 Angle      => Gdouble (Nth_Arg (Data, P_Arrow_To_Angle, 0.4)),
+                 Stroke     =>
+                   Color_From_Param (P_Arrow_To_Stroke, Black_RGBA),
+                 Line_Width => Gdouble (Nth_Arg (Data, P_Arrow_To_Width, 1.0)),
+                 Fill       => Color_From_Param (P_Arrow_To_Fill)),
 
-            Symbol_From =>
-              (Name  => Symbol_Name'Val
-                  (Nth_Arg (Data, P_Symbol_From_Name, Symbol_Name'Pos (None))),
-               Stroke => Color_From_Param (P_Symbol_From_Stroke, Black_RGBA),
-               Line_Width =>
-                 Gdouble (Nth_Arg (Data, P_Symbol_From_Width, 1.0)),
-               Distance => Gdouble (Nth_Arg (Data, P_Symbol_From_Dist, 16.0))),
+              Symbol_From =>
+                (Name       =>
+                   Symbol_Name'Val
+                     (Nth_Arg
+                        (Data, P_Symbol_From_Name, Symbol_Name'Pos (None))),
+                 Stroke     =>
+                   Color_From_Param (P_Symbol_From_Stroke, Black_RGBA),
+                 Line_Width =>
+                   Gdouble (Nth_Arg (Data, P_Symbol_From_Width, 1.0)),
+                 Distance   =>
+                   Gdouble (Nth_Arg (Data, P_Symbol_From_Dist, 16.0))),
 
-            Symbol_To =>
-              (Name  => Symbol_Name'Val
-                  (Nth_Arg (Data, P_Symbol_To_Name, Symbol_Name'Pos (None))),
-               Stroke => Color_From_Param (P_Symbol_To_Stroke, Black_RGBA),
-               Line_Width => Gdouble (Nth_Arg (Data, P_Symbol_To_Width, 1.0)),
-               Distance => Gdouble (Nth_Arg (Data, P_Symbol_To_Dist, 16.0)))
-           );
+              Symbol_To   =>
+                (Name       =>
+                   Symbol_Name'Val
+                     (Nth_Arg
+                        (Data, P_Symbol_To_Name, Symbol_Name'Pos (None))),
+                 Stroke     =>
+                   Color_From_Param (P_Symbol_To_Stroke, Black_RGBA),
+                 Line_Width =>
+                   Gdouble (Nth_Arg (Data, P_Symbol_To_Width, 1.0)),
+                 Distance   =>
+                   Gdouble (Nth_Arg (Data, P_Symbol_To_Dist, 16.0))));
 
          Set_Style (Inst, Style);
       end if;
@@ -1500,16 +1553,16 @@ package body Browsers.Scripts is
    -----------------------
 
    function Points_From_Param
-     (Data : Callback_Data'Class;
-      N    : Positive) return Item_Point_Array
+     (Data : Callback_Data'Class; N : Positive) return Item_Point_Array
    is
-      L : List_Instance'Class := Nth_Arg (Data, N);
+      L      : List_Instance'Class := Nth_Arg (Data, N);
       Points : Item_Point_Array (1 .. Number_Of_Arguments (L) / 2);
       Index  : Integer := Points'First;
    begin
       for P in Points'Range loop
-         Points (P) := (X => Gdouble (Float'(Nth_Arg (L, Index))),
-                        Y => Gdouble (Float'(Nth_Arg (L, Index + 1))));
+         Points (P) :=
+           (X => Gdouble (Float'(Nth_Arg (L, Index))),
+            Y => Gdouble (Float'(Nth_Arg (L, Index + 1))));
          Index := Index + 2;
       end loop;
       Free (L);
@@ -1542,8 +1595,7 @@ package body Browsers.Scripts is
    -- Text_Handler --
    ------------------
 
-   procedure Text_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Text_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       Item : PText_Access;
       Text : Text_Item;
@@ -1554,8 +1606,9 @@ package body Browsers.Scripts is
          Item.Initialize_Text
            (Style    => Get_Style (Data.Nth_Arg (2)),
             Text     => Data.Nth_Arg (3),
-            Directed => Text_Arrow_Direction'Val
-              (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+            Directed =>
+              Text_Arrow_Direction'Val
+                (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
          Item_Proxies.Store_In_Instance
            (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
 
@@ -1573,8 +1626,7 @@ package body Browsers.Scripts is
    -- Hr_Handler --
    ----------------
 
-   procedure Hr_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Hr_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       Item : PHr_Access;
 
@@ -1582,8 +1634,8 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new PHr_Record;
          Item.Initialize_Hr
-           (Style    => Get_Style (Data.Nth_Arg (2)),
-            Text     => Data.Nth_Arg (3, ""));
+           (Style => Get_Style (Data.Nth_Arg (2)),
+            Text  => Data.Nth_Arg (3, ""));
          Item_Proxies.Store_In_Instance
            (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
       end if;
@@ -1604,16 +1656,17 @@ package body Browsers.Scripts is
          Item.Initialize_Text
            (Style    => Get_Style (Data.Nth_Arg (2)),
             Text     => Data.Nth_Arg (3),
-            Directed => Text_Arrow_Direction'Val
-              (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+            Directed =>
+              Text_Arrow_Direction'Val
+                (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
 
          Item.On_Edited := Data.Nth_Arg (5, null);
          Item_Proxies.Store_In_Instance
            (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
 
       elsif Command = "editable" then
-         Editable := Editable_Text_Item
-            (Item_Proxies.From_Instance (Data.Nth_Arg (1)));
+         Editable :=
+           Editable_Text_Item (Item_Proxies.From_Instance (Data.Nth_Arg (1)));
          if Data.Number_Of_Arguments = 1 then
             Data.Set_Return_Value (Editable.Is_Editable);
          else
@@ -1642,10 +1695,10 @@ package body Browsers.Scripts is
          else
             Item := new PImage_Record;
             Item.Initialize_Image
-              (Style    => Get_Style (Data.Nth_Arg (2)),
-               Image    => Pixbuf,
-               Width    => Gdouble (Data.Nth_Arg (4, -1.0)),
-               Height   => Gdouble (Data.Nth_Arg (5, -1.0)));
+              (Style  => Get_Style (Data.Nth_Arg (2)),
+               Image  => Pixbuf,
+               Width  => Gdouble (Data.Nth_Arg (4, -1.0)),
+               Height => Gdouble (Data.Nth_Arg (5, -1.0)));
             Item_Proxies.Store_In_Instance
               (Item.Inst, Data.Nth_Arg (1), Abstract_Item (Item));
          end if;
@@ -1656,8 +1709,7 @@ package body Browsers.Scripts is
    -- Link_Handler --
    ------------------
 
-   procedure Link_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Link_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       Inst       : constant Class_Instance := Nth_Arg (Data, 1);
       Inst2      : Class_Instance;
@@ -1692,20 +1744,23 @@ package body Browsers.Scripts is
             Label       => Label,
             Label_From  => Label_From,
             Label_To    => Label_To,
-            Routing     => Route_Style'Val
-              (Nth_Arg (Data, L_Routing, Route_Style'Pos (Straight))),
+            Routing     =>
+              Route_Style'Val
+                (Nth_Arg (Data, L_Routing, Route_Style'Pos (Straight))),
             Anchor_From =>
-              (X   => Gdouble (Nth_Arg (Data, L_From_X, 0.5)),
-               Y   => Gdouble (Nth_Arg (Data, L_From_Y, 0.5)),
-               Distance => 0.0,
-               Toplevel_Side => Side_Attachment'Val
-                 (Nth_Arg (Data, L_From_Side, Side_Attachment'Pos (Auto)))),
+              (X             => Gdouble (Nth_Arg (Data, L_From_X, 0.5)),
+               Y             => Gdouble (Nth_Arg (Data, L_From_Y, 0.5)),
+               Distance      => 0.0,
+               Toplevel_Side =>
+                 Side_Attachment'Val
+                   (Nth_Arg (Data, L_From_Side, Side_Attachment'Pos (Auto)))),
             Anchor_To   =>
-              (X   => Gdouble (Nth_Arg (Data, L_To_X, 0.5)),
-               Y   => Gdouble (Nth_Arg (Data, L_To_Y, 0.5)),
-               Distance => 0.0,
-               Toplevel_Side => Side_Attachment'Val
-                 (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
+              (X             => Gdouble (Nth_Arg (Data, L_To_X, 0.5)),
+               Y             => Gdouble (Nth_Arg (Data, L_To_Y, 0.5)),
+               Distance      => 0.0,
+               Toplevel_Side =>
+                 Side_Attachment'Val
+                   (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
          Item_Proxies.Store_In_Instance
            (Link.Inst, Inst, Abstract_Item (Link));
@@ -1725,7 +1780,8 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label).Inst_List.all,
-                  Abstract_Item (The_Link.Get_Label), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label),
+                  Data.Get_Script));
          end if;
 
       elsif Command = "fromLabel" then
@@ -1733,7 +1789,8 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label_From).Inst_List.all,
-                  Abstract_Item (The_Link.Get_Label_From), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label_From),
+                  Data.Get_Script));
          end if;
 
       elsif Command = "toLabel" then
@@ -1741,20 +1798,23 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label_To).Inst_List.all,
-                  Abstract_Item (The_Link.Get_Label_To), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label_To),
+                  Data.Get_Script));
          end if;
 
       elsif Command = "source" then
          Data.Set_Return_Value
-            (Item_Proxies.Get_Or_Create_Instance
-               (Python_Item_Access (The_Link.Get_From).Inst_List.all,
-                The_Link.Get_From, Data.Get_Script));
+           (Item_Proxies.Get_Or_Create_Instance
+              (Python_Item_Access (The_Link.Get_From).Inst_List.all,
+               The_Link.Get_From,
+               Data.Get_Script));
 
       elsif Command = "target" then
          Data.Set_Return_Value
-            (Item_Proxies.Get_Or_Create_Instance
-               (Python_Item_Access (The_Link.Get_To).Inst_List.all,
-                The_Link.Get_To, Data.Get_Script));
+           (Item_Proxies.Get_Or_Create_Instance
+              (Python_Item_Access (The_Link.Get_To).Inst_List.all,
+               The_Link.Get_To,
+               Data.Get_Script));
       end if;
    end Link_Handler;
 
@@ -1765,43 +1825,50 @@ package body Browsers.Scripts is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      BModule : constant Module_Type :=
-        Kernel.Scripts.Lookup_Module ("@.Browsers");
-      Style_Class : constant Class_Type :=
-        Kernel.Scripts.New_Class ("Style", Module => BModule);
-      Diagram_Class : constant Class_Type :=
-        Kernel.Scripts.New_Class ("Diagram", Module => BModule);
+      BModule                                            :
+        constant Module_Type := Kernel.Scripts.Lookup_Module ("@.Browsers");
+      Style_Class                                        :
+        constant Class_Type :=
+          Kernel.Scripts.New_Class ("Style", Module => BModule);
+      Diagram_Class                                      :
+        constant Class_Type :=
+          Kernel.Scripts.New_Class ("Diagram", Module => BModule);
       Rect_Item, Ellipse_Item, Polyline, Text, Hr, Image : Class_Type;
-      Abstract_Item, View, Link, Item : Class_Type;
-      Editable_Text : Class_Type;
+      Abstract_Item, View, Link, Item                    : Class_Type;
+      Editable_Text                                      : Class_Type;
    begin
       Browser_Views.Register_Module (Kernel);
 
-      Abstract_Item := Kernel.Scripts.New_Class
-        ("AbstractItem", Module => BModule);
+      Abstract_Item :=
+        Kernel.Scripts.New_Class ("AbstractItem", Module => BModule);
 
-      View := Kernel.Scripts.New_Class
-        ("View",
-         Module => BModule,
-         Base   => Get_GUI_Class (Kernel));
-      Item := Kernel.Scripts.New_Class
-        ("Item", Module => BModule, Base => Abstract_Item);
-      Rect_Item := Kernel.Scripts.New_Class
-        ("RectItem", Module => BModule, Base => Item);
-      Ellipse_Item := Kernel.Scripts.New_Class
-        ("EllipseItem", Module => BModule, Base => Item);
-      Polyline := Kernel.Scripts.New_Class
-        ("PolylineItem", Module => BModule, Base => Item);
-      Text := Kernel.Scripts.New_Class
-        ("TextItem", Module => BModule, Base => Item);
-      Editable_Text := Kernel.Scripts.New_Class
-        ("EditableTextItem", Module => BModule, Base => Text);
-      Image := Kernel.Scripts.New_Class
-        ("ImageItem", Module => BModule, Base => Item);
-      Hr := Kernel.Scripts.New_Class
-        ("HrItem", Module => BModule, Base => Item);
-      Link := Kernel.Scripts.New_Class
-        ("Link", Module => BModule, Base => Abstract_Item);
+      View :=
+        Kernel.Scripts.New_Class
+          ("View", Module => BModule, Base => Get_GUI_Class (Kernel));
+      Item :=
+        Kernel.Scripts.New_Class
+          ("Item", Module => BModule, Base => Abstract_Item);
+      Rect_Item :=
+        Kernel.Scripts.New_Class ("RectItem", Module => BModule, Base => Item);
+      Ellipse_Item :=
+        Kernel.Scripts.New_Class
+          ("EllipseItem", Module => BModule, Base => Item);
+      Polyline :=
+        Kernel.Scripts.New_Class
+          ("PolylineItem", Module => BModule, Base => Item);
+      Text :=
+        Kernel.Scripts.New_Class ("TextItem", Module => BModule, Base => Item);
+      Editable_Text :=
+        Kernel.Scripts.New_Class
+          ("EditableTextItem", Module => BModule, Base => Text);
+      Image :=
+        Kernel.Scripts.New_Class
+          ("ImageItem", Module => BModule, Base => Item);
+      Hr :=
+        Kernel.Scripts.New_Class ("HrItem", Module => BModule, Base => Item);
+      Link :=
+        Kernel.Scripts.New_Class
+          ("Link", Module => BModule, Base => Abstract_Item);
 
       Register_Command
         (Kernel.Scripts,
@@ -1828,7 +1895,7 @@ package body Browsers.Scripts is
             P_Arrow_To_Length    => Param ("arrowToLength", True),
             P_Arrow_To_Angle     => Param ("arrowToAngle", True),
             P_Arrow_To_Stroke    => Param ("arrowToStroke", True),
-            P_Arrow_To_Fill      => Param ("arrowToFill",  True),
+            P_Arrow_To_Fill      => Param ("arrowToFill", True),
             P_Arrow_To_Width     => Param ("arrowToWidth", True),
             P_Symbol_From_Name   => Param ("symbolFrom", True),
             P_Symbol_From_Stroke => Param ("symbolFromStroke", True),
@@ -1864,9 +1931,7 @@ package body Browsers.Scripts is
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("changed",
-         Class   => Diagram_Class,
-         Handler => Diagram_Handler'Access);
+        ("changed", Class => Diagram_Class, Handler => Diagram_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_selection_mode",
          Params  => (2 => Param ("mode")),
@@ -1907,27 +1972,22 @@ package body Browsers.Scripts is
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("selected",
-         Class   => Diagram_Class,
-         Getter  => Diagram_Handler'Access);
+        ("selected", Class => Diagram_Class, Getter => Diagram_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("items",
-         Class   => Diagram_Class,
-         Getter  => Diagram_Handler'Access);
+        ("items", Class => Diagram_Class, Getter => Diagram_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Class   => View,
-         Handler => View_Handler'Access);
+        (Constructor_Method, Class => View, Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create",
          Class   => View,
-         Params  => (2 => Param ("diagram"),
-                     3 => Param ("title"),
-                     4 => Param ("save_desktop", Optional => True),
-                     5 => Param ("snap_to_grid", Optional => True),
-                     6 => Param ("snap_to_guides", Optional => True),
-                     7 => Param ("toolbar", Optional => True)),
+         Params  =>
+           (2 => Param ("diagram"),
+            3 => Param ("title"),
+            4 => Param ("save_desktop", Optional => True),
+            5 => Param ("snap_to_grid", Optional => True),
+            6 => Param ("snap_to_guides", Optional => True),
+            7 => Param ("toolbar", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_selection_style",
@@ -1936,9 +1996,10 @@ package body Browsers.Scripts is
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_background",
-         Params  => (Param ("type"),
-                     Param ("style", Optional => True),
-                     Param ("size", Optional => True)),
+         Params  =>
+           (Param ("type"),
+            Param ("style", Optional => True),
+            Param ("size", Optional => True)),
          Class   => View,
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
@@ -1954,29 +2015,26 @@ package body Browsers.Scripts is
       Kernel.Scripts.Register_Command
         ("scroll_into_view",
          Class   => View,
-         Params  => (1 => Param ("item"),
-                     2 => Param ("duration", Optional => True)),
+         Params  =>
+           (1 => Param ("item"), 2 => Param ("duration", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("center_on",
          Class   => View,
-         Params  => (2 => Param ("point"),
-                     3 => Param ("xpos", Optional => True),
-                     4 => Param ("ypos", Optional => True)),
+         Params  =>
+           (2 => Param ("point"),
+            3 => Param ("xpos", Optional => True),
+            4 => Param ("ypos", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("start_editing",
-         Class    => View,
-         Params   => (2 => Param ("item")),
-         Handler  => View_Handler'Access);
+         Class   => View,
+         Params  => (2 => Param ("item")),
+         Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("cancel_editing",
-         Class    => View,
-         Handler  => View_Handler'Access);
+        ("cancel_editing", Class => View, Handler => View_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("editing_in_progress",
-         Class    => View,
-         Getter   => View_Handler'Access);
+        ("editing_in_progress", Class => View, Getter => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("show",
@@ -1988,21 +2046,17 @@ package body Browsers.Scripts is
          Handler => Abstract_Item_Handler'Access);
       Kernel.Scripts.Register_Property
         ("style",
-         Class   => Abstract_Item,
-         Getter  => Abstract_Item_Handler'Access,
-         Setter  => Abstract_Item_Handler'Access);
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access,
+         Setter => Abstract_Item_Handler'Access);
       Kernel.Scripts.Register_Property
         ("parent",
          Class  => Abstract_Item,
          Getter => Abstract_Item_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("x",
-         Class  => Abstract_Item,
-         Getter => Abstract_Item_Handler'Access);
+        ("x", Class => Abstract_Item, Getter => Abstract_Item_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("y",
-         Class  => Abstract_Item,
-         Getter => Abstract_Item_Handler'Access);
+        ("y", Class => Abstract_Item, Getter => Abstract_Item_Handler'Access);
       Kernel.Scripts.Register_Property
         ("width",
          Class  => Abstract_Item,
@@ -2019,50 +2073,49 @@ package body Browsers.Scripts is
       Kernel.Scripts.Register_Command
         ("export_pdf",
          Class   => View,
-         Params  => (2 => Param ("filename"),
-                     3 => Param ("format", Optional => True),
-                     4 => Param ("visible_only", Optional => True)),
+         Params  =>
+           (2 => Param ("filename"),
+            3 => Param ("format", Optional => True),
+            4 => Param ("visible_only", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("scale",
-         Class => View,
+         Class  => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("topleft",
-         Class => View,
+         Class  => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("diagram",
-         Class => View,
+         Class  => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("animate_item_position",
-         Params  => (Param ("item"),
-                     Param ("x"),
-                     Param ("y"),
-                     Param ("duration", Optional => True)),
+         Params  =>
+           (Param ("item"),
+            Param ("x"),
+            Param ("y"),
+            Param ("duration", Optional => True)),
          Class   => View,
          Handler => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Class   => Item,
-         Handler => Item_Handler'Access);
+        (Constructor_Method, Class => Item, Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_position",
-         Params  => (Param ("x", Optional => True),
-                     Param ("y", Optional => True),
-                     Param ("anchorx", Optional => True),
-                     Param ("anchory", Optional => True)),
+         Params  =>
+           (Param ("x", Optional => True),
+            Param ("y", Optional => True),
+            Param ("anchorx", Optional => True),
+            Param ("anchory", Optional => True)),
          Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("children",
-         Class => Item,
-         Getter => Item_Handler'Access);
+        ("children", Class => Item, Getter => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_child_layout",
          Params  => (1 => Param ("layout")),
@@ -2070,144 +2123,143 @@ package body Browsers.Scripts is
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_size",
-         Params  => (1 => Param ("width", Optional => True),
-                     2 => Param ("height", Optional => True)),
+         Params  =>
+           (1 => Param ("width", Optional => True),
+            2 => Param ("height", Optional => True)),
          Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_width_range",
-         Params  => (2 => Param ("min",  Optional => True),
-                     3 => Param ("max", Optional => True)),
+         Params  =>
+           (2 => Param ("min", Optional => True),
+            3 => Param ("max", Optional => True)),
          Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_height_range",
-         Params  => (2 => Param ("min",  Optional => True),
-                     3 => Param ("max", Optional => True)),
+         Params  =>
+           (2 => Param ("min", Optional => True),
+            3 => Param ("max", Optional => True)),
          Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add",
-         Params  => (PA_Item     => Param ("item"),
-                     PA_Align    => Param ("align", Optional => True),
-                     PA_Margin   => Param ("margin", Optional => True),
-                     PA_Float    => Param ("float",  Optional => True),
-                     PA_Overflow => Param ("overflow", Optional => True)),
+         Params  =>
+           (PA_Item     => Param ("item"),
+            PA_Align    => Param ("align", Optional => True),
+            PA_Margin   => Param ("margin", Optional => True),
+            PA_Float    => Param ("float", Optional => True),
+            PA_Overflow => Param ("overflow", Optional => True)),
          Class   => Item,
          Handler => Item_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("width",  Optional => True),
-                     Param ("height", Optional => True),
-                     Param ("radius", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("width", Optional => True),
+            Param ("height", Optional => True),
+            Param ("radius", Optional => True)),
          Class   => Rect_Item,
          Handler => Rect_Item_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("width",  Optional => True),
-                     Param ("height", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("width", Optional => True),
+            Param ("height", Optional => True)),
          Class   => Ellipse_Item,
          Handler => Ellipse_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("points"),
-                     Param ("close", Optional => True),
-                     Param ("relative", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("points"),
+            Param ("close", Optional => True),
+            Param ("relative", Optional => True)),
          Class   => Polyline,
          Handler => Polyline_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("text"),
-                     Param ("directed", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("text"),
+            Param ("directed", Optional => True)),
          Class   => Text,
          Handler => Text_Handler'Access);
       Kernel.Scripts.Register_Property
         ("text",
-         Class   => Text,
-         Getter  => Text_Handler'Access,
-         Setter  => Text_Handler'Access);
+         Class  => Text,
+         Getter => Text_Handler'Access,
+         Setter => Text_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("text"),
-                     Param ("directed", Optional => True),
-                     Param ("on_edited", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("text"),
+            Param ("directed", Optional => True),
+            Param ("on_edited", Optional => True)),
          Class   => Editable_Text,
          Handler => Editable_Text_Handler'Access);
       Kernel.Scripts.Register_Property
-         ("editable",
-          Class  => Editable_Text,
-          Getter => Text_Handler'Access,
-          Setter => Text_Handler'Access);
+        ("editable",
+         Class  => Editable_Text,
+         Getter => Text_Handler'Access,
+         Setter => Text_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("filename"),
-                     Param ("width", Optional => True),
-                     Param ("height", Optional => True)),
+         Params  =>
+           (Param ("style"),
+            Param ("filename"),
+            Param ("width", Optional => True),
+            Param ("height", Optional => True)),
          Class   => Image,
          Handler => Image_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (Param ("style"),
-                     Param ("text", Optional => True)),
+         Params  => (Param ("style"), Param ("text", Optional => True)),
          Class   => Hr,
          Handler => Hr_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params  => (L_From       => Param ("origin"),
-                     L_To         => Param ("to"),
-                     L_Style      => Param ("style"),
-                     L_Routing    => Param ("routing",   Optional => True),
-                     L_Label      => Param ("label",     Optional => True),
-                     L_From_X     => Param ("fromX",     Optional => True),
-                     L_From_Y     => Param ("fromY",     Optional => True),
-                     L_From_Side  => Param ("fromSide",  Optional => True),
-                     L_From_Label => Param ("fromLabel", Optional => True),
-                     L_To_X       => Param ("toX",       Optional => True),
-                     L_To_Y       => Param ("toY",       Optional => True),
-                     L_To_Label   => Param ("toLabel",   Optional => True),
-                     L_To_Side    => Param ("toSide",    Optional => True)),
+         Params  =>
+           (L_From       => Param ("origin"),
+            L_To         => Param ("to"),
+            L_Style      => Param ("style"),
+            L_Routing    => Param ("routing", Optional => True),
+            L_Label      => Param ("label", Optional => True),
+            L_From_X     => Param ("fromX", Optional => True),
+            L_From_Y     => Param ("fromY", Optional => True),
+            L_From_Side  => Param ("fromSide", Optional => True),
+            L_From_Label => Param ("fromLabel", Optional => True),
+            L_To_X       => Param ("toX", Optional => True),
+            L_To_Y       => Param ("toY", Optional => True),
+            L_To_Label   => Param ("toLabel", Optional => True),
+            L_To_Side    => Param ("toSide", Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_waypoints",
-         Params  => (Param ("points"),
-                     Param ("relative", Optional => True)),
+         Params  => (Param ("points"), Param ("relative", Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("label",
-         Class   => Link,
-         Getter  => Link_Handler'Access);
+        ("label", Class => Link, Getter => Link_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("fromLabel",
-         Class   => Link,
-         Getter  => Link_Handler'Access);
+        ("fromLabel", Class => Link, Getter => Link_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("toLabel",
-         Class   => Link,
-         Getter  => Link_Handler'Access);
+        ("toLabel", Class => Link, Getter => Link_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("source",
-         Class   => Link,
-         Getter  => Link_Handler'Access);
+        ("source", Class => Link, Getter => Link_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("target",
-         Class   => Link,
-         Getter  => Link_Handler'Access);
+        ("target", Class => Link, Getter => Link_Handler'Access);
    end Register_Module;
 
 end Browsers.Scripts;

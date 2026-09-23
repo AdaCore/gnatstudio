@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;          use GPS.Kernel;
-with DAP.Requests;        use DAP.Requests;
+with GPS.Kernel;   use GPS.Kernel;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Attach;
 with DAP.Types;
 with VSS.Strings.Conversions;
@@ -32,8 +32,7 @@ package body DAP.Clients.Attach is
       PID        : Integer := -1;
       Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Target     : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-      return Attach_Request_Access;
+        VSS.Strings.Empty_Virtual_String) return Attach_Request_Access;
    --  Create a new DAP 'attach' request.
    --  PID refers to the process we want to attach to.
    --  Executable refers to the debuggee that should be loaded by the
@@ -43,11 +42,13 @@ package body DAP.Clients.Attach is
    --  Note that PID and Target are mutually exclusive: specifying one
    --  parameter will make the underlying DAP adapter ignore the other.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Attach_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access) is null;
+      New_Request : in out DAP_Request_Access)
+   is null;
    --  gdb 17.x send the answer after the configurationDone request when the
    --  executable starts so we don't have nothing to do here.
 
@@ -60,8 +61,7 @@ package body DAP.Clients.Attach is
       PID        : Integer := -1;
       Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Target     : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-      return Attach_Request_Access
+        VSS.Strings.Empty_Virtual_String) return Attach_Request_Access
    is
       use GNATCOLL.VFS;
 
@@ -74,8 +74,9 @@ package body DAP.Clients.Attach is
       end if;
 
       if Executable /= No_File then
-         Self.Parameters.arguments.program := VSS.Strings.Conversions.
-           To_Virtual_String (Executable.Display_Full_Name);
+         Self.Parameters.arguments.program :=
+           VSS.Strings.Conversions.To_Virtual_String
+             (Executable.Display_Full_Name);
       end if;
 
       return Self;

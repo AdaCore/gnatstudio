@@ -21,9 +21,10 @@ package body Completion.Ada is
    -- Get_Initial_Completion_List --
    ---------------------------------
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access Ada_Completion_Manager;
-      Context : Completion_Context) return Completion_List
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access Ada_Completion_Manager; Context : Completion_Context)
+      return Completion_List
    is
       It     : Completion_Resolver_Lists.Cursor;
       Result : Completion_List;
@@ -39,15 +40,16 @@ package body Completion.Ada is
 
       Completion_Context_Record (Ada_Context.all) :=
         Completion_Context_Record (Context.all);
-      Ada_Context_All.Expression := Parse_Expression_Backward
-        (Context.Buffer, Context.End_Offset);
+      Ada_Context_All.Expression :=
+        Parse_Expression_Backward (Context.Buffer, Context.End_Offset);
 
       if not Ada_Context_All.Expression.Tokens.Is_Empty then
          while It /= Completion_Resolver_Lists.No_Element loop
             Get_Completion_Root
               (Resolver => Element (It),
-               Offset   => Ada_Context_All.Expression.Tokens.
-                 First_Element.Token_First - 1,
+               Offset   =>
+                 Ada_Context_All.Expression.Tokens.First_Element.Token_First
+                 - 1,
                Context  => Ada_Context,
                Result   => Result);
             It := Next (It);

@@ -17,18 +17,18 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Glib;
-with Glib.Object;            use Glib.Object;
+with Glib.Object;           use Glib.Object;
 with Glib.Option;
-with GNAT.Strings;           use GNAT.Strings;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Main_Window;        use GPS.Main_Window;
-with Gtk;                    use Gtk;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Window;             use Gtk.Window;
+with GNAT.Strings;          use GNAT.Strings;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GPS.Main_Window;       use GPS.Main_Window;
+with Gtk;                   use Gtk;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Window;            use Gtk.Window;
 with Spawn.Environments;
 with VSS.Strings;
 
@@ -43,8 +43,8 @@ package GPS.Globals is
       From_Project : Boolean := False;
    end record;
 
-   package File_To_Open_Vectors is new Ada.Containers.Vectors
-     (Positive, File_To_Open);
+   package File_To_Open_Vectors is new
+     Ada.Containers.Vectors (Positive, File_To_Open);
 
    type Config_File_Setup is record
       Autoconf    : Boolean := False;
@@ -59,7 +59,7 @@ package GPS.Globals is
       --  Set to True if GNAT Studio should exit after parsing command line
       --  switches
 
-      Line  : Positive := 1;
+      Line : Positive := 1;
       --  Line to use when opening files from the command line.
    end record;
 
@@ -70,22 +70,22 @@ package GPS.Globals is
    type GPS_Splash_Screen is access all GPS_Splash_Screen_Record'Class;
    --  The GNAT Studio initial splash screen
 
-   package Cmd_Line_Scenario_Vars_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
+   package Cmd_Line_Scenario_Vars_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
-   GPS_Command_Line           : GPS_Option_Context;
+   GPS_Command_Line : GPS_Option_Context;
    --  Handling of command line
 
-   Config_Files               : Config_File_Setup;
+   Config_Files : Config_File_Setup;
 
-   Build_Tree_Dir             : Virtual_File := No_File;
-   GPS_Log_Dir                : Virtual_File;
-   GNATStudio_Home_Dir        : Virtual_File;
-   Home_Dir                   : Virtual_File;
-   Prefix_Dir                 : Virtual_File;
-   Project_Name               : Virtual_File := No_File;
-   Root_Dir                   : Virtual_File := No_File;
-   Files_To_Open              : File_To_Open_Vectors.Vector;
+   Build_Tree_Dir      : Virtual_File := No_File;
+   GPS_Log_Dir         : Virtual_File;
+   GNATStudio_Home_Dir : Virtual_File;
+   Home_Dir            : Virtual_File;
+   Prefix_Dir          : Virtual_File;
+   Project_Name        : Virtual_File := No_File;
+   Root_Dir            : Virtual_File := No_File;
+   Files_To_Open       : File_To_Open_Vectors.Vector;
 
    Ignore_Saved_Values        : Boolean := False;
    Hide_GPS                   : Boolean := False;
@@ -94,36 +94,36 @@ package GPS.Globals is
    Show_Preferences_Assistant : Boolean := False;
    Unexpected_Exception       : Boolean := False;
 
-   Batch_File                 : String_Access;
-   Batch_Script               : String_Access;
-   DAP_GDB_Adapter            : VSS.Strings.Virtual_String;
-   Debug_Session              : Boolean := False;
+   Batch_File          : String_Access;
+   Batch_Script        : String_Access;
+   DAP_GDB_Adapter     : VSS.Strings.Virtual_String;
+   Debug_Session       : Boolean := False;
    --  Set by the --debug switch: start a debug session on Debug_Executable,
    --  which may be unset
-   Debug_Executable           : VSS.Strings.Virtual_String;
+   Debug_Executable    : VSS.Strings.Virtual_String;
    --  Program to debug, as given to the --debug switch, empty when the
    --  switch was given without a value
-   Debug_Args                 : VSS.Strings.Virtual_String;
+   Debug_Args          : VSS.Strings.Virtual_String;
    --  Arguments to pass to Debug_Executable, exactly as written on the
    --  command line: they are left unsplit, the debugger itself performs
    --  quote and word splitting
-   Passed_Project_Name        : String_Access;
-   Protocol                   : String_Access;
-   Startup_Dir                : String_Access;
-   Target                     : String_Access;
-   Tools_Host                 : String_Access;
+   Passed_Project_Name : String_Access;
+   Protocol            : String_Access;
+   Startup_Dir         : String_Access;
+   Target              : String_Access;
+   Tools_Host          : String_Access;
 
-   Memory_Stack_Depth         : constant := 3;
+   Memory_Stack_Depth : constant := 3;
    --  Stack depth for GNATCOLL.Memory
-   Port_Number                : Natural := 0;
+   Port_Number        : Natural := 0;
 
-   GPS_Main                   : GPS_Window;
-   Splash                     : GPS_Splash_Screen;
+   GPS_Main : GPS_Window;
+   Splash   : GPS_Splash_Screen;
 
-   Env                        : Spawn.Environments.Process_Environment :=
+   Env : Spawn.Environments.Process_Environment :=
      Spawn.Environments.System_Environment;
 
-   Cmd_Line_Scenario_Vars     : Cmd_Line_Scenario_Vars_Maps.Map;
+   Cmd_Line_Scenario_Vars : Cmd_Line_Scenario_Vars_Maps.Map;
    --  Stores -XVAR=VALUE command line switches as Key=VAR, Element=VALUE
 
 end GPS.Globals;

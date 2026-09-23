@@ -17,18 +17,18 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Tags;                     use Ada.Tags;
+with Ada.Tags;         use Ada.Tags;
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;                  use GNAT.Regpat;
-with GNAT.Strings;                 use GNAT.Strings;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNAT.Regpat;      use GNAT.Regpat;
+with GNAT.Strings;     use GNAT.Strings;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with VSS.Strings.Conversions;
 
-with Gtk.Menu_Item;                use Gtk.Menu_Item;
-with Gtk.Widget;                   use Gtk.Widget;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Widget;    use Gtk.Widget;
 
-with Gtkada.Handlers;              use Gtkada.Handlers;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Basic_Types;                  use Basic_Types;
 with UTF8_Utils;                   use UTF8_Utils;
@@ -58,25 +58,25 @@ with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 package body Codefix_Module is
 
-   Me          : constant Trace_Handle := Create ("GPS.CODEFIX.MODULE");
+   Me : constant Trace_Handle := Create ("GPS.CODEFIX.MODULE");
 
    Codefix_Class_Name       : constant String := "Codefix";
    Codefix_Error_Class_Name : constant String := "CodefixError";
 
-   Output_Cst        : aliased constant String := "output";
-   Category_Cst      : aliased constant String := "category";
-   Regexp_Cst        : aliased constant String := "regexp";
-   File_Index_Cst    : aliased constant String := "file_index";
-   Line_Index_Cst    : aliased constant String := "line_index";
-   Col_Index_Cst     : aliased constant String := "column_index";
-   Style_Index_Cst   : aliased constant String := "style_index";
-   Warning_Index_Cst : aliased constant String := "warning_index";
-   Msg_Index_Cst     : aliased constant String := "msg_index";
-   File_Cst          : aliased constant String := "file_location";
-   Message_Cst       : aliased constant String := "message";
-   Codefix_Cst       : aliased constant String := "codefix";
-   Choice_Cst        : aliased constant String := "choice";
-   Parse_Cmd_Parameters : constant Cst_Argument_List :=
+   Output_Cst             : aliased constant String := "output";
+   Category_Cst           : aliased constant String := "category";
+   Regexp_Cst             : aliased constant String := "regexp";
+   File_Index_Cst         : aliased constant String := "file_index";
+   Line_Index_Cst         : aliased constant String := "line_index";
+   Col_Index_Cst          : aliased constant String := "column_index";
+   Style_Index_Cst        : aliased constant String := "style_index";
+   Warning_Index_Cst      : aliased constant String := "warning_index";
+   Msg_Index_Cst          : aliased constant String := "msg_index";
+   File_Cst               : aliased constant String := "file_location";
+   Message_Cst            : aliased constant String := "message";
+   Codefix_Cst            : aliased constant String := "codefix";
+   Choice_Cst             : aliased constant String := "choice";
+   Parse_Cmd_Parameters   : constant Cst_Argument_List :=
      (1 => Category_Cst'Access,
       2 => Output_Cst'Access,
       3 => Regexp_Cst'Access,
@@ -88,11 +88,9 @@ package body Codefix_Module is
       9 => Warning_Index_Cst'Access);
    Codefix_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Category_Cst'Access);
-   Error_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Codefix_Cst'Access,
-      2 => File_Cst'Access,
-      3 => Message_Cst'Access);
-   Fix_Cmd_Parameters : constant Cst_Argument_List :=
+   Error_Cmd_Parameters   : constant Cst_Argument_List :=
+     (1 => Codefix_Cst'Access, 2 => File_Cst'Access, 3 => Message_Cst'Access);
+   Fix_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Choice_Cst'Access);
 
    GPS_Codefix_String       : constant Unbounded_String :=
@@ -114,7 +112,8 @@ package body Codefix_Module is
    Codefix_Module_ID   : Codefix_Module_ID_Access;
    Codefix_Module_Name : constant String := "Code_Fixing";
 
-   overriding procedure Destroy (Id : in out Codefix_Module_ID_Record);
+   overriding
+   procedure Destroy (Id : in out Codefix_Module_ID_Record);
 
    type Codefix_Properties is new Instance_Property_Record with record
       Session : Codefix_Session;
@@ -122,7 +121,10 @@ package body Codefix_Module is
    type Codefix_Properties_Access is access all Codefix_Properties'Class;
 
    type Fix_Mode_Type is
-     (Specific, Simple, Style_And_Warnings, Similar,
+     (Specific,
+      Simple,
+      Style_And_Warnings,
+      Similar,
       Simple_In_File,               --  All simple errors in current file
       Style_And_Warnings_In_File,   --  All style warrings in current file
       Similar_In_File);             --  All similar errors in current file
@@ -143,11 +145,10 @@ package body Codefix_Module is
       --  This package represent a way to fix batch of errors in one shot.
 
       type Fix_Batch_Record (Menu : Codefix_Menu_Item) is
-        abstract tagged null record;
+      abstract tagged null record;
       type Fix_Batch is access all Fix_Batch_Record'Class;
-      procedure Fix_If_Match
-        (Self  : access Fix_Batch_Record;
-         Error : Error_Id) is abstract;
+      procedure Fix_If_Match (Self : access Fix_Batch_Record; Error : Error_Id)
+      is abstract;
       --  If given Self is supposed to fix Error, then apply a fix.
       --  Do nothing otherswise.
       procedure Destroy (Self : access Fix_Batch_Record) is null;
@@ -158,46 +159,46 @@ package body Codefix_Module is
 
       type Simple_Fix_Batch_Record is new Fix_Batch_Record with null record;
       --  Fix all simple errors
-      overriding procedure Fix_If_Match
-        (Self  : access Simple_Fix_Batch_Record;
-         Error : Error_Id);
+      overriding
+      procedure Fix_If_Match
+        (Self : access Simple_Fix_Batch_Record; Error : Error_Id);
 
-      type Style_Fix_Batch_Record is
-        new Simple_Fix_Batch_Record with null record;
+      type Style_Fix_Batch_Record is new Simple_Fix_Batch_Record
+      with null record;
       --  Fix all "style and warnings" errors
-      overriding procedure Fix_If_Match
-        (Self  : access Style_Fix_Batch_Record;
-         Error : Error_Id);
+      overriding
+      procedure Fix_If_Match
+        (Self : access Style_Fix_Batch_Record; Error : Error_Id);
 
       type Similar_Fix_Batch_Record is new Fix_Batch_Record with null record;
       --  Fix all similar errors
-      overriding procedure Fix_If_Match
-        (Self  : access Similar_Fix_Batch_Record;
-         Error : Error_Id);
+      overriding
+      procedure Fix_If_Match
+        (Self : access Similar_Fix_Batch_Record; Error : Error_Id);
 
       type In_File_Fix_Batch_Record is new Fix_Batch_Record with record
          Parent : Fix_Batch;
       end record;
       --  Fix all errors in one file only using Parent object
-      overriding procedure Fix_If_Match
-        (Self  : access In_File_Fix_Batch_Record;
-         Error : Error_Id);
-      overriding procedure Destroy (Self : access In_File_Fix_Batch_Record);
+      overriding
+      procedure Fix_If_Match
+        (Self : access In_File_Fix_Batch_Record; Error : Error_Id);
+      overriding
+      procedure Destroy (Self : access In_File_Fix_Batch_Record);
 
       procedure Free (Self : in out Fix_Batch);
 
    end Fix_Batches;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Codefix_Sessions_Array, Codefix_Sessions);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Codefix_Sessions_Array, Codefix_Sessions);
 
    procedure Destroy (Session : in out Codefix_Session);
    --  Destroy the contents of the session
 
    procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "");
    procedure Initialize
-     (Menu_Item : access Codefix_Menu_Item_Record'Class;
-      Label     : String);
+     (Menu_Item : access Codefix_Menu_Item_Record'Class; Label : String);
    --  Create a new codefix menu item
 
    type GPS_Execute_Corrupted_Record is new Execute_Corrupted_Record
@@ -205,19 +206,22 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   overriding procedure Panic
+   overriding
+   procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String);
    --  Handles error messages when an error can not be corrected.
 
-   overriding procedure Obsolescent
+   overriding
+   procedure Obsolescent
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected because
    --  of changes in the buffer.
 
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -232,27 +236,28 @@ package body Codefix_Module is
    --  Fixes the error that is proposed on a Menu_Item of Codefix.
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
-      with null record;
-   overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   with null record;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
-      Shadow, Background : Boolean;
-      Status : Integer;
-      Command_Line : GNATCOLL.Arg_Lists.Arg_List);
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Command_Line           : GNATCOLL.Arg_Lists.Arg_List);
    --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with record
       Kernel : Kernel_Handle;
    end record;
 
-   overriding function New_Text_Interface
-     (This : GPS_Navigator) return Ptr_Text;
+   overriding
+   function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
-   overriding procedure Initialize
-     (This : GPS_Navigator;
-      File : in out Text_Interface'Class);
+   overriding
+   procedure Initialize
+     (This : GPS_Navigator; File : in out Text_Interface'Class);
    --  Set the value of the Text_Interface's kernel
 
    procedure Activate_Codefix
@@ -284,7 +289,7 @@ package body Codefix_Module is
    --  Find the codefix session associated with the given category, or null
    --  if there is none.
 
-   procedure Set_Data (Instance : Class_Instance; Session  : Codefix_Session);
+   procedure Set_Data (Instance : Class_Instance; Session : Codefix_Session);
    function Get_Data (Instance : Class_Instance) return Codefix_Session;
    --  Set or retrieve the session from an instance of Codefix
 
@@ -300,16 +305,16 @@ package body Codefix_Module is
    type Codefix_Error_Property is new Instance_Property_Record with record
       Error : Codefix_Error_Data;
    end record;
-   type Codefix_Error_Property_Access
-     is access all Codefix_Error_Property'Class;
+   type Codefix_Error_Property_Access is
+     access all Codefix_Error_Property'Class;
 
    -------------
    -- Destroy --
    -------------
 
    procedure Destroy (Session : in out Codefix_Session) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Codefix_Session_Record, Codefix_Session);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Codefix_Session_Record, Codefix_Session);
    begin
       Free (Session.Current_Text);
       Free (Session.Corrector);
@@ -341,12 +346,11 @@ package body Codefix_Module is
             Get_Message (Err),
             null);
       else
-         Kernel.Insert
-           (-"cannot fix readonly file",
-            Mode => GPS.Kernel.Error);
+         Kernel.Insert (-"cannot fix readonly file", Mode => GPS.Kernel.Error);
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Fix;
 
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
@@ -360,7 +364,7 @@ package body Codefix_Module is
                Mitem.Error,
                Mitem.Fix_Command.all);
 
-         when others =>
+         when others   =>
             declare
                Batch_Fix : Fix_Batches.Fix_Batch := Fix_Batches.Fabric (Mitem);
                Error     : Error_Id :=
@@ -392,23 +396,32 @@ package body Codefix_Module is
       function Fabric (Menu : Codefix_Menu_Item) return Fix_Batch is
       begin
          case Menu.Fix_Mode is
-            when Specific =>
+            when Specific                   =>
                raise Constraint_Error;
-            when Simple =>
+
+            when Simple                     =>
                return new Simple_Fix_Batch_Record (Menu);
-            when Style_And_Warnings =>
+
+            when Style_And_Warnings         =>
                return new Style_Fix_Batch_Record (Menu);
-            when Similar =>
+
+            when Similar                    =>
                return new Similar_Fix_Batch_Record (Menu);
-            when Simple_In_File =>
-               return new In_File_Fix_Batch_Record'
-                 (Menu, new Simple_Fix_Batch_Record (Menu));
+
+            when Simple_In_File             =>
+               return
+                 new In_File_Fix_Batch_Record'
+                   (Menu, new Simple_Fix_Batch_Record (Menu));
+
             when Style_And_Warnings_In_File =>
-               return new In_File_Fix_Batch_Record'
-                 (Menu, new Style_Fix_Batch_Record (Menu));
-            when Similar_In_File =>
-               return new In_File_Fix_Batch_Record'
-                 (Menu, new Similar_Fix_Batch_Record (Menu));
+               return
+                 new In_File_Fix_Batch_Record'
+                   (Menu, new Style_Fix_Batch_Record (Menu));
+
+            when Similar_In_File            =>
+               return
+                 new In_File_Fix_Batch_Record'
+                   (Menu, new Similar_Fix_Batch_Record (Menu));
          end case;
       end Fabric;
 
@@ -416,9 +429,9 @@ package body Codefix_Module is
       -- Fix_If_Match --
       ------------------
 
-      overriding procedure Fix_If_Match
-        (Self  : access Simple_Fix_Batch_Record;
-         Error : Error_Id)
+      overriding
+      procedure Fix_If_Match
+        (Self : access Simple_Fix_Batch_Record; Error : Error_Id)
       is
          Solution_Node         : Solution_List_Iterator :=
            First (Get_Solutions (Error));
@@ -454,9 +467,9 @@ package body Codefix_Module is
       -- Fix_If_Match --
       ------------------
 
-      overriding procedure Fix_If_Match
-        (Self  : access Style_Fix_Batch_Record;
-         Error : Error_Id) is
+      overriding
+      procedure Fix_If_Match
+        (Self : access Style_Fix_Batch_Record; Error : Error_Id) is
       begin
          if Is_Style_Or_Warning (Get_Error_Message (Error)) then
             Simple_Fix_Batch_Record (Self.all).Fix_If_Match (Error);
@@ -467,9 +480,9 @@ package body Codefix_Module is
       -- Fix_If_Match --
       ------------------
 
-      overriding procedure Fix_If_Match
-        (Self  : access Similar_Fix_Batch_Record;
-         Error : Error_Id)
+      overriding
+      procedure Fix_If_Match
+        (Self : access Similar_Fix_Batch_Record; Error : Error_Id)
       is
          Command : Ptr_Command;
       begin
@@ -481,11 +494,7 @@ package body Codefix_Module is
            Get_Command (Get_Solutions (Error), Self.Menu.Solution_Index);
 
          if Command.Get_Parser.all'Tag = Self.Menu.Matching_Parser.all'Tag then
-            On_Fix
-              (Self.Menu.Kernel,
-               Self.Menu.Session,
-               Error,
-               Command.all);
+            On_Fix (Self.Menu.Kernel, Self.Menu.Session, Error, Command.all);
          end if;
       end Fix_If_Match;
 
@@ -493,9 +502,9 @@ package body Codefix_Module is
       -- Fix_If_Match --
       ------------------
 
-      overriding procedure Fix_If_Match
-        (Self  : access In_File_Fix_Batch_Record;
-         Error : Error_Id)
+      overriding
+      procedure Fix_If_Match
+        (Self : access In_File_Fix_Batch_Record; Error : Error_Id)
       is
          File : constant Virtual_File := Get_Error_Message (Error).Get_File;
       begin
@@ -509,8 +518,8 @@ package body Codefix_Module is
       ----------
 
       procedure Free (Self : in out Fix_Batch) is
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (Fix_Batch_Record'Class, Fix_Batch);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation (Fix_Batch_Record'Class, Fix_Batch);
       begin
          Self.Destroy;
          Unchecked_Free (Self);
@@ -520,7 +529,8 @@ package body Codefix_Module is
       -- Destroy --
       -------------
 
-      overriding procedure Destroy (Self : access In_File_Fix_Batch_Record) is
+      overriding
+      procedure Destroy (Self : access In_File_Fix_Batch_Record) is
       begin
          Free (Self.Parent);
       end Destroy;
@@ -543,8 +553,8 @@ package body Codefix_Module is
       Style_Index          : Integer := -1;
       Warning_Index        : Integer := -1)
    is
-      Errors_Found : Error_Message_List;
-      Session      : Codefix_Session;
+      Errors_Found           : Error_Message_List;
+      Session                : Codefix_Session;
       Fi, Li, Ci, Mi, Si, Wi : Integer;
 
       Command : Command_Access;
@@ -569,11 +579,11 @@ package body Codefix_Module is
             Session.Category := To_Unbounded_String (Category);
 
             if Tmp = null then
-               Codefix_Module_ID.Sessions := new Codefix_Sessions_Array'
-                 (1 .. 1 => Session);
+               Codefix_Module_ID.Sessions :=
+                 new Codefix_Sessions_Array'(1 .. 1 => Session);
             else
-               Codefix_Module_ID.Sessions := new Codefix_Sessions_Array'
-                 (Tmp.all & Session);
+               Codefix_Module_ID.Sessions :=
+                 new Codefix_Sessions_Array'(Tmp.all & Session);
             end if;
 
             Unchecked_Free (Tmp);
@@ -583,7 +593,7 @@ package body Codefix_Module is
       Free (Session.Corrector);
       Free (Session.Current_Text);
 
-      Session.Corrector    := new Correction_Manager;
+      Session.Corrector := new Correction_Manager;
       Session.Current_Text := new GPS_Navigator;
       GPS_Navigator (Session.Current_Text.all).Kernel := Kernel;
 
@@ -628,7 +638,7 @@ package body Codefix_Module is
       if File_Location_Regexp = "" then
          Set_Regexp
            (Errors_Found,
-            File_Location_Regexp => Compile (File_Pattern.Get_Pref),
+            File_Location_Regexp    => Compile (File_Pattern.Get_Pref),
             File_Index_In_Regexp    => Fi,
             Line_Index_In_Regexp    => Li,
             Col_Index_In_Regexp     => Ci,
@@ -638,7 +648,7 @@ package body Codefix_Module is
       else
          Set_Regexp
            (Errors_Found,
-            File_Location_Regexp => Compile (File_Location_Regexp),
+            File_Location_Regexp    => Compile (File_Location_Regexp),
             File_Index_In_Regexp    => Fi,
             Line_Index_In_Regexp    => Li,
             Col_Index_In_Regexp     => Ci,
@@ -657,12 +667,15 @@ package body Codefix_Module is
       Set_Context (Session.Current_Text.all, Refactoring_Context (Kernel));
       Add_Errors_From (Errors_Found, Get_Registry (Kernel), Output);
 
-      Options.Remove_Policy := Policy_To_Operations
-        (Remove_Policy.Get_Pref);
+      Options.Remove_Policy := Policy_To_Operations (Remove_Policy.Get_Pref);
 
       Analyze
-        (Session.Corrector.all, Codefix_Module_ID.Codefix_Processor,
-         Session.Current_Text.all, Errors_Found, Options, null);
+        (Session.Corrector.all,
+         Codefix_Module_ID.Codefix_Processor,
+         Session.Current_Text.all,
+         Errors_Found,
+         Options,
+         null);
 
       --  Update the location window to show which errors can be fixed
 
@@ -685,20 +698,22 @@ package body Codefix_Module is
       Free (Errors_Found);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Activate_Codefix;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
-      Shadow, Background : Boolean;
-      Status : Integer;
-      Command_Line : GNATCOLL.Arg_Lists.Arg_List)
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Command_Line           : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Mode, Status, Command_Line);
       Cmd : Arg_List;
@@ -712,11 +727,13 @@ package body Codefix_Module is
       if Background then
          Activate_Codefix
            (Kernel_Handle (Kernel),
-            Execute_GPS_Shell_Command (Kernel, Cmd), Category);
+            Execute_GPS_Shell_Command (Kernel, Cmd),
+            Category);
       else
          Activate_Codefix
            (Kernel_Handle (Kernel),
-            Execute_GPS_Shell_Command (Kernel, Cmd), -"Builder results");
+            Execute_GPS_Shell_Command (Kernel, Cmd),
+            -"Builder results");
       end if;
    end Execute;
 
@@ -770,8 +787,8 @@ package body Codefix_Module is
       Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;
-      New_Action.Tooltip_Text := To_Unbounded_String
-        (-"<b>Fix: </b>" & Get_Message (Err));
+      New_Action.Tooltip_Text :=
+        To_Unbounded_String (-"<b>Fix: </b>" & Get_Message (Err));
 
       if Get_Number_Of_Fixes (Error) = 1 then
          New_Action.Image := GPS_Codefix_String;
@@ -782,7 +799,7 @@ package body Codefix_Module is
       New_Action.Associated_Command := new Codefix_Command;
       Codefix_Command (New_Action.Associated_Command.all).Session_Timestamp :=
         Session.Timestamp;
-      Codefix_Command (New_Action.Associated_Command.all).Error   := Error;
+      Codefix_Command (New_Action.Associated_Command.all).Error := Error;
       Codefix_Command (New_Action.Associated_Command.all).Session :=
         Codefix_Session (Session);
       Codefix_Command (New_Action.Associated_Command.all).Kernel :=
@@ -802,7 +819,8 @@ package body Codefix_Module is
    -- Append_To_Menu --
    --------------------
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
@@ -835,25 +853,25 @@ package body Codefix_Module is
                return;
             end if;
 
-            Error := Search_Error
-              (Session.Corrector.all,
-               File    => File_Information (Context),
-               Line    => Contexts.Line_Information (Context),
-               Column  => Column_Information (Context),
-               Message =>
-                 Ada.Strings.Unbounded.To_String
-                   (Messages (Messages'First).Get_Text));
+            Error :=
+              Search_Error
+                (Session.Corrector.all,
+                 File    => File_Information (Context),
+                 Line    => Contexts.Line_Information (Context),
+                 Column  => Column_Information (Context),
+                 Message =>
+                   Ada.Strings.Unbounded.To_String
+                     (Messages (Messages'First).Get_Text));
 
-            if Error /= Null_Error_Id
-              and then not Is_Fixed (Error)
-            then
+            if Error /= Null_Error_Id and then not Is_Fixed (Error) then
                Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
             end if;
          end;
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Append_To_Menu;
 
    ---------------------
@@ -881,61 +899,71 @@ package body Codefix_Module is
 
       Codefix_Module_ID.Codefix_Class :=
         New_Class (Kernel, Codefix_Class_Name);
-      Codefix_Module_ID.Codefix_Error_Class := New_Class
-        (Kernel, Codefix_Error_Class_Name);
+      Codefix_Module_ID.Codefix_Error_Class :=
+        New_Class (Kernel, Codefix_Error_Class_Name);
 
       Register_Command
-        (Kernel, "parse",
+        (Kernel,
+         "parse",
          Minimum_Args  => 2,
          Maximum_Args  => Parse_Cmd_Parameters'Length,
          Class         => Codefix_Module_ID.Codefix_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, Constructor_Method,
+        (Kernel,
+         Constructor_Method,
          Minimum_Args => Codefix_Cmd_Parameters'Length,
          Maximum_Args => Codefix_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, Constructor_Method,
+        (Kernel,
+         Constructor_Method,
          Minimum_Args => Error_Cmd_Parameters'Length - 1,
          Maximum_Args => Error_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
       Register_Command
-        (Kernel, "errors",
-         Class        => Codefix_Module_ID.Codefix_Class,
-         Handler      => Default_Command_Handler'Access);
+        (Kernel,
+         "errors",
+         Class   => Codefix_Module_ID.Codefix_Class,
+         Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, "sessions",
+        (Kernel,
+         "sessions",
          Class         => Codefix_Module_ID.Codefix_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, "error_at",
-         Class         => Codefix_Module_ID.Codefix_Class,
-         Handler       => Default_Command_Handler'Access,
-         Minimum_Args  => 3,
-         Maximum_Args  => 4);
+        (Kernel,
+         "error_at",
+         Class        => Codefix_Module_ID.Codefix_Class,
+         Handler      => Default_Command_Handler'Access,
+         Minimum_Args => 3,
+         Maximum_Args => 4);
       Register_Command
-        (Kernel, "possible_fixes",
-         Class        => Codefix_Module_ID.Codefix_Error_Class,
-         Handler      => Error_Command_Handler'Access);
+        (Kernel,
+         "possible_fixes",
+         Class   => Codefix_Module_ID.Codefix_Error_Class,
+         Handler => Error_Command_Handler'Access);
       Register_Command
-        (Kernel, "fix",
+        (Kernel,
+         "fix",
          Minimum_Args => Fix_Cmd_Parameters'Length - 1,
          Maximum_Args => Fix_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
       Register_Command
-        (Kernel, "message",
-         Class        => Codefix_Module_ID.Codefix_Error_Class,
-         Handler      => Error_Command_Handler'Access);
+        (Kernel,
+         "message",
+         Class   => Codefix_Module_ID.Codefix_Error_Class,
+         Handler => Error_Command_Handler'Access);
       Register_Command
-        (Kernel, "location",
-         Class        => Codefix_Module_ID.Codefix_Error_Class,
-         Handler      => Error_Command_Handler'Access);
+        (Kernel,
+         "location",
+         Class   => Codefix_Module_ID.Codefix_Error_Class,
+         Handler => Error_Command_Handler'Access);
 
       Register_Preferences (Kernel);
 
@@ -947,7 +975,8 @@ package body Codefix_Module is
 
       Initialize_Parsers (Codefix_Module_ID.Codefix_Processor);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Register_Module;
 
    ---------------------------
@@ -965,15 +994,17 @@ package body Codefix_Module is
 
          declare
             Codefix  : constant Class_Instance :=
-                         Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
-            Message  : constant String  := Nth_Arg (Data, 4, "");
+              Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
+            Message  : constant String := Nth_Arg (Data, 4, "");
             Session  : constant Codefix_Session := Get_Data (Codefix);
             Location : constant File_Location_Info := Get_Data (Data, 3);
-            Error    : constant Error_Id := Search_Error
-              (Session.Corrector.all,
-               Get_File (Location),
-               Get_Line (Location),
-               Get_Column (Location), Message);
+            Error    : constant Error_Id :=
+              Search_Error
+                (Session.Corrector.all,
+                 Get_File (Location),
+                 Get_Line (Location),
+                 Get_Column (Location),
+                 Message);
          begin
             if Error = Null_Error_Id then
                Set_Error_Msg (Data, -"No fixable error at that location");
@@ -988,7 +1019,7 @@ package body Codefix_Module is
          declare
             Error         : constant Codefix_Error_Data := Get_Data (Instance);
             Solution_Node : Solution_List_Iterator :=
-                              First (Get_Solutions (Error.Error));
+              First (Get_Solutions (Error.Error));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -1007,18 +1038,19 @@ package body Codefix_Module is
             Error         : constant Codefix_Error_Data := Get_Data (Instance);
             Choice        : Integer := Nth_Arg (Data, 2, 0);
             Solution_Node : Solution_List_Iterator :=
-                              First (Get_Solutions (Error.Error));
+              First (Get_Solutions (Error.Error));
          begin
-            while Choice /= 0
-              and then not At_End (Solution_Node)
-            loop
+            while Choice /= 0 and then not At_End (Solution_Node) loop
                Solution_Node := Next (Solution_Node);
                Choice := Choice - 1;
             end loop;
 
             if not At_End (Solution_Node) then
-               On_Fix (Get_Kernel (Data), Error.Session,
-                       Error.Error, Get_Command (Solution_Node).all);
+               On_Fix
+                 (Get_Kernel (Data),
+                  Error.Session,
+                  Error.Error,
+                  Get_Command (Solution_Node).all);
             end if;
          end;
 
@@ -1134,8 +1166,9 @@ package body Codefix_Module is
          begin
             Set_Return_Value_As_List (Data);
             while Error /= Null_Error_Id loop
-               Err := New_Instance
-                 (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
+               Err :=
+                 New_Instance
+                   (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
                Set_Data (Err, Codefix_Error_Data'(Error, Session));
                Set_Return_Value (Data, Err);
                Error := Next (Error);
@@ -1146,24 +1179,25 @@ package body Codefix_Module is
          Session := Get_Data (Instance);
 
          declare
-            File    : constant Virtual_File :=
-              Get_Data (Nth_Arg (Data, 2));
+            File    : constant Virtual_File := Get_Data (Nth_Arg (Data, 2));
             Line    : constant Integer := Nth_Arg (Data, 3);
             Column  : constant Integer := Nth_Arg (Data, 4);
             Message : constant String := Nth_Arg (Data, 5, "");
 
-            Error : constant Error_Id := Search_Error
-              (This    => Session.Corrector.all,
-               File    => File,
-               Line    => Line,
-               Column  => Visible_Column_Type (Column),
-               Message => Message);
+            Error : constant Error_Id :=
+              Search_Error
+                (This    => Session.Corrector.all,
+                 File    => File,
+                 Line    => Line,
+                 Column  => Visible_Column_Type (Column),
+                 Message => Message);
 
             Err : Class_Instance;
          begin
             if Error /= Null_Error_Id then
-               Err := New_Instance
-                 (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
+               Err :=
+                 New_Instance
+                   (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
                Set_Data (Err, Codefix_Error_Data'(Error, Session));
                Set_Return_Value (Data, Err);
             else
@@ -1178,15 +1212,15 @@ package body Codefix_Module is
    -- Set_Data --
    --------------
 
-   procedure Set_Data
-     (Instance : Class_Instance; Session : Codefix_Session) is
+   procedure Set_Data (Instance : Class_Instance; Session : Codefix_Session) is
    begin
       if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Class) then
          raise Invalid_Data;
       end if;
 
       Set_Data
-        (Instance, Codefix_Class_Name,
+        (Instance,
+         Codefix_Class_Name,
          Codefix_Properties'(Session => Session));
    end Set_Data;
 
@@ -1200,17 +1234,18 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      return Codefix_Properties_Access
-        (Instance_Property'(Get_Data (Instance, Codefix_Class_Name)))
-        .Session;
+      return
+        Codefix_Properties_Access
+          (Instance_Property'(Get_Data (Instance, Codefix_Class_Name)))
+          .Session;
    end Get_Data;
 
    --------------
    -- Set_Data --
    --------------
 
-   procedure Set_Data
-     (Instance : Class_Instance; Error : Codefix_Error_Data) is
+   procedure Set_Data (Instance : Class_Instance; Error : Codefix_Error_Data)
+   is
    begin
       if not Is_Subclass (Instance, Codefix_Module_ID.Codefix_Error_Class) then
          raise Invalid_Data;
@@ -1232,18 +1267,18 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      return Codefix_Error_Property_Access
-        (Instance_Property'(Get_Data (Instance, Codefix_Error_Class_Name)))
-        .Error;
+      return
+        Codefix_Error_Property_Access
+          (Instance_Property'(Get_Data (Instance, Codefix_Error_Class_Name)))
+          .Error;
    end Get_Data;
 
    ------------------------
    -- New_Text_Interface --
    ------------------------
 
-   overriding function New_Text_Interface
-     (This : GPS_Navigator) return Ptr_Text
-   is
+   overriding
+   function New_Text_Interface (This : GPS_Navigator) return Ptr_Text is
       pragma Unreferenced (This);
    begin
       return new Console_Interface;
@@ -1253,9 +1288,9 @@ package body Codefix_Module is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
-     (This : GPS_Navigator;
-      File : in out Text_Interface'Class) is
+   overriding
+   procedure Initialize
+     (This : GPS_Navigator; File : in out Text_Interface'Class) is
    begin
       Initialize (Text_Navigator_Abstr (This), File);
       Set_Kernel (Console_Interface (File), This.Kernel);
@@ -1265,8 +1300,7 @@ package body Codefix_Module is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (This : out Codefix_Menu_Item; Label : String := "") is
+   procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "") is
    begin
       This := new Codefix_Menu_Item_Record;
       Codefix_Module.Initialize (This, Label);
@@ -1277,8 +1311,7 @@ package body Codefix_Module is
    ----------------
 
    procedure Initialize
-     (Menu_Item : access Codefix_Menu_Item_Record'Class;
-      Label     : String) is
+     (Menu_Item : access Codefix_Menu_Item_Record'Class; Label : String) is
    begin
       Gtk.Menu_Item.Initialize (Menu_Item, Label);
    end Initialize;
@@ -1318,32 +1351,32 @@ package body Codefix_Module is
             Menu_Item.Set_Submenu (Sub_Menu);
 
             Gtk_New (Mitem, "Apply to this occurrence");
-            Mitem.Fix_Mode     := Specific;
-            Mitem.Fix_Command  := Fix_Command;
-            Mitem.Error        := Error;
-            Mitem.Kernel       := Kernel_Handle (Kernel);
-            Mitem.Session      := Codefix_Session (Session);
+            Mitem.Fix_Mode := Specific;
+            Mitem.Fix_Command := Fix_Command;
+            Mitem.Error := Error;
+            Mitem.Kernel := Kernel_Handle (Kernel);
+            Mitem.Session := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Sub_Menu, Mitem);
 
             Gtk_New (Mitem, "Apply to all similar errors");
-            Mitem.Fix_Mode        := Similar;
+            Mitem.Fix_Mode := Similar;
             Mitem.Matching_Parser := Fix_Command.Get_Parser;
-            Mitem.Solution_Index  := Solution_Index;
+            Mitem.Solution_Index := Solution_Index;
             Mitem.Total_Solutions := Length (Solutions);
-            Mitem.Kernel          := Kernel_Handle (Kernel);
-            Mitem.Session         := Codefix_Session (Session);
+            Mitem.Kernel := Kernel_Handle (Kernel);
+            Mitem.Session := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Sub_Menu, Mitem);
 
             Gtk_New (Mitem, "Apply to current file");
-            Mitem.Fix_Mode        := Similar_In_File;
+            Mitem.Fix_Mode := Similar_In_File;
             Mitem.Matching_Parser := Fix_Command.Get_Parser;
-            Mitem.Solution_Index  := Solution_Index;
+            Mitem.Solution_Index := Solution_Index;
             Mitem.Total_Solutions := Length (Solutions);
-            Mitem.Error           := Error;
-            Mitem.Kernel          := Kernel_Handle (Kernel);
-            Mitem.Session         := Codefix_Session (Session);
+            Mitem.Error := Error;
+            Mitem.Kernel := Kernel_Handle (Kernel);
+            Mitem.Session := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Sub_Menu, Mitem);
 
@@ -1351,11 +1384,11 @@ package body Codefix_Module is
          else
             Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node).all));
 
-            Mitem.Fix_Mode     := Specific;
-            Mitem.Fix_Command  := Fix_Command;
-            Mitem.Error        := Error;
-            Mitem.Kernel       := Kernel_Handle (Kernel);
-            Mitem.Session      := Codefix_Session (Session);
+            Mitem.Fix_Mode := Specific;
+            Mitem.Fix_Command := Fix_Command;
+            Mitem.Error := Error;
+            Mitem.Kernel := Kernel_Handle (Kernel);
+            Mitem.Session := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Menu, Mitem);
          end if;
@@ -1368,8 +1401,8 @@ package body Codefix_Module is
             Gtk_New (Mitem, "Fix all simple style errors and warnings");
 
             Mitem.Fix_Mode := Style_And_Warnings;
-            Mitem.Kernel   := Kernel_Handle (Kernel);
-            Mitem.Session  := Codefix_Session (Session);
+            Mitem.Kernel := Kernel_Handle (Kernel);
+            Mitem.Session := Codefix_Session (Session);
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Menu, Mitem);
          end if;
@@ -1377,26 +1410,26 @@ package body Codefix_Module is
          Gtk_New (Mitem, "Fix all simple errors");
 
          Mitem.Fix_Mode := Simple;
-         Mitem.Kernel   := Kernel_Handle (Kernel);
-         Mitem.Session  := Codefix_Session (Session);
+         Mitem.Kernel := Kernel_Handle (Kernel);
+         Mitem.Session := Codefix_Session (Session);
          Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
          Append (Menu, Mitem);
 
          Gtk_New (Mitem, "Fix all simple style errors in current file");
 
          Mitem.Fix_Mode := Style_And_Warnings_In_File;
-         Mitem.Error    := Error;
-         Mitem.Kernel   := Kernel_Handle (Kernel);
-         Mitem.Session  := Codefix_Session (Session);
+         Mitem.Error := Error;
+         Mitem.Kernel := Kernel_Handle (Kernel);
+         Mitem.Session := Codefix_Session (Session);
          Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
          Append (Menu, Mitem);
 
          Gtk_New (Mitem, "Fix all simple errors in current file");
 
          Mitem.Fix_Mode := Simple_In_File;
-         Mitem.Error    := Error;
-         Mitem.Kernel   := Kernel_Handle (Kernel);
-         Mitem.Session  := Codefix_Session (Session);
+         Mitem.Error := Error;
+         Mitem.Kernel := Kernel_Handle (Kernel);
+         Mitem.Session := Codefix_Session (Session);
          Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
          Append (Menu, Mitem);
       end if;
@@ -1406,7 +1439,8 @@ package body Codefix_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out Codefix_Module_ID_Record) is
+   overriding
+   procedure Destroy (Id : in out Codefix_Module_ID_Record) is
    begin
       if Id.Sessions /= null then
          for S in Id.Sessions'Range loop
@@ -1423,45 +1457,45 @@ package body Codefix_Module is
    -- Panic --
    -----------
 
-   overriding procedure Panic
-     (Corruption    : access GPS_Execute_Corrupted_Record;
-      Error_Message : String) is
+   overriding
+   procedure Panic
+     (Corruption : access GPS_Execute_Corrupted_Record; Error_Message : String)
+   is
    begin
       Trace (Me, "Fix of current error is no longer pertinent");
       Trace (Me, "Exception got: " & Error_Message);
 
       Insert
-        (Corruption.Kernel,
-         -"Fix of current error is no longer relevant");
+        (Corruption.Kernel, -"Fix of current error is no longer relevant");
    end Panic;
 
-   overriding procedure Obsolescent
-     (Corruption    : access GPS_Execute_Corrupted_Record;
-      Error_Message : String)
+   overriding
+   procedure Obsolescent
+     (Corruption : access GPS_Execute_Corrupted_Record; Error_Message : String)
    is
       pragma Unreferenced (Error_Message);
    begin
       Insert
-        (Corruption.Kernel,
-         -"Fix of current error is no longer relevant");
+        (Corruption.Kernel, -"Fix of current error is no longer relevant");
    end Obsolescent;
 
    --------------------------
    -- Register_Preferences --
    --------------------------
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class)
+   is
    begin
-      Remove_Policy := Codefix_Remove_Policy_Preferences.Create
-        (Get_Preferences (Kernel),
-         Path     => -"Messages",
-         Name     => "Remove-Policy-When-Fixing",
-         Label    => -"Code fixing removal policy",
-         Doc      =>
-           -"Prefered way to fix code when a part has to be removed.",
-         Default  => Always_Remove,
-         Priority => 0);
+      Remove_Policy :=
+        Codefix_Remove_Policy_Preferences.Create
+          (Get_Preferences (Kernel),
+           Path     => -"Messages",
+           Name     => "Remove-Policy-When-Fixing",
+           Label    => -"Code fixing removal policy",
+           Doc      =>
+             -"Prefered way to fix code when a part has to be removed.",
+           Default  => Always_Remove,
+           Priority => 0);
    end Register_Preferences;
 
 end Codefix_Module;

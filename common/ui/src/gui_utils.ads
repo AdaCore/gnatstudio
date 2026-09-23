@@ -20,7 +20,7 @@
 
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with System;                   use System;
+with System;                use System;
 
 with GNAT.Strings;
 
@@ -28,9 +28,9 @@ with VSS.Strings;
 
 with Glib.Object;
 with Glib.Values;
-with Glib;                     use Glib;
+with Glib;      use Glib;
 with Glib.Main;
-with Glib.Menu;                use Glib.Menu;
+with Glib.Menu; use Glib.Menu;
 
 with Gdk.Event;
 with Gdk.Types;
@@ -67,12 +67,12 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
-with Gtk.Window; use Gtk.Window;
+with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
 
 with String_List_Utils;
-with Histories;                use Histories;
+with Histories; use Histories;
 
 package GUI_Utils is
 
@@ -83,13 +83,13 @@ package GUI_Utils is
    --  use with named icons (Gtk.Icon_Theme)
 
    type Query_User_Option_Type is record
-      Label    : Ada.Strings.Unbounded.Unbounded_String;
+      Label : Ada.Strings.Unbounded.Unbounded_String;
       --  The option's label.
 
       Hist_Key : Ada.Strings.Unbounded.Unbounded_String;
       --  The option's optional history key;
 
-      Value    : Boolean;
+      Value : Boolean;
       --  The option's value.
       --  If there is no history key associated, it's used to set the
       --  checkbox's default value.
@@ -107,8 +107,7 @@ package GUI_Utils is
       Urgent        : Boolean := True;
       Default       : String := "";
       Options       : access Query_User_Option_Array_Type := null;
-      History_Acc   : Histories.History := null)
-      return String;
+      History_Acc   : Histories.History := null) return String;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
@@ -139,11 +138,10 @@ package GUI_Utils is
    -- MDI --
    ---------
 
-   function "<" (A, B : Gtk_Window) return Boolean is
-     (A.all'Address < B.all'Address);
+   function "<" (A, B : Gtk_Window) return Boolean
+   is (A.all'Address < B.all'Address);
 
-   package Windows_Sets is
-     new Ada.Containers.Ordered_Sets (Gtk_Window);
+   package Windows_Sets is new Ada.Containers.Ordered_Sets (Gtk_Window);
 
    function Get_MDI_Windows
      (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
@@ -154,9 +152,9 @@ package GUI_Utils is
    -----------
 
    procedure Grab_Toplevel_Focus
-     (MDI         : not null access Gtkada.MDI.MDI_Window_Record'Class;
-      Widget      : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      Present     : Boolean := True);
+     (MDI     : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      Present : Boolean := True);
    --  Grab the focus on the widget and its toplevel window.
    --  Simply calling Grab_Focus would not change the toplevel window, so the
    --  actual keyboard focus would not be given directly to the widget until
@@ -169,9 +167,7 @@ package GUI_Utils is
    -------------
 
    procedure Gtk_New_From_Name_And_Label
-     (Button    : out Gtk.Button.Gtk_Button;
-      Icon_Name : String;
-      Label     : String);
+     (Button : out Gtk.Button.Gtk_Button; Icon_Name : String; Label : String);
    --  Create a new button, that uses the image from a stock icon, but with
    --  a specific text.
 
@@ -217,11 +213,11 @@ package GUI_Utils is
    --  is already visible in the list. Text must be UTF8-encoded.
 
    procedure Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : VSS.Strings.Virtual_String;
-      Select_Text  : Boolean := False;
-      Prepend      : Boolean := False;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : VSS.Strings.Virtual_String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Add Text to the popdown list of a text combo_box, if it is not already
    --  there.
@@ -231,19 +227,19 @@ package GUI_Utils is
    --  Text must be UTF8-encoded.
 
    function Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : VSS.Strings.Virtual_String;
-      Select_Text  : Boolean := False;
-      Prepend      : Boolean := False;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : VSS.Strings.Virtual_String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Same as above, but return the inserted iter (or the previously existing
    --  one).
 
    procedure Set_Active_Text
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : String;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True);
    --  Select the item containing Text in the Combo.
 
@@ -255,8 +251,9 @@ package GUI_Utils is
    --  If Force_Refresh is True, then all X11 events are processed so that the
    --  new cursor is immediately visible for the user.
 
-   type Filter_Function is access
-     function (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   type Filter_Function is
+     access function
+       (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
 
    procedure Remove_All_Children
      (Container : access Gtk.Container.Gtk_Container_Record'Class;
@@ -297,11 +294,12 @@ package GUI_Utils is
    --  or the operator. Needed to avoid redrawing tooltips when hovering
    --  on dots/spaces just before the entity.
 
-   type Completion_Handler is access function
-     (Input     : String;
-      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
-      return String_List_Utils.String_List.Vector;
+   type Completion_Handler is
+     access function
+       (Input     : String;
+        View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+        User_Data : System.Address)
+        return String_List_Utils.String_List.Vector;
    --  This function should return a list of adequate elements that all
    --  begin with Input, or a list containing only Input.
    --  The list if freed automatically by the interactive console.
@@ -332,13 +330,13 @@ package GUI_Utils is
    --  is removed to let the user type new text.
 
    procedure Show_Placeholder_If_Needed
-     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class);
+     (View : not null access Gtk.Text_View.Gtk_Text_View_Record'Class);
    --  If the view is empty, display the placeholder.
    --  This is only needed after programmatically setting the buffer's
    --  contents. Done automatically on focus in/out events
 
    function Get_Text_Without_Placeholder
-     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+     (View : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return String;
    --  Return the full text of the view, ignoring the placeholder text if any
 
@@ -357,8 +355,7 @@ package GUI_Utils is
      (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
       Start                : Gtk.Text_Iter.Gtk_Text_Iter;
       The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
-      Include_Hidden_Chars : Boolean := False)
-      return Unbounded_String;
+      Include_Hidden_Chars : Boolean := False) return Unbounded_String;
    --  Same as above, but converts the C pointer into an Ada Unbounded_String,
    --  avoiding an explicit free for the user.
 
@@ -366,8 +363,8 @@ package GUI_Utils is
    -- Tree view --
    ---------------
 
-   package Tree_Model_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Glib.Gint);
+   package Tree_Model_Callback is new
+     Gtk.Handlers.User_Callback (Glib.Object.GObject_Record, Glib.Gint);
 
    procedure Set_Radio_And_Callback
      (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
@@ -421,8 +418,7 @@ package GUI_Utils is
       Name      : String;
       Column    : Gint;
       Parent    : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
-      Recursive : Boolean := False)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
+      Recursive : Boolean := False) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node.
    --  If a Parent is specified, the subprogram will try to match the given
@@ -435,8 +431,8 @@ package GUI_Utils is
    --  Remove all children nodes of Parent
 
    procedure Expand_Row
-     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Expand the node at Iter
 
    function Get_Selection
@@ -469,13 +465,14 @@ package GUI_Utils is
    --  Expand or collapse the rows that are currently selected in the given
    --  tree view.
 
-   type Editable_Cb is access procedure
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+   type Editable_Cb is
+     access procedure
+       (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+        Params : Glib.Values.GValues);
    type Editable_Callback_Array is array (Natural range <>) of Editable_Cb;
 
-   type Editing_Canceled_Cb is access procedure
-     (Tree   : access Glib.Object.GObject_Record'Class);
+   type Editing_Canceled_Cb is
+     access procedure (Tree : access Glib.Object.GObject_Record'Class);
 
    GType_Icon_Name_String : constant GType := GType'Last - GType_String;
    --  Special value for use in Column_Types (and only there!) to indicate
@@ -494,7 +491,7 @@ package GUI_Utils is
       Editable_Columns   : Glib.Gint_Array := (1 .. 0 => -1);
       Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null);
       Editing_Canceled   : Editing_Canceled_Cb := null)
-     return Gtk.Tree_View.Gtk_Tree_View;
+      return Gtk.Tree_View.Gtk_Tree_View;
    --  Create a new simple tree view, where each column in the view is
    --  associated with a column in the model.
    --  Column_Names'Length is the number of columns in the view. If there are
@@ -575,14 +572,13 @@ package GUI_Utils is
       Mods   : out Gdk.Types.Gdk_Modifier_Type);
    --  Revert of Image
 
-   Special_Key_Binding    : constant String := "<special>";
+   Special_Key_Binding : constant String := "<special>";
 
    -----------
    -- Paned --
    -----------
 
-   procedure Switch_Paned_Orientation
-     (Paned : in out Gtk.Paned.Gtk_Paned);
+   procedure Switch_Paned_Orientation (Paned : in out Gtk.Paned.Gtk_Paned);
    --  Switch the orientation of the given paned view.
    --
    --  The original paned view is destroyed by this procedure: make sure to
@@ -608,7 +604,7 @@ package GUI_Utils is
    --       Parent.Add (Paned)
 
    function Get_Position_Percent
-     (Paned   : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float;
+     (Paned : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float;
    --  Return a percentage for the paned view's separator according to its
    --  width or height depending on its orientation.
 
@@ -638,29 +634,29 @@ package GUI_Utils is
    --  Free the memory as needed
 
    function Find_Or_Create_Menu
-      (Model        : not null access Gmenu_Record'Class;
-       Path         : String;
-       Allow_Create : Boolean := True) return Menu_Item_Info;
+     (Model        : not null access Gmenu_Record'Class;
+      Path         : String;
+      Allow_Create : Boolean := True) return Menu_Item_Info;
    --  Search for the corresponding menu item.
    --  The result must be unrefed by the caller.
    --  Path still has double undescores and backslashes to protect slashes.
    --  The position of the item is unset when a new item is created.
 
    function Find_Or_Create_Single_Level
-      (Model        : not null access Gmenu_Record'Class;
-       Name         : String;
-       Allow_Create : Boolean) return Menu_Item_Info;
+     (Model        : not null access Gmenu_Record'Class;
+      Name         : String;
+      Allow_Create : Boolean) return Menu_Item_Info;
    --  Find or create an item, only looking in Model (not recursive).
    --  Return value must be unrefered by caller.
    --  If Allow_Create is True, non-null will always be returned.
    --  Name must have been unescaped.
 
    procedure Find_Menu_Item_By_Name
-     (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Menu          : Gtk.Menu.Gtk_Menu;
-      Name          : String;
-      Menu_Item     : out Gtk.Menu_Item.Gtk_Menu_Item;
-      Index         : out Gint);
+     (Menu_Bar  : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu      : Gtk.Menu.Gtk_Menu;
+      Name      : String;
+      Menu_Item : out Gtk.Menu_Item.Gtk_Menu_Item;
+      Index     : out Gint);
    pragma Obsolescent (Find_Menu_Item_By_Name);
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
@@ -668,14 +664,14 @@ package GUI_Utils is
    --  create a menu item.
 
    function Find_Or_Create_Menu_Tree
-     (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Menu          : Gtk.Menu.Gtk_Menu;
-      Path          : String;
-      Accelerators  : Gtk.Accel_Group.Gtk_Accel_Group;
-      Allow_Create  : Boolean := True;
-      Ref_Item      : String  := "";
-      Add_Before    : Boolean := True;
-      New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
+     (Menu_Bar     : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu         : Gtk.Menu.Gtk_Menu;
+      Path         : String;
+      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create : Boolean := True;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      New_Item     : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    pragma Obsolescent (Find_Or_Create_Menu_Tree);
    --  Create or return the menu_item corresponding to Path in Menu.
@@ -717,7 +713,7 @@ package GUI_Utils is
      (Parent     : Gtk.Menu.Gtk_Menu;
       Menu_Bar   : Gtk.Menu_Bar.Gtk_Menu_Bar := null;
       Item       : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
-      Index      : Gint    := -1;
+      Index      : Gint := -1;
       Add_Before : Boolean := True);
    --  Append Item either to Parent, if not null, or directly to the menu
    --  bar.
@@ -730,16 +726,17 @@ package GUI_Utils is
    -- Contextual menus --
    ----------------------
 
-   type Contextual_Menu_Create is access function
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
+   type Contextual_Menu_Create is
+     access function
+       (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+        Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
    --  Function used to create the contextual menu for Widget.
    --  This function is only called for the right mouse button, so it doesn't
    --  need to check that.
 
    procedure Register_Contextual_Menu
-     (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Menu_Create  : Contextual_Menu_Create);
+     (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Menu_Create : Contextual_Menu_Create);
    --  Widget will have an associated contextual menu, that is automatically
    --  popped up when the right mouse button is pressed.
    --  This contextual menu can be fully dynamic, since it is created through
@@ -750,22 +747,26 @@ package GUI_Utils is
       type User_Data is private;
    package User_Contextual_Menus is
 
-      type Contextual_Menu_Create is access function
-        (User  : User_Data;
-         Event : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
+      type Contextual_Menu_Create is
+        access function
+          (User : User_Data; Event : Gdk.Event.Gdk_Event)
+           return Gtk.Menu.Gtk_Menu;
 
       type Callback_User_Data is record
-         Menu_Create  : Contextual_Menu_Create;
-         User         : User_Data;
+         Menu_Create : Contextual_Menu_Create;
+         User        : User_Data;
       end record;
 
-      package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
-        (Gtk.Widget.Gtk_Widget_Record, Boolean, Callback_User_Data);
+      package Contextual_Callback is new
+        Gtk.Handlers.User_Return_Callback
+          (Gtk.Widget.Gtk_Widget_Record,
+           Boolean,
+           Callback_User_Data);
 
       procedure Register_Contextual_Menu
-        (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-         User         : User_Data;
-         Menu_Create  : Contextual_Menu_Create);
+        (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
+         User        : User_Data;
+         Menu_Create : Contextual_Menu_Create);
 
    end User_Contextual_Menus;
    --  Same as the procedure Register_Contextual_Menu, but the callbacks for
@@ -784,8 +785,7 @@ package GUI_Utils is
    --  in Label.
 
    procedure Create_Warning_Label
-     (Msg   : String;
-      Label : out Gtk.Label.Gtk_Label);
+     (Msg : String; Label : out Gtk.Label.Gtk_Label);
    --  Create a new warning label, see the style defined in CSS
 
    --------------
@@ -793,8 +793,7 @@ package GUI_Utils is
    --------------
 
    function Create_Info_Bar
-     (Message      : String;
-      Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
+     (Message : String; Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
       return Gtk.Info_Bar.Gtk_Info_Bar;
    --  Create an info bar that displays the given Message.
    --  A little close button is added on the left of the infobar: when
@@ -842,7 +841,8 @@ package GUI_Utils is
 private
 
    type Activity_Progress_Bar_Record is
-     new Gtk.Progress_Bar.Gtk_Progress_Bar_Record with record
+     new Gtk.Progress_Bar.Gtk_Progress_Bar_Record
+   with record
       Progress_Pulse_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  The progress bar timeout that pulses the progress.
    end record;

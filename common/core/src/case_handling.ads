@@ -19,7 +19,7 @@
 --  services to change the casing of a word (identifier or keyword) and
 --  to handle a set of casing exceptions.
 
-with Basic_Types;        use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Wide_Wide_Hash;
@@ -60,23 +60,18 @@ package Case_Handling is
    No_Casing_Exception : aliased constant Casing_Exceptions;
 
    function Set_Case
-     (C      : Casing_Exceptions;
-      Word   : UTF8_String;
-      Casing : Casing_Type) return UTF8_String;
+     (C : Casing_Exceptions; Word : UTF8_String; Casing : Casing_Type)
+      return UTF8_String;
    --  Change the case of Str as specified by Casing. This routine also
    --  checks for case exceptions.
 
    procedure Add_Exception
-     (C         : in out Casing_Exceptions;
-      Word      : String;
-      Read_Only : Boolean);
+     (C : in out Casing_Exceptions; Word : String; Read_Only : Boolean);
    --  Add a case exception into the container. Read_Only must be set for
    --  case exception that can't be removed interactively.
 
    procedure Add_Substring_Exception
-     (C         : in out Casing_Exceptions;
-      Substring : String;
-      Read_Only : Boolean);
+     (C : in out Casing_Exceptions; Substring : String; Read_Only : Boolean);
    --  Add a substring case exception into the container. Read_Only must be set
    --  for case exception that can't be removed interactively.
 
@@ -84,8 +79,7 @@ package Case_Handling is
    --  Remove a case exception from the container
 
    procedure Remove_Substring_Exception
-     (C         : in out Casing_Exceptions;
-      Substring : String);
+     (C : in out Casing_Exceptions; Substring : String);
    --  Remove a substring case exception from the container
 
    procedure Destroy (C : in out Casing_Exceptions);
@@ -101,11 +95,12 @@ private
       Word      : Wide_Wide_String (1 .. Size);
    end record;
 
-   package Casing_Exception_Table is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Wide_Wide_String,
-      Element_Type    => W_Node,
-      Hash            => Ada.Strings.Wide_Wide_Hash,
-      Equivalent_Keys => "=");
+   package Casing_Exception_Table is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Wide_Wide_String,
+        Element_Type    => W_Node,
+        Hash            => Ada.Strings.Wide_Wide_Hash,
+        Equivalent_Keys => "=");
    use Casing_Exception_Table;
 
    type Exceptions_Table is access Map;
@@ -119,6 +114,6 @@ private
    end record;
 
    No_Casing_Exception : aliased constant Casing_Exceptions :=
-      (E => null, S => null);
+     (E => null, S => null);
 
 end Case_Handling;

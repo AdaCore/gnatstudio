@@ -28,8 +28,9 @@ package body DAP.Clients.Variables.Scopes is
      (Client : not null access DAP.Clients.DAP_Client'Class;
       Params : Request_Parameters)
    is
-      Req : Scopes_Request_Access := new Scopes_Request
-        (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
+      Req : Scopes_Request_Access :=
+        new Scopes_Request
+              (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       Req.Params := Params;
       Req.Parameters.arguments.frameId :=
@@ -41,7 +42,8 @@ package body DAP.Clients.Variables.Scopes is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Scopes_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
@@ -79,13 +81,14 @@ package body DAP.Clients.Variables.Scopes is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Scopes_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.Scopes.Scopes_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.Scopes.Scopes_DAP_Request (Self).On_Error_Message
+        (Client, Message);
       Client.Variables.On_Variable_Not_Found (Self.Params);
    end On_Error_Message;
 
@@ -93,7 +96,8 @@ package body DAP.Clients.Variables.Scopes is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Scopes_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin

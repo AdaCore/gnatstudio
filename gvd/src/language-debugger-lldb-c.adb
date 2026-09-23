@@ -17,17 +17,17 @@
 
 pragma Ada_2012;
 
-with Language.C;                      use Language.C;
+with Language.C; use Language.C;
 
-with GVD.Variables.Types;             use GVD.Variables.Types;
-with GVD.Variables.Types.Simples;     use GVD.Variables.Types.Simples;
-with GVD.Variables.Types.Arrays;      use GVD.Variables.Types.Arrays;
-with GVD.Variables.Types.Records;     use GVD.Variables.Types.Records;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
 
-with GNATCOLL.Utils;                  use GNATCOLL.Utils;
-with String_Utils;                    use String_Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with String_Utils;   use String_Utils;
 
-with Debugger.LLDB;                   use Debugger.LLDB;
+with Debugger.LLDB; use Debugger.LLDB;
 
 package body Language.Debugger.Lldb.C is
 
@@ -35,10 +35,9 @@ package body Language.Debugger.Lldb.C is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
-     (Lang : access LLDB_C_Language;
-      Str : String)
-      return Boolean
+   overriding
+   function Is_Simple_Type
+     (Lang : access LLDB_C_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
    begin
@@ -49,9 +48,9 @@ package body Language.Debugger.Lldb.C is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access LLDB_C_Language)
-      return GNAT.Expect.Pattern_Matcher_Access
+   overriding
+   function Keywords
+     (Lang : access LLDB_C_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -62,9 +61,9 @@ package body Language.Debugger.Lldb.C is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access LLDB_C_Language)
-      return GNAT.Strings.String_List
+   overriding
+   function Keywords
+     (Lang : access LLDB_C_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
    begin
@@ -75,9 +74,9 @@ package body Language.Debugger.Lldb.C is
    -- Get_Language_Context --
    --------------------------
 
-   overriding function Get_Language_Context
-     (Lang : access LLDB_C_Language)
-      return Language.Language_Context_Access
+   overriding
+   function Get_Language_Context
+     (Lang : access LLDB_C_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -88,9 +87,9 @@ package body Language.Debugger.Lldb.C is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
-     (Lang : access LLDB_C_Language)
-      return Language.Explorer_Categories
+   overriding
+   function Explorer_Regexps
+     (Lang : access LLDB_C_Language) return Language.Explorer_Categories
    is
       pragma Unreferenced (Lang);
    begin
@@ -101,10 +100,9 @@ package body Language.Debugger.Lldb.C is
    -- Is_System_File --
    --------------------
 
-   overriding function Is_System_File
-     (Lang : access LLDB_C_Language;
-      File_Name : String)
-      return Boolean
+   overriding
+   function Is_System_File
+     (Lang : access LLDB_C_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
    begin
@@ -115,10 +113,9 @@ package body Language.Debugger.Lldb.C is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access LLDB_C_Language;
-      Name : String)
-      return String
+   overriding
+   function Dereference_Name
+     (Lang : access LLDB_C_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -129,10 +126,9 @@ package body Language.Debugger.Lldb.C is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access LLDB_C_Language;
-      Name  : String;
-      Index : String)
+   overriding
+   function Array_Item_Name
+     (Lang : access LLDB_C_Language; Name : String; Index : String)
       return String
    is
       pragma Unreferenced (Lang);
@@ -144,10 +140,9 @@ package body Language.Debugger.Lldb.C is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access LLDB_C_Language;
-      Name  : String;
-      Field : String)
+   overriding
+   function Record_Field_Name
+     (Lang : access LLDB_C_Language; Name : String; Field : String)
       return String
    is
       pragma Unreferenced (Lang);
@@ -159,7 +154,8 @@ package body Language.Debugger.Lldb.C is
    -- Parse_Type --
    ----------------
 
-   overriding procedure Parse_Type
+   overriding
+   procedure Parse_Type
      (Lang     : access LLDB_C_Language;
       Type_Str : String;
       Entity   : String;
@@ -202,7 +198,7 @@ package body Language.Debugger.Lldb.C is
       --  Else a simple type
       if Index in Type_Str'Range then
          case Type_Str (Index) is
-            when '<' =>
+            when '<'    =>
                --  Simple types, like <4-byte integer> and <4-byte float>
                Skip_To_Char (Type_Str, Index, '>');
                Result := New_Simple_Type;
@@ -210,7 +206,7 @@ package body Language.Debugger.Lldb.C is
                Index := Index + 1;
                return;
 
-            when 'e' =>
+            when 'e'    =>
                --  Enumeration type.
                --  Either this is the type itself "enum {....}", or this is the
                --  field of a struct or union "enum name;".
@@ -227,8 +223,7 @@ package body Language.Debugger.Lldb.C is
                   Skip_CPP_Token (Type_Str, Index);  --  skips enum name
                   Index := Index + 1;
 
-                  if Index <= Type_Str'Last
-                    and then Type_Str (Index) = '{'
+                  if Index <= Type_Str'Last and then Type_Str (Index) = '{'
                   then
                      Skip_To_Char (Type_Str, Index, '}');
                      Index := Index + 1;
@@ -240,9 +235,9 @@ package body Language.Debugger.Lldb.C is
                   return;
                end if;
 
-               --  Else falls through
+            --  Else falls through
 
-            when 'r' =>
+            when 'r'    =>
                --  Range types
 
                if Looking_At (Type_Str, Index, "range ") then
@@ -260,7 +255,7 @@ package body Language.Debugger.Lldb.C is
                   end;
                end if;
 
-            when 's' =>
+            when 's'    =>
                --  Structures.
                --  There are several possible cases here:
                --      "struct My_Record { ... }"
@@ -270,7 +265,7 @@ package body Language.Debugger.Lldb.C is
                --  definition.
 
                if Looking_At (Type_Str, Index, "struct ") then
-                  Tmp   := Index;
+                  Tmp := Index;
                   Index := Index + 7;           --  skips "struct "
 
                   if Type_Str (Index) /= Context.Record_Start then
@@ -291,26 +286,33 @@ package body Language.Debugger.Lldb.C is
                   then
                      Index := Index + 1;
                      Parse_Record_Type
-                       (Lang, Type_Str, Entity, Index,
-                        Is_Union => False, Result => Result,
-                        End_On => "" & Context.Record_End);
+                       (Lang,
+                        Type_Str,
+                        Entity,
+                        Index,
+                        Is_Union => False,
+                        Result   => Result,
+                        End_On   => "" & Context.Record_End);
 
                   else
-                     Result := Parse_Type
-                       (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+                     Result :=
+                       Parse_Type
+                         (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
                   end if;
 
                   return;
                end if;
 
-               --  Else falls through
-            when 'u' =>
+            --  Else falls through
+
+            when 'u'    =>
                if Looking_At (Type_Str, Index, "union ") then
-                  Tmp   := Index;
+                  Tmp := Index;
                   Index := Index + 6;           --  skips "union "
 
                   if Type_Str (Index) /= Context.Record_Start then
                      Skip_CPP_Token (Type_Str, Index);  --  skips union name
+
                   end if;
 
                   Skip_Blanks (Type_Str, Index);
@@ -320,18 +322,25 @@ package body Language.Debugger.Lldb.C is
                   then
                      Index := Index + 1;
                      Parse_Record_Type
-                       (Lang, Type_Str, Entity, Index, Is_Union => True,
-                     Result => Result, End_On => "" & Context.Record_End);
+                       (Lang,
+                        Type_Str,
+                        Entity,
+                        Index,
+                        Is_Union => True,
+                        Result   => Result,
+                        End_On   => "" & Context.Record_End);
 
                   else
-                     Result := Parse_Type
-                       (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+                     Result :=
+                       Parse_Type
+                         (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
                   end if;
 
                   return;
                end if;
 
-               --  Else falls through
+            --  Else falls through
+
             when others =>
                null;
          end case;
@@ -351,8 +360,8 @@ package body Language.Debugger.Lldb.C is
 
       declare
          Ent : constant String := Type_Str (Tmp .. Type_Str'Last);
-         T   : constant String := LLDB_Debugger_Access
-           (Get_Debugger (Lang)).Get_Type (Ent);
+         T   : constant String :=
+           LLDB_Debugger_Access (Get_Debugger (Lang)).Get_Type (Ent);
          J   : Natural := T'First;
 
       begin
@@ -380,7 +389,8 @@ package body Language.Debugger.Lldb.C is
    -- Parse_Value --
    -----------------
 
-   overriding procedure Parse_Value
+   overriding
+   procedure Parse_Value
      (Lang       : access LLDB_C_Language;
       Entity     : String;
       Type_Str   : String;
@@ -389,7 +399,12 @@ package body Language.Debugger.Lldb.C is
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+        (Lang,
+         Entity,
+         Type_Str,
+         Index,
+         Result,
+         Repeat_Num,
          Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
@@ -397,14 +412,14 @@ package body Language.Debugger.Lldb.C is
    -- Parse_Array_Type --
    ----------------------
 
-   overriding procedure Parse_Array_Type
+   overriding
+   procedure Parse_Array_Type
      (Lang         : access LLDB_C_Language;
       Type_Str     : String;
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out GVD.Variables.Types.GVD_Type_Holder)
-   is
+      Result       : out GVD.Variables.Types.GVD_Type_Holder) is
    begin
       C_Parse_Array_Type (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
    end Parse_Array_Type;
@@ -434,9 +449,7 @@ package body Language.Debugger.Lldb.C is
       Index := Start_Of_Dim;
       Tmp_Index := Index;
 
-      while Tmp_Index <= Type_Str'Last
-        and then Type_Str (Tmp_Index) = '['
-      loop
+      while Tmp_Index <= Type_Str'Last and then Type_Str (Tmp_Index) = '[' loop
          Num_Dim := Num_Dim + 1;
          Skip_To_Char (Type_Str, Tmp_Index, ']');
          Tmp_Index := Tmp_Index + 1;
@@ -452,9 +465,7 @@ package body Language.Debugger.Lldb.C is
       --  Then parse the dimensions.
       Num_Dim := 0;
 
-      while Index <= Type_Str'Last
-        and then Type_Str (Index) = '['
-      loop
+      while Index <= Type_Str'Last and then Type_Str (Index) = '[' loop
          Num_Dim := Num_Dim + 1;
          Index := Index + 1;
          Parse_Num (Type_Str, Index, Last);
@@ -487,14 +498,15 @@ package body Language.Debugger.Lldb.C is
    -- Parse_Record_Type --
    -----------------------
 
-   overriding procedure Parse_Record_Type
-     (Lang      : access LLDB_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String) is
+   overriding
+   procedure Parse_Record_Type
+     (Lang     : access LLDB_C_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String) is
    begin
       C_Parse_Record_Type
         (Lang, Type_Str, Entity, Index, Is_Union, Result, End_On);
@@ -505,13 +517,13 @@ package body Language.Debugger.Lldb.C is
    -------------------------
 
    procedure C_Parse_Record_Type
-     (Lang      : access Language.Debugger.Language_Debugger'Class;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String)
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String)
    is
       pragma Unreferenced (End_On);
 
@@ -574,8 +586,14 @@ package body Language.Debugger.Lldb.C is
          Skip_Blanks (Type_Str, Index);
 
          C_Field_Name
-           (Lang, Entity,
-            Type_Str, Index, Tmp, End_Of_Name, Save, Field_Value);
+           (Lang,
+            Entity,
+            Type_Str,
+            Index,
+            Tmp,
+            End_Of_Name,
+            Save,
+            Field_Value);
          if Field_Value = Empty_GVD_Type_Holder then
             Result := Empty_GVD_Type_Holder;
             return;
@@ -593,13 +611,14 @@ package body Language.Debugger.Lldb.C is
    -- Parse_Array_Value --
    -----------------------
 
-   overriding procedure Parse_Array_Value
+   overriding
+   procedure Parse_Array_Value
      (Lang     : access LLDB_C_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out GVD.Variables.Types.GVD_Type_Holder)
    is
-      Dim           : Natural      := 0; --  current dimension
+      Dim           : Natural := 0; --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
       Int           : Natural;
 
@@ -618,8 +637,8 @@ package body Language.Debugger.Lldb.C is
 
       begin
          --  Parse the next item
-         Tmp := GVD_Array_Type_Access
-           (Result.Get_Type).Get_Value (Current_Index);
+         Tmp :=
+           GVD_Array_Type_Access (Result.Get_Type).Get_Value (Current_Index);
 
          if Tmp = Empty_GVD_Type_Holder then
             Tmp := GVD_Array_Type_Access (Result.Get_Type).Get_Item_Type.Clone;
@@ -643,7 +662,7 @@ package body Language.Debugger.Lldb.C is
       loop
          case Type_Str (Index) is
             when '}' | ')' =>
-               Dim   := Dim - 1;
+               Dim := Dim - 1;
                Index := Index + 1;
 
             when '{' | '(' =>
@@ -652,12 +671,11 @@ package body Language.Debugger.Lldb.C is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim = GVD_Array_Type_Access
-                 (Result.Get_Type).Num_Dimensions
+               if Dim = GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions
                then
                   Parse_Item;
                else
-                  Dim   := Dim + 1;
+                  Dim := Dim + 1;
                   Index := Index + 1;
                end if;
 
@@ -676,12 +694,13 @@ package body Language.Debugger.Lldb.C is
 
                if Type_Str (Int) = '=' then
                   Index := Int + 2;  --  skip "['index'] = "
+
                end if;
 
             when ',' | ' ' =>
                Index := Index + 1;
 
-            when others =>
+            when others    =>
                Parse_Item;
 
                --  Since access types can be followed by junk
@@ -709,10 +728,9 @@ package body Language.Debugger.Lldb.C is
    -- Set_Variable --
    ------------------
 
-   overriding function Set_Variable
-     (Lang     : access LLDB_C_Language;
-      Var_Name : String;
-      Value    : String)
+   overriding
+   function Set_Variable
+     (Lang : access LLDB_C_Language; Var_Name : String; Value : String)
       return String
    is
       pragma Unreferenced (Lang);
@@ -724,18 +742,20 @@ package body Language.Debugger.Lldb.C is
    -- Get_Language_Debugger_Context --
    -----------------------------------
 
-   overriding function Get_Language_Debugger_Context
+   overriding
+   function Get_Language_Debugger_Context
      (Lang : access LLDB_C_Language)
       return Language.Debugger.Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
    begin
-      return (Record_Field_Length  => 1,
-              Record_Start         => '{',
-              Record_End           => '}',
-              Array_Start          => '{',
-              Array_End            => '}',
-              Record_Field         => "=");
+      return
+        (Record_Field_Length => 1,
+         Record_Start        => '{',
+         Record_End          => '}',
+         Array_Start         => '{',
+         Array_End           => '}',
+         Record_Field        => "=");
    end Get_Language_Debugger_Context;
 
    ------------------
@@ -854,14 +874,21 @@ package body Language.Debugger.Lldb.C is
 
       if Force_Method then
          C_Detect_Composite_Type
-           (Lang, Type_Str (Index .. Name_Start - 1) & "(*)"
+           (Lang,
+            Type_Str (Index .. Name_Start - 1)
+            & "(*)"
             & Type_Str (Name_End + 1 .. Field_End - 1),
-            Entity, Tmp, Result);
+            Entity,
+            Tmp,
+            Result);
       else
          C_Detect_Composite_Type
-           (Lang, Type_Str (Index .. Name_Start - 1)
+           (Lang,
+            Type_Str (Index .. Name_Start - 1)
             & Type_Str (Name_End + 1 .. Field_End - 1),
-            Entity, Tmp, Result);
+            Entity,
+            Tmp,
+            Result);
       end if;
 
       --  if not an access or array:
@@ -882,16 +909,18 @@ package body Language.Debugger.Lldb.C is
                --  querying the type for "struct Field1_Record" would fail,
                --  whereas querying the type for Mror.c works as expected
 
-               T : constant String := Get_Type
-                 (LLDB_Debugger_Access (Get_Debugger (Lang)),
-                  Type_Str (Index .. Name_Start - 2));
+               T : constant String :=
+                 Get_Type
+                   (LLDB_Debugger_Access (Get_Debugger (Lang)),
+                    Type_Str (Index .. Name_Start - 2));
             begin
                Tmp := T'First;
                Parse_Type
                  (Lang,
-                  Type_Str =>  T,
-                  Entity   => Record_Field_Name
-                    (Lang, Entity, Type_Str (Name_Start .. Name_End)),
+                  Type_Str => T,
+                  Entity   =>
+                    Record_Field_Name
+                      (Lang, Entity, Type_Str (Name_Start .. Name_End)),
                   Index    => Tmp,
                   Result   => Result);
             end;
@@ -935,7 +964,7 @@ package body Language.Debugger.Lldb.C is
       while Index <= Last loop
          --  Access type ?
          if Type_Str (Index) = '*' then
-            Save  := Index;
+            Save := Index;
             Index := Index + 1;
 
          --  Array type ?
@@ -985,9 +1014,7 @@ package body Language.Debugger.Lldb.C is
             end loop;
 
             Last := Index;
-            while Last <= Type_Str'Last
-              and then Type_Str (Last) /= ')'
-            loop
+            while Last <= Type_Str'Last and then Type_Str (Last) /= ')' loop
                Last := Last + 1;
             end loop;
             Last := Last - 1;
@@ -1016,7 +1043,8 @@ package body Language.Debugger.Lldb.C is
 
          Result.Get_Type.Set_Type_Name
            (Get_Type_Info
-              (Lang.Get_Debugger, Entity,
+              (Lang.Get_Debugger,
+               Entity,
                Type_Str (Type_Str'First .. Index - 1)));
 
       --  An array type ?
@@ -1027,7 +1055,7 @@ package body Language.Debugger.Lldb.C is
 
       else
          Result := Empty_GVD_Type_Holder;
-         Index  := Tmp;
+         Index := Tmp;
       end if;
    end C_Detect_Composite_Type;
 
@@ -1035,10 +1063,8 @@ package body Language.Debugger.Lldb.C is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Lang : access LLDB_C_Language)
-      return String
-   is
+   overriding
+   function Get_Name (Lang : access LLDB_C_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "c";

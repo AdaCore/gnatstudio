@@ -29,16 +29,14 @@ package body GNAThub is
    -----------------------
 
    function Get_Current_Count (Self : Filterable_Item) return Natural
-   is
-      (Self.Current);
+   is (Self.Current);
 
    ---------------------
    -- Get_Total_Count --
    ---------------------
 
    function Get_Total_Count (Self : Filterable_Item) return Natural
-   is
-      (Self.Total);
+   is (Self.Total);
 
    --------------------
    -- Reset_Counters --
@@ -99,13 +97,10 @@ package body GNAThub is
       if Self.Current = Self.Total then
          return GNATCOLL.Utils.Image (Self.Total, Min_Width => 1);
       else
-         return GNATCOLL.Utils.Image
-           (Self.Current,
-            Min_Width => 1)
+         return
+           GNATCOLL.Utils.Image (Self.Current, Min_Width => 1)
            & " ("
-           & GNATCOLL.Utils.Image
-           (Self.Total,
-            Min_Width => 1)
+           & GNATCOLL.Utils.Image (Self.Total, Min_Width => 1)
            & ")";
       end if;
    end Image;
@@ -115,11 +110,11 @@ package body GNAThub is
    --------------
 
    function Get_Name
-     (Item : Severity_Record)
-      return Ada.Strings.Unbounded.Unbounded_String is
+     (Item : Severity_Record) return Ada.Strings.Unbounded.Unbounded_String is
    begin
-      return To_Unbounded_String
-        (Format_Title (Message_Importance_Type'Image (Item.Ranking)));
+      return
+        To_Unbounded_String
+          (Format_Title (Message_Importance_Type'Image (Item.Ranking)));
    end Get_Name;
 
    ----------
@@ -136,8 +131,7 @@ package body GNAThub is
    ----------
 
    function Less (L, R : GNAThub.Tool_Access) return Boolean
-   is
-     (L.Name < R.Name);
+   is (L.Name < R.Name);
 
    ----------
    -- Less --
@@ -172,46 +166,49 @@ package body GNAThub is
       Column : Basic_Types.Visible_Column_Type;
       Entity : Entity_Data) return Entity_Data is
    begin
-      if GNAThub_Semantic_Pass.Get_Pref
-        and then Entity.Info = No_Node_Info
+      if GNAThub_Semantic_Pass.Get_Pref and then Entity.Info = No_Node_Info
       then
          declare
             Tree        : constant Semantic_Tree'Class :=
               Kernel.Get_Abstract_Tree_For_File ("GNATHUB", File);
-            Entity_Node : constant Semantic_Node'Class := Tree.Node_At
-              (Sloc            => Sloc_T'(Line   => Line,
-                                          Column => Column,
-                                          Index  => 0),
-               Category_Filter => (Cat_Package,
-                                   Cat_Procedure,
-                                   Cat_Function,
-                                   Cat_Task,
-                                   Cat_Protected,
-                                   Cat_Entry,
-                                   Cat_Method,
-                                   Cat_Type,
-                                   Cat_Subtype,
-                                   Cat_Class,
-                                   Cat_Constructor,
-                                   Cat_Destructor));
+            Entity_Node : constant Semantic_Node'Class :=
+              Tree.Node_At
+                (Sloc            =>
+                   Sloc_T'(Line => Line, Column => Column, Index => 0),
+                 Category_Filter =>
+                   (Cat_Package,
+                    Cat_Procedure,
+                    Cat_Function,
+                    Cat_Task,
+                    Cat_Protected,
+                    Cat_Entry,
+                    Cat_Method,
+                    Cat_Type,
+                    Cat_Subtype,
+                    Cat_Class,
+                    Cat_Constructor,
+                    Cat_Destructor));
          begin
             if Entity_Node /= No_Semantic_Node then
                if Entity = No_Entity_Data then
                   --  We don't have any information about the entity:
                   --  use semantic information for the location and name
-                  return Entity_Data'
-                    (Name   => To_Unbounded_String
-                       (GNATCOLL.Symbols.Get (Entity_Node.Name).all),
-                     Line   => Entity_Node.Sloc_Start.Line,
-                     Column => Natural (Entity_Node.Sloc_Start.Column),
-                     Info   => Entity_Node.Info);
+                  return
+                    Entity_Data'
+                      (Name   =>
+                         To_Unbounded_String
+                           (GNATCOLL.Symbols.Get (Entity_Node.Name).all),
+                       Line   => Entity_Node.Sloc_Start.Line,
+                       Column => Natural (Entity_Node.Sloc_Start.Column),
+                       Info   => Entity_Node.Info);
                else
                   --  Only set the semantic node info
-                  return Entity_Data'
-                    (Name   => Entity.Name,
-                     Line   => Entity.Line,
-                     Column => Entity.Column,
-                     Info   => Entity_Node.Info);
+                  return
+                    Entity_Data'
+                      (Name   => Entity.Name,
+                       Line   => Entity.Line,
+                       Column => Entity.Column,
+                       Info   => Entity_Node.Info);
                end if;
             end if;
          end;

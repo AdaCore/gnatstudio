@@ -18,10 +18,10 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;                       use GNATCOLL.Traces;
-with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with Gtkada.MDI;
-with Glib.Object;                           use Glib.Object;
+with Glib.Object;      use Glib.Object;
 
 package body Memory_Usage_Views.Providers is
 
@@ -43,7 +43,8 @@ package body Memory_Usage_Views.Providers is
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
    with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self                   : On_Compilation_Finished;
       Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
@@ -55,7 +56,8 @@ package body Memory_Usage_Views.Providers is
    --  that needs to be displayed in the memory usage view.
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view changes.
@@ -115,7 +117,8 @@ package body Memory_Usage_Views.Providers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self                   : On_Compilation_Finished;
       Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
@@ -137,7 +140,8 @@ package body Memory_Usage_Views.Providers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -180,8 +184,8 @@ package body Memory_Usage_Views.Providers is
    is
 
       function Has_Memory_Overflow return Boolean
-      is (for some Region of Memory_Regions
-          => Region.Used_Size > Region.Length);
+      is (for some Region of Memory_Regions =>
+            Region.Used_Size > Region.Length);
 
    begin
       if not Memory_Regions.Is_Empty then

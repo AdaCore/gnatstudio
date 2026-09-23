@@ -21,7 +21,7 @@
 --  ??? need to decide between Erase, Delete or Remove for code deletion.
 
 with GPS.Editors;
-with Basic_Types;  use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 private package Refactoring.Buffer_Helpers is
 
@@ -30,14 +30,13 @@ private package Refactoring.Buffer_Helpers is
    ------------------------
 
    function To_Location
-     (Context   : not null access Factory_Context_Record'Class;
-      Location  : access Universal_Location)
+     (Context  : not null access Factory_Context_Record'Class;
+      Location : access Universal_Location)
       return GPS.Editors.Editor_Location'Class;
 
    function To_Location
-     (Context   : not null access Factory_Context_Record'Class;
-      Location  : GPS.Editors.Editor_Location'Class)
-      return Universal_Location;
+     (Context  : not null access Factory_Context_Record'Class;
+      Location : GPS.Editors.Editor_Location'Class) return Universal_Location;
 
    --------------------------------
    -- Helpers for buffer reading --

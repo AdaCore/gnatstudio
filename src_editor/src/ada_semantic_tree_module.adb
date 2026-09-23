@@ -15,27 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;                 use Ada.Calendar;
+with Ada.Calendar; use Ada.Calendar;
 with Ada.Strings.Unbounded;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
-with GNAT.Strings;                 use GNAT.Strings;
-with GNATCOLL.Projects;            use GNATCOLL.Projects;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 
 with VSS.Strings.Conversions;
 
-with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
-with Language.Tree.Database;       use Language.Tree.Database;
+with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
+with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants;
-with Gtkada.MDI;                   use Gtkada.MDI;
-with Src_Editor_Module;            use Src_Editor_Module;
-with Src_Editor_Buffer;            use Src_Editor_Buffer;
-with Src_Editor_Box;               use Src_Editor_Box;
-with Time_Utils;                   use Time_Utils;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Src_Editor_Module;      use Src_Editor_Module;
+with Src_Editor_Buffer;      use Src_Editor_Buffer;
+with Src_Editor_Box;         use Src_Editor_Box;
+with Time_Utils;             use Time_Utils;
 
 package body Ada_Semantic_Tree_Module is
    Me : constant Trace_Handle := Create ("GPS.ADA_SEMANTIC_TREE.MODULE", On);
@@ -50,22 +50,25 @@ package body Ada_Semantic_Tree_Module is
    -- Get_Buffer --
    ----------------
 
-   overriding function Get_Buffer
-     (Provider : access GPS_Buffer_Provider;
-      File     : Virtual_File) return String_Access;
+   overriding
+   function Get_Buffer
+     (Provider : access GPS_Buffer_Provider; File : Virtual_File)
+      return String_Access;
    --  Return the buffer from the editor if any, from the file otherwise
 
-   overriding function Get_Timestamp
-     (Provider : access GPS_Buffer_Provider;
-      File     : Virtual_File) return Integer;
+   overriding
+   function Get_Timestamp
+     (Provider : access GPS_Buffer_Provider; File : Virtual_File)
+      return Integer;
 
    -------------------
    -- Get_Timestamp --
    -------------------
 
-   overriding function Get_Timestamp
-     (Provider : access GPS_Buffer_Provider;
-      File     : Virtual_File) return Integer
+   overriding
+   function Get_Timestamp
+     (Provider : access GPS_Buffer_Provider; File : Virtual_File)
+      return Integer
    is
       Editor : Gtkada.MDI.MDI_Child;
 
@@ -76,11 +79,12 @@ package body Ada_Semantic_Tree_Module is
       S     : Day_Duration;
    begin
       if Is_Open (Provider.Kernel, File) then
-         Editor := Find_Editor
-           (Kernel        => Provider.Kernel,
-            File          => File,
-            Project       => No_Project,
-            Unlocked_Only => False);  --   ??? any project
+         Editor :=
+           Find_Editor
+             (Kernel        => Provider.Kernel,
+              File          => File,
+              Project       => No_Project,
+              Unlocked_Only => False);  --   ??? any project
 
          if Editor /= null then
             return
@@ -105,20 +109,22 @@ package body Ada_Semantic_Tree_Module is
    -- Get_Buffer --
    ----------------
 
-   overriding function Get_Buffer
-     (Provider : access GPS_Buffer_Provider;
-      File     : Virtual_File) return String_Access
+   overriding
+   function Get_Buffer
+     (Provider : access GPS_Buffer_Provider; File : Virtual_File)
+      return String_Access
    is
-      Editor  : Gtkada.MDI.MDI_Child;
+      Editor : Gtkada.MDI.MDI_Child;
 
    begin
       if Is_Open (Provider.Kernel, File) then
-         Editor := Find_Editor
-           (Provider.Kernel, File, No_Project, False); --  ??? any project
+         Editor :=
+           Find_Editor
+             (Provider.Kernel, File, No_Project, False); --  ??? any project
 
          if Editor /= null then
-            return Get_Text
-              (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))));
+            return
+              Get_Text (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))));
          end if;
       end if;
 
@@ -155,13 +161,13 @@ package body Ada_Semantic_Tree_Module is
 
    procedure Register_Module
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Std_Entities_Files : Virtual_File)
-   is
+      Std_Entities_Files : Virtual_File) is
    begin
       Set_Provider
         (Get_Construct_Database (Kernel),
-         Provider => new GPS_Buffer_Provider'
-           (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
+         Provider =>
+           new GPS_Buffer_Provider'
+             (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
         (Get_Construct_Database (Kernel), Std_Entities_Files);
    exception

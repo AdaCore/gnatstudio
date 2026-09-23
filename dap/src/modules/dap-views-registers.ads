@@ -21,16 +21,16 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with GNATCOLL.JSON;
 
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Tree_Store;              use Gtk.Tree_Store;
-with Gtk.Tree_View;               use Gtk.Tree_View;
-with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Menu;       use Gtk.Menu;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_View;  use Gtk.Tree_View;
+with Gtk.Widget;     use Gtk.Widget;
 
 with Gtkada.MDI;
 
 with GPS.Kernel;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Properties;              use GPS.Properties;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
+with GPS.Properties; use GPS.Properties;
 
 with DAP.Types;
 
@@ -46,60 +46,64 @@ private
 
    type Command_Kind is (Update_Registers, Select_Names, Select_All_Names);
 
-   package Registers_Set is
-      new Ada.Containers.Indefinite_Ordered_Sets (String);
+   package Registers_Set is new
+     Ada.Containers.Indefinite_Ordered_Sets (String);
 
-   type Registers_View_Record is new View_Record with
-      record
-         Tree         : Gtk.Tree_View.Gtk_Tree_View;
+   type Registers_View_Record is new View_Record with record
+      Tree : Gtk.Tree_View.Gtk_Tree_View;
 
-         Model        : Gtk.Tree_Store.Gtk_Tree_Store;
-         --  The actual contents of the viewer
+      Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      --  The actual contents of the viewer
 
-         Old_Values   : DAP.Types.String_To_String_Maps.Map;
-         --  Register name => value
+      Old_Values : DAP.Types.String_To_String_Maps.Map;
+      --  Register name => value
 
-         Registers    : Registers_Set.Set;
-         --  Set of all the displayed registers
+      Registers : Registers_Set.Set;
+      --  Set of all the displayed registers
 
-         Locked       : Boolean := False;
-         --  If true, disable updates
+      Locked : Boolean := False;
+      --  If true, disable updates
 
-         Resize       : Boolean := False;
-         --  If true, the column will be resized at the next update
+      Resize : Boolean := False;
+      --  If true, the column will be resized at the next update
 
-         Registers_Id : Integer := 0;
-      end record;
+      Registers_Id : Integer := 0;
+   end record;
    type Registers_View is access all Registers_View_Record'Class;
 
    function Initialize
      (Self : access Registers_View_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Registers_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   overriding procedure Update (Self : not null access Registers_View_Record);
+   overriding
+   procedure Update (Self : not null access Registers_View_Record);
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self   : not null access Registers_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self   : not null access Registers_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Status_Changed
-     (Self : not null access Registers_View_Record;
+   overriding
+   procedure On_Status_Changed
+     (Self   : not null access Registers_View_Record;
       Status : GPS.Debuggers.Debugger_State);
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (View : not null access Registers_View_Record);
 
    procedure Send_Request
-     (Self : not null access Registers_View_Record;
-      Kind : Command_Kind);
+     (Self : not null access Registers_View_Record; Kind : Command_Kind);
 
    type Registers_Property_Record is new Property_Record with record
       Items : Registers_Set.Set;
@@ -107,33 +111,37 @@ private
    --  This type is used to preverse the visible registers accross sessions by
    --  saving them in the property database.
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Registers_Property_Record;
       Value : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
+   overriding
+   procedure Load
      (Self  : in out Registers_Property_Record;
       Value : GNATCOLL.JSON.JSON_Value);
 
-   package Registers_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Registers_View",
-      View_Name                       => "Registers",
-      Formal_View_Record              => Registers_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => True,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Group                           => Group_Debugger_Stack,
-      Position                        => Gtkada.MDI.Position_Right,
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Initialize                      => Initialize,
-      Local_Config                    => True,
-      Local_Toolbar                   => True);
+   package Registers_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Registers_View",
+        View_Name                       => "Registers",
+        Formal_View_Record              => Registers_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => True,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Group                           => Group_Debugger_Stack,
+        Position                        => Gtkada.MDI.Position_Right,
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Initialize                      => Initialize,
+        Local_Config                    => True,
+        Local_Toolbar                   => True);
    subtype DAP_Registers_View is Registers_MDI_Views.View_Access;
 
-   package Simple_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Registers_MDI_Views,
-      Formal_View_Record => Registers_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Simple_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Registers_MDI_Views,
+        Formal_View_Record => Registers_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    Name_Column           : constant := 0;
    Raw_Column            : constant := 1;

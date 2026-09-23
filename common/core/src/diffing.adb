@@ -24,36 +24,35 @@ package body Diffing is
    ----------
 
    procedure Diff
-     (Old_Container, New_Container : Container;
-      Callback                     : Diff_Callback)
+     (Old_Container, New_Container : Container; Callback : Diff_Callback)
    is
-      type Diff_Matrix is array
-        (Integer range <>, Integer range <>) of Natural;
+      type Diff_Matrix is
+        array (Integer range <>, Integer range <>) of Natural;
 
       type Diff_Matrix_Access is access all Diff_Matrix;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Diff_Matrix, Diff_Matrix_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Diff_Matrix, Diff_Matrix_Access);
 
       type Iterator_Array is array (Integer range <>) of Iterator;
 
       type Iterator_Array_Access is access all Iterator_Array;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Iterator_Array, Iterator_Array_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Iterator_Array, Iterator_Array_Access);
 
       type Diff_Node is record
          Old_Ind : Integer;
          New_Ind : Integer;
-         State : Diff_State;
+         State   : Diff_State;
       end record;
 
       type Diff_Node_Array is array (Integer range <>) of Diff_Node;
 
       type Diff_Node_Array_Access is access all Diff_Node_Array;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Diff_Node_Array, Diff_Node_Array_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Diff_Node_Array, Diff_Node_Array_Access);
 
       --  We don't know how complex is the actual length computation, so
       --  we store the value in order to avoid extra processing.
@@ -61,9 +60,9 @@ package body Diffing is
       Old_Container_Length : constant Integer := Length (Old_Container);
       New_Container_Length : constant Integer := Length (New_Container);
 
-      Old_It, New_It : Iterator;
+      Old_It, New_It             : Iterator;
       Start_Old_It, Start_New_It : Iterator;
-      End_Old_It, End_New_It : Iterator;
+      End_Old_It, End_New_It     : Iterator;
 
       --  These arrays are access types because we don't want to create them on
       --  the stack - might need too much memory in case of a task.
@@ -111,9 +110,7 @@ package body Diffing is
       Old_It := Last (Old_Container);
       New_It := Last (New_Container);
 
-      if not At_End (Start_Old_It)
-        and then not At_End (Start_New_It)
-      then
+      if not At_End (Start_Old_It) and then not At_End (Start_New_It) then
          while not At_End (Old_It)
            and then not At_End (New_It)
            and then Old_It /= Start_Old_It
@@ -132,16 +129,38 @@ package body Diffing is
 
       --  Creates the matrix for the diff
 
-      Matrix := new Diff_Matrix
-        (0 .. Old_Container_Length - Common_Begin_Length - Common_End_Length,
-         0 .. New_Container_Length - Common_Begin_Length - Common_End_Length);
-      Old_Iterators := new Iterator_Array
-        (1 .. Old_Container_Length - Common_Begin_Length - Common_End_Length);
-      New_Iterators := new Iterator_Array
-        (1 .. New_Container_Length - Common_Begin_Length - Common_End_Length);
-      Diffs := new Diff_Node_Array
-        (1 .. Old_Container_Length + New_Container_Length
-           - (Common_Begin_Length + Common_End_Length) * 2);
+      Matrix :=
+        new Diff_Matrix
+              (0
+               ..
+                 Old_Container_Length
+                 - Common_Begin_Length
+                 - Common_End_Length,
+               0
+               ..
+                 New_Container_Length
+                 - Common_Begin_Length
+                 - Common_End_Length);
+      Old_Iterators :=
+        new Iterator_Array
+              (1
+               ..
+                 Old_Container_Length
+                 - Common_Begin_Length
+                 - Common_End_Length);
+      New_Iterators :=
+        new Iterator_Array
+              (1
+               ..
+                 New_Container_Length
+                 - Common_Begin_Length
+                 - Common_End_Length);
+      Diffs :=
+        new Diff_Node_Array
+              (1
+               ..
+                 Old_Container_Length + New_Container_Length
+                 - (Common_Begin_Length + Common_End_Length) * 2);
 
       Old_It := Start_Old_It;
       New_It := Start_New_It;
@@ -162,14 +181,12 @@ package body Diffing is
 
       for Old_Ind in 1 .. Matrix'Last (1) loop
          for New_Ind in 1 .. Matrix'Last (2) loop
-            if Get (Old_Iterators (Old_Ind))
-              = Get (New_Iterators (New_Ind))
+            if Get (Old_Iterators (Old_Ind)) = Get (New_Iterators (New_Ind))
             then
                Matrix (Old_Ind, New_Ind) :=
                  Matrix (Old_Ind - 1, New_Ind - 1) + 1;
             else
-               if Matrix
-                 (Old_Ind - 1, New_Ind) > Matrix (Old_Ind, New_Ind - 1)
+               if Matrix (Old_Ind - 1, New_Ind) > Matrix (Old_Ind, New_Ind - 1)
                then
                   Matrix (Old_Ind, New_Ind) := Matrix (Old_Ind - 1, New_Ind);
                else
@@ -187,8 +204,8 @@ package body Diffing is
       while New_Ind > 0 or else Old_Ind > 0 loop
          if Old_Ind > 0
            and then New_Ind > 0
-           and then Get (Old_Iterators (Old_Ind))
-           = Get (New_Iterators (New_Ind))
+           and then
+             Get (Old_Iterators (Old_Ind)) = Get (New_Iterators (New_Ind))
          then
             Last_Diff_Info := Last_Diff_Info + 1;
             Diffs (Last_Diff_Info) := (Old_Ind, New_Ind, Equal);
@@ -197,8 +214,8 @@ package body Diffing is
          elsif New_Ind > 0
            and then
              (Old_Ind = 0
-              or else Matrix (Old_Ind, New_Ind - 1)
-              >= Matrix (Old_Ind - 1, New_Ind))
+              or else
+                Matrix (Old_Ind, New_Ind - 1) >= Matrix (Old_Ind - 1, New_Ind))
          then
             Last_Diff_Info := Last_Diff_Info + 1;
             Diffs (Last_Diff_Info) := (Old_Ind, New_Ind, Added);
@@ -206,8 +223,8 @@ package body Diffing is
          elsif Old_Ind > 0
            and then
              (New_Ind = 0
-              or else Matrix (Old_Ind, New_Ind - 1)
-              < Matrix (Old_Ind - 1, New_Ind))
+              or else
+                Matrix (Old_Ind, New_Ind - 1) < Matrix (Old_Ind - 1, New_Ind))
          then
             Last_Diff_Info := Last_Diff_Info + 1;
             Diffs (Last_Diff_Info) := (Old_Ind, New_Ind, Removed);
@@ -219,17 +236,15 @@ package body Diffing is
 
       for J in reverse 1 .. Last_Diff_Info loop
          case Diffs (J).State is
-            when Equal =>
+            when Equal   =>
                Callback
                  (Get (Old_Iterators (Diffs (J).Old_Ind)),
                   Get (New_Iterators (Diffs (J).New_Ind)),
                   Equal);
 
-            when Added =>
+            when Added   =>
                Callback
-                 (Null_Object,
-                  Get (New_Iterators (Diffs (J).New_Ind)),
-                  Added);
+                 (Null_Object, Get (New_Iterators (Diffs (J).New_Ind)), Added);
 
             when Removed =>
                Callback

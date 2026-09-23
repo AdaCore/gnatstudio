@@ -14,21 +14,21 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Glib.Object;               use Glib.Object;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Link_Button;           use Gtk.Link_Button;
-with Gtk.Style_Context;         use Gtk.Style_Context;
+with Glib.Object;          use Glib.Object;
+with Gtk.Button;           use Gtk.Button;
+with Gtk.Frame;            use Gtk.Frame;
+with Gtk.Handlers;         use Gtk.Handlers;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Link_Button;      use Gtk.Link_Button;
+with Gtk.Style_Context;    use Gtk.Style_Context;
 
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with String_Utils;              use String_Utils;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with String_Utils;     use String_Utils;
 
 package body Completion_Utils is
 
@@ -37,13 +37,12 @@ package body Completion_Utils is
       Location : File_Location;
    end record;
 
-   package Cb is new Gtk.Handlers.User_Callback
-     (GObject_Record, Kernel_And_Location);
+   package Cb is new
+     Gtk.Handlers.User_Callback (GObject_Record, Kernel_And_Location);
    use Cb;
 
    procedure On_Location_Button_Clicked
-     (Object    : access GObject_Record'Class;
-      User_Data : Kernel_And_Location);
+     (Object : access GObject_Record'Class; User_Data : Kernel_And_Location);
    --  Callback on a click on the location button
 
    --------------------------------
@@ -51,8 +50,7 @@ package body Completion_Utils is
    --------------------------------
 
    procedure On_Location_Button_Clicked
-     (Object    : access GObject_Record'Class;
-      User_Data : Kernel_And_Location)
+     (Object : access GObject_Record'Class; User_Data : Kernel_And_Location)
    is
       pragma Unreferenced (Object);
    begin
@@ -113,15 +111,13 @@ package body Completion_Utils is
          else
             Set_Markup
               (Doc_Label,
-               "<span color=""darkgrey"">"
-               & "No documentation</span>");
+               "<span color=""darkgrey"">" & "No documentation</span>");
          end if;
 
          --  Add the label containing the documentation within a frame so that
          --  it can be easily aligned in CSS.
          Gtk_New (Doc_Frame);
-         Get_Style_Context (Doc_Frame).Add_Class
-           ("notes-doc-frames");
+         Get_Style_Context (Doc_Frame).Add_Class ("notes-doc-frames");
          Doc_Frame.Add (Doc_Label);
          Add (Declaration_Frame, Doc_Frame);
       end Initialize_Doc_Label;
@@ -134,8 +130,7 @@ package body Completion_Utils is
 
       --  Create the frame containing the declaration documentation
       Gtk_New (Declaration_Frame);
-      Notes_Info.Notes_Box.Pack_Start
-        (Declaration_Frame, Expand => False);
+      Notes_Info.Notes_Box.Pack_Start (Declaration_Frame, Expand => False);
 
       --  If there is only one documentation to display, do not draw a
       --  border around the frame, as this is just graphical noise in
@@ -146,10 +141,9 @@ package body Completion_Utils is
 
       declare
          Doc      : constant String :=
-                      Element (Notes_Info.C).Get_Documentation (Kernel);
+           Element (Notes_Info.C).Get_Documentation (Kernel);
          Location : constant File_Location :=
-                      Get_Location (Element (Notes_Info.C).all,
-                                    Kernel.Databases);
+           Get_Location (Element (Notes_Info.C).all, Kernel.Databases);
       begin
          --  Create the label containing the documentaion
          Initialize_Doc_Label (Doc);
@@ -158,7 +152,7 @@ package body Completion_Utils is
          if Location /= Null_File_Location then
             declare
                Location_Text     : constant String :=
-                                     Location_To_Text (Location);
+                 Location_To_Text (Location);
                Declaration_Link  : Gtk_Link_Button;
                Declaration_Label : Gtk_Label;
                Title_Box         : Gtk_Hbox;
@@ -179,7 +173,8 @@ package body Completion_Utils is
                Title_Box.Pack_Start (Declaration_Link, Expand => False);
 
                Object_Connect
-                 (Declaration_Link, Gtk.Button.Signal_Clicked,
+                 (Declaration_Link,
+                  Gtk.Button.Signal_Clicked,
                   To_Marshaller (On_Location_Button_Clicked'Access),
                   Declaration_Link,
                   After     => False,

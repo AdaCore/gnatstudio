@@ -37,8 +37,7 @@ package body Basic_Mapper is
    --------------------
 
    function Get_Other_Text
-     (Mapper : File_Mapper_Access;
-      Text   : String) return String
+     (Mapper : File_Mapper_Access; Text : String) return String
    is
       Element : String_Access;
    begin
@@ -63,10 +62,7 @@ package body Basic_Mapper is
    -- Remove_Entry --
    ------------------
 
-   procedure Remove_Entry
-     (Mapper : File_Mapper_Access;
-      Text   : String)
-   is
+   procedure Remove_Entry (Mapper : File_Mapper_Access; Text : String) is
       Other : constant String := Get_Other_Text (Mapper, Text);
    begin
       Remove (Mapper.Table_1, Text);
@@ -83,9 +79,7 @@ package body Basic_Mapper is
    ---------------
 
    procedure Add_Entry
-     (Mapper : in out File_Mapper_Access;
-      Text_1 : String;
-      Text_2 : String) is
+     (Mapper : in out File_Mapper_Access; Text_1 : String; Text_2 : String) is
    begin
       if Mapper = null then
          Mapper := new File_Mapper;
@@ -100,8 +94,7 @@ package body Basic_Mapper is
    -----------------
 
    procedure Save_Mapper
-     (Mapper    : File_Mapper_Access;
-      File_Name : Virtual_File)
+     (Mapper : File_Mapper_Access; File_Name : Virtual_File)
    is
       File    : Ada.Text_IO.File_Type;
       Element : Cursor;
@@ -140,8 +133,7 @@ package body Basic_Mapper is
    -----------------
 
    procedure Load_Mapper
-     (Mapper    : out File_Mapper_Access;
-      File_Name : Virtual_File)
+     (Mapper : out File_Mapper_Access; File_Name : Virtual_File)
    is
       File     : Ada.Text_IO.File_Type;
       Buffer_1 : String (1 .. 8192);
@@ -156,9 +148,7 @@ package body Basic_Mapper is
       while not Ada.Text_IO.End_Of_File (File) loop
          Ada.Text_IO.Get_Line (File, Buffer_1, Last_1);
          Ada.Text_IO.Get_Line (File, Buffer_2, Last_2);
-         Add_Entry (Mapper,
-                    Buffer_1 (1 .. Last_1),
-                    Buffer_2 (1 .. Last_2));
+         Add_Entry (Mapper, Buffer_1 (1 .. Last_1), Buffer_2 (1 .. Last_2));
       end loop;
 
       Ada.Text_IO.Close (File);
@@ -178,8 +168,8 @@ package body Basic_Mapper is
    ----------
 
    procedure Free (Mapper : in out File_Mapper_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (File_Mapper, File_Mapper_Access);
+      procedure Unchecked_Free is new
+        Unchecked_Deallocation (File_Mapper, File_Mapper_Access);
 
    begin
       if Mapper /= null then

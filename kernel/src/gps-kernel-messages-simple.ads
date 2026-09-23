@@ -27,42 +27,42 @@ package GPS.Kernel.Messages.Simple is
    type Simple_Message_Access is access all Simple_Message'Class;
 
    function Create_Simple_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : VSS.Strings.Virtual_String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access;
    --  Creates new instance of primary Simple_Message.
 
    procedure Create_Simple_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : VSS.Strings.Virtual_String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True);
    --  Creates new instance of primary Simple_Message.
 
    procedure Initialize
-     (Message       : not null access Simple_Message'Class;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : VSS.Strings.Virtual_String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Message                  : not null access Simple_Message'Class;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True);
 
    function Create_Simple_Message
@@ -88,16 +88,18 @@ package GPS.Kernel.Messages.Simple is
 
 private
 
-   type Simple_Message (Level : Message_Levels) is
-     new Abstract_Message (Level) with record
+   type Simple_Message (Level : Message_Levels) is new Abstract_Message (Level)
+   with record
       Text : VSS.Strings.Virtual_String;
    end record;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Simple_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Simple_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 

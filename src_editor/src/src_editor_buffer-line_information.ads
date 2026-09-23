@@ -18,16 +18,16 @@
 --  This package handles the customizable information in the buffer,
 --  such as information added to the sides of lines, or VCS information.
 
-with Cairo;                use Cairo;
+with Cairo;            use Cairo;
 with Gdk.RGBA;
-with Gtk.Drawing_Area;     use Gtk.Drawing_Area;
-with Gtk.Text_View;        use Gtk.Text_View;
-with Gtk.Widget;           use Gtk.Widget;
-with Pango.Layout;         use Pango.Layout;
+with Gtk.Drawing_Area; use Gtk.Drawing_Area;
+with Gtk.Text_View;    use Gtk.Text_View;
+with Gtk.Widget;       use Gtk.Widget;
+with Pango.Layout;     use Pango.Layout;
 
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
 package Src_Editor_Buffer.Line_Information is
 
@@ -40,14 +40,12 @@ package Src_Editor_Buffer.Line_Information is
    --  Data is used to determine the size of the column.
 
    function Has_Information_Column
-     (Buffer     : access Source_Buffer_Record'Class;
-      Identifier : String)
-     return Boolean;
+     (Buffer : access Source_Buffer_Record'Class; Identifier : String)
+      return Boolean;
    --  Whether a column with this Identifier has been created.
 
    procedure Remove_Line_Information_Column
-     (Buffer     : access Source_Buffer_Record'Class;
-      Identifier : String);
+     (Buffer : access Source_Buffer_Record'Class; Identifier : String);
    --  Remove a column from the side information in Buffer
 
    procedure Add_Extra_Information
@@ -84,16 +82,16 @@ package Src_Editor_Buffer.Line_Information is
    --  Free all file information stored in the buffer
 
    function Get_Side_Information
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access;
+     (Buffer : access Source_Buffer_Record'Class; Line : Buffer_Line_Type)
+      return Line_Info_Width_Array_Access;
    function Get_Side_Information
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type) return Line_Info_Width_Array_Access;
+     (Buffer : access Source_Buffer_Record'Class; Line : Editable_Line_Type)
+      return Line_Info_Width_Array_Access;
    --  Return the side information for the given line
 
    function Get_Internal_Tooltip
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return String;
+     (Buffer : access Source_Buffer_Record'Class; Line : Buffer_Line_Type)
+      return String;
    --  Returns representation of internal data
 
    procedure Draw_Line_Info
@@ -140,8 +138,7 @@ package Src_Editor_Buffer.Line_Information is
       Text      : String;
       Name      : String;
       Column_Id : String;
-      Info      : Line_Information_Data)
-      return Gtk.Text_Mark.Gtk_Text_Mark;
+      Info      : Line_Information_Data) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Text at line Line, as a special line.
    --  The returned mark points to the beginning of the inserted special lines.
    --  Style is used to highlight the inserted special lines.
@@ -151,14 +148,13 @@ package Src_Editor_Buffer.Line_Information is
    --  Special lines cannot be edited and are not saved on disk.
 
    function Add_Special_Blank_Lines
-     (Buffer             : access Source_Buffer_Record'Class;
-      Line               : Editable_Line_Type;
-      Style              : Style_Access;
-      Number             : Natural;
-      Name               : String;
-      Column_Id          : String;
-      Info               : Line_Information_Data)
-      return Gtk.Text_Mark.Gtk_Text_Mark;
+     (Buffer    : access Source_Buffer_Record'Class;
+      Line      : Editable_Line_Type;
+      Style     : Style_Access;
+      Number    : Natural;
+      Name      : String;
+      Column_Id : String;
+      Info      : Line_Information_Data) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank special lines.
 
    function Create_Mark
@@ -211,26 +207,22 @@ package Src_Editor_Buffer.Line_Information is
    --  If Command is null, remove the previous messages rather than adding one.
 
    procedure Fold_All
-     (Buffer  : access Source_Buffer_Record'Class;
-      Similar : Boolean := False);
+     (Buffer : access Source_Buffer_Record'Class; Similar : Boolean := False);
    --  Fold all top-level foldable blocks
    --  If Similar then fold only the blocks of the current block type.
 
    procedure Unfold_All
-     (Buffer  : access Source_Buffer_Record'Class;
-      Similar : Boolean := False);
+     (Buffer : access Source_Buffer_Record'Class; Similar : Boolean := False);
    --  Unfold all top-level foldable blocks.
    --  Do nothing if there is no folded block.
    --  If Similar then unfold only the blocks of the current block type.
 
    procedure Unfold_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type);
+     (Buffer : access Source_Buffer_Record'Class; Line : Editable_Line_Type);
    --  Unfold the block(s) containing Line
 
    procedure Fold_Block
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type);
+     (Buffer : access Source_Buffer_Record'Class; Line : Editable_Line_Type);
    --  Fold the block containing Line
 
    function Fold_Unfold_Line
@@ -299,8 +291,7 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "side_column_configuration_changed" signal
 
-   procedure Side_Column_Changed
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Side_Column_Changed (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "side_column_changed" signal
 
    procedure Free_Note (Message : Message_Access);
@@ -328,9 +319,10 @@ package Src_Editor_Buffer.Line_Information is
    --  Return True if the line is visible or False if the enclosing
    --  block is folded.
 
-   Visualize_Internal_Buffers : constant Trace_Handle := Create
-     ("GPS.INTERNAL.SOURCE_EDITOR_BUFFER_VISUALIZE_INTERNALS",
-      Default => Off);
+   Visualize_Internal_Buffers : constant Trace_Handle :=
+     Create
+       ("GPS.INTERNAL.SOURCE_EDITOR_BUFFER_VISUALIZE_INTERNALS",
+        Default => Off);
    --  Controls whether framework for displaying buffer internal data is active
 
 end Src_Editor_Buffer.Line_Information;

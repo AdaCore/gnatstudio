@@ -26,25 +26,25 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
-with GNATCOLL.VFS;                           use GNATCOLL.VFS;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with Gtkada.Tree_View;                       use Gtkada.Tree_View;
-with Gtk.Label;                              use Gtk.Label;
+with Gtkada.Tree_View;     use Gtkada.Tree_View;
+with Gtk.Label;            use Gtk.Label;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;                    use Gtk.Scrolled_Window;
+with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Toolbar;
-with Gtk.Tree_Model;                         use Gtk.Tree_Model;
-with Gtk.Tree_Store;                         use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
-with Gtk.Widget;                             use Gtk.Widget;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.MDI;
 
-with Generic_Views;                          use Generic_Views;
-with GPS.Kernel;                             use GPS.Kernel;
-with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
-with GPS.Search;                             use GPS.Search;
+with Generic_Views;  use Generic_Views;
+with GPS.Kernel;     use GPS.Kernel;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
+with GPS.Search;     use GPS.Search;
 
 package Memory_Usage_Views is
 
@@ -73,8 +73,8 @@ private
       Size     : Float;
    end record;
 
-   package Module_Description_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Module_Description, "=");
+   package Module_Description_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Module_Description, "=");
 
    type Memory_Section_Description is record
       Name    : Unbounded_String;
@@ -83,8 +83,8 @@ private
       Modules : Module_Description_Lists.List;
    end record;
 
-   package Memory_Section_Description_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Memory_Section_Description_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => Memory_Section_Description,
         Hash            => Ada.Strings.Hash,
@@ -101,8 +101,8 @@ private
 
    function "<" (Left, Right : Memory_Region_Description) return Boolean;
 
-   package Memory_Region_Description_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Memory_Region_Description_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => Memory_Region_Description,
         Hash            => Ada.Strings.Hash,
@@ -114,7 +114,8 @@ private
    end record;
    type Memory_Usage_Tree_View is
      access all Memory_Usage_Tree_View_Record'Class;
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access Memory_Usage_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean;
 
@@ -122,12 +123,13 @@ private
      (Self : not null access Memory_Usage_Tree_View_Record'Class;
       Row  : Gtk_Tree_Iter) return String;
 
-   package Expansions is new Expansion_Support
-     (Tree_Record => Memory_Usage_Tree_View_Record,
-      Id          => String,
-      Get_Id      => Get_ID,
-      Hash        => Ada.Strings.Hash,
-      "="         => "=");
+   package Expansions is new
+     Expansion_Support
+       (Tree_Record => Memory_Usage_Tree_View_Record,
+        Id          => String,
+        Get_Id      => Get_ID,
+        Hash        => Ada.Strings.Hash,
+        "="         => "=");
 
    type Memory_Usage_View_Record is new Generic_Views.View_Record with record
       Scrolled          : Gtk_Scrolled_Window;
@@ -136,13 +138,16 @@ private
       Col_Addresses     : Gtk_Tree_View_Column;
       No_Data_Label     : Gtk_Label;
    end record;
-   overriding procedure Create_Menu
-     (View    : not null access Memory_Usage_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Menu
+     (View : not null access Memory_Usage_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Memory_Usage_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Memory_Usage_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
 
@@ -150,8 +155,7 @@ private
      (Self : access Memory_Usage_View_Record'Class) return Gtk_Widget;
    --  Initialize the memory usage view widget
 
-   procedure On_Init
-     (Self : not null access Memory_Usage_View_Record'Class);
+   procedure On_Init (Self : not null access Memory_Usage_View_Record'Class);
    --  Called when creating the view.
    --  Used to connect to the Preferences_Changed hook.
 
@@ -161,15 +165,16 @@ private
    --  Refresh the given memory usage view to display the given memory usage
    --  data.
 
-   package Memory_Usage_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name               => "Memory_Usage_Views",
-      View_Name                 => "Memory Usage",
-      Formal_View_Record        => Memory_Usage_View_Record,
-      Formal_MDI_Child          => GPS_MDI_Child_Record,
-      Local_Config              => True,
-      Initialize                => Initialize,
-      Areas                     => Gtkada.MDI.Sides_Only,
-      Position                  => Gtkada.MDI.Position_Left);
+   package Memory_Usage_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Memory_Usage_Views",
+        View_Name          => "Memory Usage",
+        Formal_View_Record => Memory_Usage_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Local_Config       => True,
+        Initialize         => Initialize,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Gtkada.MDI.Position_Left);
    --  Instantiation of the Generic_Views.Simple_Views package with
    --  the parameters we want for our memory usage views.
 

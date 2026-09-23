@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 --  Implementation of GPS.Command class
 
-with Commands;         use Commands;
+with Commands; use Commands;
 
 package GPS.Scripts.Commands is
 
@@ -25,27 +25,33 @@ package GPS.Scripts.Commands is
    --  This command encloses any command scheduled or running in the task
    --  manager
 
-   overriding function Name (Command : access Scheduled_Command) return String;
-   overriding function Get_Label
-     (Self : access Scheduled_Command) return String;
-   overriding procedure Interrupt (Command : in out Scheduled_Command);
-   overriding procedure Set_Progress
+   overriding
+   function Name (Command : access Scheduled_Command) return String;
+   overriding
+   function Get_Label (Self : access Scheduled_Command) return String;
+   overriding
+   procedure Interrupt (Command : in out Scheduled_Command);
+   overriding
+   procedure Set_Progress
      (Command : access Scheduled_Command; Progress : Progress_Record);
-   overriding function Progress
+   overriding
+   function Progress
      (Command : access Scheduled_Command) return Progress_Record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scheduled_Command) return Command_Return_Type;
-   overriding function Undo (This : access Scheduled_Command) return Boolean;
-   overriding procedure Primitive_Free (Command : in out Scheduled_Command);
+   overriding
+   function Undo (This : access Scheduled_Command) return Boolean;
+   overriding
+   procedure Primitive_Free (Command : in out Scheduled_Command);
    --  See inherited documentation
 
    function Create_Wrapper
-     (Command : access Root_Command'Class)
-      return Scheduled_Command_Access;
+     (Command : access Root_Command'Class) return Scheduled_Command_Access;
    --  Create a new wrapper
 
-   function Get_Command (Command : access Scheduled_Command'Class)
-      return Command_Access;
+   function Get_Command
+     (Command : access Scheduled_Command'Class) return Command_Access;
    --  Return the command associated to this scheduled command
 
    -------------------------------------
@@ -53,20 +59,18 @@ package GPS.Scripts.Commands is
    -------------------------------------
 
    function Get_Command
-      (Data       : Callback_Data'Class;
-       Nth        : Positive;
-       Allow_Null : Boolean := False)
-      return Scheduled_Command_Access;
+     (Data       : Callback_Data'Class;
+      Nth        : Positive;
+      Allow_Null : Boolean := False) return Scheduled_Command_Access;
    --  Return the command given as the nth argument to data
 
    procedure Set_Command
-      (Inst    : Class_Instance;
-       Command : not null access Scheduled_Command'Class);
+     (Inst    : Class_Instance;
+      Command : not null access Scheduled_Command'Class);
    function Get_Instance
-      (Command : not null access Scheduled_Command'Class;
-       Script  : not null access Scripting_Language_Record'Class;
-       Class_To_Create : String := "")
-      return Class_Instance;
+     (Command         : not null access Scheduled_Command'Class;
+      Script          : not null access Scripting_Language_Record'Class;
+      Class_To_Create : String := "") return Class_Instance;
    --  Wrap the command in a python instance. The same instance is
    --  always reused for a given command. Its class can be
    --  overridden via the Class_To_Create parameter (it defaults to
@@ -81,12 +85,14 @@ private
    Command_Class_Name : constant String := "Command";
 
    type Command_Script_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name (Self : Command_Script_Proxy) return String
-   is (Command_Class_Name) with Inline;
+   overriding
+   function Class_Name (Self : Command_Script_Proxy) return String
+   is (Command_Class_Name)
+   with Inline;
 
    type Scheduled_Command is new Root_Command with record
-      Command         : Command_Access;
-      Instances       : Command_Script_Proxy;
+      Command   : Command_Access;
+      Instances : Command_Script_Proxy;
    end record;
 
 end GPS.Scripts.Commands;

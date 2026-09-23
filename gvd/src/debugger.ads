@@ -17,7 +17,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;
 with GNAT.Strings;
 
@@ -27,17 +27,16 @@ with GNATCOLL.VFS;
 
 with Language;
 with Process_Proxies;
-with Basic_Types;              use Basic_Types;
-with GVD.Breakpoints_List;     use GVD.Breakpoints_List;
+with Basic_Types;          use Basic_Types;
+with GVD.Breakpoints_List; use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Proc_Utils;
 with GVD.Variables.Types;
-with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 
 package Debugger is
 
-   type Debuggee_Start_Method_Kind is
-     (None, Launched, Attached);
+   type Debuggee_Start_Method_Kind is (None, Launched, Attached);
    --  The debuggee start method
    --  * None: The debuggee has not been started yet
    --  * Launched: The debuggee has been started by the debugger
@@ -59,7 +58,8 @@ package Debugger is
       Debugger_Num    : Natural;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") is abstract;
+      Debugger_Name   : String := "")
+   is abstract;
    --  Spawn the external process.
    --  Initialize should be called afterwards, but this is done in two
    --  separate steps so that it is possible to set filters.
@@ -91,12 +91,12 @@ package Debugger is
    --  Should raise Spawn_Error if the debugger could not be spawned.
 
    procedure General_Spawn
-     (Debugger       : access Debugger_Root'Class;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Arguments      : GNAT.Strings.String_List;
-      Debugger_Name  : String;
-      Debugger_Num   : Natural;
-      Proxy          : Process_Proxies.Process_Proxy_Access);
+     (Debugger      : access Debugger_Root'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Arguments     : GNAT.Strings.String_List;
+      Debugger_Name : String;
+      Debugger_Num  : Natural;
+      Proxy         : Process_Proxies.Process_Proxy_Access);
    --  Convenience function to start a debugger.
    --  This command modifies the argument list so that the debugger can also
    --  be run on a remote machine.
@@ -118,14 +118,16 @@ package Debugger is
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  If supported by the debugger, connect to the given target, using
    --  the given communication protocol.
    --  If Force is True, the debugger should kill any existing connection
    --  before attempting to connect to this target.
 
    function Is_Connected_To_Target
-     (Debugger : access Debugger_Root) return Boolean is abstract;
+     (Debugger : access Debugger_Root) return Boolean
+   is abstract;
    --  Return True if the debugger is already connected to a target, False
    --  otherwise.
 
@@ -180,8 +182,8 @@ package Debugger is
      (Debugger    : access Debugger_Root;
       Cmd         : String;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
-      Synchronous : Boolean := True)
-      return String is abstract;
+      Synchronous : Boolean := True) return String
+   is abstract;
    --  Same Send_And_Get_Output, but return a clean version of the output, i.e.
    --  delete the final prompt if any, depending on the debugger type.
 
@@ -194,8 +196,8 @@ package Debugger is
    --  Clear the queue of commands to execute associated with Debugger.
 
    function Highlighting_Pattern
-     (Debugger : access Debugger_Root)
-      return GNAT.Regpat.Pattern_Matcher is abstract;
+     (Debugger : access Debugger_Root) return GNAT.Regpat.Pattern_Matcher
+   is abstract;
    --  Return a regular expression that should match everything that should
    --  be highlighted in the debugger text window.
 
@@ -213,8 +215,8 @@ package Debugger is
    --  Set the language associated with a debugger.
 
    function Get_Language
-     (Debugger : access Debugger_Root;
-      Lang     : String := "") return Language.Language_Access;
+     (Debugger : access Debugger_Root; Lang : String := "")
+      return Language.Language_Access;
    --  Return the language_access for a specific language ("ada", "c", ...).
    --  This might return null if Set_Language was never called for that
    --  language. If Lang is the empty string, returns the current language.
@@ -223,8 +225,8 @@ package Debugger is
    --  Try to detect the current language associated with the debugger.
 
    function Parse_Type
-     (Debugger : access Debugger_Root'Class;
-      Entity   : String) return GVD.Variables.Types.GVD_Type_Holder;
+     (Debugger : access Debugger_Root'Class; Entity : String)
+      return GVD.Variables.Types.GVD_Type_Holder;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
@@ -253,35 +255,32 @@ package Debugger is
    --  The return result be the value of access types (ie types that can be
    --  dereferenced).
 
-   procedure Wait_Prompt
-     (Debugger : access Debugger_Root) is abstract;
+   procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
 
    function Wait_Prompt
-     (Debugger : access Debugger_Root;
-      Timeout  : Integer) return Boolean is abstract;
+     (Debugger : access Debugger_Root; Timeout : Integer) return Boolean
+   is abstract;
    --  Wait for the prompt.
    --  Timeout is the number of ms to wait.
    --  Return True if a prompt was found.
 
-   procedure Display_Prompt
-     (Debugger : access Debugger_Root) is abstract;
+   procedure Display_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Send a command to the debugger, so that the prompt is displayed
    --  again in the debugger window. This is used after internal commands like
    --  "graph print", to indicate that the command has finished executing.
 
    function Type_Of
-     (Debugger : access Debugger_Root;
-      Entity   : String) return String is abstract;
+     (Debugger : access Debugger_Root; Entity : String) return String
+   is abstract;
    --  Return the type of the entity.
    --  An empty string is returned if the entity is not defined in the
    --  current context.
    --  GDB_COMMAND: "ptype"
 
    function Get_Type_Info
-     (Debugger  : access Debugger_Root;
-      Entity    : String;
-      Default   : String) return String;
+     (Debugger : access Debugger_Root; Entity : String; Default : String)
+      return String;
    --  Return a string suitable for printing in canvas items for the type.
    --  Default is the result of Type_Of for Entity, and should be returned
    --  if the debugger does not have any special support for this command.
@@ -289,11 +288,12 @@ package Debugger is
 
    function Info_Locals
      (Debugger : access Debugger_Root)
-      return VSS.String_Vectors.Virtual_String_Vector is abstract;
+      return VSS.String_Vectors.Virtual_String_Vector
+   is abstract;
    --  Return the names of the local variables
 
-   function Info_Args
-     (Debugger : access Debugger_Root) return String is abstract;
+   function Info_Args (Debugger : access Debugger_Root) return String
+   is abstract;
    --  Return the command to be used to display the parameters of the current
    --  subprogram
 
@@ -301,23 +301,21 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Entity   : String;
       Format   : Value_Format := Default_Format;
-      From_API : Boolean := False)
-      return String is abstract;
+      From_API : Boolean := False) return String
+   is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"
 
    function Print_Value_Cmd
-     (Debugger : access Debugger_Root;
-      Entity   : String) return String is abstract;
+     (Debugger : access Debugger_Root; Entity : String) return String
+   is abstract;
    --  Return the command to execute to get the value of the entity.
    --  GDB_COMMAND: "print " & Entity
    --  JDB_COMMAND: "dump " & Entity
 
    procedure Set_Variable
-     (Debugger : access Debugger_Root;
-      Var_Name : String;
-      Value    : String);
+     (Debugger : access Debugger_Root; Var_Name : String; Value : String);
    --  Set the value of a specific variable.
    --  Var_Name should contain any needed block information
 
@@ -326,18 +324,19 @@ package Debugger is
    ------------------------------
 
    procedure Change_Directory
-     (Debugger    : access Debugger_Root;
-      Dir         : GNATCOLL.VFS.Virtual_File;
-      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+     (Debugger : access Debugger_Root;
+      Dir      : GNATCOLL.VFS.Virtual_File;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Change to directory Dir under a specified debugger session.
    --  See execution commands below for an explanation on the Mode parameter.
 
    procedure Found_File_Name
-     (Debugger    : access Debugger_Root;
-      Str         : String;
-      Name        : out Unbounded_String;
-      Line        : out Natural;
-      Addr        : out GVD.Types.Address_Type);
+     (Debugger : access Debugger_Root;
+      Str      : String;
+      Name     : out Unbounded_String;
+      Line     : out Natural;
+      Addr     : out GVD.Types.Address_Type);
    --  Search for a file name, line or address indication in Str.
    --  Str is a string output by the debugger, that might contain a reference
    --  to a specific file and line, that we want to display in the code editor
@@ -353,16 +352,13 @@ package Debugger is
    --  Note that the last reference to a file or a line should be used, in case
    --  multiple references are found in Str.
 
-   type Frame_Info_Type is
-     (Location_Not_Found,
-      Location_Found,
-      No_Debug_Info);
+   type Frame_Info_Type is (Location_Not_Found, Location_Found, No_Debug_Info);
 
    procedure Found_Frame_Info
-     (Debugger    : access Debugger_Root;
-      Str         : String;
-      Frame       : out Unbounded_String;
-      Message     : out Frame_Info_Type);
+     (Debugger : access Debugger_Root;
+      Str      : String;
+      Frame    : out Unbounded_String;
+      Message  : out Frame_Info_Type);
    --  Search for a callstack frame indication in Str.
    --  Message is set to No_Debug_Info if no frame info found, and Frame
    --  to Null_Unbounded_String.
@@ -393,9 +389,8 @@ package Debugger is
    --  Additionally, the command history is not updated for internal commands.
 
    procedure Set_Executable
-     (Debugger   : access Debugger_Root;
-      Executable : GNATCOLL.VFS.Virtual_File)
-      is abstract;
+     (Debugger : access Debugger_Root; Executable : GNATCOLL.VFS.Virtual_File)
+   is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
    --  Java, where Executable should be the name of the main class.
@@ -404,14 +399,15 @@ package Debugger is
    --  GDB_COMMAND: "file"
 
    function Get_Executable
-     (Debugger : access Debugger_Root)
-      return GNATCOLL.VFS.Virtual_File is abstract;
+     (Debugger : access Debugger_Root) return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Return the name of the executable currently debugged.
 
    procedure Load_Core_File
      (Debugger : access Debugger_Root;
       Core     : GNATCOLL.VFS.Virtual_File;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Load a core file into the debugger.
    --  GDB_COMMAND: "core"
 
@@ -419,14 +415,16 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Module   : GNATCOLL.VFS.Virtual_File;
       Address  : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Load symbols from a specified module into the debugger.
    --  GDB_COMMAND: "add-symbol-file"
 
    procedure Load_Executable
      (Debugger   : access Debugger_Root;
       Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Load the given executable to the remote target, if any.
    --  When Executable is not specified, load the currently debugged
    --  executable instead.
@@ -440,7 +438,8 @@ package Debugger is
    procedure Run
      (Debugger  : access Debugger_Root;
       Arguments : String := "";
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Start the execution of the executable.
    --  Arguments is a string passed on the command line to run
    --  Note that this command does not wait for the prompt, and returns
@@ -449,9 +448,10 @@ package Debugger is
    --  GDB_COMMAND: "run"
 
    procedure Start
-     (Debugger : access Debugger_Root;
+     (Debugger  : access Debugger_Root;
       Arguments : String := "";
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  Arguments is a string passed on the command line to run
    --  The arguments must have been set by a call to Set_Arguments.
@@ -461,53 +461,61 @@ package Debugger is
    procedure Attach_Process
      (Debugger : access Debugger_Root;
       Process  : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Attach a given process into the debugger.
    --  GDB_COMMAND: "attach"
 
    procedure Detach_Process
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Detach the current process from the debugger.
    --  GDB_COMMAND: "detach"
 
    procedure Kill_Process
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Kill the current process.
    --  GDB_COMMAND: "kill"
 
    procedure Step_Into
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Step program until it reaches a different source line.
    --  See above for details on Display.
    --  GDB_COMMAND: "step"
 
    procedure Step_Over
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Step program, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "next"
 
    procedure Step_Into_Instruction
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Step program until it reaches a different assembly line
    --  See above for details on Display.
    --  GDB_COMMAND: "stepi"
 
    procedure Step_Over_Instruction
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Step program one assembly instruction, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "nexti"
 
    procedure Continue
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Continue program after signal or breakpoint.
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
@@ -516,15 +524,16 @@ package Debugger is
      (Debugger : access Debugger_Root;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Continue the program until the given location.
    --  GDB_COMMAND: "until <location>"
 
    function Line_Contains_Code
      (Debugger : not null access Debugger_Root;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Editable_Line_Type)
-      return Boolean is abstract;
+      Line     : Editable_Line_Type) return Boolean
+   is abstract;
    --  Return True if the given line contains actual code, False otherwise.
    --  GDB_COMMAND: "info line <location>"
 
@@ -546,18 +555,18 @@ package Debugger is
    --    - Misc: None of the above.
 
    function Command_Kind
-     (Debugger : access Debugger_Root;
-      Command  : String) return Command_Category is abstract;
+     (Debugger : access Debugger_Root; Command : String)
+      return Command_Category
+   is abstract;
    --  Return the kind of command associated with Command
 
    function Breakpoints_Changed
-     (Debugger : access Debugger_Root;
-      Command  : String) return Boolean is abstract;
+     (Debugger : access Debugger_Root; Command : String) return Boolean
+   is abstract;
    --  Return True if the list of breakpoints has likely changed after
    --  Command has run.
 
-   function Is_Started (Debugger : access Debugger_Root)
-     return Boolean;
+   function Is_Started (Debugger : access Debugger_Root) return Boolean;
    --  Return True if the debuggee executable has been started.
 
    function Get_Start_Method
@@ -576,14 +585,16 @@ package Debugger is
 
    procedure Stack_Down
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Select and print stack frame called by the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "down"
 
    procedure Stack_Up
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Select and print stack frame that called the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "up"
@@ -591,7 +602,8 @@ package Debugger is
    procedure Stack_Frame
      (Debugger : access Debugger_Root;
       Frame    : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Select and print the selected stack frame.
    --  The first frame is 0. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
@@ -600,7 +612,8 @@ package Debugger is
 
    procedure Finish
      (Debugger : access Debugger_Root;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Finish executing the current frame.
    --  See above for details on Display.
    --  GDB_COMMAND: "finish"
@@ -613,21 +626,21 @@ package Debugger is
       Value : GNAT.Strings.String_Access;
    end record;
 
-   package Backtrace_Subprogram_Parameters_Vectors is
-     new Ada.Containers.Vectors (Positive, Backtrace_Subprogram_Parameter);
+   package Backtrace_Subprogram_Parameters_Vectors is new
+     Ada.Containers.Vectors (Positive, Backtrace_Subprogram_Parameter);
 
    type Backtrace_Record is record
-      Frame_Id        : Natural := 0;
-      Address         : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
-      Subprogram      : GNAT.Strings.String_Access;
-      Parameters      : Backtrace_Subprogram_Parameters_Vectors.Vector;
-      File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line            : Natural := 0;
-      Selected        : Boolean := False;
+      Frame_Id   : Natural := 0;
+      Address    : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      Subprogram : GNAT.Strings.String_Access;
+      Parameters : Backtrace_Subprogram_Parameters_Vectors.Vector;
+      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line       : Natural := 0;
+      Selected   : Boolean := False;
    end record;
 
-   package Backtrace_Vectors is
-     new Ada.Containers.Vectors (Positive, Backtrace_Record);
+   package Backtrace_Vectors is new
+     Ada.Containers.Vectors (Positive, Backtrace_Record);
    subtype Backtrace_Vector is Backtrace_Vectors.Vector;
 
    procedure Free (Bt : in out Backtrace_Vector);
@@ -637,15 +650,15 @@ package Debugger is
      (Debugger : access Debugger_Root;
       From     : Integer;
       To       : Integer;
-      Value    : out Backtrace_Vector) is abstract;
+      Value    : out Backtrace_Vector)
+   is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
    --  From and To parameters are used for pointing which frames are needed or
    --  set From to -1 if limitation is not needed
 
-   function Current_Frame
-     (Debugger : access Debugger_Root)
-      return Integer is abstract;
+   function Current_Frame (Debugger : access Debugger_Root) return Integer
+   is abstract;
    --  Return the number of current frame. Should return -1 if no frames.
 
    procedure Configure_Backtrace
@@ -654,7 +667,8 @@ package Debugger is
       Show_PC              : Boolean := True;
       Show_Subprogram_Name : Boolean := True;
       Show_Parameters      : Boolean := True;
-      Show_Location        : Boolean := True) is null;
+      Show_Location        : Boolean := True)
+   is null;
    --  Configure which information will be displayed in the call stack view.
    --  By taking advantage of which info is not necessary, this might speed up
    --  the computation of the call stack in the debugger.
@@ -671,7 +685,7 @@ package Debugger is
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -686,7 +700,7 @@ package Debugger is
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -695,12 +709,12 @@ package Debugger is
 
    function Break_Exception
      (Debugger  : access Debugger_Root;
-      Name      : String  := "";
+      Name      : String := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -716,26 +730,26 @@ package Debugger is
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Add a catchpoint for failed Ada assertions.
    --  GDB_COMMAND: "catch assert" "-catch-assert"
 
    function Break_Address
-     (Debugger   : access Debugger_Root;
-      Address    : GVD.Types.Address_Type;
-      Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger  : access Debugger_Root;
+      Address   : GVD.Types.Address_Type;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Set a breakpoint at a specific address.
 
    function Break_Regexp
-     (Debugger   : access Debugger_Root;
-      Regexp     : String;
-      Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger  : access Debugger_Root;
+      Regexp    : String;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Set a breakpoint on all subprograms matching Regexp.
    --  This function is emulated when the debugger does not support it
    --  directly.
@@ -744,7 +758,8 @@ package Debugger is
      (Debugger    : access Debugger_Root;
       Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
       Enable      : Boolean := True;
-      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Enable or disable the given breakpoint identifiers.
    --  The identifiers are always the numbers stored in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
@@ -754,7 +769,8 @@ package Debugger is
    procedure Remove_Breakpoints
      (Debugger    : access Debugger_Root;
       Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
-      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Delete a breakpoint.
    --  The identifiers are always the numbers stored in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
@@ -764,18 +780,20 @@ package Debugger is
      (Debugger : not null access Debugger_Root;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is abstract;
    --  Remove any breakpoint set at that location
 
    procedure List_Breakpoints
-     (Debugger  : not null access Debugger_Root;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      List      : out Breakpoint_Vectors.Vector) is abstract;
+     (Debugger : not null access Debugger_Root;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      List     : out Breakpoint_Vectors.Vector)
+   is abstract;
    --  Return the list of breakpoints set in the current session.
 
    function Get_Last_Breakpoint_Id
-     (Debugger  : access Debugger_Root)
-      return GVD.Types.Breakpoint_Identifier is abstract;
+     (Debugger : access Debugger_Root) return GVD.Types.Breakpoint_Identifier
+   is abstract;
    --  Return the Id of the last created breakpoint.
    --  Some of the Break_* commands above might create several breakpoints, so
    --  it might not be accurate to rely on this function to get the list of
@@ -785,14 +803,16 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Set the condition on which a breakpoint should be activated.
 
    procedure Set_Breakpoint_Command
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Set the commands to execute upon stopping at the breakpoint.
    --  One command per line in commands.
 
@@ -800,7 +820,8 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Set the number of times the breakpoint should be ignored before being
    --  activated.
 
@@ -809,7 +830,8 @@ package Debugger is
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Num      : GVD.Types.Breakpoint_Identifier := 0;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Set the scope/action of the breakpoint identified by Num:
    --  GDB_COMMAND: change-breakpoint-scope/change-breakpoint-action
    --  Set the default scope/action of a debugging session if Num = 0:
@@ -826,7 +848,7 @@ package Debugger is
       Condition : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
-      is abstract;
+   is abstract;
    --  Set a watchpoint for the variable or memory location in Name.
    --  Trigger specifies that the watchpoint is activated by a read, write,
    --  or either to the memory location.  If a condition string is given,
@@ -867,21 +889,24 @@ package Debugger is
    procedure Task_Switch
      (Debugger : access Debugger_Root;
       Task_Num : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Switch to a specified task.
    --  GDB_COMMAND: "task"
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root;
       Thread   : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread"
 
    procedure PD_Switch
      (Debugger : access Debugger_Root;
       PD       : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is null;
    --  Switch to a specified protection domain.
    --  GDB_COMMAND: "pd <pd_id>"
 
@@ -907,30 +932,33 @@ package Debugger is
    --  GDB_COMMAND: "info pds"
 
    procedure Set_VxWorks_Version
-     (Debugger : access Debugger_Root; Force : Boolean := False) is null;
+     (Debugger : access Debugger_Root; Force : Boolean := False)
+   is null;
    --  Determine the VxWorks version running on the target
 
    function VxWorks_Version
-     (Debugger : access Debugger_Root)
-     return GVD.Types.VxWorks_Version_Type;
+     (Debugger : access Debugger_Root) return GVD.Types.VxWorks_Version_Type;
    --  Retrieve the VxWorks version stored in the debugger record
 
    -------------------
    -- Assembly code --
    -------------------
 
-   package Disassemble_Element_Vectors is new Ada.Containers.Vectors
-     (Positive, GVD.Types.Disassemble_Element, "=" => GVD.Types."=");
+   package Disassemble_Element_Vectors is new
+     Ada.Containers.Vectors
+       (Positive,
+        GVD.Types.Disassemble_Element,
+        "=" => GVD.Types."=");
 
    subtype Disassemble_Elements is Disassemble_Element_Vectors.Vector;
 
    procedure Get_Machine_Code
-     (Debugger        : access Debugger_Root;
-      Range_Start     : out GVD.Types.Address_Type;
-      Range_End       : out GVD.Types.Address_Type;
-      Code            : out Disassemble_Elements;
-      Start_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
-      End_Address     : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
+     (Debugger      : access Debugger_Root;
+      Range_Start   : out GVD.Types.Address_Type;
+      Range_End     : out GVD.Types.Address_Type;
+      Code          : out Disassemble_Elements;
+      Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is abstract;
    --  Return the machine code (or assembly code) for a specific region.
    --  The region disassembled is Start_Address .. End_Address (where the
@@ -949,11 +977,12 @@ package Debugger is
    --  Disassemble whole subpgogram
 
    procedure Get_Line_Address
-     (Debugger        : access Debugger_Root;
-      Line            : Natural;
-      File            : GNATCOLL.VFS.Virtual_File;
-      Range_Start     : out GVD.Types.Address_Type;
-      Range_End       : out GVD.Types.Address_Type) is abstract;
+     (Debugger    : access Debugger_Root;
+      Line        : Natural;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Range_Start : out GVD.Types.Address_Type;
+      Range_End   : out GVD.Types.Address_Type)
+   is abstract;
    --  Return the range of addresses for a given source line.
    --  See Get_Machine_Code for an explanation of the parameters.
 
@@ -962,20 +991,20 @@ package Debugger is
    ---------------
 
    function Get_Register_Names
-     (Debugger : access Debugger_Root)
-      return GVD.Types.Strings_Vectors.Vector is abstract;
+     (Debugger : access Debugger_Root) return GVD.Types.Strings_Vectors.Vector
+   is abstract;
    --  Return names of registers
 
    function Get_Registers_Values
      (Debugger : access Debugger_Root;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.String_To_String_Maps.Map is abstract;
+      return GVD.Types.String_To_String_Maps.Map
+   is abstract;
 
    procedure Set_Register
-     (Debugger : access Debugger_Root;
-      Name     : String;
-      Value    : String) is abstract;
+     (Debugger : access Debugger_Root; Name : String; Value : String)
+   is abstract;
 
    ----------------
    -- Exceptions --
@@ -1008,24 +1037,23 @@ package Debugger is
    type Memory_Dump_Access is access all Memory_Dump;
 
    function Get_Memory
-     (Debugger : access Debugger_Root;
-      Size     : Integer;
-      Address  : String) return Memory_Dump_Access is abstract;
+     (Debugger : access Debugger_Root; Size : Integer; Address : String)
+      return Memory_Dump_Access
+   is abstract;
    --  Return the contents of the byte at a given address. The output should
    --  have representation for Size bytes.
    --  Address is "0x" followed by an hexadecimal number.
 
    procedure Put_Memory_Byte
-     (Debugger : access Debugger_Root;
-      Address  : String;
-      Byte     : String) is abstract;
+     (Debugger : access Debugger_Root; Address : String; Byte : String)
+   is abstract;
    --  Write the contents of one byte into the memory.
    --  Address is "0x" followed by an hexadecimal number.
    --  Byte is two hexadicimal digits.
 
    function Get_Variable_Address
-     (Debugger  : access Debugger_Root;
-      Variable  : String) return String is abstract;
+     (Debugger : access Debugger_Root; Variable : String) return String
+   is abstract;
    --  Returns the starting address for a given variable.
    --  The returned adress should be "0x" followed by an hexadecimal number.
    --  Alternatively, it returns "" if no such variable is found.
@@ -1033,7 +1061,8 @@ package Debugger is
    type Endian_Type is (Unknown_Endian, Little_Endian, Big_Endian);
 
    function Get_Endian_Type
-     (Debugger : access Debugger_Root) return Endian_Type is abstract;
+     (Debugger : access Debugger_Root) return Endian_Type
+   is abstract;
    --  Get the endianness of the target.
 
    -----------------------------
@@ -1041,8 +1070,9 @@ package Debugger is
    -----------------------------
 
    function Complete
-     (Debugger  : access Debugger_Root;
-      Beginning : String) return GNAT.Strings.String_List is abstract;
+     (Debugger : access Debugger_Root; Beginning : String)
+      return GNAT.Strings.String_List
+   is abstract;
    --  Return a list of commands recognized by the debugger that begin with
    --  Beginning.
    --  Note that the caller is responsible for freeing the memory allocated
@@ -1072,8 +1102,8 @@ package Debugger is
    function Support_TTY (Debugger : access Debugger_Root) return Boolean;
    --  Return True if the given debugger supports a Set_TTY command.
 
-   procedure Set_TTY
-     (Debugger : access Debugger_Root; TTY : String) is abstract;
+   procedure Set_TTY (Debugger : access Debugger_Root; TTY : String)
+   is abstract;
    --  If supported (see Support_TTY above), set the terminal of the program
    --  debugged to TTY (e.g "/dev/pts/2").
    --  If not supported, raise Unknown_Command.
@@ -1105,35 +1135,30 @@ package Debugger is
    --  log, debuggee and results output, just put everything in Console_Output.
 
    function Is_Quit_Command
-     (Debugger : access Debugger_Root;
-      Command : String) return Boolean;
+     (Debugger : access Debugger_Root; Command : String) return Boolean;
    --  Return true if Command will close the debugger.
    --  Default implementation always returns False.
    --  Note that Command is assumed to be all lower case, the caller is
    --  responsible for ensuring that.
 
    function Is_Interrupt_Command
-     (Debugger : access Debugger_Root;
-      Command : String) return Boolean;
+     (Debugger : access Debugger_Root; Command : String) return Boolean;
    --  Return true if Command will interrupt the debugger.
    --  Note that Command is assumed to be all lower case, the caller is
    --  responsible for ensuring that.
 
    function Is_Set_Register_Command
-     (Debugger : access Debugger_Root;
-      Command : String) return Boolean;
+     (Debugger : access Debugger_Root; Command : String) return Boolean;
    --  Return True if command set a value to a register
 
-   function Continuation_Line
-     (Debugger : access Debugger_Root) return Boolean;
+   function Continuation_Line (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger is currently handling a multiple line command.
 
    function Separate_Execution_Window
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger has a separate execution window.
 
-   function Get_Remote_Target
-     (Debugger : access Debugger_Root) return String;
+   function Get_Remote_Target (Debugger : access Debugger_Root) return String;
    --  Return the debugger's current remote target.
    --  If no remote target has been specified yet, return an empty string.
 
@@ -1143,8 +1168,7 @@ package Debugger is
    --  If no remote protocol has been specified yet, return an empty string.
 
    function Get_Kernel
-     (Debugger : access Debugger_Root'Class)
-      return GPS.Kernel.Kernel_Handle;
+     (Debugger : access Debugger_Root'Class) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel
 
    Command_Intercepted : constant String := "----";
@@ -1154,14 +1178,16 @@ private
    type Command_Record;
    type Command_Access is access Command_Record;
    type Command_Record is record
-      Cmd             : GNAT.Strings.String_Access;
-      Empty_Buffer    : Boolean;
-      Mode            : GVD.Types.Command_Type;
-      Next            : Command_Access;
+      Cmd          : GNAT.Strings.String_Access;
+      Empty_Buffer : Boolean;
+      Mode         : GVD.Types.Command_Type;
+      Next         : Command_Access;
    end record;
 
-   package Language_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Language.Language_Access, Language."=");
+   package Language_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Language.Language_Access,
+        Language."=");
 
    type Debugger_State is
      (Idle,              --  Debugger is waiting for the next command
@@ -1170,10 +1196,10 @@ private
      );
 
    type Debugger_Root is abstract tagged record
-      Kernel       : Kernel_Handle;
-      Process      : Process_Proxies.Process_Proxy_Access := null;
+      Kernel  : Kernel_Handle;
+      Process : Process_Proxies.Process_Proxy_Access := null;
 
-      Languages    : Language_Lists.List;
+      Languages : Language_Lists.List;
       --  The list of languages in use for this debugger. New elements are
       --  added to the list when the current language changes. We reuse
       --  elements from the list when going back to a language already seen so

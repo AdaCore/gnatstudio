@@ -21,8 +21,8 @@ with Ada.Containers.Indefinite_Vectors;
 
 package String_List_Utils is
 
-   package String_List is
-     new Ada.Containers.Indefinite_Vectors (Positive, String);
+   package String_List is new
+     Ada.Containers.Indefinite_Vectors (Positive, String);
 
    function Longest_Prefix (L : String_List.Vector) return String;
    --  Return the longest prefix of all the strings in L. The empty string is

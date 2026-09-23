@@ -19,8 +19,8 @@ with CodePeer.Module; use CodePeer.Module;
 
 package body CodePeer.Bridge.Status_Readers is
 
-   Status_Tag                : constant String := "status";
-   Message_Tag               : constant String := "message";
+   Status_Tag  : constant String := "status";
+   Message_Tag : constant String := "message";
 
    Editable_Attribute        : constant String := "editable";
    Identifier_Attribute      : constant String := "identifier";
@@ -31,7 +31,8 @@ package body CodePeer.Bridge.Status_Readers is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -64,7 +65,8 @@ package body CodePeer.Bridge.Status_Readers is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -103,17 +105,19 @@ package body CodePeer.Bridge.Status_Readers is
          null;
 
       elsif Qname = Message_Tag then
-         Message := Self.Messages.all
-           (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
+         Message :=
+           Self.Messages.all
+             (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
          Message.Status_Editable := Get_Optional_Editable;
 
          if Attrs.Get_Index (Status_Category_Attribute) /= -1 then
             --  if a status category is specified (should always be the case
             --  with recent codepeer)
-            Message.Status := Get_Status
-              (Attrs.Get_Value (Status_Attribute),
-               Audit_Status_Category'Value
-                 (Attrs.Get_Value (Status_Category_Attribute)));
+            Message.Status :=
+              Get_Status
+                (Attrs.Get_Value (Status_Attribute),
+                 Audit_Status_Category'Value
+                   (Attrs.Get_Value (Status_Category_Attribute)));
          else
             --  For backward compatibility
             Message.Status := Get_Status (Attrs.Get_Value (Status_Attribute));

@@ -23,8 +23,7 @@ with Ada.Strings.Equal_Case_Insensitive;
 package body Code_Analysis is
 
    function Get
-     (File_Node : File_Access;
-      Key       : String) return Subprogram_Access;
+     (File_Node : File_Access; Key : String) return Subprogram_Access;
    --  Like other Get subprogram in the specification, but declared here
    --  because it is not used outside of this package body.
 
@@ -45,13 +44,26 @@ package body Code_Analysis is
       --  prints it.
 
       case Kind is
-         when Unknown_Metric => return "";
-         when Line_Metric    => return "lines";
-         when Statement      => return "statement";
-         when Decision       => return "decision";
-         when MCDC           => return "MC/DC";
-         when ATC            => return "ATC";
-         when ATCC           => return "ATCC";
+         when Unknown_Metric =>
+            return "";
+
+         when Line_Metric    =>
+            return "lines";
+
+         when Statement      =>
+            return "statement";
+
+         when Decision       =>
+            return "decision";
+
+         when MCDC           =>
+            return "MC/DC";
+
+         when ATC            =>
+            return "ATC";
+
+         when ATCC           =>
+            return "ATCC";
       end case;
    end Metric_Kind_Name;
 
@@ -62,12 +74,23 @@ package body Code_Analysis is
    function Level_Component_Name (Kind : Metric_Kind) return String is
    begin
       case Kind is
-         when Statement => return "stmt";
-         when Decision  => return "decision";
-         when MCDC      => return "mcdc";
-         when ATC       => return "atc";
-         when ATCC      => return "atcc";
-         when others    => return "";
+         when Statement =>
+            return "stmt";
+
+         when Decision  =>
+            return "decision";
+
+         when MCDC      =>
+            return "mcdc";
+
+         when ATC       =>
+            return "atc";
+
+         when ATCC      =>
+            return "atcc";
+
+         when others    =>
+            return "";
       end case;
    end Level_Component_Name;
 
@@ -79,8 +102,8 @@ package body Code_Analysis is
    begin
       for Kind in Metric_Kind loop
          if Metric_Kind_Name (Kind) /= ""
-           and then Ada.Strings.Equal_Case_Insensitive
-             (Name, Metric_Kind_Name (Kind))
+           and then
+             Ada.Strings.Equal_Case_Insensitive (Name, Metric_Kind_Name (Kind))
          then
             return Kind;
          end if;
@@ -116,8 +139,9 @@ package body Code_Analysis is
       begin
          for Kind in Metric_Kind loop
             if Level_Component_Name (Kind) /= ""
-              and then Ada.Strings.Equal_Case_Insensitive
-                (Name, Level_Component_Name (Kind))
+              and then
+                Ada.Strings.Equal_Case_Insensitive
+                  (Name, Level_Component_Name (Kind))
             then
                return Kind;
             end if;
@@ -141,9 +165,10 @@ package body Code_Analysis is
          Last := Ada.Strings.Fixed.Index (Level, "+", First);
 
          declare
-            Component : constant String := Ada.Strings.Fixed.Trim
-              (Level (First .. (if Last = 0 then Level'Last else Last - 1)),
-               Ada.Strings.Both);
+            Component : constant String :=
+              Ada.Strings.Fixed.Trim
+                (Level (First .. (if Last = 0 then Level'Last else Last - 1)),
+                 Ada.Strings.Both);
             Kind      : constant Metric_Kind := Component_Kind (Component);
          begin
             if Kind > Result then
@@ -162,15 +187,16 @@ package body Code_Analysis is
    -- Line_Metric_Of --
    --------------------
 
-   function Line_Metric_Of
-     (Self : Node_Coverage'Class) return Coverage_Metric is
+   function Line_Metric_Of (Self : Node_Coverage'Class) return Coverage_Metric
+   is
    begin
       return
         (Kind     => Line_Metric,
          Name     => ASU.To_Unbounded_String (Metric_Kind_Name (Line_Metric)),
-         Covered  => (if Self.Children >= Self.Coverage
-                      then Self.Children - Self.Coverage
-                      else 0),
+         Covered  =>
+           (if Self.Children >= Self.Coverage
+            then Self.Children - Self.Coverage
+            else 0),
          Total    => Self.Children,
          Nb_Files => Self.Nb_Files,
          Missing  => <>);
@@ -198,8 +224,7 @@ package body Code_Analysis is
 
       if Announced /= Unknown_Metric then
          for Metric of Self.Metrics loop
-            if Metric.Kind = Announced
-              and then Metric.Nb_Files = Self.Nb_Files
+            if Metric.Kind = Announced and then Metric.Nb_Files = Self.Nb_Files
             then
                return Metric;
             end if;
@@ -216,7 +241,7 @@ package body Code_Analysis is
            and then (not Found or else Metric.Kind > Result.Kind)
          then
             Result := Metric;
-            Found  := True;
+            Found := True;
          end if;
       end loop;
 
@@ -234,8 +259,9 @@ package body Code_Analysis is
 
    function Less (V1, V2 : Virtual_File) return Boolean is
    begin
-      return Ada.Strings.Less_Case_Insensitive
-        (V1.Display_Base_Name, V2.Display_Base_Name);
+      return
+        Ada.Strings.Less_Case_Insensitive
+          (V1.Display_Base_Name, V2.Display_Base_Name);
    end Less;
 
    function Less
@@ -248,19 +274,19 @@ package body Code_Analysis is
    -- Equ --
    ---------
 
-   function Equ  (V1, V2 : Subprogram_Access) return Boolean is
+   function Equ (V1, V2 : Subprogram_Access) return Boolean is
    begin
-      return Ada.Strings.Equal_Case_Insensitive
-        (V1.Name.all, V2.Name.all);
+      return Ada.Strings.Equal_Case_Insensitive (V1.Name.all, V2.Name.all);
    end Equ;
 
-   function Equ  (V1, V2 : File_Access) return Boolean is
+   function Equ (V1, V2 : File_Access) return Boolean is
    begin
-      return Ada.Strings.Equal_Case_Insensitive
-        (V1.Name.Display_Base_Name, V2.Name.Display_Base_Name);
+      return
+        Ada.Strings.Equal_Case_Insensitive
+          (V1.Name.Display_Base_Name, V2.Name.Display_Base_Name);
    end Equ;
 
-   function Equ  (V1, V2 : Project_Access) return Boolean is
+   function Equ (V1, V2 : Project_Access) return Boolean is
    begin
       return Ada.Strings.Equal_Case_Insensitive (V1.View.Name, V2.View.Name);
    end Equ;
@@ -301,8 +327,8 @@ package body Code_Analysis is
       -- Lt --
       --------
 
-      function Lt (Op1, Op2 : Natural) return Boolean
-      is begin
+      function Lt (Op1, Op2 : Natural) return Boolean is
+      begin
          if Op1 = 0 then
             return Tmp.Name.all < Nodes (Op2).Name.all;
          elsif Op2 = 0 then
@@ -327,8 +353,7 @@ package body Code_Analysis is
          end if;
       end Move;
 
-      package Sort is new GNAT.Heap_Sort_G
-        (Move, Lt);
+      package Sort is new GNAT.Heap_Sort_G (Move, Lt);
    begin
       Sort.Sort (Natural (Nodes'Length));
    end Sort_Subprograms;
@@ -351,8 +376,8 @@ package body Code_Analysis is
       -- Lt --
       --------
 
-      function Lt (Op1, Op2 : Natural) return Boolean
-      is begin
+      function Lt (Op1, Op2 : Natural) return Boolean is
+      begin
          if Op1 = 0 then
             return Base_Name (Tmp.Name) < Base_Name (Nodes (Op2).Name);
          elsif Op2 = 0 then
@@ -377,8 +402,7 @@ package body Code_Analysis is
          end if;
       end Move;
 
-      package Sort is new GNAT.Heap_Sort_G
-        (Move, Lt);
+      package Sort is new GNAT.Heap_Sort_G (Move, Lt);
    begin
       Sort.Sort (Natural (Nodes'Length));
    end Sort_Files;
@@ -401,8 +425,8 @@ package body Code_Analysis is
       -- Lt --
       --------
 
-      function Lt (Op1, Op2 : Natural) return Boolean
-      is begin
+      function Lt (Op1, Op2 : Natural) return Boolean is
+      begin
          if Op1 = 0 then
             return Tmp.View.Name < Nodes (Op2).View.Name;
          elsif Op2 = 0 then
@@ -427,8 +451,7 @@ package body Code_Analysis is
          end if;
       end Move;
 
-      package Sort is new GNAT.Heap_Sort_G
-        (Move, Lt);
+      package Sort is new GNAT.Heap_Sort_G (Move, Lt);
    begin
       Sort.Sort (Natural (Nodes'Length));
    end Sort_Projects;
@@ -438,11 +461,10 @@ package body Code_Analysis is
    ---------
 
    function Get
-     (File_Node : File_Access;
-      Key       : String) return Subprogram_Access
+     (File_Node : File_Access; Key : String) return Subprogram_Access
    is
       Position : constant Subprogram_Maps.Cursor :=
-                   File_Node.Subprograms.Find (Key);
+        File_Node.Subprograms.Find (Key);
 
    begin
       if Subprogram_Maps.Has_Element (Position) then
@@ -458,11 +480,11 @@ package body Code_Analysis is
    ---------
 
    function Get
-     (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access
+     (Project_Node : Project_Access; File_Name : GNATCOLL.VFS.Virtual_File)
+      return File_Access
    is
       Position : constant File_Maps.Cursor :=
-                   Project_Node.Files.Find (File_Name);
+        Project_Node.Files.Find (File_Name);
 
    begin
       if File_Maps.Has_Element (Position) then
@@ -498,8 +520,7 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (File_Node : File_Access;
-      Key       : String) return not null Subprogram_Access
+     (File_Node : File_Access; Key : String) return not null Subprogram_Access
    is
       Subprogram_Node : Subprogram_Access := Get (File_Node, Key);
 
@@ -517,8 +538,8 @@ package body Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return not null File_Access
+     (Project_Node : Project_Access; File_Name : GNATCOLL.VFS.Virtual_File)
+      return not null File_Access
    is
       File_Node : File_Access := Get (Project_Node, File_Name);
 
@@ -546,9 +567,8 @@ package body Code_Analysis is
    begin
       if Project_Node = null then
          Project_Node :=
-           new Project'(Analysis_Data => <>,
-                        View          => Project_View,
-                        Files         => <>);
+           new Project'
+             (Analysis_Data => <>, View => Project_View, Files => <>);
          Projects.Insert (Project_View, Project_Node);
       end if;
 
@@ -658,8 +678,8 @@ package body Code_Analysis is
    ------------------------
 
    procedure Free_Code_Analysis (Projects : in out Code_Analysis_Tree) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Project_Maps.Map, Code_Analysis_Tree);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Project_Maps.Map, Code_Analysis_Tree);
    begin
       Clear_Code_Analysis (Projects);
       Unchecked_Free (Projects);
@@ -669,17 +689,20 @@ package body Code_Analysis is
    -- Is_Valid --
    --------------
 
-   overriding function Is_Valid (Self : File_Coverage) return Boolean is
+   overriding
+   function Is_Valid (Self : File_Coverage) return Boolean is
    begin
       return Self.Status = Valid;
    end Is_Valid;
 
-   overriding function Is_Valid (Self : Project_Coverage) return Boolean is
+   overriding
+   function Is_Valid (Self : Project_Coverage) return Boolean is
    begin
       return Self.Status = Valid;
    end Is_Valid;
 
-   overriding function Is_Valid (Self : Subprogram_Coverage) return Boolean is
+   overriding
+   function Is_Valid (Self : Subprogram_Coverage) return Boolean is
    begin
       return Self.Status = Valid;
    end Is_Valid;
@@ -688,25 +711,32 @@ package body Code_Analysis is
    -- Print_Status --
    ------------------
 
-   overriding function Print_Status (Self : File_Coverage) return String is
+   overriding
+   function Print_Status (Self : File_Coverage) return String is
    begin
       case Self.Status is
-         when Valid =>
+         when Valid            =>
             return "Valid";
-         when File_Not_Found =>
+
+         when File_Not_Found   =>
             return "No coverage report";
+
          when File_Out_Of_Date =>
             return "Out of date report file";
-         when File_Empty =>
+
+         when File_Empty       =>
             return "Empty report file";
-         when File_Corrupted =>
+
+         when File_Corrupted   =>
             return "Corrupted report file";
-         when Undetermined =>
+
+         when Undetermined     =>
             return "Undetermined";
       end case;
    end Print_Status;
 
-   overriding function Print_Status (Self : Project_Coverage) return String is
+   overriding
+   function Print_Status (Self : Project_Coverage) return String is
    begin
       if Self.Status = Valid then
          return "Valid";
@@ -715,8 +745,8 @@ package body Code_Analysis is
       end if;
    end Print_Status;
 
-   overriding function Print_Status
-     (Self : Subprogram_Coverage) return String is
+   overriding
+   function Print_Status (Self : Subprogram_Coverage) return String is
    begin
       if Self.Status = Valid then
          return "Valid";

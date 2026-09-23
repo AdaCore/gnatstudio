@@ -15,24 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;      use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
-with Gtk.Toggle_Button;            use Gtk.Toggle_Button;
+with Gtk.Toggle_Button; use Gtk.Toggle_Button;
 
-with Dialog_Utils;                 use Dialog_Utils;
-with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;           use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
-with GPS.Kernel;                   use GPS.Kernel;
-with GPS.Core_Kernels;             use GPS.Core_Kernels;
-with GPS.Project_Properties;       use GPS.Project_Properties;
-with Projects;                     use Projects;
+with Dialog_Utils;           use Dialog_Utils;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Core_Kernels;       use GPS.Core_Kernels;
+with GPS.Project_Properties; use GPS.Project_Properties;
+with Projects;               use Projects;
 
 package body Project_Properties is
 
@@ -40,8 +40,8 @@ package body Project_Properties is
    type Attribute_Editor is access all Attribute_Editor_Record'Class;
 
    type Editable_Attribute_Description (Indexed : Boolean := False) is
-     new Attribute_Description (Indexed) with
-   record
+     new Attribute_Description (Indexed)
+   with record
       Editor : Attribute_Editor;
       --  The attribute editor widget that allows the user to change the
       --  value of an attribute.
@@ -59,15 +59,15 @@ package body Project_Properties is
    -----------------------
 
    type Properties_Module_ID_Record is new Base_Properties_Module
-     with null record;
+   with null record;
 
-   overriding function New_Attribute_Description
-     (Module  : access Properties_Module_ID_Record;
-      Indexed : Boolean)
+   overriding
+   function New_Attribute_Description
+     (Module : access Properties_Module_ID_Record; Indexed : Boolean)
       return Attribute_Description_Access;
 
-   type Properties_Module_ID_Access
-     is access all Properties_Module_ID_Record'Class;
+   type Properties_Module_ID_Access is
+     access all Properties_Module_ID_Record'Class;
    Properties_Module_ID : Properties_Module_ID_Access;
 
    -----------------------
@@ -145,25 +145,29 @@ package body Project_Properties is
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
-      Attribute_Cst : aliased constant String := "attribute";
-      Package_Cst   : aliased constant String := "package";
-      Index_Cst     : aliased constant String := "index";
-      Tool_Cst      : aliased constant String := "tool";
-      Value_Cst     : aliased constant String := "value";
-      Recursive_Cst : aliased constant String := "recursive";
-      Get_Attributes_Parameters : constant Cst_Argument_List :=
+      Kernel                             : constant Kernel_Handle :=
+        Get_Kernel (Data);
+      Attribute_Cst                      : aliased constant String :=
+        "attribute";
+      Package_Cst                        : aliased constant String :=
+        "package";
+      Index_Cst                          : aliased constant String := "index";
+      Tool_Cst                           : aliased constant String := "tool";
+      Value_Cst                          : aliased constant String := "value";
+      Recursive_Cst                      : aliased constant String :=
+        "recursive";
+      Get_Attributes_Parameters          : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access);
-      Tool_Parameters : constant Cst_Argument_List :=
+      Tool_Parameters                    : constant Cst_Argument_List :=
         (1 => Tool_Cst'Unchecked_Access);
-      Set_Attribute_Parameters : constant Cst_Argument_List :=
+      Set_Attribute_Parameters           : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access,
          4 => Value_Cst'Unchecked_Access);
-      Add_Attribute_Values_Parameters : constant Cst_Argument_List :=
+      Add_Attribute_Values_Parameters    : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access,
@@ -173,7 +177,7 @@ package body Project_Properties is
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access,
          4 => Value_Cst'Unchecked_Access);
-      Clear_Attribute_Values_Parameters : constant Cst_Argument_List :=
+      Clear_Attribute_Values_Parameters  : constant Cst_Argument_List :=
         (1 => Attribute_Cst'Unchecked_Access,
          2 => Package_Cst'Unchecked_Access,
          3 => Index_Cst'Unchecked_Access,
@@ -193,16 +197,14 @@ package body Project_Properties is
       procedure Set_Return_Attribute (List : Argument_List; As_List : Boolean);
       --  Sets the contents of List into the return value
 
-      procedure Set_Return_Attribute
-        (Value : String; As_List : Boolean);
+      procedure Set_Return_Attribute (Value : String; As_List : Boolean);
       --  Sets the contents of Value into the return value
 
       --------------------------
       -- Set_Return_Attribute --
       --------------------------
 
-      procedure Set_Return_Attribute
-        (List : Argument_List; As_List : Boolean)
+      procedure Set_Return_Attribute (List : Argument_List; As_List : Boolean)
       is
          Result : Unbounded_String;
       begin
@@ -228,8 +230,7 @@ package body Project_Properties is
       -- Set_Return_Attribute --
       --------------------------
 
-      procedure Set_Return_Attribute
-        (Value : String; As_List : Boolean) is
+      procedure Set_Return_Attribute (Value : String; As_List : Boolean) is
       begin
          if As_List then
             Set_Return_Value_As_List (Data);
@@ -247,7 +248,7 @@ package body Project_Properties is
          Attribute_Is_List : Boolean;
          As_List           : Boolean)
       is
-         Descr  : constant Editable_Attribute_Description_Access :=
+         Descr : constant Editable_Attribute_Description_Access :=
            Get_Attribute_Type_From_Name (Pkg, Attr);
       begin
          if Descr = null then
@@ -257,17 +258,19 @@ package body Project_Properties is
 
             if Attribute_Is_List then
                declare
-                  List : String_List_Access := Project.Attribute_Value
-                    (Attribute_Pkg_List'(Build (Pkg, Attr)), Index,
-                     Use_Extended => True);
-                  Var  : constant String := Project.Attribute_Value
-                    (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                     Default => "", Index => Index,
-                     Use_Extended => True);
+                  List : String_List_Access :=
+                    Project.Attribute_Value
+                      (Attribute_Pkg_List'(Build (Pkg, Attr)),
+                       Index,
+                       Use_Extended => True);
+                  Var  : constant String :=
+                    Project.Attribute_Value
+                      (Attribute_Pkg_String'(Build (Pkg, Attr)),
+                       Default      => "",
+                       Index        => Index,
+                       Use_Extended => True);
                begin
-                  if List = null
-                    and then Var /= ""
-                  then
+                  if List = null and then Var /= "" then
                      --  Did we have a string attribute in fact ?
                      Set_Return_Attribute (Var, As_List);
 
@@ -284,16 +287,19 @@ package body Project_Properties is
 
             else
                declare
-                  Val : constant String := Project.Attribute_Value
-                    (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                     Default => "", Index => Index,
-                     Use_Extended => True);
+                  Val : constant String :=
+                    Project.Attribute_Value
+                      (Attribute_Pkg_String'(Build (Pkg, Attr)),
+                       Default      => "",
+                       Index        => Index,
+                       Use_Extended => True);
                begin
                   if Val = "" then
                      --  Did we have a list attribute in fact ?
                      declare
-                        List : String_List_Access := Project.Attribute_Value
-                          (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
+                        List : String_List_Access :=
+                          Project.Attribute_Value
+                            (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
                      begin
                         if List /= null then
                            Set_Return_Attribute (List.all, As_List);
@@ -315,8 +321,8 @@ package body Project_Properties is
          --  the default value for attributes not declared in the project
          if Descr.Is_List then
             declare
-               List : String_List_Access := Get_Current_Value
-                 (Kernel, Project, Descr, Index, True);
+               List : String_List_Access :=
+                 Get_Current_Value (Kernel, Project, Descr, Index, True);
             begin
                if List /= null then
                   Set_Return_Attribute (List.all, As_List);
@@ -338,10 +344,10 @@ package body Project_Properties is
       then
          Name_Parameters (Data, Get_Attributes_Parameters);
          Set_Return_Attribute
-           (Project => Get_Data (Data, 1),
-            Attr    => To_Lower (Nth_Arg (Data, 2)),
-            Pkg     => To_Lower (Nth_Arg (Data, 3, "")),
-            Index   => Nth_Arg (Data, 4, ""),
+           (Project           => Get_Data (Data, 1),
+            Attr              => To_Lower (Nth_Arg (Data, 2)),
+            Pkg               => To_Lower (Nth_Arg (Data, 3, "")),
+            Index             => Nth_Arg (Data, 4, ""),
             Attribute_Is_List => Command = "get_attribute_as_list",
             As_List           => Command = "get_attribute_as_list");
 
@@ -359,18 +365,22 @@ package body Project_Properties is
 
             else
                Set_Return_Attribute
-                 (Project => Get_Data (Data, 1),
-                  Attr    => To_Lower (To_String (Props.Project_Attribute)),
-                  Pkg     => To_Lower (To_String (Props.Project_Package)),
-                  Index   => To_String (Props.Project_Index),
+                 (Project           => Get_Data (Data, 1),
+                  Attr              =>
+                    To_Lower (To_String (Props.Project_Attribute)),
+                  Pkg               =>
+                    To_Lower (To_String (Props.Project_Package)),
+                  Index             => To_String (Props.Project_Index),
                   Attribute_Is_List => True,
-                  As_List => Command = "get_tool_switches_as_list");
+                  As_List           => Command = "get_tool_switches_as_list");
             end if;
          end;
 
       elsif Command = "is_modified" then
-         Name_Parameters (Data, (  --  1 => Self,
-                                 2 => Recursive_Cst'Unchecked_Access));
+         Name_Parameters
+           (Data,
+            (  --  1 => Self,
+             2 => Recursive_Cst'Unchecked_Access));
          declare
             Project   : constant Project_Type := Get_Data (Data, 1);
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
@@ -418,8 +428,8 @@ package body Project_Properties is
             Attribute_Name : constant String := Nth_Arg (Data, 2);
             Package_Name   : constant String := Nth_Arg (Data, 3);
             Index          : constant String := Nth_Arg (Data, 4);
-            Values         : GNAT.OS_Lib.Argument_List
-              (1 .. Number_Of_Arguments (Data) - 4);
+            Values         :
+              GNAT.OS_Lib.Argument_List (1 .. Number_Of_Arguments (Data) - 4);
             Attribute      : constant Attribute_Pkg_List :=
               Build (Package_Name, Attribute_Name);
          begin
@@ -459,12 +469,12 @@ package body Project_Properties is
             Attribute_Name : constant String := Nth_Arg (Data, 2);
             Package_Name   : constant String := Nth_Arg (Data, 3);
             Index          : constant String := Nth_Arg (Data, 4);
-            Values         : GNAT.OS_Lib.Argument_List
-              (1 .. Number_Of_Arguments (Data) - 4);
+            Values         :
+              GNAT.OS_Lib.Argument_List (1 .. Number_Of_Arguments (Data) - 4);
             Attribute      : constant Attribute_Pkg_List :=
               Build (Package_Name, Attribute_Name);
-            List           : String_List_Access := Project.Attribute_Value
-              (Attribute, Index);
+            List           : String_List_Access :=
+              Project.Attribute_Value (Attribute, Index);
             Found          : Boolean := False;
             First_Added    : Boolean := False;
          begin
@@ -476,8 +486,7 @@ package body Project_Properties is
                end loop;
 
                Project.Delete_Attribute
-                 (Attribute => Attribute,
-                  Index     => Index);
+                 (Attribute => Attribute, Index => Index);
 
                for J in reverse List'Range loop
                   Found := False;
@@ -522,8 +531,9 @@ package body Project_Properties is
                Set_Error_Msg (Data, -"Project is not editable");
             else
                Project.Delete_Attribute
-                 (Attribute => Attribute_Pkg_String'(Build
-                    (Package_Name, Attribute_Name)),
+                 (Attribute =>
+                    Attribute_Pkg_String'
+                      (Build (Package_Name, Attribute_Name)),
                   Index     => Index);
             end if;
          end;
@@ -545,32 +555,37 @@ package body Project_Properties is
       --  Redefine command to take into account attribute descriptions from
       --  projects.xml, which also provides the default values for attributes
       Override_Command
-        (Kernel.Scripts, "get_attribute_as_string",
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
+        (Kernel.Scripts,
+         "get_attribute_as_string",
+         Class   => Get_Project_Class (Kernel),
+         Handler => Create_Project_Command_Handler'Access);
       Override_Command
-        (Kernel.Scripts, "get_attribute_as_list",
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
+        (Kernel.Scripts,
+         "get_attribute_as_list",
+         Class   => Get_Project_Class (Kernel),
+         Handler => Create_Project_Command_Handler'Access);
 
       Register_Command
-        (Kernel, "get_tool_switches_as_list",
+        (Kernel,
+         "get_tool_switches_as_list",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "get_tool_switches_as_string",
+        (Kernel,
+         "get_tool_switches_as_string",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "get_extended_project",
-         Minimum_Args  => 0,
-         Maximum_Args  => 0,
-         Class         => Get_Project_Class (Kernel),
-         Handler       => Create_Project_Command_Handler'Access);
+        (Kernel,
+         "get_extended_project",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
    end Register_Module_Reader;
 
    ----------------------------
@@ -581,42 +596,48 @@ package body Project_Properties is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Command
-        (Kernel, "properties_editor",
+        (Kernel,
+         "properties_editor",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
       Register_Command
-        (Kernel, "set_attribute_as_string",
+        (Kernel,
+         "set_attribute_as_string",
          Minimum_Args => 4,
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "add_attribute_values",
+        (Kernel,
+         "add_attribute_values",
          Minimum_Args => 4,
          Maximum_Args => Natural'Last,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "remove_attribute_values",
+        (Kernel,
+         "remove_attribute_values",
          Minimum_Args => 4,
          Maximum_Args => Natural'Last,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "clear_attribute_values",
+        (Kernel,
+         "clear_attribute_values",
          Minimum_Args => 1,
          Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "is_modified",
-         Minimum_Args  => 0,
-         Maximum_Args  => 1,
-         Class         => Get_Project_Class (Kernel),
-         Handler       => Create_Project_Command_Handler'Access);
+        (Kernel,
+         "is_modified",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
    end Register_Module_Writer;
 
    ------------------------
@@ -626,9 +647,14 @@ package body Project_Properties is
    function Paths_Are_Relative (Project : Project_Type) return Boolean is
    begin
       case Get_Paths_Type (Project) is
-         when Relative  => return True;
-         when Absolute  => return False;
-         when From_Pref => return Generate_Relative_Paths.Get_Pref;
+         when Relative  =>
+            return True;
+
+         when Absolute  =>
+            return False;
+
+         when From_Pref =>
+            return Generate_Relative_Paths.Get_Pref;
       end case;
    end Paths_Are_Relative;
 
@@ -637,8 +663,7 @@ package body Project_Properties is
    ----------------------------------
 
    function Get_Attribute_Type_From_Name
-     (Pkg : String; Name : String)
-      return Editable_Attribute_Description_Access
+     (Pkg : String; Name : String) return Editable_Attribute_Description_Access
    is
       Result : constant Attribute_Description_Access :=
         Properties_Module_ID.Get_Attribute_Type_From_Name (Pkg, Name);
@@ -659,10 +684,10 @@ package body Project_Properties is
       --  First choice: if the editor is being edited, use that value
 
       if Attr.Editor /= null then
-         return Get_Value_As_String
-                  (Attr.Editor,
-                   (if Attr.Case_Sensitive_Index
-                    then Index else To_Lower (Index)));
+         return
+           Get_Value_As_String
+             (Attr.Editor,
+              (if Attr.Case_Sensitive_Index then Index else To_Lower (Index)));
       end if;
 
       --  Otherwise, we'll have to look in the project, or use the default
@@ -680,21 +705,22 @@ package body Project_Properties is
       Attr            : Editable_Attribute_Description_Access;
       Index           : String := "";
       Omit_If_Default : Boolean := False)
-      return GNAT.Strings.String_List_Access
-   is
+      return GNAT.Strings.String_List_Access is
    begin
       --  First choice: if the attribute is being edited, use that value
 
       if Attr.Editor /= null then
-         return new GNAT.Strings.String_List'
-                      (Get_Value_As_List
-                         (Attr.Editor,
-                          (if Attr.Case_Sensitive_Index
-                           then Index
-                           else To_Lower (Index))));
+         return
+           new GNAT.Strings.String_List'
+             (Get_Value_As_List
+                (Attr.Editor,
+                 (if Attr.Case_Sensitive_Index
+                  then Index
+                  else To_Lower (Index))));
       else
-         return Get_Value_From_Project
-           (Kernel, Project, Attr, Index, Omit_If_Default);
+         return
+           Get_Value_From_Project
+             (Kernel, Project, Attr, Index, Omit_If_Default);
       end if;
    end Get_Current_Value;
 
@@ -702,9 +728,9 @@ package body Project_Properties is
    -- New_Attribute_Description --
    -------------------------------
 
-   overriding function New_Attribute_Description
-     (Module  : access Properties_Module_ID_Record;
-      Indexed : Boolean)
+   overriding
+   function New_Attribute_Description
+     (Module : access Properties_Module_ID_Record; Indexed : Boolean)
       return Attribute_Description_Access
    is
       pragma Unreferenced (Module);

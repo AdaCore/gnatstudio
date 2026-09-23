@@ -17,24 +17,23 @@
 
 --  Concrete implementation of the DAP 'pause' request
 
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Pause;
 
 package DAP.Clients.Pause is
 
    type Pause_Request (<>) is
-     new DAP.Requests.Pause.Pause_DAP_Request
-   with private;
+     new DAP.Requests.Pause.Pause_DAP_Request with private;
    type Pause_Request_Access is access all Pause_Request'Class;
 
    procedure Send_Pause_Request
-     (Client    : in out DAP.Clients.DAP_Client'Class;
-      Thread_Id : Integer);
+     (Client : in out DAP.Clients.DAP_Client'Class; Thread_Id : Integer);
    --  Send a new DAP 'pause' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Pause_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.PauseResponse;
@@ -42,12 +41,11 @@ package DAP.Clients.Pause is
 
 private
 
-   type Pause_Request is
-     new DAP.Requests.Pause.Pause_DAP_Request with null record;
+   type Pause_Request is new DAP.Requests.Pause.Pause_DAP_Request
+   with null record;
 
    function Create
-     (Kernel    : not null Kernel_Handle;
-      Thread_Id : Integer)
+     (Kernel : not null Kernel_Handle; Thread_Id : Integer)
       return Pause_Request_Access;
    --  Create a new DAP 'pause' request.
 

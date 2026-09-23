@@ -15,59 +15,59 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Streams;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
-with Ada.Strings.Maps;         use Ada.Strings.Maps;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Strings;             use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with GNATCOLL.Coders.Base64;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with Glib;                     use Glib;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Values;              use Glib.Values;
+with Glib;            use Glib;
+with Glib.Properties; use Glib.Properties;
+with Glib.Values;     use Glib.Values;
 
-with Pango.Font;               use Pango.Font;
+with Pango.Font; use Pango.Font;
 
-with Gdk.Event;                use Gdk.Event;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Gdk.Window;               use Gdk.Window;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Window;        use Gdk.Window;
 
-with Gtk;                      use Gtk;
-with Gtk.Adjustment;           use Gtk.Adjustment;
-with Gtk.Arguments;            use Gtk.Arguments;
-with Gtk.Arrow;                use Gtk.Arrow;
-with Gtk.Button;               use Gtk.Button;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk;                 use Gtk;
+with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Arguments;       use Gtk.Arguments;
+with Gtk.Arrow;           use Gtk.Arrow;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Flow_Box;             use Gtk.Flow_Box;
-with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Flow_Box;        use Gtk.Flow_Box;
+with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Hbutton_Box;          use Gtk.Hbutton_Box;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Spin_Button;          use Gtk.Spin_Button;
-with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Text_Mark;            use Gtk.Text_Mark;
-with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
-with Gtk.Text_Tag;             use Gtk.Text_Tag;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Viewport;             use Gtk.Viewport;
-with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Separator;       use Gtk.Separator;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Spin_Button;     use Gtk.Spin_Button;
+with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
+with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Gtk.Text_Mark;       use Gtk.Text_Mark;
+with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
+with Gtk.Text_Tag;        use Gtk.Text_Tag;
+with Gtk.Text_View;       use Gtk.Text_View;
+with Gtk.Viewport;        use Gtk.Viewport;
+with Gtk.Widget;          use Gtk.Widget;
 
-with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
 with Gtkada.Types;
 
 with VSS.Strings;
@@ -75,21 +75,22 @@ with VSS.Strings.Conversions;
 
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
-with Commands.Interactive;     use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 
-with DAP.Clients;              use DAP.Clients;
+with DAP.Clients;             use DAP.Clients;
 with DAP.Clients.Evaluate;
 with DAP.Module;
-with DAP.Contexts;             use DAP.Contexts;
-with DAP.Modules.Preferences;  use DAP.Modules.Preferences;
-with DAP.Requests;             use DAP.Requests;
+with DAP.Contexts;            use DAP.Contexts;
+with DAP.Modules.Preferences; use DAP.Modules.Preferences;
+with DAP.Requests;            use DAP.Requests;
 with DAP.Tools;
-with DAP.Types;                use DAP.Types;
-with DAP.Utils;                use DAP.Utils;
+with DAP.Types;               use DAP.Types;
+with DAP.Utils;               use DAP.Utils;
 
 with DAP.Requests.ReadMemory;
 with DAP.Requests.WriteMemory;
@@ -126,19 +127,19 @@ package body DAP.Views.Memory is
    -- View_Record --
 
    type View_Record is new Gtk_Vbox_Record with record
-      Pgup           : Gtk_Button;
-      Pgdn           : Gtk_Button;
-      Viewport       : Gtk_Viewport;
-      View           : Gtk_Text_View;
-      Reset          : Gtk_Button;
-      Submit         : Gtk_Button;
-      Close          : Gtk_Button;
-      Address_View   : Gtk_Button;
-      Format         : Gtk_Combo_Box_Text;
-      Show_Ascii     : Gtk_Check_Button;
-      Size           : Gtk_Combo_Box_Text;
-      Address_Entry  : Gtk_Entry;
-      Lines_Spin     : Gtk_Spin_Button;
+      Pgup          : Gtk_Button;
+      Pgdn          : Gtk_Button;
+      Viewport      : Gtk_Viewport;
+      View          : Gtk_Text_View;
+      Reset         : Gtk_Button;
+      Submit        : Gtk_Button;
+      Close         : Gtk_Button;
+      Address_View  : Gtk_Button;
+      Format        : Gtk_Combo_Box_Text;
+      Show_Ascii    : Gtk_Check_Button;
+      Size          : Gtk_Combo_Box_Text;
+      Address_Entry : Gtk_Entry;
+      Lines_Spin    : Gtk_Spin_Button;
    end record;
    type View_Access is access all View_Record'Class;
 
@@ -147,71 +148,72 @@ package body DAP.Views.Memory is
 
    -- DAP_Memory_View_Record --
 
-   type DAP_Memory_View_Record is new DAP.Views.View_Record with
-      record
-         Editor            : View_Access;
+   type DAP_Memory_View_Record is new DAP.Views.View_Record with record
+      Editor : View_Access;
 
-         Display           : Display_Type := Hex;
-         --  The current display mode.
+      Display : Display_Type := Hex;
+      --  The current display mode.
 
-         Data              : Data_Size := Byte;
-         --  The size of data to display;
+      Data : Data_Size := Byte;
+      --  The size of data to display;
 
-         Starting_Address  : Long_Long_Integer := 0;
-         --  The first address that is being explored.
+      Starting_Address : Long_Long_Integer := 0;
+      --  The first address that is being explored.
 
-         Dump              : Memory_Dump_Access;
-         --  Dump of memory returned by Debugger
+      Dump : Memory_Dump_Access;
+      --  Dump of memory returned by Debugger
 
-         Label_Length      : Natural;
-         --  Length of labels printed after address
+      Label_Length : Natural;
+      --  Length of labels printed after address
 
-         Old_Values        : GNAT.Strings.String_Access;
-         --  The data used to set markers on the values.
-         --  This is a string of hexadecimal digits.
+      Old_Values : GNAT.Strings.String_Access;
+      --  The data used to set markers on the values.
+      --  This is a string of hexadecimal digits.
 
-         New_Values        : GNAT.Strings.String_Access;
-         --  The values that are to be shown in the window.
-         --  A string of the same size as Old_Values.
+      New_Values : GNAT.Strings.String_Access;
+      --  The values that are to be shown in the window.
+      --  A string of the same size as Old_Values.
 
-         Edit_Mode         : Boolean := False;
-         --  Edit_Mode is False till user starts to edit memory.
-         --  If Edit_Mode then Old_Values represent actual values in memory,
-         --  and New_Values includes user input not applied to memory yet.
-         --  If Edit_Mode = False then Old_Values holds previous value
-         --  and New_Values has actual values in memory.
+      Edit_Mode : Boolean := False;
+      --  Edit_Mode is False till user starts to edit memory.
+      --  If Edit_Mode then Old_Values represent actual values in memory,
+      --  and New_Values includes user input not applied to memory yet.
+      --  If Edit_Mode = False then Old_Values holds previous value
+      --  and New_Values has actual values in memory.
 
-         Number_Of_Bytes   : Integer := 256;
-         --  The size of the pages that are currently stored.
+      Number_Of_Bytes : Integer := 256;
+      --  The size of the pages that are currently stored.
 
-         Number_Of_Columns : Integer := 16;
-         --  The number of columns that are to be displayed.
+      Number_Of_Columns : Integer := 16;
+      --  The number of columns that are to be displayed.
 
-         Unit_Size         : Integer := 2;
-         --  The size, in number of elements from Values, of the current
-         --  grouping unit (ie 2 for Bytes, 4 for Halfword, 8 for Word....)
+      Unit_Size : Integer := 2;
+      --  The size, in number of elements from Values, of the current
+      --  grouping unit (ie 2 for Bytes, 4 for Halfword, 8 for Word....)
 
-         Trunc             : Integer;
-         --  The size of a separate element in the view (ie 2 for a Byte
-         --  displayed in Hex, 3 for a Byte displayed in Decimal ...)
+      Trunc : Integer;
+      --  The size of a separate element in the view (ie 2 for a Byte
+      --  displayed in Hex, 3 for a Byte displayed in Decimal ...)
 
-         Default_Tag       : Gtk_Text_Tag;
-         --  Tag used for the default text
+      Default_Tag : Gtk_Text_Tag;
+      --  Tag used for the default text
 
-         Modified_Tag      : Gtk_Text_Tag;
-         --  Tag used to display modified chunks
+      Modified_Tag : Gtk_Text_Tag;
+      --  Tag used to display modified chunks
 
-         Address_Tag       : Gtk_Text_Tag;
-         --  Tag used to display addresses
+      Address_Tag : Gtk_Text_Tag;
+      --  Tag used to display addresses
 
-         Editable_Tag      : Gtk_Text_Tag;
-         --  Tag used to display some text that could be modified by the user
-      end record;
+      Editable_Tag : Gtk_Text_Tag;
+      --  Tag used to display some text that could be modified by the user
+   end record;
    type DAP_Memory_View is access all DAP_Memory_View_Record'Class;
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (View : not null access DAP_Memory_View_Record);
-   overriding procedure Update (View : not null access DAP_Memory_View_Record);
+   overriding
+   procedure Update (View : not null access DAP_Memory_View_Record);
 
    function Initialize
      (Widget : access DAP_Memory_View_Record'Class) return Gtk_Widget;
@@ -223,31 +225,31 @@ package body DAP.Views.Memory is
       return access DAP_Memory_View_Record'Class;
    --  Store or retrieve the view from the client
 
-   package Memory_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Memory_View",
-      View_Name                       => "Memory",
-      Formal_View_Record              => DAP_Memory_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Bottom,
-      Initialize                      => Initialize);
-   package Simple_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Memory_MDI_Views,
-      Formal_View_Record => DAP_Memory_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Memory_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Memory_View",
+        View_Name                       => "Memory",
+        Formal_View_Record              => DAP_Memory_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Bottom,
+        Initialize                      => Initialize);
+   package Simple_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Memory_MDI_Views,
+        Formal_View_Record => DAP_Memory_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Display_Memory
-     (View    : access DAP_Memory_View_Record'Class;
-      Address : Long_Long_Integer);
+     (View : access DAP_Memory_View_Record'Class; Address : Long_Long_Integer);
    --  Display the contents of the memory into the text area.
 
    procedure Display_Memory
-     (View    : access DAP_Memory_View_Record'Class;
-      Address : String);
+     (View : access DAP_Memory_View_Record'Class; Address : String);
    --  Display the contents of the memory into the text area.
    --  Address is a string that represents an address in hexadecimal,
    --  it should be made of the "0x" prefix followed by hexadecimal.
@@ -264,12 +266,12 @@ package body DAP.Views.Memory is
    --  Move up or down one page in the view.
 
    type View_Memory_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Init_Graphics
-     (View : access DAP_Memory_View_Record'Class);
+   procedure Init_Graphics (View : access DAP_Memory_View_Record'Class);
    --  Initialize fonts and graphics used for this widget.
 
    procedure Update_Display (View : access DAP_Memory_View_Record'Class);
@@ -277,13 +279,11 @@ package body DAP.Views.Memory is
 
    type Dir is (Up, Down, Left, Right);
    procedure Move_Cursor
-     (View  : access DAP_Memory_View_Record'Class;
-      Where : Dir);
+     (View : access DAP_Memory_View_Record'Class; Where : Dir);
    --  Moves the cursor.
 
    procedure Insert
-     (View : access DAP_Memory_View_Record'Class;
-      Char : String);
+     (View : access DAP_Memory_View_Record'Class; Char : String);
    --  Inserts string at the current location.
 
    procedure Start_Editing (View : access DAP_Memory_View_Record'Class);
@@ -298,33 +298,26 @@ package body DAP.Views.Memory is
 
    procedure On_Address_Entry_Activate
      (Object : access Gtk_Widget_Record'Class);
-   procedure On_Address_View_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Size_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Data_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Show_Ascii_Toggled
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Address_View_Clicked (Object : access Gtk_Widget_Record'Class);
+   procedure On_Size_Entry_Changed (Object : access Gtk_Widget_Record'Class);
+   procedure On_Data_Entry_Changed (Object : access Gtk_Widget_Record'Class);
+   procedure On_Show_Ascii_Toggled (Object : access Gtk_Widget_Record'Class);
+   procedure On_Pgup_Clicked (Object : access Gtk_Widget_Record'Class);
+   procedure On_Pgdn_Clicked (Object : access Gtk_Widget_Record'Class);
    function On_View_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : GValues) return Boolean;
+     (Object : access Gtk_Widget_Record'Class; Params : GValues)
+      return Boolean;
    function On_View_Button_Release_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   procedure On_Reset_Clicked
-     (Object : access Gtk_Widget_Record'Class);
+     (Object : access Gtk_Widget_Record'Class; Params : Gtk.Arguments.Gtk_Args)
+      return Boolean;
+   procedure On_Reset_Clicked (Object : access Gtk_Widget_Record'Class);
    procedure On_Submit_Clicked (Object : access Gtk_Widget_Record'Class);
    function On_Button_Release
      (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Callbacks for the various buttons
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Memory_Dump, Memory_Dump_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Memory_Dump, Memory_Dump_Access);
 
    --------------------
    -- Local packages --
@@ -338,18 +331,18 @@ package body DAP.Views.Memory is
    ---------------------
 
    Address_Length       : constant Integer := 16;
-   Address_Separator    : constant String  := ": ";
-   Data_Separator       : constant String  := " ";
-   ASCII_Separator      : constant String  := " ";
-   Data_ASCII_Separator : constant String  := " -  ";
+   Address_Separator    : constant String := ": ";
+   Data_Separator       : constant String := " ";
+   ASCII_Separator      : constant String := " ";
+   Data_ASCII_Separator : constant String := " -  ";
 
-   Non_Valid_Character  : constant String  := "-";
+   Non_Valid_Character : constant String := "-";
 
-   End_Of_Line       : constant String  := (1 => ASCII.LF);
-   Hex_Header        : constant String  := "16#";
-   Hex_Footer        : constant String  := "#";
+   End_Of_Line : constant String := (1 => ASCII.LF);
+   Hex_Header  : constant String := "16#";
+   Hex_Footer  : constant String := "#";
 
-   Line_Base_Size    : constant Integer := 16;
+   Line_Base_Size : constant Integer := 16;
    --  Number of bytes per line.
 
    procedure Clear_View (View : access DAP_Memory_View_Record'Class);
@@ -369,21 +362,20 @@ package body DAP.Views.Memory is
    --  If Is_ASCII and the conversion failed returns Non_Valid_Character
 
    procedure Get_Coordinates
-    (View     : access DAP_Memory_View_Record'Class;
-     Position : Gint;
-     Row      : out Integer;
-     Column   : out Integer);
+     (View     : access DAP_Memory_View_Record'Class;
+      Position : Gint;
+      Row      : out Integer;
+      Column   : out Integer);
    --  Gives the bloc coordinates from a given position.
 
    function Position_To_Bloc
-     (View     : access DAP_Memory_View_Record'Class;
-      Position : Gint) return Integer;
+     (View : access DAP_Memory_View_Record'Class; Position : Gint)
+      return Integer;
    --  Gives the bloc number at the given position.
 
    function To_Standard_Base
-     (Address  : Long_Long_Integer;
-      Base     : Integer;
-      Trunc_At : Integer := -1) return String;
+     (Address : Long_Long_Integer; Base : Integer; Trunc_At : Integer := -1)
+      return String;
    --  Conversion from a Long_Long_Integer to a based representation.
    --  Output is truncated to Trunc_At characters if Trunc_At /= -1.
 
@@ -395,42 +387,47 @@ package body DAP.Views.Memory is
    -- Read_Request --
    ------------------
 
-   type Read_Request is
-     new DAP.Requests.ReadMemory.Read_Memory_DAP_Request with record
+   type Read_Request is new DAP.Requests.ReadMemory.Read_Memory_DAP_Request
+   with record
       Address : Long_Long_Integer;
    end record;
    type Read_Request_Access is access all Read_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Read_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Read_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    -------------------
    -- Write_Request --
    -------------------
 
-   type Write_Request is
-     new DAP.Requests.WriteMemory.Write_Memory_DAP_Request with null record;
+   type Write_Request is new DAP.Requests.WriteMemory.Write_Memory_DAP_Request
+   with null record;
    type Write_Request_Access is access all Write_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Write_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.WriteMemoryResponse;
-      New_Request : in out DAP_Request_Access) is null;
+      New_Request : in out DAP_Request_Access)
+   is null;
 
    ---------------------------
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (View : not null access DAP_Memory_View_Record) is
    begin
       Clear_View (View);
@@ -474,46 +471,65 @@ package body DAP.Views.Memory is
       Init_Graphics (Widget);
 
       Widget_Callback.Object_Connect
-        (Widget.Editor.Address_Entry, Gtk.GEntry.Signal_Activate,
+        (Widget.Editor.Address_Entry,
+         Gtk.GEntry.Signal_Activate,
          Widget_Callback.To_Marshaller (On_Address_Entry_Activate'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Address_View, Signal_Clicked,
+        (Widget.Editor.Address_View,
+         Signal_Clicked,
          Widget_Callback.To_Marshaller (On_Address_View_Clicked'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Size, Gtk.Combo_Box.Signal_Changed,
+        (Widget.Editor.Size,
+         Gtk.Combo_Box.Signal_Changed,
          Widget_Callback.To_Marshaller (On_Size_Entry_Changed'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Format, Gtk.Combo_Box.Signal_Changed,
+        (Widget.Editor.Format,
+         Gtk.Combo_Box.Signal_Changed,
          Widget_Callback.To_Marshaller (On_Data_Entry_Changed'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Show_Ascii, Signal_Toggled,
+        (Widget.Editor.Show_Ascii,
+         Signal_Toggled,
          Widget_Callback.To_Marshaller (On_Show_Ascii_Toggled'Access),
          Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Pgup, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Pgup_Clicked'Access), Widget);
+        (Widget.Editor.Pgup,
+         Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Pgup_Clicked'Access),
+         Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Pgdn, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Pgdn_Clicked'Access), Widget);
+        (Widget.Editor.Pgdn,
+         Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Pgdn_Clicked'Access),
+         Widget);
       Return_Callback.Object_Connect
-        (Widget.Editor.View, Signal_Key_Press_Event,
-         On_View_Key_Press_Event'Access, Widget);
+        (Widget.Editor.View,
+         Signal_Key_Press_Event,
+         On_View_Key_Press_Event'Access,
+         Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Submit, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Submit_Clicked'Access), Widget);
+        (Widget.Editor.Submit,
+         Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Submit_Clicked'Access),
+         Widget);
       Return_Callback.Object_Connect
-        (Widget.Editor.View, Signal_Button_Release_Event,
-         On_View_Button_Release_Event'Access, Widget);
+        (Widget.Editor.View,
+         Signal_Button_Release_Event,
+         On_View_Button_Release_Event'Access,
+         Widget);
       Widget_Callback.Object_Connect
-        (Widget.Editor.Reset, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Reset_Clicked'Access), Widget);
+        (Widget.Editor.Reset,
+         Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Reset_Clicked'Access),
+         Widget);
       Return_Callback.Object_Connect
-        (Gtk_Entry (Widget.Editor.Lines_Spin), Signal_Button_Release_Event,
-         On_Button_Release'Access, Widget);
+        (Gtk_Entry (Widget.Editor.Lines_Spin),
+         Signal_Button_Release_Event,
+         On_Button_Release'Access,
+         Widget);
 
       Show_All (Widget);
       return Gtk_Widget (Widget.Editor);
@@ -545,9 +561,9 @@ package body DAP.Views.Memory is
                when 'a' .. 'f' =>
                   return Character'Pos (C) - Character'Pos ('a') + 10;
 
-               when others =>
-                  raise Constraint_Error with
-                    "Wrong character '" & C & "' in Apply_Changes";
+               when others     =>
+                  raise Constraint_Error
+                    with "Wrong character '" & C & "' in Apply_Changes";
             end case;
          end Digit;
 
@@ -568,8 +584,8 @@ package body DAP.Views.Memory is
       end if;
 
       for J in 1 .. View.Number_Of_Bytes loop
-         if View.New_Values (J * 2 - 1 .. J * 2) /=
-           View.Old_Values (J * 2 - 1 .. J * 2)
+         if View.New_Values (J * 2 - 1 .. J * 2)
+           /= View.Old_Values (J * 2 - 1 .. J * 2)
          then
             Src (1) := To_Binary (View.New_Values (J * 2 - 1 .. J * 2));
             Base64_Encoder.Initialize;
@@ -583,17 +599,22 @@ package body DAP.Views.Memory is
             declare
                D   : constant Stream_Element_Array (1 .. Last) :=
                  Dest (1 .. Last);
-               Str : constant String
-                 (1 .. Integer (Last * Stream_Element'Size) / Character'Size)
-                   with Import;
+               Str :
+                 constant String
+                            (1
+                             ..
+                               Integer (Last * Stream_Element'Size)
+                               / Character'Size)
+               with Import;
                for Str'Address use D'Address;
             begin
                Request := new Write_Request (View.Kernel);
                Request.Parameters.arguments.memoryReference :=
                  VSS.Strings.Conversions.To_Virtual_String
-                   ("0x" & To_Standard_Base
-                      (View.Starting_Address + Long_Long_Integer (J - 1),
-                       16));
+                   ("0x"
+                    & To_Standard_Base
+                        (View.Starting_Address + Long_Long_Integer (J - 1),
+                         16));
                Request.Parameters.arguments.allowPartial := True;
                Request.Parameters.arguments.data :=
                  VSS.Strings.Conversions.To_Virtual_String (Str);
@@ -629,9 +650,7 @@ package body DAP.Views.Memory is
    -- Init_Graphics --
    -------------------
 
-   procedure Init_Graphics
-     (View : access DAP_Memory_View_Record'Class)
-   is
+   procedure Init_Graphics (View : access DAP_Memory_View_Record'Class) is
       Buffer    : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Tag_Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Buffer);
       Font      : constant Pango_Font_Description :=
@@ -647,17 +666,23 @@ package body DAP.Views.Memory is
       --  Tag used to display modified memory
       Gtk_New (View.Modified_Tag);
       Set_Property (View.Modified_Tag, Background_Rgba_Property, Null_RGBA);
-      Set_Property (View.Modified_Tag, Foreground_Rgba_Property,
-                    Blocks_Style.Get_Pref_Fg);
+      Set_Property
+        (View.Modified_Tag,
+         Foreground_Rgba_Property,
+         Blocks_Style.Get_Pref_Fg);
       Set_Property (View.Modified_Tag, Font_Desc_Property, Font);
       Add (Tag_Table, View.Modified_Tag);
 
       --  Tag used to display memory addresses
       Gtk_New (View.Address_Tag);
-      Set_Property (View.Address_Tag, Background_Rgba_Property,
-                    Memory_Highlighted_Color.Get_Pref);
-      Set_Property (View.Address_Tag, Foreground_Rgba_Property,
-                    Memory_View_Color.Get_Pref);
+      Set_Property
+        (View.Address_Tag,
+         Background_Rgba_Property,
+         Memory_Highlighted_Color.Get_Pref);
+      Set_Property
+        (View.Address_Tag,
+         Foreground_Rgba_Property,
+         Memory_View_Color.Get_Pref);
       Set_Property (View.Address_Tag, Font_Desc_Property, Font);
       Set_Property (View.Address_Tag, Text_Tag.Editable_Property, False);
       Add (Tag_Table, View.Address_Tag);
@@ -673,8 +698,7 @@ package body DAP.Views.Memory is
    --------------------
 
    procedure Display_Memory
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Address : String)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Address : String)
    is
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
@@ -696,8 +720,9 @@ package body DAP.Views.Memory is
    procedure Page_Up (View : access DAP_Memory_View_Record'Class) is
    begin
       Display_Memory
-        (View, View.Starting_Address -
-           Long_Long_Integer
+        (View,
+         View.Starting_Address
+         - Long_Long_Integer
              (Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
               * Line_Base_Size));
    end Page_Up;
@@ -709,8 +734,9 @@ package body DAP.Views.Memory is
    procedure Page_Down (View : access DAP_Memory_View_Record'Class) is
    begin
       Display_Memory
-        (View, View.Starting_Address +
-           Long_Long_Integer
+        (View,
+         View.Starting_Address
+         + Long_Long_Integer
              (Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
               * Line_Base_Size));
    end Page_Down;
@@ -771,9 +797,7 @@ package body DAP.Views.Memory is
          end if;
       end;
 
-      if Endianness = Little_Endian
-        and then Old_Size /= View.Data
-      then
+      if Endianness = Little_Endian and then Old_Size /= View.Data then
          --  Swap back to original.
          Swap_Blocks (View, Old_Size);
 
@@ -782,29 +806,34 @@ package body DAP.Views.Memory is
       end if;
 
       case View.Data is
-         when Byte =>
+         when Byte     =>
             View.Unit_Size := 2;
+
          when Halfword =>
             View.Unit_Size := 4;
-         when Word =>
+
+         when Word     =>
             View.Unit_Size := 8;
       end case;
 
       case View.Display is
-         when Hex =>
+         when Hex     =>
             View.Trunc := View.Unit_Size;
-         when Text =>
+
+         when Text    =>
             View.Trunc := View.Unit_Size / 2;
+
          when Decimal =>
             View.Trunc := Integer (Float (View.Unit_Size) * 1.2 + 0.5);
-         when Octal =>
+
+         when Octal   =>
             View.Trunc := View.Unit_Size * 2;
       end case;
 
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
-      if Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size >
-        View.Old_Values'Length
+      if Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
+        > View.Old_Values'Length
       then
          Display_Memory (View, View.Starting_Address);
          return;
@@ -823,13 +852,17 @@ package body DAP.Views.Memory is
            (Buffer,
             End_Iter,
             To_Standard_Base
-              (View.Starting_Address +
-                 Long_Long_Integer
-                   ((Line_Index - 1) * View.Number_Of_Columns *
-                      View.Unit_Size / 2),
-               16, Address_Length)
-            & ' ' & VSS.Strings.Conversions.To_UTF_8_String
-              (View.Dump (Line_Index).Label)
+              (View.Starting_Address
+               + Long_Long_Integer
+                   ((Line_Index - 1)
+                    * View.Number_Of_Columns
+                    * View.Unit_Size
+                    / 2),
+               16,
+               Address_Length)
+            & ' '
+            & VSS.Strings.Conversions.To_UTF_8_String
+                (View.Dump (Line_Index).Label)
             & Address_Separator);
 
          Get_Iter_At_Mark (Buffer, Start_Iter, Start_Mark);
@@ -839,12 +872,13 @@ package body DAP.Views.Memory is
          Place_Cursor (Buffer, End_Iter);
 
          for Column_Index in 1 .. View.Number_Of_Columns loop
-            Index := (Line_Index - 1) *
-              View.Number_Of_Columns * View.Unit_Size
-              + (Column_Index - 1) * View.Unit_Size + 1;
+            Index :=
+              (Line_Index - 1) * View.Number_Of_Columns * View.Unit_Size
+              + (Column_Index - 1) * View.Unit_Size
+              + 1;
 
-            if View.Old_Values (Index .. Index + View.Unit_Size - 1) /=
-              View.New_Values (Index .. Index + View.Unit_Size - 1)
+            if View.Old_Values (Index .. Index + View.Unit_Size - 1)
+              /= View.New_Values (Index .. Index + View.Unit_Size - 1)
             then
                Tag := View.Modified_Tag;
             else
@@ -903,10 +937,7 @@ package body DAP.Views.Memory is
 
          Gdk.Window.Invalidate_Rect
            (View.Get_Window,
-            (X      => 0,
-             Y      => 0,
-             Width  => Width_Box,
-             Height => Height_Box),
+            (X => 0, Y => 0, Width => Width_Box, Height => Height_Box),
             True);
       end;
 
@@ -918,24 +949,24 @@ package body DAP.Views.Memory is
    --------------------
 
    procedure Display_Memory
-     (View    : access DAP_Memory_View_Record'Class;
-      Address : Long_Long_Integer)
+     (View : access DAP_Memory_View_Record'Class; Address : Long_Long_Integer)
    is
-      Client : constant DAP.Clients.DAP_Client_Access :=
+      Client          : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
       Number_Of_Lines : constant Integer :=
         Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
-      Req    : Read_Request_Access;
+      Req             : Read_Request_Access;
 
    begin
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
       if View.Old_Values = null
-        or else Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
+        or else
+          Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
           /= View.Old_Values'Length
       then
-         View.Number_Of_Bytes := Number_Of_Lines * View.Number_Of_Columns
-           * View.Unit_Size / 2;
+         View.Number_Of_Bytes :=
+           Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size / 2;
       end if;
 
       Free (View.Dump);
@@ -954,47 +985,47 @@ package body DAP.Views.Memory is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Read_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
-      View : constant DAP_Memory_View := DAP_Memory_View
-        (Memory_MDI_Views.Retrieve_View (Self.Kernel));
+      View : constant DAP_Memory_View :=
+        DAP_Memory_View (Memory_MDI_Views.Retrieve_View (Self.Kernel));
    begin
-      if Self.Address = 0
-        and then View /= null
-      then
+      if Self.Address = 0 and then View /= null then
          View.Fill_Values;
       end if;
 
       DAP.Requests.ReadMemory.On_Error_Message
         (DAP.Requests.ReadMemory.Read_Memory_DAP_Request (Self),
-         Client, Message);
+         Client,
+         Message);
    end On_Error_Message;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Read_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access)
    is
       use Ada.Streams;
-      View : constant DAP_Memory_View := DAP_Memory_View
-        (Memory_MDI_Views.Retrieve_View (Self.Kernel));
+      View : constant DAP_Memory_View :=
+        DAP_Memory_View (Memory_MDI_Views.Retrieve_View (Self.Kernel));
 
       Dump_Index : Integer := 1;
       Total      : Integer := 0;
 
       -- Swap --
       procedure Swap;
-      procedure Swap
-      is
-         S :          String := To_UTF_8_String (View.Dump (Dump_Index).Value);
+      procedure Swap is
+         S : String := To_UTF_8_String (View.Dump (Dump_Index).Value);
          L : constant Natural := S'Last;
       begin
          if Client.Get_Endian_Type = Little_Endian then
@@ -1019,28 +1050,32 @@ package body DAP.Views.Memory is
          return;
       end if;
 
-      View.Dump := new Memory_Dump
-        (1 .. (View.Number_Of_Bytes + Dump_Item_Size - 1) /
-             Dump_Item_Size);
+      View.Dump :=
+        new Memory_Dump
+              (1
+               ..
+                 (View.Number_Of_Bytes + Dump_Item_Size - 1) / Dump_Item_Size);
 
       if Result.a_body.Is_Set then
          declare
             Base64_Decoder : GNATCOLL.Coders.Base64.Decoder_Type;
-            Str     : constant String := To_UTF8 (Result.a_body.Value.data);
-            Src     : Stream_Element_Array (1 .. Str'Length) with Import;
+            Str            : constant String :=
+              To_UTF8 (Result.a_body.Value.data);
+            Src            : Stream_Element_Array (1 .. Str'Length)
+            with Import;
             for Src'Address use Str'Address;
-            Index   : Stream_Element_Offset := Src'First;
-            Dest    : Stream_Element_Array (1 .. 4096);
-            Last    : Stream_Element_Offset;
-            Count   : Integer := 0;
+            Index          : Stream_Element_Offset := Src'First;
+            Dest           : Stream_Element_Array (1 .. 4096);
+            Last           : Stream_Element_Offset;
+            Count          : Integer := 0;
 
             function To_Hex_String (Num : Stream_Element) return String;
             function To_Hex_String (Num : Stream_Element) return String is
-               Hex_Digit : constant array
-                 (Stream_Element range 0 .. 15) of Character :=
-                 "0123456789ABCDEF";
-               Result : String (1 .. 2);
-               Value  : Stream_Element := Num;
+               Hex_Digit :
+                 constant array (Stream_Element range 0 .. 15) of Character :=
+                   "0123456789ABCDEF";
+               Result    : String (1 .. 2);
+               Value     : Stream_Element := Num;
             begin
                for J in reverse Result'Range loop
                   Result (J) := Hex_Digit (Value mod 16);
@@ -1096,9 +1131,12 @@ package body DAP.Views.Memory is
       Index  : Positive := Values'First;
    begin
       if View.Dump = null then
-         View.Dump := new Memory_Dump
-           (1 .. (View.Number_Of_Bytes + Dump_Item_Size - 1) /
-                Dump_Item_Size);
+         View.Dump :=
+           new Memory_Dump
+                 (1
+                  ..
+                    (View.Number_Of_Bytes + Dump_Item_Size - 1)
+                    / Dump_Item_Size);
       end if;
 
       --  Fill the values that could not be accessed with "-"
@@ -1111,30 +1149,33 @@ package body DAP.Views.Memory is
       View.Label_Length := 0;
       --  Copy all Dump.Value-s to Values
       for J in View.Dump'Range loop
-         Values (Index .. Index +
-                   Positive (View.Dump (J).Value.Character_Length) - 1) :=
-             To_UTF_8_String (View.Dump (J).Value);
+         Values
+           (Index
+            .. Index + Positive (View.Dump (J).Value.Character_Length) - 1) :=
+           To_UTF_8_String (View.Dump (J).Value);
 
          Index := Index + Positive (View.Dump (J).Value.Character_Length);
 
-         View.Label_Length := Natural'Max
-           (View.Label_Length, Natural (View.Dump (J).Label.Character_Length));
+         View.Label_Length :=
+           Natural'Max
+             (View.Label_Length,
+              Natural (View.Dump (J).Label.Character_Length));
       end loop;
 
       --  Make length of all labels equal
       for J in View.Dump'Range loop
-         View.Dump (J).Label := To_Virtual_String
-           (Head
-              (To_UTF_8_String (View.Dump (J).Label), View.Label_Length));
+         View.Dump (J).Label :=
+           To_Virtual_String
+             (Head (To_UTF_8_String (View.Dump (J).Label), View.Label_Length));
       end loop;
 
       Free (View.New_Values);
       View.New_Values := new String'(Values);
 
-      if View.Starting_Address /= Address or else
-        View.Old_Values = null or else
-        View.Old_Values'Length /= View.Number_Of_Bytes * 2 or else
-        View.Edit_Mode
+      if View.Starting_Address /= Address
+        or else View.Old_Values = null
+        or else View.Old_Values'Length /= View.Number_Of_Bytes * 2
+        or else View.Edit_Mode
       then
          --  Clear original data if Address or Number_Of_Bytes changed
          Free (View.Old_Values);
@@ -1143,10 +1184,11 @@ package body DAP.Views.Memory is
       end if;
 
       View.Starting_Address := Address;
-      View.Data   := Byte;
+      View.Data := Byte;
       Update_Display (View);
-      Set_Text (View.Editor.Address_Entry,
-                "0x" & To_Standard_Base (Address, 16, Address_Length));
+      Set_Text
+        (View.Editor.Address_Entry,
+         "0x" & To_Standard_Base (Address, 16, Address_Length));
    end Fill_Values;
 
    --------------------
@@ -1154,8 +1196,7 @@ package body DAP.Views.Memory is
    --------------------
 
    procedure Display_Memory
-     (View    : access DAP_Memory_View_Record'Class;
-      Address : String)
+     (View : access DAP_Memory_View_Record'Class; Address : String)
    is
       Real_Address : Long_Long_Integer;
       Index        : Integer;
@@ -1174,10 +1215,11 @@ package body DAP.Views.Memory is
          end loop;
 
          begin
-            Real_Address := Long_Long_Integer'Value
-              (Hex_Header &
-               Address (Address'First + 2 .. Index - 1) &
-               Hex_Footer);
+            Real_Address :=
+              Long_Long_Integer'Value
+                (Hex_Header
+                 & Address (Address'First + 2 .. Index - 1)
+                 & Hex_Footer);
             Display_Memory (View, Real_Address);
          exception
             when Constraint_Error =>
@@ -1197,9 +1239,7 @@ package body DAP.Views.Memory is
    -- Insert --
    ------------
 
-   procedure Insert
-     (View : access DAP_Memory_View_Record'Class;
-      Char : String)
+   procedure Insert (View : access DAP_Memory_View_Record'Class; Char : String)
    is
       Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Position    : Gint;
@@ -1232,7 +1272,7 @@ package body DAP.Views.Memory is
 
       declare
          Text : constant String :=
-                  Get_Text (Buffer, Start_Iter, End_Iter, False);
+           Get_Text (Buffer, Start_Iter, End_Iter, False);
       begin
          if View.Editor.View = null or else Text'Length <= 0 then
             return;
@@ -1242,25 +1282,28 @@ package body DAP.Views.Memory is
       --  Check whether the character to insert is in an acceptable range
 
       case View.Display is
-         when Hex =>
+         when Hex     =>
             if Is_Hexadecimal_Digit (Char (Char'First)) then
                Prefix := "16#";
             else
                return;
             end if;
+
          when Decimal =>
             if Is_Decimal_Digit (Char (Char'First)) then
                Prefix := "10#";
             else
                return;
             end if;
-         when Octal =>
+
+         when Octal   =>
             if Char (Char'First) in '0' .. '7' then
                Prefix := "08#";
             else
                return;
             end if;
-         when Text =>
+
+         when Text    =>
             null;
       end case;
 
@@ -1290,8 +1333,9 @@ package body DAP.Views.Memory is
          Get_Iter_At_Offset (Buffer, Start_Iter, Bloc_Begin);
          Get_Iter_At_Offset (Buffer, End_Iter, Bloc_Begin - 1);
 
-         exit when Get_Text (Buffer, Start_Iter, End_Iter) =
-           Data_Separator (Data_Separator'Last .. Data_Separator'Last);
+         exit when
+           Get_Text (Buffer, Start_Iter, End_Iter)
+           = Data_Separator (Data_Separator'Last .. Data_Separator'Last);
 
          Bloc_Begin := Bloc_Begin - 1;
       end loop;
@@ -1305,9 +1349,12 @@ package body DAP.Views.Memory is
          declare
             S : constant String := Get_Text (Buffer, Start_Iter, End_Iter);
          begin
-            exit when S = ""
-              or else S = Data_Separator
-                   (Data_Separator'First .. Data_Separator'First);
+            exit when
+              S = ""
+              or else
+                S
+                = Data_Separator
+                    (Data_Separator'First .. Data_Separator'First);
          end;
 
          Bloc_End := Bloc_End + 1;
@@ -1331,35 +1378,42 @@ package body DAP.Views.Memory is
          begin
             if Get_Active (View.Editor.Show_Ascii) then
                ASCII_Size :=
-                 Data_ASCII_Separator'Length
-                 + Line_Base_Size
+                 Data_ASCII_Separator'Length + Line_Base_Size
                  + ASCII_Separator'Length * View.Number_Of_Columns;
             end if;
 
             Get_Coordinates (View, Position, Row, Column);
             Value_Index :=
               (Integer (Position)
-               - Row *
-                 (Address_Length + Address_Separator'Length
-                  + 1 + View.Label_Length
-                  + ASCII_Size
-                  + End_Of_Line'Length
-                  + View.Number_Of_Columns * Data_Separator'Length)
-               - Address_Length - Address_Separator'Length
-               - 1 - View.Label_Length
-               - (Column - 1) * (Data_Separator'Length)) * 2 - 1;
+               - Row
+                 * (Address_Length
+                    + Address_Separator'Length
+                    + 1
+                    + View.Label_Length
+                    + ASCII_Size
+                    + End_Of_Line'Length
+                    + View.Number_Of_Columns * Data_Separator'Length)
+               - Address_Length
+               - Address_Separator'Length
+               - 1
+               - View.Label_Length
+               - (Column - 1) * (Data_Separator'Length))
+              * 2
+              - 1;
 
             View.New_Values (Value_Index .. Value_Index + 1) :=
               To_Standard_Base
-                (Long_Long_Integer (Character'Pos (Char (Char'First))),
-                 16, 2);
+                (Long_Long_Integer (Character'Pos (Char (Char'First))), 16, 2);
          end;
       else
          Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
 
          Value_Index :=
            Position_To_Bloc (View, Get_Offset (Start_Iter))
-           * Line_Base_Size / View.Number_Of_Columns * 2 + 1;
+           * Line_Base_Size
+           / View.Number_Of_Columns
+           * 2
+           + 1;
 
          Get_Iter_At_Offset (Buffer, Start_Iter, Bloc_Begin);
          Get_Iter_At_Offset (Buffer, End_Iter, Bloc_End);
@@ -1367,15 +1421,15 @@ package body DAP.Views.Memory is
          declare
             S : constant String := Get_Text (Buffer, Start_Iter, End_Iter);
          begin
-            if View.New_Values (Value_Index .. Value_Index) /=
-              Non_Valid_Character
+            if View.New_Values (Value_Index .. Value_Index)
+              /= Non_Valid_Character
             then
                View.New_Values
                  (Value_Index .. Value_Index + View.Unit_Size - 1) :=
-                   To_Standard_Base
-                     (Long_Long_Integer'Value (Prefix & S & Hex_Footer),
-                      16,
-                      View.Unit_Size);
+                 To_Standard_Base
+                   (Long_Long_Integer'Value (Prefix & S & Hex_Footer),
+                    16,
+                    View.Unit_Size);
             end if;
 
          end;
@@ -1392,7 +1446,7 @@ package body DAP.Views.Memory is
          loop
             declare
                Text : constant String :=
-                        Get_Text (Buffer, Start_Iter, End_Iter);
+                 Get_Text (Buffer, Start_Iter, End_Iter);
             begin
                exit when Text = Data_ASCII_Separator;
                Forward_Cursor_Position (Start_Iter, Success);
@@ -1425,8 +1479,7 @@ package body DAP.Views.Memory is
    -----------------
 
    procedure Move_Cursor
-     (View  : access DAP_Memory_View_Record'Class;
-      Where : Dir)
+     (View : access DAP_Memory_View_Record'Class; Where : Dir)
    is
       Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Start_Iter : Gtk_Text_Iter;
@@ -1440,13 +1493,12 @@ package body DAP.Views.Memory is
 
       if Get_Active (View.Editor.Show_Ascii) then
          ASCII_Size :=
-           Data_ASCII_Separator'Length +
-           Line_Base_Size +
-           ASCII_Separator'Length * View.Number_Of_Columns;
+           Data_ASCII_Separator'Length + Line_Base_Size
+           + ASCII_Separator'Length * View.Number_Of_Columns;
       end if;
 
       case Where is
-         when Right =>
+         when Right  =>
             Get_Iter_At_Offset (Buffer, Start_Iter, Position + 1);
             Get_Iter_At_Offset
               (Buffer, End_Iter, Position + 1 + Data_Separator'Length);
@@ -1454,20 +1506,22 @@ package body DAP.Views.Memory is
             if Get_Text (Buffer, Start_Iter, End_Iter) = Data_Separator then
                --  Are we on the last bloc on the line ?
 
-               if Position_To_Bloc (View, Position)
-                 mod View.Number_Of_Columns = View.Number_Of_Columns - 1
+               if Position_To_Bloc (View, Position) mod View.Number_Of_Columns
+                 = View.Number_Of_Columns - 1
                then
                   --  Is it the last bloc in the view ?
 
-                  if Position_To_Bloc (View, Position) =
-                    View.Number_Of_Columns
-                    * Integer (Get_Value_As_Int (View.Editor.Lines_Spin)) - 1
+                  if Position_To_Bloc (View, Position)
+                    = View.Number_Of_Columns
+                      * Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
+                      - 1
                   then
                      Get_Iter_At_Offset (Buffer, Start_Iter, Position - 1);
                      Place_Cursor (Buffer, Start_Iter);
                   else
                      Get_Iter_At_Offset
-                       (Buffer, Start_Iter,
+                       (Buffer,
+                        Start_Iter,
                         Position
                         + Gint (Address_Length)
                         + Address_Separator'Length
@@ -1485,7 +1539,7 @@ package body DAP.Views.Memory is
                end if;
             end if;
 
-         when Left =>
+         when Left   =>
             Get_Iter_At_Offset
               (Buffer, Start_Iter, Position - Data_Separator'Length);
             Get_Iter_At_Offset (Buffer, End_Iter, Position);
@@ -1493,8 +1547,8 @@ package body DAP.Views.Memory is
             if Get_Text (Buffer, Start_Iter, End_Iter) = Data_Separator then
                --  Are we on the first bloc on the line ?
 
-               if Position_To_Bloc (View, Position)
-                 mod View.Number_Of_Columns = 0
+               if Position_To_Bloc (View, Position) mod View.Number_Of_Columns
+                 = 0
                then
                   --  Is it the first bloc in the view ?
 
@@ -1503,7 +1557,8 @@ package body DAP.Views.Memory is
                      Place_Cursor (Buffer, Start_Iter);
                   else
                      Get_Iter_At_Offset
-                       (Buffer, Start_Iter,
+                       (Buffer,
+                        Start_Iter,
                         Position
                         - Gint (Address_Length)
                         - Address_Separator'Length
@@ -1520,6 +1575,7 @@ package body DAP.Views.Memory is
                   Place_Cursor (Buffer, Start_Iter);
                end if;
             end if;
+
          when others =>
             null;
       end case;
@@ -1529,9 +1585,8 @@ package body DAP.Views.Memory is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (View : not null access DAP_Memory_View_Record)
-   is
+   overriding
+   procedure Update (View : not null access DAP_Memory_View_Record) is
       Client : constant DAP_Client_Access := View.Get_Client;
    begin
       if Client = null then
@@ -1576,14 +1631,15 @@ package body DAP.Views.Memory is
         or else Column < 0
       then
          Set_Offset
-           (Iter, Address_Separator'Length + Gint (Address_Length)
-                     + 1 + Gint (View.Label_Length));
+           (Iter,
+            Address_Separator'Length
+            + Gint (Address_Length)
+            + 1
+            + Gint (View.Label_Length));
          Place_Cursor (Buffer, Iter);
       else
          Result := True;
-         while Result
-           and then not Editable (Iter, False)
-         loop
+         while Result and then not Editable (Iter, False) loop
             Forward_Cursor_Position (Iter, Result);
          end loop;
 
@@ -1602,7 +1658,8 @@ package body DAP.Views.Memory is
    begin
       if not View.Edit_Mode then
          --  Check if view has bytes marked as changed
-         Update := View.Old_Values /= null
+         Update :=
+           View.Old_Values /= null
            and then View.New_Values /= null
            and then View.Old_Values.all /= View.New_Values.all;
 
@@ -1672,8 +1729,7 @@ package body DAP.Views.Memory is
    -- On_Address_View_Clicked --
    -----------------------------
 
-   procedure On_Address_View_Clicked
-     (Object : access Gtk_Widget_Record'Class)
+   procedure On_Address_View_Clicked (Object : access Gtk_Widget_Record'Class)
    is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
@@ -1684,9 +1740,7 @@ package body DAP.Views.Memory is
    -- On_Size_Entry_Changed --
    ---------------------------
 
-   procedure On_Size_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Size_Entry_Changed (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Update_Display (View);
@@ -1696,9 +1750,7 @@ package body DAP.Views.Memory is
    -- On_Data_Entry_Changed --
    ---------------------------
 
-   procedure On_Data_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Data_Entry_Changed (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Update_Display (View);
@@ -1708,9 +1760,7 @@ package body DAP.Views.Memory is
    -- On_Show_Ascii_Toggled --
    ---------------------------
 
-   procedure On_Show_Ascii_Toggled
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Show_Ascii_Toggled (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Update_Display (View);
@@ -1720,9 +1770,7 @@ package body DAP.Views.Memory is
    -- On_Pgup_Clicked --
    ---------------------
 
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Pgup_Clicked (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Page_Up (View);
@@ -1732,9 +1780,7 @@ package body DAP.Views.Memory is
    -- On_Pgdn_Clicked --
    ---------------------
 
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Pgdn_Clicked (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Page_Down (View);
@@ -1745,8 +1791,7 @@ package body DAP.Views.Memory is
    -----------------------------
 
    function On_View_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : GValues) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Params : GValues) return Boolean
    is
       View  : constant DAP_Memory_View := DAP_Memory_View (Object);
       Arg1  : Gdk_Event;
@@ -1759,29 +1804,34 @@ package body DAP.Views.Memory is
          Arg1 := Get_Event (Nth (Params, 1));
       end if;
 
-      if Arg1 = null
-        or else Get_Event_Type (Arg1) /= Key_Press
-      then
+      if Arg1 = null or else Get_Event_Type (Arg1) /= Key_Press then
          return False;
       end if;
 
       case Get_Key_Val (Arg1) is
-         when GDK_Right =>
+         when GDK_Right                              =>
             Move_Cursor (View, Right);
-         when GDK_Left =>
+
+         when GDK_Left                               =>
             Move_Cursor (View, Left);
-         when GDK_Up =>
+
+         when GDK_Up                                 =>
             Move_Cursor (View, Up);
-         when GDK_Down =>
+
+         when GDK_Down                               =>
             Move_Cursor (View, Down);
+
          when GDK_BackSpace | GDK_Clear | GDK_Delete =>
             Gtk.Handlers.Emit_Stop_By_Name
               (View.Editor.View, "key_press_event");
-         when GDK_Page_Up | GDK_KP_Page_Up =>
+
+         when GDK_Page_Up | GDK_KP_Page_Up           =>
             Page_Up (View);
-         when GDK_Page_Down | GDK_KP_Page_Down =>
+
+         when GDK_Page_Down | GDK_KP_Page_Down       =>
             Page_Down (View);
-         when others =>
+
+         when others                                 =>
             Gtk.Handlers.Emit_Stop_By_Name
               (View.Editor.View, "key_press_event");
 
@@ -1810,12 +1860,12 @@ package body DAP.Views.Memory is
    ----------------------------------
 
    function On_View_Button_Release_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Params : Gtk.Arguments.Gtk_Args)
+      return Boolean
    is
       pragma Unreferenced (Params);
 
-      View : constant DAP_Memory_View := DAP_Memory_View (Object);
+      View       : constant DAP_Memory_View := DAP_Memory_View (Object);
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Result     : Boolean;
@@ -1848,9 +1898,7 @@ package body DAP.Views.Memory is
    -- On_Reset_Clicked --
    ----------------------
 
-   procedure On_Reset_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Reset_Clicked (Object : access Gtk_Widget_Record'Class) is
       View : constant DAP_Memory_View := DAP_Memory_View (Object);
    begin
       Stop_Editing (View);
@@ -1881,7 +1929,8 @@ package body DAP.Views.Memory is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1892,8 +1941,7 @@ package body DAP.Views.Memory is
    begin
       if Name /= "" then
          Display_Memory
-           (Kernel  => Get_Kernel (Context.Context),
-            Address => Name);
+           (Kernel => Get_Kernel (Context.Context), Address => Name);
 
       else
          Display_Memory
@@ -2040,8 +2088,7 @@ package body DAP.Views.Memory is
       --  Scrolled window containing the memory
 
       Gtk_New (Scrolled);
-      Set_Policy
-        (Scrolled, Policy_Automatic, Policy_Automatic);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (View, Scrolled, True, True, 0);
 
       --  Memory view
@@ -2080,28 +2127,29 @@ package body DAP.Views.Memory is
    ------------------
 
    procedure Insert_ASCII (View : access DAP_Memory_View_Record'Class) is
-      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
-      Client      : constant DAP.Clients.DAP_Client_Access :=
+      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
+      Client     : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
-      Endianness  : constant Endian_Type := Client.Get_Endian_Type;
-      Start_Mark  : Gtk_Text_Mark;
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Tag         : Gtk_Text_Tag;
-      Index       : Natural;
-      Line_Index  : Natural;
+      Endianness : constant Endian_Type := Client.Get_Endian_Type;
+      Start_Mark : Gtk_Text_Mark;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Tag        : Gtk_Text_Tag;
+      Index      : Natural;
+      Line_Index : Natural;
    begin
       Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
       Line_Index := Natural (Get_Line (Start_Iter)) + 1;
       Insert_At_Cursor (Buffer, Data_ASCII_Separator);
 
       for Column_Index in 1 .. View.Number_Of_Columns loop
-         Index := (Line_Index - 1) *
-           (View.Number_Of_Columns * View.Unit_Size)
-           + (Column_Index - 1) * View.Unit_Size + 1;
+         Index :=
+           (Line_Index - 1) * (View.Number_Of_Columns * View.Unit_Size)
+           + (Column_Index - 1) * View.Unit_Size
+           + 1;
 
-         if View.Old_Values (Index .. Index + View.Unit_Size - 1) /=
-           View.New_Values (Index .. Index + View.Unit_Size - 1)
+         if View.Old_Values (Index .. Index + View.Unit_Size - 1)
+           /= View.New_Values (Index .. Index + View.Unit_Size - 1)
          then
             Tag := View.Modified_Tag;
          else
@@ -2114,11 +2162,11 @@ package body DAP.Views.Memory is
             if Endianness = Little_Endian then
                declare
                   B : constant String (1 .. View.Unit_Size) :=
-                        View.New_Values (Index .. Index + View.Unit_Size - 1);
+                    View.New_Values (Index .. Index + View.Unit_Size - 1);
                begin
                   for J in 0 .. View.Unit_Size / 2 - 1 loop
                      S (S'First + J * 2 .. S'First + J * 2 + 1) :=
-                       B (B'Last -  J * 2 - 1 .. B'Last -  J * 2);
+                       B (B'Last - J * 2 - 1 .. B'Last - J * 2);
                   end loop;
                end;
             else
@@ -2132,8 +2180,8 @@ package body DAP.Views.Memory is
               (Buffer,
                End_Iter,
                Conversion
-                 (S, View.Unit_Size, Text, View.Trunc, Is_ASCII => True) &
-                 Data_Separator);
+                 (S, View.Unit_Size, Text, View.Trunc, Is_ASCII => True)
+               & Data_Separator);
 
             Get_Iter_At_Mark (Buffer, Start_Iter, Start_Mark);
             Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
@@ -2174,13 +2222,16 @@ package body DAP.Views.Memory is
       Long := Long_Long_Integer'Value (Hex_Header & S & Hex_Footer);
 
       case Format is
-         when Hex =>
+         when Hex     =>
             return S;
-         when Octal =>
+
+         when Octal   =>
             return To_Standard_Base (Long, 8, Trunc_At);
+
          when Decimal =>
             return To_Standard_Base (Long, 10, Trunc_At);
-         when Text =>
+
+         when Text    =>
             declare
                Result : String (1 .. S'Length / 2);
                Value  : Integer;
@@ -2188,9 +2239,9 @@ package body DAP.Views.Memory is
                for J in 1 .. Result'Last loop
                   Value :=
                     Integer'Value
-                    (Hex_Header
-                     & S (S'First + 2 * J - 2 .. S'First + 2 * J - 1)
-                     & Hex_Footer);
+                      (Hex_Header
+                       & S (S'First + 2 * J - 2 .. S'First + 2 * J - 1)
+                       & Hex_Footer);
 
                   if Value > 31 and then Value < 128 then
                      Result (J) := Character'Val (Value);
@@ -2220,22 +2271,25 @@ package body DAP.Views.Memory is
    begin
       if Get_Active (View.Editor.Show_Ascii) then
          ASCII_Size :=
-           Data_ASCII_Separator'Length +
-           Line_Base_Size +
-           ASCII_Separator'Length * View.Number_Of_Columns;
+           Data_ASCII_Separator'Length + Line_Base_Size
+           + ASCII_Separator'Length * View.Number_Of_Columns;
       end if;
 
       Row_Length :=
-        Address_Length + Address_Separator'Length +
-        1 + View.Label_Length +
-        (View.Number_Of_Columns * (View.Trunc + Data_Separator'Length)) +
-        ASCII_Size + End_Of_Line'Length;
+        Address_Length
+        + Address_Separator'Length
+        + 1
+        + View.Label_Length
+        + (View.Number_Of_Columns * (View.Trunc + Data_Separator'Length))
+        + ASCII_Size
+        + End_Of_Line'Length;
 
       Row := Integer (Position) / Row_Length;
 
       Column :=
-        (Integer (Position) - Row * Row_Length -
-         (Address_Length + Address_Separator'Length + 1 + View.Label_Length))
+        (Integer (Position)
+         - Row * Row_Length
+         - (Address_Length + Address_Separator'Length + 1 + View.Label_Length))
         + 1;
 
       if Column <= 0 then
@@ -2251,8 +2305,8 @@ package body DAP.Views.Memory is
    ----------------------
 
    function Position_To_Bloc
-     (View     : access DAP_Memory_View_Record'Class;
-      Position : Gint) return Integer
+     (View : access DAP_Memory_View_Record'Class; Position : Gint)
+      return Integer
    is
       Row    : Integer;
       Column : Integer;
@@ -2267,22 +2321,19 @@ package body DAP.Views.Memory is
    ----------------------
 
    function To_Standard_Base
-     (Address  : Long_Long_Integer;
-      Base     : Integer;
-      Trunc_At : Integer := -1) return String
+     (Address : Long_Long_Integer; Base : Integer; Trunc_At : Integer := -1)
+      return String
    is
       Index   : Integer := 1;
       Result  : String (1 .. 64);
       Mapping : constant Character_Mapping :=
-                  To_Mapping ("ABCDEF ", "abcdef0");
+        To_Mapping ("ABCDEF ", "abcdef0");
 
    begin
       Put (Result, Address, Base);
       Skip_To_String (Result, Index, Hex_Footer);
 
-      if Index > 3
-        and then Index < Result'Length + 1
-      then
+      if Index > 3 and then Index < Result'Length + 1 then
          Result (Index - 3 .. Index) := "    ";
       end if;
 
@@ -2312,18 +2363,18 @@ package body DAP.Views.Memory is
       Unit_Size : Integer;
 
    begin
-      if View.Old_Values = null
-        or else View.New_Values = null
-      then
+      if View.Old_Values = null or else View.New_Values = null then
          return;
       end if;
 
       case Size is
-         when Byte =>
+         when Byte     =>
             return;
+
          when Halfword =>
             Unit_Size := 4;
-         when Word =>
+
+         when Word     =>
             Unit_Size := 8;
       end case;
 
@@ -2333,28 +2384,30 @@ package body DAP.Views.Memory is
          while Index <= View.Number_Of_Bytes * 2 - Unit_Size loop
             Buffer (1 .. Unit_Size) :=
               View.Old_Values
-                (View.Old_Values'First + Index ..
-                     View.Old_Values'First + Index + Unit_Size - 1);
+                (View.Old_Values'First + Index
+                 .. View.Old_Values'First + Index + Unit_Size - 1);
 
             for J in 1 .. Unit_Size / 2 loop
                View.Old_Values
                  (View.Old_Values'First + Index + (J - 1) * 2
-                    .. View.Old_Values'First + Index + (J - 1) * 2 + 1) :=
-                 Buffer (Buffer'Last - (J - 1) * 2 - 1
-                           .. Buffer'Last - (J - 1) * 2);
+                  .. View.Old_Values'First + Index + (J - 1) * 2 + 1) :=
+                 Buffer
+                   (Buffer'Last - (J - 1) * 2 - 1
+                    .. Buffer'Last - (J - 1) * 2);
             end loop;
 
             Buffer (1 .. Unit_Size) :=
               View.New_Values
-                (View.New_Values'First + Index ..
-                     View.New_Values'First + Index + Unit_Size - 1);
+                (View.New_Values'First + Index
+                 .. View.New_Values'First + Index + Unit_Size - 1);
 
             for J in 1 .. Unit_Size / 2 loop
                View.New_Values
                  (View.New_Values'First + Index + (J - 1) * 2
-                    .. View.New_Values'First + Index + (J - 1) * 2 + 1) :=
-                 Buffer (Buffer'Last - (J - 1) * 2 - 1
-                           .. Buffer'Last - (J - 1) * 2);
+                  .. View.New_Values'First + Index + (J - 1) * 2 + 1) :=
+                 Buffer
+                   (Buffer'Last - (J - 1) * 2 - 1
+                    .. Buffer'Last - (J - 1) * 2);
             end loop;
 
             Index := Index + Unit_Size;
@@ -2376,14 +2429,16 @@ package body DAP.Views.Memory is
       Debugger_Available := Kernel.Lookup_Filter ("Debugger available");
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "examine memory",
+        (Kernel,
+         "examine memory",
          Command     => new View_Memory_Command,
          Description =>
            "Examine the contents of the memory at the location of the"
-         & " selected variable",
+           & " selected variable",
          Category    => "Debug",
-         Filter      => Debugger_Available and
-             Kernel.Lookup_Filter ("Debugger not command variable"));
+         Filter      =>
+           Debugger_Available
+           and Kernel.Lookup_Filter ("Debugger not command variable"));
 
       --  the '%S' and 'debug printable variable' prevent this menu from
       --  showing up in the GVD canvas. Instead, the canvas hard-codes it.
@@ -2391,8 +2446,9 @@ package body DAP.Views.Memory is
         (Kernel,
          Name   => "Debug view memory",
          Label  => "Debug/View memory at address of %S",
-         Filter =>  Debugger_Available and
-             Lookup_Filter (Kernel, "Debugger printable variable"),
+         Filter =>
+           Debugger_Available
+           and Lookup_Filter (Kernel, "Debugger printable variable"),
          Action => "examine memory");
    end Register_Module;
 

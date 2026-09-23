@@ -20,8 +20,8 @@
 
 with CodePeer.Generic_Criteria_Editors;
 
-package CodePeer.Ranking_Categories_Criteria_Editors is
-  new CodePeer.Generic_Criteria_Editors
+package CodePeer.Ranking_Categories_Criteria_Editors is new
+  CodePeer.Generic_Criteria_Editors
     (CodePeer.Ranking_Kinds,
      CodePeer.Ranking_Kind_Access,
      CodePeer.Image,

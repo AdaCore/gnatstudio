@@ -56,13 +56,13 @@ package body Ada_Semantic_Tree.Parts is
 
    type Ada_Relation_Access is access all Ada_Relation;
 
-   procedure Free is new Standard.Ada.Unchecked_Deallocation
-     (Ada_Relation, Ada_Relation_Access);
+   procedure Free is new
+     Standard.Ada.Unchecked_Deallocation (Ada_Relation, Ada_Relation_Access);
 
    type Relation_Side is (Nothing, First, Second, Third);
 
-   type Ada_Relation_Annotation is new
-     Construct_Annotations_Pckg.General_Annotation_Record
+   type Ada_Relation_Annotation is
+     new Construct_Annotations_Pckg.General_Annotation_Record
    with record
       Relation : Ada_Relation_Access := null;
       Side     : Relation_Side := Nothing;
@@ -76,21 +76,25 @@ package body Ada_Semantic_Tree.Parts is
 
    type Construct_List_Access is access Construct_List_Pckg.List;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Construct_List_Pckg.List, Construct_List_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Construct_List_Pckg.List,
+        Construct_List_Access);
 
    package Local_Dico_Pckg is new
      Standard.Ada.Containers.Indefinite_Ordered_Maps
-       (String, Construct_List_Access);
+       (String,
+        Construct_List_Access);
 
    type Dico_Access is access Local_Dico_Pckg.Map;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Local_Dico_Pckg.Map, Dico_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Local_Dico_Pckg.Map, Dico_Access);
 
    package Dicos_List_Pckg is new
      Standard.Ada.Containers.Indefinite_Ordered_Maps
-       (Entity_Access, Dico_Access);
+       (Entity_Access,
+        Dico_Access);
 
    use Dicos_List_Pckg;
    use Local_Dico_Pckg;
@@ -99,8 +103,7 @@ package body Ada_Semantic_Tree.Parts is
    function Get_Relation (Entity : Entity_Access) return Ada_Relation_Access;
 
    function Get_Relation
-     (Entity    : Entity_Access;
-      Assistant : Ada_Part_Db_Assistant'Class)
+     (Entity : Entity_Access; Assistant : Ada_Part_Db_Assistant'Class)
       return Ada_Relation_Access;
 
    procedure Disconnect_Relation_Annotation
@@ -118,15 +121,13 @@ package body Ada_Semantic_Tree.Parts is
 
    begin
       Construct_Annotations_Pckg.Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Ada_Part_Entity_Key);
+        (Get_Construct_Annotation_Key_Registry (Db).all, Ada_Part_Entity_Key);
 
       Register_Assistant
         (Db,
          Ada_Part_Assistant_Id,
          new Ada_Part_Db_Assistant'
-           (Database_Assistant with
-            Parts_Key      => Ada_Part_Entity_Key));
+           (Database_Assistant with Parts_Key => Ada_Part_Entity_Key));
    end Register_Assistant;
 
    -------------------
@@ -134,8 +135,7 @@ package body Ada_Semantic_Tree.Parts is
    -------------------
 
    function Get_Assistant
-     (Db : Construct_Database_Access) return Database_Assistant_Access
-   is
+     (Db : Construct_Database_Access) return Database_Assistant_Access is
    begin
       return Get_Assistant (Db, Ada_Part_Assistant_Id);
    end Get_Assistant;
@@ -144,7 +144,8 @@ package body Ada_Semantic_Tree.Parts is
    -- File_Updated --
    ------------------
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Ada_Part_Db_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -176,11 +177,10 @@ package body Ada_Semantic_Tree.Parts is
    ------------------
 
    procedure Analyze_Unit
-     (Assistant : Database_Assistant_Access;
-      Unit      : Unit_Access)
+     (Assistant : Database_Assistant_Access; Unit : Unit_Access)
    is
-      Parts_Key : constant Construct_Annotations_Pckg.Annotation_Key
-        := Ada_Part_Db_Assistant (Assistant.all).Parts_Key;
+      Parts_Key : constant Construct_Annotations_Pckg.Annotation_Key :=
+        Ada_Part_Db_Assistant (Assistant.all).Parts_Key;
 
       function Can_Have_Parts (Category : Language_Category) return Boolean;
       --  Return true if this category may denote a construct with multiple
@@ -203,7 +203,8 @@ package body Ada_Semantic_Tree.Parts is
 
       function Can_Have_Parts (Category : Language_Category) return Boolean is
       begin
-         return Category in Cat_Package .. Cat_Variable
+         return
+           Category in Cat_Package .. Cat_Variable
            or else Category = Cat_Parameter
            or else Category = Cat_Discriminant;
       end Can_Have_Parts;
@@ -230,7 +231,7 @@ package body Ada_Semantic_Tree.Parts is
          --  dictionnary.
 
          if Is_Set
-           (Get_Annotation_Container (Scope_Tree, Scope_It).all, Parts_Key)
+              (Get_Annotation_Container (Scope_Tree, Scope_It).all, Parts_Key)
          then
             --  The dico is stored against the spec name, so get the spec
             --  entity and get the dico associated to this entity.
@@ -242,17 +243,18 @@ package body Ada_Semantic_Tree.Parts is
 
             First_Occ :=
               To_Entity_Access
-                (Ada_Relation_Annotation
-                     (Parts_Annotation.Other_Val.all)
-                 .Relation.First_Occurence);
+                (Ada_Relation_Annotation (Parts_Annotation.Other_Val.all)
+                   .Relation
+                   .First_Occurence);
 
             if Dicos_List_Pckg.Contains (Dico_List, First_Occ) then
-               Dico := Dicos_List_Pckg.Element
-                 (Dico_List,
-                  To_Entity_Access
-                    (Ada_Relation_Annotation
-                       (Parts_Annotation.Other_Val.all)
-                     .Relation.First_Occurence));
+               Dico :=
+                 Dicos_List_Pckg.Element
+                   (Dico_List,
+                    To_Entity_Access
+                      (Ada_Relation_Annotation (Parts_Annotation.Other_Val.all)
+                         .Relation
+                         .First_Occurence));
             else
                Dico := new Local_Dico_Pckg.Map;
 
@@ -261,12 +263,14 @@ package body Ada_Semantic_Tree.Parts is
          else
             Dico := new Local_Dico_Pckg.Map;
 
-            Parts_Annotation.Other_Val := new Ada_Relation_Annotation'
-              (Relation => new Ada_Relation'
-                 (First_Occurence  => To_Entity_Persistent_Access (Scope),
-                  Second_Occurence => Null_Entity_Persistent_Access,
-                  Third_Occurence  => Null_Entity_Persistent_Access),
-               Side     => First);
+            Parts_Annotation.Other_Val :=
+              new Ada_Relation_Annotation'
+                (Relation =>
+                   new Ada_Relation'
+                     (First_Occurence  => To_Entity_Persistent_Access (Scope),
+                      Second_Occurence => Null_Entity_Persistent_Access,
+                      Third_Occurence  => Null_Entity_Persistent_Access),
+                 Side     => First);
 
             Set_Annotation
               (Get_Annotation_Container (Scope_Tree, Scope_It).all,
@@ -280,27 +284,25 @@ package body Ada_Semantic_Tree.Parts is
 
          while Is_Parent_Scope (Scope_It, It) loop
 
-         --  For each construct found in the scope:
-         --    If we found the corresponding construct in the dico, then
-         --      we create (or update) the parts record
-         --    If not, then we add the construct in the dico
-         --    If we are on a scope, then we call Analyze_Scope on recursively
-         --      on it.
+            --  For each construct found in the scope:
+            --    If we found the corresponding construct in the dico, then
+            --      we create (or update) the parts record
+            --    If not, then we add the construct in the dico
+            --    If we are on a scope, then we call Analyze_Scope on recursively
+            --      on it.
 
             if Can_Have_Parts (Get_Construct (It).Category)
               and then Get_Construct (It).Name /= No_Symbol
             then
                if Is_Set
-                 (Get_Annotation_Container (Scope_Tree, It).all,
-                  Parts_Key)
+                    (Get_Annotation_Container (Scope_Tree, It).all, Parts_Key)
                then
                   --  If the key is already set, it means that we already have
                   --  computed the information from a previous version of the
                   --  unit. It's not valid anymore - remove it.
 
                   Free_Annotation
-                    (Get_Annotation_Container (Scope_Tree, It).all,
-                     Parts_Key);
+                    (Get_Annotation_Container (Scope_Tree, It).all, Parts_Key);
                end if;
 
                declare
@@ -328,19 +330,18 @@ package body Ada_Semantic_Tree.Parts is
                         Cur_Tree := Get_Tree (Cur_File);
 
                         if Same_Entity
-                          (Element (Cur),
-                           To_Entity_Access (Scope_File, It))
+                             (Element (Cur), To_Entity_Access (Scope_File, It))
                         then
                            --  We found a similary entity. We either extract
                            --  the already existing annotation, or create a
                            --  new one an set its 'First' value.
 
                            if Is_Set
-                             (Get_Annotation_Container
-                                (Cur_Tree,
-                                 To_Construct_Tree_Iterator
-                                   (Element (Cur))).all,
-                              Parts_Key)
+                                (Get_Annotation_Container
+                                   (Cur_Tree,
+                                    To_Construct_Tree_Iterator
+                                      (Element (Cur))).all,
+                                 Parts_Key)
                            then
                               Get_Annotation
                                 (Get_Annotation_Container
@@ -350,8 +351,10 @@ package body Ada_Semantic_Tree.Parts is
                                  Parts_Key,
                                  Parts_Annotation);
 
-                              Relation := Ada_Relation_Annotation
-                                (Parts_Annotation.Other_Val.all).Relation;
+                              Relation :=
+                                Ada_Relation_Annotation
+                                  (Parts_Annotation.Other_Val.all)
+                                  .Relation;
 
                               if not Exists (Relation.First_Occurence) then
                                  --  If the spec doesn't exit anymore, it means
@@ -362,18 +365,18 @@ package body Ada_Semantic_Tree.Parts is
                                  Unref (Relation.First_Occurence);
 
                                  Relation.First_Occurence :=
-                                   To_Entity_Persistent_Access
-                                     (Element (Cur));
+                                   To_Entity_Persistent_Access (Element (Cur));
                               end if;
                            else
-                              Relation := new Ada_Relation'
-                                (First_Occurence  =>
-                                   To_Entity_Persistent_Access
-                                     (Element (Cur)),
-                                 Second_Occurence =>
-                                   Null_Entity_Persistent_Access,
-                                 Third_Occurence  =>
-                                   Null_Entity_Persistent_Access);
+                              Relation :=
+                                new Ada_Relation'
+                                  (First_Occurence  =>
+                                     To_Entity_Persistent_Access
+                                       (Element (Cur)),
+                                   Second_Occurence =>
+                                     Null_Entity_Persistent_Access,
+                                   Third_Occurence  =>
+                                     Null_Entity_Persistent_Access);
 
                               Parts_Annotation.Other_Val :=
                                 new Ada_Relation_Annotation'(Relation, First);
@@ -392,8 +395,7 @@ package body Ada_Semantic_Tree.Parts is
                            --  do an updated analysis.
 
                            Disconnect_Relation_Annotation
-                             (To_Entity_Access (Scope_File, It),
-                              Parts_Key);
+                             (To_Entity_Access (Scope_File, It), Parts_Key);
 
                            --  Now set the second or third value, depending
                            --  on the contents of the relation.
@@ -411,7 +413,8 @@ package body Ada_Semantic_Tree.Parts is
                                   (To_Entity_Access (Scope_File, It));
 
                               Ada_Relation_Annotation
-                                (Parts_Annotation.Other_Val.all).Side :=
+                                (Parts_Annotation.Other_Val.all)
+                                .Side :=
                                 Second;
                            elsif not Exists (Relation.Third_Occurence) then
                               --  If the second occurence exists, and is
@@ -427,7 +430,8 @@ package body Ada_Semantic_Tree.Parts is
                                   (To_Entity_Access (Scope_File, It));
 
                               Ada_Relation_Annotation
-                                (Parts_Annotation.Other_Val.all).Side :=
+                                (Parts_Annotation.Other_Val.all)
+                                .Side :=
                                 Third;
                            else
                               --  If everything is already set, there's an
@@ -483,24 +487,25 @@ package body Ada_Semantic_Tree.Parts is
            (Cat : Language_Category) return Boolean;
 
          function Compatible_Type_Category
-           (Cat : Language_Category) return Boolean
-         is
+           (Cat : Language_Category) return Boolean is
          begin
-            return Cat in Cat_Class .. Cat_Subtype or else Cat = Cat_Protected
+            return
+              Cat in Cat_Class .. Cat_Subtype
+              or else Cat = Cat_Protected
               or else Cat = Cat_Task;
          end Compatible_Type_Category;
 
-         Left_Construct : constant access Simple_Construct_Information :=
+         Left_Construct  : constant access Simple_Construct_Information :=
            Get_Construct (Left);
          Right_Construct : constant access Simple_Construct_Information :=
            Get_Construct (Right);
       begin
-         if not
-           ((Left_Construct.Category = Cat_Type
-             and then Compatible_Type_Category (Right_Construct.Category))
-            or else
-              (Right_Construct.Category = Cat_Type
-               and then Compatible_Type_Category (Left_Construct.Category)))
+         if not ((Left_Construct.Category = Cat_Type
+                  and then Compatible_Type_Category (Right_Construct.Category))
+                 or else
+                   (Right_Construct.Category = Cat_Type
+                    and then
+                      Compatible_Type_Category (Left_Construct.Category)))
            and then Left_Construct.Category /= Right_Construct.Category
          then
             return False;
@@ -509,13 +514,14 @@ package body Ada_Semantic_Tree.Parts is
          case Left_Construct.Category is
             when Cat_Function | Cat_Procedure | Cat_Entry =>
                --  Here check parameters types.
-               return Same_Profile
-                 (Left_Tree    => Get_Tree (Get_File (Left)),
-                  Left_Sb      => To_Construct_Tree_Iterator (Left),
-                  Right_Tree   => Get_Tree (Get_File (Right)),
-                  Right_Sb     => To_Construct_Tree_Iterator (Right));
+               return
+                 Same_Profile
+                   (Left_Tree  => Get_Tree (Get_File (Left)),
+                    Left_Sb    => To_Construct_Tree_Iterator (Left),
+                    Right_Tree => Get_Tree (Get_File (Right)),
+                    Right_Sb   => To_Construct_Tree_Iterator (Right));
 
-            when others =>
+            when others                                   =>
                --  In all other cases, name + category match is enough.
                return True;
 
@@ -529,8 +535,8 @@ package body Ada_Semantic_Tree.Parts is
       Relation         : Ada_Relation_Access;
       Parts_Annotation : Annotation (Other_Kind);
 
-      Spec_Entity      : Entity_Access;
-      Body_Entity      : Entity_Access;
+      Spec_Entity : Entity_Access;
+      Body_Entity : Entity_Access;
    begin
       if Unit = Null_Unit_Access then
          return;
@@ -567,18 +573,15 @@ package body Ada_Semantic_Tree.Parts is
          Body_Entity := Get_Entity (Body_Unit);
       end if;
 
-      Relation := new Ada_Relation'
-        (First_Occurence  =>
-           To_Entity_Persistent_Access (Spec_Entity),
-         Second_Occurence =>
-           To_Entity_Persistent_Access (Body_Entity),
-         Third_Occurence  => Null_Entity_Persistent_Access);
+      Relation :=
+        new Ada_Relation'
+          (First_Occurence  => To_Entity_Persistent_Access (Spec_Entity),
+           Second_Occurence => To_Entity_Persistent_Access (Body_Entity),
+           Third_Occurence  => Null_Entity_Persistent_Access);
 
       if Spec_Unit /= Null_Unit_Access then
          Parts_Annotation.Other_Val :=
-           new Ada_Relation_Annotation'
-             (Relation => Relation,
-              Side     => First);
+           new Ada_Relation_Annotation'(Relation => Relation, Side => First);
 
          Set_Annotation
            (Get_Annotation_Container
@@ -590,9 +593,7 @@ package body Ada_Semantic_Tree.Parts is
 
       if Body_Unit /= Null_Unit_Access then
          Parts_Annotation.Other_Val :=
-           new Ada_Relation_Annotation'
-             (Relation => Relation,
-              Side     => Second);
+           new Ada_Relation_Annotation'(Relation => Relation, Side => Second);
 
          Set_Annotation
            (Get_Annotation_Container
@@ -643,11 +644,12 @@ package body Ada_Semantic_Tree.Parts is
    -- Free --
    ----------
 
-   overriding procedure Free (Obj : in out Ada_Relation_Annotation) is
+   overriding
+   procedure Free (Obj : in out Ada_Relation_Annotation) is
    begin
       if Obj.Relation /= null then
          case Obj.Side is
-            when First =>
+            when First  =>
                Unref (Obj.Relation.First_Occurence);
                Obj.Relation.First_Occurence := Null_Entity_Persistent_Access;
 
@@ -655,7 +657,7 @@ package body Ada_Semantic_Tree.Parts is
                Unref (Obj.Relation.Second_Occurence);
                Obj.Relation.Second_Occurence := Null_Entity_Persistent_Access;
 
-            when Third =>
+            when Third  =>
                Unref (Obj.Relation.Third_Occurence);
                Obj.Relation.Third_Occurence := Null_Entity_Persistent_Access;
 
@@ -665,10 +667,10 @@ package body Ada_Semantic_Tree.Parts is
          end case;
 
          if Obj.Relation.First_Occurence = Null_Entity_Persistent_Access
-           and then Obj.Relation.Second_Occurence
-             = Null_Entity_Persistent_Access
-           and then Obj.Relation.Third_Occurence
-             = Null_Entity_Persistent_Access
+           and then
+             Obj.Relation.Second_Occurence = Null_Entity_Persistent_Access
+           and then
+             Obj.Relation.Third_Occurence = Null_Entity_Persistent_Access
          then
             Free (Obj.Relation);
          end if;
@@ -690,9 +692,10 @@ package body Ada_Semantic_Tree.Parts is
       Rel   : access Ada_Relation_Annotation;
    begin
       Construct_Annotations_Pckg.Get_Annotation
-        (Container => Get_Annotation_Container
-           (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator (Entity)).all,
+        (Container =>
+           Get_Annotation_Container
+             (Get_Tree (Get_File (Entity)),
+              To_Construct_Tree_Iterator (Entity)).all,
          Key       => Key,
          Result    => Annot);
 
@@ -703,7 +706,7 @@ package body Ada_Semantic_Tree.Parts is
       Rel := Ada_Relation_Annotation (Annot.Other_Val.all)'Access;
 
       case Rel.Side is
-         when First =>
+         when First  =>
             Unref (Rel.Relation.First_Occurence);
             Rel.Relation.First_Occurence := Null_Entity_Persistent_Access;
 
@@ -711,7 +714,7 @@ package body Ada_Semantic_Tree.Parts is
             Unref (Rel.Relation.Second_Occurence);
             Rel.Relation.Second_Occurence := Null_Entity_Persistent_Access;
 
-         when Third =>
+         when Third  =>
             Unref (Rel.Relation.Third_Occurence);
             Rel.Relation.Third_Occurence := Null_Entity_Persistent_Access;
 
@@ -722,9 +725,10 @@ package body Ada_Semantic_Tree.Parts is
       Rel.Relation := null;
 
       Construct_Annotations_Pckg.Free_Annotation
-        (Container => Get_Annotation_Container
-           (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator (Entity)).all,
+        (Container =>
+           Get_Annotation_Container
+             (Get_Tree (Get_File (Entity)),
+              To_Construct_Tree_Iterator (Entity)).all,
          Key       => Key);
    end Disconnect_Relation_Annotation;
 
@@ -734,7 +738,7 @@ package body Ada_Semantic_Tree.Parts is
 
    function Get_Relation (Entity : Entity_Access) return Ada_Relation_Access is
       Assistant : Database_Assistant_Access;
-      Unit :  Unit_Access;
+      Unit      : Unit_Access;
    begin
       if Entity = Null_Entity_Access then
          return null;
@@ -748,9 +752,7 @@ package body Ada_Semantic_Tree.Parts is
 
       Analyze_Unit (Assistant, Unit);
 
-      return Get_Relation
-        (Entity,
-         Ada_Part_Db_Assistant (Assistant.all));
+      return Get_Relation (Entity, Ada_Part_Db_Assistant (Assistant.all));
    end Get_Relation;
 
    ------------------
@@ -758,8 +760,7 @@ package body Ada_Semantic_Tree.Parts is
    ------------------
 
    function Get_Relation
-     (Entity    : Entity_Access;
-      Assistant : Ada_Part_Db_Assistant'Class)
+     (Entity : Entity_Access; Assistant : Ada_Part_Db_Assistant'Class)
       return Ada_Relation_Access
    is
       use type Language.Tree.Construct_Annotations_Pckg.Annotation;
@@ -781,8 +782,9 @@ package body Ada_Semantic_Tree.Parts is
          return null;
 
       else
-         return Ada_Relation_Annotation
-           (Relation_Annotation.Other_Val.all).Relation;
+         return
+           Ada_Relation_Annotation (Relation_Annotation.Other_Val.all)
+             .Relation;
       end if;
    end Get_Relation;
 
@@ -790,8 +792,7 @@ package body Ada_Semantic_Tree.Parts is
    -- Get_First_Occurence --
    -------------------------
 
-   function Get_First_Occurence
-     (Entity : Entity_Access) return Entity_Access
+   function Get_First_Occurence (Entity : Entity_Access) return Entity_Access
    is
       Relation : constant Ada_Relation_Access := Get_Relation (Entity);
    begin
@@ -806,8 +807,7 @@ package body Ada_Semantic_Tree.Parts is
    -- Get_Second_Occurence --
    --------------------------
 
-   function Get_Second_Occurence
-     (Entity : Entity_Access) return Entity_Access
+   function Get_Second_Occurence (Entity : Entity_Access) return Entity_Access
    is
       Relation : constant Ada_Relation_Access := Get_Relation (Entity);
    begin
@@ -822,8 +822,7 @@ package body Ada_Semantic_Tree.Parts is
    -- Get_Third_Occurence --
    -------------------------
 
-   function Get_Third_Occurence
-     (Entity : Entity_Access) return Entity_Access
+   function Get_Third_Occurence (Entity : Entity_Access) return Entity_Access
    is
       Relation : constant Ada_Relation_Access := Get_Relation (Entity);
    begin
@@ -895,10 +894,11 @@ package body Ada_Semantic_Tree.Parts is
    ---------------------
 
    function Are_Same_Entity (Left, Right : Entity_Access) return Boolean is
-      Relation_Left : constant Ada_Relation_Access := Get_Relation (Left);
+      Relation_Left  : constant Ada_Relation_Access := Get_Relation (Left);
       Relation_Right : constant Ada_Relation_Access := Get_Relation (Right);
    begin
-      return Left = Right
+      return
+        Left = Right
         or else
           (Relation_Left /= null and then Relation_Left = Relation_Right);
    end Are_Same_Entity;
@@ -908,17 +908,17 @@ package body Ada_Semantic_Tree.Parts is
    -------------------------------
 
    function Unchecked_Are_Same_Entity
-     (Assistant   : Database_Assistant_Access;
-      Left, Right : Entity_Access) return Boolean
+     (Assistant : Database_Assistant_Access; Left, Right : Entity_Access)
+      return Boolean
    is
-      Ada_Assistant : Ada_Part_Db_Assistant renames Ada_Part_Db_Assistant
-        (Assistant.all);
+      Ada_Assistant : Ada_Part_Db_Assistant renames
+        Ada_Part_Db_Assistant (Assistant.all);
 
-      Left_Relation : constant Ada_Relation_Access :=
+      Left_Relation   : constant Ada_Relation_Access :=
         Get_Relation (Left, Ada_Assistant);
       Left_Entity_Cmp : Entity_Persistent_Access;
 
-      Right_Relation : constant Ada_Relation_Access :=
+      Right_Relation   : constant Ada_Relation_Access :=
         Get_Relation (Right, Ada_Assistant);
       Right_Entity_Cmp : Entity_Persistent_Access;
    begin
@@ -963,19 +963,21 @@ package body Ada_Semantic_Tree.Parts is
          return Get_Most_Complete_View (Entity);
       end if;
 
-      Relation_Given := Get_Location_Relation
-        (Tree_To     => Get_Tree (Get_File (Entity)),
-         Object_To   => Get_Parent_Scope
-           (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator (Entity)),
-         Tree_From   => Get_Tree (File),
-         Offset_From => Offset);
+      Relation_Given :=
+        Get_Location_Relation
+          (Tree_To     => Get_Tree (Get_File (Entity)),
+           Object_To   =>
+             Get_Parent_Scope
+               (Get_Tree (Get_File (Entity)),
+                To_Construct_Tree_Iterator (Entity)),
+           Tree_From   => Get_Tree (File),
+           Offset_From => Offset);
 
       case Relation_Given is
-         when Package_Body =>
+         when Package_Body                 =>
             return Get_Most_Complete_View (Entity);
 
-         when Full_Spec_Hierarchy =>
+         when Full_Spec_Hierarchy          =>
             --  ??? We should check that we're indeed in a package spec here,
             --  and not a package body...
             return Get_Most_Complete_View (Entity);
@@ -1005,14 +1007,14 @@ package body Ada_Semantic_Tree.Parts is
    ---------------------------
 
    function Unchecked_Is_In_Scope
-     (Assistant   : Database_Assistant_Access;
-      Scope       : Entity_Access;
-      Entity      : Entity_Access) return Boolean
+     (Assistant : Database_Assistant_Access;
+      Scope     : Entity_Access;
+      Entity    : Entity_Access) return Boolean
    is
-      Ada_Assistant : Ada_Part_Db_Assistant renames Ada_Part_Db_Assistant
-        (Assistant.all);
+      Ada_Assistant : Ada_Part_Db_Assistant renames
+        Ada_Part_Db_Assistant (Assistant.all);
 
-      Scope_Relation : constant Ada_Relation_Access :=
+      Scope_Relation   : constant Ada_Relation_Access :=
         Get_Relation (Scope, Ada_Assistant);
       Scope_Entity_Cmp : Entity_Persistent_Access;
 
@@ -1041,9 +1043,10 @@ package body Ada_Semantic_Tree.Parts is
             return True;
          end if;
 
-         Entity_It := To_Entity_Access
-           (File,
-            Get_Parent_Scope (Tree, To_Construct_Tree_Iterator (Entity_It)));
+         Entity_It :=
+           To_Entity_Access
+             (File,
+              Get_Parent_Scope (Tree, To_Construct_Tree_Iterator (Entity_It)));
 
          exit when Entity_It = Null_Entity_Access;
 

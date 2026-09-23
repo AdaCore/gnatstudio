@@ -15,27 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtkada.Style;              use Gtkada.Style;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Image;                 use Gtk.Image;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Style;  use Gtkada.Style;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Enums;     use Gtk.Enums;
+with Gtk.Image;     use Gtk.Image;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Separator; use Gtk.Separator;
+with Gtk.Widget;    use Gtk.Widget;
 
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with Language;                  use Language;
-with Language.Icons;            use Language.Icons;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Language;               use Language;
+with Language.Icons;         use Language.Icons;
 with Tooltips;
-with Xref;                      use Xref;
+with Xref;                   use Xref;
 
 with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;
 
 package body Entities_Tooltips is
 
    function Get_Pixbuf
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class; Entity : Root_Entity'Class)
+      return String;
    --  Return the image (icon-name) associated to an entity
 
    function Draw_Tooltip
@@ -51,14 +51,14 @@ package body Entities_Tooltips is
    ----------------
 
    function Get_Pixbuf
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return String
+     (Kernel : access Kernel_Handle_Record'Class; Entity : Root_Entity'Class)
+      return String
    is
       Info : constant Tooltip_Information :=
         Get_Tooltip_Information (Kernel, Entity);
    begin
-      return Stock_From_Category
-        (Info.Is_Spec, Info.Visibility, Info.Category);
+      return
+        Stock_From_Category (Info.Is_Spec, Info.Visibility, Info.Category);
    end Get_Pixbuf;
 
    ------------------
@@ -66,17 +66,18 @@ package body Entities_Tooltips is
    ------------------
 
    function Draw_Tooltip
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Root_Entity'Class;
-      Ref           : Root_Entity_Reference'Class;
-      Draw_Border   : Boolean) return Gtk_Widget is
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Root_Entity'Class;
+      Ref         : Root_Entity_Reference'Class;
+      Draw_Border : Boolean) return Gtk_Widget is
    begin
-      return Draw_Tooltip
-        (Guess       => Is_Guess (Entity),
-         Header      => Get_Tooltip_Header (Kernel, Entity),
-         Icon_Name   => Get_Pixbuf (Kernel, Entity),
-         Draw_Border => Draw_Border,
-         Doc         => Get_Tooltip_Documentation (Kernel, Entity, Ref));
+      return
+        Draw_Tooltip
+          (Guess       => Is_Guess (Entity),
+           Header      => Get_Tooltip_Header (Kernel, Entity),
+           Icon_Name   => Get_Pixbuf (Kernel, Entity),
+           Draw_Border => Draw_Border,
+           Doc         => Get_Tooltip_Documentation (Kernel, Entity, Ref));
    end Draw_Tooltip;
 
    ------------------
@@ -88,15 +89,14 @@ package body Entities_Tooltips is
       Doc         : String;
       Icon_Name   : String;
       Draw_Border : Boolean;
-      Guess       : Boolean := False)
-     return Gtk_Widget
+      Guess       : Boolean := False) return Gtk_Widget
    is
       pragma Unreferenced (Draw_Border);
 
       Header_Label, Doc_Label : Gtk_Label;
-      Box, Hbox : Gtk_Box;
-      Image : Gtk_Image;
-      Sep : Gtk_Separator;
+      Box, Hbox               : Gtk_Box;
+      Image                   : Gtk_Image;
+      Sep                     : Gtk_Separator;
 
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
@@ -106,8 +106,7 @@ package body Entities_Tooltips is
 
       if Icon_Name /= "" then
          Gtk_New_From_Icon_Name
-           (Image, Icon_Name => Icon_Name,
-            Size             => Icon_Size_Small_Toolbar);
+           (Image, Icon_Name => Icon_Name, Size => Icon_Size_Small_Toolbar);
          Image.Set_Alignment (0.0, 0.0);
          Hbox.Pack_Start (Image, Expand => False, Fill => False);
       end if;
@@ -121,7 +120,10 @@ package body Entities_Tooltips is
            ("<span foreground ="""
             & To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color))
             & """>"
-            & Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
+            & Tooltip_Guess_Message
+            & "</span>"
+            & ASCII.LF
+            & Header);
       else
          Header_Label.Set_Markup (Header);
       end if;

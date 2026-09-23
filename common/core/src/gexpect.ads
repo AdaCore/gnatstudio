@@ -20,10 +20,10 @@
 --  (in the remote project) and GNAT.Expect.TTY.Remote (in the
 --  common project).
 
-with GNAT.Strings;         use GNAT.Strings;
-with GNAT.Expect;          use GNAT.Expect;
+with GNAT.Strings; use GNAT.Strings;
+with GNAT.Expect;  use GNAT.Expect;
 
-with GNATCOLL.VFS_Types;   use GNATCOLL.VFS_Types;
+with GNATCOLL.VFS_Types; use GNATCOLL.VFS_Types;
 
 package Gexpect is
 
@@ -41,7 +41,8 @@ package Gexpect is
 
       case Auto_Answer is
          when True =>
-            Answer   : String_Access;
+            Answer : String_Access;
+
          when False =>
             Question : String_Access;
       end case;
@@ -58,9 +59,7 @@ package Gexpect is
    --  See Free procedure in remote-db.ads
 
    Null_Extra_Prompt : constant Extra_Prompt :=
-                         (Auto_Answer => True,
-                          Ptrn        => null,
-                          Answer      => null);
+     (Auto_Answer => True, Ptrn => null, Answer => null);
 
    ------------------------
    -- Machine definition --
@@ -75,101 +74,93 @@ package Gexpect is
    --  Machine accessors
 
    --  Basic Machine properties
-   function Nickname
-     (Machine : Machine_Type) return String is abstract;
-   function Network_Name
-     (Machine : Machine_Type) return String is abstract;
-   function Access_Tool
-     (Machine : Machine_Type) return String is abstract;
-   function Shell
-     (Machine : Machine_Type) return String is abstract;
+   function Nickname (Machine : Machine_Type) return String is abstract;
+   function Network_Name (Machine : Machine_Type) return String is abstract;
+   function Access_Tool (Machine : Machine_Type) return String is abstract;
+   function Shell (Machine : Machine_Type) return String is abstract;
 
-   function Sync_Tool
-     (Machine : Machine_Type) return String is abstract;
+   function Sync_Tool (Machine : Machine_Type) return String is abstract;
    --  The name of the synchronization tool
-   function Sync_Tool_Args
-     (Machine : Machine_Type) return String_List is abstract;
+   function Sync_Tool_Args (Machine : Machine_Type) return String_List
+   is abstract;
    --  Arguments used by synchronization tool
 
-   function Extra_Init_Commands
-     (Machine : Machine_Type) return String_List is abstract;
-   function User_Name
-     (Machine : Machine_Type) return String is abstract;
-   procedure Set_User_Name
-     (Machine   : in out Machine_Type;
-      User_Name : String) is abstract;
-   function Max_Nb_Connections
-     (Machine : Machine_Type) return Natural is abstract;
-   function Timeout
-     (Machine : Machine_Type) return Natural is abstract;
-   function Cr_Lf
-     (Machine : Machine_Type) return Cr_Lf_Handling is abstract;
-   function Use_Dbg
-     (Machine : Machine_Type) return Boolean is abstract;
+   function Extra_Init_Commands (Machine : Machine_Type) return String_List
+   is abstract;
+   function User_Name (Machine : Machine_Type) return String is abstract;
+   procedure Set_User_Name (Machine : in out Machine_Type; User_Name : String)
+   is abstract;
+   function Max_Nb_Connections (Machine : Machine_Type) return Natural
+   is abstract;
+   function Timeout (Machine : Machine_Type) return Natural is abstract;
+   function Cr_Lf (Machine : Machine_Type) return Cr_Lf_Handling is abstract;
+   function Use_Dbg (Machine : Machine_Type) return Boolean is abstract;
    type Mode_Type is (Input, Output);
    procedure Dbg
-     (Machine : access Machine_Type;
-      Str     : String;
-      Mode    : Mode_Type) is abstract;
+     (Machine : access Machine_Type; Str : String; Mode : Mode_Type)
+   is abstract;
 
    --  Machine's shell properties
-   function Shell_Command
-     (Machine : Machine_Type) return String is abstract;
+   function Shell_Command (Machine : Machine_Type) return String is abstract;
    function Shell_Generic_Prompt
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
    function Shell_Configured_Prompt
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
-   function Shell_FS
-     (Machine : Machine_Type) return FS_Type is abstract;
-   function Shell_No_Echo_Cmd
-     (Machine : Machine_Type) return String is abstract;
-   function Shell_Init_Cmds
-     (Machine : Machine_Type) return String_List is abstract;
-   function Shell_Exit_Cmds
-     (Machine : Machine_Type) return String_List is abstract;
-   function Shell_Cd_Cmd
-     (Machine : Machine_Type) return String is abstract;
-   function Shell_Get_Status_Cmd
-     (Machine : Machine_Type) return String is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
+   function Shell_FS (Machine : Machine_Type) return FS_Type is abstract;
+   function Shell_No_Echo_Cmd (Machine : Machine_Type) return String
+   is abstract;
+   function Shell_Init_Cmds (Machine : Machine_Type) return String_List
+   is abstract;
+   function Shell_Exit_Cmds (Machine : Machine_Type) return String_List
+   is abstract;
+   function Shell_Cd_Cmd (Machine : Machine_Type) return String is abstract;
+   function Shell_Get_Status_Cmd (Machine : Machine_Type) return String
+   is abstract;
    function Shell_Get_Status_Pattern
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
 
    --  Machine's access tool properties
 
-   function Access_Tool_Command
-     (Machine : Machine_Type) return String is abstract;
-   function Access_Tool_Common_Args
-     (Machine : Machine_Type) return String_List is abstract;
-   function Access_Tool_User_Args
-     (Machine : Machine_Type) return String_List is abstract;
-   function Access_Tool_Send_Interrupt
-     (Machine : Machine_Type) return String is abstract;
+   function Access_Tool_Command (Machine : Machine_Type) return String
+   is abstract;
+   function Access_Tool_Common_Args (Machine : Machine_Type) return String_List
+   is abstract;
+   function Access_Tool_User_Args (Machine : Machine_Type) return String_List
+   is abstract;
+   function Access_Tool_Send_Interrupt (Machine : Machine_Type) return String
+   is abstract;
    function Access_Tool_User_Prompt_Ptrn
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
    function Access_Tool_Password_Prompt_Ptrn
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
    function Access_Tool_Passphrase_Prompt_Ptrn
-     (Machine : Machine_Type) return Pattern_Matcher_Access is abstract;
+     (Machine : Machine_Type) return Pattern_Matcher_Access
+   is abstract;
    function Access_Tool_Extra_Prompts
-     (Machine : Machine_Type) return Extra_Prompt_Array is abstract;
-   function Access_Tool_Use_Pipes
-     (Machine : Machine_Type) return Boolean is abstract;
+     (Machine : Machine_Type) return Extra_Prompt_Array
+   is abstract;
+   function Access_Tool_Use_Pipes (Machine : Machine_Type) return Boolean
+   is abstract;
 
    ------------------------------------
    -- internally used g-exttre datas --
    ------------------------------------
 
    type Machine_User_Data_Type is abstract tagged null record;
-   type Machine_User_Data_Access is access all
-     Machine_User_Data_Type'Class;
+   type Machine_User_Data_Access is access all Machine_User_Data_Type'Class;
 
    procedure Free (Machine : in out Machine_User_Data_Type) is null;
    --  Should free memory used by Machine.
 
    procedure Set_Data
-     (Machine : in out Machine_Type;
-      Data    : Machine_User_Data_Access) is abstract;
-   function Get_Data
-     (Machine : Machine_Type) return Machine_User_Data_Access is abstract;
+     (Machine : in out Machine_Type; Data : Machine_User_Data_Access)
+   is abstract;
+   function Get_Data (Machine : Machine_Type) return Machine_User_Data_Access
+   is abstract;
 
 end Gexpect;

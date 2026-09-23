@@ -27,13 +27,13 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.VFS;                          use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Gdk.RGBA;                              use Gdk.RGBA;
-with Glib;                                  use Glib;
-with Glib.Object;                           use Glib.Object;
+with Gdk.RGBA;    use Gdk.RGBA;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 
 with Gtk.Box;
 with Gtk.Color_Button;
@@ -42,7 +42,7 @@ with Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Widget;
 
-with Pango.Font;                            use Pango.Font;
+with Pango.Font; use Pango.Font;
 
 package Default_Preferences is
 
@@ -138,8 +138,8 @@ package Default_Preferences is
    --  preference's path.
 
    procedure Set_GObject_To_Update
-     (Pref   : not null access Preference_Record;
-      Obj    : not null access GObject_Record'Class);
+     (Pref : not null access Preference_Record;
+      Obj  : not null access GObject_Record'Class);
    --  Add/Update the key association in the Preferences_GObjects_Map
    --  between the preference's name and the GObject which needs
    --  to be updated when preferences changed.
@@ -171,14 +171,15 @@ package Default_Preferences is
 
    procedure Notify_Pref_Changed
      (Self : not null access Preferences_Manager_Record;
-      Pref : not null access Preference_Record'Class) is null;
+      Pref : not null access Preference_Record'Class)
+   is null;
    --  Called when a preference is changed.
    --  If the Preference dialog is displayed, runs the
    --  Preferences_Changed_Hook. This is only useful when writing
    --  your own type of preference and overriding Set_Pref.
 
    procedure Set_Is_Loading_Prefs
-     (Self : not null access Preferences_Manager_Record'Class;
+     (Self    : not null access Preferences_Manager_Record'Class;
       Loading : Boolean);
    function Is_Loading_Preferences
      (Self : not null access Preferences_Manager_Record'Class) return Boolean;
@@ -190,11 +191,11 @@ package Default_Preferences is
    --  Freeze/Thaw the emission of the preferences_changed signal
 
    procedure Register
-     (Manager                : not null access Preferences_Manager_Record;
-      Path                   : Preference_Path;
-      Name, Label, Doc       : String;
-      Pref                   : not null access Preference_Record'Class;
-      Priority               : Integer := -1);
+     (Manager          : not null access Preferences_Manager_Record;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Pref             : not null access Preference_Record'Class;
+      Priority         : Integer := -1);
    --  Set common attributes of all preferences, and register that preference
    --  in the manager. This function only needs to be called if you are
    --  creating your own types of preferences, and is already called
@@ -234,30 +235,33 @@ package Default_Preferences is
 
    function Get_Widget
      (Self : not null access Preferences_Editor_Interface)
-      return Gtk.Widget.Gtk_Widget is abstract;
+      return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the main Gtk_Widget of the preferences editor view
 
    procedure Display_Page
      (Self      : not null access Preferences_Editor_Interface;
-      Page_Name : Preferences_Page_Name) is abstract;
+      Page_Name : Preferences_Page_Name)
+   is abstract;
    --  Display the page view associated with Page_Name.
 
    procedure Display_Pref
      (Self      : not null access Preferences_Editor_Interface;
       Pref      : not null Preference;
-      Highlight : Boolean := False) is abstract;
+      Highlight : Boolean := False)
+   is abstract;
    --  Display the page view in which Pref is contained, highlighting the
    --  preference or not depending on Highlight.
 
    function Get_Page_View
      (Self      : not null access Preferences_Editor_Interface;
-      Page_Name : Preferences_Page_Name)
-      return Gtk.Widget.Gtk_Widget is abstract;
+      Page_Name : Preferences_Page_Name) return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the page view associated with Page_Name.
 
    function Is_Displaying_Hidden_Preferences
-     (Self : not null access Preferences_Editor_Interface)
-      return Boolean is abstract;
+     (Self : not null access Preferences_Editor_Interface) return Boolean
+   is abstract;
    --  Return True if the editor is currently displaying hidden preferences,
    --  False otherwise.
 
@@ -299,8 +303,8 @@ package Default_Preferences is
 
    function Get_Widget
      (Self    : not null access Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget is abstract;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the main widget of the preferences page.
    --  This is the widget we want to append to the preferences editor.
 
@@ -346,28 +350,31 @@ package Default_Preferences is
    ----------------
    --  This type represents a preference (type + value)
 
-   function Get_Pref
-     (Pref : access Preference_Record) return String is abstract;
+   function Get_Pref (Pref : access Preference_Record) return String
+   is abstract;
    --  Convert the preference to a string suitable for inclusion in an XML
    --  file. The string can itself contain well-formed XML
 
    procedure Set_Pref
      (Pref    : access Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is abstract;
+      Value   : String)
+   is abstract;
    --  Set the value of the preference from a string read in an XML file.
    --  This emits the preferences_changed signal on Manager if necessary, so
    --  that the preferences dialog is refreshed appropriately if it is open.
    --  Manager could be null if we never want to refresh the dialog
 
    function Is_Default
-     (Pref    : not null access Preference_Record) return Boolean is (False);
+     (Pref : not null access Preference_Record) return Boolean
+   is (False);
    --  Whether the current value of the preference is also the default value.
 
    function Edit
-     (Pref               : access Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
-      return Gtk.Widget.Gtk_Widget is abstract;
+     (Pref    : access Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
+      return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the widget that should be used to edit the preference described
    --  in Pref.
    --  This widget should connect to the "preferences_changed" signal on
@@ -384,8 +391,8 @@ package Default_Preferences is
    --  by Edit already shows the label.
 
    procedure Update_On_Pref_Changed
-     (Pref   : access Preference_Record;
-      Widget : access GObject_Record'Class) is abstract;
+     (Pref : access Preference_Record; Widget : access GObject_Record'Class)
+   is abstract;
    --  Called when preferences changed. This procedure allows to update
    --  the GObject associated with the preference's name in the
    --  Preferences_GObjects_Map.
@@ -399,6 +406,7 @@ package Default_Preferences is
       case Is_Set is
          when True =>
             Variant : Variant_Enum;
+
          when False =>
             null;
       end case;
@@ -416,6 +424,7 @@ package Default_Preferences is
       case Is_Set is
          when True =>
             Underline : Underline_Enum;
+
          when False =>
             null;
       end case;
@@ -431,23 +440,23 @@ package Default_Preferences is
 
    type Integer_Preference_Record is new Preference_Record with private;
    type Boolean_Preference_Record is new Preference_Record with private;
-   type String_Preference_Record  is new Preference_Record with private;
-   type Color_Preference_Record   is new Preference_Record with private;
-   type Font_Preference_Record    is new Preference_Record with private;
+   type String_Preference_Record is new Preference_Record with private;
+   type Color_Preference_Record is new Preference_Record with private;
+   type Font_Preference_Record is new Preference_Record with private;
    type Style_Preference_Record is tagged;
    type Variant_Preference_Record is tagged;
-   type Enum_Preference_Record  is abstract new Preference_Record with private;
-   type Theme_Preference_Record   is new Preference_Record with private;
+   type Enum_Preference_Record is abstract new Preference_Record with private;
+   type Theme_Preference_Record is new Preference_Record with private;
 
    type Integer_Preference is access all Integer_Preference_Record'Class;
    type Boolean_Preference is access all Boolean_Preference_Record'Class;
-   type String_Preference  is access all String_Preference_Record'Class;
-   type Color_Preference   is access all Color_Preference_Record'Class;
-   type Font_Preference    is access all Font_Preference_Record'Class;
-   type Style_Preference   is access all Style_Preference_Record'Class;
+   type String_Preference is access all String_Preference_Record'Class;
+   type Color_Preference is access all Color_Preference_Record'Class;
+   type Font_Preference is access all Font_Preference_Record'Class;
+   type Style_Preference is access all Style_Preference_Record'Class;
    type Variant_Preference is access all Variant_Preference_Record'Class;
-   type Enum_Preference    is access all Enum_Preference_Record'Class;
-   type Theme_Preference   is access all Theme_Preference_Record'Class;
+   type Enum_Preference is access all Enum_Preference_Record'Class;
+   type Theme_Preference is access all Theme_Preference_Record'Class;
 
    -------------------------------
    -- Editing preferences types --
@@ -459,13 +468,18 @@ package Default_Preferences is
    --  See for instance GPS.Kernel.Charsets for more examples.
 
    type Manager_Preference is record
-      Manager   : Preferences_Manager;
-      Pref      : Preference;
+      Manager : Preferences_Manager;
+      Pref    : Preference;
    end record;
-   package Preference_Handlers is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Manager_Preference);
-   package Return_Preference_Handlers is new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Manager_Preference);
+   package Preference_Handlers is new
+     Gtk.Handlers.User_Callback
+       (Glib.Object.GObject_Record,
+        Manager_Preference);
+   package Return_Preference_Handlers is new
+     Gtk.Handlers.User_Return_Callback
+       (Glib.Object.GObject_Record,
+        Boolean,
+        Manager_Preference);
 
    ------------------------------
    -- Creating new preferences --
@@ -476,62 +490,54 @@ package Default_Preferences is
       Path                      : Preference_Path;
       Name, Label, Doc          : String;
       Minimum, Maximum, Default : Integer;
-      Priority                  : Integer := -1)
-      return Integer_Preference;
+      Priority                  : Integer := -1) return Integer_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Default                   : Boolean;
-      Priority                  : Integer := -1)
-      return Boolean_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : Boolean;
+      Priority         : Integer := -1) return Boolean_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc    : String;
-      Default                   : String;
-      Multi_Line                : Boolean := False;
-      Priority                  : Integer := -1)
-      return String_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : String;
+      Multi_Line       : Boolean := False;
+      Priority         : Integer := -1) return String_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Default                   : String;
-      Priority                  : Integer := -1)
-      return Color_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : String;
+      Priority         : Integer := -1) return Color_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc         : String;
-      Default                   : String;
-      Priority                  : Integer := -1)
-      return Font_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : String;
+      Priority         : Integer := -1) return Font_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Default_Font              : String;
-      Default_Fg                : String;
-      Default_Bg                : String := "rgba(0,0,0,0)";
-      Priority                  : Integer := -1)
-      return Style_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default_Font     : String;
+      Default_Fg       : String;
+      Default_Bg       : String := "rgba(0,0,0,0)";
+      Priority         : Integer := -1) return Style_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Base                      : Style_Preference;
-      Default_Variant           : Variant_Enum;
-      Default_Fg                : String;
-      Default_Bg                : String := "rgba(0,0,0,0)";
-      Priority                  : Integer := -1)
-      return Variant_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Base             : Style_Preference;
+      Default_Variant  : Variant_Enum;
+      Default_Fg       : String;
+      Default_Bg       : String := "rgba(0,0,0,0)";
+      Priority         : Integer := -1) return Variant_Preference;
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Priority                  : Integer := -1)
-      return Theme_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Priority         : Integer := -1) return Theme_Preference;
    --  Create a new preference and register it in the Manager.
    --  Path designates where the preference should go in the preferences
    --    dialog. Read the Preference_Path documentation for more details.
@@ -554,14 +560,14 @@ package Default_Preferences is
       Name    : String;
       Default : Boolean;
       Label   : String;
-      Doc     : String := "")
-      return Boolean_Preference
-   is (Create (Manager,
-               Path    => ":Local Configuration",
-               Name    => Name,
-               Label   => Label,
-               Doc     => Doc,
-               Default => Default));
+      Doc     : String := "") return Boolean_Preference
+   is (Create
+         (Manager,
+          Path    => ":Local Configuration",
+          Name    => Name,
+          Label   => Label,
+          Doc     => Doc,
+          Default => Default));
    --  Convenience function for creating a boolean invisible preference.
    --  Such preferences are changed via other GUI elements (e.g: view local
    --  menus) or in the advanced preferences page when displayed.
@@ -593,19 +599,19 @@ package Default_Preferences is
    function Get_Group_Name
      (Pref : not null access Preference_Record'Class) return String;
 
-   overriding function Get_Pref
-     (Pref : access String_Preference_Record) return String;
+   overriding
+   function Get_Pref (Pref : access String_Preference_Record) return String;
 
    function Get_Pref (Pref : access Integer_Preference_Record) return Integer;
    function Get_Pref (Pref : access Boolean_Preference_Record) return Boolean;
 
-   overriding function Get_Pref
-     (Pref : access Color_Preference_Record) return String;
+   overriding
+   function Get_Pref (Pref : access Color_Preference_Record) return String;
    function Get_Pref
      (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA;
 
-   overriding function Get_Pref
-     (Pref : access Font_Preference_Record) return String;
+   overriding
+   function Get_Pref (Pref : access Font_Preference_Record) return String;
    function Get_Pref
      (Pref : access Font_Preference_Record)
       return Pango.Font.Pango_Font_Description;
@@ -616,17 +622,15 @@ package Default_Preferences is
 
    type Style_Preference_Record is new Preference_Record with private;
 
-   overriding function Get_Pref
-     (Pref : access Style_Preference_Record) return String;
+   overriding
+   function Get_Pref (Pref : access Style_Preference_Record) return String;
    function Get_Pref_Font
-     (Pref     : access Style_Preference_Record)
+     (Pref : access Style_Preference_Record)
       return Pango.Font.Pango_Font_Description;
    function Get_Pref_Fg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.RGBA.Gdk_RGBA;
+     (Pref : access Style_Preference_Record'Class) return Gdk.RGBA.Gdk_RGBA;
    function Get_Pref_Bg
-     (Pref     : access Style_Preference_Record'Class)
-      return Gdk.RGBA.Gdk_RGBA;
+     (Pref : access Style_Preference_Record'Class) return Gdk.RGBA.Gdk_RGBA;
 
    -------------------------------
    -- Variant_Preference_Record --
@@ -634,21 +638,19 @@ package Default_Preferences is
 
    type Variant_Preference_Record is new Style_Preference_Record with private;
 
-   overriding function Get_Pref
-     (Pref : access Variant_Preference_Record) return String;
-   overriding function Get_Pref_Font
-     (Pref     : access Variant_Preference_Record)
+   overriding
+   function Get_Pref (Pref : access Variant_Preference_Record) return String;
+   overriding
+   function Get_Pref_Font
+     (Pref : access Variant_Preference_Record)
       return Pango.Font.Pango_Font_Description;
    function Get_Pref_Fg_Color
-     (Pref     : access Variant_Preference_Record)
-      return Gdk.RGBA.Gdk_RGBA;
+     (Pref : access Variant_Preference_Record) return Gdk.RGBA.Gdk_RGBA;
    function Get_Pref_Bg_Color
-     (Pref     : access Variant_Preference_Record)
-      return Gdk.RGBA.Gdk_RGBA;
+     (Pref : access Variant_Preference_Record) return Gdk.RGBA.Gdk_RGBA;
    function Get_Pref (Pref : access Enum_Preference_Record) return Integer;
    function Get_Pref_Variant
-     (Pref     : access Variant_Preference_Record)
-      return Variant_Enum;
+     (Pref : access Variant_Preference_Record) return Variant_Enum;
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overridden it.
    --  Colors have already been allocated when they are returned.
@@ -656,13 +658,13 @@ package Default_Preferences is
    --  For enumeration, it returns the 'Pos of the enumeration value.
 
    type Theme_Descr is record
-      Name      : Unbounded_String;
+      Name : Unbounded_String;
       --  Display name for the theme, including the variant
 
       Directory : Unbounded_String;
       --  Name for the theme (not including the variant name)
 
-      Dark      : Boolean := False;
+      Dark : Boolean := False;
       --  Whether to use a dark variant
    end record;
    function Get_Pref
@@ -689,14 +691,14 @@ package Default_Preferences is
       Manager      : access Preferences_Manager_Record'Class;
       Font, Fg, Bg : String);
    procedure Set_Pref
-     (Pref         : Font_Preference;
-      Manager      : access Preferences_Manager_Record'Class;
-      Font         : Pango.Font.Pango_Font_Description);
+     (Pref    : Font_Preference;
+      Manager : access Preferences_Manager_Record'Class;
+      Font    : Pango.Font.Pango_Font_Description);
    procedure Set_Pref
-     (Pref         : Variant_Preference;
-      Manager      : access Preferences_Manager_Record'Class;
-      Variant      : Variant_Enum;
-      Fg, Bg       : String);
+     (Pref    : Variant_Preference;
+      Manager : access Preferences_Manager_Record'Class;
+      Variant : Variant_Enum;
+      Fg, Bg  : String);
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
 
@@ -705,8 +707,7 @@ package Default_Preferences is
    ---------------------------------------------
 
    procedure Load_Preferences
-     (Manager   : access Preferences_Manager_Record;
-      File_Name : Virtual_File);
+     (Manager : access Preferences_Manager_Record; File_Name : Virtual_File);
    --  Load the preferences from a specific file.
    --  The preferences can be loaded even if they have not been registered
    --  yet.
@@ -724,8 +725,7 @@ package Default_Preferences is
    type Page_Cursor is private;
 
    function Get_First_Reference
-     (Manager : not null access Preferences_Manager_Record)
-      return Page_Cursor;
+     (Manager : not null access Preferences_Manager_Record) return Page_Cursor;
    procedure Next (C : in out Page_Cursor);
    function Get_Page (Self : in out Page_Cursor) return Preferences_Page;
    --  Iterate all over the registered pages.
@@ -733,8 +733,7 @@ package Default_Preferences is
    type Subpage_Cursor is private;
 
    function Get_First_Reference
-     (Parent : not null access Preferences_Page_Record)
-      return Subpage_Cursor;
+     (Parent : not null access Preferences_Page_Record) return Subpage_Cursor;
    procedure Next (C : in out Subpage_Cursor);
    function Get_Subpage (Self : in out Subpage_Cursor) return Preferences_Page;
    --  Iterate all over the registered subpages
@@ -775,10 +774,10 @@ package Default_Preferences is
    --  preference that resides in a page that has not been registered
    --  previously.
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Default_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
    -------------------
@@ -798,12 +797,12 @@ private
    function Page_Name_Equals (Left, Right : Preferences_Page) return Boolean;
    --  Used to search in pages lists using name equality.
 
-   package Pages_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Preferences_Page, Page_Name_Equals);
+   package Pages_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Preferences_Page, Page_Name_Equals);
    type Page_Cursor is record
-      Root_Pages_Curs   : Pages_Lists.Cursor;
-      Subpages_Curs     : Pages_Lists.Cursor;
-      Is_Root           : Boolean;
+      Root_Pages_Curs : Pages_Lists.Cursor;
+      Subpages_Curs   : Pages_Lists.Cursor;
+      Is_Root         : Boolean;
    end record;
    type Subpage_Cursor is record
       C : Pages_Lists.Cursor;
@@ -813,53 +812,63 @@ private
    function Group_Name_Equals (Left, Right : Preferences_Group) return Boolean;
    --  Used to search in groups lists using name equality.
 
-   package Groups_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Preferences_Group, Group_Name_Equals);
+   package Groups_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Preferences_Group, Group_Name_Equals);
    --  Used to store groups in the pages.
 
-   package Preferences_Names_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists
-       (String, "=");
+   package Preferences_Names_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (String, "=");
    --  Used to store the names of the preferences that belong to a given group
 
-   package Preferences_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Preference, Ada.Strings.Hash, "=");
+   package Preferences_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        Preference,
+        Ada.Strings.Hash,
+        "=");
    type Preference_Cursor (Cursor_Type : Preference_Cursor_Type) is record
       case Cursor_Type is
          when From_Manager =>
-            Map_Curs  : Preferences_Maps.Cursor;
+            Map_Curs : Preferences_Maps.Cursor;
+
          when From_Group =>
             List_Curs : Preferences_Names_Lists.Cursor;
       end case;
    end record;
    --  Used to map preferences with their names.
 
-   package Preferences_GObjects_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
-       (String, GObject, Ada.Strings.Hash, "=");
+   package Preferences_GObjects_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        GObject,
+        Ada.Strings.Hash,
+        "=");
    --  Used to map preferences with the GObjects we want to update when
    --  preferences change.
 
    function "=" (Left, Right : Gtk.Widget.Gtk_Widget) return Boolean
    is (GObject (Left) = GObject (Right));
 
-   package Preferences_Widgets_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
-       (String, Gtk.Widget.Gtk_Widget, Ada.Strings.Hash, "=");
+   package Preferences_Widgets_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        Gtk.Widget.Gtk_Widget,
+        Ada.Strings.Hash,
+        "=");
    --  Used to map preferences with the widgets displaying them.
 
    type Preference_Record is abstract tagged record
-      Name       : Unbounded_String;
+      Name : Unbounded_String;
       --  Name in the .xml file, and used for external references
 
-      Label      : Unbounded_String;
+      Label : Unbounded_String;
       --  Label used in the preferences dialog
 
-      Path       : Unbounded_String;
+      Path : Unbounded_String;
       --  Preferences's full path in the preference dialog. Read the
       --  Preference_Path documentation for more details.
 
-      Page_Name  : Unbounded_String;
+      Page_Name : Unbounded_String;
       --  Name of the preference's page. This is set to null if the preference
       --  is hidden.
 
@@ -867,22 +876,22 @@ private
       --  Name of the preference's group. This is set to null if no group has
       --  been specified in its path.
 
-      Doc        : Unbounded_String;
+      Doc : Unbounded_String;
       --  The documentation for this preference
 
-      Priority   : Integer;
+      Priority : Integer;
       --  Preference's priority. This is used to sort the preferences according
       --  to the order we want to display it.
    end record;
 
    type Preferences_Group_Record is tagged record
-      Name        : Unbounded_String;
+      Name : Unbounded_String;
       --  Group's name.
 
       Description : Unbounded_String;
       --  Group's description.
 
-      Priority    : Integer;
+      Priority : Integer;
       --  Group's priority. This is used to sort the groups according to the
       --  order we want to display it.
 
@@ -890,30 +899,34 @@ private
       --  List of preferences belonging to this group.
    end record;
 
-   package Groups_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Preferences_Group, Ada.Strings.Hash, "=");
+   package Groups_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        Preferences_Group,
+        Ada.Strings.Hash,
+        "=");
    --  Used to map groups with their names.
    type Group_Cursor is record
       C : Groups_Lists.Cursor;
    end record;
 
    type Preferences_Page_Record is abstract tagged record
-      Name      : Unbounded_String;
+      Name : Unbounded_String;
       --  Name of the page. Read the Preferences_Page_Name documentation for
       --  more details.
 
-      Priority  : Integer;
+      Priority : Integer;
       --  Page's priority. This is used to sort the pages according to the
       --  order we want to display it.
 
-      Groups    : Groups_Lists.List;
+      Groups : Groups_Lists.List;
       --  List of groups belonging to this page.
 
       Page_Type : Preferences_Page_Type;
       --  Type of the page. Used by the editor to know if the page should be
       --  displayed or not.
 
-      Subpages  : Pages_Lists.List;
+      Subpages : Pages_Lists.List;
       --  List of all the subpages. This list is empty if Is_Root is False.
    end record;
 
@@ -926,120 +939,141 @@ private
       Int_Max_Value : Integer;
       Default       : Integer;
    end record;
-   overriding function Get_Pref
-     (Pref : access Integer_Preference_Record) return String;
-   overriding procedure Set_Pref
+   overriding
+   function Get_Pref (Pref : access Integer_Preference_Record) return String;
+   overriding
+   procedure Set_Pref
      (Pref    : access Integer_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Integer_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Integer_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access Integer_Preference_Record) return Boolean
    is (Self.Default = Self.Int_Value);
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Integer_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Boolean_Preference_Record is new Preference_Record with record
-      Bool_Value    : Boolean;
-      Default       : Boolean;
+      Bool_Value : Boolean;
+      Default    : Boolean;
    end record;
-   overriding function Get_Pref
-     (Pref : access Boolean_Preference_Record) return String;
-   overriding procedure Set_Pref
+   overriding
+   function Get_Pref (Pref : access Boolean_Preference_Record) return String;
+   overriding
+   procedure Set_Pref
      (Pref    : access Boolean_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Boolean_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Boolean_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access Boolean_Preference_Record) return Boolean
-     is (Self.Default = Self.Bool_Value);
-   overriding function Editor_Needs_Label
+   is (Self.Default = Self.Bool_Value);
+   overriding
+   function Editor_Needs_Label
      (Pref : not null access Boolean_Preference_Record) return Boolean
    is (False);
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Boolean_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type String_Preference_Record is new Preference_Record with record
-      Str_Value     : Unbounded_String;
-      Default       : Unbounded_String;
-      Multi_Line    : Boolean := False;
+      Str_Value  : Unbounded_String;
+      Default    : Unbounded_String;
+      Multi_Line : Boolean := False;
    end record;
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access String_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access String_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access String_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access String_Preference_Record) return Boolean
-   is
-     (Self.Default = Self.Str_Value);
-   overriding procedure Update_On_Pref_Changed
+   is (Self.Default = Self.Str_Value);
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access String_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Color_Preference_Record is new Preference_Record with record
-      Default       : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Color         : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Default : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Color   : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access Color_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Color_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Color_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access Color_Preference_Record) return Boolean
    is (Self.Default = Self.Color);
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Color_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Font_Preference_Record is new Preference_Record with record
-      Default       : Pango.Font.Pango_Font_Description;
-      Descr         : Pango.Font.Pango_Font_Description;
+      Default : Pango.Font.Pango_Font_Description;
+      Descr   : Pango.Font.Pango_Font_Description;
    end record;
    type My_Font_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Ent : Gtk.GEntry.Gtk_Entry;
    end record;
    type My_Font_Box is access all My_Font_Box_Record'Class;
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access Font_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Font_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Font_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out Font_Preference_Record);
-   overriding function Is_Default
+   overriding
+   procedure Free (Pref : in out Font_Preference_Record);
+   overriding
+   function Is_Default
      (Self : not null access Font_Preference_Record) return Boolean
    is (Equal (Self.Default, Self.Descr));
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Font_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Style_Preference_Record is new Preference_Record with record
-      Font_Default  : Pango.Font.Pango_Font_Description;
-      Font_Descr    : Pango.Font.Pango_Font_Description;
+      Font_Default : Pango.Font.Pango_Font_Description;
+      Font_Descr   : Pango.Font.Pango_Font_Description;
 
-      Fg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Fg_Default    : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Fg_Color   : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Fg_Default : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
 
-      Bg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Bg_Default    : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Bg_Color   : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Bg_Default : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    type My_Style_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Font_Box        : My_Font_Box;
@@ -1047,27 +1081,32 @@ private
       Bg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
    end record;
    type My_Style_Box is access all My_Style_Box_Record'Class;
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access Style_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Style_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Style_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out Style_Preference_Record);
-   overriding function Is_Default
+   overriding
+   procedure Free (Pref : in out Style_Preference_Record);
+   overriding
+   function Is_Default
      (Self : not null access Style_Preference_Record) return Boolean
-     is (Equal (Self.Font_Default, Self.Font_Descr)
-         and then Self.Fg_Default = Self.Fg_Color
-         and then Self.Bg_Default = Self.Bg_Color);
-   overriding procedure Update_On_Pref_Changed
+   is (Equal (Self.Font_Default, Self.Font_Descr)
+       and then Self.Fg_Default = Self.Fg_Color
+       and then Self.Bg_Default = Self.Bg_Color);
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Style_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Variant_Preference_Record is new Style_Preference_Record with record
-      Base_Font     : Style_Preference;
-      Variant       : Variant_Enum;
+      Base_Font       : Style_Preference;
+      Variant         : Variant_Enum;
       Default_Variant : Variant_Enum;
       --  never sets the Style_Font and Font_Default fields
    end record;
@@ -1077,21 +1116,26 @@ private
       Bg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
    end record;
    type My_Variant_Box is access all My_Variant_Box_Record'Class;
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access Variant_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
-     (Pref               : access Variant_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Variant_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out Variant_Preference_Record);
-   overriding function Is_Default
+   overriding
+   procedure Free (Pref : in out Variant_Preference_Record);
+   overriding
+   function Is_Default
      (Self : not null access Variant_Preference_Record) return Boolean
-     is (Self.Variant = Self.Default_Variant
-         and then Self.Fg_Default = Self.Fg_Color
-         and then Self.Bg_Default = Self.Bg_Color);
-   overriding procedure Update_On_Pref_Changed
+   is (Self.Variant = Self.Default_Variant
+       and then Self.Fg_Default = Self.Fg_Color
+       and then Self.Bg_Default = Self.Bg_Color);
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Variant_Preference_Record;
       Widget : access GObject_Record'Class);
 
@@ -1100,13 +1144,15 @@ private
       Default         : Integer := -1;
       Combo_Threshold : Integer := 3;
    end record;
-   overriding function Get_Pref
-     (Pref : access Enum_Preference_Record) return String;
-   overriding procedure Set_Pref
+   overriding
+   function Get_Pref (Pref : access Enum_Preference_Record) return String;
+   overriding
+   procedure Set_Pref
      (Pref    : access Enum_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access Enum_Preference_Record) return Boolean
    is (Self.Enum_Value = Self.Default);
 
@@ -1117,32 +1163,36 @@ private
       Themes  : Theme_Descr_Array_Access;
       Current : Natural := 0;
    end record;
-   overriding function Get_Pref
-     (Pref : access Theme_Preference_Record) return String;
-   overriding procedure Set_Pref
+   overriding
+   function Get_Pref (Pref : access Theme_Preference_Record) return String;
+   overriding
+   procedure Set_Pref
      (Pref    : access Theme_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Edit
+   overriding
+   function Edit
      (Pref    : access Theme_Preference_Record;
       Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out Theme_Preference_Record);
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Free (Pref : in out Theme_Preference_Record);
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Theme_Preference_Record;
       Widget : access GObject_Record'Class);
 
    type Preferences_Manager_Record is tagged record
-      Pages         : Pages_Lists.List;
+      Pages : Pages_Lists.List;
       --  List of the preferences pages belonging to this manager.
 
-      Preferences   : Preferences_Maps.Map;
+      Preferences : Preferences_Maps.Map;
       --  Global map containing all the preferences.
       --  This is used when we need to iterate over all the preferences,
       --  without needing to know in which page it resides (e.g: when saving
       --  preferences).
 
-      Pref_Editor   : access Preferences_Editor_Interface'Class;
+      Pref_Editor : access Preferences_Editor_Interface'Class;
       --  The current preferences editor. This is set to null if there is no
       --  editor open currently.
 

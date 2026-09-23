@@ -22,9 +22,9 @@ with Glib.Xml_Int; use Glib.Xml_Int;
 
 package XML_Utils.GtkAda is
 
-   function Convert is new Ada.Unchecked_Conversion
-     (Glib.Xml_Int.Node_Ptr, XML_Utils.Node_Ptr);
-   function Convert is new Ada.Unchecked_Conversion
-     (XML_Utils.Node_Ptr, Glib.Xml_Int.Node_Ptr);
+   function Convert is new
+     Ada.Unchecked_Conversion (Glib.Xml_Int.Node_Ptr, XML_Utils.Node_Ptr);
+   function Convert is new
+     Ada.Unchecked_Conversion (XML_Utils.Node_Ptr, Glib.Xml_Int.Node_Ptr);
 
 end XML_Utils.GtkAda;

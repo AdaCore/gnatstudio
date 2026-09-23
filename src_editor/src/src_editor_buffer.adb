@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;                        use Ada.Calendar;
+with Ada.Calendar; use Ada.Calendar;
 with Ada.Characters.Conversions;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
@@ -23,88 +23,88 @@ with System.Address_To_Access_Conversions;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
-with Ada.Strings.Maps;                    use Ada.Strings.Maps;
+with Ada.Strings.Maps; use Ada.Strings.Maps;
 
-with Interfaces.C.Strings;                use Interfaces.C.Strings;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System.Address_Image;
-with GNAT.Expect;                         use GNAT.Expect;
-with GNAT.Regpat;                         use GNAT.Regpat;
+with GNAT.Expect;          use GNAT.Expect;
+with GNAT.Regpat;          use GNAT.Regpat;
 with GNAT.SHA1;
 
-with GNATCOLL.Arg_Lists;                  use GNATCOLL.Arg_Lists;
-with GNATCOLL.Paragraph_Filling;          use GNATCOLL.Paragraph_Filling;
-with GNATCOLL.Projects;                   use GNATCOLL.Projects;
-with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
-with GNATCOLL.Utils;                      use GNATCOLL.Utils;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with GNATCOLL.Paragraph_Filling; use GNATCOLL.Paragraph_Filling;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 
 with Gdk.Keyval;
-with Gdk.RGBA;                            use Gdk.RGBA;
-with Gdk.Types.Keysyms;                   use Gdk.Types.Keysyms;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Glib.Convert;
-with Glib.Error;                          use Glib.Error;
-with Glib.Object;                         use Glib.Object;
-with Glib.Properties;                     use Glib.Properties;
-with Glib.Unicode;                        use Glib.Unicode;
-with Glib.Values;                         use Glib.Values;
+with Glib.Error;        use Glib.Error;
+with Glib.Object;       use Glib.Object;
+with Glib.Properties;   use Glib.Properties;
+with Glib.Unicode;      use Glib.Unicode;
+with Glib.Values;       use Glib.Values;
 
-with Gtk;                                 use Gtk;
-with Gtk.Enums;                           use Gtk.Enums;
-with Gtk.Handlers;                        use Gtk.Handlers;
-with Gtk.Text_Buffer;                     use Gtk.Text_Buffer;
-with Gtk.Text_Iter;                       use Gtk.Text_Iter;
-with Gtk.Text_Tag;                        use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
-with Gtk.Text_View;                       use Gtk.Text_View;
+with Gtk;                use Gtk;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Handlers;       use Gtk.Handlers;
+with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
+with Gtk.Text_View;      use Gtk.Text_View;
 
-with Gtkada.Dialogs;                      use Gtkada.Dialogs;
-with Gtkada.MDI;                          use Gtkada.MDI;
-with Gtkada.Types;                        use Gtkada.Types;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+with Gtkada.MDI;     use Gtkada.MDI;
+with Gtkada.Types;   use Gtkada.Types;
 
-with Pango.Enums;                         use Pango.Enums;
+with Pango.Enums; use Pango.Enums;
 
-with Commands.Editor;                     use Commands.Editor;
-with Completion_Module;                   use Completion_Module;
-with Default_Preferences;                 use Default_Preferences;
-with GPS.Default_Styles;                  use GPS.Default_Styles;
-with GPS.Dialogs;                         use GPS.Dialogs;
-with GPS.Intl;                            use GPS.Intl;
-with GPS.Kernel;                          use GPS.Kernel;
-with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
-with GPS.Kernel.Clipboard;                use GPS.Kernel.Clipboard;
-with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;                 use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;          use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;               use GPS.Kernel.Properties;
-with GPS.Kernel.Project;                  use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
+with Commands.Editor;            use Commands.Editor;
+with Completion_Module;          use Completion_Module;
+with Default_Preferences;        use Default_Preferences;
+with GPS.Default_Styles;         use GPS.Default_Styles;
+with GPS.Dialogs;                use GPS.Dialogs;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
+with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;
 with GPS.Properties;
-with GUI_Utils;                           use GUI_Utils;
-with Language;                            use Language;
-with Language.Unknown;                    use Language.Unknown;
-with Language_Handlers;                   use Language_Handlers;
-with Src_Editor_Box;                      use Src_Editor_Box;
+with GUI_Utils;                  use GUI_Utils;
+with Language;                   use Language;
+with Language.Unknown;           use Language.Unknown;
+with Language_Handlers;          use Language_Handlers;
+with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Cursors;           use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
+with Src_Editor_Buffer.Cursors;  use Src_Editor_Buffer.Cursors;
 with Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Module;                   use Src_Editor_Module;
-with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
+with Src_Editor_Module;          use Src_Editor_Module;
+with Src_Editor_Module.Editors;  use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Status_Bar;               use Src_Editor_Status_Bar;
-with Src_Highlighting;                    use Src_Highlighting;
-with String_Utils;                        use String_Utils;
-with Gtk.Window;                          use Gtk.Window;
+with Src_Editor_Status_Bar;      use Src_Editor_Status_Bar;
+with Src_Highlighting;           use Src_Highlighting;
+with String_Utils;               use String_Utils;
+with Gtk.Window;                 use Gtk.Window;
 
 package body Src_Editor_Buffer is
 
@@ -124,19 +124,18 @@ package body Src_Editor_Buffer is
 
    Editors_Factory : Src_Editor_Factory_Access;
 
-   Me                  : constant Trace_Handle :=
-     Create ("GPS.Source_Editor.Buffer");
+   Me : constant Trace_Handle := Create ("GPS.Source_Editor.Buffer");
 
-   Me_Formatters       : constant Trace_Handle :=
+   Me_Formatters : constant Trace_Handle :=
      Create ("GPS.SOURCE_EDITOR.BUFFER.FORMATTERS", Off);
 
-   Prevent_Align       : constant Trace_Handle :=
+   Prevent_Align : constant Trace_Handle :=
      Create ("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB", On);
 
    Auto_Save_No_Reload : constant Trace_Handle :=
      Create ("DIALOG_AUTO_SAVE_NO_RELOAD", Off);
 
-   Auto_Save_Reload    : constant Trace_Handle :=
+   Auto_Save_Reload : constant Trace_Handle :=
      Create ("DIALOG_AUTO_SAVE_RELOAD", Off);
 
    pragma Unreferenced (Prevent_Align);
@@ -146,35 +145,31 @@ package body Src_Editor_Buffer is
    --  The interval at which to check whether the buffer should be reparsed,
    --  in milliseconds.
 
-   Buffer_Recompute_Delay    : constant Duration := 1.0;
+   Buffer_Recompute_Delay : constant Duration := 1.0;
    --  The delay between the last edit and the re-parsing of the buffer,
    --  in seconds.
 
-   Src_Editor_Message_Flags  : constant Message_Flags :=
-     Side_And_Locations;
+   Src_Editor_Message_Flags : constant Message_Flags := Side_And_Locations;
 
    package Buffer_Timeout is new Glib.Main.Generic_Sources (Source_Buffer);
 
-   function Strlen
-     (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
+   function Strlen (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
    pragma Import (C, Strlen);
    --  Import Strlen directly, for efficiency
 
    type Delimiter_Type is (Opening, Closing);
    --  ??? missing doc
 
-   Delimiters : constant array (1 .. 3, Delimiter_Type'Range) of Character
-     := (('(', ')'),
-         ('[', ']'),
-         ('{', '}'));
+   Delimiters : constant array (1 .. 3, Delimiter_Type'Range) of Character :=
+     (('(', ')'), ('[', ']'), ('{', '}'));
    --  ??? missing doc
    --  ??? Should we get that from the language ?
 
    Strip_Blanks_Property_Name : constant String := "strip-blanks";
    Strip_Lines_Property_Name  : constant String := "strip-blanks-lines";
 
-   package Iter_Access_Address_Conversions is
-     new System.Address_To_Access_Conversions (Gtk_Text_Iter);
+   package Iter_Access_Address_Conversions is new
+     System.Address_To_Access_Conversions (Gtk_Text_Iter);
 
    --------------------
    -- Signal Support --
@@ -184,29 +179,29 @@ package body Src_Editor_Buffer is
    --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-          (1 => New_String (String (Signal_Cursor_Position_Changed)),
-           2 => New_String (String (Signal_Side_Column_Changed)),
-           3 => New_String (String (Signal_Side_Column_Configuration_Changed)),
-           4 => New_String (String (Signal_Line_Highlights_Changed)),
-           5 => New_String (String (Signal_Status_Changed)),
-           6 => New_String (String (Signal_Filename_Changed)),
-           7 => New_String (String (Signal_Buffer_Information_Changed)),
-           8 => New_String (String (Signal_Closed)));
+     (1 => New_String (String (Signal_Cursor_Position_Changed)),
+      2 => New_String (String (Signal_Side_Column_Changed)),
+      3 => New_String (String (Signal_Side_Column_Configuration_Changed)),
+      4 => New_String (String (Signal_Line_Highlights_Changed)),
+      5 => New_String (String (Signal_Status_Changed)),
+      6 => New_String (String (Signal_Filename_Changed)),
+      7 => New_String (String (Signal_Buffer_Information_Changed)),
+      8 => New_String (String (Signal_Closed)));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-                         (1 => (GType_Int, GType_Int),
-                          2 => (GType_None, GType_None),
-                          3 => (GType_None, GType_None),
-                          4 => (GType_None, GType_None),
-                          5 => (GType_None, GType_None),
-                          6 => (GType_None, GType_None),
-                          7 => (GType_None, GType_None),
-                          8 => (GType_None, GType_None));
+     (1 => (GType_Int, GType_Int),
+      2 => (GType_None, GType_None),
+      3 => (GType_None, GType_None),
+      4 => (GType_None, GType_None),
+      5 => (GType_None, GType_None),
+      6 => (GType_None, GType_None),
+      7 => (GType_None, GType_None),
+      8 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
-   package Buffer_Callback is new Gtk.Handlers.Callback
-     (Widget_Type => Source_Buffer_Record);
+   package Buffer_Callback is new
+     Gtk.Handlers.Callback (Widget_Type => Source_Buffer_Record);
 
    --------------------------
    -- Forward declarations --
@@ -224,8 +219,7 @@ package body Src_Editor_Buffer is
       Column : Item_Offset_Type := 0);
    --  Generic version of Is_Valid_Position
 
-   procedure Changed_Handler
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Changed_Handler (Buffer : access Source_Buffer_Record'Class);
    --  This procedure is used to signal to the clients that the insert
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
@@ -266,8 +260,7 @@ package body Src_Editor_Buffer is
    --  First handler connected to the "insert_text" signal
 
    procedure Delete_Range_Cb
-     (Buffer : access Source_Buffer_Record'Class;
-      Iter   : Gtk_Text_Iter);
+     (Buffer : access Source_Buffer_Record'Class; Iter : Gtk_Text_Iter);
    --  This procedure recomputes the syntax-highlighting of the buffer
    --  in a semi-optimized manor, based on syntax-highlighting already
    --  done before the deletion and the location of deletion.
@@ -314,7 +307,8 @@ package body Src_Editor_Buffer is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -323,7 +317,8 @@ package body Src_Editor_Buffer is
    type On_Project_Changed is new Simple_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has changed
@@ -331,7 +326,8 @@ package body Src_Editor_Buffer is
    type On_Loc_Changed is new File_Location_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Loc_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -390,8 +386,7 @@ package body Src_Editor_Buffer is
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean;
    --  Timeout called in a timeout after the user has finished editing
 
-   procedure Free_Column_Info
-     (Column_Info : Columns_Config_Access);
+   procedure Free_Column_Info (Column_Info : Columns_Config_Access);
    --  Free the info contained in Column_Info
 
    procedure Get_Selection_Bounds
@@ -485,14 +480,12 @@ package body Src_Editor_Buffer is
 
    function Get_Current_Command
      (Buffer : access Source_Buffer_Record'Class) return Editor_Command
-   is
-     (if Buffer.Cursors_Sync.Mode = Manual_Slave
-      then Editor_Command (Buffer.Cursors_Sync.MC.Current_Command)
-      else Editor_Command (Buffer.Current_Command));
+   is (if Buffer.Cursors_Sync.Mode = Manual_Slave
+       then Editor_Command (Buffer.Cursors_Sync.MC.Current_Command)
+       else Editor_Command (Buffer.Current_Command));
 
    procedure Set_Current_Command
-     (Buffer : access Source_Buffer_Record'Class;
-      Command : Editor_Command);
+     (Buffer : access Source_Buffer_Record'Class; Command : Editor_Command);
 
    function Source_Lines_Context
      (Buffer     : access Source_Buffer_Record;
@@ -501,8 +494,8 @@ package body Src_Editor_Buffer is
    --  Create a selection context for the given lines
 
    procedure Set_Trailing_Space_Policy
-     (Buffer : access Source_Buffer_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
+     (Buffer                : access Source_Buffer_Record;
+      File                  : GNATCOLL.VFS.Virtual_File;
       Trailing_Spaces_Found : Boolean);
    --  Detect and set strip trailing space policy for Buffer
 
@@ -521,8 +514,7 @@ package body Src_Editor_Buffer is
    --  Return True if the context was created from a source editor
 
    function Get_First_Non_Blank_Column
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type)
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
       return Visible_Column_Type;
    --  Return the first column with a non-whitespace character
 
@@ -536,7 +528,8 @@ package body Src_Editor_Buffer is
    type On_File_Deleted is new File_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Deleted;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -545,22 +538,23 @@ package body Src_Editor_Buffer is
    type On_File_Renamed is new File2_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
    type On_Semantic_Tree_Updated is new File_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   overriding procedure Execute
-      (Self   : On_Semantic_Tree_Updated;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : GNATCOLL.VFS.Virtual_File);
+   overriding
+   procedure Execute
+     (Self   : On_Semantic_Tree_Updated;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
 
-   procedure Reset_Slave_Cursors_Commands
-     (Buffer : Source_Buffer);
+   procedure Reset_Slave_Cursors_Commands (Buffer : Source_Buffer);
 
    procedure Emit_File_Edited
      (Buffer   : not null access Source_Buffer_Record'Class;
@@ -578,8 +572,7 @@ package body Src_Editor_Buffer is
       To     : Virtual_File);
    --  Emit the File_Renamed hook and call File_Renamed on the listeners
 
-   procedure Adjust_Tab_Width
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Adjust_Tab_Width (Buffer : access Source_Buffer_Record'Class);
    --  Set Tab_Width based on the Language preferences
 
    procedure Save_Cursor
@@ -614,16 +607,16 @@ package body Src_Editor_Buffer is
    -- Utils --
    -----------
 
-   procedure Unchecked_Free is
-     new Ada.Unchecked_Deallocation
-       (Source_Highlighter_Record'Class, Source_Highlighter);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Source_Highlighter_Record'Class,
+        Source_Highlighter);
 
    ----------------------
    -- Adjust_Tab_Width --
    ----------------------
 
-   procedure Adjust_Tab_Width
-     (Buffer : access Source_Buffer_Record'Class) is
+   procedure Adjust_Tab_Width (Buffer : access Source_Buffer_Record'Class) is
    begin
       if Buffer.Lang /= null then
          Buffer.Tab_Width := Buffer.Lang.Get_Indentation_Level;
@@ -635,12 +628,10 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_Current_Command
-     (Buffer : access Source_Buffer_Record'Class;
-      Command : Editor_Command) is
+     (Buffer : access Source_Buffer_Record'Class; Command : Editor_Command) is
    begin
       if Buffer.Cursors_Sync.Mode = Manual_Slave then
-         Buffer.Cursors_Sync.MC.Current_Command :=
-           Command_Access (Command);
+         Buffer.Cursors_Sync.MC.Current_Command := Command_Access (Command);
       else
          Buffer.Current_Command := Command_Access (Command);
       end if;
@@ -650,8 +641,7 @@ package body Src_Editor_Buffer is
    -- Reset_Slave_Cursors_Commands --
    ----------------------------------
 
-   procedure Reset_Slave_Cursors_Commands
-     (Buffer : Source_Buffer) is
+   procedure Reset_Slave_Cursors_Commands (Buffer : Source_Buffer) is
    begin
       for Cursor of Buffer.Slave_Cursors_List loop
          if not Is_Null_Command (Editor_Command (Cursor.Current_Command)) then
@@ -664,9 +654,11 @@ package body Src_Editor_Buffer is
    -- Paste_Clipboard --
    ---------------------
 
-   overriding procedure Paste_Clipboard
-     (Buffer      : not null access Source_Buffer_Record;
-      Clipboard   : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+   overriding
+   procedure Paste_Clipboard
+     (Buffer           : not null access Source_Buffer_Record;
+      Clipboard        :
+        not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
       Default_Editable : Boolean := True)
    is
       Iter     : Gtk_Text_Iter;
@@ -687,8 +679,7 @@ package body Src_Editor_Buffer is
             end if;
          end loop;
 
-         Set_Manual_Sync
-           (Get_Main_Cursor (Source_Buffer (Buffer)));
+         Set_Manual_Sync (Get_Main_Cursor (Source_Buffer (Buffer)));
       end if;
 
       Get_Mark_Position (Source_Buffer (Buffer), Buffer.Get_Insert, S);
@@ -711,9 +702,11 @@ package body Src_Editor_Buffer is
    -- Cut_Clipboard --
    -------------------
 
-   overriding procedure Cut_Clipboard
-     (Buffer     : not null access Source_Buffer_Record;
-      Clipboard  : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+   overriding
+   procedure Cut_Clipboard
+     (Buffer           : not null access Source_Buffer_Record;
+      Clipboard        :
+        not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
       Default_Editable : Boolean)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
@@ -728,11 +721,10 @@ package body Src_Editor_Buffer is
             Set_Manual_Sync (C);
             Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
             Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
-            C.Cursor.Clipboard := To_Unbounded_String
-              (Buffer.Get_Text
-                 (Start_Iter,
-                  End_Iter,
-                  Include_Hidden_Chars => True));
+            C.Cursor.Clipboard :=
+              To_Unbounded_String
+                (Buffer.Get_Text
+                   (Start_Iter, End_Iter, Include_Hidden_Chars => True));
             Buffer.Delete (Start_Iter, End_Iter);
          end if;
       end loop;
@@ -746,7 +738,8 @@ package body Src_Editor_Buffer is
    -- Copy_Clipboard --
    --------------------
 
-   overriding procedure Copy_Clipboard
+   overriding
+   procedure Copy_Clipboard
      (Buffer    : not null access Source_Buffer_Record;
       Clipboard : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class)
    is
@@ -755,16 +748,15 @@ package body Src_Editor_Buffer is
    begin
       Set_Manual_Sync (Get_Main_Cursor (+Buffer));
       Buffer.Get_Selection_Bounds
-        (Start   => Start_Iter,
-         The_End => End_Iter,
-         Result  => Success);
+        (Start => Start_Iter, The_End => End_Iter, Result => Success);
 
       if Success then
          Clipboard.Set_Text
-           (Text => Buffer.Get_Text
-              (Start                => Start_Iter,
-               The_End              => End_Iter,
-               Include_Hidden_Chars => True));
+           (Text =>
+              Buffer.Get_Text
+                (Start                => Start_Iter,
+                 The_End              => End_Iter,
+                 Include_Hidden_Chars => True));
       end if;
 
       for C of Get_Cursors (Source_Buffer (Buffer)) loop
@@ -773,11 +765,10 @@ package body Src_Editor_Buffer is
             Set_Manual_Sync (C);
             Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
             Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
-            C.Cursor.Clipboard := To_Unbounded_String
-              (Buffer.Get_Text
-                 (Start_Iter,
-                  End_Iter,
-                  Include_Hidden_Chars => True));
+            C.Cursor.Clipboard :=
+              To_Unbounded_String
+                (Buffer.Get_Text
+                   (Start_Iter, End_Iter, Include_Hidden_Chars => True));
          end if;
       end loop;
 
@@ -788,7 +779,8 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Deleted;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -815,17 +807,16 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       pragma Unreferenced (Kernel);
-      Edited  : constant GNATCOLL.VFS.Virtual_File := Self.Buffer.Filename;
+      Edited : constant GNATCOLL.VFS.Virtual_File := Self.Buffer.Filename;
    begin
-      if Edited /= GNATCOLL.VFS.No_File
-        and then File = Edited
-      then
+      if Edited /= GNATCOLL.VFS.No_File and then File = Edited then
          --  The semantic tree for this buffer has been updated.
          --  Parse the blocks.
 
@@ -840,9 +831,10 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File)
    is
       pragma Unreferenced (Kernel);
@@ -855,8 +847,8 @@ package body Src_Editor_Buffer is
 
       if Is_Directory (File) then
          if Is_Parent (File, Edited) then
-            Dest := Create_From_Dir
-              (Renamed.Dir, Relative_Path (Edited, File));
+            Dest :=
+              Create_From_Dir (Renamed.Dir, Relative_Path (Edited, File));
             Self.Buffer.Filename := Dest;
             Self.Buffer.Filename_Changed;
          end if;
@@ -878,7 +870,8 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Loc_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -918,8 +911,10 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Free (S : in out Src_String) is
-      function To_chars_ptr is new Ada.Unchecked_Conversion
-        (Unchecked_String_Access, Gtkada.Types.Chars_Ptr);
+      function To_chars_ptr is new
+        Ada.Unchecked_Conversion
+          (Unchecked_String_Access,
+           Gtkada.Types.Chars_Ptr);
    begin
       if not S.Read_Only then
          --  was returned by Gtk.Text_Buffer.Get_Text
@@ -948,8 +943,7 @@ package body Src_Editor_Buffer is
       Start_Column         : Character_Index := 1;
       End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Src_String
+      Include_Last         : Boolean := False) return Src_String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Success              : Boolean;
@@ -958,8 +952,7 @@ package body Src_Editor_Buffer is
 
    begin
       if Line not in 1 .. Buffer.Last_Editable_Line
-        or else (End_Column.Has_Index
-                 and then End_Column.Index = Start_Column)
+        or else (End_Column.Has_Index and then End_Column.Index = Start_Column)
       then
          return Result;
       end if;
@@ -992,8 +985,7 @@ package body Src_Editor_Buffer is
          Forward_Char (End_Iter, Success);
       end if;
 
-      Chars :=
-        Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
+      Chars := Get_Text (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
       Result.Contents := To_Unchecked_String (Chars);
       Result.Length := UTF8_Code_Unit_Count (Strlen (Chars));
 
@@ -1049,21 +1041,23 @@ package body Src_Editor_Buffer is
             Forward_Char (End_Iter, Success);
          end if;
 
-         Result := GUI_Utils.Get_Text
+         Result :=
+           GUI_Utils.Get_Text
              (Buffer, Start_Iter, End_Iter, Include_Hidden_Chars);
 
          return Result;
 
       else
          if End_Line /= 0 then
-            return Get_Buffer_Lines
-              (Buffer               => Buffer,
-               Start_Line           => Start_Line,
-               End_Line             => End_Line,
-               Start_Column         => Start_Column,
-               End_Column           => End_Column,
-               Include_Hidden_Chars => Include_Hidden_Chars,
-               Include_Last         => Include_Last);
+            return
+              Get_Buffer_Lines
+                (Buffer               => Buffer,
+                 Start_Line           => Start_Line,
+                 End_Line             => End_Line,
+                 Start_Column         => Start_Column,
+                 End_Column           => End_Column,
+                 Include_Hidden_Chars => Include_Hidden_Chars,
+                 Include_Last         => Include_Last);
          else
             return
               Get_Buffer_Lines
@@ -1105,8 +1099,7 @@ package body Src_Editor_Buffer is
    -------------------------------
 
    procedure Set_Strip_Trailing_Blanks
-     (Buffer : access Source_Buffer_Record;
-      Value  : Boolean) is
+     (Buffer : access Source_Buffer_Record; Value : Boolean) is
    begin
       Buffer.Strip_Trailing_Blanks := Value;
 
@@ -1115,8 +1108,7 @@ package body Src_Editor_Buffer is
            (Kernel     => Buffer.Kernel,
             File       => Buffer.Filename,
             Name       => Strip_Blanks_Property_Name,
-            Property   =>
-               new GPS.Properties.Boolean_Property'(Value => Value),
+            Property   => new GPS.Properties.Boolean_Property'(Value => Value),
             Persistent => True);
       end if;
    end Set_Strip_Trailing_Blanks;
@@ -1136,8 +1128,7 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Set_Strip_Trailing_Lines
-     (Buffer : access Source_Buffer_Record;
-      Value  : Boolean) is
+     (Buffer : access Source_Buffer_Record; Value : Boolean) is
    begin
       Buffer.Strip_Trailing_Lines := Value;
 
@@ -1146,8 +1137,7 @@ package body Src_Editor_Buffer is
            (Kernel     => Buffer.Kernel,
             File       => Buffer.Filename,
             Name       => Strip_Lines_Property_Name,
-            Property   =>
-               new GPS.Properties.Boolean_Property'(Value => Value),
+            Property   => new GPS.Properties.Boolean_Property'(Value => Value),
             Persistent => True);
       end if;
    end Set_Strip_Trailing_Lines;
@@ -1184,14 +1174,12 @@ package body Src_Editor_Buffer is
            Get_String_At_Line
              (Source_Buffer (Buffer),
               Line                 => J,
-              Start_Column         => (if J = Lines'First
-                                       then Start_Column
-                                       else 1),
-              End_Column           => (if J = Lines'Last
-                                       then End_Column
-                                       else No_Index),
+              Start_Column         =>
+                (if J = Lines'First then Start_Column else 1),
+              End_Column           =>
+                (if J = Lines'Last then End_Column else No_Index),
               Include_Hidden_Chars => Include_Hidden_Chars,
-              Include_Last         =>  J /= Lines'Last or else Include_Last);
+              Include_Last         => J /= Lines'Last or else Include_Last);
          Len := Len + Lines (J).Last;
       end loop;
 
@@ -1219,10 +1207,13 @@ package body Src_Editor_Buffer is
    function Get_Byte_Index (Iter : Gtk_Text_Iter) return Natural is
       Index : Natural := 0;
    begin
-      for J in 0 ..
-        Get_Editable_Line
-          (Source_Buffer (Get_Buffer (Iter)),
-           Buffer_Line_Type (Get_Line (Iter))) - 1
+      for J in
+        0
+        ..
+          Get_Editable_Line
+            (Source_Buffer (Get_Buffer (Iter)),
+             Buffer_Line_Type (Get_Line (Iter)))
+          - 1
       loop
          --  Increment the index by the size of the string + 1 (for EOL).
          --  Gtk lines are 0-based, Editable_Lines 1-based, hence the J + 1
@@ -1247,8 +1238,7 @@ package body Src_Editor_Buffer is
    -- Run_Highlight_Range_Hook --
    ------------------------------
 
-   procedure Run_Highlight_Range_Hook (Buffer : Source_Buffer)
-   is
+   procedure Run_Highlight_Range_Hook (Buffer : Source_Buffer) is
       Start_Iter    : Gtk_Text_Iter;
       End_Iter      : Gtk_Text_Iter;
       First_Line    : Glib.Gint;
@@ -1273,7 +1263,8 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Mark
         (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
 
-      Whole_File := Get_Line (Start_Iter) = First_Line
+      Whole_File :=
+        Get_Line (Start_Iter) = First_Line
         and then Get_Line (End_Iter) = Last_Line;
 
       --  Convert buffer lines to editable lines. The buffer may contain
@@ -1281,10 +1272,11 @@ package body Src_Editor_Buffer is
       --  so raw buffer line numbers can exceed the actual file line count.
       --  The LSP semantic highlighter works on file lines only.
 
-      From_Editable := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Start_Iter) + 1));
-      To_Editable := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (End_Iter) + 1));
+      From_Editable :=
+        Get_Editable_Line
+          (Buffer, Buffer_Line_Type (Get_Line (Start_Iter) + 1));
+      To_Editable :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (End_Iter) + 1));
 
       --  If marks point to special lines, fall back to safe defaults
       if From_Editable = 0 then
@@ -1299,8 +1291,7 @@ package body Src_Editor_Buffer is
       Highlight_Range_Hook.Run
         (Kernel    => Buffer.Kernel,
          File      => Buffer.Filename,
-         From_Line =>
-           (if Whole_File then 0 else Natural (From_Editable)),
+         From_Line => (if Whole_File then 0 else Natural (From_Editable)),
          To_Line   => Natural (To_Editable));
 
       Buffer.Highlighter.Highlight_Needed := False;
@@ -1315,8 +1306,8 @@ package body Src_Editor_Buffer is
 
    begin
       if Buffer.In_Destruction
-        or else Clock < Buffer.Blocks_Request_Timestamp +
-          Buffer_Recompute_Delay
+        or else
+          Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay
         or else Buffer.Inserting --  wait until the end of inserting
       then
          return True;
@@ -1327,8 +1318,7 @@ package body Src_Editor_Buffer is
       if Buffer.Auto_Syntax_Check then
          CL := Create ("File");
          Append_Argument (CL, +Full_Name (Buffer.Filename), One_Arg);
-         Execute_GPS_Shell_Command
-           (Buffer.Kernel, CL);
+         Execute_GPS_Shell_Command (Buffer.Kernel, CL);
          Execute_GPS_Shell_Command
            (Buffer.Kernel,
             Parse_String ("File.shadow_check_syntax %1", Separate_Args));
@@ -1350,10 +1340,10 @@ package body Src_Editor_Buffer is
       --  Request an asynchronous update of the semantic tree
       if Buffer.Filename /= No_File then
          declare
-            Command : constant Update_Async_Access := new Update_Async_Record'
-              (Root_Command with
-               Kernel => Buffer.Kernel,
-               Filename => Buffer.Filename);
+            Command : constant Update_Async_Access :=
+              new Update_Async_Record'
+                (Root_Command
+                 with Kernel => Buffer.Kernel, Filename => Buffer.Filename);
          begin
             GPS.Kernel.Task_Manager.Launch_Background_Command
               (Buffer.Kernel,
@@ -1391,18 +1381,18 @@ package body Src_Editor_Buffer is
       Found            : out Natural;
       Counter_Max      : Natural := 16_384)
    is
-      Current      : Gtk_Text_Iter;
+      Current : Gtk_Text_Iter;
 
-      Success      : Boolean;
-      Counter      : Natural;
+      Success : Boolean;
+      Counter : Natural;
 
-      Stack        : Natural;
-      String_Tag   : Boolean;
-      C            : Character;
+      Stack      : Natural;
+      String_Tag : Boolean;
+      C          : Character;
 
-      Delimiter    : Integer;
+      Delimiter : Integer;
 
-      Language     : constant Language_Access := Get_Language (Buffer);
+      Language : constant Language_Access := Get_Language (Buffer);
 
       Highlight_Within_Comment : Boolean := False;
       --  Set to True if the cursor is in a comment. In this case, we want to
@@ -1440,7 +1430,7 @@ package body Src_Editor_Buffer is
          end Move_Char;
 
          In_Comment : constant Boolean :=
-                        Is_In_Comment (Source_Buffer (Buffer), Current);
+           Is_In_Comment (Source_Buffer (Buffer), Current);
 
       begin
          --  If we are looking to highlight only within the current comment,
@@ -1521,8 +1511,8 @@ package body Src_Editor_Buffer is
       end if;
 
       if Delimiter in Delimiters'Range (1) then
-         Counter    := 0;
-         Stack      := 1;
+         Counter := 0;
+         Stack := 1;
          String_Tag := False;
 
          Backward_Char (Current, Success);
@@ -1560,8 +1550,8 @@ package body Src_Editor_Buffer is
       end loop;
 
       if Delimiter in Delimiters'Range (1) then
-         Counter    := 0;
-         Stack      := 1;
+         Counter := 0;
+         Stack := 1;
          String_Tag := False;
 
          Forward_Char (Current, Success);
@@ -1594,8 +1584,7 @@ package body Src_Editor_Buffer is
    -- Register_Edit_Timeout --
    ---------------------------
 
-   procedure Register_Edit_Timeout
-     (Buffer : access Source_Buffer_Record'Class)
+   procedure Register_Edit_Timeout (Buffer : access Source_Buffer_Record'Class)
    is
       Timeout : Gint;
    begin
@@ -1609,18 +1598,20 @@ package body Src_Editor_Buffer is
         and then Buffer.Blocks_Timeout = Glib.Main.No_Source_Id
       then
          Buffer.Blocks_Timeout_Registered := True;
-         Buffer.Blocks_Timeout := Buffer_Timeout.Timeout_Add
-           (Buffer_Recompute_Interval,
-            Edition_Timeout'Access,
-            Source_Buffer (Buffer));
+         Buffer.Blocks_Timeout :=
+           Buffer_Timeout.Timeout_Add
+             (Buffer_Recompute_Interval,
+              Edition_Timeout'Access,
+              Source_Buffer (Buffer));
       end if;
 
       Timeout := Gint (Integer'(Periodic_Save.Get_Pref));
-      if not Buffer.Timeout_Registered
-        and then Timeout > 0
-      then
-         Buffer.Timeout_Id := Buffer_Timeout.Timeout_Add
-           (Guint (Timeout) * 1000,  Automatic_Save'Access, Buffer.all'Access);
+      if not Buffer.Timeout_Registered and then Timeout > 0 then
+         Buffer.Timeout_Id :=
+           Buffer_Timeout.Timeout_Add
+             (Guint (Timeout) * 1000,
+              Automatic_Save'Access,
+              Buffer.all'Access);
          Buffer.Timeout_Registered := True;
       end if;
    end Register_Edit_Timeout;
@@ -1630,8 +1621,8 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Buffer_Line_Type is
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return Buffer_Line_Type is
    begin
       if not Buffer.Original_Text_Inserted then
          return Buffer_Line_Type (Line);
@@ -1651,12 +1642,10 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Get_Editable_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type) return Editable_Line_Type is
+     (Buffer : access Source_Buffer_Record'Class; Line : Buffer_Line_Type)
+      return Editable_Line_Type is
    begin
-      if Buffer.Line_Data /= null
-        and then Line in Buffer.Line_Data'Range
-      then
+      if Buffer.Line_Data /= null and then Line in Buffer.Line_Data'Range then
          return Buffer.Line_Data (Line).Editable_Line;
       end if;
 
@@ -1667,18 +1656,12 @@ package body Src_Editor_Buffer is
    -- Automatic_Save --
    --------------------
 
-   function Automatic_Save (Buffer : Source_Buffer) return Boolean
-   is
+   function Automatic_Save (Buffer : Source_Buffer) return Boolean is
       Success : Boolean;
    begin
-      if Buffer.Modified_Auto
-        and then Buffer.Filename /= No_File
-      then
+      if Buffer.Modified_Auto and then Buffer.Filename /= No_File then
          Internal_Save_To_File
-           (Buffer,
-            Autosaved_File (Buffer.Filename),
-            True,
-            Success);
+           (Buffer, Autosaved_File (Buffer.Filename), True, Success);
          Buffer.Modified_Auto := False;
       end if;
 
@@ -1759,8 +1742,10 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Free (Info : in out Extra_Information_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Extra_Information_Record, Extra_Information_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Extra_Information_Record,
+           Extra_Information_Access);
    begin
       if Info /= null then
          GNAT.Strings.Free (Info.Identifier);
@@ -1780,12 +1765,12 @@ package body Src_Editor_Buffer is
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X
 
-      Stub    : Source_Buffer_Record;
+      Stub : Source_Buffer_Record;
       pragma Unreferenced (Data);
       pragma Warnings (Off, Stub);
 
-      Buffer  : constant Source_Buffer :=
-                  Source_Buffer (Get_User_Data (Buf, Stub));
+      Buffer : constant Source_Buffer :=
+        Source_Buffer (Get_User_Data (Buf, Stub));
 
       ----------
       -- Free --
@@ -1799,22 +1784,25 @@ package body Src_Editor_Buffer is
       end Free;
 
    begin
-      Trace (Me, "Destroying Buffer buffer="
-             & System.Address_Image (Buffer.all'Address)
-             & " widget="
-             & System.Address_Image (Buf));
+      Trace
+        (Me,
+         "Destroying Buffer buffer="
+         & System.Address_Image (Buffer.all'Address)
+         & " widget="
+         & System.Address_Image (Buf));
       Buffer.In_Destruction := True;
 
       --  Destroying listeners
 
       while not Buffer.Listeners.Is_Empty loop
          declare
-            procedure Unchecked_Free is
-              new Ada.Unchecked_Deallocation
-                (Editor_Listener'Class, Editor_Listener_Access);
+            procedure Unchecked_Free is new
+              Ada.Unchecked_Deallocation
+                (Editor_Listener'Class,
+                 Editor_Listener_Access);
 
             Listener : Editor_Listener_Access :=
-                         Buffer.Listeners.First_Element;
+              Buffer.Listeners.First_Element;
 
          begin
             Listener.Finalize;
@@ -1900,11 +1888,10 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Mark_Set_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
+     (Buffer : access Source_Buffer_Record'Class; Params : Glib.Values.GValues)
    is
       Mark : constant Gtk_Text_Mark :=
-               Get_Text_Mark (Glib.Values.Nth (Params, 2));
+        Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Iter : Gtk_Text_Iter;
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
@@ -1949,8 +1936,7 @@ package body Src_Editor_Buffer is
             for Listener of Buffer.Listeners loop
                Listener.After_Cursor_Moved
                  (Buffer.Editor_Buffer.New_Location
-                    (Integer (Editable_Line),
-                     Visible_Column),
+                    (Integer (Editable_Line), Visible_Column),
                   not Buffer.Inserting);
             end loop;
          end;
@@ -1991,14 +1977,13 @@ package body Src_Editor_Buffer is
    -----------------------
 
    procedure After_Insert_Text
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
+     (Buffer : access Source_Buffer_Record'Class; Params : Glib.Values.GValues)
    is
-      Text   : constant Unchecked_String_Access :=
-                 To_Unchecked_String (Get_Chars (Nth (Params, 2)));
-      Length : constant Integer := Integer (Get_Int (Nth (Params, 3)));
-      Start  : Buffer_Line_Type;
-      Iter   : Gtk_Text_Iter;
+      Text         : constant Unchecked_String_Access :=
+        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
+      Length       : constant Integer := Integer (Get_Int (Nth (Params, 3)));
+      Start        : Buffer_Line_Type;
+      Iter         : Gtk_Text_Iter;
       Start_Iter   : Gtk_Text_Iter;
       Start_Line   : Editable_Line_Type;
       Start_Column : Visible_Column_Type;
@@ -2012,8 +1997,7 @@ package body Src_Editor_Buffer is
       --  Get the coordinates of the start
       Copy (Iter, Start_Iter);
       Backward_Chars
-        (Start_Iter, Gint (UTF8_Strlen (Text (1 .. Length))),
-         Ignored);
+        (Start_Iter, Gint (UTF8_Strlen (Text (1 .. Length))), Ignored);
       Get_Iter_Position
         (Source_Buffer (Buffer), Start_Iter, Start_Line, Start_Column);
 
@@ -2046,16 +2030,17 @@ package body Src_Editor_Buffer is
          Lines_Add_Hook (Buffer, Start - Number, Number);
 
          Emit_New_Cursor_Position (Buffer);
-         --  This is already done when the cursor is moved but it is too early
-         --  when new lines are inserted at the end of the buffer: the fact
-         --  that lines have been added as to be reflected in the buffer data
-         --  before the status bar is refereshed.
-         --  When indentation is enabled "cursor_position_changed" is emitted
-         --  twice (once after line information has been recomputed) and the
-         --  status bar is properly refreshed. This is not the case when
-         --  auto indentation is not performed (preference disabled or
-         --  buffer language unknown). As a result, the status bar report a
-         --  cursor on line 0.
+      --  This is already done when the cursor is moved but it is too early
+      --  when new lines are inserted at the end of the buffer: the fact
+      --  that lines have been added as to be reflected in the buffer data
+      --  before the status bar is refereshed.
+      --  When indentation is enabled "cursor_position_changed" is emitted
+      --  twice (once after line information has been recomputed) and the
+      --  status bar is properly refreshed. This is not the case when
+      --  auto indentation is not performed (preference disabled or
+      --  buffer language unknown). As a result, the status bar report a
+      --  cursor on line 0.
+
       end if;
 
       --  Perform insertion for every multi cursor
@@ -2063,7 +2048,7 @@ package body Src_Editor_Buffer is
       if Buffer.Cursors_Sync.Mode = Auto then
          declare
             Iter : Gtk_Text_Iter;
-            G : Group_Block := Current_Group (Buffer.Queue);
+            G    : Group_Block := Current_Group (Buffer.Queue);
          begin
             for C of Get_Cursors (Source_Buffer (Buffer)) loop
                if not C.Is_Main_Cursor then
@@ -2131,29 +2116,27 @@ package body Src_Editor_Buffer is
            (Buffer => Buffer,
             Iter   => End_Iter,
             Line   => Start_Line,
-            Column => Collapse_Tabs
-              (Buffer => Buffer,
-               Line   => Start_Line,
-               Column => Start_Column));
+            Column =>
+              Collapse_Tabs
+                (Buffer => Buffer,
+                 Line   => Start_Line,
+                 Column => Start_Column));
          Forward_Chars
-           (Iter   => End_Iter,
-            Count  => Gint (Length),
-            Result => Success);
+           (Iter => End_Iter, Count => Gint (Length), Result => Success);
 
          if Buffer.Lang /= null
            and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
          then
-            Insert_Text_Cb
-              (Buffer          => Buffer,
-               End_Insert_Iter => End_Iter);
+            Insert_Text_Cb (Buffer => Buffer, End_Insert_Iter => End_Iter);
          end if;
       end;
 
       declare
-         Address  : constant System.Address := Get_Address (Nth (Params, 1));
+         Address     : constant System.Address :=
+           Get_Address (Nth (Params, 1));
          Insert_Iter : Gtk_Text_Iter;
-         Original : Gtk_Text_Iter
-           with Import, Address => Address;
+         Original    : Gtk_Text_Iter
+         with Import, Address => Address;
       begin
          Buffer.Get_Iter_At_Mark (Insert_Iter, Buffer.Insert_Mark);
 
@@ -2174,17 +2157,16 @@ package body Src_Editor_Buffer is
    ------------------------
 
    procedure Before_Insert_Text
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
+     (Buffer : access Source_Buffer_Record'Class; Params : Glib.Values.GValues)
    is
 
       procedure Update_Insert_Command
-        (Buffer : Source_Buffer;
-         User_Action : Action_Type;
-         Command : out Editor_Command;
-         Pos : Gtk_Text_Iter;
-         Sel_Pos : Gtk_Text_Iter;
-         Text : String;
+        (Buffer         : Source_Buffer;
+         User_Action    : Action_Type;
+         Command        : out Editor_Command;
+         Pos            : Gtk_Text_Iter;
+         Sel_Pos        : Gtk_Text_Iter;
+         Text           : String;
          Is_Main_Action : Boolean := True);
       --  Update the command with the given action
 
@@ -2212,8 +2194,9 @@ package body Src_Editor_Buffer is
          procedure Create_And_Enqueue_Command is
             C : constant Src_Editor_Buffer.Cursors.Cursor :=
               (if Buffer.Cursors_Sync.Mode = Manual_Slave
-               then Src_Editor_Buffer.Cursors.Create
-                 (Buffer.Cursors_Sync.MC, Buffer)
+               then
+                 Src_Editor_Buffer.Cursors.Create
+                   (Buffer.Cursors_Sync.MC, Buffer)
                else Get_Main_Cursor (+Buffer));
          begin
             Create
@@ -2253,14 +2236,15 @@ package body Src_Editor_Buffer is
          Buffer.Set_Current_Command (Command);
       end Update_Insert_Command;
 
-      Text         : constant Unchecked_String_Access :=
+      Text                   : constant Unchecked_String_Access :=
         To_Unchecked_String (Get_Chars (Nth (Params, 2)));
-      Length       : constant Integer := Integer (Get_Int (Nth (Params, 3)));
-      Pos, Sel_Pos : Gtk_Text_Iter;
-      Command      : Editor_Command := Get_Current_Command (Buffer);
-      Line         : Editable_Line_Type;
-      User_Action  : Action_Type;
-      Sel_Mark     : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
+      Length                 : constant Integer :=
+        Integer (Get_Int (Nth (Params, 3)));
+      Pos, Sel_Pos           : Gtk_Text_Iter;
+      Command                : Editor_Command := Get_Current_Command (Buffer);
+      Line                   : Editable_Line_Type;
+      User_Action            : Action_Type;
+      Sel_Mark               : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
       Cursor_Previously_Held : Boolean;
 
    begin
@@ -2283,8 +2267,8 @@ package body Src_Editor_Buffer is
          Sel_Mark := Buffer.Cursors_Sync.MC.Sel_Mark;
       end if;
 
-      Line := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+      Line :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
       if Starts_Line (Pos) then
          Buffer.Inserting_Position := At_Begin;
@@ -2335,8 +2319,8 @@ package body Src_Editor_Buffer is
                --  insertion and write the stripped text instead.
 
                Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
-               Ignore := Insert_Interactive_At_Cursor
-                 (Buffer, T (1 .. Last), True);
+               Ignore :=
+                 Insert_Interactive_At_Cursor (Buffer, T (1 .. Last), True);
                return;
             end if;
          end;
@@ -2374,8 +2358,9 @@ package body Src_Editor_Buffer is
                --  new text at the cursor position.
                Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
 
-               Ignore := Insert_Interactive_At_Cursor
-                 (Buffer, Text (1 .. Length), True);
+               Ignore :=
+                 Insert_Interactive_At_Cursor
+                   (Buffer, Text (1 .. Length), True);
                return;
             end if;
          end;
@@ -2392,9 +2377,7 @@ package body Src_Editor_Buffer is
 
       User_Edit_Hook (Buffer);
 
-      if Length = 1
-        and then (Text (1) = ' ' or else Text (1) = ASCII.HT)
-      then
+      if Length = 1 and then (Text (1) = ' ' or else Text (1) = ASCII.HT) then
          User_Action := Insert_Spaces;
       elsif Length = 1 and then Text (1) = ASCII.LF then
          User_Action := Insert_Line;
@@ -2415,7 +2398,11 @@ package body Src_Editor_Buffer is
       Buffer.Get_Iter_At_Mark (Sel_Pos, Sel_Mark);
       Update_Insert_Command
         (Source_Buffer (Buffer),
-         User_Action, Command, Pos, Sel_Pos, Text (1 .. Length),
+         User_Action,
+         Command,
+         Pos,
+         Sel_Pos,
+         Text (1 .. Length),
          Is_Main_Action => Buffer.Cursors_Sync.Mode /= Manual_Slave);
 
       Buffer.No_Cursor_Move_On_Changes := Cursor_Previously_Held;
@@ -2430,8 +2417,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure Delete_Range_Cb
-     (Buffer : access Source_Buffer_Record'Class;
-      Iter   : Gtk_Text_Iter) is
+     (Buffer : access Source_Buffer_Record'Class; Iter : Gtk_Text_Iter) is
    begin
       Source_Buffer (Buffer).Highlighter.Update_Highlight_Region (Iter);
    end Delete_Range_Cb;
@@ -2441,8 +2427,7 @@ package body Src_Editor_Buffer is
    ------------------------
 
    procedure After_Delete_Range
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
+     (Buffer : access Source_Buffer_Record'Class; Params : Glib.Values.GValues)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
@@ -2486,15 +2471,14 @@ package body Src_Editor_Buffer is
       end if;
 
       Character_Added
-        (Source_Buffer (Buffer), 8,
-         Interactive => not Buffer.Inserting);
+        (Source_Buffer (Buffer), 8, Interactive => not Buffer.Inserting);
 
-      if Buffer.Cursors_Delete_Offset /= 0 and then
-        Buffer.Cursors_Sync.Mode = Auto
+      if Buffer.Cursors_Delete_Offset /= 0
+        and then Buffer.Cursors_Sync.Mode = Auto
       then
          declare
             Iter_1, Iter_2 : Gtk_Text_Iter;
-            G : Group_Block := Current_Group (Buffer.Queue);
+            G              : Group_Block := Current_Group (Buffer.Queue);
          begin
             for C of Get_Cursors (Source_Buffer (Buffer)) loop
                if not C.Is_Main_Cursor then
@@ -2523,9 +2507,9 @@ package body Src_Editor_Buffer is
 
          declare
             use Message_Reference_List;
-            Src  : Line_Info_Width_Array_Access renames
-              Buffer.Line_Data (Buffer_Line_Type
-                                (Get_Line (Start_Iter))).Side_Info_Data;
+            Src : Line_Info_Width_Array_Access renames
+              Buffer.Line_Data (Buffer_Line_Type (Get_Line (Start_Iter)))
+                .Side_Info_Data;
 
             Msg          : Message_Access;
             For_Deleting : Message_Reference_List.List;
@@ -2534,8 +2518,7 @@ package body Src_Editor_Buffer is
             for Index in Src'Range loop
                for Ref of Src (Index).Messages loop
                   Msg := Message (Ref);
-                  if Msg /= null
-                    and then not Msg.Get_Editor_Mark.Is_Present
+                  if Msg /= null and then not Msg.Get_Editor_Mark.Is_Present
                   then
                      For_Deleting.Append (Ref);
                   end if;
@@ -2562,8 +2545,7 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Before_Delete_Range
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
+     (Buffer : access Source_Buffer_Record'Class; Params : Glib.Values.GValues)
    is
       Start_Iter          : Gtk_Text_Iter;
       End_Iter            : Gtk_Text_Iter;
@@ -2586,15 +2568,13 @@ package body Src_Editor_Buffer is
       Last_Buffer_Line_To_Remove  : Buffer_Line_Type;
 
       procedure Get_Current_Cursor_Position
-        (Line   : out Gint;
-         Column : out Gint);
+        (Line : out Gint; Column : out Gint);
       --  Same as get cursor position, but takes multi-cursors into account
 
       Cursor_Pos : Loc_T;
 
       procedure Get_Current_Cursor_Position
-        (Line   : out Gint;
-         Column : out Gint)
+        (Line : out Gint; Column : out Gint)
       is
          Mark : Gtk_Text_Mark;
          Iter : Gtk_Text_Iter;
@@ -2607,12 +2587,11 @@ package body Src_Editor_Buffer is
          end if;
 
          Get_Iter_At_Mark (Buffer, Iter, Mark);
-         Line   := Get_Line (Iter);
+         Line := Get_Line (Iter);
          Column := Get_Line_Offset (Iter);
 
          Get_Iter_Position
-           (Source_Buffer (Buffer),
-            Iter, Cursor_Pos.Line, Cursor_Pos.Col);
+           (Source_Buffer (Buffer), Iter, Cursor_Pos.Line, Cursor_Pos.Col);
       end Get_Current_Cursor_Position;
 
    begin
@@ -2628,10 +2607,10 @@ package body Src_Editor_Buffer is
 
       Get_Current_Cursor_Position (Line, Column);
 
-      Line_Start   := Get_Line (Start_Iter);
+      Line_Start := Get_Line (Start_Iter);
       Column_Start := Get_Line_Offset (Start_Iter);
-      Line_End     := Get_Line (End_Iter);
-      Column_End   := Get_Line_Offset (End_Iter);
+      Line_End := Get_Line (End_Iter);
+      Column_End := Get_Line_Offset (End_Iter);
 
       if Line = Line_Start and then Column = Column_Start then
          Direction := Backward;
@@ -2643,10 +2622,12 @@ package body Src_Editor_Buffer is
 
       if Buffer.Cursors_Sync.Mode = Auto then
          Delete_Offset := (Get_Offset (End_Iter) - Get_Offset (Start_Iter));
-         Delete_Offset := Delete_Offset * (case Direction is
-                                           when Forward => -1,
-                                           when Backward => 1,
-                                           when Extended => 0);
+         Delete_Offset :=
+           Delete_Offset
+           * (case Direction is
+                when Forward  => -1,
+                when Backward => 1,
+                when Extended => 0);
          Buffer.Cursors_Delete_Offset := Delete_Offset;
       end if;
 
@@ -2663,10 +2644,11 @@ package body Src_Editor_Buffer is
       --  If there are non-editable lines in the range, intercept the deletion
 
       if not Buffer.Inserting
-        and then Has_Special_Lines
-          (Buffer,
-           Buffer_Line_Type (Line_Start + 1),
-           Buffer_Line_Type (Line_End + 1))
+        and then
+          Has_Special_Lines
+            (Buffer,
+             Buffer_Line_Type (Line_Start + 1),
+             Buffer_Line_Type (Line_End + 1))
       then
          --  Intercept default propagation, we want to flatten the area
          --  before continuing.
@@ -2707,20 +2689,21 @@ package body Src_Editor_Buffer is
          Last_Buffer_Line_To_Remove := Buffer_Line_Type (Line_End + 1);
 
          declare
-            Expanded : Boolean;
+            Expanded       : Boolean;
             M_Start, M_End : Gtk_Text_Mark;
             I_Start, I_End : Gtk_Text_Iter;
-            Ignored  : Boolean;
+            Ignored        : Boolean;
          begin
             M_Start := Buffer.Create_Mark (Where => Start_Iter);
-            M_End   := Buffer.Create_Mark (Where => End_Iter);
+            M_End := Buffer.Create_Mark (Where => End_Iter);
 
-            Expanded := Flatten_Area
-              (Buffer            => Buffer,
-               Start_Line        => Editable_Line_Start,
-               End_Line          => Editable_Line_End,
-               Start_Buffer_Line => First_Buffer_Line_To_Remove,
-               End_Buffer_Line   => Last_Buffer_Line_To_Remove);
+            Expanded :=
+              Flatten_Area
+                (Buffer            => Buffer,
+                 Start_Line        => Editable_Line_Start,
+                 End_Line          => Editable_Line_End,
+                 Start_Buffer_Line => First_Buffer_Line_To_Remove,
+                 End_Buffer_Line   => Last_Buffer_Line_To_Remove);
 
             Buffer.Get_Iter_At_Mark (I_Start, M_Start);
             Buffer.Get_Iter_At_Mark (I_End, M_End);
@@ -2731,11 +2714,12 @@ package body Src_Editor_Buffer is
             --  Re-launch the deletion unless we are expanding a folded line,
             --  in which case do nothing.
             if not Expanded then
-               Delete_Interactive (Buffer           => Buffer,
-                                   Start_Iter       => I_Start,
-                                   End_Iter         => I_End,
-                                   Default_Editable => True,
-                                   Result           => Ignored);
+               Delete_Interactive
+                 (Buffer           => Buffer,
+                  Start_Iter       => I_Start,
+                  End_Iter         => I_End,
+                  Default_Editable => True,
+                  Result           => Ignored);
             end if;
             return;
          end;
@@ -2747,13 +2731,11 @@ package body Src_Editor_Buffer is
               (Buffer.Editor_Buffer.New_Location
                  (Integer (Editable_Line_Start),
                   Buffer.Expand_Tabs
-                    (Editable_Line_Start,
-                     Character_Index (Column_Start + 1))),
+                    (Editable_Line_Start, Character_Index (Column_Start + 1))),
                Buffer.Editor_Buffer.New_Location
                  (Integer (Editable_Line_End),
                   Buffer.Expand_Tabs
-                    (Editable_Line_End,
-                     Character_Index (Column_End + 1))),
+                    (Editable_Line_End, Character_Index (Column_End + 1))),
                not Buffer.Inserting);
          end loop;
       end if;
@@ -2763,7 +2745,7 @@ package body Src_Editor_Buffer is
          From, To, Count : Buffer_Line_Type;
       begin
          From := Buffer_Line_Type (Line_Start + 1);
-         To   := Buffer_Line_Type (Line_End + 1);
+         To := Buffer_Line_Type (Line_End + 1);
 
          if From /= To then
             Count := To - From;
@@ -2801,8 +2783,8 @@ package body Src_Editor_Buffer is
                   M1 := Create_Mark (Buffer, "", Start_Iter);
                   M2 := Create_Mark (Buffer, "", End_Iter);
 
-                  Result := Fold_Unfold_Line
-                    (Buffer, Editable_Line_Start, False);
+                  Result :=
+                    Fold_Unfold_Line (Buffer, Editable_Line_Start, False);
                   if Result then
                      --  We have changed the buffer:
                      --  stop propagation and reemit
@@ -2831,17 +2813,18 @@ package body Src_Editor_Buffer is
       User_Edit_Hook (Buffer);
 
       if not Is_Null_Command (Command)
-        and then (Get_Mode (Command) /= Deletion
-                  or else Get_Direction (Command) /= Direction)
+        and then
+          (Get_Mode (Command) /= Deletion
+           or else Get_Direction (Command) /= Direction)
       then
          End_Action (Buffer);
          Command := Get_Current_Command (Buffer);
       end if;
 
       declare
-         Slice        : constant Basic_Types.UTF8_String :=
+         Slice       : constant Basic_Types.UTF8_String :=
            Get_Slice (Buffer, Start_Iter, End_Iter);
-         User_Action  : Action_Type;
+         User_Action : Action_Type;
       begin
 
          if Slice = "" & ASCII.LF then
@@ -2858,13 +2841,12 @@ package body Src_Editor_Buffer is
                Deletion,
                Source_Buffer (Buffer),
                True,
-               Cursor_Loc  => Cursor_Pos,
-               Sel_Loc     => Sel_Pos,
-               Direction   => Direction,
-               C           =>
+               Cursor_Loc => Cursor_Pos,
+               Sel_Loc    => Sel_Pos,
+               Direction  => Direction,
+               C          =>
                  (if Buffer.Cursors_Sync.Mode = Manual_Slave
-                  then Create
-                    (Buffer.Cursors_Sync.MC, Source_Buffer (Buffer))
+                  then Create (Buffer.Cursors_Sync.MC, Source_Buffer (Buffer))
                   else Get_Main_Cursor (+Buffer)));
 
             Enqueue (Buffer, Command_Access (Command), User_Action);
@@ -2917,8 +2899,7 @@ package body Src_Editor_Buffer is
    -- Status_Changed --
    --------------------
 
-   procedure Status_Changed
-     (Buffer : access Source_Buffer_Record'Class) is
+   procedure Status_Changed (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name (Get_Object (Buffer), Signal_Status_Changed & ASCII.NUL);
    end Status_Changed;
@@ -2927,8 +2908,7 @@ package body Src_Editor_Buffer is
    -- Filename_Changed --
    ----------------------
 
-   procedure Filename_Changed
-     (Buffer : access Source_Buffer_Record'Class) is
+   procedure Filename_Changed (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name (Get_Object (Buffer), Signal_Filename_Changed & ASCII.NUL);
    end Filename_Changed;
@@ -2938,8 +2918,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure Set_Last_Status
-     (Buffer : access Source_Buffer_Record'Class;
-      Status : Status_Type) is
+     (Buffer : access Source_Buffer_Record'Class; Status : Status_Type) is
    begin
       if Status /= Buffer.Current_Status then
          Buffer.Current_Status := Status;
@@ -2955,10 +2934,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
    is
       procedure Emit_By_Name
-        (Object : System.Address;
-         Name   : String;
-         Line   : Gint;
-         Column : Gint);
+        (Object : System.Address; Name : String; Line : Gint; Column : Gint);
       pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name_int_int");
 
       L, C : Gint;
@@ -2970,7 +2946,8 @@ package body Src_Editor_Buffer is
       Get_Screen_Position (Buffer, L, C);
 
       Emit_By_Name
-        (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
+        (Get_Object (Buffer),
+         "cursor_position_changed" & ASCII.NUL,
          Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
          Column => C + 1);
 
@@ -2991,9 +2968,7 @@ package body Src_Editor_Buffer is
       --  First check that Line does not exceed the number of lines
       --  in the buffer.
 
-      if Column < 0
-        or else Line >= Get_Line_Count (Buffer)
-      then
+      if Column < 0 or else Line >= Get_Line_Count (Buffer) then
          Found := False;
          return;
       end if;
@@ -3016,7 +2991,9 @@ package body Src_Editor_Buffer is
 
    procedure Is_Valid_Pos is new
      Generic_Valid_Position
-       (VSS.Strings.Character_Count, Get_Chars_In_Line, Set_Line_Offset);
+       (VSS.Strings.Character_Count,
+        Get_Chars_In_Line,
+        Set_Line_Offset);
    --  Column should be given in characters, not in bytes
 
    -----------------------
@@ -3024,9 +3001,8 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Is_Valid_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Gint;
-      Column : Gint := 0) return Boolean
+     (Buffer : access Source_Buffer_Record; Line : Gint; Column : Gint := 0)
+      return Boolean
    is
       Iter  : Gtk_Text_Iter;
       Found : Boolean;
@@ -3045,11 +3021,11 @@ package body Src_Editor_Buffer is
    -------------------
 
    function Is_Valid_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Boolean
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return Boolean
    is
       Buffer_Line : constant Buffer_Line_Type :=
-                      Get_Buffer_Line (Buffer, Line);
+        Get_Buffer_Line (Buffer, Line);
 
    begin
       if Buffer_Line = 0 then
@@ -3078,7 +3054,7 @@ package body Src_Editor_Buffer is
       Column : Character_Index) return Boolean
    is
       Buffer_Line : constant Buffer_Line_Type :=
-                      Get_Buffer_Line (Buffer, Line);
+        Get_Buffer_Line (Buffer, Line);
 
    begin
       if Buffer_Line = 0 then
@@ -3088,8 +3064,9 @@ package body Src_Editor_Buffer is
          return Is_Valid_Line (Buffer, Line);
 
       else
-         return Is_Valid_Position
-           (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1);
+         return
+           Is_Valid_Position
+             (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1);
       end if;
    end Is_Valid_Position;
 
@@ -3101,9 +3078,11 @@ package body Src_Editor_Buffer is
       --  The first visible column of a line is 1, thus 0 is not a valid
       --  position. Use Is_Valid_Line when no column is known.
 
-      return Column /= 0
-        and then Is_Valid_Position
-                   (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
+      return
+        Column /= 0
+        and then
+          Is_Valid_Position
+            (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
    end Is_Valid_Position;
 
    -----------------------
@@ -3111,8 +3090,7 @@ package body Src_Editor_Buffer is
    -----------------------
 
    procedure Ensure_Valid_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) is
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type) is
    begin
       if not Is_Valid_Line (Buffer, Line) then
          raise Location_Exception with (-"Invalid Buffer Line");
@@ -3171,7 +3149,7 @@ package body Src_Editor_Buffer is
 
       Buffer.Highlighter.First_Highlight_Mark :=
         Create_Mark (Buffer, "", Iter);
-      Buffer.Highlighter.Last_Highlight_Mark  :=
+      Buffer.Highlighter.Last_Highlight_Mark :=
         Create_Mark (Buffer, "", Iter, False);
 
       --  Initialize the line info
@@ -3238,14 +3216,13 @@ package body Src_Editor_Buffer is
       Glib.Object.G_New (Buffer, Class_Record);
       Gtkada.Text_Buffer.Initialize (Buffer);
 
-      Buffer.Lang   := Lang;
+      Buffer.Lang := Lang;
       Buffer.Kernel := Kernel;
 
       --  Create the Hidden_Text_Tag and save it into the source buffer tag
       --  table.
       Gtk_New (Buffer.Hidden_Text_Tag, "hidden-text");
-      Set_Property
-        (Buffer.Hidden_Text_Tag, Invisible_Property, True);
+      Set_Property (Buffer.Hidden_Text_Tag, Invisible_Property, True);
 
       --  Create the Hyper Mode Tag
 
@@ -3254,12 +3231,16 @@ package body Src_Editor_Buffer is
         (Buffer.Hyper_Mode_Tag,
          Gtk.Text_Tag.Underline_Property,
          Pango_Underline_Single);
-      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Rgba_Property,
-                    Hyper_Links_Style.Get_Pref_Fg);
+      Set_Property
+        (Buffer.Hyper_Mode_Tag,
+         Foreground_Rgba_Property,
+         Hyper_Links_Style.Get_Pref_Fg);
 
       if Hyper_Links_Style.Get_Pref_Bg /= Gdk.RGBA.White_RGBA then
-         Set_Property (Buffer.Hyper_Mode_Tag, Background_Rgba_Property,
-                       Hyper_Links_Style.Get_Pref_Bg);
+         Set_Property
+           (Buffer.Hyper_Mode_Tag,
+            Background_Rgba_Property,
+            Hyper_Links_Style.Get_Pref_Bg);
       end if;
 
       --  Create the Non Editable Tag
@@ -3268,8 +3249,8 @@ package body Src_Editor_Buffer is
       Set_Property
         (Buffer.Non_Editable_Tag, Gtk.Text_Tag.Editable_Property, False);
 
-      Buffer.Highlighter := new Source_Highlighter_Record
-        (Source_Buffer (Buffer));
+      Buffer.Highlighter :=
+        new Source_Highlighter_Record (Source_Buffer (Buffer));
 
       --  Preference changed hook
 
@@ -3282,15 +3263,15 @@ package body Src_Editor_Buffer is
       --  Project recomputed hook
       Project_View_Changed_Hook.Add
         (Obj   =>
-            new On_Project_Changed'
-           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+           new On_Project_Changed'
+             (Hook_Function with Buffer => Source_Buffer (Buffer)),
          Watch => Buffer);
 
       --  File hooks
       File_Deleted_Hook.Add
         (Obj   =>
-            new On_File_Deleted'
-           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+           new On_File_Deleted'
+             (Hook_Function with Buffer => Source_Buffer (Buffer)),
          Watch => Buffer);
 
       --  Renamed_Hook.Execute will change the buffer's filename:
@@ -3298,21 +3279,21 @@ package body Src_Editor_Buffer is
       --  on the editor before it is renamed
       File_Renamed_Hook.Add
         (Obj   =>
-            new On_File_Renamed'
-           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+           new On_File_Renamed'
+             (Hook_Function with Buffer => Source_Buffer (Buffer)),
          Watch => Buffer,
          Last  => True);
 
       Semantic_Tree_Updated_Hook.Add
         (Obj   =>
-            new On_Semantic_Tree_Updated'
-           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+           new On_Semantic_Tree_Updated'
+             (Hook_Function with Buffer => Source_Buffer (Buffer)),
          Watch => Buffer);
 
       Location_Changed_Hook.Add_Debounce
         (Obj   =>
-            new On_Loc_Changed'
-           (Hook_Function with Buffer => Source_Buffer (Buffer)),
+           new On_Loc_Changed'
+             (Hook_Function with Buffer => Source_Buffer (Buffer)),
          Watch => Buffer);
 
       --  Save the insert mark for fast retrievals, since we will need to
@@ -3334,7 +3315,8 @@ package body Src_Editor_Buffer is
       --      view at the end of the pasted text in the case of an async paste
 
       Buffer_Callback.Connect
-        (Buffer, "paste-done",
+        (Buffer,
+         "paste-done",
          Marsh => Buffer_Callback.To_Marshaller (On_Paste_Done'Access),
          After => False);
 
@@ -3345,21 +3327,25 @@ package body Src_Editor_Buffer is
       Buffer_Callback.Connect
         (Buffer, Signal_Changed, Changed_Handler'Access, After => True);
       Buffer_Callback.Connect
-        (Buffer, Signal_Mark_Set,
-         Cb => Mark_Set_Handler'Access, After => True);
-      Buffer_Callback.Connect
-        (Buffer, Signal_Insert_Text,
-         Cb => Before_Insert_Text'Access);
-      Buffer_Callback.Connect
-        (Buffer, Signal_Insert_Text,
-         Cb => After_Insert_Text'Access,
+        (Buffer,
+         Signal_Mark_Set,
+         Cb    => Mark_Set_Handler'Access,
          After => True);
       Buffer_Callback.Connect
-        (Buffer, Signal_Delete_Range,
-         Cb => After_Delete_Range'Access,
+        (Buffer, Signal_Insert_Text, Cb => Before_Insert_Text'Access);
+      Buffer_Callback.Connect
+        (Buffer,
+         Signal_Insert_Text,
+         Cb    => After_Insert_Text'Access,
          After => True);
       Buffer_Callback.Connect
-        (Buffer, Signal_Delete_Range,
+        (Buffer,
+         Signal_Delete_Range,
+         Cb    => After_Delete_Range'Access,
+         After => True);
+      Buffer_Callback.Connect
+        (Buffer,
+         Signal_Delete_Range,
          Cb    => Before_Delete_Range'Access,
          After => False);
 
@@ -3393,8 +3379,8 @@ package body Src_Editor_Buffer is
              (Src_Editor_Module.Editors.Create (Kernel));
       end if;
 
-      Buffer.Editor_Buffer := new GPS.Editors.Editor_Buffer'Class'
-          (Editors_Factory.Get (Buffer));
+      Buffer.Editor_Buffer :=
+        new GPS.Editors.Editor_Buffer'Class'(Editors_Factory.Get (Buffer));
 
       --  Initialize every listener from factories
       for Factory of Listener_Factories loop
@@ -3413,8 +3399,7 @@ package body Src_Editor_Buffer is
    -------------------
 
    function Is_In_Comment
-     (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter) return Boolean
+     (Buffer : Source_Buffer; Iter : Gtk_Text_Iter) return Boolean
    is
       Pos     : Gtk_Text_Iter;
       Success : Boolean;
@@ -3443,9 +3428,7 @@ package body Src_Editor_Buffer is
       Iter : Gtk_Text_Iter;
    begin
       Buffer.Get_Iter_At_Screen_Position
-        (Iter   => Iter,
-         Line   => Line,
-         Column => Column);
+        (Iter => Iter, Line => Line, Column => Column);
 
       return Is_In_Comment (Buffer, Iter);
    end Is_In_Comment;
@@ -3498,17 +3481,20 @@ package body Src_Editor_Buffer is
       end if;
 
       if Check_Interpolation
-        and then Lang.Is_Interpolation_Char
-          (Ada.Characters.Conversions.To_Wide_Wide_Character (C2))
+        and then
+          Lang.Is_Interpolation_Char
+            (Ada.Characters.Conversions.To_Wide_Wide_Character (C2))
       then
          --  In case of interpolation character, consider that we are in
          --  a string if the next character is in string.
          Forward_Char (Pos, Result);
          if Result then
-            return Is_In_String (Buffer, Pos) xor
-              (Added_Character /= 0
-               and then C2 /= Lang_Context.Quote_Character
-               and then Added_C = Lang_Context.String_Delimiter);
+            return
+              Is_In_String (Buffer, Pos)
+              xor
+                (Added_Character /= 0
+                 and then C2 /= Lang_Context.Quote_Character
+                 and then Added_C = Lang_Context.String_Delimiter);
          end if;
       end if;
 
@@ -3565,7 +3551,8 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -3579,7 +3566,8 @@ package body Src_Editor_Buffer is
         and then Buffer.Filename /= No_File
       then
          Set_Language
-           (Buffer, Get_Language_From_File
+           (Buffer,
+            Get_Language_From_File
               (Get_Language_Handler (Kernel), Buffer.Filename));
       end if;
    end Execute;
@@ -3588,16 +3576,17 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel, Pref);
-      B                 : constant Source_Buffer := Self.Buffer;
-      Prev              : Boolean;
+      B                         : constant Source_Buffer := Self.Buffer;
+      Prev                      : Boolean;
       Has_Semantic_Highlighting : Boolean;
-      Prev_Folding      : Folding_Preferences_Values;
+      Prev_Folding              : Folding_Preferences_Values;
 
    begin
       --  Connect timeout, to handle automatic saving of buffer
@@ -3631,15 +3620,15 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      if not B.Block_Folding.Block_Folding
-        and then Prev_Folding.Block_Folding
+      if not B.Block_Folding.Block_Folding and then Prev_Folding.Block_Folding
       then
          Unfold_All (B);
          Remove_Block_Folding_Commands (B);
       end if;
 
       Prev := B.Parse_Blocks;
-      B.Parse_Blocks := B.Block_Folding.Block_Folding
+      B.Parse_Blocks :=
+        B.Block_Folding.Block_Folding
         or else B.Block_Highlighting
         or else Display_Subprogram_Names.Get_Pref;
 
@@ -3654,8 +3643,7 @@ package body Src_Editor_Buffer is
       B.Auto_Syntax_Check := Automatic_Syntax_Check.Get_Pref;
       B.Adjust_Tab_Width;
 
-      B.Highlighter.Highlight_Delimiters :=
-        Highlight_Delimiters.Get_Pref;
+      B.Highlighter.Highlight_Delimiters := Highlight_Delimiters.Get_Pref;
    end Execute;
 
    ---------------------
@@ -3674,14 +3662,13 @@ package body Src_Editor_Buffer is
    -------------------------------
 
    procedure Set_Trailing_Space_Policy
-     (Buffer : access Source_Buffer_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
+     (Buffer                : access Source_Buffer_Record;
+      File                  : GNATCOLL.VFS.Virtual_File;
       Trailing_Spaces_Found : Boolean)
    is
       Found   : Boolean;
       Prop    : GPS.Properties.Boolean_Property;
-      Default : constant Strip_Trailing_Blanks_Policy :=
-        Strip_Blanks.Get_Pref;
+      Default : constant Strip_Trailing_Blanks_Policy := Strip_Blanks.Get_Pref;
    begin
       if File /= GNATCOLL.VFS.No_File then
          GPS.Properties.Get_Property
@@ -3695,13 +3682,14 @@ package body Src_Editor_Buffer is
       end if;
 
       case Default is
-         when Always =>
+         when Always     =>
             Set_Strip_Trailing_Blanks (Buffer, True);
-         when Never =>
+
+         when Never      =>
             Set_Strip_Trailing_Blanks (Buffer, False);
+
          when Autodetect =>
-            Set_Strip_Trailing_Blanks
-              (Buffer, not Trailing_Spaces_Found);
+            Set_Strip_Trailing_Blanks (Buffer, not Trailing_Spaces_Found);
       end case;
    end Set_Trailing_Space_Policy;
 
@@ -3716,8 +3704,7 @@ package body Src_Editor_Buffer is
    is
       Found   : Boolean;
       Prop    : GPS.Properties.Boolean_Property;
-      Default : constant Strip_Trailing_Blanks_Policy :=
-        Strip_Lines.Get_Pref;
+      Default : constant Strip_Trailing_Blanks_Policy := Strip_Lines.Get_Pref;
    begin
       if File /= GNATCOLL.VFS.No_File then
          GPS.Properties.Get_Property
@@ -3730,13 +3717,14 @@ package body Src_Editor_Buffer is
       end if;
 
       case Default is
-         when Always =>
+         when Always     =>
             Set_Strip_Trailing_Lines (Buffer, True);
-         when Never =>
+
+         when Never      =>
             Set_Strip_Trailing_Lines (Buffer, False);
+
          when Autodetect =>
-            Set_Strip_Trailing_Lines
-              (Buffer, not Trailing_Lines_Found);
+            Set_Strip_Trailing_Lines (Buffer, not Trailing_Lines_Found);
       end case;
    end Set_Trailing_Lines_Policy;
 
@@ -3763,7 +3751,8 @@ package body Src_Editor_Buffer is
    function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean is
       Base : constant String := +Base_Name (File);
    begin
-      return Base'Length >= 2
+      return
+        Base'Length >= 2
         and then Base (Base'First .. Base'First + 1) = ".#"
         and then Base (Base'Last) = '#';
    end Is_Auto_Save;
@@ -3871,8 +3860,10 @@ package body Src_Editor_Buffer is
 
             if Buffer.Line_Data (J).Side_Info_Data /= null then
                for I in Buffer.Line_Data (J).Side_Info_Data'Range loop
-                  Free (Buffer, Buffer.Line_Data (J).Side_Info_Data (I),
-                        Free_Messages => False);
+                  Free
+                    (Buffer,
+                     Buffer.Line_Data (J).Side_Info_Data (I),
+                     Free_Messages => False);
                end loop;
                Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
             end if;
@@ -3883,7 +3874,7 @@ package body Src_Editor_Buffer is
          Initialize_Hook (Buffer);
 
          Buffer.First_Removed_Line := 0;
-         Buffer.Last_Removed_Line  := 0;
+         Buffer.Last_Removed_Line := 0;
          Buffer.Last_Editable_Line := 1;
 
          --  Unregister the blocks timeout
@@ -3905,17 +3896,24 @@ package body Src_Editor_Buffer is
       Props : File_Props;
 
    begin
-      Trace (Me, "Loading " & From_File.Display_Full_Name
-             & " as autosave ? " & Is_Auto_Save'Img
-             & " is new ? " & File_Is_New'Img);
+      Trace
+        (Me,
+         "Loading "
+         & From_File.Display_Full_Name
+         & " as autosave ? "
+         & Is_Auto_Save'Img
+         & " is new ? "
+         & File_Is_New'Img);
       Success := True;
       Read_File_With_Charset (From_File, Text, Props);
 
       if Text.Is_Null then
          --  The file does not exist on disk, this is a new file that has
          --  never been saved.
-         Trace (Me, "Load_File: Couldn't read contents of "
-                & From_File.Display_Full_Name);
+         Trace
+           (Me,
+            "Load_File: Couldn't read contents of "
+            & From_File.Display_Full_Name);
          Success := False;
          return;
       end if;
@@ -3925,19 +3923,21 @@ package body Src_Editor_Buffer is
            ("Warning: the file contains bidirectional Unicode text that may be"
             & " interpreted or compiled differently than what it looks in the"
             & " editor.",
-           Mode => GPS.Kernel.Error);
+            Mode => GPS.Kernel.Error);
       end if;
 
       if Props.NUL_Found then
          Buffer.Kernel.Insert
            ((-"Warning: NUL characters stripped from ")
-            & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
+            & From_File.Display_Full_Name,
+            Mode => GPS.Kernel.Error);
       end if;
 
       if Props.Invalid_UTF8 then
          Buffer.Kernel.Insert
            ((-"Warning: invalid characters stripped from ")
-            & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
+            & From_File.Display_Full_Name,
+            Mode => GPS.Kernel.Error);
       end if;
 
       declare
@@ -3945,8 +3945,7 @@ package body Src_Editor_Buffer is
       begin
          if not Is_Auto_Save then
             if not File_Is_New then
-               Emit_By_Name (Get_Object (Buffer),
-                             Signal_Closed & ASCII.NUL);
+               Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
                Reset_Buffer (Buffer);
             else
                Buffer.Start_Inserting;  --  no undo should be available
@@ -3954,7 +3953,8 @@ package body Src_Editor_Buffer is
 
             if Lang_Autodetect then
                Set_Language
-                 (Buffer, Get_Language_From_File
+                 (Buffer,
+                  Get_Language_From_File
                     (Get_Language_Handler (Buffer.Kernel), From_File));
             end if;
 
@@ -3998,6 +3998,7 @@ package body Src_Editor_Buffer is
 
          if not Is_Auto_Save and then File_Is_New then
             Buffer.End_Inserting;  --  reenable undo
+
          end if;
       end;
 
@@ -4068,8 +4069,8 @@ package body Src_Editor_Buffer is
       ---------------------------
 
       procedure Check_Auto_Saved_File is
-         Autosave   : constant Virtual_File := Autosaved_File (Filename);
-         Buttons    : Message_Dialog_Buttons;
+         Autosave : constant Virtual_File := Autosaved_File (Filename);
+         Buttons  : Message_Dialog_Buttons;
       begin
          if Autosave.Is_Regular_File then
 
@@ -4095,24 +4096,29 @@ package body Src_Editor_Buffer is
                      "Would have displayed the dialog about auto-saved file");
                end if;
             else
-               Buttons := GPS_Message_Dialog
-                 (Msg            =>
-                    -"Found an auto-saved file named "
-                  & Autosave.Display_Base_Name & ASCII.LF
-                  & (-"This usually means that your previous GNAT Studio"
-                  & " session ") & ASCII.LF
-                  & (-"terminated unexpectedly with unsaved changes.")
-                  & ASCII.LF & ASCII.LF
-                  & (-"Do you want to recover the contents of ")
-                  & Filename.Display_Base_Name & ASCII.LF
-                  & (-"from this auto-saved file "
-                    & " (this operation can be undone) ?"),
-                  Dialog_Type    => Warning,
-                  Buttons        => Button_Yes or Button_No,
-                  Default_Button => Button_Yes,
-                  Title          => -"Found auto-saved file",
-                  Justification  => Justify_Left,
-                  Parent         => Get_Current_Window (Buffer.Kernel));
+               Buttons :=
+                 GPS_Message_Dialog
+                   (Msg            =>
+                      -"Found an auto-saved file named "
+                      & Autosave.Display_Base_Name
+                      & ASCII.LF
+                      & (-"This usually means that your previous GNAT Studio"
+                         & " session ")
+                      & ASCII.LF
+                      & (-"terminated unexpectedly with unsaved changes.")
+                      & ASCII.LF
+                      & ASCII.LF
+                      & (-"Do you want to recover the contents of ")
+                      & Filename.Display_Base_Name
+                      & ASCII.LF
+                      & (-"from this auto-saved file "
+                         & " (this operation can be undone) ?"),
+                    Dialog_Type    => Warning,
+                    Buttons        => Button_Yes or Button_No,
+                    Default_Button => Button_Yes,
+                    Title          => -"Found auto-saved file",
+                    Justification  => Justify_Left,
+                    Parent         => Get_Current_Window (Buffer.Kernel));
             end if;
 
             if Buttons = Button_Yes then
@@ -4125,10 +4131,11 @@ package body Src_Editor_Buffer is
                   Success         => Success);
             end if;
 
-            --  Do not delete the auto-save file: it will be removed when the
-            --  user saves the file (or another auto-save takes place). In the
-            --  meantime, should GNAT Studio crash, we still want the user to
-            --  be able to restore it next time.
+         --  Do not delete the auto-save file: it will be removed when the
+         --  user saves the file (or another auto-save takes place). In the
+         --  meantime, should GNAT Studio crash, we still want the user to
+         --  be able to restore it next time.
+
          end if;
       end Check_Auto_Saved_File;
 
@@ -4204,12 +4211,12 @@ package body Src_Editor_Buffer is
       Success  : out Boolean;
       Force    : Boolean := False)
    is
-      FD          : Writable_File;
-      Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
+      FD         : Writable_File;
+      Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
       --  Whether the file mode has been forced to writable
-      U_Buffer    : Unbounded_String;
-      Has_Errors  : Boolean := False;
-      Buttons     : Message_Dialog_Buttons := Button_None;
+      U_Buffer   : Unbounded_String;
+      Has_Errors : Boolean := False;
+      Buttons    : Message_Dialog_Buttons := Button_None;
 
       procedure New_Line;
       --  Append a new line on U_Buffer
@@ -4221,9 +4228,14 @@ package body Src_Editor_Buffer is
       procedure New_Line is
       begin
          case Terminator is
-            when CR_LF        => Append (U_Buffer, (ASCII.CR & ASCII.LF));
-            when CR           => Append (U_Buffer, ASCII.CR);
-            when Unknown | LF => Append (U_Buffer, ASCII.LF);
+            when CR_LF        =>
+               Append (U_Buffer, (ASCII.CR & ASCII.LF));
+
+            when CR           =>
+               Append (U_Buffer, ASCII.CR);
+
+            when Unknown | LF =>
+               Append (U_Buffer, ASCII.LF);
          end case;
       end New_Line;
 
@@ -4232,8 +4244,8 @@ package body Src_Editor_Buffer is
       Success := True;
 
       if not Needs_To_Be_Saved (Buffer)
-         and then Filename = Buffer.Get_Filename
-         and then Filename.Is_Regular_File
+        and then Filename = Buffer.Get_Filename
+        and then Filename.Is_Regular_File
       then
          Trace (Me, "File not modified, nothing to do");
          return;
@@ -4264,23 +4276,25 @@ package body Src_Editor_Buffer is
 
       declare
          Terminator_Pref : constant Line_Terminators :=
-                             Line_Terminator.Get_Pref;
+           Line_Terminator.Get_Pref;
          Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
-         Index           : Natural;
-         Error           : GError_Access := new GError'(null);
+         Index : Natural;
+         Error : GError_Access := new GError'(null);
 
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (GError, GError_Access);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation (GError, GError_Access);
 
          Last_Line : Editable_Line_Type := 0;
       begin
          case Terminator_Pref is
-            when Unix =>
+            when Unix      =>
                Terminator := LF;
-            when Windows =>
+
+            when Windows   =>
                Terminator := CR_LF;
+
             when Unchanged =>
                null;
          end case;
@@ -4290,7 +4304,7 @@ package body Src_Editor_Buffer is
               Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
             loop
                declare
-                  Str  : constant Src_String :=
+                  Str : constant Src_String :=
                     Get_String_At_Line (Buffer, Line);
                begin
                   if Str.Contents /= null
@@ -4324,7 +4338,8 @@ package body Src_Editor_Buffer is
                         --  No need for special utf8 handling, as we are just
                         --  looking for spaces.
 
-                        exit when Str.Contents (J) /= ' '
+                        exit when
+                          Str.Contents (J) /= ' '
                           and then Str.Contents (J) /= ASCII.HT;
 
                         --  J points to a blank character. Let's set Index to
@@ -4334,9 +4349,12 @@ package body Src_Editor_Buffer is
                   end if;
 
                   declare
-                     Contents : constant String := Glib.Convert.Convert
-                       (Str.Contents (Str.Contents'First .. Index),
-                        Buffer.Charset.all, "UTF-8", Error);
+                     Contents : constant String :=
+                       Glib.Convert.Convert
+                         (Str.Contents (Str.Contents'First .. Index),
+                          Buffer.Charset.all,
+                          "UTF-8",
+                          Error);
 
                   begin
                      if Error.all = null then
@@ -4374,38 +4392,46 @@ package body Src_Editor_Buffer is
       --  If we observed UTF-8 conversion errors, warn the user
 
       if Has_Errors and then not Internal then
-         Buttons := GPS_Message_Dialog
-           (Msg            =>
-              -("This buffer contains UTF-8 characters which"
-              & " could not be translated to ") & Buffer.Charset.all
-            & "." & ASCII.LF & ASCII.LF &
-            (-("Some data may be missing in the saved file: check the"
-               & " Locations View."))
-            & ASCII.LF & ASCII.LF &
-            (-("You may change the character set of this file through"
-               & " the ""Properties..."" contextual menu.")),
-            Dialog_Type    => Warning,
-            Buttons        => Button_OK,
-            Default_Button => Button_OK,
-            Title          => -"Warning: Conversion Incomplete",
-            Justification  => Justify_Left,
-            Parent         => Get_Current_Window (Buffer.Kernel));
+         Buttons :=
+           GPS_Message_Dialog
+             (Msg            =>
+                -("This buffer contains UTF-8 characters which"
+                  & " could not be translated to ")
+                & Buffer.Charset.all
+                & "."
+                & ASCII.LF
+                & ASCII.LF
+                & (-("Some data may be missing in the saved file: check the"
+                     & " Locations View."))
+                & ASCII.LF
+                & ASCII.LF
+                & (-("You may change the character set of this file through"
+                     & " the ""Properties..."" contextual menu.")),
+              Dialog_Type    => Warning,
+              Buttons        => Button_OK,
+              Default_Button => Button_OK,
+              Title          => -"Warning: Conversion Incomplete",
+              Justification  => Justify_Left,
+              Parent         => Get_Current_Window (Buffer.Kernel));
       end if;
 
       --  The file could not be opened, check whether it is read-only
 
       if Is_Regular_File (Filename) and then not Is_Writable (Filename) then
          if not Force then
-            Buttons := GPS_Message_Dialog
-              (Msg            => -"The file "
-               & Display_Base_Name (Filename) & ASCII.LF
-               & (-"is read-only. Do you want to overwrite it ?"),
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No,
-               Default_Button => Button_No,
-               Title          => -"File is read-only",
-               Justification  => Justify_Left,
-               Parent         => Get_Current_Window (Buffer.Kernel));
+            Buttons :=
+              GPS_Message_Dialog
+                (Msg            =>
+                   -"The file "
+                   & Display_Base_Name (Filename)
+                   & ASCII.LF
+                   & (-"is read-only. Do you want to overwrite it ?"),
+                 Dialog_Type    => Confirmation,
+                 Buttons        => Button_Yes or Button_No,
+                 Default_Button => Button_No,
+                 Title          => -"File is read-only",
+                 Justification  => Justify_Left,
+                 Parent         => Get_Current_Window (Buffer.Kernel));
          end if;
 
          if Force or else Buttons = Button_Yes then
@@ -4429,8 +4455,7 @@ package body Src_Editor_Buffer is
                & Display_Full_Name (Filename),
                Mode => GPS.Kernel.Error);
             Buffer.Kernel.Insert
-              (To_String (Error_String (FD)),
-               Mode => GPS.Kernel.Error);
+              (To_String (Error_String (FD)), Mode => GPS.Kernel.Error);
             Success := False;
             return;
          end if;
@@ -4450,17 +4475,20 @@ package body Src_Editor_Buffer is
             Trace (Me, E);
 
             if not Internal then
-               Buttons := GPS_Message_Dialog
-                 (Msg            => -"The file "
-                  & Display_Base_Name (Filename) & ASCII.LF
-                  & " could not be saved. This might be a transient disk"
-                  & " problem.",
-                  Dialog_Type    => Warning,
-                  Buttons        => Button_OK,
-                  Default_Button => Button_OK,
-                  Title          => -"File could not be saved",
-                  Justification  => Justify_Left,
-                  Parent         => Get_Current_Window (Buffer.Kernel));
+               Buttons :=
+                 GPS_Message_Dialog
+                   (Msg            =>
+                      -"The file "
+                      & Display_Base_Name (Filename)
+                      & ASCII.LF
+                      & " could not be saved. This might be a transient disk"
+                      & " problem.",
+                    Dialog_Type    => Warning,
+                    Buttons        => Button_OK,
+                    Default_Button => Button_OK,
+                    Title          => -"File could not be saved",
+                    Justification  => Justify_Left,
+                    Parent         => Get_Current_Window (Buffer.Kernel));
             end if;
             return;
       end;
@@ -4487,7 +4515,7 @@ package body Src_Editor_Buffer is
 
                --  If we renamed the file, emit the corresponding hook
                --  and notify listeners
-               if Old /= Buffer.Filename  then
+               if Old /= Buffer.Filename then
                   Emit_File_Renamed (Buffer, Old, Buffer.Filename);
                end if;
             end;
@@ -4525,12 +4553,12 @@ package body Src_Editor_Buffer is
    -- Set_Save_Deferred --
    ------------------------
 
-   procedure Set_Save_Deferred
-     (Buffer : access Source_Buffer_Record) is
+   procedure Set_Save_Deferred (Buffer : access Source_Buffer_Record) is
    begin
       Buffer.Save_Deferred := True;
-      Trace (Me, "Save deferred for "
-             & Buffer.Deferred_Save_File.Display_Full_Name);
+      Trace
+        (Me,
+         "Save deferred for " & Buffer.Deferred_Save_File.Display_Full_Name);
    end Set_Save_Deferred;
 
    ---------------------------
@@ -4538,8 +4566,7 @@ package body Src_Editor_Buffer is
    ---------------------------
 
    procedure Complete_Deferred_Save
-     (Buffer  : access Source_Buffer_Record;
-      Success : out Boolean)
+     (Buffer : access Source_Buffer_Record; Success : out Boolean)
    is
       Deferred_File : constant GNATCOLL.VFS.Virtual_File :=
         Buffer.Deferred_Save_File;
@@ -4549,8 +4576,9 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Trace (Me, "Completing deferred save for "
-             & Deferred_File.Display_Full_Name);
+      Trace
+        (Me,
+         "Completing deferred save for " & Deferred_File.Display_Full_Name);
 
       --  Clear the deferred state before saving
       Buffer.Save_Deferred := False;
@@ -4559,11 +4587,7 @@ package body Src_Editor_Buffer is
       --  Save_In_Progress is still True from the original save, so
       --  Internal_Save_To_File will skip the before_file_saved hook.
       Save_To_File
-        (Buffer,
-         Deferred_File,
-         Success,
-         Internal => False,
-         Force    => False);
+        (Buffer, Deferred_File, Success, Internal => False, Force => False);
 
       Buffer.Save_In_Progress := False;
    end Complete_Deferred_Save;
@@ -4575,8 +4599,10 @@ package body Src_Editor_Buffer is
    procedure Cancel_Deferred_Save (Buffer : access Source_Buffer_Record) is
    begin
       if Buffer.Save_Deferred then
-         Trace (Me, "Canceling deferred save for "
-                & Buffer.Deferred_Save_File.Display_Full_Name);
+         Trace
+           (Me,
+            "Canceling deferred save for "
+            & Buffer.Deferred_Save_File.Display_Full_Name);
          Buffer.Save_Deferred := False;
          Buffer.Deferred_Save_File := GNATCOLL.VFS.No_File;
          Buffer.Save_In_Progress := False;
@@ -4597,7 +4623,7 @@ package body Src_Editor_Buffer is
       --  When a file is created through "Goto spec<->body", the file won't
       --  exist on the disk yet, but Buffer.Filename will already be set. So
       --  we need both tests below
-      Name_Changed      : constant Boolean :=
+      Name_Changed : constant Boolean :=
         Buffer.Filename /= Filename
         or else not Buffer.Filename.Is_Regular_File;
 
@@ -4608,8 +4634,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Internal_Save_To_File
-        (Source_Buffer (Buffer), Filename, Internal, Success,
-         Force => Force);
+        (Source_Buffer (Buffer), Filename, Internal, Success, Force => Force);
 
       --  If the save was deferred (async formatting in progress), return
       --  early without running post-save cleanup. The cleanup will be done
@@ -4621,7 +4646,7 @@ package body Src_Editor_Buffer is
       if Success and then not Internal then
          if Name_Changed then
             --  Force an update of the persistent properties if need be
-            Set_Charset  (Buffer, Get_Charset (Buffer));
+            Set_Charset (Buffer, Get_Charset (Buffer));
             Set_Language (Buffer, Get_Language (Buffer));
 
             --  ??? The following is expensive, it would be nice to have a
@@ -4663,15 +4688,13 @@ package body Src_Editor_Buffer is
    ---------------------------
 
    procedure Delete_Autosaved_File
-     (Buffer : access Source_Buffer_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
+     (Buffer : access Source_Buffer_Record; File : GNATCOLL.VFS.Virtual_File)
    is
       Autosaved : constant Virtual_File := Autosaved_File (File);
       Dummy     : Boolean;
    begin
       if Active (Me) then
-         Trace (Me, "Delete autosave file " &
-                  Autosaved.Display_Full_Name);
+         Trace (Me, "Delete autosave file " & Autosaved.Display_Full_Name);
       end if;
 
       if Is_Regular_File (Autosaved) then
@@ -4683,8 +4706,8 @@ package body Src_Editor_Buffer is
       end if;
    exception
       when E : others =>
-         Me.Trace (E, "When deleting autosave file " &
-                     Autosaved.Display_Full_Name);
+         Me.Trace
+           (E, "When deleting autosave file " & Autosaved.Display_Full_Name);
    end Delete_Autosaved_File;
 
    ------------------
@@ -4692,25 +4715,27 @@ package body Src_Editor_Buffer is
    ------------------
 
    procedure Set_Language
-     (Buffer : access Source_Buffer_Record;
-      Lang   : Language.Language_Access)
+     (Buffer : access Source_Buffer_Record; Lang : Language.Language_Access)
    is
       Buffer_Start_Iter : Gtk_Text_Iter;
       Buffer_End_Iter   : Gtk_Text_Iter;
    begin
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         if Lang /= Get_Language_From_File
-           (Get_Language_Handler (Buffer.Kernel), Buffer.Filename)
+         if Lang
+           /= Get_Language_From_File
+                (Get_Language_Handler (Buffer.Kernel), Buffer.Filename)
          then
             if Lang = Language.Unknown.Unknown_Lang
-              or else Lang = Get_Language_From_File
-              (Get_Language_Handler (Buffer.Kernel), Buffer.Filename,
-               From_Project_Only => True)
+              or else
+                Lang
+                = Get_Language_From_File
+                    (Get_Language_Handler (Buffer.Kernel),
+                     Buffer.Filename,
+                     From_Project_Only => True)
             then
                --  If this is the same as the project => Do not save, so that
                --  changing in the project correctly impacts this file
-               Set_Language_From_File
-                 (Buffer.Kernel, Buffer.Filename, "");
+               Set_Language_From_File (Buffer.Kernel, Buffer.Filename, "");
             else
                --  Note for the future which language should be used
                Set_Language_From_File
@@ -4759,9 +4784,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      if Buffer.Charset /= null
-        and then Buffer.Charset.all /= Charset
-      then
+      if Buffer.Charset /= null and then Buffer.Charset.all /= Charset then
          --  The charset is being changed: remove from the Locations View
          --  the category listing the conversion errors from that charset for
          --  this file.
@@ -4777,18 +4800,20 @@ package body Src_Editor_Buffer is
          if Get_Status (Buffer) = Modified
            or else Get_Status (Buffer) = Unsaved
          then
-            Ignore := GPS_Message_Dialog
-              (Msg => -("The character set has been modified."
-               & ASCII.LF
-               & "Since the file is currently modified, the new"
-               & ASCII.LF
-               & "character set will only apply when the file is"
-               & ASCII.LF
-               & " saved, the file will not be reloaded automatically"),
-               Dialog_Type => Warning,
-               Buttons     => Button_OK,
-               Title       => -"Warning: charset modified",
-               Parent      => Get_Main_Window (Buffer.Kernel));
+            Ignore :=
+              GPS_Message_Dialog
+                (Msg         =>
+                   -("The character set has been modified."
+                     & ASCII.LF
+                     & "Since the file is currently modified, the new"
+                     & ASCII.LF
+                     & "character set will only apply when the file is"
+                     & ASCII.LF
+                     & " saved, the file will not be reloaded automatically"),
+                 Dialog_Type => Warning,
+                 Buttons     => Button_OK,
+                 Title       => -"Warning: charset modified",
+                 Parent      => Get_Main_Window (Buffer.Kernel));
 
          else
             --  If the user has tried to save Buffer and got errors, do not
@@ -4835,8 +4860,7 @@ package body Src_Editor_Buffer is
      (Buffer           : not null access Source_Buffer_Record;
       Extend_Selection : Boolean) return Boolean is
    begin
-      return Extend_Selection
-        or else Buffer.Extend_Existing_Selection;
+      return Extend_Selection or else Buffer.Extend_Existing_Selection;
    end Should_Extend_Selection;
 
    -----------------------------------
@@ -4844,8 +4868,7 @@ package body Src_Editor_Buffer is
    -----------------------------------
 
    procedure Set_Extend_Existing_Selection
-     (Buffer : not null access Source_Buffer_Record;
-      Extend : Boolean) is
+     (Buffer : not null access Source_Buffer_Record; Extend : Boolean) is
    begin
       Buffer.Extend_Existing_Selection := Extend;
    end Set_Extend_Existing_Selection;
@@ -4865,18 +4888,21 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_Cursor_Position
-     (Buffer    : access Source_Buffer_Record;
-      Line      : Gint;
-      Column    : Gint;
-      Internal  : Boolean;
+     (Buffer           : access Source_Buffer_Record;
+      Line             : Gint;
+      Column           : Gint;
+      Internal         : Boolean;
       Extend_Selection : Boolean := False)
    is
       Iter : Gtk_Text_Iter;
    begin
       if not Is_Valid_Position (Buffer, Line, Column) then
-         Trace (Me, "invalid position for Set_Cursor_Position "
-                & Get_Filename (Buffer).Display_Full_Name
-                & Line'Img & Column'Img);
+         Trace
+           (Me,
+            "invalid position for Set_Cursor_Position "
+            & Get_Filename (Buffer).Display_Full_Name
+            & Line'Img
+            & Column'Img);
          return;
       end if;
 
@@ -4901,10 +4927,10 @@ package body Src_Editor_Buffer is
    end Set_Cursor_Position;
 
    procedure Set_Cursor_Position
-     (Buffer    : access Source_Buffer_Record;
-      Line      : Editable_Line_Type;
-      Column    : Character_Index;
-      Internal  : Boolean;
+     (Buffer           : access Source_Buffer_Record;
+      Line             : Editable_Line_Type;
+      Column           : Character_Index;
+      Internal         : Boolean;
       Extend_Selection : Boolean := False)
    is
       Buffer_Line : Buffer_Line_Type;
@@ -4919,8 +4945,10 @@ package body Src_Editor_Buffer is
       Buffer_Line := Get_Buffer_Line (Buffer, Line);
 
       Set_Cursor_Position
-        (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1,
-         Internal => Internal,
+        (Buffer,
+         Gint (Buffer_Line - 1),
+         Gint (Column) - 1,
+         Internal         => Internal,
          Extend_Selection => Extend_Selection);
    end Set_Cursor_Position;
 
@@ -4942,8 +4970,11 @@ package body Src_Editor_Buffer is
       if Is_Valid_Position (Buffer, Line, 0) then
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
       else
-         Trace (Me, "Invalid position for Set_Screen_Position "
-                & Get_Filename (Buffer).Display_Full_Name & Line'Img);
+         Trace
+           (Me,
+            "Invalid position for Set_Screen_Position "
+            & Get_Filename (Buffer).Display_Full_Name
+            & Line'Img);
          Get_End_Iter (Buffer, Iter);
       end if;
 
@@ -4979,9 +5010,7 @@ package body Src_Editor_Buffer is
 
       if Buffer_Line /= 0 then
          Get_Iter_At_Screen_Position
-           (Buffer, Iter,
-            Gint (Buffer_Line - 1),
-            Column);
+           (Buffer, Iter, Gint (Buffer_Line - 1), Column);
       elsif Line >= Buffer.Last_Editable_Line then
          Get_End_Iter (Buffer, Iter);
       else
@@ -5001,9 +5030,7 @@ package body Src_Editor_Buffer is
 
       if Buffer_Line /= 0 then
          Get_Iter_At_Line_Offset
-           (Buffer, Iter,
-            Gint (Buffer_Line - 1),
-            Gint (Column) - 1);
+           (Buffer, Iter, Gint (Buffer_Line - 1), Gint (Column) - 1);
       elsif Line >= Buffer.Last_Editable_Line then
          Get_End_Iter (Buffer, Iter);
       else
@@ -5026,7 +5053,7 @@ package body Src_Editor_Buffer is
       Tab_Len : constant Positive := Buffer.Tab_Width;
 
    begin
-      Line   := Get_Line (Iter);
+      Line := Get_Line (Iter);
       Column := 0;
       Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
 
@@ -5045,9 +5072,7 @@ package body Src_Editor_Buffer is
    end Get_Screen_Position;
 
    procedure Get_Screen_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : out Gint;
-      Column : out Gint)
+     (Buffer : access Source_Buffer_Record; Line : out Gint; Column : out Gint)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -5060,14 +5085,12 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Get_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : out Gint;
-      Column : out Gint)
+     (Buffer : access Source_Buffer_Record; Line : out Gint; Column : out Gint)
    is
       Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Line   := Get_Line (Iter);
+      Line := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
    end Get_Cursor_Position;
 
@@ -5081,8 +5104,8 @@ package body Src_Editor_Buffer is
       Line   : out Editable_Line_Type;
       Column : out Character_Index) is
    begin
-      Line := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
+      Line :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
       Column := Character_Index (Get_Line_Offset (Iter) + 1);
    end Get_Iter_Position;
 
@@ -5109,8 +5132,7 @@ package body Src_Editor_Buffer is
    procedure Get_Iter_Position
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Loc    : out Loc_T)
-   is
+      Loc    : out Loc_T) is
    begin
       Get_Iter_Position (Buffer, Iter, Loc.Line, Loc.Col);
    end Get_Iter_Position;
@@ -5172,8 +5194,7 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Ends_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter : Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk_Text_Iter)
       return Boolean
    is
       Next : Gtk_Text_Iter;
@@ -5198,8 +5219,7 @@ package body Src_Editor_Buffer is
    -----------------
 
    function Starts_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean
    is
       Prev : Gtk_Text_Iter;
@@ -5224,14 +5244,13 @@ package body Src_Editor_Buffer is
    -----------------
 
    function Inside_Word
-     (Buffer : access Source_Buffer_Record;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer : access Source_Buffer_Record; Iter : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean is
    begin
       if Buffer.Lang /= null then
-         return Buffer.Lang.Is_Word_Char
-           (Wide_Wide_Character'Val
-              (Gunichar'(Get_Char (Iter))));
+         return
+           Buffer.Lang.Is_Word_Char
+             (Wide_Wide_Character'Val (Gunichar'(Get_Char (Iter))));
       else
          return False;
       end if;
@@ -5268,8 +5287,7 @@ package body Src_Editor_Buffer is
 
          Backward_Char (End_Iter, Success);
 
-      elsif not Inside_Word (Start_Iter)
-        and then Get_Char (Start_Iter) /= '_'
+      elsif not Inside_Word (Start_Iter) and then Get_Char (Start_Iter) /= '_'
       then
          return;
       end if;
@@ -5303,19 +5321,18 @@ package body Src_Editor_Buffer is
       End_Line             : Gint;
       End_Column           : Gint;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Unbounded_String
-   is
+      Include_Last         : Boolean := False) return Unbounded_String is
    begin
-      return Get_Text
-        (Buffer               => Buffer,
-         Start_Line           => Editable_Line_Type (Start_Line + 1),
-         Start_Column         => Character_Index (Start_Column + 1),
-         End_Line             => Editable_Line_Type (End_Line + 1),
-         End_Column           =>
-           As_Optional (Character_Index (End_Column + 1)),
-         Include_Hidden_Chars => Include_Hidden_Chars,
-         Include_Last         => Include_Last);
+      return
+        Get_Text
+          (Buffer               => Buffer,
+           Start_Line           => Editable_Line_Type (Start_Line + 1),
+           Start_Column         => Character_Index (Start_Column + 1),
+           End_Line             => Editable_Line_Type (End_Line + 1),
+           End_Column           =>
+             As_Optional (Character_Index (End_Column + 1)),
+           Include_Hidden_Chars => Include_Hidden_Chars,
+           Include_Last         => Include_Last);
    end Get_Text;
 
    --------------------------
@@ -5336,15 +5353,15 @@ package body Src_Editor_Buffer is
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
 
       if Found then
-         Start_Line   := Get_Line (Start_Iter);
+         Start_Line := Get_Line (Start_Iter);
          Start_Column := Get_Line_Offset (Start_Iter);
-         End_Line     := Get_Line (End_Iter);
-         End_Column   := Get_Line_Offset (End_Iter);
+         End_Line := Get_Line (End_Iter);
+         End_Column := Get_Line_Offset (End_Iter);
       else
-         Start_Line   := 0;
+         Start_Line := 0;
          Start_Column := 0;
-         End_Line     := 0;
-         End_Column   := 0;
+         End_Line := 0;
+         End_Column := 0;
       end if;
    end Get_Selection_Bounds;
 
@@ -5363,15 +5380,14 @@ package body Src_Editor_Buffer is
       Start_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (SL + 1));
       End_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (EL + 1));
       Start_Column := Character_Index (SC + 1);
-      End_Column   := Character_Index (EC + 1);
+      End_Column := Character_Index (EC + 1);
    end Get_Selection_Bounds;
 
    -------------------
    -- Get_Selection --
    -------------------
 
-   function Get_Selection
-     (Buffer : access Source_Buffer_Record) return String
+   function Get_Selection (Buffer : access Source_Buffer_Record) return String
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
@@ -5381,14 +5397,15 @@ package body Src_Editor_Buffer is
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
 
       if Found then
-         return To_String
-           (Get_Text
-              (Source_Buffer (Buffer),
-               Get_Line (Start_Iter),
-               Get_Line_Offset (Start_Iter),
-               Get_Line (End_Iter),
-               Get_Line_Offset (End_Iter),
-               Include_Last => True));
+         return
+           To_String
+             (Get_Text
+                (Source_Buffer (Buffer),
+                 Get_Line (Start_Iter),
+                 Get_Line_Offset (Start_Iter),
+                 Get_Line (End_Iter),
+                 Get_Line_Offset (End_Iter),
+                 Include_Last => True));
       else
          return "";
       end if;
@@ -5450,8 +5467,8 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Insert (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1, Text,
-              Enable_Undo);
+      Insert
+        (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1, Text, Enable_Undo);
    end Insert;
 
    ------------
@@ -5465,9 +5482,9 @@ package body Src_Editor_Buffer is
       Length      : Gint;
       Enable_Undo : Boolean := True)
    is
-      Iter                     : Gtk_Text_Iter;
-      End_Iter                 : Gtk_Text_Iter;
-      Result                   : Boolean;
+      Iter     : Gtk_Text_Iter;
+      End_Iter : Gtk_Text_Iter;
+      Result   : Boolean;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
@@ -5496,8 +5513,7 @@ package body Src_Editor_Buffer is
          begin
             Buff_Line := Get_Line (End_Iter);
 
-            Advance_Char :
-            loop
+            Advance_Char : loop
                exit Advance_Char when Remaining = 0;
 
                Forward_Char (End_Iter, Success);
@@ -5512,7 +5528,8 @@ package body Src_Editor_Buffer is
                   --  line.
 
                   while Get_Editable_Line
-                      (Buffer, Buffer_Line_Type (Buff_Line + 1)) = 0
+                          (Buffer, Buffer_Line_Type (Buff_Line + 1))
+                    = 0
                   loop
                      Forward_Line (End_Iter, Success);
                      exit Advance_Char when not Success;
@@ -5556,16 +5573,19 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Delete (Buffer, Gint (Buffer_Line - 1), Gint (Column) - 1, Gint (Length),
-              Enable_Undo);
+      Delete
+        (Buffer,
+         Gint (Buffer_Line - 1),
+         Gint (Column) - 1,
+         Gint (Length),
+         Enable_Undo);
    end Delete;
 
    -------------------------
    -- Delete_Tab_Backward --
    -------------------------
 
-   procedure Delete_Tab_Backward (Buffer : access Source_Buffer_Record)
-   is
+   procedure Delete_Tab_Backward (Buffer : access Source_Buffer_Record) is
       Cursor_Mark : Gtk_Text_Mark;
       Iter, To    : Gtk_Text_Iter;
       Result      : Boolean;
@@ -5584,7 +5604,8 @@ package body Src_Editor_Buffer is
             Backward_Char (Iter, Result);
             for Pos in 1 .. Buffer.Tab_Width - 1 loop
                --  Move backward until we reach Tab_Width or find not HT/space
-               exit when not Result
+               exit when
+                 not Result
                  or else Get_Line_Offset (Iter) = 0
                  or else Get_Char (Iter) /= ' ';
                Backward_Char (Iter, Result);
@@ -5614,14 +5635,18 @@ package body Src_Editor_Buffer is
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
-      Start_Iter               : Gtk_Text_Iter;
-      End_Iter                 : Gtk_Text_Iter;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
 
    begin
-      Assert (Me, Is_Valid_Position (Buffer, Start_Line, Start_Column),
-              "Invalid start position " & Start_Line'Img & Start_Column'Img);
-      Assert (Me, Is_Valid_Position (Buffer, End_Line, End_Column),
-              "Invalid end position " & End_Line'Img & End_Column'Img);
+      Assert
+        (Me,
+         Is_Valid_Position (Buffer, Start_Line, Start_Column),
+         "Invalid start position " & Start_Line'Img & Start_Column'Img);
+      Assert
+        (Me,
+         Is_Valid_Position (Buffer, End_Line, End_Column),
+         "Invalid end position " & End_Line'Img & End_Column'Img);
 
       if not Buffer.Inserting then
          End_Action (Buffer);
@@ -5712,8 +5737,7 @@ package body Src_Editor_Buffer is
    procedure Select_Region
      (Buffer      : access Source_Buffer_Record;
       Cursor_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
-      Bound_Iter  : Gtk.Text_Iter.Gtk_Text_Iter)
-   is
+      Bound_Iter  : Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
       End_Action (Buffer);
       Select_Range (Buffer, Ins => Cursor_Iter, Bound => Bound_Iter);
@@ -5740,13 +5764,19 @@ package body Src_Editor_Buffer is
 
       else
          if not Is_Valid_Position (Buffer, Start_Line, Start_Column) then
-            Trace (Me, "invalid start position in Select_Region, aborting:"
-                   & Start_Line'Img & Start_Column'Img);
+            Trace
+              (Me,
+               "invalid start position in Select_Region, aborting:"
+               & Start_Line'Img
+               & Start_Column'Img);
             return;
 
          elsif not Is_Valid_Position (Buffer, End_Line, End_Column) then
-            Trace (Me, "invalid end position in Select_Region, aborting:"
-                   & End_Line'Img & End_Column'Img);
+            Trace
+              (Me,
+               "invalid end position in Select_Region, aborting:"
+               & End_Line'Img
+               & End_Column'Img);
             return;
          end if;
 
@@ -5827,8 +5857,10 @@ package body Src_Editor_Buffer is
       Count      : Buffer_Line_Type) is
    begin
       Buffer_Before_Delete_Lines_Hook.Run
-        (Buffer.Kernel, Buffer.Filename,
-         Integer (Start_Line + 1), Integer (Count));
+        (Buffer.Kernel,
+         Buffer.Filename,
+         Integer (Start_Line + 1),
+         Integer (Count));
 
       --  Resynchronize the arrays that need to be synchronized with line
       --  numbers.
@@ -5840,7 +5872,7 @@ package body Src_Editor_Buffer is
       --  deletion has been done.
 
       Buffer.First_Removed_Line := Start_Line + 1;
-      Buffer.Last_Removed_Line  := Start_Line + Count;
+      Buffer.Last_Removed_Line := Start_Line + Count;
    end Lines_Remove_Hook_Before;
 
    -----------------------------
@@ -5874,7 +5906,7 @@ package body Src_Editor_Buffer is
 
    procedure End_Action (Buffer : access Source_Buffer_Record'Class) is
       Command : constant Editor_Command :=
-                  Editor_Command (Buffer.Current_Command);
+        Editor_Command (Buffer.Current_Command);
    begin
       End_Action_Hook (Buffer);
 
@@ -5889,7 +5921,7 @@ package body Src_Editor_Buffer is
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
-                  Editor_Command (Buffer.Current_Command);
+        Editor_Command (Buffer.Current_Command);
 
    begin
       if not Is_Null_Command (Command) then
@@ -5903,7 +5935,7 @@ package body Src_Editor_Buffer is
 
    procedure Redo (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
-                  Editor_Command (Buffer.Current_Command);
+        Editor_Command (Buffer.Current_Command);
    begin
       if not Is_Null_Command (Command) then
          End_Action (Buffer);
@@ -5921,7 +5953,7 @@ package body Src_Editor_Buffer is
 
    procedure Undo (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
-                  Editor_Command (Buffer.Current_Command);
+        Editor_Command (Buffer.Current_Command);
    begin
       if not Is_Null_Command (Command) then
          End_Action (Buffer);
@@ -6044,8 +6076,8 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure Set_Initial_Dir
-     (Buffer : access Source_Buffer_Record;
-      Name   : GNATCOLL.VFS.Virtual_File) is
+     (Buffer : access Source_Buffer_Record; Name : GNATCOLL.VFS.Virtual_File)
+   is
    begin
       Buffer.Initial_Dir := Name;
    end Set_Initial_Dir;
@@ -6089,13 +6121,11 @@ package body Src_Editor_Buffer is
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type)
    is
-      Context : constant Selection_Context := Source_Lines_Context
-        (Buffer, Start_Line, End_Line);
+      Context : constant Selection_Context :=
+        Source_Lines_Context (Buffer, Start_Line, End_Line);
    begin
       Source_Lines_Folded_Hook.Run
-        (Buffer.Kernel, Context,
-         Natural (Start_Line),
-         Natural (End_Line));
+        (Buffer.Kernel, Context, Natural (Start_Line), Natural (End_Line));
    end Source_Lines_Folded;
 
    ---------------------------
@@ -6107,13 +6137,11 @@ package body Src_Editor_Buffer is
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type)
    is
-      Context : constant Selection_Context := Source_Lines_Context
-        (Buffer, Start_Line, End_Line);
+      Context : constant Selection_Context :=
+        Source_Lines_Context (Buffer, Start_Line, End_Line);
    begin
       Source_Lines_Unfolded_Hook.Run
-        (Buffer.Kernel, Context,
-         Natural (Start_Line),
-         Natural (End_Line));
+        (Buffer.Kernel, Context, Natural (Start_Line), Natural (End_Line));
    end Source_Lines_Unfolded;
 
    --------------------------
@@ -6160,9 +6188,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Set_Area_Information
-        (Context, "",
-         Integer (Start_Line),
-         Integer (End_Line));
+        (Context, "", Integer (Start_Line), Integer (End_Line));
 
       return Context;
    end Source_Lines_Context;
@@ -6197,8 +6223,7 @@ package body Src_Editor_Buffer is
    ----------------------
 
    function Is_Cursor_Frozen
-     (Buffer : access Source_Buffer_Record) return Boolean
-   is
+     (Buffer : access Source_Buffer_Record) return Boolean is
    begin
       return Buffer.Do_Not_Move_Cursor > 0;
    end Is_Cursor_Frozen;
@@ -6255,8 +6280,8 @@ package body Src_Editor_Buffer is
    ------------------------
 
    function Line_Needs_Refresh
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Boolean is
+     (Buffer : access Source_Buffer_Record; Line : Buffer_Line_Type)
+      return Boolean is
    begin
       if Buffer.Line_Data (Line).Side_Info_Data /= null then
          for J in Buffer.Line_Data (Line).Side_Info_Data'Range loop
@@ -6274,16 +6299,15 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Create_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type)
+     (Buffer : access Source_Buffer_Record; Line : Buffer_Line_Type)
    is
-      Columns_Config : Line_Info_Display_Array_Access
-        renames Buffer.Editable_Line_Info_Columns.all;
+      Columns_Config : Line_Info_Display_Array_Access renames
+        Buffer.Editable_Line_Info_Columns.all;
    begin
       if Columns_Config /= null then
          if Buffer.Line_Data (Line).Side_Info_Data = null then
-            Buffer.Line_Data (Line).Side_Info_Data := new
-              Line_Info_Width_Array (Columns_Config'Range);
+            Buffer.Line_Data (Line).Side_Info_Data :=
+              new Line_Info_Width_Array (Columns_Config'Range);
 
             for K in Columns_Config'Range loop
                Buffer.Line_Data (Line).Side_Info_Data (K) :=
@@ -6303,9 +6327,10 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) return Boolean is
    begin
       --  Only modified and non-empty unsaved buffers need to be saved
-      return Get_Status (Buffer) = Modified
-        or else (Get_Status (Buffer) = Unsaved
-                 and then Get_Char_Count (Buffer) > 0);
+      return
+        Get_Status (Buffer) = Modified
+        or else
+          (Get_Status (Buffer) = Unsaved and then Get_Char_Count (Buffer) > 0);
    end Needs_To_Be_Saved;
 
    --------------------
@@ -6357,8 +6382,7 @@ package body Src_Editor_Buffer is
    ---------------------------
 
    function Get_Extra_Information
-     (Buffer : Source_Buffer)
-      return Extra_Information_Array_Access is
+     (Buffer : Source_Buffer) return Extra_Information_Array_Access is
    begin
       return Buffer.Extra_Information;
    end Get_Extra_Information;
@@ -6368,8 +6392,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Get_Highlighter
-     (Editor : access Source_Buffer_Record)
-      return Source_Highlighter is
+     (Editor : access Source_Buffer_Record) return Source_Highlighter is
    begin
       return Editor.Highlighter;
    end Get_Highlighter;
@@ -6379,15 +6402,14 @@ package body Src_Editor_Buffer is
    --------------------------------
 
    function Get_First_Non_Blank_Column
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type)
+     (Buffer : access Source_Buffer_Record; Line : Editable_Line_Type)
       return Visible_Column_Type
    is
       Str   : Src_String := Get_String_At_Line (Source_Buffer (Buffer), Line);
-      Index : Natural    := 1;
+      Index : Natural := 1;
    begin
-      if Str.Contents /= null and then
-        not Is_Blank_Line (Str.Contents (1 .. Str.Last))
+      if Str.Contents /= null
+        and then not Is_Blank_Line (Str.Contents (1 .. Str.Last))
       then
          Skip_Blanks (Str.Contents (1 .. Str.Last), Index);
       end if;
@@ -6428,9 +6450,7 @@ package body Src_Editor_Buffer is
             Tree.Update;
          end if;
 
-         if Tree.Is_Ready
-           or else Update_Immediately
-         then
+         if Tree.Is_Ready or else Update_Immediately then
             --  Take the first possible project. This should not impact block
             --  computation, which does not need xref information
             declare
@@ -6438,24 +6458,28 @@ package body Src_Editor_Buffer is
                  (if Column /= 0
                   then Column
                   else Get_First_Non_Blank_Column (Editor, Line));
-               Node : constant Semantic_Node'Class := Tree.Node_At
-                    ((Line   => Integer (Line),
-                      Column => Real_Column,
-                      others => <>),
-                  Filter);
+               Node        : constant Semantic_Node'Class :=
+                 Tree.Node_At
+                   ((Line   => Integer (Line),
+                     Column => Real_Column,
+                     others => <>),
+                    Filter);
             begin
                if Node = No_Semantic_Node then
                   return New_Block;
                else
-                  return Block_Record'
-                    (Indentation_Level => 0,
-                     Offset_Start      => Integer (Node.Sloc_Start.Column),
-                     Stored_Offset     => 0,
-                     First_Line => Editable_Line_Type (Node.Sloc_Start.Line),
-                     Last_Line  => Editable_Line_Type (Node.Sloc_End.Line),
-                     Name              => Node.Name,
-                     Block_Type        => Node.Category,
-                     Color             => Null_RGBA);
+                  return
+                    Block_Record'
+                      (Indentation_Level => 0,
+                       Offset_Start      => Integer (Node.Sloc_Start.Column),
+                       Stored_Offset     => 0,
+                       First_Line        =>
+                         Editable_Line_Type (Node.Sloc_Start.Line),
+                       Last_Line         =>
+                         Editable_Line_Type (Node.Sloc_End.Line),
+                       Name              => Node.Name,
+                       Block_Type        => Node.Category,
+                       Color             => Null_RGBA);
                end if;
             end;
          else
@@ -6469,18 +6493,18 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Get_Current_Block
-     (Editor   : access Source_Buffer_Record;
-      Absolute : Boolean := False)
+     (Editor : access Source_Buffer_Record; Absolute : Boolean := False)
       return Block_Record
    is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
    begin
       Editor.Get_Cursor_Position (Line, Column);
-      return Editor.Get_Block
-        (Line               => Line,
-         Update_Immediately => False,
-         Column             => (if Absolute then Column else 0));
+      return
+        Editor.Get_Block
+          (Line               => Line,
+           Update_Immediately => False,
+           Column             => (if Absolute then Column else 0));
    end Get_Current_Block;
 
    --------------------------
@@ -6488,16 +6512,29 @@ package body Src_Editor_Buffer is
    --------------------------
 
    function Get_Subprogram_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
+     (Editor      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
       Update_Tree : Boolean := False) return Block_Record is
    begin
-      return Get_Block
-        (Editor, Line, Update_Tree,
-         Filter =>
-           (Cat_Package, Cat_Namespace, Cat_Task, Cat_Procedure,
-            Cat_Function, Cat_Constructor, Cat_Method, Cat_Destructor,
-            Cat_Protected, Cat_Entry, Cat_Class, Cat_Structure, Cat_Union));
+      return
+        Get_Block
+          (Editor,
+           Line,
+           Update_Tree,
+           Filter =>
+             (Cat_Package,
+              Cat_Namespace,
+              Cat_Task,
+              Cat_Procedure,
+              Cat_Function,
+              Cat_Constructor,
+              Cat_Method,
+              Cat_Destructor,
+              Cat_Protected,
+              Cat_Entry,
+              Cat_Class,
+              Cat_Structure,
+              Cat_Union));
    end Get_Subprogram_Block;
 
    -------------------------
@@ -6505,11 +6542,10 @@ package body Src_Editor_Buffer is
    -------------------------
 
    function Get_Subprogram_Name
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return String
+     (Editor : access Source_Buffer_Record; Line : Editable_Line_Type)
+      return String
    is
-      Block : constant Block_Record :=
-        Get_Subprogram_Block (Editor, Line);
+      Block : constant Block_Record := Get_Subprogram_Block (Editor, Line);
    begin
       if Block.Name /= No_Symbol then
          return Get (Block.Name).all;
@@ -6622,9 +6658,7 @@ package body Src_Editor_Buffer is
         Src_Editor_Module.Get_Range_Formatting_Provider (Buffer.Get_Language);
    begin
       if Provider = null then
-         Trace
-           (Me_Formatters,
-            "rangeFormatting Provider is not defined.");
+         Trace (Me_Formatters, "rangeFormatting Provider is not defined.");
          return;
       else
          Trace
@@ -6666,8 +6700,7 @@ package body Src_Editor_Buffer is
             Search_Line := Start_Line + 2;
             while From_Line = 0 and then Search_Line <= End_Line loop
                From_Line :=
-                 Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Search_Line));
+                 Get_Editable_Line (Buffer, Buffer_Line_Type (Search_Line));
                Search_Line := Search_Line + 1;
             end loop;
 
@@ -6676,8 +6709,7 @@ package body Src_Editor_Buffer is
             Search_Line := End_Line;
             while To_Line = 0 and then Search_Line >= Start_Line loop
                To_Line :=
-                 Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Search_Line));
+                 Get_Editable_Line (Buffer, Buffer_Line_Type (Search_Line));
                Search_Line := Search_Line - 1;
             end loop;
 
@@ -6688,8 +6720,9 @@ package body Src_Editor_Buffer is
             --  Include all characters from the last line
             To_Column :=
               Buffer.Editor_Buffer.New_Location
-                (Line   => Integer (To_Line),
-                 Column => 1).End_Of_Line.Column;
+                (Line => Integer (To_Line), Column => 1)
+                .End_Of_Line
+                .Column;
          end;
       end if;
 
@@ -6733,9 +6766,7 @@ package body Src_Editor_Buffer is
           (Buffer.Get_Language);
    begin
       if Provider = null then
-         Trace
-           (Me_Formatters,
-            "onTypeFormatting Provider is not defined.");
+         Trace (Me_Formatters, "onTypeFormatting Provider is not defined.");
          return;
       else
          Trace
@@ -6828,9 +6859,9 @@ package body Src_Editor_Buffer is
    --------------------
 
    function On_Indent_Action
-     (Buffer     : Source_Buffer;
-      From, To   : Gtk_Text_Iter;
-      Force      : Boolean := False) return Boolean
+     (Buffer   : Source_Buffer;
+      From, To : Gtk_Text_Iter;
+      Force    : Boolean := False) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
       Indent_Style  : Indentation_Kind;
@@ -6852,9 +6883,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Get_Indentation_Parameters
-        (Lang         => Lang,
-         Params       => Indent_Params,
-         Indent_Style => Indent_Style);
+        (Lang => Lang, Params => Indent_Params, Indent_Style => Indent_Style);
 
       if Indent_Style = None then
          return False;
@@ -6936,9 +6965,7 @@ package body Src_Editor_Buffer is
          Start_Offset := Get_Line_Offset (Iter);
 
          --  Delete the trailing blanks, if any
-         if Start_Offset /= 0
-           and then End_Offset /= Start_Offset + 1
-         then
+         if Start_Offset /= 0 and then End_Offset /= Start_Offset + 1 then
             Line := Get_Line (Iter);
             Buffer.Get_Iter_At_Line_Offset (Iter, Line, Start_Offset + 1);
             Buffer.Get_Iter_At_Line_Offset (End_Iter, Line, End_Offset);
@@ -6967,8 +6994,7 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Insert the newline
-      Result :=
-        Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
+      Result := Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
 
       --  Now that the newline is inserted, strip the trailing blanks from the
       --  previous line, if any.
@@ -6984,9 +7010,7 @@ package body Src_Editor_Buffer is
             Current_Sync_Mode : constant Cursors_Sync_Type :=
               Get_Cursors_Sync (+Buffer);
             procedure Indent_Cursor (M : Gtk_Text_Mark);
-            procedure Indent_Cursor
-              (M : Gtk_Text_Mark)
-            is
+            procedure Indent_Cursor (M : Gtk_Text_Mark) is
                S, L : Gtk_Text_Iter;
             begin
                Get_Iter_At_Mark (Buffer, L, M);
@@ -7034,8 +7058,8 @@ package body Src_Editor_Buffer is
       --  There are languages which simultaneously support both kinds of
       --  comments (for example, C++).
 
-      Single_Line_BC_Len        : Natural := 0;
-      Single_Line_BC_Pattern    : Pattern_Matcher_Access;
+      Single_Line_BC_Len     : Natural := 0;
+      Single_Line_BC_Pattern : Pattern_Matcher_Access;
 
       Multiple_Lines_BC_Len     : Natural := 0;
       Multiple_Lines_BC_Pattern : Pattern_Matcher_Access;
@@ -7043,7 +7067,7 @@ package body Src_Editor_Buffer is
       Multiple_Lines_EC_Len     : Natural := 0;
       Multiple_Lines_EC_Pattern : Pattern_Matcher_Access;
 
-      Lang_Context              : constant Language_Context_Access :=
+      Lang_Context : constant Language_Context_Access :=
         (if Buffer.Lang /= null
          then Get_Language_Context (Buffer.Lang)
          else null);
@@ -7052,21 +7076,17 @@ package body Src_Editor_Buffer is
       --  Return True if Line is empty (no contents it has only spaces/HT)
 
       procedure Refill_Comments
-        (From_Line : Editable_Line_Type;
-         To_Line   : Editable_Line_Type);
+        (From_Line : Editable_Line_Type; To_Line : Editable_Line_Type);
       --  Scan the Buffer in the range From_Line .. To_Line and refill the
       --  comments. Lines not containing comments are left unmodified.
 
       procedure Refill_Plain_Text
-        (From_Line : Editable_Line_Type;
-         To_Line   : Editable_Line_Type);
+        (From_Line : Editable_Line_Type; To_Line : Editable_Line_Type);
       --  Refill the contents of the buffer. It assumes that the contents of
       --  the buffer is plain text.
 
       procedure Scan_Comment
-        (Line : String;
-         Kind : out Comment_Kind;
-         Last : out Natural);
+        (Line : String; Kind : out Comment_Kind; Last : out Natural);
       --  Search in Line for the Begin-Comment pattern of single-line and
       --  multiple-line comment. If the pattern of a single line comment
       --  is found then Kind is set to Single_Line; if the pattern of a
@@ -7132,8 +7152,7 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Refill_Comments
-        (From_Line : Editable_Line_Type;
-         To_Line   : Editable_Line_Type)
+        (From_Line : Editable_Line_Type; To_Line : Editable_Line_Type)
       is
          Max_Line_Length : constant Positive := Highlight_Column.Get_Pref;
          Tab_Width       : constant Integer := Integer (Buffer.Tab_Width);
@@ -7175,7 +7194,7 @@ package body Src_Editor_Buffer is
 
          procedure Refill_One_Comment is
             Blanks_Prefix : constant String (1 .. Length (Prefix)) :=
-                              (others => ' ');
+              (others => ' ');
             Search_For    : constant Character_Set := To_Set (ASCII.LF);
             From          : Positive;
             Is_First_Line : Boolean;
@@ -7205,15 +7224,13 @@ package body Src_Editor_Buffer is
             --            of refilling text */
 
             Is_First_Line := True;
-            Len  := Length (New_Comment);
+            Len := Length (New_Comment);
             From := 1;
 
             while From <= Len loop
                Pos := Index (New_Comment, Search_For, From);
 
-               if In_ML_Comment
-                 and then not Is_First_Line
-               then
+               if In_ML_Comment and then not Is_First_Line then
                   Append (New_Text, Blanks_Prefix);
                else
                   Append (New_Text, To_String (Prefix));
@@ -7234,7 +7251,8 @@ package body Src_Editor_Buffer is
          Line       : Src_String;
          To_Length  : Character_Index;
 
-      begin  --  Refill_Comments
+      begin
+         --  Refill_Comments
          for K in From_Line .. To_Line loop
             Line := Get_String_At_Line (Buffer, K);
 
@@ -7271,8 +7289,7 @@ package body Src_Editor_Buffer is
                      --  acumulating all the text of the current comment
 
                      if EC_Last = 0 then
-                        Append (Comment,
-                          To_Unbounded_String (ASCII.LF & S));
+                        Append (Comment, To_Unbounded_String (ASCII.LF & S));
 
                      --  End of multi-line comment found
 
@@ -7281,16 +7298,18 @@ package body Src_Editor_Buffer is
                         --  end-comment delimiter) to the buffer of acumulated
                         --  comments and refill the whole comment
 
-                        Append (Comment,
-                          To_Unbounded_String (ASCII.LF & S (1 .. EC_Last)));
+                        Append
+                          (Comment,
+                           To_Unbounded_String (ASCII.LF & S (1 .. EC_Last)));
                         Refill_One_Comment;
 
                         --  If there is some text after the end-comment
                         --  delimiter then move it to the next line
 
                         if EC_Last < Line.Last then
-                           Append (New_Text,
-                             S (EC_Last + 1 .. Line.Last) & ASCII.LF);
+                           Append
+                             (New_Text,
+                              S (EC_Last + 1 .. Line.Last) & ASCII.LF);
                         end if;
 
                         In_ML_Comment := False;
@@ -7392,8 +7411,9 @@ package body Src_Editor_Buffer is
                         --  delimiter then move it to the next line
 
                         if EC_Last < Line.Last then
-                           Append (New_Text,
-                             S (EC_Last + 1 .. Line.Last) & ASCII.LF);
+                           Append
+                             (New_Text,
+                              S (EC_Last + 1 .. Line.Last) & ASCII.LF);
                         end if;
                      end if;
 
@@ -7401,9 +7421,10 @@ package body Src_Editor_Buffer is
                   --  continue acumulating comments
 
                   else
-                     Append (Comment,
-                       To_Unbounded_String
-                         (ASCII.LF & S (BC_Last .. Line.Last)));
+                     Append
+                       (Comment,
+                        To_Unbounded_String
+                          (ASCII.LF & S (BC_Last .. Line.Last)));
                   end if;
                end;
             end if;
@@ -7420,12 +7441,11 @@ package body Src_Editor_Buffer is
               (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
          else
             Replace_Slice
-              (Buffer, From_Line, 1, To_Line, To_Length,
-               To_String (New_Text));
+              (Buffer, From_Line, 1, To_Line, To_Length, To_String (New_Text));
          end if;
 
          declare
-            Iter : Gtk_Text_Iter;
+            Iter  : Gtk_Text_Iter;
             Dummy : Boolean;
          begin
             Buffer.Get_Iter_At_Mark (Iter, Buffer.Get_Insert);
@@ -7444,8 +7464,7 @@ package body Src_Editor_Buffer is
       -----------------------
 
       procedure Refill_Plain_Text
-        (From_Line : Editable_Line_Type;
-         To_Line   : Editable_Line_Type)
+        (From_Line : Editable_Line_Type; To_Line : Editable_Line_Type)
       is
          Max_Line_Length : constant Positive := Highlight_Column.Get_Pref;
          Tab_Width       : constant Integer := Integer (Buffer.Tab_Width);
@@ -7480,7 +7499,7 @@ package body Src_Editor_Buffer is
             --  Add Prefix before each line. Thus we ensure that all the
             --  refilled text has the same left margin.
 
-            Len  := Length (New_Comment);
+            Len := Length (New_Comment);
             From := 1;
 
             while From <= Len loop
@@ -7498,7 +7517,8 @@ package body Src_Editor_Buffer is
          Line        : Src_String;
          To_Length   : Character_Index := 1;
 
-      begin  --  Refill_Plain_Text
+      begin
+         --  Refill_Plain_Text
          for K in From_Line .. To_Line loop
             Line := Get_String_At_Line (Buffer, K);
 
@@ -7530,7 +7550,7 @@ package body Src_Editor_Buffer is
 
             else
                declare
-                  S    : String renames Line.Contents (1 .. Line.Last);
+                  S : String renames Line.Contents (1 .. Line.Last);
 
                begin
                   --  If we are acumulating text then let's continue
@@ -7544,7 +7564,7 @@ package body Src_Editor_Buffer is
                      --  spaces and horizontal tabs
 
                      declare
-                        Prefix_Length : Natural  := 0;
+                        Prefix_Length : Natural := 0;
                         J             : Positive := 1;
 
                      begin
@@ -7561,8 +7581,8 @@ package body Src_Editor_Buffer is
                         --  Calculate the maximum line length to refill
 
                         Max_Line := Max_Line_Length - Prefix_Length;
-                        Prefix   := To_Unbounded_String (S (1 .. J - 1));
-                        Comment  := To_Unbounded_String (S (J .. Line.Last));
+                        Prefix := To_Unbounded_String (S (1 .. J - 1));
+                        Comment := To_Unbounded_String (S (J .. Line.Last));
                      end;
 
                      Acumulating := True;
@@ -7582,8 +7602,7 @@ package body Src_Editor_Buffer is
               (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
          else
             Replace_Slice
-              (Buffer, From_Line, 1, To_Line, To_Length,
-               To_String (New_Text));
+              (Buffer, From_Line, 1, To_Line, To_Length, To_String (New_Text));
          end if;
 
       exception
@@ -7596,9 +7615,7 @@ package body Src_Editor_Buffer is
       ------------------
 
       procedure Scan_Comment
-        (Line : String;
-         Kind : out Comment_Kind;
-         Last : out Natural)
+        (Line : String; Kind : out Comment_Kind; Last : out Natural)
       is
          Matches        : Match_Array (0 .. 0);
          Single_Line_BC : constant GNAT.Strings.String_Access :=
@@ -7626,8 +7643,9 @@ package body Src_Editor_Buffer is
                --      This line is an example of a non-refilled comment    --
 
                if Single_Line_BC = null
-                 or else Line (Line'Last - Single_Line_BC_Len + 1 .. Line'Last)
-                    /= Single_Line_BC.all
+                 or else
+                   Line (Line'Last - Single_Line_BC_Len + 1 .. Line'Last)
+                   /= Single_Line_BC.all
                then
                   Kind := Single_Line;
                   Last := Matches (0).Last;
@@ -7658,7 +7676,7 @@ package body Src_Editor_Buffer is
          Start_Comment_Pattern : constant String := "^\s*";
          --  Start of line, followed by zero or more spaces
 
-         End_Comment_Pattern   : constant String := "\s\s?[^\s]";
+         End_Comment_Pattern : constant String := "\s\s?[^\s]";
          --  One or two spaces, followed by a non-space. If there are more than
          --  two spaces after the comment marker, then we don't recognize it as
          --  a comment line (it's an indented comment, which should not be
@@ -7707,7 +7725,8 @@ package body Src_Editor_Buffer is
          --  a regexp, use it directly
          if Lang_Context /= null
            and then Lang_Context.Syntax.New_Line_Comment_Start_Regexp /= null
-           and then Lang_Context.Syntax.New_Line_Comment_Start_Regexp.all
+           and then
+             Lang_Context.Syntax.New_Line_Comment_Start_Regexp.all
              /= Never_Match
          then
             Single_Line_BC_Pattern :=
@@ -7717,9 +7736,7 @@ package body Src_Editor_Buffer is
 
          --  If the language comment start dectection has been provided via
          --  a simple string, build the regexp from it instead.
-         if Single_Line_BC_Pattern = null
-           and then Single_Line_BC /= null
-         then
+         if Single_Line_BC_Pattern = null and then Single_Line_BC /= null then
             Single_Line_BC_Len := Single_Line_BC'Length;
 
             S := To_Unbounded_String (Start_Comment_Pattern);
@@ -7749,8 +7766,9 @@ package body Src_Editor_Buffer is
             Multiple_Lines_BC_Pattern :=
               new Pattern_Matcher'(Compile (To_String (S)));
 
-            S := To_Unbounded_String
-                   (Filter_Metachars (Lang_Context.Syntax.Comment_End.all));
+            S :=
+              To_Unbounded_String
+                (Filter_Metachars (Lang_Context.Syntax.Comment_End.all));
             Multiple_Lines_EC_Pattern :=
               new Pattern_Matcher'(Compile (To_String (S)));
          end if;
@@ -7803,8 +7821,7 @@ package body Src_Editor_Buffer is
                 (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
 
             To_Line :=
-              Get_Editable_Line
-                (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
+              Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
          end if;
       end Find_Paragraph_Bounds;
 
@@ -7813,7 +7830,7 @@ package body Src_Editor_Buffer is
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type;
 
-   --  Start of processing for Do_Refill
+      --  Start of processing for Do_Refill
 
    begin
       if not Buffer.Writable then
@@ -7858,21 +7875,21 @@ package body Src_Editor_Buffer is
    ------------------------------------
 
    procedure Find_Current_Comment_Paragraph
-     (Buffer : not null access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
+     (Buffer               : not null access Source_Buffer_Record;
+      Line                 : Editable_Line_Type;
       Start_Line, End_Line : out Editable_Line_Type)
    is
-      Lang_Context : constant Language_Context_Access :=
+      Lang_Context         : constant Language_Context_Access :=
         (if Buffer.Lang /= null
          then Get_Language_Context (Buffer.Lang)
          else null);
-      Single_Line_BC : constant GNAT.Strings.String_Access :=
+      Single_Line_BC       : constant GNAT.Strings.String_Access :=
         (if Lang_Context /= null
          then Lang_Context.Syntax.New_Line_Comment_Start
          else null);
       Non_Empty_Comment_Re : Pattern_Matcher_Access;
 
-      Is_Empty_Re : Pattern_Matcher_Access;
+      Is_Empty_Re          : Pattern_Matcher_Access;
       Comment_Start_End_Re : Pattern_Matcher_Access;
 
       function Is_Comment_Line (Line : Editable_Line_Type) return Boolean;
@@ -7894,8 +7911,9 @@ package body Src_Editor_Buffer is
          end if;
 
          L := Get_String_At_Line (Source_Buffer (Buffer), Line);
-         return L.Contents /= null and then Match
-           (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last));
+         return
+           L.Contents /= null
+           and then Match (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last));
       end Is_Comment_Line;
 
       -----------------
@@ -7906,26 +7924,29 @@ package body Src_Editor_Buffer is
          L : constant Src_String :=
            Get_String_At_Line (Source_Buffer (Buffer), Line);
       begin
-         return L.Contents = null
+         return
+           L.Contents = null
            or else Match (Is_Empty_Re.all, L.Contents (1 .. L.Last))
            or else
              (Non_Empty_Comment_Re /= null
-              and then Match  --  in a single line comment
-                (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last)))
+              and then
+                Match  --  in a single line comment
+                  (Non_Empty_Comment_Re.all, L.Contents (1 .. L.Last)))
            or else    --  boundary of comment block
              (Comment_Start_End_Re /= null
-              and then Match (Comment_Start_End_Re.all,
-                              L.Contents (1 .. L.Last)));
+              and then
+                Match (Comment_Start_End_Re.all, L.Contents (1 .. L.Last)));
       end Is_Boundary;
 
    begin
       if Single_Line_BC /= null then
-         Non_Empty_Comment_Re := new Pattern_Matcher'
-           (Compile ("^\s*" & Single_Line_BC.all & "\s*\S"));
+         Non_Empty_Comment_Re :=
+           new Pattern_Matcher'
+             (Compile ("^\s*" & Single_Line_BC.all & "\s*\S"));
       end if;
 
       Start_Line := Line;
-      End_Line  := Line;
+      End_Line := Line;
 
       if not Is_Comment_Line (Line) then
          --  If we are not in a single line comment, we should simply search
@@ -7938,14 +7959,17 @@ package body Src_Editor_Buffer is
          if Lang_Context /= null
            and then Lang_Context.Syntax.Comment_Start /= null
          then
-            Comment_Start_End_Re := new Pattern_Matcher'
-              (Compile ("(" & Quote (Lang_Context.Syntax.Comment_Start.all)
-               & "|" & Quote (Lang_Context.Syntax.Comment_End.all) & ")"));
+            Comment_Start_End_Re :=
+              new Pattern_Matcher'
+                (Compile
+                   ("("
+                    & Quote (Lang_Context.Syntax.Comment_Start.all)
+                    & "|"
+                    & Quote (Lang_Context.Syntax.Comment_End.all)
+                    & ")"));
          end if;
 
-         while Start_Line > 1
-           and then not Is_Boundary (Start_Line - 1)
-         loop
+         while Start_Line > 1 and then not Is_Boundary (Start_Line - 1) loop
             Start_Line := Start_Line - 1;
          end loop;
 
@@ -7956,9 +7980,7 @@ package body Src_Editor_Buffer is
          end loop;
 
       else
-         while Start_Line > 1
-           and then Is_Comment_Line (Start_Line - 1)
-         loop
+         while Start_Line > 1 and then Is_Comment_Line (Start_Line - 1) loop
             Start_Line := Start_Line - 1;
          end loop;
 
@@ -7969,8 +7991,13 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
-      Trace (Me, "Bounds" & Start_Line'Img & End_Line'Img
-             & " started from" & Line'Img);
+      Trace
+        (Me,
+         "Bounds"
+         & Start_Line'Img
+         & End_Line'Img
+         & " started from"
+         & Line'Img);
 
       Unchecked_Free (Non_Empty_Comment_Re);
       Unchecked_Free (Is_Empty_Re);
@@ -7981,8 +8008,7 @@ package body Src_Editor_Buffer is
    -- Is_Editor --
    ---------------
 
-   function Is_Editor (Ctxt : Selection_Context) return Boolean
-   is
+   function Is_Editor (Ctxt : Selection_Context) return Boolean is
    begin
       --  Do not check the current focus widget ourselves. Instead, we know
       --  it has been properly checked when the context was created, and we
@@ -8002,9 +8028,10 @@ package body Src_Editor_Buffer is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Context : access Src_Editor_Action_Context;
-      Ctxt    : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Src_Editor_Action_Context; Ctxt : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -8015,24 +8042,27 @@ package body Src_Editor_Buffer is
    -- Filter_Matched_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Context : access Completion_Context;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Completion_Context; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Ctxt);
    begin
       --  Disable Move to next/previous line when in completion
-      return not (Context.Is_Line_Movement
-        and then Completion_Module.In_Smart_Completion);
+      return
+        not (Context.Is_Line_Movement
+             and then Completion_Module.In_Smart_Completion);
    end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matched_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Context : access Signature_Context;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Signature_Context; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Context);
    begin
@@ -8044,15 +8074,15 @@ package body Src_Editor_Buffer is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Writable_Src_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Context);
       Box : Source_Editor_Box;
    begin
-      if not Is_Editor (Ctxt)
-        or else Completion_Module.In_Smart_Completion
+      if not Is_Editor (Ctxt) or else Completion_Module.In_Smart_Completion
       then
          return False;
       end if;
@@ -8066,7 +8096,8 @@ package body Src_Editor_Buffer is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Has_Writable_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -8087,7 +8118,8 @@ package body Src_Editor_Buffer is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Last_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -8141,12 +8173,12 @@ package body Src_Editor_Buffer is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
-      Amount  : Character_Offset := Length;
+      Amount : Character_Offset := Length;
 
       Found   : Boolean;
       Forward : constant Boolean := Length > 0;
    begin
-      End_Line   := Start_Line;
+      End_Line := Start_Line;
       End_Column := Start_Column;
 
       if Length < 0 then
@@ -8171,12 +8203,15 @@ package body Src_Editor_Buffer is
             Backward_Char (Iter, Success);
          end if;
 
-         exit when not Success
-           or else Buffer_Line_Type (Get_Line (Iter) + 1) not in
-             Buffer.Line_Data'Range;
+         exit when
+           not Success
+           or else
+             Buffer_Line_Type (Get_Line (Iter) + 1)
+             not in Buffer.Line_Data'Range;
 
-         while Buffer.Line_Data
-           (Buffer_Line_Type (Get_Line (Iter) + 1)).Editable_Line = 0
+         while Buffer.Line_Data (Buffer_Line_Type (Get_Line (Iter) + 1))
+                 .Editable_Line
+           = 0
          loop
             --  ??? Could be optimized by moving line by line
             if Forward then
@@ -8185,20 +8220,21 @@ package body Src_Editor_Buffer is
                Backward_Char (Iter, Success);
             end if;
 
-            exit when not Success
-              or else Buffer_Line_Type (Get_Line (Iter) + 1) not in
-                Buffer.Line_Data'Range;
+            exit when
+              not Success
+              or else
+                Buffer_Line_Type (Get_Line (Iter) + 1)
+                not in Buffer.Line_Data'Range;
          end loop;
       end loop;
 
-      if Buffer_Line_Type (Get_Line (Iter) + 1) not in
-        Buffer.Line_Data'Range
+      if Buffer_Line_Type (Get_Line (Iter) + 1) not in Buffer.Line_Data'Range
       then
          return;
       end if;
 
-      End_Line := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
+      End_Line :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
 
       End_Column := Character_Index (Get_Line_Offset (Iter) + 1);
    end Forward_Position;
@@ -8214,18 +8250,17 @@ package body Src_Editor_Buffer is
       End_Line             : Editable_Line_Type := 0;
       End_Column           : Optional_Character_Index := No_Index;
       Include_Hidden_Chars : Boolean := True;
-      Include_Last         : Boolean := False)
-      return Unbounded_String
+      Include_Last         : Boolean := False) return Unbounded_String
    is
       Text_Access : GNAT.Strings.String_Access :=
         Get_Text
-           (Buffer               => Buffer,
-            Start_Line           => Start_Line,
-            Start_Column         => Start_Column,
-            End_Line             => End_Line,
-            End_Column           => End_Column,
-            Include_Hidden_Chars => Include_Hidden_Chars,
-            Include_Last         => Include_Last);
+          (Buffer               => Buffer,
+           Start_Line           => Start_Line,
+           Start_Column         => Start_Column,
+           End_Line             => End_Line,
+           End_Column           => End_Column,
+           Include_Hidden_Chars => Include_Hidden_Chars,
+           Include_Last         => Include_Last);
    begin
       return To_Unbounded_String (Text_Access);
    end Get_Text;
@@ -8246,16 +8281,17 @@ package body Src_Editor_Buffer is
    is
       Text_Access : GNAT.Strings.String_Access :=
         Get_Text
-           (Buffer               => Buffer,
-            Start_Line           => Start_Line,
-            Start_Column         => Start_Column,
-            End_Line             => End_Line,
-            End_Column           => End_Column,
-            Include_Hidden_Chars => Include_Hidden_Chars,
-            Include_Last         => Include_Last);
+          (Buffer               => Buffer,
+           Start_Line           => Start_Line,
+           Start_Column         => Start_Column,
+           End_Line             => End_Line,
+           End_Column           => End_Column,
+           Include_Hidden_Chars => Include_Hidden_Chars,
+           Include_Last         => Include_Last);
    begin
-      return Result : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Text_Access.all)
+      return
+         Result : constant VSS.Strings.Virtual_String :=
+           VSS.Strings.Conversions.To_Virtual_String (Text_Access.all)
       do
          GNAT.Strings.Free (Text_Access);
       end return;
@@ -8320,7 +8356,7 @@ package body Src_Editor_Buffer is
       Current : Visible_Column_Type := 1;
       Result  : Boolean := True;
       Tab_Len : constant Visible_Column_Type :=
-                  Visible_Column_Type (Buffer.Tab_Width);
+        Visible_Column_Type (Buffer.Tab_Width);
    begin
       if Buffer.Editable_Lines = null
         or else Line not in 1 .. Buffer.Last_Editable_Line
@@ -8328,9 +8364,7 @@ package body Src_Editor_Buffer is
          return Current;
       end if;
 
-      Get_Iter_At_Line
-        (Buffer, Iter,
-         Gint (Buffer.Editable_Lines (Line) - 1));
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer.Editable_Lines (Line) - 1));
 
       while Result and then Count < Column loop
          if Get_Char (Iter) = ASCII.HT then
@@ -8362,9 +8396,8 @@ package body Src_Editor_Buffer is
       Count       : Character_Index := 1;
       Result      : Boolean := True;
       Tab_Len     : constant Visible_Column_Type :=
-                      Visible_Column_Type (Buffer.Tab_Width);
-      Buffer_Line : constant Buffer_Line_Type := Buffer.Get_Buffer_Line
-        (Line);
+        Visible_Column_Type (Buffer.Tab_Width);
+      Buffer_Line : constant Buffer_Line_Type := Buffer.Get_Buffer_Line (Line);
    begin
       if Column = 0 or else Line not in 1 .. Buffer.Last_Editable_Line then
          --  No tab expansion can be computed: return the first position of
@@ -8376,11 +8409,9 @@ package body Src_Editor_Buffer is
       end if;
 
       if Buffer_Line /= 0 then
-         Get_Iter_At_Line
-           (Buffer, Iter,
-            Gint (Buffer_Line - 1));
+         Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
 
-         while Result and then Current < Column  loop
+         while Result and then Current < Column loop
             if VSS.Characters.Virtual_Character'Base'Val (Get_Char (Iter))
               = VSS.Characters.Latin.Character_Tabulation
             then
@@ -8404,8 +8435,8 @@ package body Src_Editor_Buffer is
    function Get_Tree
      (Buffer : access Source_Buffer_Record) return Semantic_Tree'Class is
    begin
-      return Buffer.Kernel.Get_Abstract_Tree_For_File
-        ("EDIT", Buffer.Filename);
+      return
+        Buffer.Kernel.Get_Abstract_Tree_For_File ("EDIT", Buffer.Filename);
    end Get_Tree;
 
    ----------------------
@@ -8423,8 +8454,7 @@ package body Src_Editor_Buffer is
    --------------------------
 
    procedure Mark_Buffer_Writable
-     (Buffer   : not null access Source_Buffer_Record;
-      Writable : Boolean)
+     (Buffer : not null access Source_Buffer_Record; Writable : Boolean)
    is
       Views : constant Views_Array := Get_Views (Source_Buffer (Buffer));
    begin
@@ -8462,8 +8492,7 @@ package body Src_Editor_Buffer is
    --------------------------
 
    procedure Prevent_CR_Insertion
-     (Buffer  : access Source_Buffer_Record'Class;
-      Prevent : Boolean := True) is
+     (Buffer : access Source_Buffer_Record'Class; Prevent : Boolean := True) is
    begin
       Buffer.Prevent_CR_Insertion := Prevent;
    end Prevent_CR_Insertion;
@@ -8473,8 +8502,7 @@ package body Src_Editor_Buffer is
    -----------------------
 
    procedure Set_In_Completion
-     (Buffer        : Source_Buffer;
-      In_Completion : Boolean) is
+     (Buffer : Source_Buffer; In_Completion : Boolean) is
    begin
       Buffer.In_Completion := In_Completion;
    end Set_In_Completion;
@@ -8544,8 +8572,7 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Add_Typed_Char
-     (Buffer : access Source_Buffer_Record'Class;
-      C      : Gunichar) is
+     (Buffer : access Source_Buffer_Record'Class; C : Gunichar) is
    begin
       if Buffer.Typed_Char_Index < Buffer.Typed_Chars'Last then
          Buffer.Typed_Char_Index := Buffer.Typed_Char_Index + 1;
@@ -8579,8 +8606,8 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Get_Typed_Chars
-     (Buffer : access Source_Buffer_Record'Class;
-      N      : Positive) return Basic_Types.UTF8_String is
+     (Buffer : access Source_Buffer_Record'Class; N : Positive)
+      return Basic_Types.UTF8_String is
    begin
       if N > Buffer.Typed_Char_Index then
          --  No enough characters in buffer, we cannot support conservative
@@ -8593,8 +8620,7 @@ package body Src_Editor_Buffer is
             --  An UTF-8 character expand of max 6 bytes
             Last : Natural := 0;
          begin
-            for K in Buffer.Typed_Char_Index - N + 1
-              .. Buffer.Typed_Char_Index
+            for K in Buffer.Typed_Char_Index - N + 1 .. Buffer.Typed_Char_Index
             loop
                Unichar_To_UTF8
                  (Buffer.Typed_Chars (K), S (Last + 1 .. S'Last), Last);
@@ -8660,12 +8686,10 @@ package body Src_Editor_Buffer is
    begin
       Self.Use_Highlighting_Hook :=
         Self.Buffer.Lang /= null
-          and then Self.Buffer.Lang.Get_Name = "Ada"
-          and then LSP_Semantic_Highlighting.Get_Pref;
+        and then Self.Buffer.Lang.Get_Name = "Ada"
+        and then LSP_Semantic_Highlighting.Get_Pref;
 
-      if Prev /= Self.Use_Highlighting_Hook
-        and then Prev
-      then
+      if Prev /= Self.Use_Highlighting_Hook and then Prev then
          --  We don't use hook anymore, so should clear old highlighting
          --  styles prodused by code connected to highlighting hook
 
@@ -8688,15 +8712,14 @@ package body Src_Editor_Buffer is
    -----------------------------
 
    function Is_Inserting_Internally
-     (Buffer  : access Source_Buffer_Record) return Boolean
+     (Buffer : access Source_Buffer_Record) return Boolean
    is (Buffer.Inserting);
 
    ---------------------
    -- Start_Inserting --
    ---------------------
 
-   procedure Start_Inserting
-     (Buffer : access Source_Buffer_Record'Class) is
+   procedure Start_Inserting (Buffer : access Source_Buffer_Record'Class) is
    begin
       Buffer.Inserting_Count := Buffer.Inserting_Count + 1;
    end Start_Inserting;
@@ -8705,8 +8728,7 @@ package body Src_Editor_Buffer is
    -- End_Inserting --
    -------------------
 
-   procedure End_Inserting
-     (Buffer : access Source_Buffer_Record'Class) is
+   procedure End_Inserting (Buffer : access Source_Buffer_Record'Class) is
    begin
       Buffer.Inserting_Count := Buffer.Inserting_Count - 1;
    end End_Inserting;
@@ -8757,8 +8779,7 @@ package body Src_Editor_Buffer is
    -- Add_Listener_Factory --
    --------------------------
 
-   procedure Add_Listener_Factory
-     (Factory : Editor_Listener_Factory_Access) is
+   procedure Add_Listener_Factory (Factory : Editor_Listener_Factory_Access) is
    begin
       Listener_Factories.Append (Factory);
    end Add_Listener_Factory;
@@ -8767,8 +8788,8 @@ package body Src_Editor_Buffer is
    -- Set_Folding_Provider --
    --------------------------
 
-   procedure Set_Folding_Provider
-     (Provider : Editor_Folding_Provider_Access) is
+   procedure Set_Folding_Provider (Provider : Editor_Folding_Provider_Access)
+   is
    begin
       Folding_Provider := Provider;
    end Set_Folding_Provider;
@@ -8789,7 +8810,7 @@ package body Src_Editor_Buffer is
    --------------------------------------
 
    function Get_Global_Editor_Buffer_Factory
-     return access GPS.Editors.Editor_Buffer_Factory'Class is
+      return access GPS.Editors.Editor_Buffer_Factory'Class is
    begin
       return Editors_Factory;
    end Get_Global_Editor_Buffer_Factory;
@@ -8799,9 +8820,7 @@ package body Src_Editor_Buffer is
    ---------------
 
    procedure Set_Title
-      (Buffer : not null access Source_Buffer_Record;
-       Title  : String)
-   is
+     (Buffer : not null access Source_Buffer_Record; Title : String) is
    begin
       GNAT.Strings.Free (Buffer.Forced_Title);
       Buffer.Forced_Title := new String'(Title);
@@ -8812,7 +8831,7 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Get_Title
-      (Buffer : not null access Source_Buffer_Record) return String is
+     (Buffer : not null access Source_Buffer_Record) return String is
    begin
       if Buffer.Forced_Title /= null then
          return Buffer.Forced_Title.all;
@@ -8825,8 +8844,8 @@ package body Src_Editor_Buffer is
    -- Freeze_Context --
    --------------------
 
-   procedure Freeze_Context
-     (Self : not null access Source_Buffer_Record'Class) is
+   procedure Freeze_Context (Self : not null access Source_Buffer_Record'Class)
+   is
    begin
       Self.Context_Frozen := Self.Context_Frozen + 1;
    end Freeze_Context;
@@ -8835,12 +8854,14 @@ package body Src_Editor_Buffer is
    -- Thaw_Context --
    ------------------
 
-   procedure Thaw_Context
-     (Self : not null access Source_Buffer_Record'Class) is
+   procedure Thaw_Context (Self : not null access Source_Buffer_Record'Class)
+   is
    begin
       Self.Context_Frozen := Self.Context_Frozen - 1;
-      Assert (Me, Self.Context_Frozen >= 0,
-              "Calls to Thaw_Context doesn't match Freeze_Context");
+      Assert
+        (Me,
+         Self.Context_Frozen >= 0,
+         "Calls to Thaw_Context doesn't match Freeze_Context");
    end Thaw_Context;
 
    -----------------------
@@ -8848,9 +8869,8 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Context_Is_Frozen
-     (Self  : not null access Source_Buffer_Record'Class)
-      return Boolean
-     is (Self.Context_Frozen > 0);
+     (Self : not null access Source_Buffer_Record'Class) return Boolean
+   is (Self.Context_Frozen > 0);
 
    -------------------------------
    -- Source_Highlighter_Record --
@@ -8860,8 +8880,8 @@ package body Src_Editor_Buffer is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (Self : in out Source_Highlighter_Record)
-   is
+   overriding
+   procedure Initialize (Self : in out Source_Highlighter_Record) is
       Tags : Gtk_Text_Tag_Table;
 
    begin
@@ -8871,8 +8891,8 @@ package body Src_Editor_Buffer is
       Tags := Get_Tag_Table (Self.Buffer);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
-         Self.Syntax_Tags (Entity_Kind) := Get_Tag
-           (Language_Styles (Entity_Kind));
+         Self.Syntax_Tags (Entity_Kind) :=
+           Get_Tag (Language_Styles (Entity_Kind));
          Text_Tag_Table.Add (Tags, Self.Syntax_Tags (Entity_Kind));
       end loop;
 
@@ -8890,7 +8910,8 @@ package body Src_Editor_Buffer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Source_Highlighter_Record) is
+   overriding
+   procedure Finalize (Self : in out Source_Highlighter_Record) is
    begin
       Unref (Self.Syntax_Tags);
       if Self.Delimiter_Tag /= null then
@@ -8902,8 +8923,7 @@ package body Src_Editor_Buffer is
    -- Enable_Highlighting --
    -------------------------
 
-   procedure Enable_Highlighting
-     (Self : access Source_Highlighter_Record) is
+   procedure Enable_Highlighting (Self : access Source_Highlighter_Record) is
    begin
       Self.Auto_Highlight_Enabled := True;
    end Enable_Highlighting;
@@ -8912,8 +8932,7 @@ package body Src_Editor_Buffer is
    -- Disable_Highlighting --
    --------------------------
 
-   procedure Disable_Highlighting
-     (Self : access Source_Highlighter_Record) is
+   procedure Disable_Highlighting (Self : access Source_Highlighter_Record) is
    begin
       Self.Auto_Highlight_Enabled := False;
    end Disable_Highlighting;
@@ -9002,8 +9021,11 @@ package body Src_Editor_Buffer is
       Category := Lookup_Category (Style);
 
       if Category = 0 then
-         Trace (Me, "Set_Line_Highlight Id=" & Get_Name (Style)
-                & " couldn't identify category, nothing done");
+         Trace
+           (Me,
+            "Set_Line_Highlight Id="
+            & Get_Name (Style)
+            & " couldn't identify category, nothing done");
          --  Could not identify highlighting category
          return;
       end if;
@@ -9082,8 +9104,7 @@ package body Src_Editor_Buffer is
          Get_Bounds (Self.Buffer, Start_Iter, End_Iter);
 
       else
-         The_Line :=
-           Gint (Get_Buffer_Line (Self.Buffer, Line) - 1);
+         The_Line := Gint (Get_Buffer_Line (Self.Buffer, Line) - 1);
 
          if The_Line < 0 then
             return;
@@ -9108,16 +9129,16 @@ package body Src_Editor_Buffer is
             Copy (Start_Iter, End_Iter);
             Forward_To_Line_End (End_Iter, Result);
          else
-            Get_Iter_At_Screen_Position
-              (Self.Buffer, End_Iter, Line, End_Col);
+            Get_Iter_At_Screen_Position (Self.Buffer, End_Iter, Line, End_Col);
          end if;
       end if;
 
-      Self.Highlight_Range (Style      => Style,
-                            Line       => Line,
-                            Start_Iter => Start_Iter,
-                            End_Iter   => End_Iter,
-                            Remove     => Remove);
+      Self.Highlight_Range
+        (Style      => Style,
+         Line       => Line,
+         Start_Iter => Start_Iter,
+         End_Iter   => End_Iter,
+         Remove     => Remove);
    end Highlight_Range;
 
    ---------------------
@@ -9137,8 +9158,7 @@ package body Src_Editor_Buffer is
    begin
       Get_Iter_At_Screen_Position
         (Self.Buffer, Start_Iter, Start_Line, Start_Col);
-      Get_Iter_At_Screen_Position
-        (Self.Buffer, End_Iter, End_Line, End_Col);
+      Get_Iter_At_Screen_Position (Self.Buffer, End_Iter, End_Line, End_Col);
 
       Highlight_Slice (Self, Style, Start_Iter, End_Iter, Remove);
    end Highlight_Slice;
@@ -9188,9 +9208,10 @@ package body Src_Editor_Buffer is
                     (Editable_Line_Type (Line), Style);
                else
                   Self.Add_Line_Highlighting
-                    (Editable_Line_Type (Line), Style,
-                     Highlight_In => (Highlight_Speedbar => True,
-                                      others             => False));
+                    (Editable_Line_Type (Line),
+                     Style,
+                     Highlight_In =>
+                       (Highlight_Speedbar => True, others => False));
                end if;
             end loop;
          end if;
@@ -9244,9 +9265,10 @@ package body Src_Editor_Buffer is
                Self.Remove_Line_Highlighting (Line, Style);
             else
                Self.Add_Line_Highlighting
-                 (Line, Style,
-                  Highlight_In => (Highlight_Speedbar => True,
-                                   others             => False));
+                 (Line,
+                  Style,
+                  Highlight_In =>
+                    (Highlight_Speedbar => True, others => False));
             end if;
          end if;
       end if;
@@ -9389,8 +9411,9 @@ package body Src_Editor_Buffer is
                --  while Sloc_End.Index points to the end of a character, so
                --  adjust if needed.
 
-               Start := UTF8_Find_Prev_Char
-                 (Slice (1 .. Sloc_End.Index + 1), Sloc_End.Index + 1);
+               Start :=
+                 UTF8_Find_Prev_Char
+                   (Slice (1 .. Sloc_End.Index + 1), Sloc_End.Index + 1);
 
                if Start /= Sloc_End.Index then
                   Col := Col - Gint (Sloc_End.Index - Start);
@@ -9404,9 +9427,13 @@ package body Src_Editor_Buffer is
                   VSS.Unicode.UTF8_Code_Unit_Count (Col));
 
                if not Success then
-                  Trace (Me, "invalid position """
-                         & Self.Buffer.Filename.Display_Full_Name & """"
-                         & Line'Img & Col'Img);
+                  Trace
+                    (Me,
+                     "invalid position """
+                     & Self.Buffer.Filename.Display_Full_Name
+                     & """"
+                     & Line'Img
+                     & Col'Img);
                   return False;
                end if;
 
@@ -9415,9 +9442,13 @@ package body Src_Editor_Buffer is
             else
                Is_Valid_Index (Self.Buffer, Entity_End, Success, Line, 0);
                if not Success then
-                  Trace (Me, "invalid position """
-                         & Self.Buffer.Filename.Display_Full_Name & """"
-                         & Line'Img & " 0--");
+                  Trace
+                    (Me,
+                     "invalid position """
+                     & Self.Buffer.Filename.Display_Full_Name
+                     & """"
+                     & Line'Img
+                     & " 0--");
                   return False;
                end if;
 
@@ -9459,7 +9490,7 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Local_Highlight is
-         UTF8   : constant Gtkada.Types.Chars_Ptr :=
+         UTF8 : constant Gtkada.Types.Chars_Ptr :=
            Get_Slice (Entity_Start, Entity_End);
 
          --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
@@ -9468,9 +9499,9 @@ package body Src_Editor_Buffer is
          Length : constant Integer := Integer (Strlen (UTF8));
 
       begin
-         Slice               := To_Unchecked_String (UTF8);
-         Highlight_Complete  := True;
-         Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
+         Slice := To_Unchecked_String (UTF8);
+         Highlight_Complete := True;
+         Slice_Offset_Line := Buffer_Line_Type (Get_Line (Entity_Start));
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
 
          --  First, un-apply all the style tags...
@@ -9510,8 +9541,7 @@ package body Src_Editor_Buffer is
       end loop;
 
       if Slice_Offset_Line < Buffer_Line_Type (Get_Line (Start_Iter) + 1) then
-         Self.Buffer.Get_Iter_At_Line
-           (Entity_Start, Gint (Slice_Offset_Line));
+         Self.Buffer.Get_Iter_At_Line (Entity_Start, Gint (Slice_Offset_Line));
       else
          --  Start from the beginning of the current line to handle special
          --  language semantics requiring information from previous characters,
@@ -9533,9 +9563,12 @@ package body Src_Editor_Buffer is
          --  of a comment, which wouldn't help us that much.
 
          Backward_Search
-           (Iter => Entity_Start, Str => ";", Flags => 0,
-            Match_Start => Tmp_Start, Match_End => Tmp_End,
-            Result => Result);
+           (Iter        => Entity_Start,
+            Str         => ";",
+            Flags       => 0,
+            Match_Start => Tmp_Start,
+            Match_End   => Tmp_End,
+            Result      => Result);
 
          if Result then
             Forward_Char (Tmp_Start, Result);
@@ -9557,9 +9590,12 @@ package body Src_Editor_Buffer is
       then
          --  ...and go to next semicolon if any
          Forward_Search
-           (Iter => Entity_End, Str => ";", Flags => 0,
-            Match_Start => Tmp_Start, Match_End => Tmp_End,
-            Result => Result);
+           (Iter        => Entity_End,
+            Str         => ";",
+            Flags       => 0,
+            Match_Start => Tmp_Start,
+            Match_End   => Tmp_End,
+            Result      => Result);
 
          if Result then
             Entity_End := Tmp_Start;
@@ -9572,8 +9608,8 @@ package body Src_Editor_Buffer is
 
       Entity_Kind := Normal_Text;
 
-      Entity_Kind_Search_Loop :
-      for Current_Entity in Standout_Language_Entity loop
+      Entity_Kind_Search_Loop : for Current_Entity in Standout_Language_Entity
+      loop
          if Has_Tag (Entity_Start, Self.Syntax_Tags (Current_Entity)) then
             --  This means that we are in a highlighted region. The minimum
             --  region to re-highlight starts from the begining of the
@@ -9643,8 +9679,7 @@ package body Src_Editor_Buffer is
    -----------------------------
 
    procedure Update_Highlight_Region
-     (Self : access Source_Highlighter_Record;
-      Iter : Gtk_Text_Iter)
+     (Self : access Source_Highlighter_Record; Iter : Gtk_Text_Iter)
    is
       First_Mark_Iter : Gtk_Text_Iter;
       Last_Mark_Iter  : Gtk_Text_Iter;
@@ -9670,9 +9705,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      if not Self.Buffer.Inserting
-        and then Self.Auto_Highlight_Enabled
-      then
+      if not Self.Buffer.Inserting and then Self.Auto_Highlight_Enabled then
          Self.Highlight_Region;
       end if;
    end Update_Highlight_Region;
@@ -9681,9 +9714,7 @@ package body Src_Editor_Buffer is
    -- Highlight_Region --
    ----------------------
 
-   procedure Highlight_Region
-     (Self : access Source_Highlighter_Record)
-   is
+   procedure Highlight_Region (Self : access Source_Highlighter_Record) is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
@@ -9691,8 +9722,7 @@ package body Src_Editor_Buffer is
          Self.Call_Clear_Highlighting := False;
 
          Clear_Highlighting_Hook.Run
-           (Kernel => Self.Buffer.Kernel,
-            File   => Self.Buffer.Filename);
+           (Kernel => Self.Buffer.Kernel, File => Self.Buffer.Filename);
       end if;
 
       if not Self.Highlight_Needed then
@@ -9710,15 +9740,12 @@ package body Src_Editor_Buffer is
    -- Highlight_File --
    --------------------
 
-   procedure Highlight_File
-     (Self : access Source_Highlighter_Record)
-   is
+   procedure Highlight_File (Self : access Source_Highlighter_Record) is
       F, L : Gtk_Text_Iter;
    begin
       --  Highlight the newly inserted text
       if Self.Buffer.Lang = null
-        or else not Get_Language_Context
-          (Self.Buffer.Lang).Syntax_Highlighting
+        or else not Get_Language_Context (Self.Buffer.Lang).Syntax_Highlighting
       then
          return;
       end if;
@@ -9745,8 +9772,8 @@ package body Src_Editor_Buffer is
       --  Do not try to highlight an empty buffer
       if not Is_End (Start_Iter) then
          if Self.Buffer.Lang /= null
-           and then not Get_Language_Context
-             (Self.Buffer.Lang).Syntax_Highlighting
+           and then
+             not Get_Language_Context (Self.Buffer.Lang).Syntax_Highlighting
          then
             Self.Kill_Highlighting (Start_Iter, End_Iter);
 
@@ -9767,9 +9794,9 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Remove_Line_Highlighting
-     (Self   : access Source_Highlighter_Record;
-      Line   : Editable_Line_Type;
-      Style  : not null Style_Access)
+     (Self  : access Source_Highlighter_Record;
+      Line  : Editable_Line_Type;
+      Style : not null Style_Access)
    is
       The_Line : Buffer_Line_Type;
    begin
@@ -9816,10 +9843,8 @@ package body Src_Editor_Buffer is
 
       --  Remove tag-based highlighting
       if Tag /= null then
-         Get_Iter_At_Screen_Position
-           (Self.Buffer, Start_Iter, From_Line, One);
-         Get_Iter_At_Screen_Position
-           (Self.Buffer, End_Iter, To_Line, One);
+         Get_Iter_At_Screen_Position (Self.Buffer, Start_Iter, From_Line, One);
+         Get_Iter_At_Screen_Position (Self.Buffer, End_Iter, To_Line, One);
 
          if not Ends_Line (End_Iter) then
             Forward_To_Line_End (End_Iter, Ignore);
@@ -9849,9 +9874,7 @@ package body Src_Editor_Buffer is
       The_End : constant Buffer_Line_Type :=
         Buffer_Line_Type (Get_Line (To) + 1);
    begin
-      while Line <= The_End
-        and then Line in Self.Buffer.Line_Data'Range
-      loop
+      while Line <= The_End and then Line in Self.Buffer.Line_Data'Range loop
          --  Clearing 'aspect' information for lines
          Self.Buffer.Line_Data (Line).Has_Aspect := False;
          Line := Line + 1;
@@ -9877,11 +9900,12 @@ package body Src_Editor_Buffer is
 
       if Self.Buffer.Line_Data /= null
         and then Line <= Self.Buffer.Line_Data'Last
-        and then Self.Buffer.Line_Data
-          (Line).Highlighting (Context).Active /= 0
+        and then
+          Self.Buffer.Line_Data (Line).Highlighting (Context).Active /= 0
       then
-         return Get_Color
-           (Self.Buffer.Line_Data (Line).Highlighting (Context).Active);
+         return
+           Get_Color
+             (Self.Buffer.Line_Data (Line).Highlighting (Context).Active);
 
       else
          return Null_RGBA;
@@ -9894,10 +9918,10 @@ package body Src_Editor_Buffer is
 
    function Is_Comment_Tag
      (Self : access Source_Highlighter_Record;
-      Pos  : Gtk.Text_Iter.Gtk_Text_Iter)
-      return Boolean is
+      Pos  : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean is
    begin
-      return Has_Tag (Pos, Self.Syntax_Tags (Comment_Text))
+      return
+        Has_Tag (Pos, Self.Syntax_Tags (Comment_Text))
         or else Has_Tag (Pos, Self.Syntax_Tags (Aspect_Comment_Text))
         or else Has_Tag (Pos, Self.Syntax_Tags (Annotated_Comment_Text))
         or else Has_Tag (Pos, Self.Syntax_Tags (Annotated_Keyword_Text));
@@ -9907,8 +9931,7 @@ package body Src_Editor_Buffer is
    -- Highlight_Parenthesis --
    ---------------------------
 
-   procedure Highlight_Parenthesis (Self : access Source_Highlighter_Record)
-   is
+   procedure Highlight_Parenthesis (Self : access Source_Highlighter_Record) is
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
       Last_Highlight_Iter  : Gtk_Text_Iter;
@@ -9925,7 +9948,8 @@ package body Src_Editor_Buffer is
       Get_Delimiters
         (Self.Buffer,
          On_Cursor_Iter,
-         First_Highlight_Iter, Last_Highlight_Iter,
+         First_Highlight_Iter,
+         Last_Highlight_Iter,
          Found);
 
       if Found >= 1 then
@@ -9933,20 +9957,14 @@ package body Src_Editor_Buffer is
          Forward_Char (Current, Success);
          if Success then
             Apply_Tag
-              (Self.Buffer,
-               Self.Delimiter_Tag,
-               First_Highlight_Iter,
-               Current);
+              (Self.Buffer, Self.Delimiter_Tag, First_Highlight_Iter, Current);
          end if;
 
          Copy (Last_Highlight_Iter, Current);
          Backward_Char (Current, Success);
          if Success then
             Apply_Tag
-              (Self.Buffer,
-               Self.Delimiter_Tag,
-               Current,
-               Last_Highlight_Iter);
+              (Self.Buffer, Self.Delimiter_Tag, Current, Last_Highlight_Iter);
          end if;
 
          if Found = 2 then
@@ -9956,18 +9974,15 @@ package body Src_Editor_Buffer is
                Forward_Char (On_Cursor_Iter, Success);
                if Success then
                   Apply_Tag
-                    (Self.Buffer,
-                     Self.Delimiter_Tag,
-                     Current,
-                     On_Cursor_Iter);
+                    (Self.Buffer, Self.Delimiter_Tag, Current, On_Cursor_Iter);
                end if;
             end if;
          end if;
 
-         Self.Start_Delimiters_Highlight := Create_Mark
-           (Self.Buffer, "", First_Highlight_Iter);
-         Self.End_Delimiters_Highlight := Create_Mark
-           (Self.Buffer, "", Last_Highlight_Iter);
+         Self.Start_Delimiters_Highlight :=
+           Create_Mark (Self.Buffer, "", First_Highlight_Iter);
+         Self.End_Delimiters_Highlight :=
+           Create_Mark (Self.Buffer, "", Last_Highlight_Iter);
 
          Self.Has_Delimiters_Highlight := True;
       end if;
@@ -9988,8 +10003,7 @@ package body Src_Editor_Buffer is
          From : Gtk_Text_Iter;
          To   : Gtk_Text_Iter;
       begin
-         Get_Iter_At_Mark
-           (Self.Buffer, From, Self.Start_Delimiters_Highlight);
+         Get_Iter_At_Mark (Self.Buffer, From, Self.Start_Delimiters_Highlight);
          Get_Iter_At_Mark (Self.Buffer, To, Self.End_Delimiters_Highlight);
 
          Delete_Mark (Self.Buffer, Self.Start_Delimiters_Highlight);
@@ -10036,8 +10050,7 @@ package body Src_Editor_Buffer is
    procedure Emit_File_Renamed
      (Buffer : not null access Source_Buffer_Record'Class;
       From   : Virtual_File;
-      To     : Virtual_File)
-   is
+      To     : Virtual_File) is
    begin
       File_Renamed_Hook.Run (Buffer.Kernel, From, To);
       for Listener of Buffer.Listeners loop
@@ -10050,8 +10063,7 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Set_Opened_On_LSP_Server
-     (This  : access Source_Buffer_Record;
-      Value : Boolean) is
+     (This : access Source_Buffer_Record; Value : Boolean) is
    begin
       This.LSP_Opened := Value;
    end Set_Opened_On_LSP_Server;

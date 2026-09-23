@@ -24,7 +24,7 @@ with Src_Printing.Command_Printer;
 package body Src_Printing.Fabric is
 
    function Create return Abstract_Printer'Class is
-      Print_Helper     : constant String :=
+      Print_Helper : constant String :=
         GPS.Kernel.Preferences.Print_Command.Get_Pref;
    begin
       if Print_Helper = "" then

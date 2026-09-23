@@ -28,31 +28,24 @@ package Basic_Mapper is
    type File_Mapper_Access is access File_Mapper;
 
    function Get_Other_Text
-     (Mapper : File_Mapper_Access;
-      Text   : String) return String;
+     (Mapper : File_Mapper_Access; Text : String) return String;
    --  Return the file that has been entered as corresponding to
    --  Text in Mapper, or "" if no such entry was found.
 
    procedure Add_Entry
-     (Mapper : in out File_Mapper_Access;
-      Text_1 : String;
-      Text_2 : String);
+     (Mapper : in out File_Mapper_Access; Text_1 : String; Text_2 : String);
    --  Add a couple of corresponding strings in Mapper
 
-   procedure Remove_Entry
-     (Mapper : File_Mapper_Access;
-      Text   : String);
+   procedure Remove_Entry (Mapper : File_Mapper_Access; Text : String);
    --  Remove all the entries containing Text on either table
    --  from Mapping.
 
    procedure Save_Mapper
-     (Mapper    : File_Mapper_Access;
-      File_Name : Virtual_File);
+     (Mapper : File_Mapper_Access; File_Name : Virtual_File);
    --  Save Mapper to file File_Name
 
    procedure Load_Mapper
-     (Mapper    : out File_Mapper_Access;
-      File_Name : Virtual_File);
+     (Mapper : out File_Mapper_Access; File_Name : Virtual_File);
    --  Load Mapper from file File_Name
 
    procedure Empty_Mapper (Mapper : out File_Mapper_Access);
@@ -71,8 +64,8 @@ private
    --  The actual freeing occurs automatically, since the elements for one
    --  table are the keys for another table, and vice versa.
 
-   package Double_String_Table is
-     new String_Hash (String_Access, False_Free, No_Element);
+   package Double_String_Table is new
+     String_Hash (String_Access, False_Free, No_Element);
 
    type File_Mapper is limited record
       Table_1 : Double_String_Table.String_Hash_Table.Instance;

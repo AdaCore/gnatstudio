@@ -16,16 +16,16 @@
 ------------------------------------------------------------------------------
 
 with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
-with Ada_Analyzer;              use Ada_Analyzer;
-with String_Utils;              use String_Utils;
-with UTF8_Utils;                use UTF8_Utils;
+with Ada_Analyzer; use Ada_Analyzer;
+with String_Utils; use String_Utils;
+with UTF8_Utils;   use UTF8_Utils;
 
 package body Language.Ada is
 
@@ -42,87 +42,86 @@ package body Language.Ada is
      & "erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor)\b";
 
    Keywords_List : aliased Pattern_Matcher :=
-                     Compile (Keywords_Regexp, Case_Insensitive);
+     Compile (Keywords_Regexp, Case_Insensitive);
 
    The_Keywords : constant GNAT.Strings.String_List :=
-                    (1  => new String'("abort"),
-                     2  => new String'("abs"),
-                     3  => new String'("abstract"),
-                     4  => new String'("accept"),
-                     5  => new String'("access"),
-                     6  => new String'("aliased"),
-                     7  => new String'("all"),
-                     8  => new String'("and"),
-                     9  => new String'("array"),
-                     10 => new String'("at"),
-                     11 => new String'("begin"),
-                     12 => new String'("body"),
-                     13 => new String'("case"),
-                     14 => new String'("constant"),
-                     15 => new String'("declare"),
-                     16 => new String'("delay"),
-                     17 => new String'("delta"),
-                     18 => new String'("digits"),
-                     19 => new String'("do"),
-                     20 => new String'("else"),
-                     21 => new String'("elsif"),
-                     22 => new String'("end"),
-                     23 => new String'("entry"),
-                     24 => new String'("exception"),
-                     25 => new String'("exit"),
-                     26 => new String'("for"),
-                     27 => new String'("function"),
-                     28 => new String'("generic"),
-                     29 => new String'("goto"),
-                     30 => new String'("if"),
-                     31 => new String'("in"),
-                     32 => new String'("interface"),
-                     33 => new String'("is"),
-                     34 => new String'("limited"),
-                     35 => new String'("loop"),
-                     36 => new String'("mod"),
-                     37 => new String'("new"),
-                     38 => new String'("not"),
-                     39 => new String'("null"),
-                     40 => new String'("others"),
-                     41 => new String'("out"),
-                     42 => new String'("of"),
-                     43 => new String'("or"),
-                     44 => new String'("overriding"),
-                     45 => new String'("package"),
-                     46 => new String'("pragma"),
-                     47 => new String'("private"),
-                     48 => new String'("procedure"),
-                     49 => new String'("protected"),
-                     50 => new String'("raise"),
-                     51 => new String'("range"),
-                     52 => new String'("record"),
-                     53 => new String'("rem"),
-                     54 => new String'("renames"),
-                     55 => new String'("requeue"),
-                     56 => new String'("return"),
-                     57 => new String'("reverse"),
-                     58 => new String'("select"),
-                     59 => new String'("separate"),
-                     60 => new String'("some"),
-                     61 => new String'("subtype"),
-                     62 => new String'("synchronized"),
-                     63 => new String'("tagged"),
-                     64 => new String'("task"),
-                     65 => new String'("terminate"),
-                     66 => new String'("then"),
-                     67 => new String'("type"),
-                     68 => new String'("until"),
-                     69 => new String'("use"),
-                     70 => new String'("when"),
-                     71 => new String'("while"),
-                     72 => new String'("with"),
-                     73 => new String'("xor"));
+     (1  => new String'("abort"),
+      2  => new String'("abs"),
+      3  => new String'("abstract"),
+      4  => new String'("accept"),
+      5  => new String'("access"),
+      6  => new String'("aliased"),
+      7  => new String'("all"),
+      8  => new String'("and"),
+      9  => new String'("array"),
+      10 => new String'("at"),
+      11 => new String'("begin"),
+      12 => new String'("body"),
+      13 => new String'("case"),
+      14 => new String'("constant"),
+      15 => new String'("declare"),
+      16 => new String'("delay"),
+      17 => new String'("delta"),
+      18 => new String'("digits"),
+      19 => new String'("do"),
+      20 => new String'("else"),
+      21 => new String'("elsif"),
+      22 => new String'("end"),
+      23 => new String'("entry"),
+      24 => new String'("exception"),
+      25 => new String'("exit"),
+      26 => new String'("for"),
+      27 => new String'("function"),
+      28 => new String'("generic"),
+      29 => new String'("goto"),
+      30 => new String'("if"),
+      31 => new String'("in"),
+      32 => new String'("interface"),
+      33 => new String'("is"),
+      34 => new String'("limited"),
+      35 => new String'("loop"),
+      36 => new String'("mod"),
+      37 => new String'("new"),
+      38 => new String'("not"),
+      39 => new String'("null"),
+      40 => new String'("others"),
+      41 => new String'("out"),
+      42 => new String'("of"),
+      43 => new String'("or"),
+      44 => new String'("overriding"),
+      45 => new String'("package"),
+      46 => new String'("pragma"),
+      47 => new String'("private"),
+      48 => new String'("procedure"),
+      49 => new String'("protected"),
+      50 => new String'("raise"),
+      51 => new String'("range"),
+      52 => new String'("record"),
+      53 => new String'("rem"),
+      54 => new String'("renames"),
+      55 => new String'("requeue"),
+      56 => new String'("return"),
+      57 => new String'("reverse"),
+      58 => new String'("select"),
+      59 => new String'("separate"),
+      60 => new String'("some"),
+      61 => new String'("subtype"),
+      62 => new String'("synchronized"),
+      63 => new String'("tagged"),
+      64 => new String'("task"),
+      65 => new String'("terminate"),
+      66 => new String'("then"),
+      67 => new String'("type"),
+      68 => new String'("until"),
+      69 => new String'("use"),
+      70 => new String'("when"),
+      71 => new String'("while"),
+      72 => new String'("with"),
+      73 => new String'("xor"));
    --  List of the keywords. Indexes in this array have to correspond to values
    --  declared for token types in the specification.
 
-   Operators_Regexp : constant String :=
-     "^(a(bs|nd)|in|mod|or|not|rem|xor)\b";
+   Operators_Regexp : constant String := "^(a(bs|nd)|in|mod|or|not|rem|xor)\b";
    --  Literal operators which can be overridden
 
    --  Make_Entry functions for the explorer
@@ -132,20 +131,17 @@ package body Language.Ada is
    --  The special characters that should trigger auto-completion in Ada
 
    function Make_Entry_Subprogram
-     (Str     : String;
-      Matched : Match_Array) return String;
+     (Str : String; Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for subprograms.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Task
-     (Str     : String;
-      Matched : Match_Array) return String;
+     (Str : String; Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for tasks.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Protected
-     (Str     : String;
-      Matched : Match_Array) return String;
+     (Str : String; Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for protected objects
    --  and types.
    --  See the description of Explorer_Categories for more information.
@@ -157,83 +153,82 @@ package body Language.Ada is
    Comment_RE : constant String := "([ \t]*--[^\n]*)?";
 
    Subprogram_RE : aliased Pattern_Matcher :=
-                     Compile
-                       ("^[ \t]*(procedure|function)\s+"
-                        & "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)"
-                        & Comment_RE & ")\s*"
-                        & "(return\s+(\w|\.)+\s*)?is\s",
-                        Multiple_Lines or Case_Insensitive);
+     Compile
+       ("^[ \t]*(procedure|function)\s+"
+        & "(\w+)("
+        & Comment_RE
+        & "\s*|\s*\([^\)]+\)"
+        & Comment_RE
+        & ")\s*"
+        & "(return\s+(\w|\.)+\s*)?is\s",
+        Multiple_Lines or Case_Insensitive);
 
-   Package_RE    : aliased Pattern_Matcher :=
-                     Compile
-                       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))",
-                        Multiple_Lines or Case_Insensitive);
+   Package_RE : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*package[ \t]+((body[ \t]+)?((\w|\.)+))",
+        Multiple_Lines or Case_Insensitive);
 
-   Type_Def_RE   : aliased Pattern_Matcher :=
-                     Compile
-                       ("^[ \t]*(sub)?type[ \t]+(\w+)",
-                        Multiple_Lines or Case_Insensitive);
+   Type_Def_RE : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*(sub)?type[ \t]+(\w+)", Multiple_Lines or Case_Insensitive);
 
-   Task_RE       : aliased Pattern_Matcher :=
-                     Compile
-                       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)",
-                        Multiple_Lines or Case_Insensitive);
+   Task_RE : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)",
+        Multiple_Lines or Case_Insensitive);
 
-   Protected_RE  : aliased Pattern_Matcher :=
-                     Compile
-                       ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
-                        Multiple_Lines or Case_Insensitive);
+   Protected_RE : aliased Pattern_Matcher :=
+     Compile
+       ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
+        Multiple_Lines or Case_Insensitive);
 
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
    --  distinguishes between the two cases.
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
-                               ((Category       => Cat_Procedure,
-                                 Category_Name  => No_Symbol,
-                                 Regexp         => Subprogram_RE'Access,
-                                 Position_Index => 2,
-                                 End_Index      => 0,
-                                 Make_Entry     =>
-                                   Make_Entry_Subprogram'Access),
+     ((Category       => Cat_Procedure,
+       Category_Name  => No_Symbol,
+       Regexp         => Subprogram_RE'Access,
+       Position_Index => 2,
+       End_Index      => 0,
+       Make_Entry     => Make_Entry_Subprogram'Access),
 
-                                (Category       => Cat_Package,
-                                 Category_Name  => No_Symbol,
-                                 Regexp         => Package_RE'Access,
-                                 Position_Index => 3,
-                                 End_Index      => 0,
-                                 Make_Entry     => null),
+      (Category       => Cat_Package,
+       Category_Name  => No_Symbol,
+       Regexp         => Package_RE'Access,
+       Position_Index => 3,
+       End_Index      => 0,
+       Make_Entry     => null),
 
-                                (Category       => Cat_Type,
-                                 Category_Name  => No_Symbol,
-                                 Regexp         => Type_Def_RE'Access,
-                                 Position_Index => 2,
-                                 End_Index      => 0,
-                                 Make_Entry     => null),
+      (Category       => Cat_Type,
+       Category_Name  => No_Symbol,
+       Regexp         => Type_Def_RE'Access,
+       Position_Index => 2,
+       End_Index      => 0,
+       Make_Entry     => null),
 
-                                (Category       => Cat_Task,
-                                 Category_Name  => No_Symbol,
-                                 Regexp         => Task_RE'Access,
-                                 Position_Index => 3,
-                                 End_Index      => 0,
-                                 Make_Entry     => Make_Entry_Task'Access),
+      (Category       => Cat_Task,
+       Category_Name  => No_Symbol,
+       Regexp         => Task_RE'Access,
+       Position_Index => 3,
+       End_Index      => 0,
+       Make_Entry     => Make_Entry_Task'Access),
 
-                                (Category       => Cat_Protected,
-                                 Category_Name  => No_Symbol,
-                                 Regexp         => Protected_RE'Access,
-                                 Position_Index => 3,
-                                 End_Index      => 0,
-                                 Make_Entry     =>
-                                   Make_Entry_Protected'Access));
+      (Category       => Cat_Protected,
+       Category_Name  => No_Symbol,
+       Regexp         => Protected_RE'Access,
+       Position_Index => 3,
+       End_Index      => 0,
+       Make_Entry     => Make_Entry_Protected'Access));
 
    --------------------
    -- Is_Entity_Name --
    --------------------
 
-   overriding function Is_Entity_Name
-     (Lang : access Ada_Language;
-      Name : String)
-      return Boolean
+   overriding
+   function Is_Entity_Name
+     (Lang : access Ada_Language; Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
    begin
@@ -248,7 +243,8 @@ package body Language.Ada is
    -- Completion_Trigger_Character_Set --
    --------------------------------------
 
-   overriding function Completion_Trigger_Character_Set
+   overriding
+   function Completion_Trigger_Character_Set
      (Lang : access Ada_Language) return Wide_Wide_Character_Set is
    begin
       return Ada_Completion_Trigger_Chars;
@@ -258,12 +254,14 @@ package body Language.Ada is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
    begin
-      return Str = "boolean"
+      return
+        Str = "boolean"
         or else Str = "integer"
         or else Str = "natural"
         or else Str = "positive"
@@ -275,7 +273,8 @@ package body Language.Ada is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
+   overriding
+   function Dereference_Name
      (Lang : access Ada_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
@@ -287,17 +286,15 @@ package body Language.Ada is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access Ada_Language;
-      Name  : String;
-      Index : String) return String
+   overriding
+   function Array_Item_Name
+     (Lang : access Ada_Language; Name : String; Index : String) return String
    is
       pragma Unreferenced (Lang);
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
 
-      if Name'Length > 4
-        and then Name (Name'Last - 3 .. Name'Last) = ".all"
+      if Name'Length > 4 and then Name (Name'Last - 3 .. Name'Last) = ".all"
       then
          return Name (Name'First .. Name'Last - 4) & '(' & Index & ')';
       else
@@ -309,17 +306,15 @@ package body Language.Ada is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access Ada_Language;
-      Name  : String;
-      Field : String) return String
+   overriding
+   function Record_Field_Name
+     (Lang : access Ada_Language; Name : String; Field : String) return String
    is
       pragma Unreferenced (Lang);
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
 
-      if Name'Length > 4
-        and then Name (Name'Last - 3 .. Name'Last) = ".all"
+      if Name'Length > 4 and then Name (Name'Last - 3 .. Name'Last) = ".all"
       then
          return Name (Name'First .. Name'Last - 4) & '.' & Field;
       else
@@ -331,7 +326,8 @@ package body Language.Ada is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Ada_Language) return Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -367,31 +363,37 @@ package body Language.Ada is
    ---------------------------
 
    function Make_Entry_Subprogram
-     (Str     : String;
-      Matched : Match_Array) return String is
+     (Str : String; Matched : Match_Array) return String is
    begin
       if Matched (3) = No_Match then
          if Matched (4) = No_Match then
             return Str (Matched (2).First .. Matched (2).Last);
          else
-            return Str (Matched (2).First .. Matched (2).Last)
+            return
+              Str (Matched (2).First .. Matched (2).Last)
               & " "
-              & Reduce (Remove_Ada_Comments
-                        (Str (Matched (4).First .. Matched (4).Last)));
+              & Reduce
+                  (Remove_Ada_Comments
+                     (Str (Matched (4).First .. Matched (4).Last)));
          end if;
 
       elsif Matched (4) = No_Match then
          return
-           Str (Matched (2).First .. Matched (2).Last) & ' ' & Reduce
-           (Remove_Ada_Comments (Str (Matched (3).First .. Matched (3).Last)));
+           Str (Matched (2).First .. Matched (2).Last)
+           & ' '
+           & Reduce
+               (Remove_Ada_Comments
+                  (Str (Matched (3).First .. Matched (3).Last)));
 
       else
          return
-           Str (Matched (2).First .. Matched (2).Last) & ' ' & Reduce
-           (Remove_Ada_Comments
-            (Str (Matched (3).First .. Matched (3).Last)
-             & " "
-             & Str (Matched (4).First .. Matched (4).Last)));
+           Str (Matched (2).First .. Matched (2).Last)
+           & ' '
+           & Reduce
+               (Remove_Ada_Comments
+                  (Str (Matched (3).First .. Matched (3).Last)
+                   & " "
+                   & Str (Matched (4).First .. Matched (4).Last)));
       end if;
    end Make_Entry_Subprogram;
 
@@ -400,8 +402,7 @@ package body Language.Ada is
    --------------------------
 
    function Make_Entry_Protected
-     (Str     : String;
-      Matched : Match_Array) return String
+     (Str : String; Matched : Match_Array) return String
    is
       First, Last : Natural;
    begin
@@ -412,17 +413,18 @@ package body Language.Ada is
          First := Str'First;
       end if;
 
-      return Str (Matched (3).First .. Matched (3).Last) & " (" &
-        Reduce (Str (First .. Last)) & ")";
+      return
+        Str (Matched (3).First .. Matched (3).Last)
+        & " ("
+        & Reduce (Str (First .. Last))
+        & ")";
    end Make_Entry_Protected;
 
    ---------------------
    -- Make_Entry_Task --
    ---------------------
 
-   function Make_Entry_Task
-     (Str     : String;
-      Matched : Match_Array) return String
+   function Make_Entry_Task (Str : String; Matched : Match_Array) return String
    is
       First, Last : Natural;
    begin
@@ -433,17 +435,20 @@ package body Language.Ada is
          First := Str'First;
       end if;
 
-      return Str (Matched (3).First .. Matched (3).Last) & " (" &
-        Reduce (Str (First .. Last)) & ")";
+      return
+        Str (Matched (3).First .. Matched (3).Last)
+        & " ("
+        & Reduce (Str (First .. Last))
+        & ")";
    end Make_Entry_Task;
 
    --------------------
    -- Is_System_File --
    --------------------
 
-   overriding function Is_System_File
-     (Lang      : access Ada_Language;
-      File_Name : String) return Boolean
+   overriding
+   function Is_System_File
+     (Lang : access Ada_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
       Name : constant String := Base_Name (File_Name);
@@ -451,10 +456,11 @@ package body Language.Ada is
       return
         (Name'Length > 2
          and then Name (Name'First + 1) = '-'
-         and then (Name (Name'First) = 'a'
-                   or else Name (Name'First) = 'g'
-                   or else Name (Name'First) = 's'
-                   or else Name (Name'First) = 'i'))
+         and then
+           (Name (Name'First) = 'a'
+            or else Name (Name'First) = 'g'
+            or else Name (Name'First) = 's'
+            or else Name (Name'First) = 'i'))
         or else Name = "gnat.ads"
         or else Name = "ada.ads"
         or else Name = "interfac.ads"
@@ -465,15 +471,16 @@ package body Language.Ada is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access Ada_Language) return Strings.String_Access
+   overriding
+   function Keywords (Lang : access Ada_Language) return Strings.String_Access
    is
       pragma Unreferenced (Lang);
    begin
       return Keywords_Regexp'Access;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Ada_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -481,7 +488,8 @@ package body Language.Ada is
       return The_Keywords;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Ada_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -493,7 +501,8 @@ package body Language.Ada is
    -- Is_Interpolation_Char --
    ---------------------------
 
-   overriding function Is_Interpolation_Char
+   overriding
+   function Is_Interpolation_Char
      (Lang : access Ada_Language; Char : Wide_Wide_Character) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -506,20 +515,22 @@ package body Language.Ada is
    --------------------------
 
    Ada_Context : aliased Language_Context :=
-                   (Syntax => (Comment_Start          => null,
-                               Comment_End            => null,
-                               New_Line_Comment_Start => new String'("--"),
-                               New_Line_Comment_Start_Regexp => null),
-                    String_Delimiter              => '"',
-                    Quote_Character               => ASCII.NUL,
-                    Constant_Character            => ''',
-                    Can_Indent                    => True,
-                    Syntax_Highlighting           => True,
-                    Case_Sensitive                => False,
-                    Accurate_Xref                 => True,
-                    Use_Semicolon                 => True);
+     (Syntax              =>
+        (Comment_Start                 => null,
+         Comment_End                   => null,
+         New_Line_Comment_Start        => new String'("--"),
+         New_Line_Comment_Start_Regexp => null),
+      String_Delimiter    => '"',
+      Quote_Character     => ASCII.NUL,
+      Constant_Character  => ''',
+      Can_Indent          => True,
+      Syntax_Highlighting => True,
+      Case_Sensitive      => False,
+      Accurate_Xref       => True,
+      Use_Semicolon       => True);
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -531,7 +542,8 @@ package body Language.Ada is
    -- Comment_Line --
    ------------------
 
-   overriding function Comment_Line
+   overriding
+   function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;
       Comment : Boolean := True;
@@ -561,27 +573,29 @@ package body Language.Ada is
 
       for Index in Line'First .. Line'Last - 1 loop
          if Line (Index .. Index + 1) = "--" then
-            if Index + 3 <= Line'Last and then
-              Line (Index .. Index + 3) = "--  "
+            if Index + 3 <= Line'Last
+              and then Line (Index .. Index + 3) = "--  "
             then
                if Clean then
                   Local_Index := Index + 4;
                   Skip_Blanks (Line, Local_Index);
                   return Line (Local_Index .. Line'Last);
                end if;
-               return Line (Line'First .. Index - 1) &
-                 Line (Index + 4 .. Line'Last);
+               return
+                 Line (Line'First .. Index - 1)
+                 & Line (Index + 4 .. Line'Last);
 
-            elsif Index + 2 <= Line'Last and then
-              Line (Index .. Index + 2) = "-- "
+            elsif Index + 2 <= Line'Last
+              and then Line (Index .. Index + 2) = "-- "
             then
                if Clean then
                   Local_Index := Index + 3;
                   Skip_Blanks (Line, Local_Index);
                   return Line (Local_Index .. Line'Last);
                end if;
-               return Line (Line'First .. Index - 1) &
-                 Line (Index + 3 .. Line'Last);
+               return
+                 Line (Line'First .. Index - 1)
+                 & Line (Index + 3 .. Line'Last);
 
             else
                return Line (Index + 2 .. Line'Last);
@@ -598,7 +612,8 @@ package body Language.Ada is
    -- Parse_Constructs --
    ----------------------
 
-   overriding procedure Parse_Constructs
+   overriding
+   procedure Parse_Constructs
      (Lang   : access Ada_Language;
       File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
@@ -620,10 +635,10 @@ package body Language.Ada is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
-     (Lang     : access Ada_Language;
-      Buffer   : String;
-      Callback : Entity_Callback) is
+   overriding
+   procedure Parse_Entities
+     (Lang : access Ada_Language; Buffer : String; Callback : Entity_Callback)
+   is
    begin
       Analyze_Ada_Source
         (Buffer,
@@ -637,7 +652,8 @@ package body Language.Ada is
    -- Format_Buffer --
    -------------------
 
-   overriding procedure Format_Buffer
+   overriding
+   procedure Format_Buffer
      (Lang                : access Ada_Language;
       Buffer              : String;
       Replace             : Replace_Text_Callback;
@@ -645,12 +661,16 @@ package body Language.Ada is
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
-      Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null)
-   is
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null) is
    begin
       Analyze_Ada_Source
-        (Buffer, Lang.Symbols, Indent_Params, True, From, To,
+        (Buffer,
+         Lang.Symbols,
+         Indent_Params,
+         True,
+         From,
+         To,
          Replace,
          Case_Exceptions     => Case_Exceptions,
          Is_Optional_Keyword => Is_Optional_Keyword);
@@ -660,7 +680,8 @@ package body Language.Ada is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name (Lang : access Ada_Language) return String is
+   overriding
+   function Get_Name (Lang : access Ada_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "Ada";
@@ -670,7 +691,8 @@ package body Language.Ada is
    -- Get_Referenced_Entity --
    ---------------------------
 
-   overriding procedure Get_Referenced_Entity
+   overriding
+   procedure Get_Referenced_Entity
      (Lang       : access Ada_Language;
       Buffer     : String;
       Construct  : Simple_Construct_Information;
@@ -707,7 +729,7 @@ package body Language.Ada is
       is
          pragma Unreferenced (Partial_Entity);
          Word : constant String :=
-                  Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
+           Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
       begin
          if Paren_Depth = 0 then
             if (Construct.Category in Subprogram_Category
@@ -742,12 +764,14 @@ package body Language.Ada is
                   Previous_Is := False;
                end if;
 
-               if Word = "access" or else Word = "new"
-                 or else Word = "return" or else Word = "renames"
+               if Word = "access"
+                 or else Word = "new"
+                 or else Word = "return"
+                 or else Word = "renames"
                  or else Word = "of"
                  or else Word = "and"
-                 or else (Word = "is"
-                          and then Construct.Category = Cat_Subtype)
+                 or else
+                   (Word = "is" and then Construct.Category = Cat_Subtype)
                then
                   Has_Reference := True;
                end if;
@@ -763,9 +787,10 @@ package body Language.Ada is
 
                   if In_Anonymous_Access_Type
                     and then Anon_Start_Sloc.Line = 0
-                    and then (Word = "protected"
-                               or else Word = "function"
-                               or else Word = "procedure")
+                    and then
+                      (Word = "protected"
+                       or else Word = "function"
+                       or else Word = "procedure")
                   then
                      Anon_Start_Sloc := Sloc_Start_Got;
                   end if;
@@ -794,9 +819,7 @@ package body Language.Ada is
             elsif Word = ")" then
                Paren_Depth := Paren_Depth - 1;
 
-               if In_Anonymous_Access_Type
-                 and then Paren_Depth <= 0
-               then
+               if In_Anonymous_Access_Type and then Paren_Depth <= 0 then
                   Sloc_Start := Anon_Start_Sloc;
 
                   if Paren_Depth = 0 then
@@ -864,23 +887,53 @@ package body Language.Ada is
    function Image (Token : Ada_Token) return String is
    begin
       case Token is
-         when No_Token              => return "NO_TOKEN";
+         when No_Token              =>
+            return "NO_TOKEN";
+
          when Ada_Reserved_Token    =>
             return "TOK_" & To_Upper (The_Keywords (Integer (Token)).all);
-         when Tok_Dot               => return "TOK_DOT";
-         when Tok_Open_Parenthesis  => return "TOK_OPEN_PARENTHESIS";
-         when Tok_Close_Parenthesis => return "TOK_CLOSE_PARENTHESIS";
-         when Tok_Colon             => return "TOK_COLON";
-         when Tok_Arrow             => return "TOK_ARROW";
-         when Tok_Operator          => return "TOK_OPERATOR";
-         when Tok_Comma             => return "TOK_COMMA";
-         when Tok_Semicolon         => return "TOK_SEMICOLON";
-         when Tok_Blank             => return "TOK_BLANK";
-         when Tok_Tick              => return "TOK_TICK";
-         when Tok_Dot_Dot           => return "TOK_DOT_DOT";
-         when Tok_Identifier        => return "TOK_IDENTIFIER";
-         when Tok_String            => return "TOK_STRING";
-         when Tok_Expression        => return "TOK_EXPRESSION";
+
+         when Tok_Dot               =>
+            return "TOK_DOT";
+
+         when Tok_Open_Parenthesis  =>
+            return "TOK_OPEN_PARENTHESIS";
+
+         when Tok_Close_Parenthesis =>
+            return "TOK_CLOSE_PARENTHESIS";
+
+         when Tok_Colon             =>
+            return "TOK_COLON";
+
+         when Tok_Arrow             =>
+            return "TOK_ARROW";
+
+         when Tok_Operator          =>
+            return "TOK_OPERATOR";
+
+         when Tok_Comma             =>
+            return "TOK_COMMA";
+
+         when Tok_Semicolon         =>
+            return "TOK_SEMICOLON";
+
+         when Tok_Blank             =>
+            return "TOK_BLANK";
+
+         when Tok_Tick              =>
+            return "TOK_TICK";
+
+         when Tok_Dot_Dot           =>
+            return "TOK_DOT_DOT";
+
+         when Tok_Identifier        =>
+            return "TOK_IDENTIFIER";
+
+         when Tok_String            =>
+            return "TOK_STRING";
+
+         when Tok_Expression        =>
+            return "TOK_EXPRESSION";
       end case;
    end Image;
 
@@ -888,13 +941,14 @@ package body Language.Ada is
    -- Parse_Tokens_Backwards --
    ----------------------------
 
-   overriding procedure Parse_Tokens_Backwards
+   overriding
+   procedure Parse_Tokens_Backwards
      (Lang         : access Ada_Language;
       Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type := 0;
-      Callback     : access procedure (Token : Token_Record;
-                                       Stop  : in out Boolean))
+      Callback     :
+        access procedure (Token : Token_Record; Stop : in out Boolean))
    is
       pragma Unreferenced (Lang);
       Offset               : Natural := Natural (Start_Offset);
@@ -903,8 +957,7 @@ package body Language.Ada is
       Prev_Non_Blank_Token : Token_Record;
 
       procedure Skip_String
-        (Offset            : in out Natural;
-         Incomplete_String : out Boolean);
+        (Offset : in out Natural; Incomplete_String : out Boolean);
       --  Assuming offset is on a closing double quote, skips to before the
       --  corresponding opening double quote. If such opening double quote
       --  can't be found, Incomplete_String is set to True, false otherwise.
@@ -921,8 +974,7 @@ package body Language.Ada is
       -----------------
 
       procedure Skip_String
-        (Offset            : in out Natural;
-         Incomplete_String : out Boolean)
+        (Offset : in out Natural; Incomplete_String : out Boolean)
       is
          Close_Found : Boolean := False;
       begin
@@ -930,7 +982,7 @@ package body Language.Ada is
 
          while Offset > Offset_Limit loop
             case Buffer (Offset) is
-               when '"' =>
+               when '"'      =>
                   if Close_Found then
                      if Offset - 1 = Offset_Limit
                        or else Buffer (Offset - 1) /= '"'
@@ -950,7 +1002,7 @@ package body Language.Ada is
                   --  probably means that the string is broken.
                   exit;
 
-               when others =>
+               when others   =>
                   null;
             end case;
 
@@ -967,8 +1019,8 @@ package body Language.Ada is
       procedure Skip_Comment_Line
         (Offset : in out Natural; Incomplete_String : out Boolean)
       is
-         Local_Offset      : Natural := Offset;
-         Prev_Offset       : Natural;
+         Local_Offset : Natural := Offset;
+         Prev_Offset  : Natural;
       begin
          Incomplete_String := False;
 
@@ -976,20 +1028,17 @@ package body Language.Ada is
 
          while Local_Offset > Offset_Limit loop
             case Buffer (Local_Offset) is
-               when '"' =>
+               when '"'      =>
                   Skip_String (Local_Offset, Incomplete_String);
 
-               when ''' =>
-                  Local_Offset := UTF8_Prev_Char
-                    (Buffer, Local_Offset);
+               when '''      =>
+                  Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
                   if Local_Offset > Offset_Limit then
-                     Local_Offset := UTF8_Prev_Char
-                       (Buffer, Local_Offset);
+                     Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
                   end if;
 
-               when '-' =>
-                  Prev_Offset := UTF8_Prev_Char
-                    (Buffer, Local_Offset);
+               when '-'      =>
+                  Prev_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
 
                   if Prev_Offset > Offset_Limit
                     and then Buffer (Prev_Offset) = '-'
@@ -1005,12 +1054,11 @@ package body Language.Ada is
                when ASCII.LF =>
                   exit;
 
-               when others =>
+               when others   =>
                   null;
             end case;
 
-            Local_Offset := UTF8_Prev_Char
-              (Buffer, Local_Offset);
+            Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
          end loop;
       end Skip_Comment_Line;
 
@@ -1019,8 +1067,7 @@ package body Language.Ada is
       ------------------
 
       procedure Handle_Token
-        (Token : in out Token_Record; Offset : Natural; Stop : out Boolean)
-      is
+        (Token : in out Token_Record; Offset : Natural; Stop : out Boolean) is
       begin
          Stop := False;
 
@@ -1047,8 +1094,8 @@ package body Language.Ada is
                   Word : constant String :=
                     To_Lower
                       (Buffer
-                           (Integer (Token.Token_First)
-                            .. Integer (Token.Token_Last)));
+                         (Integer (Token.Token_First)
+                          .. Integer (Token.Token_Last)));
                begin
                   for J in The_Keywords'Range loop
                      if The_Keywords (J).all = Word then
@@ -1070,7 +1117,7 @@ package body Language.Ada is
          end if;
       end Handle_Token;
 
-      Next_Ind   : Natural;
+      Next_Ind : Natural;
 
       Stop : Boolean := False;
 
@@ -1107,8 +1154,7 @@ package body Language.Ada is
       --  of an UTF-8 character
 
       declare
-         Prev_Offset : constant Integer :=
-                         UTF8_Prev_Char (Buffer, Offset);
+         Prev_Offset : constant Integer := UTF8_Prev_Char (Buffer, Offset);
          Next_Offset : Integer;
       begin
          if Prev_Offset >= Buffer'First then
@@ -1138,7 +1184,7 @@ package body Language.Ada is
 
       while Offset > Offset_Limit loop
          case Buffer (Offset) is
-            when ';' =>
+            when ';'                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1146,7 +1192,7 @@ package body Language.Ada is
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
-            when ',' =>
+            when ','                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1154,7 +1200,7 @@ package body Language.Ada is
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
-            when ')' =>
+            when ')'                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1162,7 +1208,7 @@ package body Language.Ada is
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
-            when '(' =>
+            when '('                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1170,7 +1216,7 @@ package body Language.Ada is
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
-            when '.' =>
+            when '.'                       =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '.' then
                   --  .. case
 
@@ -1186,7 +1232,7 @@ package body Language.Ada is
                   Token.Token_Last := String_Index_Type (Offset);
                end if;
 
-            when ''' =>
+            when '''                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1195,19 +1241,18 @@ package body Language.Ada is
                declare
                   Local_Offset : Integer := Offset;
                begin
-                  Local_Offset :=
-                    UTF8_Prev_Char (Buffer, Local_Offset);
+                  Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
 
                   if Local_Offset <= Offset_Limit
-                    or else not Is_Alphanumeric
-                    (UTF8_Get_Char (Buffer (Local_Offset .. Offset)))
+                    or else
+                      not Is_Alphanumeric
+                            (UTF8_Get_Char (Buffer (Local_Offset .. Offset)))
                   then
                      Token.Tok_Type := No_Token;
                   end if;
 
                   if Local_Offset > Offset_Limit then
-                     Local_Offset :=
-                       UTF8_Prev_Char (Buffer, Local_Offset);
+                     Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
                   end if;
 
                   if Local_Offset > Offset_Limit then
@@ -1236,7 +1281,7 @@ package body Language.Ada is
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
-            when '"' =>
+            when '"'                       =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1266,7 +1311,7 @@ package body Language.Ada is
                   exit when Stop;
                end if;
 
-            when '<' | '>' | '/' =>
+            when '<' | '>' | '/'           =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
                   --  <= or >= or /= case
                   Token.Tok_Type := Tok_Operator;
@@ -1281,7 +1326,7 @@ package body Language.Ada is
                   Token.Token_Last := String_Index_Type (Offset);
                end if;
 
-            when '=' =>
+            when '='                       =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '>' then
                   --  => case
                   Token.Tok_Type := Tok_Arrow;
@@ -1296,7 +1341,7 @@ package body Language.Ada is
                   Token.Token_Last := String_Index_Type (Offset);
                end if;
 
-            when '+' | '-' | '&' =>
+            when '+' | '-' | '&'           =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1304,7 +1349,7 @@ package body Language.Ada is
                Token.Token_First := String_Index_Type (Offset);
                Token.Token_Last := String_Index_Type (Offset);
 
-            when '*' =>
+            when '*'                       =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '*' then
                   --  ** case
                   Token.Tok_Type := Tok_Operator;
@@ -1319,7 +1364,7 @@ package body Language.Ada is
                   Token.Token_Last := String_Index_Type (Offset);
                end if;
 
-            when ':' =>
+            when ':'                       =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
                   --  := case
                   Token.Tok_Type := Tok_Operator;
@@ -1334,7 +1379,7 @@ package body Language.Ada is
                   exit when Stop;
                end if;
 
-            when ASCII.LF =>
+            when ASCII.LF                  =>
                Handle_Token (Token, Offset, Stop);
                exit when Stop;
 
@@ -1351,7 +1396,7 @@ package body Language.Ada is
                   exit;
                end if;
 
-            when others =>
+            when others                    =>
                if Token.Tok_Type /= Tok_Identifier then
                   Handle_Token (Token, Offset, Stop);
                   exit when Stop;
@@ -1362,7 +1407,7 @@ package body Language.Ada is
                if (Next_Ind in Buffer'Range
                    and then
                      Is_Alphanumeric
-                        (UTF8_Get_Char (Buffer (Offset .. Next_Ind))))
+                       (UTF8_Get_Char (Buffer (Offset .. Next_Ind))))
                  or else
                    (Next_Ind not in Buffer'Range
                     and then Is_Alphanumeric (Buffer (Offset)))
@@ -1395,7 +1440,8 @@ package body Language.Ada is
    -- Parse_Reference_Backwards --
    -------------------------------
 
-   overriding function Parse_Reference_Backwards
+   overriding
+   function Parse_Reference_Backwards
      (Lang         : access Ada_Language;
       Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
@@ -1409,35 +1455,30 @@ package body Language.Ada is
       Ends_With_Blanks : Boolean := False;
       Is_First         : Boolean := True;
 
-      procedure Callback
-        (Token : Token_Record;
-         Stop  : in out Boolean);
+      procedure Callback (Token : Token_Record; Stop : in out Boolean);
 
       --------------
       -- Callback --
       --------------
 
-      procedure Callback
-        (Token : Token_Record;
-         Stop  : in out Boolean)
-      is
+      procedure Callback (Token : Token_Record; Stop : in out Boolean) is
       begin
          case Token.Tok_Type is
-            when Tok_Blank =>
+            when Tok_Blank             =>
                if Is_First then
                   Ends_With_Blanks := True;
                end if;
 
                return;
 
-            when Tok_Dot =>
+            when Tok_Dot               =>
                if Is_First then
                   Stop := True;
 
                   return;
                end if;
 
-            when Tok_Identifier =>
+            when Tok_Identifier        =>
                if Ends_With_Blanks
                  or else Prev_Non_Blank.Tok_Type = Tok_Identifier
                then
@@ -1446,7 +1487,7 @@ package body Language.Ada is
                   return;
                end if;
 
-            when Tok_All | Tok_Tick =>
+            when Tok_All | Tok_Tick    =>
                if Ends_With_Blanks then
                   Stop := True;
 
@@ -1456,7 +1497,7 @@ package body Language.Ada is
             when Tok_Close_Parenthesis =>
                Expression_Depth := Expression_Depth + 1;
 
-            when Tok_Open_Parenthesis =>
+            when Tok_Open_Parenthesis  =>
                Expression_Depth := Expression_Depth - 1;
 
                if Expression_Depth < 0 then
@@ -1464,7 +1505,7 @@ package body Language.Ada is
                   return;
                end if;
 
-            when others =>
+            when others                =>
                if Expression_Depth <= 0 then
                   Stop := True;
                   return;

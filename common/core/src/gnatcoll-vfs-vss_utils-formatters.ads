@@ -27,27 +27,25 @@ package GNATCOLL.VFS.VSS_Utils.Formatters is
    type Formatter is
      new VSS.Strings.Formatters.Abstract_Formatter with private;
 
-   function Image
-     (Item : GNATCOLL.VFS.Virtual_File) return Formatter;
+   function Image (Item : GNATCOLL.VFS.Virtual_File) return Formatter;
 
    function Image
-     (Name : VSS.Strings.Virtual_String;
-      Item : GNATCOLL.VFS.Virtual_File) return Formatter;
+     (Name : VSS.Strings.Virtual_String; Item : GNATCOLL.VFS.Virtual_File)
+      return Formatter;
 
 private
 
-   type Formatter is
-     new VSS.Strings.Formatters.Abstract_Formatter with record
+   type Formatter is new VSS.Strings.Formatters.Abstract_Formatter with record
       Name  : VSS.Strings.Virtual_String;
       Value : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   overriding function Name
-     (Self : Formatter) return VSS.Strings.Virtual_String;
+   overriding
+   function Name (Self : Formatter) return VSS.Strings.Virtual_String;
 
-   overriding function Format
-     (Self   : Formatter;
-      Format : VSS.Strings.Formatters.Format_Information)
+   overriding
+   function Format
+     (Self : Formatter; Format : VSS.Strings.Formatters.Format_Information)
       return VSS.Strings.Virtual_String;
 
 end GNATCOLL.VFS.VSS_Utils.Formatters;

@@ -15,78 +15,80 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.Strings;              use GNAT.Strings;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with GNAT.Strings;            use GNAT.Strings;
 
-with VSS.Strings.Conversions;   use VSS.Strings.Conversions;
+with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Glib.Convert;              use Glib.Convert;
-with Glib.Object;               use Glib.Object;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Object;       use Glib.Object;
 with Glib.Values;
-with Glib;                      use Glib;
-with Glib_Values_Utils;         use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Window;                use Gdk.Window;
+with Gdk.Window; use Gdk.Window;
 
-with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
-with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.Spin_Button;           use Gtk.Spin_Button;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Adjustment;           use Gtk.Adjustment;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.Gesture_Multi_Press;  use Gtk.Gesture_Multi_Press;
+with Gtk.Gesture_Long_Press;   use Gtk.Gesture_Long_Press;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Store;           use Gtk.List_Store;
+with Gtk.Radio_Button;         use Gtk.Radio_Button;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Size_Group;           use Gtk.Size_Group;
+with Gtk.Spin_Button;          use Gtk.Spin_Button;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
 
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
-with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Multiline_Entry; use Gtkada.Multiline_Entry;
+with Gtkada.Stock_Labels;    use Gtkada.Stock_Labels;
 
-with GPS.Debuggers;             use GPS.Debuggers;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks; use GPS.Kernel;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Markers;               use GPS.Markers;
+with GPS.Debuggers;      use GPS.Debuggers;
+with GPS.Editors;        use GPS.Editors;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+use GPS.Kernel;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Main_Window;    use GPS.Main_Window;
+with GPS.Markers;        use GPS.Markers;
 
-with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
-with GVD.Code_Editors;          use GVD.Code_Editors;
-with GVD.Generic_View;          use GVD.Generic_View;
-with GVD.Process;               use GVD.Process;
-with GVD.Types;                 use GVD.Types;
-with GVD_Module;                use GVD_Module;
+with GVD.Breakpoints_List; use GVD.Breakpoints_List;
+with GVD.Code_Editors;     use GVD.Code_Editors;
+with GVD.Generic_View;     use GVD.Generic_View;
+with GVD.Process;          use GVD.Process;
+with GVD.Types;            use GVD.Types;
+with GVD_Module;           use GVD_Module;
 
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Debugger;                  use Debugger;
-with Generic_Views;             use Generic_Views;
-with GUI_Utils;                 use GUI_Utils;
+with Basic_Types;   use Basic_Types;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Debugger;      use Debugger;
+with Generic_Views; use Generic_Views;
+with GUI_Utils;     use GUI_Utils;
 
 package body GVD.Breakpoints is
    Col_Num         : constant Gint := 0;
@@ -126,80 +128,81 @@ package body GVD.Breakpoints is
       Break_On_Exception);
    --  The various types of breakpoints
 
-   package Breakpoint_Type_Vectors is
-     new Ada.Containers.Vectors (Natural, Breakpoint_Type);
+   package Breakpoint_Type_Vectors is new
+     Ada.Containers.Vectors (Natural, Breakpoint_Type);
 
-   type Breakpoint_Editor_Record is new Process_View_Record with
-      record
-         Breakpoint_List      : Gtk_Tree_View;
-         Multipress           : Gtk_Gesture_Multi_Press;
-         Longpress            : Gtk_Gesture_Long_Press;
-         Activatable          : Boolean := True;
-         Prevent_Bp_Selection : Boolean := False;
-         --  Do not select bp when location is changed
-      end record;
+   type Breakpoint_Editor_Record is new Process_View_Record with record
+      Breakpoint_List      : Gtk_Tree_View;
+      Multipress           : Gtk_Gesture_Multi_Press;
+      Longpress            : Gtk_Gesture_Long_Press;
+      Activatable          : Boolean := True;
+      Prevent_Bp_Selection : Boolean := False;
+      --  Do not select bp when location is changed
+   end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
-   overriding procedure Update
-     (View   : not null access Breakpoint_Editor_Record);
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure Update (View : not null access Breakpoint_Editor_Record);
+   overriding
+   procedure On_Process_Terminated
      (View : not null access Breakpoint_Editor_Record);
-   overriding procedure On_State_Changed
+   overriding
+   procedure On_State_Changed
      (View      : not null access Breakpoint_Editor_Record;
       New_State : Debugger_State);
    --  See inherited documentation
 
    type Properties_Editor_Record is new Gtk_Dialog_Record with record
-      Process              : access Visual_Debugger_Record'Class;
-      Kernel               : access Kernel_Handle_Record'Class;
+      Process : access Visual_Debugger_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class;
 
-      Temporary            : Gtk_Check_Button;
+      Temporary : Gtk_Check_Button;
 
-      Location_Box         : Gtk_Box;
-      Subprogram_Box       : Gtk_Box;
-      Address_Box          : Gtk_Box;
-      Regexp_Box           : Gtk_Box;
-      Variable_Box         : Gtk_Box;
-      Exception_Box        : Gtk_Box;
+      Location_Box   : Gtk_Box;
+      Subprogram_Box : Gtk_Box;
+      Address_Box    : Gtk_Box;
+      Regexp_Box     : Gtk_Box;
+      Variable_Box   : Gtk_Box;
+      Exception_Box  : Gtk_Box;
 
       Stop_Always_Exception      : Gtk_Radio_Button;
       Stop_Not_Handled_Exception : Gtk_Radio_Button;
 
-      Breakpoint_Type      : Gtk_Combo_Box_Text;
-      BP_Types_In_Combo    : Breakpoint_Type_Vectors.Vector;
+      Breakpoint_Type   : Gtk_Combo_Box_Text;
+      BP_Types_In_Combo : Breakpoint_Type_Vectors.Vector;
 
-      Exception_Name       : Gtk_Combo_Box_Text;
+      Exception_Name : Gtk_Combo_Box_Text;
 
-      Watchpoint_Name      : Gtk_Entry;
-      Watchpoint_Type      : Gtk_Combo_Box_Text;
-      Watchpoint_Cond      : Gtk_Entry;
+      Watchpoint_Name : Gtk_Entry;
+      Watchpoint_Type : Gtk_Combo_Box_Text;
+      Watchpoint_Cond : Gtk_Entry;
 
-      File_Name            : Gtk_Entry;
-      Line_Spin            : Gtk_Spin_Button;
-      Address_Combo        : Gtk_Combo_Box_Text;
-      Subprogram_Combo     : Gtk_Combo_Box_Text;
-      Regexp_Combo         : Gtk_Combo_Box_Text;
+      File_Name        : Gtk_Entry;
+      Line_Spin        : Gtk_Spin_Button;
+      Address_Combo    : Gtk_Combo_Box_Text;
+      Subprogram_Combo : Gtk_Combo_Box_Text;
+      Regexp_Combo     : Gtk_Combo_Box_Text;
 
-      Condition_Frame      : Gtk_Frame;
-      Condition_Combo      : Gtk_Combo_Box_Text;
+      Condition_Frame : Gtk_Frame;
+      Condition_Combo : Gtk_Combo_Box_Text;
 
-      Ignore_Frame         : Gtk_Frame;
-      Ignore_Count_Combo   : Gtk_Spin_Button;
+      Ignore_Frame       : Gtk_Frame;
+      Ignore_Count_Combo : Gtk_Spin_Button;
 
-      Command_Frame        : Gtk_Frame;
-      Command_Descr        : Gtkada_Multiline_Entry;
+      Command_Frame : Gtk_Frame;
+      Command_Descr : Gtkada_Multiline_Entry;
 
-      Scope_Frame          : Gtk_Frame;
-      Scope_Task           : Gtk_Radio_Button;
-      Scope_Pd             : Gtk_Radio_Button;
-      Scope_Any            : Gtk_Radio_Button;
+      Scope_Frame : Gtk_Frame;
+      Scope_Task  : Gtk_Radio_Button;
+      Scope_Pd    : Gtk_Radio_Button;
+      Scope_Any   : Gtk_Radio_Button;
 
-      Task_Frame           : Gtk_Frame;
-      Action_Task          : Gtk_Radio_Button;
-      Action_Pd            : Gtk_Radio_Button;
-      Action_All           : Gtk_Radio_Button;
+      Task_Frame  : Gtk_Frame;
+      Action_Task : Gtk_Radio_Button;
+      Action_Pd   : Gtk_Radio_Button;
+      Action_All  : Gtk_Radio_Button;
 
-      Set_Default          : Gtk_Check_Button;
+      Set_Default : Gtk_Check_Button;
    end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
@@ -210,13 +213,13 @@ package body GVD.Breakpoints is
    --  Create the breakpoint properties editor
 
    procedure Fill
-     (Self    : not null access Properties_Editor_Record'Class;
-      Br      : Breakpoint_Data);
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : Breakpoint_Data);
    --  Show the information for the given breakpoint in the editor
 
    procedure Apply
-     (Self    : not null access Properties_Editor_Record'Class;
-      Br      : in out Breakpoint_Data);
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data);
    --  Apply the settings to the given breakpoint
 
    function Initialize
@@ -238,32 +241,34 @@ package body GVD.Breakpoints is
       View    : access Breakpoint_Editor_Record'Class := null);
    --  Store or retrieve the view from the process
 
-   package Breakpoints_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Breakpoints",
-      View_Name                       => -"Breakpoints",
-      Formal_View_Record              => Breakpoint_Editor_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Local_Toolbar                   => True,
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Position                        => Position_Automatic,
-      Initialize                      => Initialize);
-   package Simple_Views is new GVD.Generic_View.Simple_Views
-     (Works_Without_Debugger => True,
-      Views              => Breakpoints_MDI_Views,
-      Formal_View_Record => Breakpoint_Editor_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+   package Breakpoints_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Breakpoints",
+        View_Name                       => -"Breakpoints",
+        Formal_View_Record              => Breakpoint_Editor_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Local_Toolbar                   => True,
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Position                        => Position_Automatic,
+        Initialize                      => Initialize);
+   package Simple_Views is new
+     GVD.Generic_View.Simple_Views
+       (Works_Without_Debugger => True,
+        Views                  => Breakpoints_MDI_Views,
+        Formal_View_Record     => Breakpoint_Editor_Record,
+        Formal_MDI_Child       => GPS_MDI_Child_Record,
+        Get_View               => Get_View,
+        Set_View               => Set_View);
 
-   type On_Breakpoints_Changed is new Debugger_Hooks_Function
-      with null record;
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class);
+   type On_Breakpoints_Changed is new Debugger_Hooks_Function with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
    --  Hook for "debugger_breakpoints_changed"
 
    function Get_Selection
@@ -271,8 +276,7 @@ package body GVD.Breakpoints is
    --  Return information on the currently selected breakpoint.
 
    procedure On_Breakpoint_State_Toggled
-     (Self : access Glib.Object.GObject_Record'Class;
-      Path : Glib.UTF8_String);
+     (Self : access Glib.Object.GObject_Record'Class; Path : Glib.UTF8_String);
    --  Called when the state of a brekpoint is toggled.
 
    procedure Recompute_Filters
@@ -280,46 +284,54 @@ package body GVD.Breakpoints is
    --  Called when the selection changed, refresh the context to recompute the
    --  filters.
 
-   type Breakpoint_Single_Selection is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Breakpoint_Single_Selection;
-      Context : Selection_Context) return Boolean;
+   type Breakpoint_Single_Selection is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Breakpoint_Single_Selection; Context : Selection_Context)
+      return Boolean;
    --  True if only one row is selected.
 
    type Remove_Breakpoint_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove the selected breakpoint
 
    type Clear_Breakpoints_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Clear_Breakpoints_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all breakpoints
 
    type View_Breakpoint_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access View_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the source editor that has the breakpoint
 
    type Advanced_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Advanced_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Advanced_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Edit the advanced properties of the selected breakpoint
 
    type Add_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Add_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Add_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Create a new breakpoint
 
    type Set_Breakpoints_State_Command (Is_Enabled : Boolean) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Set_Breakpoints_State_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Set the state of the selected breakpoints to Is_Enabled
@@ -334,7 +346,7 @@ package body GVD.Breakpoints is
    --  else set the State in the model.
 
    procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
-   procedure On_Type_Changed                (W : access GObject_Record'Class);
+   procedure On_Type_Changed (W : access GObject_Record'Class);
    --  Callbacks for the various buttons
 
    procedure Show_Selected_Breakpoint_In_Editor
@@ -352,13 +364,13 @@ package body GVD.Breakpoints is
    --  Called when the user double clicks on a breakpoint
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble);
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble);
    --  Called when the user long presses on a breakpoint
 
    type On_Location_Changed is new File_Location_Hooks_Function
-      with null record;
-   overriding procedure Execute
+   with null record;
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -406,11 +418,11 @@ package body GVD.Breakpoints is
 
       if Id /= 0 then
          Model := -Get_Model (Self.Breakpoint_List);
-         Iter  := Model.Get_Iter_First;
+         Iter := Model.Get_Iter_First;
 
          while Iter /= Null_Iter loop
-            if Breakpoint_Identifier'Value
-              (Model.Get_String (Iter, Col_Num)) = Id
+            if Breakpoint_Identifier'Value (Model.Get_String (Iter, Col_Num))
+              = Id
             then
                Self.Breakpoint_List.Get_Selection.Unselect_All;
                Self.Breakpoint_List.Get_Selection.Select_Iter (Iter);
@@ -449,15 +461,14 @@ package body GVD.Breakpoints is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (View   : not null access Breakpoint_Editor_Record)
-   is
-      Process   : Visual_Debugger := Visual_Debugger (Get_Process (View));
-      Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
-      Iter      : Gtk_Tree_Iter;
-      Values    : Glib.Values.GValue_Array (1 .. 10);
-      Columns   : Columns_Array (Values'Range);
-      Last      : Gint;
+   overriding
+   procedure Update (View : not null access Breakpoint_Editor_Record) is
+      Process : Visual_Debugger := Visual_Debugger (Get_Process (View));
+      Model   : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
+      Iter    : Gtk_Tree_Iter;
+      Values  : Glib.Values.GValue_Array (1 .. 10);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint;
 
    begin
       --  If the view is being detached (but the process has not been reset
@@ -473,11 +484,12 @@ package body GVD.Breakpoints is
 
          Columns (1 .. 5) :=
            (Col_Num, Col_Enb, Col_Activatable, Col_Type, Col_Disp);
-         Values  (1 .. 3) :=
-           (1 => As_String (
-                  if Br.Num = Breakpoint_Identifier'Last
-                  then "0"
-                  else Breakpoint_Identifier'Image (Br.Num)),
+         Values (1 .. 3) :=
+           (1 =>
+              As_String
+                (if Br.Num = Breakpoint_Identifier'Last
+                 then "0"
+                 else Breakpoint_Identifier'Image (Br.Num)),
             2 => As_Boolean (Br.Enabled),
             3 => As_Boolean (View.Activatable));
          Last := 5;
@@ -485,11 +497,14 @@ package body GVD.Breakpoints is
          case Br.The_Type is
             when Breakpoint =>
                Glib.Values.Init_Set_String (Values (4), "break");
+
             when Watchpoint =>
                Glib.Values.Init_Set_String (Values (4), "watch");
+
             when Catchpoint =>
                Glib.Values.Init_Set_String (Values (4), "catch");
-            when Other =>
+
+            when Other      =>
                Glib.Values.Init_Set_String
                  (Values (4), Escape_Text (To_String (Br.The_Type_Name)));
          end case;
@@ -511,8 +526,8 @@ package body GVD.Breakpoints is
                  (Values (Last), Column_Types (Guint (Col_File)));
             end if;
             Glib.Values.Set_String
-              (Values (Last), Escape_Text
-               (+Base_Name (Get_File (Br.Location))));
+              (Values (Last),
+               Escape_Text (+Base_Name (Get_File (Br.Location))));
 
             Last := Last + 1;
             Columns (Last) := Col_Line;
@@ -556,19 +571,20 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class)
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self);
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       View    : constant Breakpoint_Editor :=
         (if Debugger = null
-         then Breakpoint_Editor
-           (Breakpoints_MDI_Views.Retrieve_View
-                (Kernel,
-                 Visible_Only => True))
+         then
+           Breakpoint_Editor
+             (Breakpoints_MDI_Views.Retrieve_View
+                (Kernel, Visible_Only => True))
          else Breakpoint_Editor (Process.Breakpoints_Editor));
    begin
       if View /= null then
@@ -580,7 +596,8 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -591,9 +608,7 @@ package body GVD.Breakpoints is
 
       View : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View
-             (Kernel,
-              Visible_Only => True));
+          (Breakpoints_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
    begin
       if View /= null then
          Select_Breakpoint_On (View, File, Line);
@@ -604,7 +619,8 @@ package body GVD.Breakpoints is
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (View : not null access Breakpoint_Editor_Record)
    is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
@@ -642,8 +658,7 @@ package body GVD.Breakpoints is
    ------------------
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble)
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble)
    is
       pragma Unreferenced (X, Y);
       View : constant Breakpoint_Editor := Breakpoint_Editor (Self);
@@ -675,8 +690,9 @@ package body GVD.Breakpoints is
       --  List of breakpoints
       ----------
 
-      Self.Breakpoint_List := Create_Tree_View
-        (Column_Types, Column_Names, Sortable_Columns => False);
+      Self.Breakpoint_List :=
+        Create_Tree_View
+          (Column_Types, Column_Names, Sortable_Columns => False);
       Self.Breakpoint_List.Get_Selection.Set_Mode (Selection_Multiple);
       Self.Breakpoint_List.Get_Selection.On_Changed
         (Recompute_Filters'Access, Self);
@@ -693,10 +709,9 @@ package body GVD.Breakpoints is
            (Cell_Renderer_List.Get_Data (List),
             "activatable",
             Col_Activatable);
-         Gtk_Cell_Renderer_Toggle
-           (Cell_Renderer_List.Get_Data (List)).On_Toggled
-             (Call  => On_Breakpoint_State_Toggled'Access,
-              Slot  => Self);
+         Gtk_Cell_Renderer_Toggle (Cell_Renderer_List.Get_Data (List))
+           .On_Toggled
+              (Call => On_Breakpoint_State_Toggled'Access, Slot => Self);
          Cell_Renderer_List.Free (List);
       end;
 
@@ -710,7 +725,7 @@ package body GVD.Breakpoints is
 
       --  Initial display
       Debugger_Breakpoints_Changed_Hook.Add
-         (new On_Breakpoints_Changed, Watch => Self);
+        (new On_Breakpoints_Changed, Watch => Self);
 
       Location_Changed_Hook.Add_Debounce
         (new On_Location_Changed, Watch => Self);
@@ -748,8 +763,7 @@ package body GVD.Breakpoints is
          Parent => Kernel.Get_Main_Window,
          Flags  => Destroy_With_Parent);
 
-      Set_Default_Size_From_History
-        (Self, "breakpoints", Kernel, 600, 500);
+      Set_Default_Size_From_History (Self, "breakpoints", Kernel, 600, 500);
 
       Self.Process := Process;
       Self.Kernel := Kernel;
@@ -765,14 +779,18 @@ package body GVD.Breakpoints is
          case T is
             when Break_On_Source_Loc =>
                Self.Breakpoint_Type.Append_Text (-"break on source location");
+
             when Break_On_Subprogram =>
                Self.Breakpoint_Type.Append_Text (-"break on subprogram");
-            when Break_At_Address =>
+
+            when Break_At_Address    =>
                Self.Breakpoint_Type.Append_Text (-"break at specific address");
-            when Break_On_Regexp =>
+
+            when Break_On_Regexp     =>
                Self.Breakpoint_Type.Append_Text
                  (-"break on regular expression");
-            when Break_On_Variable =>
+
+            when Break_On_Variable   =>
                if Self.Process = null then
                   Type_Added := False;
                else
@@ -781,7 +799,8 @@ package body GVD.Breakpoints is
                   Self.Breakpoint_Type.Append_Text
                     (-"watch changes on variable");
                end if;
-            when Break_On_Exception =>
+
+            when Break_On_Exception  =>
                Self.Breakpoint_Type.Append_Text (-"break on exception");
          end case;
 
@@ -1044,8 +1063,10 @@ package body GVD.Breakpoints is
       Self.Scope_Task.Set_Active (True);
       Vbox9.Pack_Start (Self.Scope_Task, False, False, 0);
 
-      Gtk_New (Self.Scope_Pd, Self.Scope_Task,
-               -"All tasks in current Protection Domain");
+      Gtk_New
+        (Self.Scope_Pd,
+         Self.Scope_Task,
+         -"All tasks in current Protection Domain");
       Vbox9.Pack_Start (Self.Scope_Pd, False, False, 0);
 
       Gtk_New (Self.Scope_Any, Self.Scope_Task, -"Any task");
@@ -1065,8 +1086,10 @@ package body GVD.Breakpoints is
       Self.Action_Task.Set_Active (True);
       Vbox9.Pack_Start (Self.Action_Task, False, False, 0);
 
-      Gtk_New (Self.Action_Pd, Self.Action_Task,
-               -"All tasks in current Protection Domain");
+      Gtk_New
+        (Self.Action_Pd,
+         Self.Action_Task,
+         -"All tasks in current Protection Domain");
       Self.Action_Pd.Set_Active (False);
       Vbox9.Pack_Start (Self.Action_Pd, False, False, 0);
 
@@ -1097,8 +1120,7 @@ package body GVD.Breakpoints is
       Self.Scope_Frame.Set_No_Show_All (True);
       Self.Task_Frame.Set_No_Show_All (True);
 
-      if Process = null
-        or else VxWorks_Version (Process.Debugger) /= Vx653
+      if Process = null or else VxWorks_Version (Process.Debugger) /= Vx653
       then
          Self.Scope_Frame.Hide;
          Self.Task_Frame.Hide;
@@ -1157,16 +1179,17 @@ package body GVD.Breakpoints is
 
       Register_Action
         (Kernel,
-         "debug delete breakpoint", new Remove_Breakpoint_Command,
-         -("Delete the selected breakpoints"
-           & " (from the Breakpoints view)"),
+         "debug delete breakpoint",
+         new Remove_Breakpoint_Command,
+         -("Delete the selected breakpoints" & " (from the Breakpoints view)"),
          Icon_Name => "gps-remove-symbolic",
          Category  => -"Debug",
          Filter    => Debugger_Filter);
 
       Register_Action
         (Kernel,
-         "debug clear breakpoints", new Clear_Breakpoints_Command,
+         "debug clear breakpoints",
+         new Clear_Breakpoints_Command,
          -"Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
          Category  => -"Debug",
@@ -1174,7 +1197,8 @@ package body GVD.Breakpoints is
 
       Register_Action
         (Kernel,
-         "debug view breakpoint", new View_Breakpoint_Command,
+         "debug view breakpoint",
+         new View_Breakpoint_Command,
          -("View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-goto-symbolic",
@@ -1183,7 +1207,8 @@ package body GVD.Breakpoints is
 
       Register_Action
         (Kernel,
-         "debug edit breakpoint", new Advanced_Command,
+         "debug edit breakpoint",
+         new Advanced_Command,
          -("Edit the advanced properties of the selected breakpoint"
            & " like its condition, repeat count,..."
            & " (from the Breakpoints view)"),
@@ -1193,7 +1218,8 @@ package body GVD.Breakpoints is
 
       Register_Action
         (Kernel,
-         "debug create breakpoint", new Add_Command,
+         "debug create breakpoint",
+         new Add_Command,
          -"Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
          Category  => -"Debug",
@@ -1223,17 +1249,15 @@ package body GVD.Breakpoints is
    ----------
 
    procedure Fill
-     (Self    : not null access Properties_Editor_Record'Class;
-      Br      : Breakpoint_Data)
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : Breakpoint_Data)
    is
       Start, The_End : Gtk_Text_Iter;
       Buffer         : Gtk_Text_Buffer;
    begin
       --  Fill the information
 
-      if Br.Except /= ""
-        or else Br.Assertion
-      then
+      if Br.Except /= "" or else Br.Assertion then
          Self.Breakpoint_Type.Set_Active
            (Gint (Self.BP_Types_In_Combo.Find_Index (Break_On_Exception)));
          Set_Active (Self.Stop_Always_Exception, True);
@@ -1245,14 +1269,14 @@ package body GVD.Breakpoints is
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               To_Virtual_String (Br.Except), Select_Text => True);
+               To_Virtual_String (Br.Except),
+               Select_Text => True);
          end if;
 
          Set_Active (Self.Stop_Not_Handled_Exception, Br.Unhandled);
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
 
-      elsif Br.Location /= No_Marker
-        or else Br.Num = 0   --  a new breakpoint
+      elsif Br.Location /= No_Marker or else Br.Num = 0   --  a new breakpoint
       then
          Self.Breakpoint_Type.Set_Active
            (Gint (Self.BP_Types_In_Combo.Find_Index (Break_On_Source_Loc)));
@@ -1295,7 +1319,8 @@ package body GVD.Breakpoints is
       if Br.Condition /= "" then
          Add_Unique_Combo_Entry
            (Self.Condition_Combo,
-            To_Virtual_String (Br.Condition), Select_Text => True);
+            To_Virtual_String (Br.Condition),
+            Select_Text => True);
       else
          Self.Condition_Combo.Set_Active (-1);
       end if;
@@ -1316,17 +1341,31 @@ package body GVD.Breakpoints is
 
       --  Set the scope and action, if appropriate
       case Br.Scope is
-         when No_Scope     => null;
-         when Current_Task => Self.Scope_Task.Set_Active (True);
-         when Tasks_In_PD  => Self.Scope_Pd.Set_Active (True);
-         when Any_Task     => Self.Scope_Any.Set_Active (True);
+         when No_Scope     =>
+            null;
+
+         when Current_Task =>
+            Self.Scope_Task.Set_Active (True);
+
+         when Tasks_In_PD  =>
+            Self.Scope_Pd.Set_Active (True);
+
+         when Any_Task     =>
+            Self.Scope_Any.Set_Active (True);
       end case;
 
       case Br.Action is
-         when No_Action    => null;
-         when Current_Task => Self.Action_Task.Set_Active (True);
-         when Tasks_In_PD  => Self.Action_Pd.Set_Active (True);
-         when All_Tasks    => Self.Action_All.Set_Active (True);
+         when No_Action    =>
+            null;
+
+         when Current_Task =>
+            Self.Action_Task.Set_Active (True);
+
+         when Tasks_In_PD  =>
+            Self.Action_Pd.Set_Active (True);
+
+         when All_Tasks    =>
+            Self.Action_All.Set_Active (True);
       end case;
 
       Self.Set_Default.Set_Active (False);
@@ -1337,8 +1376,7 @@ package body GVD.Breakpoints is
    ---------------------------------
 
    procedure On_Breakpoint_State_Toggled
-     (Self : access Glib.Object.GObject_Record'Class;
-      Path : Glib.UTF8_String)
+     (Self : access Glib.Object.GObject_Record'Class; Path : Glib.UTF8_String)
    is
       View  : constant Breakpoint_Editor := Breakpoint_Editor (Self);
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
@@ -1347,12 +1385,11 @@ package body GVD.Breakpoints is
    begin
       if Iter /= Null_Iter then
          List.Append
-           (Breakpoint_Identifier'Value
-              (Get_String (Model, Iter, Col_Num)));
+           (Breakpoint_Identifier'Value (Get_String (Model, Iter, Col_Num)));
          Set_Breakpoints_State
            (View.Kernel,
-            List   => List,
-            State  => Model.Get_Boolean (Iter, Col_Enb));
+            List  => List,
+            State => Model.Get_Boolean (Iter, Col_Enb));
       end if;
    end On_Breakpoint_State_Toggled;
 
@@ -1363,7 +1400,7 @@ package body GVD.Breakpoints is
    procedure Recompute_Filters (Self : access Glib.Object.GObject_Record'Class)
    is
       View   : constant Breakpoint_Editor := Breakpoint_Editor (Self);
-      Kernel : constant Kernel_Handle     := View.Kernel;
+      Kernel : constant Kernel_Handle := View.Kernel;
    begin
       --  Must refresh the context to update the value of the Selection Filter
       Kernel.Refresh_Context;
@@ -1373,22 +1410,22 @@ package body GVD.Breakpoints is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Breakpoint_Single_Selection;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Breakpoint_Single_Selection; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       View : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View
-             (Get_Kernel (Context),
-              Visible_Only => True));
-      Res  : Boolean                    := False;
+             (Get_Kernel (Context), Visible_Only => True));
+      Res  : Boolean := False;
    begin
       if View /= null then
          declare
-            Selection : constant Gtk_Tree_Selection
-              := Get_Selection (View.Breakpoint_List);
+            Selection : constant Gtk_Tree_Selection :=
+              Get_Selection (View.Breakpoint_List);
          begin
             Res := Selection.Count_Selected_Rows = 1;
          end;
@@ -1413,16 +1450,18 @@ package body GVD.Breakpoints is
 
       if Selection.Count_Selected_Rows = 1 then
          Get_Selected_Rows (Selection, The_Model, List);
-         Path := Gtk_Tree_Path
-           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Path :=
+           Gtk_Tree_Path
+             (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
          Iter := Get_Iter (The_Model, Path);
          Free_Path_List (List);
 
          if Iter /= Null_Iter then
-            return Get_Breakpoint_From_Id
-              (View.Kernel,
-               Breakpoint_Identifier'Value
-                 (Get_String (The_Model, Iter, Col_Num)));
+            return
+              Get_Breakpoint_From_Id
+                (View.Kernel,
+                 Breakpoint_Identifier'Value
+                   (Get_String (The_Model, Iter, Col_Num)));
          end if;
       end if;
 
@@ -1434,8 +1473,8 @@ package body GVD.Breakpoints is
    -----------
 
    procedure Apply
-     (Self    : not null access Properties_Editor_Record'Class;
-      Br      : in out Breakpoint_Data)
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data)
    is
       Modified       : Boolean := False;
       Start, The_End : Gtk_Text_Iter;
@@ -1452,96 +1491,102 @@ package body GVD.Breakpoints is
 
       if Num = 0 then
          case T is
-         when Break_On_Source_Loc =>
-            declare
-               File : constant Filesystem_String := +Get_Text (Self.File_Name);
-               --  ??? What if the filesystem path is non-UTF8?
-            begin
-               Break_Source
+            when Break_On_Source_Loc =>
+               declare
+                  File : constant Filesystem_String :=
+                    +Get_Text (Self.File_Name);
+                  --  ??? What if the filesystem path is non-UTF8?
+               begin
+                  Break_Source
+                    (Self.Kernel,
+                     File      => Create_From_Base (File),
+                     Line      =>
+                       Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                     Temporary => Temporary);
+               end;
+
+            when Break_On_Subprogram =>
+               Break_Subprogram
                  (Self.Kernel,
-                  File      => Create_From_Base (File),
-                  Line      =>
-                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                  Temporary => Temporary);
-            end;
+                  Subprogram => Self.Subprogram_Combo.Get_Active_Text,
+                  Temporary  => Temporary);
 
-         when Break_On_Subprogram =>
-            Break_Subprogram
-              (Self.Kernel,
-               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
-               Temporary  => Temporary);
+            when Break_At_Address    =>
+               Num :=
+                 Break_At_Address
+                   (Self.Kernel,
+                    Address   =>
+                      String_To_Address (Self.Address_Combo.Get_Active_Text),
+                    Temporary => Temporary);
 
-         when Break_At_Address =>
-            Num := Break_At_Address
-              (Self.Kernel,
-               Address   => String_To_Address
-                 (Self.Address_Combo.Get_Active_Text),
-               Temporary => Temporary);
+            when Break_On_Regexp     =>
+               Num :=
+                 Break_Regexp
+                   (Self.Kernel,
+                    Expression => Self.Regexp_Combo.Get_Active_Text,
+                    Temporary  => Temporary);
 
-         when Break_On_Regexp =>
-            Num := Break_Regexp
-              (Self.Kernel,
-               Expression => Self.Regexp_Combo.Get_Active_Text,
-               Temporary  => Temporary);
+            when Break_On_Exception  =>
+               declare
+                  Name      : constant String :=
+                    Get_Text (Gtk_Entry (Self.Exception_Name.Get_Child));
+                  Unhandled : constant Boolean :=
+                    Get_Active (Self.Stop_Not_Handled_Exception);
+               begin
+                  --  Some of the strings below deal with the GUI, and thus should
+                  --  be translated for internationalization. Others come from
+                  --  gdb, and should not be translated. This explains why some
+                  --  are preceded by '-'.
 
-         when Break_On_Exception =>
-            declare
-               Name      : constant String :=
-                 Get_Text (Gtk_Entry (Self.Exception_Name.Get_Child));
-               Unhandled : constant Boolean :=
-                 Get_Active (Self.Stop_Not_Handled_Exception);
-            begin
-               --  Some of the strings below deal with the GUI, and thus should
-               --  be translated for internationalization. Others come from
-               --  gdb, and should not be translated. This explains why some
-               --  are preceded by '-'.
+                  if Name = -"All Ada exceptions" then
+                     Num :=
+                       Break_Exception
+                         (Self.Kernel,
+                          Name      => "all",
+                          Unhandled => Unhandled,
+                          Temporary => Temporary);
 
-               if Name = -"All Ada exceptions" then
-                  Num := Break_Exception
-                    (Self.Kernel,
-                     Name      => "all",
-                     Unhandled => Unhandled,
-                     Temporary => Temporary);
+                  elsif Name = -"Ada assertions" then
+                     Num :=
+                       Catch_Assertions (Self.Kernel, Temporary => Temporary);
 
-               elsif Name = -"Ada assertions" then
-                  Num := Catch_Assertions
-                    (Self.Kernel,
-                     Temporary => Temporary);
+                  else
+                     Num :=
+                       Break_Exception
+                         (Self.Kernel,
+                          Name      => Name,
+                          Unhandled => Unhandled,
+                          Temporary => Temporary);
+                  end if;
+               end;
 
-               else
-                  Num := Break_Exception
-                    (Self.Kernel,
-                     Name      => Name,
-                     Unhandled => Unhandled,
-                     Temporary => Temporary);
-               end if;
-            end;
-
-         when Break_On_Variable =>
-            declare
-               Watchpoint_Name : constant String :=
-                 Self.Watchpoint_Name.Get_Text;
-               Watchpoint_Type : constant String :=
-                 Self.Watchpoint_Type.Get_Active_Text;
-               Watchpoint_Cond : constant String :=
-                 Self.Watchpoint_Cond.Get_Text;
-               Trigger         : constant GVD.Types.Watchpoint_Trigger :=
-                 (if Watchpoint_Type = -"read" then GVD.Types.Read
-                  elsif Watchpoint_Type = -"read or written"
-                  then GVD.Types.Read_Write
-                  else GVD.Types.Write);
-            begin
-               if Self.Process /= null then
-                  --  gdb don't set wachpoint when variable is not in the scope
-                  --  so it is not possible to pre-set such breakpoint
-                  Num := Watch
-                    (Self.Process.Debugger,
-                     Name      => Watchpoint_Name,
-                     Trigger   => Trigger,
-                     Condition => Watchpoint_Cond,
-                     Mode      => GVD.Types.Visible);
-               end if;
-            end;
+            when Break_On_Variable   =>
+               declare
+                  Watchpoint_Name : constant String :=
+                    Self.Watchpoint_Name.Get_Text;
+                  Watchpoint_Type : constant String :=
+                    Self.Watchpoint_Type.Get_Active_Text;
+                  Watchpoint_Cond : constant String :=
+                    Self.Watchpoint_Cond.Get_Text;
+                  Trigger         : constant GVD.Types.Watchpoint_Trigger :=
+                    (if Watchpoint_Type = -"read"
+                     then GVD.Types.Read
+                     elsif Watchpoint_Type = -"read or written"
+                     then GVD.Types.Read_Write
+                     else GVD.Types.Write);
+               begin
+                  if Self.Process /= null then
+                     --  gdb don't set wachpoint when variable is not in the scope
+                     --  so it is not possible to pre-set such breakpoint
+                     Num :=
+                       Watch
+                         (Self.Process.Debugger,
+                          Name      => Watchpoint_Name,
+                          Trigger   => Trigger,
+                          Condition => Watchpoint_Cond,
+                          Mode      => GVD.Types.Visible);
+                  end if;
+               end;
          end case;
       end if;
 
@@ -1570,8 +1615,8 @@ package body GVD.Breakpoints is
       then
          Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
          declare
-            T : constant String := Get_Text
-              (Get_Buffer (Self.Command_Descr), Start, The_End);
+            T : constant String :=
+              Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End);
          begin
             if T /= "" or else Br.Commands /= "" then
                Set_Breakpoint_Command
@@ -1635,18 +1680,18 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Add_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Add_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View
-             (Get_Kernel (Context.Context),
-              Visible_Only => True));
+             (Get_Kernel (Context.Context), Visible_Only => True));
       Props : Properties_Editor;
-      Br : Breakpoint_Data := (Num => 0, others => <>);
+      Br    : Breakpoint_Data := (Num => 0, others => <>);
    begin
       if View /= null then
          Props := new Properties_Editor_Record;
@@ -1669,16 +1714,15 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Breakpoints_State_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       View    : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View
-             (Kernel,
-              Visible_Only => True));
+          (Breakpoints_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
       Id_List : Breakpoint_Identifier_Lists.List;
    begin
       if View = null then
@@ -1686,10 +1730,11 @@ package body GVD.Breakpoints is
       end if;
 
       --  Get the list of selected breakpoints
-      Get_Selected_Breakpoints_Or_Set_State (View    => View,
-                                             Is_Set  => False,
-                                             State   => Command.Is_Enabled,
-                                             Id_List => Id_List);
+      Get_Selected_Breakpoints_Or_Set_State
+        (View    => View,
+         Is_Set  => False,
+         State   => Command.Is_Enabled,
+         Id_List => Id_List);
 
       --  Put them in numerical order
       Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
@@ -1698,10 +1743,11 @@ package body GVD.Breakpoints is
       Breakpoint_Identifier_Lists.Clear (Id_List);
 
       --  Need to modify the toggle buttons in the model
-      Get_Selected_Breakpoints_Or_Set_State (View    => View,
-                                             Is_Set  => True,
-                                             State   => Command.Is_Enabled,
-                                             Id_List => Id_List);
+      Get_Selected_Breakpoints_Or_Set_State
+        (View    => View,
+         Is_Set  => True,
+         State   => Command.Is_Enabled,
+         Id_List => Id_List);
 
       return Commands.Success;
    end Execute;
@@ -1746,8 +1792,9 @@ package body GVD.Breakpoints is
                if Is_Set then
                   Store_Model.Set (Iter, Col_Enb, State);
                else
-                  Id_List.Append (Breakpoint_Identifier'Value
-                                  (Get_String (Model, Iter, Col_Num)));
+                  Id_List.Append
+                    (Breakpoint_Identifier'Value
+                       (Get_String (Model, Iter, Col_Num)));
                end if;
             end if;
 
@@ -1788,16 +1835,16 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Advanced_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Advanced_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View  : constant Breakpoint_Editor :=
+      View : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View
-             (Get_Kernel (Context.Context),
-              Visible_Only => True));
+             (Get_Kernel (Context.Context), Visible_Only => True));
    begin
       if View /= null then
          Show_Selected_Breakpoint_Details (View);
@@ -1809,18 +1856,15 @@ package body GVD.Breakpoints is
    -- On_Load_Exception_List_Clicked --
    ------------------------------------
 
-   procedure On_Load_Exception_List_Clicked
-     (W : access GObject_Record'Class)
+   procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class)
    is
-      View    : constant Properties_Editor := Properties_Editor (W);
+      View          : constant Properties_Editor := Properties_Editor (W);
       Exception_Arr : constant Exception_Array :=
         List_Exceptions (View.Process.Debugger);
    begin
       if Exception_Arr'Length > 0 then
-         Add_Unique_Combo_Entry
-           (View.Exception_Name, -"All Ada exceptions");
-         Add_Unique_Combo_Entry
-           (View.Exception_Name, -"Ada assertions");
+         Add_Unique_Combo_Entry (View.Exception_Name, -"All Ada exceptions");
+         Add_Unique_Combo_Entry (View.Exception_Name, -"Ada assertions");
 
          for J in Exception_Arr'Range loop
             Add_Unique_Combo_Entry
@@ -1834,24 +1878,21 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       View    : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View
-             (Kernel,
-              Visible_Only => True));
+          (Breakpoints_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
       Id_List : Breakpoint_Identifier_Lists.List;
    begin
       --  Get the list of selected breakpoints
-      Get_Selected_Breakpoints_Or_Set_State (View    => View,
-                                             Is_Set  => False,
-                                             State   => False,
-                                             Id_List => Id_List);
+      Get_Selected_Breakpoints_Or_Set_State
+        (View => View, Is_Set => False, State => False, Id_List => Id_List);
       --  Put them in numerical order
       Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Delete_Multiple_Breakpoints (Kernel, Id_List);
@@ -1863,17 +1904,17 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Clear_Breakpoints_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View      : constant Breakpoint_Editor :=
+      View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View
-             (Get_Kernel (Context.Context),
-              Visible_Only => True));
-      Model     : Gtk_Tree_Store;
+             (Get_Kernel (Context.Context), Visible_Only => True));
+      Model : Gtk_Tree_Store;
    begin
       if View /= null then
          Clear_All_Breakpoints (Get_Kernel (Context.Context));
@@ -1909,16 +1950,16 @@ package body GVD.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access View_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View  : constant Breakpoint_Editor :=
+      View : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View
-             (Get_Kernel (Context.Context),
-              Visible_Only => True));
+             (Get_Kernel (Context.Context), Visible_Only => True));
    begin
       if View /= null then
          Show_Selected_Breakpoint_In_Editor (View);
@@ -1930,7 +1971,8 @@ package body GVD.Breakpoints is
    -- On_State_Changed --
    ----------------------
 
-   overriding procedure On_State_Changed
+   overriding
+   procedure On_State_Changed
      (View      : not null access Breakpoint_Editor_Record;
       New_State : Debugger_State)
    is

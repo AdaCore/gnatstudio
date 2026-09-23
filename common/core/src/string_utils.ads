@@ -19,16 +19,15 @@
 --  strings.
 
 with GNAT.Strings;
-with Basic_Types; use Basic_Types;
+with Basic_Types;           use Basic_Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package String_Utils is
 
-   function "+"
-     (S : String) return Unbounded_String renames To_Unbounded_String;
+   function "+" (S : String) return Unbounded_String
+   renames To_Unbounded_String;
 
-   function "+"
-     (S : Unbounded_String) return String renames To_String;
+   function "+" (S : Unbounded_String) return String renames To_String;
    --  Utility conversion operators from String to Unbounded_String
 
    function Hex_Value (Hex : String) return Natural;
@@ -55,16 +54,12 @@ package String_Utils is
    --  Return the Base_Name without the extension
 
    function Get_Surrounding_Line
-     (Str    : String;
-      Start  : Natural;
-      Finish : Natural) return String;
+     (Str : String; Start : Natural; Finish : Natural) return String;
    --  Return the line surrounding the substring Str (Start .. Finish) without
    --  leading whitespaces.
 
    procedure Skip_To_Blank
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1);
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1);
    --  Skip to the next blank character
 
    procedure Skip_To_Index
@@ -82,9 +77,7 @@ package String_Utils is
    --  Assuming Index points to the begining of a line, move the index by
    --  "Index_In_Line" characters, and give the new column value.
 
-   procedure Skip_Hexa_Digit
-     (Type_Str : String;
-      Index    : in out Natural);
+   procedure Skip_Hexa_Digit (Type_Str : String; Index : in out Natural);
    --  Move Index to the first character that can not be part of an hexadecimal
    --  digit. Note that an hexadecimal digit can optionally start with '0x',
    --  which is the only case where x is recognized as part of the digit.
@@ -103,18 +96,14 @@ package String_Utils is
    --  If no occurrence found, then Index is set over Type_Str'Last.
 
    procedure Skip_Word
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1);
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1);
    --  Skip the word starting at Index (at least one character, even if there
    --  is no word).
    --  Currently, a word is defined as any string made of alphanumeric
    --  character or underscore.
 
    procedure Skip_CPP_Token
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1);
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1);
    --  Skip the cpp token starting at Index (at least one character, even if
    --  there is no cpp token).
    --  Currently, a cpp token is defined as any string made of alphanumeric
@@ -124,43 +113,34 @@ package String_Utils is
    --  Return the number of lines in Text
 
    function Blank_Slice
-     (Count     : Integer;
-      Use_Tabs  : Boolean := False;
-      Tab_Width : Positive := 8) return String;
+     (Count : Integer; Use_Tabs : Boolean := False; Tab_Width : Positive := 8)
+      return String;
    --  Return a string representing count blanks.
    --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
    --  otherwise use only spaces.
    --  Return a null string if Count is negative.
 
    function Is_Blank
-     (C                 : Character;
-      Include_New_Lines : Boolean := True)
-      return Boolean with Inline;
+     (C : Character; Include_New_Lines : Boolean := True) return Boolean
+   with Inline;
    --  Return True if C is a blank character: HT or ' '
    --  If Include_New_Lines then also return True for CR, LF
 
    procedure Next_Line
-     (Buffer  : String;
-      P       : Natural;
-      Next    : out Natural;
-      Success : out Boolean);
+     (Buffer : String; P : Natural; Next : out Natural; Success : out Boolean);
    --  Return the start of the next line in Next or Buffer'Last if the end of
    --  the buffer is reached.
    --  Success is set to True if a new line was found, false otherwise (end of
    --  buffer reached).
 
    procedure Parse_Num
-     (Type_Str : String;
-      Index    : in out Natural;
-      Result   : out Long_Integer);
+     (Type_Str : String; Index : in out Natural; Result : out Long_Integer);
    --  Parse the integer found at position Index in Type_Str.
    --  Index is set to the position of the first character that does not
    --  belong to the integer.
 
    function Looking_At
-     (Type_Str  : String;
-      Index     : Natural;
-      Substring : String) return Boolean;
+     (Type_Str : String; Index : Natural; Substring : String) return Boolean;
    --  Return True if the characters starting at Index in Type_Str are
    --  equivalent to Substring.
 
@@ -207,24 +187,21 @@ package String_Utils is
    --  characters. S should be encoded in UTF-8.
 
    function Krunch
-     (S                 : String;
-      Max_String_Length : Positive := 20) return String;
+     (S : String; Max_String_Length : Positive := 20) return String;
    --  If String is less than Max_String_Length characters long, return it,
    --  otherwise return a krunched string no longer than Max_String_Length.
 
    procedure Strip_CR
-     (Text     : in out String;
-      Last     : out Integer;
-      CR_Found : out Boolean);
+     (Text : in out String; Last : out Integer; CR_Found : out Boolean);
    --  Same as above, but works on Text, and more efficient
    --  Text (Text'First .. Last) contains the new result.
    --  CR_Found is set to True if a CR was found in Text.
 
    procedure Strip_CR_And_NUL
-     (Text      : in out String;
-      Last      : out Integer;
-      CR_Found  : out Boolean;
-      NUL_Found : out Boolean;
+     (Text                 : in out String;
+      Last                 : out Integer;
+      CR_Found             : out Boolean;
+      NUL_Found            : out Boolean;
       Trailing_Space_Found : out Boolean);
    --  Same as Strip_CR, and strip also ASCII.NUL characters
    --  Note that CR chars alone are not replaced by LF chars.
@@ -262,10 +239,12 @@ package String_Utils is
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
-   function Is_Dot (Char : Wide_Wide_Character) return Boolean with Inline;
+   function Is_Dot (Char : Wide_Wide_Character) return Boolean
+   with Inline;
    --  Return True if the given char is a dot character
 
-   function Is_Blank (Char : Wide_Wide_Character) return Boolean with Inline;
+   function Is_Blank (Char : Wide_Wide_Character) return Boolean
+   with Inline;
    --  Return True if the given char is a space character or HT
 
    function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean;
@@ -283,9 +262,7 @@ package String_Utils is
    --  Copy S to Unbounded_String and free it
 
    function Wrap_At_Words
-     (S     : String;
-      Limit : Integer := 80)
-      return Unbounded_String;
+     (S : String; Limit : Integer := 80) return Unbounded_String;
    --  Return a new string based on U which doesn't exceed Limit for its line
    --  width by wrapping at words.
 
@@ -302,8 +279,7 @@ package String_Utils is
    --  caller.
 
    procedure Append
-     (List  : in out GNAT.Strings.String_List_Access;
-      Item  : String);
+     (List : in out GNAT.Strings.String_List_Access; Item : String);
    --  Append all the strings in List2 to the end of List.
    --  The strings in List2 are not duplicated.
    --  List might be null initially.

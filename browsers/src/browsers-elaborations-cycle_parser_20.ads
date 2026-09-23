@@ -19,11 +19,11 @@
 --  circularities.
 
 with Elaboration_Cycles;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Commands; use Commands;
 
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 package Browsers.Elaborations.Cycle_Parser_20 is
 
@@ -34,7 +34,8 @@ package Browsers.Elaborations.Cycle_Parser_20 is
    --    INVOCATION_PATH and TACTIC.
    --  Each cycle dependency has two units (After, Before)
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Circularity_Parser;
       Item    : String;
       Command : access Root_Command'Class);
@@ -42,21 +43,24 @@ package Browsers.Elaborations.Cycle_Parser_20 is
    type Output_Parser_Fabric (Kernel : GPS.Kernel.Kernel_Handle) is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to get binder errors about elaboration circularities
 
 private
 
    type Output_Parser_Fabric (Kernel : GPS.Kernel.Kernel_Handle) is
-     new GPS.Tools_Output.Output_Parser_Fabric with null record;
+     new GPS.Tools_Output.Output_Parser_Fabric
+   with null record;
 
    type State_Kinds is
      (Expect_Error,
-      Reason_Header, Reason_Info,
-      Circularity, Cycle,
+      Reason_Header,
+      Reason_Info,
+      Circularity,
+      Cycle,
       Invocations);
 
    type Circularity_Parser is new Tools_Output_Parser with record

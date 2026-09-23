@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences;   use Default_Preferences;
 with Default_Preferences.Enums;
 with Language;
-with GPS_Preferences_Types;    use GPS_Preferences_Types;
+with GPS_Preferences_Types; use GPS_Preferences_Types;
 with Gtk.Widget;
-with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu;              use Gtk.Menu;
 
 package GPS.Kernel.Preferences is
 
@@ -373,9 +373,12 @@ package GPS.Kernel.Preferences is
    LSP_Diagnostics_Display         :
      LSP_Diagnostics_Display_Policy_Prefs.Preference;
 
-   Indent_Choice : constant VSS.Strings.Virtual_String := "Indent";
-   Format_Choice : constant VSS.Strings.Virtual_String := "Format";
-   Narrow_Choice : constant VSS.Strings.Virtual_String := "Narrow";
+   Indent_Choice               : constant VSS.Strings.Virtual_String :=
+     "Indent";
+   Format_Choice               : constant VSS.Strings.Virtual_String :=
+     "Format";
+   Narrow_Choice               : constant VSS.Strings.Virtual_String :=
+     "Narrow";
    LSP_Ada_On_Type_Formatting  : Default_Preferences.Enums.Choice_Preference;
    LSP_Ada_On_Range_Formatting : Default_Preferences.Enums.Choice_Preference;
 
@@ -399,7 +402,7 @@ package GPS.Kernel.Preferences is
 private
 
    type GPS_Preferences_Manager_Record is new Preferences_Manager_Record
-     with record
+   with record
       Kernel : GPS.Kernel.Kernel_Handle;
 
       Nested_Pref_Changed : Natural := 0;

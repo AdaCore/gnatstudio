@@ -24,7 +24,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;
 with GNAT.Strings;
@@ -35,15 +35,15 @@ with GNATCOLL.Refcount;
 with GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with VSS.Strings;
 
 with Glib.Main;
-with Glib;                            use Glib;
+with Glib;            use Glib;
 with Glib.Object;
 with Gdk.Types;
-with Gtk.Application;                 use Gtk.Application;
+with Gtk.Application; use Gtk.Application;
 with Gtk.Text_Iter;
 with Gtk.Widget;
 with Gtk.Window;
@@ -66,16 +66,16 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
-with GPS.Core_Kernels;                use GPS.Core_Kernels;
-with GPS.Markers;                     use GPS.Markers;
+with GPS.Core_Kernels;                     use GPS.Core_Kernels;
+with GPS.Markers;                          use GPS.Markers;
 limited with GPS.Kernel.Messages;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
-with GPS.Scripts;                     use GPS.Scripts;
+with GPS.Scripts;                          use GPS.Scripts;
 with GPS.VCS;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language.Abstract_Language_Tree;      use Language.Abstract_Language_Tree;
 
 package GPS.Kernel is
 
@@ -129,15 +129,14 @@ package GPS.Kernel is
    --  Return the preference manager associated with Handle
 
    function Preferences_File
-     (Self : access Kernel_Handle_Record)
-      return GNATCOLL.VFS.Virtual_File;
+     (Self : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the preferences file.
    --  This is the file that GNAT Studio will modify when the user modifies
    --  the preferences. But the default value for preferences could be set
    --  from any plugin.
 
    function Get_Application
-      (Self : not null access Kernel_Handle_Record'Class)
+     (Self : not null access Kernel_Handle_Record'Class)
       return not null access Gtk_Application_Record'Class;
    --  Return the handle on the application (i.e. the non-graphical part of
    --  the process).
@@ -163,20 +162,16 @@ package GPS.Kernel is
    --  The VCS system
 
    procedure Set_Ignore_Saved_Scenario_Values
-     (Self   : not null access Kernel_Handle_Record;
-      Status : Boolean);
+     (Self : not null access Kernel_Handle_Record; Status : Boolean);
    function Get_Ignore_Saved_Scenario_Values
-     (Self : not null access Kernel_Handle_Record)
-      return Boolean;
+     (Self : not null access Kernel_Handle_Record) return Boolean;
    --  Getter/Setter to ignore the saved values of the scenario variables in
    --  .gnatstudio when loading a project.
 
    procedure Set_Ignore_Project_Load_Errors
-     (Self   : not null access Kernel_Handle_Record;
-      Status : Boolean);
+     (Self : not null access Kernel_Handle_Record; Status : Boolean);
    function Get_Ignore_Project_Load_Errors
-     (Self : not null access Kernel_Handle_Record)
-      return Boolean;
+     (Self : not null access Kernel_Handle_Record) return Boolean;
    --  Getter/Setter to discard the errors raised while loading a project,
    --  instead of reporting them in the Messages and Locations views.
    --
@@ -206,14 +201,13 @@ package GPS.Kernel is
    subtype Action_Kernel_State is Kernel_State range Processing .. Busy;
 
    function Get_Home_Dir
-     (Handle : access Kernel_Handle_Record)
-     return Virtual_File;
+     (Handle : access Kernel_Handle_Record) return Virtual_File;
    --  Return the Home directory. (eg $HOME/.gnatstudio/).
    --  The directory ends with a directory separator
 
-   overriding function Get_System_Dir
-     (Handle : not null access Kernel_Handle_Record)
-     return Virtual_File;
+   overriding
+   function Get_System_Dir
+     (Handle : not null access Kernel_Handle_Record) return Virtual_File;
    --  Return the installation directory for GNAT Studio. This always ends up
    --  with a directory separator.
 
@@ -221,9 +215,10 @@ package GPS.Kernel is
      (Handle : not null access Kernel_Handle_Record) return Virtual_File;
    --  Return the log directory for GNAT Studio (e.g: $HOME/.gnatstudio/log).
 
-   overriding function Get_Share_Dir
+   overriding
+   function Get_Share_Dir
      (Self : not null access Kernel_Handle_Record)
-     return GNATCOLL.VFS.Virtual_File;
+      return GNATCOLL.VFS.Virtual_File;
    --  Return share/gnatstudio/ in Get_System_Dir directory. This always
    --  ends up with a directory separator.
 
@@ -249,14 +244,13 @@ package GPS.Kernel is
    --  See also Require_GNAT_Date below.
 
    function Require_GNAT_Date
-     (Handle : access Kernel_Handle_Record;
-      Date   : Basic_Types.Date_Type) return Boolean;
+     (Handle : access Kernel_Handle_Record; Date : Basic_Types.Date_Type)
+      return Boolean;
    --  Return True if the version of GNAT associated with Handle is at
    --  least Date.
 
    procedure Set_Destruction_Flag
-     (Handle : access Kernel_Handle_Record;
-      Flag   : Boolean);
+     (Handle : access Kernel_Handle_Record; Flag : Boolean);
    --  Set the destruction flag in the kernel
 
    function Is_In_Destruction
@@ -290,22 +284,25 @@ package GPS.Kernel is
    -- Key managing --
    ------------------
 
-   type Key_Setter is access procedure
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Action      : String;
-      Default_Key : String;
-      Exclusive   : Boolean := False);
-   type Key_Getter is access function
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Action          : String;
-      Use_Markup      : Boolean := True;
-      Return_Multiple : Boolean := True) return String;
-   type Key_Getter_Simple is access procedure
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Key        : out Gdk.Types.Gdk_Key_Type;
-      Button     : out Guint;
-      Mods       : out Gdk.Types.Gdk_Modifier_Type);
+   type Key_Setter is
+     access procedure
+       (Kernel      : access Kernel_Handle_Record'Class;
+        Action      : String;
+        Default_Key : String;
+        Exclusive   : Boolean := False);
+   type Key_Getter is
+     access function
+       (Kernel          : access Kernel_Handle_Record'Class;
+        Action          : String;
+        Use_Markup      : Boolean := True;
+        Return_Multiple : Boolean := True) return String;
+   type Key_Getter_Simple is
+     access procedure
+       (Kernel : access Kernel_Handle_Record'Class;
+        Action : String;
+        Key    : out Gdk.Types.Gdk_Key_Type;
+        Button : out Guint;
+        Mods   : out Gdk.Types.Gdk_Modifier_Type);
 
    procedure Set_Key_Setter
      (Kernel        : access Kernel_Handle_Record;
@@ -325,11 +322,11 @@ package GPS.Kernel is
    --  binding (since it might includes special system-specific symbols).
 
    procedure Get_Shortcut_Simple
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Key        : out Gdk.Types.Gdk_Key_Type;
-      Button     : out Guint;
-      Mods       : out Gdk.Types.Gdk_Modifier_Type);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type);
    --  If the action has a simple keybinding associated with it, return it.
    --  Otherwise, set Key to 0 to indicate there is no simple shortcut.
 
@@ -360,14 +357,14 @@ package GPS.Kernel is
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether Filename is currently opened in an editor
 
-   overriding function Opened_Files
-     (Kernel : access Kernel_Handle_Record)
-      return Basic_Types.File_Sets.Set;
+   overriding
+   function Opened_Files
+     (Kernel : access Kernel_Handle_Record) return Basic_Types.File_Sets.Set;
    --  Return a list of currently open files
 
    function Is_Hidden
-     (Kernel    : access Kernel_Handle_Record;
-      File      : GNATCOLL.VFS.Virtual_File) return Boolean;
+     (Kernel : access Kernel_Handle_Record; File : GNATCOLL.VFS.Virtual_File)
+      return Boolean;
    --  Whether the file or directory should considered hidden in the GUI, for
    --  instance in the Projects and Files view.
 
@@ -391,7 +388,7 @@ package GPS.Kernel is
    function New_Context
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Creator : access Abstract_Module_Record'Class := null)
-     return Selection_Context;
+      return Selection_Context;
    --  Creates a new context, with basic information set.
    --  In general, this function should only be called from a GPS_MDI_Child's
    --  Build_Context primitive.
@@ -399,13 +396,11 @@ package GPS.Kernel is
    function Get_Kernel (Context : Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
-   function Get_Creator
-     (Context : Selection_Context) return Abstract_Module;
+   function Get_Creator (Context : Selection_Context) return Abstract_Module;
    --  Return the module ID for the module that created the context
 
    procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record;
-      Context : Selection_Context);
+     (Handle : access Kernel_Handle_Record; Context : Selection_Context);
    --  Runs the "context_changed" hook.
    --  Context is the current context at that point, and will be returned by
    --  Get_Current_Context until the next call to Context_Changed.
@@ -433,7 +428,7 @@ package GPS.Kernel is
    --  valid actions).
 
    function Get_Search_Context
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
       return Selection_Context;
    --  Return the currently set search context.
 
@@ -455,8 +450,7 @@ package GPS.Kernel is
    --  a browser,...
 
    procedure Push_Marker_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Marker : Location_Marker);
+     (Kernel : access Kernel_Handle_Record'Class; Marker : Location_Marker);
    --  Push a new marker in the list of previous locations the user has
    --  visited. This is the basic interface for the handling of the history of
    --  locations. It emits the hook Marker_Added_To_History.
@@ -465,15 +459,16 @@ package GPS.Kernel is
    -- Action filters --
    --------------------
 
-   package Action_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (String);
+   package Action_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
 
    type Action_Filter_Record is abstract tagged private;
    type Action_Filter is access all Action_Filter_Record'Class;
 
    function Filter_Matches_Primitive
-     (Filter  : access Action_Filter_Record;
-      Context : Selection_Context) return Boolean is abstract;
+     (Filter : access Action_Filter_Record; Context : Selection_Context)
+      return Boolean
+   is abstract;
    --  Whether the context matches Filter.
    --  Context doesn't need to be Ref-ed or Unref-ed.
 
@@ -490,19 +485,17 @@ package GPS.Kernel is
    --  overridable for new filter types.
 
    function "and"
-     (Filter1 : access Action_Filter_Record'Class;
-      Filter2 : Action_Filter) return Action_Filter;
+     (Filter1 : access Action_Filter_Record'Class; Filter2 : Action_Filter)
+      return Action_Filter;
    function "or"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
       return Action_Filter;
    function "not"
-     (Filter : access Action_Filter_Record'Class)
-      return Action_Filter;
+     (Filter : access Action_Filter_Record'Class) return Action_Filter;
    --  Execute logical operations between filters
 
    procedure Set_Error_Message
-     (Filter : Action_Filter;
-      Msg    : Unbounded_String);
+     (Filter : Action_Filter; Msg : Unbounded_String);
    --  Set the error message to display if Filter doesn't match
 
    function Get_Error_Message
@@ -515,13 +508,13 @@ package GPS.Kernel is
    --  display in the logs)
 
    function Filter_Matches
-     (Filter  : access Action_Filter_Record'Class;
-      Context : Selection_Context) return Boolean;
+     (Filter : access Action_Filter_Record'Class; Context : Selection_Context)
+      return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
    function Lookup_Filter
-     (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Action_Filter;
+     (Kernel : access Kernel_Handle_Record; Name : String)
+      return Action_Filter;
    --  Lookup a filter by name. Return null if no such filter has been
    --  registered.
 
@@ -536,17 +529,19 @@ package GPS.Kernel is
    --  is done for this particular parameter.
    --  It might return null if no criteria is specified.
 
-   type Base_Action_Filter_Record (<>)
-      is new Action_Filter_Record with private;
+   type Base_Action_Filter_Record (<>) is
+     new Action_Filter_Record with private;
    type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
 
-   overriding procedure Register_Filter
+   overriding
+   procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Base_Action_Filter_Record;
       Name   : String);
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Base_Action_Filter_Record;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Base_Action_Filter_Record; Context : Selection_Context)
+      return Boolean;
    --  See docs for inherited subprograms
 
    -----------
@@ -584,8 +579,9 @@ package GPS.Kernel is
    --  This name is only useful when creating new hooks from python.
 
    procedure Run_From_Python
-      (Self  : in out Hook_Types;
-       Data  : in out GNATCOLL.Scripts.Callback_Data'Class) is null;
+     (Self : in out Hook_Types;
+      Data : in out GNATCOLL.Scripts.Callback_Data'Class)
+   is null;
    --  This procedure is called when a python scripts "run"s a hook from
    --  python. It is responsible for decoding the parameters (encoded in
    --  Data) and then call Self.Run (the latter is defined for each child
@@ -594,8 +590,8 @@ package GPS.Kernel is
    --  be ignored.
 
    procedure Register
-      (Self    : not null access Hook_Types'Class;
-       Kernel  : not null access Kernel_Handle_Record'Class);
+     (Self   : not null access Hook_Types'Class;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Export both the family of hooks and the specific hook to python, if not
    --  done yet. Once this is done, users will be able to create new hooks in
    --  python with the same profile (parameters + return type), and to add
@@ -613,16 +609,16 @@ package GPS.Kernel is
    --  hook by name.
 
    procedure Remove
-       (Self       : in out Hook_Types;
-        If_Matches : not null access function
-           (F : not null access Hook_Function'Class) return Boolean);
+     (Self       : in out Hook_Types;
+      If_Matches :
+        not null access function
+          (F : not null access Hook_Function'Class) return Boolean);
    --  Remove the first attached function for which the function returns True.
    --  This also frees the corresponding function, unless it is attached to
    --  multiple hooks.
 
    function List_Functions
-      (Self : not null access Hook_Types)
-      return GNAT.Strings.String_List;
+     (Self : not null access Hook_Types) return GNAT.Strings.String_List;
    --  Return the list of functions (by name) connected to this hook.
    --  Result must be freed by caller.
 
@@ -631,14 +627,17 @@ package GPS.Kernel is
 
    type Debounce_Hook_Access is access all Debounce_Hook_Types'Class;
 
-   overriding procedure Remove
-       (Self       : in out Debounce_Hook_Types;
-        If_Matches : not null access function
-           (F : not null access Hook_Function'Class) return Boolean);
+   overriding
+   procedure Remove
+     (Self       : in out Debounce_Hook_Types;
+      If_Matches :
+        not null access function
+          (F : not null access Hook_Function'Class) return Boolean);
    --  The same as above.
 
-   overriding function List_Functions
-      (Self : not null access Debounce_Hook_Types)
+   overriding
+   function List_Functions
+     (Self : not null access Debounce_Hook_Types)
       return GNAT.Strings.String_List;
 
    type File_Status is (Modified, Unmodified, Unsaved, Saved, Readonly);
@@ -671,15 +670,14 @@ package GPS.Kernel is
    type Tool_Properties_Array is array (Natural range <>) of Tool_Properties;
 
    procedure Register_Tool
-     (Kernel : access Kernel_Handle_Record;
-      Tool   : not null Tool_Properties);
+     (Kernel : access Kernel_Handle_Record; Tool : not null Tool_Properties);
    --  Register a new tool.
    --  No copy is made for Tool, which must therefore not be freed by the
    --  caller
 
    function Get_Tool_Properties
-     (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String) return Tool_Properties;
+     (Kernel : access Kernel_Handle_Record; Tool_Name : String)
+      return Tool_Properties;
    --  Return the properties of the tool.
    --  The result must not be freed by the caller.
 
@@ -691,7 +689,8 @@ package GPS.Kernel is
    --  Editor_Factory --
    ---------------------
 
-   overriding function Get_Buffer_Factory
+   overriding
+   function Get_Buffer_Factory
      (Kernel : not null access Kernel_Handle_Record)
       return GPS.Editors.Editor_Buffer_Factory_Access;
 
@@ -735,7 +734,8 @@ package GPS.Kernel is
    function Refactoring_Context
      (Kernel : access Kernel_Handle_Record) return Refactoring.Factory_Context;
 
-   overriding function Default_Language_Tree_Provider
+   overriding
+   function Default_Language_Tree_Provider
      (Kernel : not null access Kernel_Handle_Record)
       return Semantic_Tree_Provider_Access;
 
@@ -743,22 +743,24 @@ package GPS.Kernel is
    -- Commands --
    --------------
 
-   overriding function Get_Scheduled_Command
+   overriding
+   function Get_Scheduled_Command
      (Kernel  : not null access Kernel_Handle_Record;
       Command : access Commands.Root_Command'Class)
       return Commands.Command_Access;
 
    -- References_Command --
 
-   type Abstract_References_Command is
-     abstract new Commands.Root_Command with null record;
+   type Abstract_References_Command is abstract new Commands.Root_Command
+   with null record;
 
    type References_Command_Access is
      access all Abstract_References_Command'Class;
 
    procedure Get_Result
      (Self : not null access Abstract_References_Command;
-      Data : in out GNATCOLL.Scripts.Callback_Data'Class) is abstract;
+      Data : in out GNATCOLL.Scripts.Callback_Data'Class)
+   is abstract;
 
    References_Command_Class_Name : constant String := "ReferencesCommand";
 
@@ -768,18 +770,20 @@ package GPS.Kernel is
 
    subtype Message_Type is GPS.Messages_Windows.Message_Type;
 
-   function Info    return Message_Type renames GPS.Messages_Windows.Info;
-   function Error   return Message_Type renames GPS.Messages_Windows.Error;
+   function Info return Message_Type renames GPS.Messages_Windows.Info;
+   function Error return Message_Type renames GPS.Messages_Windows.Error;
    function Verbose return Message_Type renames GPS.Messages_Windows.Verbose;
 
-   type Abstract_Messages_Window is abstract new
-     GPS.Messages_Windows.Abstract_Messages_Window with null record;
+   type Abstract_Messages_Window is abstract
+     new GPS.Messages_Windows.Abstract_Messages_Window
+   with null record;
    type Abstract_Messages_Window_Access is
      access all Abstract_Messages_Window'Class;
 
    function Get_Console_Window
      (Self : not null access Abstract_Messages_Window)
-      return Gtk.Widget.Gtk_Widget is abstract;
+      return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the widget (if any) representing the console. It will be an
    --  instance of Interactive_Console, but we cannot make that explicit here
    --  to avoid circularities.
@@ -788,12 +792,12 @@ package GPS.Kernel is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Console : not null access Abstract_Messages_Window'Class);
    function Get_Messages_Window
-     (Kernel  : not null access Kernel_Handle_Record'Class)
-     return GNATCOLL.Scripts.Virtual_Console;
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.Scripts.Virtual_Console;
    --  Set the messages window
 
    function Get_Messages_Console
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    --  Return the widget (if any) representing the console.
 
@@ -867,29 +871,31 @@ package GPS.Kernel is
    -----------------
 
    procedure Set_Build_Mode
-     (Kernel   : access Kernel_Handle_Record'Class;
-      New_Mode : String);
+     (Kernel : access Kernel_Handle_Record'Class; New_Mode : String);
    --  Called when a new build mode is being selected. The name of that mode is
    --  passed as parameter to the Build_Mode_Changed_Hook. At the time the hook
    --  is run, various settings like the object's subdir might not have been
    --  set yet, since they are set by listeners on that hook.
 
-   overriding function Get_Build_Mode
+   overriding
+   function Get_Build_Mode
      (Kernel : not null access Kernel_Handle_Record) return String;
    --  Returns the current build mode.
    --  This build mode is in fact stored as a property of the root project by
    --  the builder module, so this function is a convenient to retrieve that
    --  property.
 
-   overriding function Get_Target
+   overriding
+   function Get_Target
      (Self : not null access Kernel_Handle_Record) return String;
    --  Return the current target
 
-   overriding function Get_Runtime
+   overriding
+   function Get_Runtime
      (Self : not null access Kernel_Handle_Record) return String;
    --  Return the current runtime
 
-   subtype Abstract_Module_ID        is Abstract_Module;
+   subtype Abstract_Module_ID is Abstract_Module;
    subtype Abstract_Module_ID_Record is Abstract_Module_Record;
    --  Type aliases for compability
 
@@ -902,7 +908,8 @@ package GPS.Kernel is
 
    function Get_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null Messages_Container_Access with Inline;
+      return not null Messages_Container_Access
+   with Inline;
    --  Returns messages container for the specified instance of the kernel.
 
 private
@@ -910,8 +917,8 @@ private
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
 
    type Action_Filter_Record is abstract tagged record
-      Error_Msg  : Unbounded_String;
-      Name       : Unbounded_String;
+      Error_Msg : Unbounded_String;
+      Name      : Unbounded_String;
 
       Registered : Boolean := False;
       --  For proper memory management, all filters are kept on an internal
@@ -921,8 +928,8 @@ private
       --  special except use them
    end record;
 
-   type Base_Action_Filter_Record (Kind : Filter_Type)
-      is new Action_Filter_Record
+   type Base_Action_Filter_Record (Kind : Filter_Type) is
+     new Action_Filter_Record
    with record
       case Kind is
          when Standard_Filter =>
@@ -941,27 +948,32 @@ private
             Not1 : Action_Filter;
       end case;
    end record;
-   overriding function Get_Debug_Name
+   overriding
+   function Get_Debug_Name
      (Filter : access Base_Action_Filter_Record) return String;
 
-   package Filter_Result_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => System.Address,
-      Element_Type => Boolean,
-      "<"          => System."<");
+   package Filter_Result_Map is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => System.Address,
+        Element_Type => Boolean,
+        "<"          => System."<");
 
    type Addresses_Array is array (Positive range <>) of System.Address;
    type Addresses_Array_Access is access all Addresses_Array;
 
    Context_Class_Name : aliased constant String := "Context";
    type Context_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name (Self : Context_Proxy) return String
-      is (Context_Class_Name) with Inline;
+   overriding
+   function Class_Name (Self : Context_Proxy) return String
+   is (Context_Class_Name)
+   with Inline;
 
    type Entity_Locations_Type (Is_Fetched : Boolean := False) is record
       case Is_Fetched is
          when True =>
             Spec_Location : Xref.General_Location;
             Body_Location : Xref.General_Location;
+
          when False =>
             null;
       end case;
@@ -972,9 +984,9 @@ private
       Creator   : Abstract_Module;
       Instances : Context_Proxy;
 
-      Files             : GNATCOLL.VFS.File_Array_Access := null;
+      Files     : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
-      File_Lang         : Unbounded_String;
+      File_Lang : Unbounded_String;
 
       Project           : GNATCOLL.Projects.Project_Type :=
         GNATCOLL.Projects.No_Project;
@@ -984,10 +996,10 @@ private
       File_Line         : Natural := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
-      Browser_Details : Gtkada.Canvas_View.Canvas_Event_Details;
+      Browser_Details     : Gtkada.Canvas_View.Canvas_Event_Details;
       Has_Browser_Details : Boolean := False;
 
-      Messages       : Addresses_Array_Access := null;
+      Messages : Addresses_Array_Access := null;
       --  The current selected messages
 
       Revision       : Unbounded_String;
@@ -1003,7 +1015,7 @@ private
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
 
-      Text       : Unbounded_String;
+      Text : Unbounded_String;
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
@@ -1012,12 +1024,12 @@ private
       Entity_Column    : Basic_Types.Visible_Column_Type := 0;
       Entity_Locations : Entity_Locations_Type;
 
-      Expression    : Unbounded_String;
+      Expression : Unbounded_String;
 
-      Activities   : String_List_Utils.String_List.Vector;
+      Activities : String_List_Utils.String_List.Vector;
       --  Activities
 
-      File_Checked    : Boolean := False;
+      File_Checked : Boolean := False;
       --  The current file is sometimes a virtual file (one temporarily
       --  generated for a diff for instance). In such cases, it is converted to
       --  the actual reference file. File_Checked indicates whether this
@@ -1050,7 +1062,7 @@ private
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether the entity has at least one parent type.
 
-      Xref_Closest_Ref  : Xref.Root_Entity_Reference_Ref :=
+      Xref_Closest_Ref : Xref.Root_Entity_Reference_Ref :=
         Xref.Root_Entity_Reference_Refs.To_Holder
           (Xref.No_Root_Entity_Reference);
       --  The reference on which the user has clicked. This is slightly
@@ -1071,10 +1083,11 @@ private
    procedure Free (Self : in out Selection_Context_Data_Record);
    --  Free the context and its data
 
-   package Selection_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-      (Element_Type           => Selection_Context_Data_Record,
-       Release                => Free,
-       Atomic_Counters        => True);
+   package Selection_Pointers is new
+     GNATCOLL.Refcount.Shared_Pointers
+       (Element_Type    => Selection_Context_Data_Record,
+        Release         => Free,
+        Atomic_Counters => True);
 
    type Selection_Context is record
       Ref : Selection_Pointers.Ref;
@@ -1082,13 +1095,13 @@ private
    type Weak_Selection_Context is record
       Weak : Selection_Pointers.Weak_Ref;
    end record;
-   No_Context : constant Selection_Context :=
-      (Ref => Selection_Pointers.Null_Ref);
+   No_Context      : constant Selection_Context :=
+     (Ref => Selection_Pointers.Null_Ref);
    No_Weak_Context : constant Weak_Selection_Context :=
-      (Weak => Selection_Pointers.Null_Weak_Ref);
+     (Weak => Selection_Pointers.Null_Weak_Ref);
 
-   package Context_Proxies is new Script_Proxies
-      (Weak_Selection_Context, Context_Proxy);
+   package Context_Proxies is new
+     Script_Proxies (Weak_Selection_Context, Context_Proxy);
 
    No_Tool : constant Tool_Properties_Record :=
      (Null_Unbounded_String,
@@ -1096,10 +1109,12 @@ private
       Null_Unbounded_String,
       Null_Unbounded_String,
       Null_Unbounded_String,
-      False, null, null);
+      False,
+      null,
+      null);
 
-   package Tools_List is new Ada.Containers.Doubly_Linked_Lists
-     (Tool_Properties);
+   package Tools_List is new
+     Ada.Containers.Doubly_Linked_Lists (Tool_Properties);
    --  Tools are stored in a list (we expect only a limited number of tools in
    --  any case), so that we also preserve the order in which they were
    --  registered.
@@ -1114,12 +1129,16 @@ private
    procedure Reset (X : access Root_Table) is abstract;
    --  Reset the table
 
-   package Action_Filters_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Action_Filter);
+   package Action_Filters_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Action_Filter);
    --  All filters (named or unnamed) that are registered
 
-   package Action_Filters_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Action_Filter, Ada.Strings.Hash_Case_Insensitive, "=");
+   package Action_Filters_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        Action_Filter,
+        Ada.Strings.Hash_Case_Insensitive,
+        "=");
    --  We never free the filter from this hash-table, since the filters might
    --  be shared between actions.
 
@@ -1141,8 +1160,8 @@ private
    type Hook_Func_Info is record
       Func : not null access Hook_Function'Class;
    end record;
-   package Hook_Func_Lists is new Ada.Containers.Doubly_Linked_Lists
-      (Hook_Func_Info);
+   package Hook_Func_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Hook_Func_Info);
    --  We use a list, not a vector: when a hook is run, it is possible that
    --  the list of functions is modified by one of the callbacks. The Run
    --  subprograms are implemented so that this is safe with a list, but if
@@ -1155,28 +1174,29 @@ private
 
    type Hook_Types_Access is access all Hook_Types'Class;
 
-   package Hooks_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-      (Key_Type        => String,
-       Element_Type    => Hook_Types_Access,
-       Hash            => Ada.Strings.Hash,
-       Equivalent_Keys => "=");
+   package Hooks_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Hook_Types_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
    Hook_Type_Prefix : constant String := "__type__";
    --  Both hooks and hook types are stored in the kernel's map.
    --  To distinguish, a prefix is added to the name of the types.
 
    procedure Add_Hook_Func
-      (Self  : in out Hook_Types'Class;
-       Func  : not null access Hook_Function'Class;
-       Last  : Boolean := True;
-       Watch : access Glib.Object.GObject_Record'Class := null);
+     (Self  : in out Hook_Types'Class;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null);
    --  Add a new callback to the hook.
    --  This function should not be used directly, use the specific Add
    --  function for each hook, which checks the function has the right profile
 
    procedure Remove_Hook_Func
-      (Self  : in out Hook_Types'Class;
-       Func  : not null access Hook_Function'Class);
+     (Self : in out Hook_Types'Class;
+      Func : not null access Hook_Function'Class);
    --  Delete Func from the hook.
    --  This also frees the corresponding function, unless it is attached to
    --  multiple hooks.
@@ -1186,8 +1206,8 @@ private
    --  for asynchronouse call
 
    type Hook_Function_Params_Access is access all Hook_Function_Params'Class;
-   package Hook_Func_Params_Lists is new Ada.Containers.Doubly_Linked_Lists
-      (Hook_Function_Params_Access);
+   package Hook_Func_Params_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Hook_Function_Params_Access);
 
    type Debounce_Hook_Types is abstract new Hook_Types with record
       Asynch_Funcs : Hook_Func_Lists.List;
@@ -1195,10 +1215,10 @@ private
    end record;
 
    procedure Add_Debounce_Hook_Func
-      (Self  : in out Debounce_Hook_Types'Class;
-       Func  : not null access Hook_Function'Class;
-       Last  : Boolean := True;
-       Watch : access Glib.Object.GObject_Record'Class := null);
+     (Self  : in out Debounce_Hook_Types'Class;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null);
    --  Add a new asynchronous callback to the hook.
 
    type Custom_Load_State is (None, System_Level, User_Level);
@@ -1207,23 +1227,25 @@ private
    --  User_Level   : system and user custom files loaded
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Regpat.Pattern_Matcher,
+        Pattern_Matcher_Access);
 
    function Hash
      (Element : Commands.Command_Access) return Ada.Containers.Hash_Type;
-   package Command_Set is new Ada.Containers.Hashed_Sets
-     (Element_Type        => Commands.Command_Access,
-      Hash                => Hash,
-      Equivalent_Elements => Commands."=",
-      "="                 => Commands."=");
+   package Command_Set is new
+     Ada.Containers.Hashed_Sets
+       (Element_Type        => Commands.Command_Access,
+        Hash                => Hash,
+        Equivalent_Elements => Commands."=",
+        "="                 => Commands."=");
 
-   type Line_Click_Action_Type is
-     array (Line_Click_Type) of Unbounded_String;
+   type Line_Click_Action_Type is array (Line_Click_Type) of Unbounded_String;
 
-   type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel_Record with
-   record
-      Tools   : Tools_List.List;
+   type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel_Record
+   with record
+      Tools : Tools_List.List;
       --  The tools registered in the kernel
 
       Actions : Root_Table_Access;
@@ -1232,7 +1254,7 @@ private
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 
-      Hooks       : Hooks_Maps.Map;
+      Hooks : Hooks_Maps.Map;
       --  The hooks registered in the kernel. The hooks are indexed by
       --  their names. A second entry will be created for the family
       --  of hooks. So for instance, the hook "task_started", which is
@@ -1264,7 +1286,7 @@ private
       Style_Manager : System.Address;
       --  A pointer to the color manager.
 
-      VCS   : GPS.VCS.Abstract_VCS_System_Access;
+      VCS : GPS.VCS.Abstract_VCS_System_Access;
 
       ----------------------
       -- Context handling --
@@ -1291,10 +1313,10 @@ private
       Home_Dir : Virtual_File;
       --  The home directory (e.g $HOME/.gnatstudio)
 
-      Log_Dir  : Virtual_File;
+      Log_Dir : Virtual_File;
       --  The log directory (e.g $HOME/.gnatstudio/log)
 
-      Prefix   : Virtual_File;
+      Prefix : Virtual_File;
       --  Prefix directory (e.g. /opt/gnatstudio)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
@@ -1321,7 +1343,7 @@ private
       --  GPS.Kernel.Modules, and cast to the appropriate type in that
       --  package.
 
-      Clipboard  : System.Address := System.Null_Address;
+      Clipboard : System.Address := System.Null_Address;
       --  The clipboard used in GNAT Studio (See GPS.Kernel.Clipboard on how
       --  to use this field).
 
@@ -1330,19 +1352,19 @@ private
 
       Hidden_File_Matcher : Pattern_Matcher_Access;
 
-      Editor_Factory               : GPS.Editors.Editor_Buffer_Factory_Access;
+      Editor_Factory : GPS.Editors.Editor_Buffer_Factory_Access;
 
-      Hyper_Mode                   : Boolean := False;
+      Hyper_Mode : Boolean := False;
       --  Whether we are in hyper mode
 
-      Macro_Play_Mode               : Boolean := False;
+      Macro_Play_Mode : Boolean := False;
       --  Whether we are in Macro_Play mode
 
       Messages_Container : Messages_Container_Access;
       --  The message container for this instance of kernel
 
-      Key_Setter_Function : Key_Setter;
-      Key_Getter_Function : Key_Getter;
+      Key_Setter_Function        : Key_Setter;
+      Key_Getter_Function        : Key_Getter;
       Key_Getter_Simple_Function : Key_Getter_Simple;
       --  The function to set or retrieve default keys
 
@@ -1356,8 +1378,8 @@ private
       Launcher : aliased GPS_Process_Launcher_Record;
       --  External process launcher
 
-      Pending_Messages : Ada.Strings.Unbounded.Unbounded_String
-         := Ada.Strings.Unbounded.Null_Unbounded_String;
+      Pending_Messages : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.Null_Unbounded_String;
       --  Messages that should be inserted in the Messages window.
       --  We use this to store messages until the Messages window is
       --  created.
@@ -1369,7 +1391,7 @@ private
       --  with the disk.
 
       Check_Monitored_Files_Id : Glib.Main.G_Source_Id :=
-         Glib.Main.No_Source_Id;
+        Glib.Main.No_Source_Id;
       --  An idle callback  used to check whether any file currently edited
       --  has been changed on disk.
 
@@ -1395,29 +1417,33 @@ private
 
    package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);
 
-   overriding procedure Create_Registry
+   overriding
+   procedure Create_Registry
      (Self   : not null access Kernel_Handle_Record;
       Result : out Projects.Project_Registry_Access);
 
-   overriding procedure Create_Database
+   overriding
+   procedure Create_Database
      (Self   : not null access Kernel_Handle_Record;
       Result : out Xref.General_Xref_Database);
 
-   overriding function Messages_Window
+   overriding
+   function Messages_Window
      (Self : not null access Kernel_Handle_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access;
 
-   overriding function Process_Launcher
+   overriding
+   function Process_Launcher
      (Self : not null access Kernel_Handle_Record)
       return GPS.Process_Launchers.Process_Launcher;
 
-   overriding procedure Semantic_Tree_Updated
-     (Kernel  : not null access Kernel_Handle_Record;
-      File    : GNATCOLL.VFS.Virtual_File);
+   overriding
+   procedure Semantic_Tree_Updated
+     (Kernel : not null access Kernel_Handle_Record;
+      File   : GNATCOLL.VFS.Virtual_File);
 
    function Get_Contextual_Menu_Open
      (Handle : access Kernel_Handle_Record) return Boolean
-   is
-      (Handle.Contextual_Menu_Open);
+   is (Handle.Contextual_Menu_Open);
 
 end GPS.Kernel;

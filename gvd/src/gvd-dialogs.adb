@@ -17,56 +17,57 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Regpat; use GNAT.Regpat;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
 with Glib.Convert;
-with Glib.Object;           use Glib.Object;
+with Glib.Object;            use Glib.Object;
 with Glib.Values;
-with Glib;                  use Glib;
-with Glib_Values_Utils;     use Glib_Values_Utils;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Dialog;            use Gtk.Dialog;
+with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Arguments;         use Gtk.Arguments;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
-with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
-with Gtk.Window;            use Gtk.Window;
-with Gtk;                   use Gtk;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Gtkada.MDI;            use Gtkada.MDI;
+with Gtk.Arguments;          use Gtk.Arguments;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Window;             use Gtk.Window;
+with Gtk;                    use Gtk;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.MDI;             use Gtkada.MDI;
 
-with Config;                use Config;
-with GPS.Debuggers;         use GPS.Debuggers;
-with GPS.Intl;              use GPS.Intl;
+with Config;           use Config;
+with GPS.Debuggers;    use GPS.Debuggers;
+with GPS.Intl;         use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Main_Window;       use GPS.Main_Window;
-with GUI_Utils;             use GUI_Utils;
-with GVD.Generic_View;      use GVD.Generic_View;
-with GVD.Process;           use GVD.Process;
-with GVD.Types;             use GVD.Types;
-with GVD_Module;            use GVD_Module;
-with Generic_Views;         use Generic_Views;
-with Process_Proxies;       use Process_Proxies;
+with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
+with GPS.Main_Window;  use GPS.Main_Window;
+with GUI_Utils;        use GUI_Utils;
+with GVD.Generic_View; use GVD.Generic_View;
+with GVD.Process;      use GVD.Process;
+with GVD.Types;        use GVD.Types;
+with GVD_Module;       use GVD_Module;
+with Generic_Views;    use Generic_Views;
+with Process_Proxies;  use Process_Proxies;
 
 package body GVD.Dialogs is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DIALOGS");
 
    type Is_Vx653_Debugger is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-      (Self    : access Is_Vx653_Debugger;
-       Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Vx653_Debugger; Context : Selection_Context)
+      return Boolean;
    --  Whether the current debugger is for a vx653 target
 
    ------------------------
@@ -90,10 +91,11 @@ package body GVD.Dialogs is
    -- Thread View --
    -----------------
 
-   type Get_Info_Subprogram is access procedure
-     (Debugger : access Debugger_Root'Class;
-      Info     : out Thread_Information_Array;
-      Len      : out Natural);
+   type Get_Info_Subprogram is
+     access procedure
+       (Debugger : access Debugger_Root'Class;
+        Info     : out Thread_Information_Array;
+        Len      : out Natural);
    procedure Info_Threads_Dispatch
      (Debugger : access Debugger_Root'Class;
       Info     : out Thread_Information_Array;
@@ -108,8 +110,8 @@ package body GVD.Dialogs is
       Len      : out Natural);
 
    type Thread_View_Record;
-   type Switch_Subprogram is access procedure
-     (View : access Thread_View_Record'Class; Line : String);
+   type Switch_Subprogram is
+     access procedure (View : access Thread_View_Record'Class; Line : String);
    procedure Task_Switch_Dispatch
      (View : access Thread_View_Record'Class; Line : String);
    procedure Thread_Switch_Dispatch
@@ -119,13 +121,12 @@ package body GVD.Dialogs is
    --  Would be nice to use a primitive operation, but that would require
    --  declaring the types in the spec, not nice...
 
-   type Thread_View_Record is new Process_View_Record with
-      record
-         Scrolled : Gtk_Scrolled_Window;
-         Tree     : Gtk.Tree_View.Gtk_Tree_View;
-         Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
-         Switch   : Switch_Subprogram := Thread_Switch_Dispatch'Access;
-      end record;
+   type Thread_View_Record is new Process_View_Record with record
+      Scrolled : Gtk_Scrolled_Window;
+      Tree     : Gtk.Tree_View.Gtk_Tree_View;
+      Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
+      Switch   : Switch_Subprogram := Thread_Switch_Dispatch'Access;
+   end record;
    type Thread_View is access all Thread_View_Record'Class;
 
    function Initialize
@@ -136,33 +137,37 @@ package body GVD.Dialogs is
    procedure Set_Thread_View
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Thread_View_Record'Class := null);
-   overriding procedure Update (Thread : not null access Thread_View_Record);
+   overriding
+   procedure Update (Thread : not null access Thread_View_Record);
    --  See description in GVD.Generic_View
 
-   package Thread_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Thread_View",
-      View_Name                       => -"Threads",
-      Formal_View_Record              => Thread_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
-   package Thread_Views is new GVD.Generic_View.Simple_Views
-     (Views              => Thread_MDI_Views,
-      Formal_View_Record => Thread_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Thread_View,
-      Set_View           => Set_Thread_View);
+   package Thread_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Thread_View",
+        View_Name                       => -"Threads",
+        Formal_View_Record              => Thread_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
+   package Thread_Views is new
+     GVD.Generic_View.Simple_Views
+       (Views              => Thread_MDI_Views,
+        Formal_View_Record => Thread_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Get_View           => Get_Thread_View,
+        Set_View           => Set_Thread_View);
 
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
+      Column :
+        not null access
+          Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
    --  Called when a row was clicked by the user in the view
 
    ----------------
@@ -178,27 +183,29 @@ package body GVD.Dialogs is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Task_View_Record'Class := null);
    function Initialize
-     (Tasks  : access Task_View_Record'Class) return Gtk_Widget;
+     (Tasks : access Task_View_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package Tasks_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Tasks_View",
-      View_Name                       => -"Debugger Tasks",
-      Formal_View_Record              => Task_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
-   package Tasks_Views is new GVD.Generic_View.Simple_Views
-     (Views              => Tasks_MDI_Views,
-      Formal_View_Record => Task_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Task_View,
-      Set_View           => Set_Task_View);
+   package Tasks_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Tasks_View",
+        View_Name                       => -"Debugger Tasks",
+        Formal_View_Record              => Task_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
+   package Tasks_Views is new
+     GVD.Generic_View.Simple_Views
+       (Views              => Tasks_MDI_Views,
+        Formal_View_Record => Task_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Get_View           => Get_Task_View,
+        Set_View           => Set_Task_View);
 
    -----------------------------
    -- Protection domains view --
@@ -212,28 +219,29 @@ package body GVD.Dialogs is
    procedure Set_PD_View
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access PD_View_Record'Class := null);
-   function Initialize
-     (PDs    : access PD_View_Record'Class) return Gtk_Widget;
+   function Initialize (PDs : access PD_View_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package PD_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "PD_View",
-      View_Name                       => -"Protection Domains",
-      Formal_View_Record              => PD_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
-   package PD_Views is new GVD.Generic_View.Simple_Views
-     (Views              => PD_MDI_Views,
-      Formal_View_Record => PD_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_PD_View,
-      Set_View           => Set_PD_View);
+   package PD_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "PD_View",
+        View_Name                       => -"Protection Domains",
+        Formal_View_Record              => PD_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
+   package PD_Views is new
+     GVD.Generic_View.Simple_Views
+       (Views              => PD_MDI_Views,
+        Formal_View_Record => PD_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Get_View           => Get_PD_View,
+        Set_View           => Set_PD_View);
 
    ----------
    -- Misc --
@@ -266,18 +274,20 @@ package body GVD.Dialogs is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-      (Self    : access Is_Vx653_Debugger;
-       Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Vx653_Debugger; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
-      return Process /= null
-         and then Process.Debugger /= null
-         and then Process.Debugger.VxWorks_Version = Vx653;
+      return
+        Process /= null
+        and then Process.Debugger /= null
+        and then Process.Debugger.VxWorks_Version = Vx653;
    end Filter_Matches_Primitive;
 
    ---------------------------
@@ -406,7 +416,7 @@ package body GVD.Dialogs is
          Action_Name => "open protection domains debugger window",
          Description =>
            -"Open the 'Protection Domains' window for the debugger",
-        Filter       => new Is_Vx653_Debugger);
+         Filter      => new Is_Vx653_Debugger);
    end Register_Module;
 
    ----------------
@@ -416,11 +426,11 @@ package body GVD.Dialogs is
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
+      Column :
+        not null access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
    is
       pragma Unreferenced (Column);
-      T           : constant Thread_View    := Thread_View (Self);
+      T           : constant Thread_View := Thread_View (Self);
       Store_Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
       Iter        : Gtk_Tree_Iter;
 
@@ -431,7 +441,8 @@ package body GVD.Dialogs is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Clicked;
 
    ---------------------
@@ -454,7 +465,7 @@ package body GVD.Dialogs is
       View    : access Thread_View_Record'Class := null)
    is
       V   : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant Thread_View     := Get_Thread_View (Process);
+      Old : constant Thread_View := Get_Thread_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -483,7 +494,7 @@ package body GVD.Dialogs is
       View    : access Task_View_Record'Class := null)
    is
       V   : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant Task_View       := Get_Task_View (Process);
+      Old : constant Task_View := Get_Task_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -512,7 +523,7 @@ package body GVD.Dialogs is
       View    : access PD_View_Record'Class := null)
    is
       V   : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant PD_View         := Get_PD_View (Process);
+      Old : constant PD_View := Get_PD_View (Process);
    begin
       if Old /= null and then Old.Tree /= null then
          Clear (-Get_Model (Old.Tree));
@@ -536,8 +547,11 @@ package body GVD.Dialogs is
       Question_Dialog := new Question_Dialog_Record;
 
       Initialize
-        (Question_Dialog, Kernel, Debugger,
-         Multiple_Selection_Allowed, Questions,
+        (Question_Dialog,
+         Kernel,
+         Debugger,
+         Multiple_Selection_Allowed,
+         Questions,
          Question_Description);
    end Gtk_New;
 
@@ -545,7 +559,8 @@ package body GVD.Dialogs is
    -- Update --
    ------------
 
-   overriding procedure Update (Thread : not null access Thread_View_Record) is
+   overriding
+   procedure Update (Thread : not null access Thread_View_Record) is
       Info        : Thread_Information_Array (1 .. Max_Tasks);
       Len         : Natural;
       Num_Columns : Guint;
@@ -553,7 +568,8 @@ package body GVD.Dialogs is
       Model       : Gtk_Tree_Model;
       Path        : Gtk_Tree_Path;
       Sel         : Gtk_Tree_Selection;
-      V   : constant Visual_Debugger := Visual_Debugger (Get_Process (Thread));
+      V           : constant Visual_Debugger :=
+        Visual_Debugger (Get_Process (Thread));
    begin
       if V /= null
         and then Thread.Get_Visible
@@ -563,8 +579,7 @@ package body GVD.Dialogs is
          Num_Columns := Guint (Info (Info'First).Information.Length);
 
          if Thread.Tree /= null
-           and then Get_N_Columns (Thread.Tree.Get_Model) /=
-           Gint (Num_Columns)
+           and then Get_N_Columns (Thread.Tree.Get_Model) /= Gint (Num_Columns)
          then
             Trace (Me, "Threads: Number of columns has changed");
             Destroy (Thread.Tree);
@@ -575,18 +590,21 @@ package body GVD.Dialogs is
             declare
                Titles : GNAT.Strings.String_List (1 .. Integer (Num_Columns));
             begin
-               Trace (Me, "Threads: Creating tree, num_columns=" &
-                        Num_Columns'Img);
+               Trace
+                 (Me,
+                  "Threads: Creating tree, num_columns=" & Num_Columns'Img);
 
                for T in Titles'Range loop
-                  Titles (T) := new String'
-                    (VSS.Strings.Conversions.To_UTF_8_String
-                       (Info (Info'First).Information (Thread_Fields (T))));
+                  Titles (T) :=
+                    new String'
+                      (VSS.Strings.Conversions.To_UTF_8_String
+                         (Info (Info'First).Information (Thread_Fields (T))));
                end loop;
 
-               Thread.Tree := Create_Tree_View
-                 (Column_Types => (0 .. Num_Columns - 1 => GType_String),
-                  Column_Names => Titles);
+               Thread.Tree :=
+                 Create_Tree_View
+                   (Column_Types => (0 .. Num_Columns - 1 => GType_String),
+                    Column_Names => Titles);
                Free (Titles);
 
                Thread.Scrolled.Add (Thread.Tree);
@@ -614,22 +632,26 @@ package body GVD.Dialogs is
          for J in Info'First + 1 .. Len loop
             Append (-Get_Model (Thread.Tree), Iter, Null_Iter);
             declare
-               Values  : Glib.Values.GValue_Array
-                 (Gint (Info (J).Information.First_Index) ..
-                    Gint (Info (J).Information.Last_Index));
+               Values  :
+                 Glib.Values.GValue_Array
+                   (Gint (Info (J).Information.First_Index)
+                    .. Gint (Info (J).Information.Last_Index));
                Columns : Columns_Array (Values'Range);
             begin
-               for Col in Info (J).Information.First_Index
-                            .. Info (J).Information.Last_Index
+               for Col in
+                 Info (J).Information.First_Index
+                 .. Info (J).Information.Last_Index
                loop
                   Columns (Gint (Col)) :=
                     Gint (Col - Info (J).Information.First_Index);
                   Glib.Values.Init_Set_String
                     (Values (Gint (Col)),
-                     (if Info (J).Information (Col).Is_Empty then ""
-                      else Glib.Convert.Escape_Text
-                        (VSS.Strings.Conversions.To_UTF_8_String
-                           (Info (J).Information (Col)))));
+                     (if Info (J).Information (Col).Is_Empty
+                      then ""
+                      else
+                        Glib.Convert.Escape_Text
+                          (VSS.Strings.Conversions.To_UTF_8_String
+                             (Info (J).Information (Col)))));
                end loop;
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
@@ -668,13 +690,13 @@ package body GVD.Dialogs is
    ----------------
 
    function Initialize
-     (Tasks  : access Task_View_Record'Class) return Gtk_Widget
+     (Tasks : access Task_View_Record'Class) return Gtk_Widget
    is
       W : Gtk_Widget;
    begin
       W := Initialize (Thread => Tasks);
       Tasks.Get_Info := Info_Tasks_Dispatch'Access;
-      Tasks.Switch   := Task_Switch_Dispatch'Access;
+      Tasks.Switch := Task_Switch_Dispatch'Access;
       return W;
    end Initialize;
 
@@ -682,14 +704,12 @@ package body GVD.Dialogs is
    -- Initialize --
    ----------------
 
-   function Initialize
-     (PDs    : access PD_View_Record'Class) return Gtk_Widget
-   is
+   function Initialize (PDs : access PD_View_Record'Class) return Gtk_Widget is
       W : Gtk_Widget;
    begin
       W := Initialize (Thread => PDs);
       PDs.Get_Info := Info_PD_Dispatch'Access;
-      PDs.Switch   := PD_Switch_Dispatch'Access;
+      PDs.Switch := PD_Switch_Dispatch'Access;
       return W;
    end Initialize;
 
@@ -705,8 +725,10 @@ package body GVD.Dialogs is
       Questions                  : Question_Array;
       Question_Description       : String := "")
    is
-      Row           : Gint with Unreferenced;
-      Width         : Gint with Unreferenced;
+      Row           : Gint
+      with Unreferenced;
+      Width         : Gint
+      with Unreferenced;
       OK_Button     : Gtk_Widget;
       Cancel_Button : Gtk_Widget;
       Label         : Gtk_Label;
@@ -714,20 +736,21 @@ package body GVD.Dialogs is
    begin
       GPS.Dialogs.Initialize
         (Dialog,
-         Title   => -"Question",
-         Kernel  => Kernel,
-         Flags   =>
+         Title  => -"Question",
+         Kernel => Kernel,
+         Flags  =>
            Gtk.Dialog.Destroy_With_Parent and Gtk.Dialog.Use_Header_Bar);
 
       Set_Default_Size_From_History
-         (Dialog, "debug-question", Kernel, -1, 200);
+        (Dialog, "debug-question", Kernel, -1, 200);
 
       Dialog.Content_Area := Get_Content_Area (Dialog);
       Dialog.Content_Area.Set_Homogeneous (False);
       Dialog.Content_Area.Set_Spacing (0);
 
       Gtkada.Handlers.Return_Callback.Connect
-        (Dialog, Gtk.Widget.Signal_Delete_Event,
+        (Dialog,
+         Gtk.Widget.Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Delete_Dialog'Access));
 
       Dialog.Debugger := Debugger;
@@ -744,9 +767,9 @@ package body GVD.Dialogs is
         and then
           ((Questions (Questions'Last).Choice.all = "y"
             and then Questions (Questions'First).Choice.all = "n")
-          or else
-           (Questions (Questions'Last).Choice.all = "n"
-            and then Questions (Questions'First).Choice.all = "y"))
+           or else
+             (Questions (Questions'Last).Choice.all = "n"
+              and then Questions (Questions'First).Choice.all = "y"))
       then
          Dialog.Kind := Yes_No_Dialog;
          Set_Default_Size_From_History
@@ -785,7 +808,8 @@ package body GVD.Dialogs is
          Cancel_Button := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
          Cancel_Button.Set_Name ("Cancel Button");
          Widget_Callback.Connect
-           (Cancel_Button, Gtk.Button.Signal_Clicked,
+           (Cancel_Button,
+            Gtk.Button.Signal_Clicked,
             Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
 
          Gtk_New (Dialog.Tree_Model, (0 => GType_String, 1 => GType_String));
@@ -818,8 +842,8 @@ package body GVD.Dialogs is
 
          Dialog.Tree_View.Get_Selection.Set_Mode
            ((if Multiple_Selection_Allowed
-            then Selection_Multiple
-            else Selection_Single));
+             then Selection_Multiple
+             else Selection_Single));
 
          declare
             Iter : Gtk_Tree_Iter;
@@ -828,14 +852,15 @@ package body GVD.Dialogs is
                Dialog.Tree_Model.Append (Iter, Null_Iter);
 
                Set_And_Clear
-                 (Dialog.Tree_Model, Iter,
+                 (Dialog.Tree_Model,
+                  Iter,
                   (0 => As_String (Questions (J).Choice.all),
                    1 => As_String (Questions (J).Description.all)));
             end loop;
          end;
          Dialog.Tree_View.Columns_Autosize;
          Set_Default_Size_From_History
-            (Dialog, "debug-question-multiple", Kernel, 500, 200);
+           (Dialog, "debug-question-multiple", Kernel, 500, 200);
       end if;
 
       Register_Dialog (GVD.Process.Convert (Debugger), Dialog);
@@ -846,8 +871,8 @@ package body GVD.Dialogs is
    ---------------------
 
    function Get_Dialog_Kind
-     (Question_Dialog : access Question_Dialog_Record'Class)
-      return Dialog_Kind is
+     (Question_Dialog : access Question_Dialog_Record'Class) return Dialog_Kind
+   is
    begin
       return Question_Dialog.Kind;
    end Get_Dialog_Kind;
@@ -885,17 +910,15 @@ package body GVD.Dialogs is
    -----------------------------
 
    procedure On_Question_Yes_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class; Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
    begin
       declare
-         Dialog    : constant Question_Dialog_Access :=
+         Dialog   : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
-         Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger :=
-           GVD.Process.Convert (Debugger);
+         Debugger : constant Debugger_Access := Dialog.Debugger;
+         Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -905,7 +928,7 @@ package body GVD.Dialogs is
 
          Debugger.Send
            ("y" & Gdb_Answer_Suffix,
-            Mode => GVD.Types.Visible,
+            Mode            => GVD.Types.Visible,
             Empty_Buffer    => False,
             Force_Send      => True,
             Wait_For_Prompt => False);
@@ -917,17 +940,15 @@ package body GVD.Dialogs is
    -----------------------------
 
    procedure On_Question_No_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class; Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
    begin
       declare
-         Dialog    : constant Question_Dialog_Access :=
+         Dialog   : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
-         Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger :=
-           GVD.Process.Convert (Debugger);
+         Debugger : constant Debugger_Access := Dialog.Debugger;
+         Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -936,7 +957,7 @@ package body GVD.Dialogs is
 
          Debugger.Send
            ("n" & Gdb_Answer_Suffix,
-            Mode => GVD.Types.Visible,
+            Mode            => GVD.Types.Visible,
             Empty_Buffer    => False,
             Force_Send      => True,
             Wait_For_Prompt => False);
@@ -948,19 +969,19 @@ package body GVD.Dialogs is
    ----------------------------
 
    procedure On_Question_OK_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class; Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
    begin
       declare
-         Dialog    : constant Question_Dialog_Access :=
+         Dialog : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
 
          Selection : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
          S         : Unbounded_String;
          Tmp       : Gtk.Tree_Model.Gtk_Tree_Path_List.Glist;
-         Button    : Message_Dialog_Buttons with Unreferenced;
+         Button    : Message_Dialog_Buttons
+         with Unreferenced;
          Debugger  : constant Debugger_Access := Dialog.Debugger;
          Process   : constant Visual_Debugger :=
            GVD.Process.Convert (Debugger);
@@ -987,7 +1008,8 @@ package body GVD.Dialogs is
             Button :=
               GPS_Message_Dialog
                 (-"You must select at least one of the choices",
-                 Error, Button_OK,
+                 Error,
+                 Button_OK,
                  Parent => Gtk_Window (Dialog));
             Emit_Stop_By_Name (Object, "clicked");
             return;
@@ -1017,9 +1039,8 @@ package body GVD.Dialogs is
       Dialog   : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger : constant Debugger_Access := Dialog.Debugger;
-      Process  : constant Visual_Debugger :=
-        GVD.Process.Convert (Debugger);
-      Kind     : constant Dialog_Kind     := Get_Dialog_Kind (Dialog);
+      Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Kind     : constant Dialog_Kind := Get_Dialog_Kind (Dialog);
 
    begin
       --  We used to call Interrupt (Dialog.Debugger) here, but this proved to
@@ -1030,7 +1051,7 @@ package body GVD.Dialogs is
       Unregister_Dialog (Process);
 
       case Kind is
-         when Yes_No_Dialog =>
+         when Yes_No_Dialog          =>
             Debugger.Send
               ("n" & Gdb_Answer_Suffix,
                Mode            => GVD.Types.Visible,

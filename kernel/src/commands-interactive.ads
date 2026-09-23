@@ -37,14 +37,14 @@ package Commands.Interactive is
       Synchronous : Boolean := False;
       --  Whether the command should be executed synchronously
 
-      Dir     : GNATCOLL.VFS.Virtual_File;
+      Dir : GNATCOLL.VFS.Virtual_File;
       --  The directory in which the execution should take place
 
-      Args    : GNAT.Strings.String_List_Access;
+      Args : GNAT.Strings.String_List_Access;
       --  Args is the list of arguments to pass to this action. These can be
       --  accessed through $1, $2 in XML files.
 
-      Label   : GNAT.Strings.String_Access;
+      Label : GNAT.Strings.String_Access;
 
       Via_Menu : Boolean := False;
       --  Whether this action is executed through a menu or through a script
@@ -65,8 +65,7 @@ package Commands.Interactive is
    --  automatically for you.
 
    function Create_Null_Context
-     (From : GPS.Kernel.Selection_Context)
-      return Interactive_Command_Context;
+     (From : GPS.Kernel.Selection_Context) return Interactive_Command_Context;
    --  Create an empty interactive context
 
    procedure Free (X : in out Interactive_Command_Context);
@@ -81,19 +80,21 @@ package Commands.Interactive is
 
    function Execute
      (Command : access Interactive_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type is abstract;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is abstract;
    --  Execute the command.
    --  Context is the current context when the command is started. Its Event
    --  field is the event that started the execution (a Gdk_Key_Event
    --  if started from a key, a Gtk_Button_Event if started from a menu,...)
 
-   overriding function Execute (Command : access Interactive_Command)
-      return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Interactive_Command) return Command_Return_Type;
    --  Execute the command non-interactively, with a Null_Context
 
    function Is_Active_Command
-     (Command : access Interactive_Command) return Boolean is (True);
+     (Command : access Interactive_Command) return Boolean
+   is (True);
    --  Whether the command is active or passive
 
    -------------------------------
@@ -104,8 +105,8 @@ package Commands.Interactive is
       Command : Interactive_Command_Access;
       Context : Interactive_Command_Context;
    end record;
-   type Interactive_Command_Proxy_Access
-      is access Interactive_Command_Proxy'Class;
+   type Interactive_Command_Proxy_Access is
+     access Interactive_Command_Proxy'Class;
    --  This acts as a proxy for Interactive_Command, so that they can be called
    --  with an event. This should be used when one need to execute a procedure
    --  that expects a Root_Command.
@@ -117,19 +118,23 @@ package Commands.Interactive is
    --  proxy. Context.Event is also automatically copied (see comment for
    --  Interactive_Command_Context)
 
-   overriding procedure Interrupt (Command : in out Interactive_Command_Proxy);
-   overriding function Execute (Command : access Interactive_Command_Proxy)
-      return Command_Return_Type;
-   overriding function Name
-     (Command : access Interactive_Command_Proxy) return String;
-   overriding procedure Primitive_Free (X : in out Interactive_Command_Proxy);
-   overriding function Progress
+   overriding
+   procedure Interrupt (Command : in out Interactive_Command_Proxy);
+   overriding
+   function Execute
+     (Command : access Interactive_Command_Proxy) return Command_Return_Type;
+   overriding
+   function Name (Command : access Interactive_Command_Proxy) return String;
+   overriding
+   procedure Primitive_Free (X : in out Interactive_Command_Proxy);
+   overriding
+   function Progress
      (Command : access Interactive_Command_Proxy) return Progress_Record;
-   overriding procedure Set_Progress
-     (Command  : access Interactive_Command_Proxy;
-      Progress : Progress_Record);
-   overriding function Undo
-     (Command : access Interactive_Command_Proxy) return Boolean;
+   overriding
+   procedure Set_Progress
+     (Command : access Interactive_Command_Proxy; Progress : Progress_Record);
+   overriding
+   function Undo (Command : access Interactive_Command_Proxy) return Boolean;
    --  See doc from inherited subprogram
 
 end Commands.Interactive;

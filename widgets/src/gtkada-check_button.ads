@@ -20,8 +20,8 @@ with Gtk.Check_Button;
 
 package Gtkada.Check_Button is
 
-   type Gtkada_Check_Button_Record is new
-     Gtk.Check_Button.Gtk_Check_Button_Record with private;
+   type Gtkada_Check_Button_Record is
+     new Gtk.Check_Button.Gtk_Check_Button_Record with private;
    type Gtkada_Check_Button is access all Gtkada_Check_Button_Record'Class;
    --  This version of the Check Button is a variant of the original gtk+
    --  widget, in that is handles 3 states instead of two: Checked/Unchecked/
@@ -36,23 +36,22 @@ package Gtkada.Check_Button is
    --  Create a new Gtkada_Check_Button
 
    procedure Initialize
-     (Check : access Gtkada_Check_Button_Record'Class;
-      Label : UTF8_String := "";
+     (Check   : access Gtkada_Check_Button_Record'Class;
+      Label   : UTF8_String := "";
       Default : Boolean := False);
    --  Initialize an existing Check_Button_Record
 
    procedure Set_Default
-     (Check : access Gtkada_Check_Button_Record;
-      State : Boolean);
+     (Check : access Gtkada_Check_Button_Record; State : Boolean);
    --  Set the default state of the check button
 
    function Get_Default
      (Check : access Gtkada_Check_Button_Record) return Boolean;
    --  Get the default state of the check button
 
-   overriding procedure Set_Active
-     (Check : access Gtkada_Check_Button_Record;
-      State : Boolean);
+   overriding
+   procedure Set_Active
+     (Check : access Gtkada_Check_Button_Record; State : Boolean);
    --  Force the state of the check button
 
    type State_Type is (State_Checked, State_Checked_Default, State_Unchecked);
@@ -63,11 +62,12 @@ package Gtkada.Check_Button is
 
 private
 
-   type Gtkada_Check_Button_Record is new
-     Gtk.Check_Button.Gtk_Check_Button_Record with record
-      State     : State_Type;
-      Default   : Boolean;
-      Internal  : Boolean;
+   type Gtkada_Check_Button_Record is
+     new Gtk.Check_Button.Gtk_Check_Button_Record
+   with record
+      State    : State_Type;
+      Default  : Boolean;
+      Internal : Boolean;
 
       Forcing_Update : Boolean := False;
    end record;

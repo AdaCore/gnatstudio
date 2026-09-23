@@ -19,12 +19,12 @@
 --  files.
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with GPS.Kernel;                  use GPS.Kernel;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GPS.Editors;                 use GPS.Editors;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GPS.Kernel;   use GPS.Kernel;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Editors;  use GPS.Editors;
 with GPS.Kernel.Preferences;
-with GPS.Scripts;                 use GPS.Scripts;
+with GPS.Scripts;  use GPS.Scripts;
 with GPS_Vectors;
 
 package Diff_Utils2 is
@@ -51,10 +51,10 @@ package Diff_Utils2 is
       Blank_Lines_Mark   => <>,
       Special_Lines_Mark => <>);
 
-   type T_VRange  is array (1 .. 3) of Diff_Range;
-   type T_VStr    is array (1 .. 3) of String_Access;
+   type T_VRange is array (1 .. 3) of Diff_Range;
+   type T_VStr is array (1 .. 3) of String_Access;
    type T_VOffset is array (1 .. 3) of Natural;
-   type T_VFile   is array (T_VFile_Index) of Virtual_File;
+   type T_VFile is array (T_VFile_Index) of Virtual_File;
 
    procedure Free (V : in out T_VStr);
    --  free memory of each element of vector V
@@ -72,8 +72,8 @@ package Diff_Utils2 is
    Null_Chunk : constant Diff_Chunk :=
      (Null_Range, Null_Range, Null_Range, 0, False);
 
-   procedure Free is
-      new Ada.Unchecked_Deallocation (Diff_Chunk, Diff_Chunk_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Diff_Chunk, Diff_Chunk_Access);
    --  Free the memory associated with the head of the list Link
 
    package Diff_Chunk_List is new GPS_Vectors (Diff_Chunk_Access, Free);
@@ -85,8 +85,10 @@ package Diff_Utils2 is
 
    Vdiff_Class_Name : constant String := "Vdiff";
    type Diff_Script_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name (Self : Diff_Script_Proxy) return String
-      is (Vdiff_Class_Name) with Inline;
+   overriding
+   function Class_Name (Self : Diff_Script_Proxy) return String
+   is (Vdiff_Class_Name)
+   with Inline;
 
    type Diff_Head is record
       List           : Diff_List;
@@ -100,8 +102,8 @@ package Diff_Utils2 is
    type Diff_Head_Access is access all Diff_Head;
    --  Data structure that represents a visual diff
 
-   package Diff_Script_Proxies is new Script_Proxies
-      (Diff_Head_Access, Diff_Script_Proxy);
+   package Diff_Script_Proxies is new
+     Script_Proxies (Diff_Head_Access, Diff_Script_Proxy);
 
    procedure Free (Link : in out Diff_Head);
    --  Free the memory associated with Link
@@ -112,13 +114,13 @@ package Diff_Utils2 is
    --  Execute diff on Item
 
    Null_Head : constant Diff_Head :=
-                 (List           => Diff_Chunk_List.Empty_Vector,
-                  Files          => (others => GNATCOLL.VFS.No_File),
-                  Current_Node   => Diff_Chunk_List.Std_Vectors.No_Element,
-                  Ref_File       => 2,
-                  In_Destruction => False,
-                  Instances      => <>,
-                  Mode           => GPS.Kernel.Preferences.Side_By_Side);
+     (List           => Diff_Chunk_List.Empty_Vector,
+      Files          => (others => GNATCOLL.VFS.No_File),
+      Current_Node   => Diff_Chunk_List.Std_Vectors.No_Element,
+      Ref_File       => 2,
+      In_Destruction => False,
+      Instances      => <>,
+      Mode           => GPS.Kernel.Preferences.Side_By_Side);
 
    procedure Free (Vdiff : in out Diff_Head_Access);
    --  Free the memory associated with the head of the list Link
@@ -145,12 +147,12 @@ package Diff_Utils2 is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
 
    function Diff3
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel                           :
+        access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List;
    --  Execute diff on File1,File2 and File3 and return a list of differences
 
-   function Simplify
-     (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;
+   function Simplify (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;
    --  Calculate the displayable version of Diff with reference file Ref_File
 
    function Horizontal_Diff
@@ -163,15 +165,16 @@ package Diff_Utils2 is
 private
 
    function Diff3
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Diff3_Command : String;
+     (Kernel                           :
+        access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff3_Command                    : String;
       My_Change, Old_File, Your_Change : GNATCOLL.VFS.Virtual_File)
       return Diff_List;
    --  Execute diff3 on File1, File2, File3 and return list of Chunk
 
    function Diff
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Diff_Command : String;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff_Command       : String;
       Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences
 

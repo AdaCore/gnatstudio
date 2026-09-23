@@ -39,7 +39,7 @@ with LSP.Raw_Clients;
 
 with DAP.Modules.Histories;
 with DAP.Requests;
-with DAP.Types;                  use DAP.Types;
+with DAP.Types; use DAP.Types;
 with DAP.Tools;
 
 with Generic_Views;
@@ -70,8 +70,8 @@ package DAP.Clients is
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Id     : Valid_Client_Id_Type) is
-     new LSP.Raw_Clients.Raw_Client with private;
+      Id     : Valid_Client_Id_Type)
+   is new LSP.Raw_Clients.Raw_Client with private;
    --  The client to communicate with DAP adapter
 
    type DAP_Client_Access is access all DAP_Client'Class;
@@ -80,8 +80,8 @@ package DAP.Clients is
    -- DAP_Visual_Debugger --
    -------------------------
 
-   type DAP_Visual_Debugger is
-     new GPS.Debuggers.Base_Visual_Debugger with record
+   type DAP_Visual_Debugger is new GPS.Debuggers.Base_Visual_Debugger
+   with record
       Client : DAP_Client_Access;
    end record;
    type DAP_Visual_Debugger_Access is access all DAP_Visual_Debugger'Class;
@@ -135,8 +135,7 @@ package DAP.Clients is
    --  if a debuggee has been launched by the debugger.
 
    procedure On_Launched_Sent
-     (Self         : in out DAP_Client;
-      Start_Method : Debuggee_Start_Method_Kind);
+     (Self : in out DAP_Client; Start_Method : Debuggee_Start_Method_Kind);
    --  Launched request has been sent. Start_Method should specify which
    --  method was used to start the debuggee.
 
@@ -165,33 +164,27 @@ package DAP.Clients is
    --  Return the method used to start the debuggee by the given DAP client.
 
    function Get_Breakpoints_Manager
-     (Self : DAP_Client) return
-     DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
+     (Self : DAP_Client)
+      return DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
    --  Return the debugger's breakpoints' manager.
 
    function Get_Debugger_Console
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
+     (Self : DAP_Client) return Generic_Views.Abstract_View_Access;
    --  Returns the debugger console, if any.
 
    procedure Set_Debugger_Console
-     (Self    : in out DAP_Client;
-      Console : Generic_Views.Abstract_View_Access);
+     (Self : in out DAP_Client; Console : Generic_Views.Abstract_View_Access);
    --  Set the debugger console
 
    function Get_Debuggee_Console
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
+     (Self : DAP_Client) return Generic_Views.Abstract_View_Access;
    --  Returns the debuggee view, if any.
 
    procedure Set_Debuggee_Console
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
+     (Self : in out DAP_Client; View : Generic_Views.Abstract_View_Access);
    --  Attach the debuggee view
 
-   procedure Set_Selected_Frame
-     (Self : in out DAP_Client;
-      Id   : Integer);
+   procedure Set_Selected_Frame (Self : in out DAP_Client; Id : Integer);
    --  Set the current Frame.
 
    function Get_Executable
@@ -219,18 +212,16 @@ package DAP.Clients is
    procedure Set_Selected_Thread (Self : in out DAP_Client; Id : Integer);
    --  Set the Thread ID that has been selected in the thread view
 
-   function Get_Current_Thread (Self  : in out DAP_Client) return Integer;
+   function Get_Current_Thread (Self : in out DAP_Client) return Integer;
    --  Returns current selected stopped thread Id or
    --  the first stopped thread or 0
 
    function Get_Command_History
-     (Self : in out DAP_Client)
-      return History_List_Access;
+     (Self : in out DAP_Client) return History_List_Access;
    --  Returns debugging console commands history
 
    function Get_Visual
-     (Self : in out DAP_Client)
-      return DAP_Visual_Debugger_Access;
+     (Self : in out DAP_Client) return DAP_Visual_Debugger_Access;
    --  Return the visual debugger associated with the given DAP client
 
    procedure Set_Capabilities
@@ -239,8 +230,7 @@ package DAP.Clients is
    --  Set the DAP client's capabilities.
 
    function Get_Capabilities
-     (Self : in out DAP_Client)
-      return DAP.Tools.Optional_Capabilities;
+     (Self : in out DAP_Client) return DAP.Tools.Optional_Capabilities;
    --  Return the DAP client's capabilities.
 
    procedure Display_In_Debugger_Console
@@ -256,13 +246,11 @@ package DAP.Clients is
    --  Little endian is returned by default if not.
 
    function Get_Stack_Trace
-     (Self : DAP_Client)
-      return DAP.Clients.Stack_Trace.Stack_Trace_Access;
+     (Self : DAP_Client) return DAP.Clients.Stack_Trace.Stack_Trace_Access;
    --  Returns the Stack_Trace module
 
    function Get_Variables
-     (Self : DAP_Client)
-      return DAP.Clients.Variables.Variables_Holder_Access;
+     (Self : DAP_Client) return DAP.Clients.Variables.Variables_Holder_Access;
    --  Returns the Variables module
 
    procedure Process_User_Command
@@ -280,27 +268,19 @@ package DAP.Clients is
    --  Python API.
 
    function Is_Quit_Command
-     (Self : DAP_Client;
-      Cmd  : VSS.Strings.Virtual_String)
-      return Boolean;
+     (Self : DAP_Client; Cmd : VSS.Strings.Virtual_String) return Boolean;
    --  Is `quit` command. Used to intercept console input.
 
    function Is_Frame_Up_Command
-     (Self : DAP_Client;
-      Cmd  : VSS.Strings.Virtual_String)
-      return Boolean;
+     (Self : DAP_Client; Cmd : VSS.Strings.Virtual_String) return Boolean;
    --  Is `up` command. Used to intercept console input.
 
    function Is_Frame_Down_Command
-     (Self : DAP_Client;
-      Cmd  : VSS.Strings.Virtual_String)
-      return Boolean;
+     (Self : DAP_Client; Cmd : VSS.Strings.Virtual_String) return Boolean;
    --  Is `down` command. Used to intercept console input.
 
    function Is_Frame_Command
-     (Self  : DAP_Client;
-      Cmd   : VSS.Strings.Virtual_String;
-      Level : out Integer)
+     (Self : DAP_Client; Cmd : VSS.Strings.Virtual_String; Level : out Integer)
       return Boolean;
    --  Is `frame` command. Used to intercept console input.
 
@@ -324,11 +304,13 @@ package DAP.Clients is
    -- DAP_Visual_Debugger --
    -------------------------
 
-   overriding function Get_Num
+   overriding
+   function Get_Num
      (Self : not null access DAP_Visual_Debugger) return Glib.Gint
-      is (Glib.Gint (Self.Client.Id));
+   is (Glib.Gint (Self.Client.Id));
 
-   overriding function Command_In_Process
+   overriding
+   function Command_In_Process
      (Visual : not null access DAP_Visual_Debugger) return Boolean;
 
    function Current_File
@@ -336,8 +318,7 @@ package DAP.Clients is
       return GNATCOLL.VFS.Virtual_File;
 
    function Current_Line
-     (Visual : not null access DAP_Visual_Debugger)
-      return Natural;
+     (Visual : not null access DAP_Visual_Debugger) return Natural;
 
    function Is_Connected_To_Target
      (Visual : not null access DAP_Visual_Debugger) return Boolean;
@@ -375,13 +356,10 @@ package DAP.Clients is
    --  the stack trace in the debugger (e.g., "next" or "cont").
 
    procedure Set_Executable
-     (Self : in out DAP_Client;
-      File : GNATCOLL.VFS.Virtual_File);
+     (Self : in out DAP_Client; File : GNATCOLL.VFS.Virtual_File);
    --  Set the main file
 
-   function Get_Debuggee_TTY
-     (Self : DAP_Client)
-      return GNAT.TTY.TTY_Handle;
+   function Get_Debuggee_TTY (Self : DAP_Client) return GNAT.TTY.TTY_Handle;
    --  Returns TTY allocated for debuggee
 
    procedure Allocate_TTY (Self : in out DAP_Client);
@@ -396,35 +374,34 @@ package DAP.Clients is
    procedure Connect_To_Target
      (Self   : in out DAP_Client;
       PID    : Integer := -1;
-      Target : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String);
+      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String);
    --  Send the attach request for PID or Target. They are mutually exclusive.
 
 private
 
-   function Hash
-     (Item : Integer)
-      return Ada.Containers.Hash_Type is
-     (Ada.Containers.Hash_Type'Val (Item));
+   function Hash (Item : Integer) return Ada.Containers.Hash_Type
+   is (Ada.Containers.Hash_Type'Val (Item));
 
-   package Requests_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Integer,
-      Element_Type    => DAP.Requests.DAP_Request_Access,
-      Hash            => Hash,
-      Equivalent_Keys => "=",
-      "="             => DAP.Requests."=");
+   package Requests_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Integer,
+        Element_Type    => DAP.Requests.DAP_Request_Access,
+        Hash            => Hash,
+        Equivalent_Keys => "=",
+        "="             => DAP.Requests."=");
 
-   package Integer_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => Integer,
-      Hash                => Hash,
-      Equivalent_Elements => "=");
+   package Integer_Sets is new
+     Ada.Containers.Hashed_Sets
+       (Element_Type        => Integer,
+        Hash                => Hash,
+        Equivalent_Elements => "=");
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Id     : Valid_Client_Id_Type) is new LSP.Raw_Clients.Raw_Client
-   with record
-      This            : DAP_Client_Access := DAP_Client'Unchecked_Access;
-      Visual          : DAP_Visual_Debugger_Access;
+      Id     : Valid_Client_Id_Type)
+   is new LSP.Raw_Clients.Raw_Client with record
+      This   : DAP_Client_Access := DAP_Client'Unchecked_Access;
+      Visual : DAP_Visual_Debugger_Access;
 
       Project         : GNATCOLL.Projects.Project_Type;
       Executable      : GNATCOLL.VFS.Virtual_File;
@@ -434,35 +411,35 @@ private
       Remote_Target    : VSS.Strings.Virtual_String;
       Remote_Protocol  : VSS.Strings.Virtual_String;
 
-      Source_Files    : VSS.String_Vectors.Virtual_String_Vector;
+      Source_Files : VSS.String_Vectors.Virtual_String_Vector;
 
       Is_Attached                : Boolean := False;
       Is_Debuggee_Started_Called : Boolean := False;
 
-      Capabilities   : DAP.Tools.Optional_Capabilities;
-      Status         : Debugger_Status_Kind := Initialization;
-      Endian         : Endian_Type := Unknown_Endian;
+      Capabilities : DAP.Tools.Optional_Capabilities;
+      Status       : Debugger_Status_Kind := Initialization;
+      Endian       : Endian_Type := Unknown_Endian;
 
-      Sent           : Requests_Maps.Map;
+      Sent : Requests_Maps.Map;
 
-      Request_Id     : Integer := 1;
-      Error_Msg      : VSS.Strings.Virtual_String;
+      Request_Id : Integer := 1;
+      Error_Msg  : VSS.Strings.Virtual_String;
 
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;
       All_Threads_Stopped : Boolean := False;
       Selected_Thread     : Integer := 0;
 
-      Start_Method        : Debuggee_Start_Method_Kind := None;
+      Start_Method : Debuggee_Start_Method_Kind := None;
       --  The method that was used to start the current debugging session
 
       --  Modules --
-      Breakpoints      : access DAP.Clients.Breakpoint_Managers.
-        Breakpoint_Manager_Type'Class;
-      Stack_Trace      : access DAP.Clients.Stack_Trace.Stack_Trace'Class;
-      Variables        : access DAP.Clients.Variables.Variables_Holder'Class;
+      Breakpoints :
+        access DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Type'Class;
+      Stack_Trace : access DAP.Clients.Stack_Trace.Stack_Trace'Class;
+      Variables   : access DAP.Clients.Variables.Variables_Holder'Class;
 
-      Command_History  : aliased String_History.History_List;
+      Command_History : aliased String_History.History_List;
 
       Debugger_Console      : Generic_Views.Abstract_View_Access := null;
       Debuggee_Console      : Generic_Views.Abstract_View_Access := null;
@@ -475,39 +452,42 @@ private
       --  Debugger Console.
    end record;
 
-   overriding function Error_Message
+   overriding
+   function Error_Message
      (Self : DAP_Client) return VSS.Strings.Virtual_String;
    --  Error message for the last detected "internal error".
 
-   overriding procedure On_Raw_Message
+   overriding
+   procedure On_Raw_Message
      (Self    : in out DAP_Client;
       Data    : Ada.Strings.Unbounded.Unbounded_String;
       Success : in out Boolean);
    --  Called to parse RAW response from the DAP adapter
 
-   overriding procedure On_Started (Self : in out DAP_Client);
+   overriding
+   procedure On_Started (Self : in out DAP_Client);
    --  Send 'initialize' request on successful startup of the DAP server
    --  process.
 
-   overriding procedure On_Finished (Self : in out DAP_Client);
+   overriding
+   procedure On_Finished (Self : in out DAP_Client);
    --  Handle termination of the language server process. If this wasn't
    --  expected and we're within the acceptable throttling limits, relaunch.
 
-   overriding procedure On_Error
-     (Self  : in out DAP_Client;
-      Error : String);
+   overriding
+   procedure On_Error (Self : in out DAP_Client; Error : String);
 
-   overriding procedure On_Standard_Error_Message
-     (Self : in out DAP_Client;
-      Text : String);
+   overriding
+   procedure On_Standard_Error_Message
+     (Self : in out DAP_Client; Text : String);
 
-   overriding procedure On_Exception
+   overriding
+   procedure On_Exception
      (Self       : in out DAP_Client;
       Occurrence : Ada.Exceptions.Exception_Occurrence);
 
    procedure Set_Status
-     (Self   : in out DAP_Client'Class;
-      Status : Debugger_Status_Kind);
+     (Self : in out DAP_Client'Class; Status : Debugger_Status_Kind);
    --  Set the current debugging status.
    --  Will run the debugger hook appropriate to the new status.
 
@@ -516,8 +496,7 @@ private
       Request : in out DAP.Requests.DAP_Request_Access);
    --  Process (send) the request to the DAP adapter
 
-   function Get_Request_ID
-     (Self : in out DAP_Client) return Integer;
+   function Get_Request_ID (Self : in out DAP_Client) return Integer;
    --  Returns the unique ID for the request
 
    procedure Reject_All_Requests (Self : in out DAP_Client);
@@ -540,6 +519,6 @@ private
    procedure Display_Prompt_If_Needed (Self : in out DAP_Client);
    --  Display a prompt in the debugger console when needed
 
-   function Is_Attached (Self : DAP_Client)
-   return Boolean is (Self.Is_Attached);
+   function Is_Attached (Self : DAP_Client) return Boolean
+   is (Self.Is_Attached);
 end DAP.Clients;

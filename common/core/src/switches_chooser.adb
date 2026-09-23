@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
-with GNATCOLL.Tribooleans;        use GNATCOLL.Tribooleans;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Tribooleans;  use GNATCOLL.Tribooleans;
 
 package body Switches_Chooser is
    use Switch_Description_Vectors, Combo_Switch_Vectors;
@@ -47,8 +47,10 @@ package body Switches_Chooser is
    ---------------
 
    procedure Free_List (Deps : in out Dependency_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Dependency_Description, Dependency_Description_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Dependency_Description,
+           Dependency_Description_Access);
       N : Dependency_Description_Access;
    begin
       while Deps /= null loop
@@ -68,8 +70,10 @@ package body Switches_Chooser is
    ----------
 
    procedure Free (Dep : in out Default_Value_Dependency) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Default_Value_Dependency_Record, Default_Value_Dependency);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Default_Value_Dependency_Record,
+           Default_Value_Dependency);
       Tmp : Default_Value_Dependency;
    begin
       while Dep /= null loop
@@ -84,9 +88,11 @@ package body Switches_Chooser is
    ----------
 
    procedure Free (Config : in out Switches_Editor_Config) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Switches_Editor_Config_Record'Class, Switches_Editor_Config);
-      C : Switch_Description_Vectors.Cursor;
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Switches_Editor_Config_Record'Class,
+           Switches_Editor_Config);
+      C   : Switch_Description_Vectors.Cursor;
       Dep : Default_Value_Dependency;
    begin
       if Config /= null then
@@ -146,31 +152,32 @@ package body Switches_Chooser is
       Show_Command_Line : Boolean := True;
       Sections          : String := "") return Switches_Editor_Config
    is
-      Config : Switches_Editor_Config;
+      Config      : Switches_Editor_Config;
       Start, Stop : Natural;
    begin
-      Config := new Switches_Editor_Config_Record'
-        (Lines             => 1,
-         Columns           => 1,
-         Default_Separator => To_Unbounded_String (Default_Separator),
-         Scrolled_Window   => Scrolled_Window,
-         Switch_Char       => Switch_Char,
-         Config            => <>,
-         Max_Radio         => 0,
-         Max_Popup         => Main_Window,
-         Show_Command_Line => Show_Command_Line,
-         Sections          => To_Unbounded_String (Sections),
-         Switches          => <>,
-         Frames            => <>,
-         Filters           => <>,
-         Dependencies      => null);
+      Config :=
+        new Switches_Editor_Config_Record'
+          (Lines             => 1,
+           Columns           => 1,
+           Default_Separator => To_Unbounded_String (Default_Separator),
+           Scrolled_Window   => Scrolled_Window,
+           Switch_Char       => Switch_Char,
+           Config            => <>,
+           Max_Radio         => 0,
+           Max_Popup         => Main_Window,
+           Show_Command_Line => Show_Command_Line,
+           Sections          => To_Unbounded_String (Sections),
+           Switches          => <>,
+           Frames            => <>,
+           Filters           => <>,
+           Dependencies      => null);
 
       --  Add star to getopt switches
       Define_Switch (Config.Config, "*");
 
       --  Add sections to getopt switches
       Start := Sections'First;
-      Stop  := Start + 1;
+      Stop := Start + 1;
 
       while Stop <= Sections'Last loop
          if Sections (Stop) = ' ' then
@@ -192,9 +199,8 @@ package body Switches_Chooser is
    -- Define_Prefix --
    -------------------
 
-   procedure Define_Prefix
-     (Config : Switches_Editor_Config;
-      Prefix : String) is
+   procedure Define_Prefix (Config : Switches_Editor_Config; Prefix : String)
+   is
    begin
       Define_Prefix (Config.Config, Prefix);
    end Define_Prefix;
@@ -204,9 +210,7 @@ package body Switches_Chooser is
    ------------------
 
    procedure Define_Alias
-     (Config   : Switches_Editor_Config;
-      Switch   : String;
-      Expanded : String) is
+     (Config : Switches_Editor_Config; Switch : String; Expanded : String) is
    begin
       Define_Alias (Config.Config, Switch, Expanded);
    end Define_Alias;
@@ -222,8 +226,7 @@ package body Switches_Chooser is
       Column    : Positive := 1;
       Line_Span : Natural := 1;
       Col_Span  : Natural := 1;
-      Popup     : Popup_Index := Main_Window)
-   is
+      Popup     : Popup_Index := Main_Window) is
    begin
       Append
         (Config.Frames,
@@ -257,8 +260,7 @@ package body Switches_Chooser is
      (Config    : Switches_Editor_Config;
       Switch    : String;
       Separator : String;
-      Section   : String)
-   is
+      Section   : String) is
    begin
       if Separator = ASCII.LF'Image then
          --  No parameter
@@ -291,8 +293,7 @@ package body Switches_Chooser is
       Column        : Positive := 1;
       Add_Before    : Boolean := False;
       Popup         : Popup_Index := Main_Window;
-      Filter        : String := "")
-   is
+      Filter        : String := "") is
    begin
       Append
         (Config.Switches,
@@ -380,10 +381,7 @@ package body Switches_Chooser is
             Popup         => Popup,
             Active        => True));
       Add_To_Getopt
-        (Config,
-         Switch    => Switch,
-         Separator => Separator,
-         Section   => Section);
+        (Config, Switch => Switch, Separator => Separator, Section => Section);
 
       if Filter /= "" then
          Config.Filters.Append
@@ -445,10 +443,7 @@ package body Switches_Chooser is
             Popup     => Popup,
             Active    => True));
       Add_To_Getopt
-        (Config,
-         Switch    => Switch,
-         Separator => Separator,
-         Section   => Section);
+        (Config, Switch => Switch, Separator => Separator, Section => Section);
 
       if Filter /= "" then
          Config.Filters.Append
@@ -520,10 +515,10 @@ package body Switches_Chooser is
 
       if Filter /= "" then
          Config.Filters.Append
-              (new Switch_Filter_Description_Record'
-                   (Name         => To_Unbounded_String (Filter),
-                    Switch       => Config.Switches.Last_Index,
-                    Add_On_Match => False));
+           (new Switch_Filter_Description_Record'
+              (Name         => To_Unbounded_String (Filter),
+               Switch       => Config.Switches.Last_Index,
+               Add_On_Match => False));
       end if;
    end Add_Combo;
 
@@ -532,12 +527,11 @@ package body Switches_Chooser is
    ---------------
 
    function Add_Popup
-     (Config  : Switches_Editor_Config;
-      Label   : String;
-      Line    : Positive := 1;
-      Column  : Positive := 1;
-      Popup   : Popup_Index := Main_Window) return Popup_Index
-   is
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window) return Popup_Index is
    begin
       Config.Max_Popup := Config.Max_Popup + 1;
       Append
@@ -565,13 +559,12 @@ package body Switches_Chooser is
    ---------------
 
    function Add_Radio
-     (Config  : Switches_Editor_Config;
-      Label   : String;
-      Tip     : String;
-      Line    : Positive := 1;
-      Column  : Positive := 1;
-      Popup   : Popup_Index := Main_Window) return Radio_Switch
-   is
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Tip    : String;
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window) return Radio_Switch is
    begin
       Config.Max_Radio := Config.Max_Radio + 1;
       Append
@@ -605,8 +598,7 @@ package body Switches_Chooser is
       Section    : String := "";
       Tip        : String := "";
       Add_Before : Boolean := False;
-      Filter     : String := "")
-   is
+      Filter     : String := "") is
    begin
       Append
         (Config.Switches,
@@ -635,10 +627,10 @@ package body Switches_Chooser is
 
       if Filter /= "" then
          Config.Filters.Append
-              (new Switch_Filter_Description_Record'
-                   (Name         => To_Unbounded_String (Filter),
-                    Switch       => Config.Switches.Last_Index,
-                    Add_On_Match => False));
+           (new Switch_Filter_Description_Record'
+              (Name         => To_Unbounded_String (Filter),
+               Switch       => Config.Switches.Last_Index,
+               Add_On_Match => False));
       end if;
    end Add_Radio_Entry;
 
@@ -656,15 +648,16 @@ package body Switches_Chooser is
       Slave_Section  : String;
       Slave_Activate : Boolean := True) is
    begin
-      Config.Dependencies := new Dependency_Description'
-        (Next           => Config.Dependencies,
-         Master_Switch  => new String'(Switch),
-         Master_Section => new String'(Section),
-         Master_Status  => Status,
-         Slave_Tool     => new String'(Slave_Tool),
-         Slave_Section  => new String'(Slave_Section),
-         Slave_Switch   => new String'(Slave_Switch),
-         Slave_Status   => Slave_Activate);
+      Config.Dependencies :=
+        new Dependency_Description'
+          (Next           => Config.Dependencies,
+           Master_Switch  => new String'(Switch),
+           Master_Section => new String'(Section),
+           Master_Status  => Status,
+           Slave_Tool     => new String'(Slave_Tool),
+           Slave_Section  => new String'(Slave_Section),
+           Slave_Switch   => new String'(Slave_Switch),
+           Slave_Status   => Slave_Activate);
    end Add_Dependency;
 
    ----------------------------------
@@ -672,19 +665,19 @@ package body Switches_Chooser is
    ----------------------------------
 
    procedure Add_Default_Value_Dependency
-     (Config         : Switches_Editor_Config;
-      Switch         : String;
-      Section        : String;
-      Slave_Switch   : String;
-      Slave_Section  : String;
-      Slave_Status   : Boolean := True)
+     (Config        : Switches_Editor_Config;
+      Switch        : String;
+      Section       : String;
+      Slave_Switch  : String;
+      Slave_Section : String;
+      Slave_Status  : Boolean := True)
    is
       Cursor        : Switch_Description_Vectors.Cursor :=
-                        Config.Switches.First;
+        Config.Switches.First;
       Slave_Cursor  : Switch_Description_Vectors.Cursor :=
-                       Switch_Description_Vectors.No_Element;
+        Switch_Description_Vectors.No_Element;
       Master_Cursor : Switch_Description_Vectors.Cursor :=
-                       Switch_Description_Vectors.No_Element;
+        Switch_Description_Vectors.No_Element;
 
    begin
       while Has_Element (Cursor) loop
@@ -705,7 +698,8 @@ package body Switches_Chooser is
                   Master_Cursor := Cursor;
                end if;
 
-               exit when Has_Element (Master_Cursor)
+               exit when
+                 Has_Element (Master_Cursor)
                  and then Has_Element (Slave_Cursor);
             end if;
          end;
@@ -713,12 +707,9 @@ package body Switches_Chooser is
          Next (Cursor);
       end loop;
 
-      if Has_Element (Master_Cursor)
-        and then Has_Element (Slave_Cursor)
-      then
+      if Has_Element (Master_Cursor) and then Has_Element (Slave_Cursor) then
          declare
-            Slave  : Switch_Description :=
-                       Element (Slave_Cursor);
+            Slave  : Switch_Description := Element (Slave_Cursor);
             Enable : Boolean;
          begin
             if To_String (Slave.Switch) = Slave_Switch then
@@ -727,11 +718,12 @@ package body Switches_Chooser is
                Enable := False;
             end if;
 
-            Slave.Dependencies := new Default_Value_Dependency_Record'
-              (Enable        => Enable,
-               Master_Switch => To_Index (Master_Cursor),
-               Master_State  => False,
-               Next          => Slave.Dependencies);
+            Slave.Dependencies :=
+              new Default_Value_Dependency_Record'
+                (Enable        => Enable,
+                 Master_Switch => To_Index (Master_Cursor),
+                 Master_State  => False,
+                 Next          => Slave.Dependencies);
             Config.Switches.Replace_Element (Slave_Cursor, Slave);
          end;
       end if;
@@ -748,14 +740,13 @@ package body Switches_Chooser is
       ----------------
 
       procedure Initialize
-        (Editor    : in out Root_Switches_Editor;
-         Config    : Switches_Editor_Config)
+        (Editor : in out Root_Switches_Editor; Config : Switches_Editor_Config)
       is
       begin
          Set_Configuration (Editor.Cmd_Line, Config.Config);
          Editor.Config := Config;
-         Editor.Widgets := new Widget_Array
-           (0 .. Integer (Length (Config.Switches)));
+         Editor.Widgets :=
+           new Widget_Array (0 .. Integer (Length (Config.Switches)));
       end Initialize;
 
       ----------------------
@@ -763,8 +754,8 @@ package body Switches_Chooser is
       ----------------------
 
       function Get_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Expanded : Boolean) return GNAT.Strings.String_List_Access is
+        (Editor : access Root_Switches_Editor; Expanded : Boolean)
+         return GNAT.Strings.String_List_Access is
       begin
          return Editor.Cmd_Line.To_String_List (Expanded);
       end Get_Command_Line;
@@ -776,8 +767,7 @@ package body Switches_Chooser is
       procedure Set_Widget
         (Editor       : in out Root_Switches_Editor;
          Switch_Index : Integer;
-         Widget       : access Root_Widget_Record'Class)
-      is
+         Widget       : access Root_Widget_Record'Class) is
       begin
          Editor.Widgets (Switch_Index) := Root_Widget (Widget);
       end Set_Widget;
@@ -800,11 +790,10 @@ package body Switches_Chooser is
          Section : String;
          Status  : Boolean)
       is
-         Deps     : Dependency_Description_Access :=
-                      Editor.Config.Dependencies;
-         Tool     : Root_Switches_Editor_Access;
-         Changed  : Boolean := False;
-         Success  : Boolean := False;
+         Deps    : Dependency_Description_Access := Editor.Config.Dependencies;
+         Tool    : Root_Switches_Editor_Access;
+         Changed : Boolean := False;
+         Success : Boolean := False;
 
       begin
 
@@ -814,9 +803,7 @@ package body Switches_Chooser is
               and then Deps.Master_Status = Status
             then
                --  Find the slave tool
-               Tool := Get_Tool_By_Name
-                 (Editor,
-                  Deps.Slave_Tool.all);
+               Tool := Get_Tool_By_Name (Editor, Deps.Slave_Tool.all);
 
                if Tool /= null then
                   --  We give just a hint to the user that the switch
@@ -833,8 +820,8 @@ package body Switches_Chooser is
                         Switch  => Deps.Slave_Switch.all,
                         Success => Success);
                   elsif not Tool.Cmd_Line.Has_Switch
-                    (Section => Deps.Slave_Section.all,
-                     Switch  => Deps.Slave_Switch.all)
+                              (Section => Deps.Slave_Section.all,
+                               Switch  => Deps.Slave_Switch.all)
                   then
                      Append_Switch
                        (Tool.Cmd_Line,
@@ -895,12 +882,13 @@ package body Switches_Chooser is
          end if;
 
          --  Now check default values for all switches
-         for J in Editor.Config.Switches.First_Index
-                   .. Editor.Config.Switches.Last_Index
+         for J in
+           Editor.Config.Switches.First_Index
+           .. Editor.Config.Switches.Last_Index
          loop
             declare
                Sw    : Switch_Description :=
-                         Editor.Config.Switches.Element (J);
+                 Editor.Config.Switches.Element (J);
                Dep   : Default_Value_Dependency;
                State : Boolean;
 
@@ -910,13 +898,12 @@ package body Switches_Chooser is
                   --  We will modify it afterwards, depending on the states of
                   --  the modifiers.
                   State := Sw.Initial_State;
-                  Dep   := Sw.Dependencies;
+                  Dep := Sw.Dependencies;
 
                   while Dep /= null loop
                      declare
                         Master : constant Switch_Description :=
-                                   Editor.Config.Switches.Element
-                                     (Dep.Master_Switch);
+                          Editor.Config.Switches.Element (Dep.Master_Switch);
                      begin
                         if To_String (Master.Switch) = Switch
                           and then To_String (Master.Section) = Section
@@ -1101,7 +1088,7 @@ package body Switches_Chooser is
                               To_String (S.Section),
                               Parameter /= "");
 
-                        when Switch_Spin =>
+                        when Switch_Spin  =>
                            if Integer'Value (Parameter) /= S.Default then
                               Append_Switch
                                 (Editor.Cmd_Line,
@@ -1183,8 +1170,7 @@ package body Switches_Chooser is
       -----------------------------------
 
       procedure Update_Graphical_Command_Line
-        (Editor : in out Root_Switches_Editor)
-      is
+        (Editor : in out Root_Switches_Editor) is
       begin
          if Editor.Block then
             return;
@@ -1194,10 +1180,9 @@ package body Switches_Chooser is
             List     : String_List_Access :=
               Editor.Cmd_Line.To_String_List (Expanded => False);
             Cmd_Line : constant String :=
-              (if List /= null then
-                  Argument_List_To_String (List.all)
-               else
-                  "");
+              (if List /= null
+               then Argument_List_To_String (List.all)
+               else "");
          begin
             Editor.Block := True;
             Set_Graphical_Command_Line
@@ -1212,8 +1197,8 @@ package body Switches_Chooser is
       ---------
 
       function "="
-        (Editor : access Root_Switches_Editor;
-         Args   : GNAT.Strings.String_List) return Boolean
+        (Editor : access Root_Switches_Editor; Args : GNAT.Strings.String_List)
+         return Boolean
       is
          Cmd2         : Command_Line;
          Iter1, Iter2 : Command_Line_Iterator;
@@ -1231,7 +1216,7 @@ package body Switches_Chooser is
          --  (See G315-031)
 
          Start (Editor.Cmd_Line, Iter1, Expanded => True);
-         Start (Cmd2,            Iter2, Expanded => True);
+         Start (Cmd2, Iter2, Expanded => True);
          while Has_More (Iter1) loop
             if not Has_More (Iter2) then
                return False;
@@ -1257,9 +1242,7 @@ package body Switches_Chooser is
       -----------------------------
 
       procedure On_Command_Line_Changed
-        (Editor   : in out Root_Switches_Editor;
-         Cmd_Line : String)
-      is
+        (Editor : in out Root_Switches_Editor; Cmd_Line : String) is
       begin
          if Editor.Block then
             return;
@@ -1277,10 +1260,10 @@ package body Switches_Chooser is
       -----------------------------
 
       procedure On_Command_Line_Changed
-        (Editor   : in out Root_Switches_Editor'Class)
+        (Editor : in out Root_Switches_Editor'Class)
       is
          Switch              : Switch_Description_Vectors.Cursor :=
-                                 First (Editor.Config.Switches);
+           First (Editor.Config.Switches);
          Current_Radio_Group : Radio_Switch := -1;
 
          function Get_Param (S : Switch_Description) return String;
@@ -1288,9 +1271,10 @@ package body Switches_Chooser is
          --  the separator for S if needed
 
          function Get_Param (S : Switch_Description) return String is
-            Param : constant Argument := Editor.Cmd_Line.Get_Parameter
-              (Switch  => To_String (S.Switch),
-               Section => To_String (S.Section));
+            Param : constant Argument :=
+              Editor.Cmd_Line.Get_Parameter
+                (Switch  => To_String (S.Switch),
+                 Section => To_String (S.Section));
          begin
             if Param.Is_Set then
                return To_String (Param.Value);
@@ -1308,8 +1292,9 @@ package body Switches_Chooser is
 
          while Has_Element (Switch) loop
             declare
-               S : constant Switch_Description := Element (Switch);
-               Switch_Found : constant Boolean := Editor.Cmd_Line.Has_Switch
+               S            : constant Switch_Description := Element (Switch);
+               Switch_Found : constant Boolean :=
+                 Editor.Cmd_Line.Has_Switch
                    (Switch  => To_String (S.Switch),
                     Section => To_String (S.Section));
             begin
@@ -1354,7 +1339,7 @@ package body Switches_Chooser is
                            State);
                      end;
 
-                  when Switch_Spin =>
+                  when Switch_Spin  =>
                      if Editor.Widgets (To_Index (Switch)) /= null then
                         if Get_Param (S) = "" then
                            Set_Graphical_Widget
@@ -1401,8 +1386,8 @@ package body Switches_Chooser is
                   when Switch_Combo =>
                      if Editor.Widgets (To_Index (Switch)) /= null then
                         declare
-                           Combo : Combo_Switch_Vectors.Cursor
-                             := First (S.Entries);
+                           Combo : Combo_Switch_Vectors.Cursor :=
+                             First (S.Entries);
                            Param : constant String := Get_Param (S);
                         begin
                            while Has_Element (Combo) loop
@@ -1412,7 +1397,7 @@ package body Switches_Chooser is
                                  exit when
                                    (Param = ""
                                     and then
-                                       Element (Combo).Value = S.No_Digit)
+                                      Element (Combo).Value = S.No_Digit)
                                    or else Element (Combo).Value = Param;
                               end if;
                               Next (Combo);
@@ -1444,8 +1429,7 @@ package body Switches_Chooser is
       ----------------------
 
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Cmd_Line : String) is
+        (Editor : access Root_Switches_Editor; Cmd_Line : String) is
       begin
          Set_Graphical_Command_Line
            (Root_Switches_Editor'Class (Editor.all), Cmd_Line);
@@ -1473,8 +1457,7 @@ package body Switches_Chooser is
       ----------------
 
       function Get_Config
-        (Editor : access Root_Switches_Editor)
-         return Switches_Editor_Config is
+        (Editor : access Root_Switches_Editor) return Switches_Editor_Config is
       begin
          return Editor.Config;
       end Get_Config;
@@ -1557,8 +1540,7 @@ package body Switches_Chooser is
    -- Get_Combo_No_Switch --
    -------------------------
 
-   function Get_Combo_No_Switch
-     (Switch : Switch_Description) return String is
+   function Get_Combo_No_Switch (Switch : Switch_Description) return String is
    begin
       return To_String (Switch.No_Switch);
    end Get_Combo_No_Switch;
@@ -1567,8 +1549,7 @@ package body Switches_Chooser is
    -- Get_Combo_No_Digit --
    ------------------------
 
-   function Get_Combo_No_Digit
-     (Switch : Switch_Description) return String is
+   function Get_Combo_No_Digit (Switch : Switch_Description) return String is
    begin
       return To_String (Switch.No_Digit);
    end Get_Combo_No_Digit;
@@ -1587,8 +1568,7 @@ package body Switches_Chooser is
    -- Get_Switch_Unset --
    ----------------------
 
-   function Get_Switch_Unset
-     (Switch : Switch_Description) return String is
+   function Get_Switch_Unset (Switch : Switch_Description) return String is
    begin
       return To_String (Switch.Switch_Unset);
    end Get_Switch_Unset;
@@ -1597,8 +1577,7 @@ package body Switches_Chooser is
    -- Get_Default_State --
    -----------------------
 
-   function Get_Default_State
-     (Switch : Switch_Description) return Boolean is
+   function Get_Default_State (Switch : Switch_Description) return Boolean is
    begin
       return Switch.Default_State;
    end Get_Default_State;
@@ -1607,8 +1586,7 @@ package body Switches_Chooser is
    -- Get_Initial_State --
    -----------------------
 
-   function Get_Initial_State
-     (Switch : Switch_Description) return Boolean is
+   function Get_Initial_State (Switch : Switch_Description) return Boolean is
    begin
       return Switch.Initial_State;
    end Get_Initial_State;
@@ -1617,8 +1595,8 @@ package body Switches_Chooser is
    -- Is_Field_As_Directory --
    ---------------------------
 
-   function Is_Field_As_Directory
-     (Switch : Switch_Description) return Boolean is
+   function Is_Field_As_Directory (Switch : Switch_Description) return Boolean
+   is
    begin
       return Switch.As_Directory;
    end Is_Field_As_Directory;
@@ -1627,8 +1605,7 @@ package body Switches_Chooser is
    -- Is_Field_As_File --
    ----------------------
 
-   function Is_Field_As_File
-     (Switch : Switch_Description) return Boolean is
+   function Is_Field_As_File (Switch : Switch_Description) return Boolean is
    begin
       return Switch.As_File;
    end Is_Field_As_File;
@@ -1637,9 +1614,7 @@ package body Switches_Chooser is
    -- Get_Lines --
    ---------------
 
-   function Get_Lines
-     (Switches : Switches_Editor_Config)
-      return Positive is
+   function Get_Lines (Switches : Switches_Editor_Config) return Positive is
    begin
       return Switches.Lines;
    end Get_Lines;
@@ -1648,9 +1623,7 @@ package body Switches_Chooser is
    -- Get_Columns --
    -----------------
 
-   function Get_Columns
-     (Switches : Switches_Editor_Config)
-      return Positive is
+   function Get_Columns (Switches : Switches_Editor_Config) return Positive is
    begin
       return Switches.Columns;
    end Get_Columns;
@@ -1660,8 +1633,7 @@ package body Switches_Chooser is
    --------------------------
 
    function Is_Show_Command_Line
-     (Switches : Switches_Editor_Config)
-      return Boolean is
+     (Switches : Switches_Editor_Config) return Boolean is
    begin
       return Switches.Show_Command_Line;
    end Is_Show_Command_Line;
@@ -1671,8 +1643,7 @@ package body Switches_Chooser is
    ---------------------------
 
    function Get_Default_Separator
-     (Switches : Switches_Editor_Config)
-      return String is
+     (Switches : Switches_Editor_Config) return String is
    begin
       return To_String (Switches.Default_Separator);
    end Get_Default_Separator;
@@ -1681,9 +1652,7 @@ package body Switches_Chooser is
    -- Get_Sections --
    ------------------
 
-   function Get_Sections
-     (Switches : Switches_Editor_Config)
-      return String is
+   function Get_Sections (Switches : Switches_Editor_Config) return String is
    begin
       return To_String (Switches.Sections);
    end Get_Sections;
@@ -1693,8 +1662,7 @@ package body Switches_Chooser is
    ------------------------
 
    function Is_Scrolled_Window
-     (Switches : Switches_Editor_Config)
-      return Boolean is
+     (Switches : Switches_Editor_Config) return Boolean is
    begin
       return Switches.Scrolled_Window;
    end Is_Scrolled_Window;
@@ -1704,8 +1672,7 @@ package body Switches_Chooser is
    ---------------------
 
    function Get_Switch_Char
-     (Switches : Switches_Editor_Config)
-      return Character is
+     (Switches : Switches_Editor_Config) return Character is
    begin
       return Switches.Switch_Char;
    end Get_Switch_Char;
@@ -1715,8 +1682,7 @@ package body Switches_Chooser is
    -----------------------
 
    function Get_Frames_Length
-     (Switches : Switches_Editor_Config)
-      return Ada.Containers.Count_Type is
+     (Switches : Switches_Editor_Config) return Ada.Containers.Count_Type is
    begin
       return Length (Switches.Frames);
    end Get_Frames_Length;
@@ -1726,8 +1692,7 @@ package body Switches_Chooser is
    ------------------------
 
    function Get_Frames_Element
-     (Switches : Switches_Editor_Config;
-      Index : Natural)
+     (Switches : Switches_Editor_Config; Index : Natural)
       return Frame_Description is
    begin
       return Element (Switches.Frames, Index + First_Index (Switches.Frames));
@@ -1765,8 +1730,7 @@ package body Switches_Chooser is
    -------------------------
 
    function Get_Switches_Length
-     (Switches : Switches_Editor_Config)
-      return Ada.Containers.Count_Type is
+     (Switches : Switches_Editor_Config) return Ada.Containers.Count_Type is
    begin
       return Length (Switches.Switches);
    end Get_Switches_Length;
@@ -1776,12 +1740,11 @@ package body Switches_Chooser is
    --------------------------
 
    function Get_Switches_Element
-     (Switches : Switches_Editor_Config;
-      Index : Natural)
+     (Switches : Switches_Editor_Config; Index : Natural)
       return Switch_Description is
    begin
-      return Element (Switches.Switches,
-                      Index + First_Index (Switches.Switches));
+      return
+        Element (Switches.Switches, Index + First_Index (Switches.Switches));
    end Get_Switches_Element;
 
    --------------
@@ -1844,8 +1807,7 @@ package body Switches_Chooser is
 
    function Get_Name
      (Filter : not null access Switch_Filter_Description_Record) return String
-   is
-     (To_String (Filter.Name));
+   is (To_String (Filter.Name));
 
    ----------------
    -- Get_Switch --
@@ -1854,8 +1816,7 @@ package body Switches_Chooser is
    function Get_Switch
      (Config : not null access Switches_Editor_Config_Record'Class;
       Filter : not null Switch_Filter_Description) return Switch_Description
-   is
-      (Config.Switches (Filter.Switch));
+   is (Config.Switches (Filter.Switch));
 
    -----------
    -- Apply --
@@ -1878,14 +1839,14 @@ package body Switches_Chooser is
       ----------------------------------
 
       procedure Apply_Filter_On_Command_Line is
-         Switches_Config  : constant Switches_Editor_Config
-           := Switches_Editor_Config (Config);
+         Switches_Config  : constant Switches_Editor_Config :=
+           Switches_Editor_Config (Config);
          Default_Cmd_Line : Command_Lines.Command_Line;
          Cmd_Line         : Command_Lines.Command_Line;
          Config           : constant Command_Line_Configuration :=
-                              Switches_Config.Config;
+           Switches_Config.Config;
          Switch           : constant Switch_Description :=
-                              Get_Switch (Switches_Config, Filter);
+           Get_Switch (Switches_Config, Filter);
          Success          : Boolean := False;
       begin
          --  Set the command line configuration
@@ -1902,13 +1863,13 @@ package body Switches_Chooser is
 
             Remove_Switch
               (Cmd_Line,
-               Switch    => Get_Switch (Switch),
-               Section   => Get_Section (Switch),
-               Success   => Success);
+               Switch  => Get_Switch (Switch),
+               Section => Get_Section (Switch),
+               Success => Success);
          elsif not Has_Switch
-           (Cmd_Line,
-            Switch    => Get_Switch (Switch),
-            Section   => Get_Section (Switch))
+                     (Cmd_Line,
+                      Switch  => Get_Switch (Switch),
+                      Section => Get_Section (Switch))
            and then not (Before_Save and then Matches)
          then
             --  It it matches and if the target is not going to be saved, add
@@ -1927,9 +1888,9 @@ package body Switches_Chooser is
                Start (Default_Cmd_Line, Iter, Expanded => True);
 
                while Has_More (Iter) loop
-                  exit when Get_Switch (Switch) = Current_Switch (Iter)
-                    and then
-                      Get_Section (Switch) = Current_Section (Iter);
+                  exit when
+                    Get_Switch (Switch) = Current_Switch (Iter)
+                    and then Get_Section (Switch) = Current_Section (Iter);
 
                   Next (Iter);
                end loop;
@@ -1964,10 +1925,8 @@ package body Switches_Chooser is
    -- First --
    -----------
 
-   function First
-     (Config : Switches_Editor_Config) return Switch_Filter_Cursor
-   is
-      (Switch_Filter_Cursor'(C => Config.Filters.First));
+   function First (Config : Switches_Editor_Config) return Switch_Filter_Cursor
+   is (Switch_Filter_Cursor'(C => Config.Filters.First));
 
    ----------
    -- Next --
@@ -1982,10 +1941,8 @@ package body Switches_Chooser is
    -- Has_Element --
    -----------------
 
-   function Has_Element
-     (Cursor : Switch_Filter_Cursor) return Boolean
-   is
-     (Switch_Filter_Description_Vectors.Has_Element (Cursor.C));
+   function Has_Element (Cursor : Switch_Filter_Cursor) return Boolean
+   is (Switch_Filter_Description_Vectors.Has_Element (Cursor.C));
 
    -------------
    -- Element --
@@ -1993,7 +1950,6 @@ package body Switches_Chooser is
 
    function Element
      (Cursor : Switch_Filter_Cursor) return Switch_Filter_Description
-   is
-      (Switch_Filter_Description_Vectors.Element (Cursor.C));
+   is (Switch_Filter_Description_Vectors.Element (Cursor.C));
 
 end Switches_Chooser;

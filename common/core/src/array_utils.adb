@@ -28,8 +28,7 @@ package body Array_Utils is
    -- Map_Gen --
    -------------
 
-   function Map_Gen (In_Array : Array_Type) return Out_Array_Type
-   is
+   function Map_Gen (In_Array : Array_Type) return Out_Array_Type is
    begin
       return Ret_Array : Out_Array_Type (In_Array'Range) do
          for J in In_Array'Range loop
@@ -43,12 +42,12 @@ package body Array_Utils is
    ---------
 
    function Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Out_Type) return Out_Array_Type
+     (In_Array  : Array_Type;
+      Transform : access function (In_Element : Element_Type) return Out_Type)
+      return Out_Array_Type
    is
-      function Map_Gen_Internal
-      is new Map_Gen (Out_Type, Out_Array_Type, Transform.all);
+      function Map_Gen_Internal is new
+        Map_Gen (Out_Type, Out_Array_Type, Transform.all);
    begin
       return Map_Gen_Internal (In_Array);
    end Map;
@@ -59,8 +58,8 @@ package body Array_Utils is
 
    function Filter
      (In_Array : Array_Type;
-      Pred : access function
-        (E : Element_Type) return Boolean) return Array_Type
+      Pred     : access function (E : Element_Type) return Boolean)
+      return Array_Type
    is
       function Filter_Internal is new Filter_Gen (Pred.all);
    begin
@@ -73,9 +72,8 @@ package body Array_Utils is
 
    function Contains
      (In_Array : Array_Type;
-      Pred : access function (El : Element_Type) return Boolean)
-      return Boolean
-   is
+      Pred     : access function (El : Element_Type) return Boolean)
+      return Boolean is
    begin
       for E of In_Array loop
          if Pred (E) then
@@ -89,8 +87,7 @@ package body Array_Utils is
    -- Contains --
    --------------
 
-   function Contains
-     (In_Array : Array_Type; El : Element_Type) return Boolean
+   function Contains (In_Array : Array_Type; El : Element_Type) return Boolean
    is
    begin
       for E of In_Array loop
@@ -105,10 +102,8 @@ package body Array_Utils is
    -- Unique_Gen --
    ----------------
 
-   function Unique_Gen
-     (In_Array : Array_Type) return Array_Type
-   is
-      Keep : Bool_Array (In_Array'Range) := (others => True);
+   function Unique_Gen (In_Array : Array_Type) return Array_Type is
+      Keep  : Bool_Array (In_Array'Range) := (others => True);
       Count : Natural := 0;
    begin
       for I in In_Array'Range loop
@@ -125,8 +120,9 @@ package body Array_Utils is
          Count := Count + 1;
       end loop;
 
-      return Ret_Array : Array_Type (In_Array'First
-                                     .. In_Array'First + (Count - 1))
+      return
+         Ret_Array :
+           Array_Type (In_Array'First .. In_Array'First + (Count - 1))
       do
          Count := In_Array'First;
 
@@ -141,15 +137,14 @@ package body Array_Utils is
 
    function Unique_Inst is new Unique_Gen ("=" => "=");
 
-   function Unique
-     (In_Array : Array_Type) return Array_Type renames Unique_Inst;
+   function Unique (In_Array : Array_Type) return Array_Type
+   renames Unique_Inst;
 
    ----------------
    -- Filter_Gen --
    ----------------
 
-   function Filter_Gen (In_Array : Array_Type) return Array_Type
-   is
+   function Filter_Gen (In_Array : Array_Type) return Array_Type is
       Pred_Array : Bool_Array (In_Array'Range);
       Keep_Count : Natural := 0;
    begin
@@ -164,8 +159,9 @@ package body Array_Utils is
          return Empty_Array;
       end if;
 
-      return Ret_Array : Array_Type (In_Array'First
-                                     .. In_Array'First + (Keep_Count - 1))
+      return
+         Ret_Array :
+           Array_Type (In_Array'First .. In_Array'First + (Keep_Count - 1))
       do
          Keep_Count := In_Array'First;
 
@@ -182,10 +178,9 @@ package body Array_Utils is
    -- Id_Flat_Map_Gen --
    ---------------------
 
-   function Id_Flat_Map_Gen (In_Array : Array_Type) return Array_Type
-   is
-      function Flat_Map_Internal
-      is new Flat_Map_Gen (Element_Type, Index_Type, Array_Type, Transform);
+   function Id_Flat_Map_Gen (In_Array : Array_Type) return Array_Type is
+      function Flat_Map_Internal is new
+        Flat_Map_Gen (Element_Type, Index_Type, Array_Type, Transform);
    begin
       return Flat_Map_Internal (In_Array);
    end Id_Flat_Map_Gen;
@@ -195,9 +190,9 @@ package body Array_Utils is
    -----------------
 
    function Id_Flat_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Array_Type)
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Array_Type)
       return Array_Type
    is
       function Id_Flat_Map_Internal is new Id_Flat_Map_Gen (Transform.all);
@@ -209,14 +204,14 @@ package body Array_Utils is
    -- Flat_Map_Gen --
    ------------------
 
-   function Flat_Map_Gen (In_Array : Array_Type) return Fun_Ret_Array_Type
-   is
+   function Flat_Map_Gen (In_Array : Array_Type) return Fun_Ret_Array_Type is
       subtype Empty_Ret_Type is Fun_Ret_Array_Type (1 .. 0);
    begin
       if In_Array'Length = 0 then
          return Empty_Ret_Type'(others => <>);
       else
-         return Transform (In_Array (In_Array'First))
+         return
+           Transform (In_Array (In_Array'First))
            & Flat_Map_Gen (In_Array (In_Array'First + 1 .. In_Array'Last));
       end if;
    end Flat_Map_Gen;
@@ -226,14 +221,13 @@ package body Array_Utils is
    --------------
 
    function Flat_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Fun_Ret_Array_Type)
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Fun_Ret_Array_Type)
       return Fun_Ret_Array_Type
    is
-      function Flat_Map_Internal
-      is new Flat_Map_Gen (F_Type, Index_Type,
-                           Fun_Ret_Array_Type, Transform.all);
+      function Flat_Map_Internal is new
+        Flat_Map_Gen (F_Type, Index_Type, Fun_Ret_Array_Type, Transform.all);
    begin
       return Flat_Map_Internal (In_Array);
    end Flat_Map;
@@ -242,10 +236,9 @@ package body Array_Utils is
    -- Id_Map_Gen --
    ----------------
 
-   function Id_Map_Gen (In_Array : Array_Type) return Array_Type
-   is
-      function Id_Map_Internal
-      is new Map_Gen (Element_Type, Array_Type, Transform);
+   function Id_Map_Gen (In_Array : Array_Type) return Array_Type is
+      function Id_Map_Internal is new
+        Map_Gen (Element_Type, Array_Type, Transform);
    begin
       return Id_Map_Internal (In_Array);
    end Id_Map_Gen;
@@ -255,9 +248,10 @@ package body Array_Utils is
    ------------
 
    function Id_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Element_Type) return Array_Type
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Element_Type)
+      return Array_Type
    is
       function Id_Map_Internal is new Id_Map_Gen (Transform.all);
    begin
@@ -266,19 +260,19 @@ package body Array_Utils is
 
    generic
       with function Predicate (In_Element : Element_Type) return Boolean;
-   function Find_Internal (In_Array : Array_Type;
-                           Rev : Boolean := False;
-                           Ret : out Element_Type) return Natural;
+   function Find_Internal
+     (In_Array : Array_Type; Rev : Boolean := False; Ret : out Element_Type)
+      return Natural;
 
    ----------
    -- Find --
    ----------
 
-   function Find (In_Array : Array_Type;
-                  Predicate :
-                  access function (El : Element_Type) return Boolean;
-                  Rev : Boolean := False;
-                  Ret : out Element_Type) return Boolean
+   function Find
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False;
+      Ret       : out Element_Type) return Boolean
    is
       function F is new Find_Internal (Predicate.all);
    begin
@@ -289,10 +283,9 @@ package body Array_Utils is
    -- Find_Internal --
    -------------------
 
-   function Find_Internal (In_Array : Array_Type;
-                           Rev : Boolean := False;
-                           Ret : out Element_Type) return Natural
-   is
+   function Find_Internal
+     (In_Array : Array_Type; Rev : Boolean := False; Ret : out Element_Type)
+      return Natural is
    begin
       if Rev then
          for Idx in In_Array'Range loop
@@ -318,15 +311,14 @@ package body Array_Utils is
    ----------
 
    function Create (El : Element_Type) return Option_Type
-   is
-     (Option_Type'(Has_Element => True, Element => El));
+   is (Option_Type'(Has_Element => True, Element => El));
 
    --------------
    -- Find_Gen --
    --------------
 
-   function Find_Gen (In_Array : Array_Type;
-                      Rev : Boolean := False) return Option_Type
+   function Find_Gen
+     (In_Array : Array_Type; Rev : Boolean := False) return Option_Type
    is
       function F is new Find_Internal (Predicate);
       El : Element_Type;
@@ -343,10 +335,9 @@ package body Array_Utils is
    ----------
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
-      Rev : Boolean := False) return Natural
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False) return Natural
    is
       function F is new Find_Internal (Predicate.all);
       El : Element_Type;
@@ -359,10 +350,9 @@ package body Array_Utils is
    ----------
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
-      Rev : Boolean := False) return Option_Type
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False) return Option_Type
    is
       function F is new Find_Internal (Predicate.all);
       El : Element_Type;
@@ -378,9 +368,10 @@ package body Array_Utils is
    -- Find_Gen_Or --
    -----------------
 
-   function Find_Gen_Or (In_Array : Array_Type;
-                         Val_If_Not_Found : Element_Type;
-                         Rev : Boolean := False) return Element_Type
+   function Find_Gen_Or
+     (In_Array         : Array_Type;
+      Val_If_Not_Found : Element_Type;
+      Rev              : Boolean := False) return Element_Type
    is
       function F is new Find_Internal (Predicate);
       El : Element_Type;
@@ -397,11 +388,10 @@ package body Array_Utils is
    ----------
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
+     (In_Array         : Array_Type;
+      Predicate        : access function (El : Element_Type) return Boolean;
       Val_If_Not_Found : Element_Type;
-      Rev : Boolean := False) return Element_Type
+      Rev              : Boolean := False) return Element_Type
    is
       function F is new Find_Gen_Or (Predicate.all);
    begin
@@ -413,8 +403,11 @@ package body Array_Utils is
    --------------
 
    function Sort_Gen (In_Array : Array_Type) return Array_Type is
-      procedure Sort is new Ada.Containers.Generic_Array_Sort
-        (Index_Type, Element_Type, Array_Type);
+      procedure Sort is new
+        Ada.Containers.Generic_Array_Sort
+          (Index_Type,
+           Element_Type,
+           Array_Type);
    begin
       return Res : Array_Type (In_Array'Range) do
          Res := In_Array;
@@ -426,10 +419,12 @@ package body Array_Utils is
    -- In_Place_Sort_Gen --
    -----------------------
 
-   procedure In_Place_Sort_Gen (In_Out_Array : in out Array_Type)
-   is
-      procedure Sort is new Ada.Containers.Generic_Array_Sort
-        (Index_Type, Element_Type, Array_Type);
+   procedure In_Place_Sort_Gen (In_Out_Array : in out Array_Type) is
+      procedure Sort is new
+        Ada.Containers.Generic_Array_Sort
+          (Index_Type,
+           Element_Type,
+           Array_Type);
    begin
       Sort (In_Out_Array);
    end In_Place_Sort_Gen;

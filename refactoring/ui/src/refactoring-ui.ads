@@ -23,8 +23,8 @@ with Xref;
 
 package Refactoring.UI is
 
-   package Location_Arrays is new Ada.Containers.Doubly_Linked_Lists
-     (Xref.General_Location, Xref."=");
+   package Location_Arrays is new
+     Ada.Containers.Doubly_Linked_Lists (Xref.General_Location, Xref."=");
    --  Handling of dynamic arrays
 
    package Source_File_Sets renames Basic_Types.File_Sets;
@@ -51,8 +51,7 @@ package Refactoring.UI is
    --  Execute_Label is the label for the OK button
 
    function Create_File_List
-     (List : Source_File_Set)
-      return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+     (List : Source_File_Set) return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Create a list showing all the files in List
 
 end Refactoring.UI;

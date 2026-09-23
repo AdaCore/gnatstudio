@@ -32,32 +32,30 @@ package body Src_Printing.Command_Printer is
    -- Print --
    -----------
 
-   overriding procedure Print
-     (This       : Printer;
-      Editor     : Src_Editor_Box.Source_Editor_Box;
-      From       : Editable_Line_Type := 1;
-      To         : Editable_Line_Type := Editable_Line_Type'Last)
+   overriding
+   procedure Print
+     (This   : Printer;
+      Editor : Src_Editor_Box.Source_Editor_Box;
+      From   : Editable_Line_Type := 1;
+      To     : Editable_Line_Type := Editable_Line_Type'Last)
    is
       pragma Unreferenced (From, To);
 
       Print_Helper : constant String :=
         Ada.Strings.Unbounded.To_String (This.Command);
 
-      Kernel  : constant GPS.Kernel.Kernel_Handle := Editor.Get_Kernel;
-      Child   : constant Gtkada.MDI.MDI_Child :=
+      Kernel    : constant GPS.Kernel.Kernel_Handle := Editor.Get_Kernel;
+      Child     : constant Gtkada.MDI.MDI_Child :=
         Src_Editor_Module.Find_Current_Editor (Kernel);
       Success   : Boolean;
       Scheduled : Scheduled_Command_Access;
       CL        : Arg_List;
    begin
       if GPS.Kernel.MDI.Save_MDI_Children
-        (Kernel,
-         Children => (1 => Child),
-         Force    => Auto_Save.Get_Pref)
+           (Kernel, Children => (1 => Child), Force => Auto_Save.Get_Pref)
       then
          CL := Parse_String (Print_Helper, Separate_Args);
-         Append_Argument
-           (CL, +Full_Name (Editor.Get_Filename), One_Arg);
+         Append_Argument (CL, +Full_Name (Editor.Get_Filename), One_Arg);
 
          Launch_Process
            (Kernel    => Kernel,

@@ -40,15 +40,13 @@ package Password_Manager is
    --  User_Interface_Tools)
 
    function Get_Passphrase
-     (Key_Id       : String;
-      Force_Asking : Boolean := False) return String;
+     (Key_Id : String; Force_Asking : Boolean := False) return String;
    --  Same as above, for a passphrase.
    --  Raises User_Interface_Not_Set if UI was not set previously (see package
    --  User_Interface_Tools)
 
    function Get_Tool_Password
-     (Tool         : String;
-      Force_Asking : Boolean := False) return String;
+     (Tool : String; Force_Asking : Boolean := False) return String;
    --  Same as above, for the specified tool
    --  Raises User_Interface_Not_Set if UI was not set previously (see package
    --  User_Interface_Tools)

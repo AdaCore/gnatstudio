@@ -21,22 +21,22 @@ with Basic_Types;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk.Event;         use Gdk.Event;
-with Glib;              use Glib;
-with Glib.Object;       use Glib.Object;
-with Glib.Values;       use Glib.Values;
-with Gtk.Tree_Model;    use Gtk.Tree_Model;
-with Gtk.Tree_Store;    use Gtk.Tree_Store;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtkada.MDI;        use Gtkada.MDI;
-with Gtkada.Tree_View;  use Gtkada.Tree_View;
+with Gdk.Event;        use Gdk.Event;
+with Glib;             use Glib;
+with Glib.Object;      use Glib.Object;
+with Glib.Values;      use Glib.Values;
+with Gtk.Tree_Model;   use Gtk.Tree_Model;
+with Gtk.Tree_Store;   use Gtk.Tree_Store;
+with Gtk.Widget;       use Gtk.Widget;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GPS.Kernel;        use GPS.Kernel;
-with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;    use GPS.Kernel.MDI;
-with GPS.VCS;           use GPS.VCS;
-with Language;          use Language;
-with Tooltips;          use Tooltips;
+with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
+with GPS.VCS;          use GPS.VCS;
+with Language;         use Language;
+with Tooltips;         use Tooltips;
 
 package Project_Explorers_Common is
 
@@ -44,11 +44,12 @@ package Project_Explorers_Common is
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with private;
    type MDI_Explorer_Child is access all MDI_Explorer_Child_Record'Class;
 
-   overriding function Dnd_Data
+   overriding
+   function Dnd_Data
      (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
       return Gtkada.MDI.MDI_Child;
-   overriding procedure Child_Drag_Finished
-     (Child  : access MDI_Explorer_Child_Record);
+   overriding
+   procedure Child_Drag_Finished (Child : access MDI_Explorer_Child_Record);
    --  See inherited documentation
 
    type Base_Explorer_Tree_Record is new Tree_View_Record with record
@@ -71,10 +72,10 @@ package Project_Explorers_Common is
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
 
-   Icon_Column          : constant := 0;
-   Display_Name_Column  : constant := 1;
-   File_Column          : constant := 2;
-   Node_Type_Column     : constant := 3;
+   Icon_Column         : constant := 0;
+   Display_Name_Column : constant := 1;
+   File_Column         : constant := 2;
+   Node_Type_Column    : constant := 3;
 
    ----------------------
    -- Node definitions --
@@ -93,12 +94,12 @@ package Project_Explorers_Common is
       Specification_File_Node,
       Body_File_Node,
       Other_File_Node);
-   subtype Project_Node_Types
-     is Node_Types range Project_Node .. Modified_Project_Node;
-   subtype Directory_Node_Types
-     is Node_Types range Directory_Node .. Exec_Directory_Node;
-   subtype File_Node_Types
-     is Node_Types range Specification_File_Node .. Other_File_Node;
+   subtype Project_Node_Types is
+     Node_Types range Project_Node .. Modified_Project_Node;
+   subtype Directory_Node_Types is
+     Node_Types range Directory_Node .. Exec_Directory_Node;
+   subtype File_Node_Types is
+     Node_Types range Specification_File_Node .. Other_File_Node;
    --  The kind of nodes one might find in the tree
 
    function Stock_For_Node
@@ -137,8 +138,7 @@ package Project_Explorers_Common is
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Dir       : Gtk_Tree_Iter;
       File      : Virtual_File;
-      Icon_Name : String := "gps-emblem-file-unmodified")
-      return Gtk_Tree_Iter;
+      Icon_Name : String := "gps-emblem-file-unmodified") return Gtk_Tree_Iter;
    --  Create a file node at the end of the children of Dir
 
    procedure Append_Runtime_Info
@@ -147,12 +147,11 @@ package Project_Explorers_Common is
    --  Add runtime information
 
    function Get_Node_Type
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Node_Types;
+     (Model : Gtk_Tree_Store; Node : Gtk_Tree_Iter) return Node_Types;
    function Get_Node_Type
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return Node_Types
-     is (Get_Node_Type (Self.Model, Node));
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return Node_Types
+   is (Get_Node_Type (Self.Model, Node));
    --  Return the type of Node
 
    procedure Set_Node_Type
@@ -163,18 +162,18 @@ package Project_Explorers_Common is
    --  Set the Node type and the pixmap accordingly
 
    function Get_Directory_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the directory to which Node belongs.
 
    function Get_File_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file containing Node
 
    function Get_Icon_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return String;
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return String;
    --  Return the icon of Node
 
    function Get_Project_From_Node
@@ -200,29 +199,32 @@ package Project_Explorers_Common is
      (Self : not null access Base_Explorer_Tree_Record'Class;
       Row  : Gtk_Tree_Iter) return Node_Id;
    function Hash (Self : Node_Id) return Ada.Containers.Hash_Type;
-   package Explorer_Expansion is new Expansion_Support
-     (Tree_Record => Base_Explorer_Tree_Record,
-      Id          => Node_Id,
-      Get_Id      => Get_Id,
-      Hash        => Hash);
+   package Explorer_Expansion is new
+     Expansion_Support
+       (Tree_Record => Base_Explorer_Tree_Record,
+        Id          => Node_Id,
+        Get_Id      => Get_Id,
+        Hash        => Hash);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Explorer_Expansion.Detached_Model'Class,
-      Explorer_Expansion.Detached_Model_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Explorer_Expansion.Detached_Model'Class,
+        Explorer_Expansion.Detached_Model_Access);
 
    ---------
    -- VCS --
    ---------
 
    type On_VCS_Status_Changed is new Vcs_File_Status_Hooks_Function with record
-      Tree     : access Base_Explorer_Tree_Record'Class;
+      Tree : access Base_Explorer_Tree_Record'Class;
    end record;
-   overriding procedure Execute
-     (Self          : On_VCS_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : Basic_Types.File_Sets.Set;
-      Props         : VCS_File_Properties);
+   overriding
+   procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : Basic_Types.File_Sets.Set;
+      Props  : VCS_File_Properties);
    --  Should be set for the Vcs_File_Status_Changed_Hook.
    --  It will automatically update the icons for all displayed files in the
    --  tree
@@ -236,10 +238,11 @@ package Project_Explorers_Common is
    end record;
    type Explorer_Tooltip_Handler_Access is
      access all Explorer_Tooltip_Handler'Class;
-   overriding function Create_Contents
-     (Self     : not null access Explorer_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   overriding
+   function Create_Contents
+     (Self   : not null access Explorer_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
 
    ----------
@@ -270,15 +273,15 @@ package Project_Explorers_Common is
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
    function On_Button_Press
-     (Child     : access MDI_Explorer_Child_Record'Class;
-      Tree      : not null access Base_Explorer_Tree_Record'Class;
-      Event     : Gdk_Event_Button) return Boolean;
+     (Child : access MDI_Explorer_Child_Record'Class;
+      Tree  : not null access Base_Explorer_Tree_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
    --  If the Event is a button click, expand the node or jump to the
    --  location accordingly, and return whether the event should be propagated.
 
    function On_Key_Press
-     (Tree   : not null access Base_Explorer_Tree_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Tree  : not null access Base_Explorer_Tree_Record'Class;
+      Event : Gdk_Event) return Boolean;
    --  React to key press event on the tree
 
    procedure Context_Factory
@@ -300,19 +303,18 @@ package Project_Explorers_Common is
 
 private
 
-   type MDI_Explorer_Child_Record is
-     new GPS.Kernel.MDI.GPS_MDI_Child_Record with
-      record
-         Kernel        : GPS.Kernel.Kernel_Handle;
-         Dnd_From_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-         Dnd_From_Project : GNATCOLL.Projects.Project_Type :=
-           GNATCOLL.Projects.No_Project;
-         --  The file from which we started a Dnd operation
-      end record;
+   type MDI_Explorer_Child_Record is new GPS.Kernel.MDI.GPS_MDI_Child_Record
+   with record
+      Kernel           : GPS.Kernel.Kernel_Handle;
+      Dnd_From_File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Dnd_From_Project : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      --  The file from which we started a Dnd operation
+   end record;
 
    function Get_File_Node_Type
-     (Self   : not null access Base_Explorer_Tree_Record'Class;
-      File   : Virtual_File) return Node_Types;
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      File : Virtual_File) return Node_Types;
    --  Checks whether file is a specification/body/other file.
 
 end Project_Explorers_Common;

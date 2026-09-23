@@ -19,38 +19,38 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
 with Gdk.Event;
 
-with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
-with Glib;                     use Glib;
-with Glib.Convert;             use Glib.Convert;
-with Glib.Object;              use Glib.Object;
+with Glib;         use Glib;
+with Glib.Convert; use Glib.Convert;
+with Glib.Object;  use Glib.Object;
 with Glib.Values;
 
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Button;               use Gtk.Button;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 with Gtk.Editable;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Info_Bar;             use Gtk.Info_Bar;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Flow_Box_Child; use Gtk.Flow_Box_Child;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Handlers;       use Gtk.Handlers;
+with Gtk.Info_Bar;       use Gtk.Info_Bar;
 with Gtk.Menu;
-with Gtk.Message_Dialog;       use Gtk.Message_Dialog;
-with Gtk.Style_Context;        use Gtk.Style_Context;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
-with Gtkada.MDI;               use Gtkada.MDI;
+with Gtk.Message_Dialog; use Gtk.Message_Dialog;
+with Gtk.Style_Context;  use Gtk.Style_Context;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Dialogs;     use Gtkada.Dialogs;
+with Gtkada.MDI;         use Gtkada.MDI;
 
 with Commands.Interactive;     use Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
@@ -94,9 +94,10 @@ package body Scenario_Views is
    end record;
    type Variable_Combo_Box is access all Variable_Combo_Box_Record'Class;
 
-   package Variable_Combo_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type    => Variable_Combo_Box,
-      "="             => "=");
+   package Variable_Combo_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => Variable_Combo_Box,
+        "="          => "=");
    use Variable_Combo_Lists;
 
    function On_Variable_Combo_Tooltip_Query
@@ -110,14 +111,12 @@ package body Scenario_Views is
    --  current value.
 
    function Get_Current_Value
-     (Combo  : not null access Variable_Combo_Box_Record'Class)
-      return String;
+     (Combo : not null access Variable_Combo_Box_Record'Class) return String;
    --  Return the current value in the project tree of the scenario variable
    --  associated with the given combo.
 
    function Has_Valid_Value
-     (Combo : not null access Variable_Combo_Box_Record'Class)
-      return Boolean;
+     (Combo : not null access Variable_Combo_Box_Record'Class) return Boolean;
    --  Return True if the combo's active text is a valid value for the
    --  associated variable or False otherwise.
 
@@ -133,8 +132,10 @@ package body Scenario_Views is
    end record;
 
    type Scenario_View_Module is access all Scenario_View_Module_Record'Class;
-   overriding procedure Destroy (Self : in out Scenario_View_Module_Record);
-   overriding procedure Customize
+   overriding
+   procedure Destroy (Self : in out Scenario_View_Module_Record);
+   overriding
+   procedure Customize
      (Module : access Scenario_View_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -164,43 +165,45 @@ package body Scenario_Views is
       --  submitted when clicking on the Apply button
    end record;
 
-   overriding procedure Create_Menu
-     (View    : not null access Scenario_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access Scenario_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
-     (View    : access Scenario_View_Record'Class)
-      return Gtk_Widget;
+     (View : access Scenario_View_Record'Class) return Gtk_Widget;
    --  Create a new scenario view associated with Manager.
    --  The view is automatically refreshed every time the project view in
    --  the manager changes.
    --  Returns the focus widget in the view.
 
-   package Scenario_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Scenario_View",
-      View_Name          => -"Scenario",
-      Formal_View_Record => Scenario_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Left);
+   package Scenario_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Scenario_View",
+        View_Name          => -"Scenario",
+        Formal_View_Record => Scenario_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Position_Left);
    use Scenario_Views;
    subtype Scenario_View is Scenario_Views.View_Access;
 
    type On_Refresh is new Simple_Hooks_Function with record
       View : access Scenario_View_Record'Class;
    end record;
-   overriding procedure Execute
-     (Self   : On_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self : On_Refresh; Kernel : not null access Kernel_Handle_Record'Class);
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
    type On_Build_Mode_Changed is new String_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Build_Mode_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : String);
@@ -210,7 +213,8 @@ package body Scenario_Views is
    --  Force a refresh of the view when some settings have changed.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -220,23 +224,26 @@ package body Scenario_Views is
    Show_Untyped_Variables : Boolean_Preference;
 
    type Command_Validate_Variable is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Command_Validate_Variable;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Apply the variable modifications
 
-   type Command_Revert_Modification is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Command_Revert_Modification is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Command_Revert_Modification;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Revert the variable modifications
 
-   package Variable_Combo_Callbacks is new Gtk.Handlers.User_Callback
-     (Widget_Type => Variable_Combo_Box_Record,
-      User_Type   => Scenario_View);
+   package Variable_Combo_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Variable_Combo_Box_Record,
+        User_Type   => Scenario_View);
 
    function Sort_Scenario_By_Name
      (C1 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class;
@@ -275,25 +282,27 @@ package body Scenario_Views is
    --  Discard all the values entered in the Scenario view.
 
    type On_Compilation_Starting is new Compilation_Hooks_Function
-      with null record;
-   overriding function Execute
-      (Self            : On_Compilation_Starting;
-       Kernel          : not null access Kernel_Handle_Record'Class;
-       Category        : String;
-       Quiet           : Boolean;
-       Shadow          : Boolean;
-       Background      : Boolean;
-       Preserve_Output : Boolean) return Boolean;
+   with null record;
+   overriding
+   function Execute
+     (Self            : On_Compilation_Starting;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Category        : String;
+      Quiet           : Boolean;
+      Shadow          : Boolean;
+      Background      : Boolean;
+      Preserve_Output : Boolean) return Boolean;
    --  Called when a build target is starting.
    --  Used to display a confirmation dialog asking the user if he wants to
    --  apply his changes regarding scenario variables before pursuing.
 
-   package External_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => String,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package External_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => String,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    function Get_Aggregate_Externals
      (Kernel : not null access Kernel_Handle_Record'Class)
@@ -304,7 +313,8 @@ package body Scenario_Views is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : in out Scenario_View_Module_Record) is
+   overriding
+   procedure Destroy (Self : in out Scenario_View_Module_Record) is
    begin
       Self.Modes.Clear;
    end Destroy;
@@ -313,7 +323,8 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -343,14 +354,15 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self            : On_Compilation_Starting;
-       Kernel          : not null access Kernel_Handle_Record'Class;
-       Category        : String;
-       Quiet           : Boolean;
-       Shadow          : Boolean;
-       Background      : Boolean;
-       Preserve_Output : Boolean) return Boolean
+   overriding
+   function Execute
+     (Self            : On_Compilation_Starting;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Category        : String;
+      Quiet           : Boolean;
+      Shadow          : Boolean;
+      Background      : Boolean;
+      Preserve_Output : Boolean) return Boolean
    is
       pragma Unreferenced (Self);
       View : constant Scenario_View :=
@@ -360,14 +372,15 @@ package body Scenario_Views is
          declare
             Response : Message_Dialog_Buttons;
          begin
-            Response := GPS_Message_Dialog
-              (Msg         =>
-                 "Your changes regarding scenario variables have not been "
-               & "applied yet. Do you want to apply them before pursuing your "
-               & "action?",
-               Buttons     => Button_Yes or Button_No,
-               Dialog_Type => Confirmation,
-               Parent      => Kernel.Get_Main_Window);
+            Response :=
+              GPS_Message_Dialog
+                (Msg         =>
+                   "Your changes regarding scenario variables have not been "
+                   & "applied yet. Do you want to apply them before pursuing your "
+                   & "action?",
+                 Buttons     => Button_Yes or Button_No,
+                 Dialog_Type => Confirmation,
+                 Parent      => Kernel.Get_Main_Window);
 
             if Response = Button_Yes then
                On_Apply_Button_Clicked (View);
@@ -392,8 +405,9 @@ package body Scenario_Views is
    is
       pragma Unreferenced (X, Y, Keyboard_Mode);
 
-      Combo : constant Variable_Combo_Box := Variable_Combo_Box (Self);
-      Value : constant String := Combo.Get_Current_Value;
+      Combo          : constant Variable_Combo_Box :=
+        Variable_Combo_Box (Self);
+      Value          : constant String := Combo.Get_Current_Value;
       Actual_Tooltip : constant Gtk_Tooltip := Gtk_Tooltip (Tooltip);
    begin
       Actual_Tooltip.Set_Text (Value);
@@ -406,8 +420,7 @@ package body Scenario_Views is
    -----------------------
 
    function Get_Current_Value
-     (Combo  : not null access Variable_Combo_Box_Record'Class)
-      return String
+     (Combo : not null access Variable_Combo_Box_Record'Class) return String
    is
       Tree     : constant Project_Tree_Access := Combo.Kernel.Registry.Tree;
       Var_Name : constant String := To_String (Combo.Var_Name);
@@ -419,16 +432,14 @@ package body Scenario_Views is
       if Combo.Untyped then
          declare
             Untyped_Var : constant Untyped_Variable :=
-                            Tree.Get_Untyped_Variable
-                              (Var_Name);
+              Tree.Get_Untyped_Variable (Var_Name);
          begin
             return Value (Untyped_Var);
          end;
       else
          declare
             Typed_Var : constant Scenario_Variable :=
-                          Tree.Scenario_Variables
-                            (Var_Name);
+              Tree.Scenario_Variables (Var_Name);
          begin
             return Value (Typed_Var);
          end;
@@ -440,8 +451,7 @@ package body Scenario_Views is
    ---------------------
 
    function Has_Valid_Value
-     (Combo : not null access Variable_Combo_Box_Record'Class)
-      return Boolean
+     (Combo : not null access Variable_Combo_Box_Record'Class) return Boolean
    is
       Tree  : constant Project_Tree_Access := Combo.Kernel.Registry.Tree;
       Value : constant String := Combo.Get_Active_Text;
@@ -460,14 +470,14 @@ package body Scenario_Views is
          declare
 
             Var             : constant Scenario_Variable :=
-                                Tree.Scenario_Variables
-                                  (To_String (Combo.Var_Name));
+              Tree.Scenario_Variables (To_String (Combo.Var_Name));
             Possible_Values : GNAT.Strings.String_List :=
-                                Tree.Possible_Values_Of (Var);
+              Tree.Possible_Values_Of (Var);
          begin
-            return Is_Valid : constant Boolean :=
-              (for some Possible_Value of Possible_Values =>
-                 Value = Possible_Value.all)
+            return
+               Is_Valid : constant Boolean :=
+                 (for some Possible_Value of Possible_Values =>
+                    Value = Possible_Value.all)
             do
                GNATCOLL.Utils.Free (Possible_Values);
             end return;
@@ -490,25 +500,21 @@ package body Scenario_Views is
          return;
       end if;
 
-      Trace (Me, "Set value of '" & Var_Name & "' to '"
-             & Value & "'");
+      Trace (Me, "Set value of '" & Var_Name & "' to '" & Value & "'");
 
       if Combo.Untyped then
          declare
             Untyped_Var : Untyped_Variable :=
-                            Tree.Get_Untyped_Variable
-                              (Var_Name);
+              Tree.Get_Untyped_Variable (Var_Name);
          begin
             Set_Value (Untyped_Var, Value);
             Tree.Change_Environment
-              (Vars  => All_Scenarios,
-               UVars => (1 => Untyped_Var));
+              (Vars => All_Scenarios, UVars => (1 => Untyped_Var));
          end;
       else
          declare
             Typed_Var : Scenario_Variable :=
-                          Tree.Scenario_Variables
-                            (Var_Name);
+              Tree.Scenario_Variables (Var_Name);
          begin
             Set_Value (Typed_Var, Value);
             Tree.Change_Environment (Vars => (1 => Typed_Var));
@@ -521,8 +527,7 @@ package body Scenario_Views is
    ----------------
 
    function Initialize
-     (View    : access Scenario_View_Record'Class)
-      return Gtk_Widget
+     (View : access Scenario_View_Record'Class) return Gtk_Widget
    is
       Button : Gtk_Button;
       Group  : Dialog_Group_Widget;
@@ -582,8 +587,7 @@ package body Scenario_Views is
       View.Scenar_View.Append_Button (Button);
       View.Apply_Button := Button;
       View.Apply_Button.On_Clicked
-        (On_Apply_Button_Clicked'Access,
-         Slot => View);
+        (On_Apply_Button_Clicked'Access, Slot => View);
       View.Apply_Button.Set_Sensitive (False);
       View.Apply_Button.Set_Name ("Apply scenario changes");
 
@@ -596,15 +600,13 @@ package body Scenario_Views is
       View.Scenar_View.Append_Button (Button);
       View.Discard_Button := Button;
       View.Discard_Button.On_Clicked
-        (On_Discard_Button_Clicked'Access,
-         Slot => View);
+        (On_Discard_Button_Clicked'Access, Slot => View);
       View.Discard_Button.Set_Sensitive (False);
       View.Discard_Button.Set_Name ("Discard scenario changes");
 
       --  Add the Scenario Variable View in the previous Widget Group
       Append_Child
-        (Group, View.Scenar_View,
-         Child_Key => "Scenario Variables");
+        (Group, View.Scenar_View, Child_Key => "Scenario Variables");
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -615,13 +617,11 @@ package body Scenario_Views is
       Variable_Changed_Hook.Add
         (new On_Refresh'(Simple_Hooks_Function with View => View),
          Watch => View);
-      Preferences_Changed_Hook.Add
-        (new On_Pref_Changed, Watch => View);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
       Compilation_Starting_Hook.Add
         (new On_Compilation_Starting, Watch => View);
 
-      Build_Mode_Changed_Hook.Add
-        (new On_Build_Mode_Changed, Watch => View);
+      Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed, Watch => View);
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
       --  Update the viewer with the current project
@@ -634,14 +634,15 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Command_Validate_Variable;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      K      : constant Kernel_Handle     := Get_Kernel (Context.Context);
-      V      : constant Scenario_View     := Scenario_Views.Retrieve_View (K);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Scenario_View := Scenario_Views.Retrieve_View (K);
    begin
       --  Apply the values of the scenario variables
 
@@ -692,8 +693,7 @@ package body Scenario_Views is
    function Sort_Scenario_By_Name
      (C1 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class;
       C2 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class)
-      return Glib.Gint
-   is
+      return Glib.Gint is
    begin
       if C1.Get_Name <= C2.Get_Name then
          return -1;
@@ -735,8 +735,7 @@ package body Scenario_Views is
             Icon_Name => Up_To_Date_Icon_Name);
       end if;
 
-      View.Scenar_View.Remove_Information_On_Child
-        (Child_Key => Var_Name);
+      View.Scenar_View.Remove_Information_On_Child (Child_Key => Var_Name);
 
       --  Update the 'Apply' and 'Discard' buttons sensitivity accordingly
 
@@ -755,8 +754,8 @@ package body Scenario_Views is
    is
       Module   : constant Scenario_View_Module :=
         Scenario_View_Module (Scenario_Views.Get_Module);
-      Cur_Mode : constant String               := View.Kernel.Get_Build_Mode;
-      Iter     : Build_Mode_Lists.Cursor       := Module.Modes.First;
+      Cur_Mode : constant String := View.Kernel.Get_Build_Mode;
+      Iter     : Build_Mode_Lists.Cursor := Module.Modes.First;
    begin
       --  Clear the combo box, needed by the revert action
       View.Combo_Build.Remove_All;
@@ -774,8 +773,7 @@ package body Scenario_Views is
 
       View.Combo_Build.On_Scroll_Event (On_Build_Mode_Scroll'Access);
       View.Combo_Build.On_Changed
-        (On_Build_Mode_Combo_Changed'Access,
-         Slot => View);
+        (On_Build_Mode_Combo_Changed'Access, Slot => View);
    end Fill_Build_Mode;
 
    ---------------------------------
@@ -785,7 +783,7 @@ package body Scenario_Views is
    procedure On_Build_Mode_Combo_Changed
      (Self : access Glib.Object.GObject_Record'Class)
    is
-      View : constant Scenario_View := Scenario_View (Self);
+      View         : constant Scenario_View := Scenario_View (Self);
       Incompatible : Boolean := False;
    begin
       if View.Combo_Build.Get_Active_Text = "debug" then
@@ -794,9 +792,9 @@ package body Scenario_Views is
          declare
             Project : constant Project_Type :=
               View.Kernel.Get_Project_Tree.Root_Project;
-            Langs    : GNAT.Strings.String_List := Project.Languages;
-            Args     : GNAT.Strings.String_List_Access;
-            Default  : Boolean;
+            Langs   : GNAT.Strings.String_List := Project.Languages;
+            Args    : GNAT.Strings.String_List_Access;
+            Default : Boolean;
          begin
             Project.Switches
               (GNATCOLL.Projects.Linker_Package,
@@ -820,9 +818,9 @@ package body Scenario_Views is
 
          if Incompatible then
             View.Kernel.Insert
-              ("The project contains 'strip all symbols' option which is " &
-                 "incompatible with debugging. Please, remove '-s' from " &
-                 "the project.",
+              ("The project contains 'strip all symbols' option which is "
+               & "incompatible with debugging. Please, remove '-s' from "
+               & "the project.",
                Mode => Error);
 
             View.Combo_Build.Set_Active (0);
@@ -857,15 +855,16 @@ package body Scenario_Views is
      (Self : access Glib.Object.GObject_Record'Class)
    is
       View         : constant Scenario_View := Scenario_View (Self);
-      Success      : Boolean with Unreferenced;
+      Success      : Boolean
+      with Unreferenced;
       Should_Apply : Boolean := True;
    begin
       for Combo of View.Variable_Combo_List loop
          declare
-            Var_Name  : constant String := To_String (Combo.Var_Name);
-            Value     : constant String := Combo.Get_Active_Text;
-            Ent       : constant Gtk_Entry := Gtk_Entry (Combo.Get_Child);
-            Is_Valid  : constant Boolean := Has_Valid_Value (Combo);
+            Var_Name : constant String := To_String (Combo.Var_Name);
+            Value    : constant String := Combo.Get_Active_Text;
+            Ent      : constant Gtk_Entry := Gtk_Entry (Combo.Get_Child);
+            Is_Valid : constant Boolean := Has_Valid_Value (Combo);
          begin
             Should_Apply := Should_Apply and Is_Valid;
 
@@ -875,8 +874,8 @@ package body Scenario_Views is
                   Icon_Name => Not_Valid_Icon_Name);
                View.Scenar_View.Display_Information_On_Child
                  (Child_Key => Var_Name,
-                  Message   => "'" & Value & "' is not a valid value for "
-                  & Var_Name,
+                  Message   =>
+                    "'" & Value & "' is not a valid value for " & Var_Name,
                   Is_Error  => True);
             end if;
 
@@ -890,18 +889,21 @@ package body Scenario_Views is
       end loop;
 
       if Should_Apply then
-         Success := Execute_Action
-           (View.Kernel,
-            Action      => Validate_Action_Name,
-            Synchronous => True);
+         Success :=
+           Execute_Action
+             (View.Kernel,
+              Action      => Validate_Action_Name,
+              Synchronous => True);
       else
-         View.Error_Info_Bar := Create_Info_Bar
-           (Message      => "Some values are not valid",
-            Message_Type => Message_Error);
-         View.Scenar_View.Insert (View.Error_Info_Bar,
-                                  Position      => 0,
-                                  Expand        => False,
-                                  Add_Separator => False);
+         View.Error_Info_Bar :=
+           Create_Info_Bar
+             (Message      => "Some values are not valid",
+              Message_Type => Message_Error);
+         View.Scenar_View.Insert
+           (View.Error_Info_Bar,
+            Position      => 0,
+            Expand        => False,
+            Add_Separator => False);
          View.Error_Info_Bar.Show_All;
       end if;
    end On_Apply_Button_Clicked;
@@ -914,11 +916,10 @@ package body Scenario_Views is
      (Self : access Glib.Object.GObject_Record'Class)
    is
       View    : constant Scenario_View := Scenario_View (Self);
-      Success : Boolean with Unreferenced;
+      Success : Boolean
+      with Unreferenced;
    begin
-      Success := Execute_Action
-        (View.Kernel,
-         Action => Revert_Action_Name);
+      Success := Execute_Action (View.Kernel, Action => Revert_Action_Name);
    end On_Discard_Button_Clicked;
 
    ----------------------
@@ -937,10 +938,10 @@ package body Scenario_Views is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Scenario_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
+   overriding
+   procedure Create_Menu
+     (View : not null access Scenario_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Show_Build_Modes);
       Append_Menu (Menu, View.Kernel, Show_Untyped_Variables);
@@ -982,9 +983,9 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure Execute
+     (Self : On_Refresh; Kernel : not null access Kernel_Handle_Record'Class)
    is
       Combo              : Variable_Combo_Box;
       Ent                : Gtk_Entry;
@@ -1013,26 +1014,32 @@ package body Scenario_Views is
          Flow_Child : Gtk_Widget;
       begin
          if View.Scenar_View.Has_Child (Name) then
-            Insert (Kernel_Handle (Kernel),
-                    "Could not display all variables in the scenario view: "
-                    & "a scenario variable named '" & Name
-                    & "' appears more than once in the project tree.");
+            Insert
+              (Kernel_Handle (Kernel),
+               "Could not display all variables in the scenario view: "
+               & "a scenario variable named '"
+               & Name
+               & "' appears more than once in the project tree.");
             return;
          end if;
 
-         Combo := new Variable_Combo_Box_Record'
-           (GObject_Record with
-            Kernel   => Kernel_Handle (Kernel),
-            Var_Name => To_Unbounded_String (Name),
-            Untyped  => Untyped);
+         Combo :=
+           new Variable_Combo_Box_Record'
+             (GObject_Record
+              with
+                Kernel   => Kernel_Handle (Kernel),
+                Var_Name => To_Unbounded_String (Name),
+                Untyped  => Untyped);
 
          Gtk.Combo_Box_Text.Initialize_With_Entry (Combo);
-         Flow_Child := Create_Child
-           (Group, Combo,
-            Label     => Name,
-            Child_Key => Name,
-            Expand    => True,
-            Fill      => True);
+         Flow_Child :=
+           Create_Child
+             (Group,
+              Combo,
+              Label     => Name,
+              Child_Key => Name,
+              Expand    => True,
+              Fill      => True);
          Combo.Set_Has_Tooltip (True);
          Combo.On_Query_Tooltip (On_Variable_Combo_Tooltip_Query'Access);
 
@@ -1071,9 +1078,10 @@ package body Scenario_Views is
             Icon_Name => Up_To_Date_Icon_Name);
 
          Variable_Combo_Callbacks.Connect
-           (Combo, Gtk.Editable.Signal_Changed,
+           (Combo,
+            Gtk.Editable.Signal_Changed,
             On_Variable_Combo_Changed'Access,
-            User_Data   => View);
+            User_Data => View);
 
          --  The combo needs to have the name of the variable
          Combo.Set_Name (Name);
@@ -1124,13 +1132,13 @@ package body Scenario_Views is
          if Typed_Vars'Length /= 0 then
             for J in Typed_Vars'Range loop
                declare
-                  Name            : constant String
-                    := External_Name (Typed_Vars (J));
-                  Value           : constant String := GNATCOLL.Projects.Value
-                    (Typed_Vars (J));
-                  Possible_Values : GNAT.Strings.String_List
-                    := Get_Registry (Kernel).Tree.Possible_Values_Of
-                    (Typed_Vars (J));
+                  Name            : constant String :=
+                    External_Name (Typed_Vars (J));
+                  Value           : constant String :=
+                    GNATCOLL.Projects.Value (Typed_Vars (J));
+                  Possible_Values : GNAT.Strings.String_List :=
+                    Get_Registry (Kernel).Tree.Possible_Values_Of
+                      (Typed_Vars (J));
                begin
                   Add_Scenario_Variable_Combo
                     (Name,
@@ -1147,12 +1155,12 @@ package body Scenario_Views is
          if Untyped_Vars'Length /= 0 then
             for J in Untyped_Vars'Range loop
                declare
-                  Name            : constant String
-                    := External_Name (Untyped_Vars (J));
-                  Value           : constant String := GNATCOLL.Projects.Value
-                    (Untyped_Vars (J));
-                  Possible_Values : GNAT.Strings.String_List
-                    (1 .. 0) := (others => null);
+                  Name            : constant String :=
+                    External_Name (Untyped_Vars (J));
+                  Value           : constant String :=
+                    GNATCOLL.Projects.Value (Untyped_Vars (J));
+                  Possible_Values : GNAT.Strings.String_List (1 .. 0) :=
+                    (others => null);
                begin
                   Add_Scenario_Variable_Combo
                     (Name,
@@ -1183,7 +1191,8 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Build_Mode_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : String)
@@ -1191,16 +1200,15 @@ package body Scenario_Views is
       pragma Unreferenced (Self);
       View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
    begin
-      Set_Active_Text
-        (Combo => View.Combo_Build,
-         Text  => Mode);
+      Set_Active_Text (Combo => View.Combo_Build, Text => Mode);
    end Execute;
 
    ---------------
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Scenario_View_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -1213,10 +1221,11 @@ package body Scenario_Views is
          --  Create the mode and add it to the list of supported modes
 
          declare
-            Name : constant String := Get_Attribute_S (Node, "name", "");
+            Name        : constant String :=
+              Get_Attribute_S (Node, "name", "");
             Description : constant XML_Utils.String_Ptr :=
               Get_Field (Node, "description");
-            Shadow : constant XML_Utils.String_Ptr :=
+            Shadow      : constant XML_Utils.String_Ptr :=
               Get_Field (Node, "shadow");
          begin
             if Name = "" then
@@ -1230,9 +1239,14 @@ package body Scenario_Views is
             end if;
 
             if Description /= null then
-               Append (Module.Modes_Help,
-                       Name & ":" & ASCII.LF & ASCII.HT &
-                       Description.all & ASCII.LF);
+               Append
+                 (Module.Modes_Help,
+                  Name
+                  & ":"
+                  & ASCII.LF
+                  & ASCII.HT
+                  & Description.all
+                  & ASCII.LF);
             end if;
 
          exception
@@ -1249,34 +1263,35 @@ package body Scenario_Views is
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       M : constant Scenario_View_Module := new Scenario_View_Module_Record;
    begin
-      Scenario_Views.Register_Module
-        (Kernel,
-         ID        => Module_ID (M));
+      Scenario_Views.Register_Module (Kernel, ID => Module_ID (M));
 
-      Show_Build_Modes := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("scenario-show-build-modes", True,
-         Label => -"Show build modes");
+      Show_Build_Modes :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("scenario-show-build-modes", True, Label => -"Show build modes");
 
-      Show_Untyped_Variables := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("scenario-show-untyped_variables", True,
-         Label => -"Show untyped variables");
+      Show_Untyped_Variables :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("scenario-show-untyped_variables",
+           True,
+           Label => -"Show untyped variables");
 
       Register_Action
-        (Kernel, Validate_Action_Name,
+        (Kernel,
+         Validate_Action_Name,
          new Command_Validate_Variable,
          Description =>
            -("Save all the scenario modifications. The project"
-           & " must be built for the changes to be applied"),
-         Icon_Name => "gps-syntax-check-symbolic",
-         Category => -"Scenario");
+             & " must be built for the changes to be applied"),
+         Icon_Name   => "gps-syntax-check-symbolic",
+         Category    => -"Scenario");
 
       Register_Action
-        (Kernel, Revert_Action_Name,
+        (Kernel,
+         Revert_Action_Name,
          new Command_Revert_Modification,
-         Description =>
-           -("Revert the modifications in the view"),
-         Icon_Name => "gps-stop-symbolic",
-         Category => -"Scenario");
+         Description => -("Revert the modifications in the view"),
+         Icon_Name   => "gps-stop-symbolic",
+         Category    => -"Scenario");
    end Register_Module;
 
 end Scenario_Views;

@@ -16,11 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with Ada.Strings.Maps;        use Ada.Strings.Maps;
-with GNAT.Strings;            use GNAT.Strings;
+with Ada.Strings.Maps; use Ada.Strings.Maps;
+with GNAT.Strings;     use GNAT.Strings;
 
-with Case_Handling;           use Case_Handling;
-with GUI_Utils;               use GUI_Utils;
+with Case_Handling; use Case_Handling;
+with GUI_Utils;     use GUI_Utils;
 
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Combo_Box;           use Gtk.Combo_Box;
@@ -44,24 +44,20 @@ package body Default_Preferences.Enums is
    --  preferences.
 
    procedure Enum_Combo_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference);
+     (Widget : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when an enumeration preference with a combo box has changed.
 
    procedure Enum_Radio_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference);
+     (Widget : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when an enumeration preference with a radio button group
    --  has changed.
 
    procedure Choice_Combo_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference);
+     (Widget : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when an enumeration preference with a combo box has changed.
 
    procedure Choice_Radio_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference);
+     (Widget : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when an enumeration preference with a radio button group
    --  has changed.
 
@@ -76,8 +72,7 @@ package body Default_Preferences.Enums is
    function Create_Choices_Radio_Buttons_Box
      (Pref    : not null access Choice_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
-      Choices : VSS.String_Vectors.Virtual_String_Vector)
-      return Gtk_Box;
+      Choices : VSS.String_Vectors.Virtual_String_Vector) return Gtk_Box;
    --  Create a horizontal box containing radio buttons listing all the given
    --  choices, and updating the given pref when the selected radio button
    --  changes.
@@ -93,8 +88,7 @@ package body Default_Preferences.Enums is
    function Create_Enum_Radio_Buttons_Box
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
-      Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Box;
+      Choices : not null GNAT.Strings.String_List_Access) return Gtk_Box;
    --  Create a horizontal box containing radio buttons listing all the given
    --  choices, and updating the given pref when the selected radio button
    --  changes.
@@ -108,9 +102,10 @@ package body Default_Preferences.Enums is
    begin
       Ada.Strings.Fixed.Translate
         (Source  => Label,
-         Mapping => To_Mapping
-           (From => To_Sequence (To_Set (('_'))),
-            To   => To_Sequence (To_Set ((' ')))));
+         Mapping =>
+           To_Mapping
+             (From => To_Sequence (To_Set (('_'))),
+              To   => To_Sequence (To_Set ((' ')))));
       return Mixed_Case (Label);
    end Enum_Value_To_Label;
 
@@ -132,8 +127,8 @@ package body Default_Preferences.Enums is
       for Choice of Choices loop
          Combo.Append_Text (Enum_Value_To_Label (To_UTF_8_String (Choice)));
 
-         if To_Lowercase.Transform (Choice) =
-           To_Lowercase.Transform (Pref.Current_Choice)
+         if To_Lowercase.Transform (Choice)
+           = To_Lowercase.Transform (Pref.Current_Choice)
          then
             Combo.Set_Active (I);
          end if;
@@ -142,9 +137,10 @@ package body Default_Preferences.Enums is
       end loop;
 
       Preference_Handlers.Connect
-        (Combo, Gtk.Combo_Box.Signal_Changed,
+        (Combo,
+         Gtk.Combo_Box.Signal_Changed,
          Choice_Combo_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
       Set_GObject_To_Update (Pref, GObject (Combo));
 
@@ -158,8 +154,7 @@ package body Default_Preferences.Enums is
    function Create_Choices_Radio_Buttons_Box
      (Pref    : not null access Choice_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
-      Choices : VSS.String_Vectors.Virtual_String_Vector)
-      return Gtk_Box
+      Choices : VSS.String_Vectors.Virtual_String_Vector) return Gtk_Box
    is
       Radio_Box : Gtk_Box;
       Radio     :
@@ -172,16 +167,16 @@ package body Default_Preferences.Enums is
          Initialize
            (Radio_Button => Gtk_Radio_Button (Radio (K)),
             Group        => Radio (Radio'First),
-            Label        => Enum_Value_To_Label
-              (To_UTF_8_String (Choices.Element (K))));
+            Label        =>
+              Enum_Value_To_Label (To_UTF_8_String (Choices.Element (K))));
          Radio (K).Enum_Value := K - Choices.First_Index;
          Radio_Box.Pack_Start (Radio (K), Expand => False);
 
          Preference_Handlers.Connect
-           (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
+           (Radio (K),
+            Gtk.Toggle_Button.Signal_Toggled,
             Choice_Radio_Changed'Access,
-            User_Data =>
-              (Preferences_Manager (Manager), Preference (Pref)));
+            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
          if To_Lowercase.Transform (Pref.Current_Choice)
            = To_Lowercase.Transform (Choices.Element (K))
@@ -219,9 +214,10 @@ package body Default_Preferences.Enums is
       end loop;
 
       Preference_Handlers.Connect
-        (Combo, Gtk.Combo_Box.Signal_Changed,
+        (Combo,
+         Gtk.Combo_Box.Signal_Changed,
          Enum_Combo_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
       Set_GObject_To_Update (Pref, GObject (Combo));
 
@@ -235,8 +231,7 @@ package body Default_Preferences.Enums is
    function Create_Enum_Radio_Buttons_Box
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
-      Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Box
+      Choices : not null GNAT.Strings.String_List_Access) return Gtk_Box
    is
       Radio_Box : Gtk_Box;
       Radio     : array (Choices'Range) of Enum_Radio_Button;
@@ -253,10 +248,10 @@ package body Default_Preferences.Enums is
          Radio_Box.Pack_Start (Radio (K), Expand => False);
 
          Preference_Handlers.Connect
-           (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
+           (Radio (K),
+            Gtk.Toggle_Button.Signal_Toggled,
             Enum_Radio_Changed'Access,
-            User_Data =>
-              (Preferences_Manager (Manager), Preference (Pref)));
+            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
          if K = Pref.Enum_Value + Choices'First then
             Radio (K).Set_Active (True);
@@ -271,14 +266,11 @@ package body Default_Preferences.Enums is
    ------------------------
 
    procedure Enum_Combo_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference)
+     (Widget : access GObject_Record'Class; Data : Manager_Preference)
    is
-      Combo : constant Gtk_Combo_Box_Text :=
-                Gtk_Combo_Box_Text (Widget);
+      Combo : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Widget);
    begin
-      Enum_Preference (Data.Pref).Enum_Value :=
-        Integer (Get_Active (Combo));
+      Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (Combo));
       Data.Manager.Notify_Pref_Changed (Data.Pref);
    end Enum_Combo_Changed;
 
@@ -287,8 +279,7 @@ package body Default_Preferences.Enums is
    ------------------------
 
    procedure Enum_Radio_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference)
+     (Widget : access GObject_Record'Class; Data : Manager_Preference)
    is
       Radio : constant Enum_Radio_Button := Enum_Radio_Button (Widget);
    begin
@@ -301,11 +292,9 @@ package body Default_Preferences.Enums is
    --------------------------
 
    procedure Choice_Combo_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference)
+     (Widget : access GObject_Record'Class; Data : Manager_Preference)
    is
-      Combo : constant Gtk_Combo_Box_Text :=
-        Gtk_Combo_Box_Text (Widget);
+      Combo : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Widget);
       Pref  : constant Choice_Preference := Choice_Preference (Data.Pref);
    begin
       Pref.Current_Choice :=
@@ -319,8 +308,7 @@ package body Default_Preferences.Enums is
    --------------------------
 
    procedure Choice_Radio_Changed
-     (Widget : access GObject_Record'Class;
-      Data   : Manager_Preference)
+     (Widget : access GObject_Record'Class; Data : Manager_Preference)
    is
       Radio : constant Enum_Radio_Button := Enum_Radio_Button (Widget);
       Pref  : constant Choice_Preference := Choice_Preference (Data.Pref);
@@ -336,14 +324,13 @@ package body Default_Preferences.Enums is
    ------------
 
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Choices                   : VSS.String_Vectors.Virtual_String_Vector;
-      Default                   : VSS.Strings.Virtual_String;
-      Priority                  : Integer := -1;
-      Combo_Threshold           : Integer := 3)
-      return Choice_Preference
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Choices          : VSS.String_Vectors.Virtual_String_Vector;
+      Default          : VSS.Strings.Virtual_String;
+      Priority         : Integer := -1;
+      Combo_Threshold  : Integer := 3) return Choice_Preference
    is
       Result : constant Choice_Preference := new Choice_Preference_Record;
    begin
@@ -368,22 +355,21 @@ package body Default_Preferences.Enums is
             Group_Name      : Unbounded_String;
             Registered_Page : Preferences_Page;
          begin
-            Extract_Page_And_Group_Names (Path       => Path,
-                                          Page_Name  => Page_Name,
-                                          Group_Name => Group_Name);
+            Extract_Page_And_Group_Names
+              (Path => Path, Page_Name => Page_Name, Group_Name => Group_Name);
 
             --  Get/create the corresponding preferences page and register
             --  the preference as a group, without forgetting to set the
             --  group's priority to the preference's priority since it will
             --  contain only this preference.
 
-            Registered_Page := Manager.Get_Registered_Page
-              (Name             => To_String (Page_Name),
-               Create_If_Needed => True);
+            Registered_Page :=
+              Manager.Get_Registered_Page
+                (Name => To_String (Page_Name), Create_If_Needed => True);
             Registered_Page.Register_Group
-              (Name             => Label,
-               Group            => new Preferences_Group_Record,
-               Priority         => Priority);
+              (Name     => Label,
+               Group    => new Preferences_Group_Record,
+               Priority => Priority);
 
             Manager.Register
               (Name     => Name,
@@ -401,7 +387,8 @@ package body Default_Preferences.Enums is
    -- Free --
    ----------
 
-   overriding procedure Free (Pref : in out Choice_Preference_Record) is
+   overriding
+   procedure Free (Pref : in out Choice_Preference_Record) is
    begin
       Clear (Pref.Choices);
       Free (Preference_Record (Pref));
@@ -411,38 +398,38 @@ package body Default_Preferences.Enums is
    -- Edit --
    ----------
 
-   overriding function Edit
-     (Pref               : access Choice_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Choice_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
-   is
-     (if Pref.Combo_Threshold /= -1
-      and then Pref.Choices.Length > Pref.Combo_Threshold
-      then
-         Gtk_Widget (Create_Choices_Combo_Box (Pref    => Pref,
-                                       Manager => Manager,
-                                       Choices => Pref.Choices))
-      else
-         Gtk_Widget (Create_Choices_Radio_Buttons_Box (Pref    => Pref,
-                                                    Manager => Manager,
-                                                    Choices => Pref.Choices)));
+   is (if Pref.Combo_Threshold /= -1
+         and then Pref.Choices.Length > Pref.Combo_Threshold
+       then
+         Gtk_Widget
+           (Create_Choices_Combo_Box
+              (Pref => Pref, Manager => Manager, Choices => Pref.Choices))
+       else
+         Gtk_Widget
+           (Create_Choices_Radio_Buttons_Box
+              (Pref => Pref, Manager => Manager, Choices => Pref.Choices)));
 
    --------------
    -- Get_Pref --
    --------------
 
-   overriding function Get_Pref
-     (Pref : access Choice_Preference_Record) return String is
+   overriding
+   function Get_Pref (Pref : access Choice_Preference_Record) return String is
    begin
-      return
-        VSS.Strings.Conversions.To_UTF_8_String (Pref.Current_Choice);
+      return VSS.Strings.Conversions.To_UTF_8_String (Pref.Current_Choice);
    end Get_Pref;
 
    --------------
    -- Set_Pref --
    --------------
 
-   overriding procedure Set_Pref
+   overriding
+   procedure Set_Pref
      (Pref    : access Choice_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String)
@@ -461,22 +448,22 @@ package body Default_Preferences.Enums is
    -- Update_On_Pref_Changed --
    ----------------------------
 
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Choice_Preference_Record;
       Widget : access GObject_Record'Class) is
    begin
-      Set_Active_Text
-        (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
+      Set_Active_Text (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
    end Update_On_Pref_Changed;
 
    ------------------------
    -- Editor_Needs_Label --
    ------------------------
 
-   overriding function Editor_Needs_Label
+   overriding
+   function Editor_Needs_Label
      (Pref : not null access Choice_Preference_Record) return Boolean
-   is
-     (Pref.Choices.Length > Pref.Combo_Threshold);
+   is (Pref.Choices.Length > Pref.Combo_Threshold);
 
    --------------
    -- Generics --
@@ -489,17 +476,15 @@ package body Default_Preferences.Enums is
       ------------
 
       function Create
-        (Manager                   : access Preferences_Manager_Record'Class;
-         Path                      : Preference_Path;
-         Name, Label, Doc          : String;
-         Default                   : Enumeration;
-         Priority                  : Integer := -1;
-         Combo_Threshold           : Integer := 3)
-         return Preference
+        (Manager          : access Preferences_Manager_Record'Class;
+         Path             : Preference_Path;
+         Name, Label, Doc : String;
+         Default          : Enumeration;
+         Priority         : Integer := -1;
+         Combo_Threshold  : Integer := 3) return Preference
       is
          P      : constant Default_Preferences.Preference :=
-                    Get_Pref_From_Name
-                      (Manager, Name, Create_If_Necessary => False);
+           Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
          Result : constant Preference := new Preference_Record;
 
       begin
@@ -509,8 +494,7 @@ package body Default_Preferences.Enums is
 
             begin
                Enum_Preference (Result).Enum_Value :=
-                 Enumeration'Pos
-                   (Enumeration'Value (String'(Get_Pref (P))));
+                 Enumeration'Pos (Enumeration'Value (String'(Get_Pref (P))));
             exception
                when Constraint_Error =>
                   Enum_Preference (Result).Enum_Value :=
@@ -540,22 +524,23 @@ package body Default_Preferences.Enums is
                Group_Name      : Unbounded_String;
                Registered_Page : Preferences_Page;
             begin
-               Extract_Page_And_Group_Names (Path       => Path,
-                                             Page_Name  => Page_Name,
-                                             Group_Name => Group_Name);
+               Extract_Page_And_Group_Names
+                 (Path       => Path,
+                  Page_Name  => Page_Name,
+                  Group_Name => Group_Name);
 
                --  Get/create the corresponding preferences page and register
                --  the preference as a group, without forgetting to set the
                --  group's priority to the preference's priority since it will
                --  contain only this preference.
 
-               Registered_Page := Manager.Get_Registered_Page
-                 (Name             => To_String (Page_Name),
-                  Create_If_Needed => True);
+               Registered_Page :=
+                 Manager.Get_Registered_Page
+                   (Name => To_String (Page_Name), Create_If_Needed => True);
                Registered_Page.Register_Group
-                 (Name             => Label,
-                  Group            => new Preferences_Group_Record,
-                  Priority         => Priority);
+                 (Name     => Label,
+                  Group    => new Preferences_Group_Record,
+                  Priority => Priority);
 
                Manager.Register
                  (Name     => Name,
@@ -574,9 +559,7 @@ package body Default_Preferences.Enums is
       -- Hide --
       ----------
 
-      procedure Hide
-        (Pref  : access Preference_Record;
-         Value : Enumeration) is
+      procedure Hide (Pref : access Preference_Record; Value : Enumeration) is
       begin
          if not Pref.Hidden.Contains (Value) then
             Pref.Hidden.Insert (Value);
@@ -587,9 +570,10 @@ package body Default_Preferences.Enums is
       -- Edit --
       ----------
 
-      overriding function Edit
-        (Pref               : access Preference_Record;
-         Manager            : access Preferences_Manager_Record'Class)
+      overriding
+      function Edit
+        (Pref    : access Preference_Record;
+         Manager : access Preferences_Manager_Record'Class)
          return Gtk.Widget.Gtk_Widget
       is
          subtype Enumeration_Choices is
@@ -611,8 +595,7 @@ package body Default_Preferences.Enums is
          begin
             for K in Enumeration'Range loop
                if not Pref.Hidden.Contains (K) then
-                  Choices (I) :=
-                    new String'(Enumeration'Image (K));
+                  Choices (I) := new String'(Enumeration'Image (K));
                   I := I + 1;
                end if;
             end loop;
@@ -623,15 +606,15 @@ package body Default_Preferences.Enums is
 
          if Enumeration_Choices'Last > Enum_Preference (Pref).Combo_Threshold
          then
-            Widget := Gtk_Widget
-              (Create_Enum_Combo_Box (Pref    => Pref,
-                                 Manager => Manager,
-                                 Choices => Choices));
+            Widget :=
+              Gtk_Widget
+                (Create_Enum_Combo_Box
+                   (Pref => Pref, Manager => Manager, Choices => Choices));
          else
-            Widget := Gtk_Widget
-              (Create_Enum_Radio_Buttons_Box (Pref    => Pref,
-                                              Manager => Manager,
-                                              Choices => Choices));
+            Widget :=
+              Gtk_Widget
+                (Create_Enum_Radio_Buttons_Box
+                   (Pref => Pref, Manager => Manager, Choices => Choices));
          end if;
 
          Free (Choices);
@@ -643,9 +626,10 @@ package body Default_Preferences.Enums is
       -- Update_On_Pref_Changed --
       ----------------------------
 
-      overriding procedure Update_On_Pref_Changed
-        (Pref   : access Preference_Record;
-         Widget : access GObject_Record'Class) is
+      overriding
+      procedure Update_On_Pref_Changed
+        (Pref : access Preference_Record; Widget : access GObject_Record'Class)
+      is
       begin
          Set_Active_Text
            (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
@@ -655,11 +639,11 @@ package body Default_Preferences.Enums is
       -- Get_Pref --
       --------------
 
-      overriding function Get_Pref
-        (Pref : access Preference_Record) return String
-      is
-         S : constant String := Enumeration'Image
-           (Enumeration'Val (Enum_Preference (Pref).Enum_Value));
+      overriding
+      function Get_Pref (Pref : access Preference_Record) return String is
+         S : constant String :=
+           Enumeration'Image
+             (Enumeration'Val (Enum_Preference (Pref).Enum_Value));
       begin
          return Mixed_Case (S);
       end Get_Pref;
@@ -668,8 +652,7 @@ package body Default_Preferences.Enums is
       -- Get_Pref --
       --------------
 
-      function Get_Pref
-        (Pref : access Preference_Record) return Enumeration is
+      function Get_Pref (Pref : access Preference_Record) return Enumeration is
       begin
          return Enumeration'Val (Enum_Preference (Pref).Enum_Value);
       end Get_Pref;
@@ -678,7 +661,8 @@ package body Default_Preferences.Enums is
       -- Set_Pref --
       --------------
 
-      overriding procedure Set_Pref
+      overriding
+      procedure Set_Pref
         (Pref    : access Preference_Record;
          Manager : access Preferences_Manager_Record'Class;
          Value   : String) is
@@ -691,18 +675,18 @@ package body Default_Preferences.Enums is
       exception
          when Constraint_Error =>
             --  Else we might have an integer representing the Pos
-            Set_Pref (Enum_Preference_Record (Pref.all)'Access,
-                      Manager, Value);
+            Set_Pref
+              (Enum_Preference_Record (Pref.all)'Access, Manager, Value);
       end Set_Pref;
 
       ------------------------
       -- Editor_Needs_Label --
       ------------------------
 
-      overriding function Editor_Needs_Label
+      overriding
+      function Editor_Needs_Label
         (Pref : not null access Preference_Record) return Boolean
-      is
-        (Enumeration'Range_Length > Enum_Preference (Pref).Combo_Threshold);
+      is (Enumeration'Range_Length > Enum_Preference (Pref).Combo_Threshold);
 
    end Generics;
 

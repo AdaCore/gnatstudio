@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Menu;              use Gtk.Menu;
+with Gtk.Menu; use Gtk.Menu;
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
@@ -35,7 +35,8 @@ package body Commands.Codefix is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Codefix_Command) return Command_Return_Type
    is
       Menu        : Gtk_Menu;
@@ -51,8 +52,7 @@ package body Commands.Codefix is
 
       if Get_Number_Of_Fixes (Command.Error) > 1 then
          Gtk_New (Menu);
-         Create_Submenu
-           (Command.Kernel, Menu, Command.Session, Command.Error);
+         Create_Submenu (Command.Kernel, Menu, Command.Session, Command.Error);
          Show_All (Menu);
          Popup_Custom_Contextual_Menu (Menu, Command.Kernel);
 
@@ -68,14 +68,9 @@ package body Commands.Codefix is
             Command.Error,
             Sub_Command.all);
 
-         Remove_Pixmap
-           (Command.Kernel,
-            Command.Session,
-            Command.Error);
+         Remove_Pixmap (Command.Kernel, Command.Session, Command.Error);
       else
-         Command.Kernel.Insert
-           (-"cannot fix readonly file",
-            Mode => Error);
+         Command.Kernel.Insert (-"cannot fix readonly file", Mode => Error);
       end if;
 
       return Success;
@@ -85,14 +80,12 @@ package body Commands.Codefix is
    -- Undo --
    ----------
 
-   overriding function Undo
-     (Command : access Codefix_Command) return Boolean is
+   overriding
+   function Undo (Command : access Codefix_Command) return Boolean is
    begin
       Undo (Command.Error, Command.Session.Current_Text.all);
       Create_Pixmap_And_Category
-        (Command.Kernel,
-         Command.Session,
-         Command.Error);
+        (Command.Kernel, Command.Session, Command.Error);
 
       return True;
    end Undo;
@@ -101,7 +94,8 @@ package body Commands.Codefix is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type is
    begin
       if Command.Session_Timestamp /= Command.Session.Timestamp then
@@ -111,9 +105,10 @@ package body Commands.Codefix is
       if Command.Current_Error /= Null_Error_Id then
          if Active (Me) then
             Trace
-              (Me, "Activate_Codefix: Error found at "
+              (Me,
+               "Activate_Codefix: Error found at "
                & Display_Full_Name
-                 (Get_File (Get_Error_Message (Command.Current_Error)))
+                   (Get_File (Get_Error_Message (Command.Current_Error)))
                & Get_Line (Get_Error_Message (Command.Current_Error))'Img
                & Get_Column (Get_Error_Message (Command.Current_Error))'Img);
          end if;
@@ -122,7 +117,7 @@ package body Commands.Codefix is
            (Command.Kernel, Command.Session, Command.Current_Error);
 
          Command.Current_Error := Next (Command.Current_Error);
-         Command.Errors_Fixed  := Command.Errors_Fixed + 1;
+         Command.Errors_Fixed := Command.Errors_Fixed + 1;
 
          return Execute_Again;
       else
@@ -134,7 +129,8 @@ package body Commands.Codefix is
    -- Progress --
    --------------
 
-   overriding function Progress
+   overriding
+   function Progress
      (Command : access Codefix_Add_Command) return Progress_Record is
    begin
       return (Running, Command.Errors_Fixed, Command.Errors_Num);
@@ -144,9 +140,8 @@ package body Commands.Codefix is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Codefix_Add_Command) return String
-   is
+   overriding
+   function Name (Command : access Codefix_Add_Command) return String is
       pragma Unreferenced (Command);
    begin
       return -"Code fixing";

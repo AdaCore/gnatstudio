@@ -25,8 +25,7 @@ with GNATCOLL.Iconv; use GNATCOLL.Iconv;
 package UTF8_Utils is
 
    function Unknown_To_UTF8
-     (Input   : String;
-      Success : access Boolean) return UTF8_String;
+     (Input : String; Success : access Boolean) return UTF8_String;
    --  Transform a string of unknown encoding to UTF-8.
    --  The heuristics used is the following:
    --    - if S already contains valid UTF-8, assume it is already encoded
@@ -35,15 +34,12 @@ package UTF8_Utils is
    --      locale, and attempt to convert it from the locale to UTF-8.
    --  Success is set to False if the conversion failed.
 
-   function Unknown_To_UTF8
-     (Input   : String) return UTF8_String;
+   function Unknown_To_UTF8 (Input : String) return UTF8_String;
    --  Same as above, but return "<could not convert to UTF8>" if the
    --  conversion could not be done.
 
    procedure Unknown_To_UTF8
-     (Input   : String;
-      Output  : out String_Access;
-      Success : out Boolean);
+     (Input : String; Output : out String_Access; Success : out Boolean);
    --  Same as above, but return Output as Unchecked_String_Access for
    --  efficiency. Output is still in UTF8 format, and the caller is
    --  responsible for freeing it.
@@ -67,8 +63,7 @@ package UTF8_Utils is
    --  Index is set to a value greater than Str'Last if there is no more
    --  character.
 
-   function UTF8_Prev_Char
-     (Str : UTF8_String; Index : Natural) return Natural;
+   function UTF8_Prev_Char (Str : UTF8_String; Index : Natural) return Natural;
    --  Find the start of the previous UTF8 character before the Index-th byte.
    --  Index has to be on the start of a character.
    --  Index is set to 0 if there is no more character.

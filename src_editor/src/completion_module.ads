@@ -33,11 +33,11 @@ package Completion_Module is
    --  gps-main.adb, only by the source editor itself. There are just too
    --  many links with the rest of the source editor.
 
-   type Completion_Manager_Factory_Type is access
-     function (Kernel : not null GPS.Kernel.Kernel_Handle;
-               File   : GNATCOLL.VFS.Virtual_File;
-               Lang   : Language.Language_Access)
-               return Completion_Manager_Access;
+   type Completion_Manager_Factory_Type is
+     access function
+       (Kernel : not null GPS.Kernel.Kernel_Handle;
+        File   : GNATCOLL.VFS.Virtual_File;
+        Lang   : Language.Language_Access) return Completion_Manager_Access;
    --  Type for completion manager factories.
    --  This should return the completion manager that should handle the given
    --  file with the given associated language.
@@ -47,10 +47,10 @@ package Completion_Module is
    --  Set the completion manager factory that will be used when completion
    --  gets triggered.
 
-   type Completion_Trigger_Chars_Func_Type is access
-     function
-       (Editor : Editor_Buffer'Class;
-        C      : VSS.Characters.Virtual_Character) return Boolean;
+   type Completion_Trigger_Chars_Func_Type is
+     access function
+       (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+        return Boolean;
    --  Type for the function used to determine if the given character typed in
    --  Editor should trigger auto completion.
    --  Note that this function is only called for special characters that are

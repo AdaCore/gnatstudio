@@ -15,35 +15,38 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;          use GPS.Kernel;
-with DAP.Requests;        use DAP.Requests;
+with GPS.Kernel;   use GPS.Kernel;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Disconnect;
 
 package body DAP.Clients.Disconnect is
 
    type Disconnect_Request is
-     new DAP.Requests.Disconnect.Disconnect_DAP_Request with null record;
+     new DAP.Requests.Disconnect.Disconnect_DAP_Request
+   with null record;
    type Disconnect_Request_Access is access all Disconnect_Request'Class;
 
    function Create
-     (Kernel             : not null Kernel_Handle;
-      Terminate_Debuggee : Boolean)
+     (Kernel : not null Kernel_Handle; Terminate_Debuggee : Boolean)
       return Disconnect_Request_Access;
    --  Create a new DAP 'disconnect' request.
    --  Terminate_Debuggee indicates whether the debuggee should be terminated
    --  when the debugger is disconnected if supported. If unspecified, the
    --  debug adapter is free to do whatever it thinks is best.
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Disconnect_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Disconnect_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Disconnect_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.DisconnectResponse;
@@ -54,8 +57,7 @@ package body DAP.Clients.Disconnect is
    ------------
 
    function Create
-     (Kernel             : not null Kernel_Handle;
-      Terminate_Debuggee : Boolean)
+     (Kernel : not null Kernel_Handle; Terminate_Debuggee : Boolean)
       return Disconnect_Request_Access
    is
       Self : constant Disconnect_Request_Access :=
@@ -74,7 +76,8 @@ package body DAP.Clients.Disconnect is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Disconnect_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.DisconnectResponse;
@@ -95,12 +98,13 @@ package body DAP.Clients.Disconnect is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Disconnect_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP.Requests.Disconnect.Disconnect_DAP_Request
-        (Self).On_Rejected (Client);
+      DAP.Requests.Disconnect.Disconnect_DAP_Request (Self).On_Rejected
+        (Client);
 
       --  Something is wrong, but we still have to stop the client
       Client.Stop;
@@ -110,13 +114,14 @@ package body DAP.Clients.Disconnect is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Disconnect_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.Disconnect.Disconnect_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.Disconnect.Disconnect_DAP_Request (Self).On_Error_Message
+        (Client, Message);
 
       --  Stop client even on error, because the debugger should be shot down
       Client.Stop;
@@ -131,9 +136,8 @@ package body DAP.Clients.Disconnect is
       Terminate_Debuggee : Boolean)
    is
       Disconnect_Req : Disconnect_Request_Access :=
-         DAP.Clients.Disconnect.Create
-          (Kernel             => Client.Kernel,
-           Terminate_Debuggee => Terminate_Debuggee);
+        DAP.Clients.Disconnect.Create
+          (Kernel => Client.Kernel, Terminate_Debuggee => Terminate_Debuggee);
    begin
       --  Set the DAP client's status to Terminating
       Client.Set_Status (Terminating);

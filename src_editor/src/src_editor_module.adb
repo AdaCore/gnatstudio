@@ -16,84 +16,85 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Default_Preferences.Enums;
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;
 
 with VSS.String_Vectors;
 
-with GNATCOLL.Projects;                 use GNATCOLL.Projects;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.VFS.VSS_Utils;
 
-with Gdk.Event;                         use Gdk.Event;
-with Glib.Object;                       use Glib.Object;
-with Glib.Unicode;                      use Glib.Unicode;
+with Gdk.Event;    use Gdk.Event;
+with Glib.Object;  use Glib.Object;
+with Glib.Unicode; use Glib.Unicode;
 with Glib.Values;
 
-with Gtk.Label;                         use Gtk.Label;
+with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;
-with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
-with Gtk.Style_Context;                 use Gtk.Style_Context;
-with Gtk.Window;                        use Gtk.Window;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
+with Gtk.Style_Context;       use Gtk.Style_Context;
+with Gtk.Window;              use Gtk.Window;
 
-with Gtkada.File_Selector;              use Gtkada.File_Selector;
-with Gtkada.Handlers;                   use Gtkada.Handlers;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 
-with Pango.Layout;                      use Pango.Layout;
+with Pango.Layout; use Pango.Layout;
 
-with Aliases_Module;                    use Aliases_Module;
-with Casing_Exceptions;                 use Casing_Exceptions;
-with Case_Handling;                     use Case_Handling;
+with Aliases_Module;               use Aliases_Module;
+with Casing_Exceptions;            use Casing_Exceptions;
+with Case_Handling;                use Case_Handling;
 with Commands;
-with Commands.Controls;                 use Commands.Controls;
-with Commands.Interactive;              use Commands, Commands.Interactive;
+with Commands.Controls;            use Commands.Controls;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 with Completion_Module;
-with Config;                            use Config;
-with Default_Preferences;               use Default_Preferences;
-with Find_Utils;                        use Find_Utils;
-with File_Utils;                        use File_Utils;
-with GPS.Default_Styles;                use GPS.Default_Styles;
-with GPS.Intl;                          use GPS.Intl;
-with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
-with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
-with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Project;                use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+with Config;                       use Config;
+with Default_Preferences;          use Default_Preferences;
+with Find_Utils;                   use Find_Utils;
+with File_Utils;                   use File_Utils;
+with GPS.Default_Styles;           use GPS.Default_Styles;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
 
-with GUI_Utils;                         use GUI_Utils;
-with Histories;                         use Histories;
-with Projects;                          use Projects;
-with Src_Contexts;                      use Src_Contexts;
-with Src_Editor_Box;                    use Src_Editor_Box;
-with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
+with GUI_Utils;                          use GUI_Utils;
+with Histories;                          use Histories;
+with Projects;                           use Projects;
+with Src_Contexts;                       use Src_Contexts;
+with Src_Editor_Box;                     use Src_Editor_Box;
+with Src_Editor_Buffer.Buffer_Commands;  use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Text_Handling;    use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
-with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
-with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
-with Src_Editor_Module.Commands;        use Src_Editor_Module.Commands;
+with Src_Editor_Module.Editors;          use Src_Editor_Module.Editors;
+with Src_Editor_Module.Markers;          use Src_Editor_Module.Markers;
+with Src_Editor_Module.Shell;            use Src_Editor_Module.Shell;
+with Src_Editor_Module.Commands;         use Src_Editor_Module.Commands;
 with Src_Editor_Module.Messages;
 
-with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
-with Src_Editor_View;                   use Src_Editor_View;
-with String_Utils;                      use String_Utils;
-with Vsearch;                           use Vsearch;
-with VSS.Strings;                       use VSS.Strings;
-with VSS.Strings.Conversions;           use VSS.Strings.Conversions;
-with VSS.Transformers.Casing;           use VSS.Transformers.Casing;
-with Xref;                              use Xref;
+with Src_Editor_View.Commands; use Src_Editor_View.Commands;
+with Src_Editor_View;          use Src_Editor_View;
+with String_Utils;             use String_Utils;
+with Vsearch;                  use Vsearch;
+with VSS.Strings;              use VSS.Strings;
+with VSS.Strings.Conversions;  use VSS.Strings.Conversions;
+with VSS.Transformers.Casing;  use VSS.Transformers.Casing;
+with Xref;                     use Xref;
 
 package body Src_Editor_Module is
 
@@ -120,57 +121,74 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
-   overriding procedure Tab_Contextual
+   overriding
+   procedure Tab_Contextual
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding function Get_Tooltip
+   overriding
+   function Get_Tooltip
      (Self : not null access Editor_Child_Record)
       return VSS.Strings.Virtual_String;
-   overriding function Get_Tooltip_Is_Markup
-     (Self  : not null access Editor_Child_Record) return Boolean is (True);
-   overriding function Get_Command_Queue
+   overriding
+   function Get_Tooltip_Is_Markup
+     (Self : not null access Editor_Child_Record) return Boolean
+   is (True);
+   overriding
+   function Get_Command_Queue
      (Child : access Editor_Child_Record)
       return Standard.Commands.Command_Queue;
-   overriding function Dnd_Data
+   overriding
+   function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
-   overriding function Save_Desktop
-     (Self  : not null access Editor_Child_Record) return Node_Ptr;
-   overriding function Get_Child_Class
-     (Self  : not null access Editor_Child_Record) return Class_Type;
-   overriding procedure Reload
-     (Self : not null access Editor_Child_Record);
-   overriding function Needs_To_Be_Saved
+   overriding
+   function Save_Desktop
+     (Self : not null access Editor_Child_Record) return Node_Ptr;
+   overriding
+   function Get_Child_Class
+     (Self : not null access Editor_Child_Record) return Class_Type;
+   overriding
+   procedure Reload (Self : not null access Editor_Child_Record);
+   overriding
+   function Needs_To_Be_Saved
      (Self : not null access Editor_Child_Record) return Boolean;
-   overriding function Report_Deleted_File
-     (Self   : not null access Editor_Child_Record;
-      Exists : Boolean) return Boolean;
-   overriding function Build_Context
+   overriding
+   function Report_Deleted_File
+     (Self : not null access Editor_Child_Record; Exists : Boolean)
+      return Boolean;
+   overriding
+   function Build_Context
      (Self  : not null access Editor_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
-   overriding function Has_Menu_Bar_When_Floating
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
+   overriding
+   function Has_Menu_Bar_When_Floating
      (Child : not null access Editor_Child_Record) return Boolean
-      is (True) with Inline;
+   is (True)
+   with Inline;
    --  See inherited documentation
 
    type On_Open_File is new Open_File_Hooks_Function with null record;
-   overriding function Execute
-     (Self             : On_Open_File;
-      Kernel           : not null access Kernel_Handle_Record'Class;
-      File             : Virtual_File;
-      Line             : Integer;
-      Column, Column_End : Basic_Types.Visible_Column_Type;
+   overriding
+   function Execute
+     (Self                                             : On_Open_File;
+      Kernel                                           :
+        not null access Kernel_Handle_Record'Class;
+      File                                             : Virtual_File;
+      Line                                             : Integer;
+      Column, Column_End                               :
+        Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project          : Project_Type;
-      Group            : Child_Group;
-      Initial_Position : Child_Position;
-      Areas            : Allowed_Areas;
-      Title            : String;
-      Is_Load_Desktop  : Boolean) return Boolean;
+      Project                                          : Project_Type;
+      Group                                            : Child_Group;
+      Initial_Position                                 : Child_Position;
+      Areas                                            : Allowed_Areas;
+      Title                                            : String;
+      Is_Load_Desktop                                  : Boolean)
+      return Boolean;
    --  Reacts to the Open_File_Action_Hook
 
    type On_File_Line_Action is new Line_Info_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self       : On_File_Line_Action;
       Kernel     : not null access Kernel_Handle_Record'Class;
       Identifier : String;
@@ -182,15 +200,17 @@ package body Src_Editor_Module is
    --  Reacts to the File_Line_Action_Hook
 
    type On_Open_Recent is new Interactive_Command with record
-      File  : GNATCOLL.VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
    end record;
-   overriding function Execute
-      (Self    : access On_Open_Recent;
-       Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access On_Open_Recent; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Called to reopen a source file
 
    type On_Word_Added is new Character_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self        : On_Word_Added;
       Kernel      : not null access Kernel_Handle_Record'Class;
       File        : Virtual_File;
@@ -199,7 +219,8 @@ package body Src_Editor_Module is
    --  Reacts to the word_added Hook
 
    type On_Character_Added is new Character_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self        : On_Character_Added;
       Kernel      : not null access Kernel_Handle_Record'Class;
       File        : Virtual_File;
@@ -208,89 +229,99 @@ package body Src_Editor_Module is
    --  Reacts to the character_added Hook
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has changed
 
    function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
+     (MDI : MDI_Window; Node : Node_Ptr; User : Kernel_Handle)
+      return MDI_Child;
    --  Support functions for the MDI
 
    type Select_All_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Select All menu
 
    type Insert_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Insert_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Insert File... menu
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_edited" hook
 
    type On_File_Reloaded is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Reloaded;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_reloaded" hook
 
    type On_File_Changed_On_Disk is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Changed_On_Disk;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_changed_on_disk" hook
 
    type On_File_Renamed is new File2_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_saved" hook
 
-   type On_Cursor_Stopped is new File_Location_Hooks_Function
-      with null record;
-   overriding procedure Execute
-     (Self   : On_Cursor_Stopped;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
+   type On_Cursor_Stopped is new File_Location_Hooks_Function with null record;
+   overriding
+   procedure Execute
+     (Self         : On_Cursor_Stopped;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
       Line, Column : Integer;
-      Project : Project_Type);
+      Project      : Project_Type);
    --  Callback for the "cursor_stopped" hook
 
    type On_Semantic_Tree_Updated is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences have changed
 
    type On_Deleting is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Deleting;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -301,7 +332,7 @@ package body Src_Editor_Module is
    --  Add an entry for File to the Recent menu, if needed
    --  Remove the older menu if the history is full.
 
-   function Get_File_Identifier (Child  : MDI_Child) return Virtual_File;
+   function Get_File_Identifier (Child : MDI_Child) return Virtual_File;
    --  Return the file identifier if Child is a file editor
 
    function Expand_Aliases_Entities
@@ -311,24 +342,20 @@ package body Src_Editor_Module is
    --  Does the expansion of special entities in the aliases
 
    procedure On_Editor_Destroy
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues);
    --  Callback to call when an editor is about to be destroyed
 
    procedure On_Lock_Or_Unlock_Tab_Contextual_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the user clicks on the 'Lock or unlock editor' tab
    --  contextual menu.
 
    procedure On_Lock_Or_Unlock_Split_Tab_Contextual_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the user clicks on the 'Lock or unlock editor (split)'
    --  tab contextual menu.
 
-   procedure Update_Cache_On_Focus
-     (Child : access Gtk_Widget_Record'Class);
+   procedure Update_Cache_On_Focus (Child : access Gtk_Widget_Record'Class);
    --  Make sure that the last view for a file is reflected in the cache, so
    --  that we always use that one by default when looking for the last editor
    --  for a given file.
@@ -341,44 +368,51 @@ package body Src_Editor_Module is
    --  menu.
 
    type Is_Not_Makefile_Context is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Is_Not_Makefile_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  Filter which passes when the context contains a file which is not
    --  a Makefile.
 
    type Is_Ada_File_Context is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Is_Ada_File_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  Filter which passes when the context contains an Ada file.
 
    type Undo_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Undo_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Undo_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Redo_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Redo_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Redo_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Has_Undo_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Undo_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Undo_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Has_Redo_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Redo_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Redo_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Has_Selection_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Selection_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Selection_Filter; Context : Selection_Context)
+      return Boolean;
 
    procedure Create_New_Recent_Menu
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -398,9 +432,10 @@ package body Src_Editor_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Undo_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Undo_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter, Context);
       UR : constant Undo_Redo :=
@@ -413,9 +448,10 @@ package body Src_Editor_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Redo_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Redo_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter, Context);
       UR : constant Undo_Redo :=
@@ -428,9 +464,11 @@ package body Src_Editor_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Selection_Filter;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Selection_Filter; Context : Selection_Context)
+      return Boolean
+   is
       pragma Unreferenced (Filter);
    begin
       return Has_Area_Information (Context);
@@ -440,9 +478,10 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Undo_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Undo_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command, Context);
       UR : constant Undo_Redo :=
@@ -456,9 +495,10 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Redo_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Redo_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command, Context);
       UR : constant Undo_Redo :=
@@ -494,8 +534,10 @@ package body Src_Editor_Module is
 
    function Can_Undo return Boolean is
    begin
-      return Src_Editor_Module_Id /= null and then Can_Undo
-        (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
+      return
+        Src_Editor_Module_Id /= null
+        and then
+          Can_Undo (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
    end Can_Undo;
 
    ------------------------
@@ -514,12 +556,13 @@ package body Src_Editor_Module is
    -- Execute_Global_Command --
    ----------------------------
 
-   function Execute_Global_Command
-     return Standard.Commands.Command_Return_Type is
+   function Execute_Global_Command return Standard.Commands.Command_Return_Type
+   is
    begin
       if Src_Editor_Module_Id /= null then
-         return Execute_Global_Command
-           (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
+         return
+           Execute_Global_Command
+             (Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo);
       end if;
       return Standard.Commands.Success;
    end Execute_Global_Command;
@@ -546,13 +589,12 @@ package body Src_Editor_Module is
    -----------------------
 
    procedure On_Editor_Destroy
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
-      Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
-      Child : constant MDI_Child := MDI_Child (Widget);
+      Id      : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Child   : constant MDI_Child := MDI_Child (Widget);
       New_Map : Editors_Hash.Map;
    begin
       if Id /= null then
@@ -568,7 +610,8 @@ package body Src_Editor_Module is
          Id.Editors := New_Map;
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Editor_Destroy;
 
    -------------------------------------------
@@ -576,8 +619,7 @@ package body Src_Editor_Module is
    -------------------------------------------
 
    procedure On_Lock_Or_Unlock_Tab_Contextual_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
       Command : Interactive_Command_Access;
@@ -586,15 +628,16 @@ package body Src_Editor_Module is
       Command :=
         new Lock_Or_Unlock_Commmand'(Root_Command with Split => False);
 
-      Proxy := Create_Proxy
-        (Command,
-         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
+      Proxy :=
+        Create_Proxy
+          (Command,
+           Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
       Launch_Background_Command
-        (Kernel          => Kernel,
-         Command         => Proxy,
-         Active          => True,
-         Show_Bar        => False,
-         Block_Exit      => False);
+        (Kernel     => Kernel,
+         Command    => Proxy,
+         Active     => True,
+         Show_Bar   => False,
+         Block_Exit => False);
    end On_Lock_Or_Unlock_Tab_Contextual_Menu;
 
    -------------------------------------------------
@@ -602,32 +645,32 @@ package body Src_Editor_Module is
    -------------------------------------------------
 
    procedure On_Lock_Or_Unlock_Split_Tab_Contextual_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
       Command : Interactive_Command_Access;
       Proxy   : Command_Access;
    begin
-      Command :=
-        new Lock_Or_Unlock_Commmand'(Root_Command with Split => True);
+      Command := new Lock_Or_Unlock_Commmand'(Root_Command with Split => True);
 
-      Proxy := Create_Proxy
-        (Command,
-         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
+      Proxy :=
+        Create_Proxy
+          (Command,
+           Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
       Launch_Background_Command
-        (Kernel          => Kernel,
-         Command         => Proxy,
-         Active          => True,
-         Show_Bar        => False,
-         Block_Exit      => False);
+        (Kernel     => Kernel,
+         Command    => Proxy,
+         Active     => True,
+         Show_Bar   => False,
+         Block_Exit => False);
    end On_Lock_Or_Unlock_Split_Tab_Contextual_Menu;
 
    --------------
    -- Dnd_Data --
    --------------
 
-   overriding function Dnd_Data
+   overriding
+   function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child
    is
       Editor : Source_Editor_Box;
@@ -636,10 +679,12 @@ package body Src_Editor_Module is
       if Copy then
          Editor := Get_Source_Box_From_MDI (MDI_Child (Child));
          Kernel := Get_Kernel (Editor);
-         return Find_MDI_Child
-           (Get_MDI (Kernel),
-            New_View
-              (Kernel, Editor, Get_Project (Editor))); --  for same project
+         return
+           Find_MDI_Child
+             (Get_MDI (Kernel),
+              New_View
+                (Kernel, Editor, Get_Project (Editor))); --  for same project
+
       else
          return MDI_Child (Child);
       end if;
@@ -649,14 +694,15 @@ package body Src_Editor_Module is
    -- Report_Deleted_File --
    -------------------------
 
-   overriding function Report_Deleted_File
-     (Self : not null access Editor_Child_Record;
-      Exists : Boolean) return Boolean
+   overriding
+   function Report_Deleted_File
+     (Self : not null access Editor_Child_Record; Exists : Boolean)
+      return Boolean
    is
       Title   : constant String := Self.Get_Short_Title;
       Del_Tag : constant String := " (deleted)";
       Has_Tag : constant Boolean := Ends_With (Title, Del_Tag);
---        Ada.Strings.Fixed.Index (Title, Del_Tag) > 0;
+      --        Ada.Strings.Fixed.Index (Title, Del_Tag) > 0;
    begin
       --  Indicate in the title that the file has been deleted, the user
       --  can save the buffer to recreate it or close it to remove the
@@ -674,7 +720,8 @@ package body Src_Editor_Module is
    -- Reload --
    ------------
 
-   overriding procedure Reload (Self : not null access Editor_Child_Record) is
+   overriding
+   procedure Reload (Self : not null access Editor_Child_Record) is
       Editor  : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (MDI_Child (Self));
       Buffer  : constant Source_Buffer := Get_Buffer (Editor);
@@ -685,10 +732,11 @@ package body Src_Editor_Module is
    begin
       if not File.Is_Regular_File then
          Open_File_Action_Hook.Run
-            (Editor.Get_Kernel,
-             File => File,
-             Project => No_Project,
-             Line => -1);   --  close editors for File
+           (Editor.Get_Kernel,
+            File    => File,
+            Project => No_Project,
+            Line    => -1);   --  close editors for File
+
       else
          Get_Cursor_Position (Buffer, Line, Column);
 
@@ -723,7 +771,8 @@ package body Src_Editor_Module is
    -- Needs_To_Be_Saved --
    -----------------------
 
-   overriding function Needs_To_Be_Saved
+   overriding
+   function Needs_To_Be_Saved
      (Self : not null access Editor_Child_Record) return Boolean
    is
       Buffer : constant Source_Buffer :=
@@ -742,8 +791,9 @@ package body Src_Editor_Module is
         and then Get_Widget (Child) /= null
         and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
       then
-         return Get_File_Identifier
-           (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
+         return
+           Get_File_Identifier
+             (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
       else
          return GNATCOLL.VFS.No_File;
       end if;
@@ -755,8 +805,7 @@ package body Src_Editor_Module is
 
    function Get_Filename
      (Child : not null access MDI_Child_Record'Class)
-      return GNATCOLL.VFS.Virtual_File
-   is
+      return GNATCOLL.VFS.Virtual_File is
    begin
       if Child /= null
         and then Get_Widget (Child) /= null
@@ -792,15 +841,16 @@ package body Src_Editor_Module is
    procedure For_All_Views
      (Kernel   : not null access Kernel_Handle_Record'Class;
       File     : Virtual_File;
-      Callback : not null access procedure
-        (Child : not null access GPS_MDI_Child_Record'Class))
+      Callback :
+        not null access procedure
+          (Child : not null access GPS_MDI_Child_Record'Class))
    is
       Iter  : Child_Iterator := Get_MDI (Kernel).First_Child;
       Child : MDI_Child;
       Box   : Source_Editor_Box;
 
-      package Child_Vectors is new Ada.Containers.Vectors
-        (Positive, GPS_MDI_Child);
+      package Child_Vectors is new
+        Ada.Containers.Vectors (Positive, GPS_MDI_Child);
       Childs : Child_Vectors.Vector;
 
    begin
@@ -828,18 +878,17 @@ package body Src_Editor_Module is
    -- Cancel_Activity_Bar --
    -------------------------
 
-   procedure Cancel_Activity_Bar
-     (Kernel : Kernel_Handle; File : Virtual_File)
+   procedure Cancel_Activity_Bar (Kernel : Kernel_Handle; File : Virtual_File)
    is
-      Project : constant Project_Type := Get_Project_For_File
-        (Kernel.Get_Project_Tree, File =>  File);
+      Project : constant Project_Type :=
+        Get_Project_For_File (Kernel.Get_Project_Tree, File => File);
       Editor  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI
-                    (Find_Editor
-                       (Kernel,
-                        File    => File,
-                        Project => Project,
-                        Unlocked_Only => False));
+        Get_Source_Box_From_MDI
+          (Find_Editor
+             (Kernel,
+              File          => File,
+              Project       => Project,
+              Unlocked_Only => False));
    begin
       if Editor /= null then
          Editor.Set_Activity_Progress_Bar_Visibility (False);
@@ -865,8 +914,7 @@ package body Src_Editor_Module is
    -- Cancel_Deferred_Save --
    --------------------------
 
-   procedure Cancel_Deferred_Save
-     (Kernel : Kernel_Handle; File : Virtual_File)
+   procedure Cancel_Deferred_Save (Kernel : Kernel_Handle; File : Virtual_File)
    is
       Buffer : constant Source_Buffer := Get (Kernel, File);
    begin
@@ -879,13 +927,14 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      Id    : constant Source_Editor_Module :=
+      Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
@@ -906,7 +955,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Reloaded;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -925,7 +975,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Changed_On_Disk;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -947,14 +998,15 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File)
    is
       pragma Unreferenced (Kernel, Self);
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       E  : Element := No_Element;
    begin
       while Id.Editors.Contains (File) loop
@@ -973,7 +1025,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1018,7 +1071,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1027,8 +1081,7 @@ package body Src_Editor_Module is
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       C   : constant MDI_Child := Find_Editor (Kernel, File, No_Project);
-      Box : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (C);
+      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (C);
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
@@ -1042,19 +1095,19 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Cursor_Stopped;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
+   overriding
+   procedure Execute
+     (Self         : On_Cursor_Stopped;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
       Line, Column : Integer;
-      Project : Project_Type)
+      Project      : Project_Type)
    is
       pragma Unreferenced (Self, Line, Column);
       C   : constant MDI_Child := Find_Editor (Kernel, File, Project);
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Box : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (C);
+      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (C);
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
@@ -1069,20 +1122,18 @@ package body Src_Editor_Module is
    ------------------
 
    function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
+     (MDI : MDI_Window; Node : Node_Ptr; User : Kernel_Handle) return MDI_Child
    is
-      Src         : Source_Editor_Box;
-      F           : Virtual_File;
-      Str         : XML_Utils.String_Ptr;
-      Line        : Editable_Line_Type := 1;
-      Column      : Visible_Column_Type := 1;
-      Child       : MDI_Child;
-      Project     : Project_Type;
+      Src     : Source_Editor_Box;
+      F       : Virtual_File;
+      Str     : XML_Utils.String_Ptr;
+      Line    : Editable_Line_Type := 1;
+      Column  : Visible_Column_Type := 1;
+      Child   : MDI_Child;
+      Project : Project_Type;
       pragma Unreferenced (MDI);
 
-      Dummy  : Boolean;
+      Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
       if Node.Tag.all = "Source_Editor" then
@@ -1103,8 +1154,9 @@ package body Src_Editor_Module is
 
             Str := Get_Field (Node, "project");
             if Str /= null then
-               Project := Get_Registry (User).Tree.Project_From_Path
-                 (Create (+Str.all));
+               Project :=
+                 Get_Registry (User).Tree.Project_From_Path
+                   (Create (+Str.all));
             end if;
 
             Child := Find_Editor (User, F, No_Project);  --  any project
@@ -1113,21 +1165,23 @@ package body Src_Editor_Module is
                --  to create an empty editor : this preserves the user's
                --  desktop and points out possible disk issues...
 
-               Src := Open_File
-                 (User, F,
-                  Project         => Project,
-                  Focus           => False,
-                  Line            => Line,
-                  Create_New      => True,
-                  Column          => Column,
-                  Column_End      => Column,
-                  Is_Load_Desktop => True);
+               Src :=
+                 Open_File
+                   (User,
+                    F,
+                    Project         => Project,
+                    Focus           => False,
+                    Line            => Line,
+                    Create_New      => True,
+                    Column          => Column,
+                    Column_End      => Column,
+                    Is_Load_Desktop => True);
                if Src /= null then
                   Child := Find_Child (User, Src);
                end if;
             else
-               Src := New_View
-                 (User, Get_Source_Box_From_MDI (Child), Project);
+               Src :=
+                 New_View (User, Get_Source_Box_From_MDI (Child), Project);
                Child := Find_Child (User, Src);
             end if;
          end if;
@@ -1145,8 +1199,9 @@ package body Src_Editor_Module is
    -- Get_Child_Class --
    ---------------------
 
-   overriding function Get_Child_Class
-     (Self  : not null access Editor_Child_Record) return Class_Type is
+   overriding
+   function Get_Child_Class
+     (Self : not null access Editor_Child_Record) return Class_Type is
    begin
       return New_Class (Self.Kernel, "EditorView");
    end Get_Child_Class;
@@ -1155,8 +1210,9 @@ package body Src_Editor_Module is
    -- Save_Desktop --
    ------------------
 
-   overriding function Save_Desktop
-     (Self  : not null access Editor_Child_Record) return Node_Ptr
+   overriding
+   function Save_Desktop
+     (Self : not null access Editor_Child_Record) return Node_Ptr
    is
       N, Child : Node_Ptr;
       Line     : Editable_Line_Type;
@@ -1179,7 +1235,7 @@ package body Src_Editor_Module is
          return null;
       end if;
 
-      File   := Get_Filename (Editor);
+      File := Get_Filename (Editor);
 
       --  ??? For now, save with desktop only local files
 
@@ -1187,9 +1243,10 @@ package body Src_Editor_Module is
          return null;
       end if;
 
-      if Pref = From_Project and then
-        (Get_Registry (Kernel).Tree.Status /= From_File or else
-         Get_Registry (Kernel).Tree.Info_Set (File).Is_Empty)
+      if Pref = From_Project
+        and then
+          (Get_Registry (Kernel).Tree.Status /= From_File
+           or else Get_Registry (Kernel).Tree.Info_Set (File).Is_Empty)
       then
          return null;
       end if;
@@ -1222,8 +1279,9 @@ package body Src_Editor_Module is
 
       Child := new Node;
       Child.Tag := new String'("project");
-      Child.Value := new String'
-        (Editor.Get_View.Get_Project.Project_Path.Display_Full_Name);
+      Child.Value :=
+        new String'
+          (Editor.Get_View.Get_Project.Project_Path.Display_Full_Name);
       Add_Child (N, Child);
 
       return N;
@@ -1264,7 +1322,7 @@ package body Src_Editor_Module is
      (Kernel          : access Kernel_Handle_Record'Class;
       Only_If_Focused : Boolean := False) return MDI_Child
    is
-      Id : constant Source_Editor_Module :=
+      Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
@@ -1276,17 +1334,15 @@ package body Src_Editor_Module is
          return Id.Last_Focused_Editor;
       end if;
 
-      return Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Source_Editor_Box_Record'Tag);
+      return
+        Find_MDI_Child_By_Tag (Get_MDI (Kernel), Source_Editor_Box_Record'Tag);
    end Find_Current_Editor;
 
    ---------------------------
    -- Update_Cache_On_Focus --
    ---------------------------
 
-   procedure Update_Cache_On_Focus
-     (Child : access Gtk_Widget_Record'Class)
-   is
+   procedure Update_Cache_On_Focus (Child : access Gtk_Widget_Record'Class) is
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Box : constant Source_Editor_Box :=
@@ -1310,12 +1366,11 @@ package body Src_Editor_Module is
    begin
       if Has_File_Information (Context) then
          declare
-            Kernel     : constant Kernel_Handle := Get_Kernel (Context);
-            File       : constant Virtual_File := File_Information (Context);
-            Info       : constant GNATCOLL.Projects.File_Info'Class :=
-                           File_Info'Class
-                             (Get_Registry
-                                (Kernel).Tree.Info_Set (File).First_Element);
+            Kernel : constant Kernel_Handle := Get_Kernel (Context);
+            File   : constant Virtual_File := File_Information (Context);
+            Info   : constant GNATCOLL.Projects.File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
          begin
             if Info.Unit_Part in Unit_Body | Unit_Separate then
                return "Specification";
@@ -1351,34 +1406,32 @@ package body Src_Editor_Module is
       end if;
 
       declare
-         Title : constant Virtual_File := Get_Filename (Current);
+         Title       : constant Virtual_File := Get_Filename (Current);
          P_Full_Name : constant String :=
-           (if P /= No_Project and then
-               Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
+           (if P /= No_Project
+              and then
+                Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
             then " - Project: " & P.Project_Path.Display_Full_Name
             else "");
       begin
-         Create_New_View
-           (Editor,
-            P,
-            Kernel,
-            Current);
+         Create_New_View (Editor, P, Kernel, Current);
 
          Child := new Editor_Child_Record;
          Initialize
-           (Child, Editor,
-            Kernel         => Kernel,
-            Flags          => All_Buttons,
-            Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Module         => Src_Editor_Module_Id,
-            Areas          => Central_Only);
+           (Child,
+            Editor,
+            Kernel       => Kernel,
+            Flags        => All_Buttons,
+            Focus_Widget => Gtk_Widget (Get_View (Editor)),
+            Module       => Src_Editor_Module_Id,
+            Areas        => Central_Only);
 
          --  Find the first free view number
          Num := 2;
          while Find_MDI_Child_By_Name
-           (Get_MDI (Kernel),
-            Display_Base_Name (Title) & " <" & Image (Num) & ">") /=
-           null
+                 (Get_MDI (Kernel),
+                  Display_Base_Name (Title) & " <" & Image (Num) & ">")
+           /= null
          loop
             Num := Num + 1;
          end loop;
@@ -1404,8 +1457,7 @@ package body Src_Editor_Module is
          Set_Focus_Child (Child);
 
          Widget_Callback.Connect
-           (Child, Signal_Destroy,
-            On_Editor_Destroy'Access);
+           (Child, Signal_Destroy, On_Editor_Destroy'Access);
 
          --  Emit a "status_changed" signal on the editor, to initialize the
          --  MDI icon and status.
@@ -1419,7 +1471,8 @@ package body Src_Editor_Module is
    -- Save_Function --
    -------------------
 
-   overriding function Save_Function
+   overriding
+   function Save_Function
      (Module       : access Source_Editor_Module_Record;
       Child        : Glib.Object.GObject;
       Mode         : Save_Function_Mode;
@@ -1431,7 +1484,7 @@ package body Src_Editor_Module is
       Box     : constant Source_Editor_Box := Source_Editor_Box (Child);
    begin
       case Mode is
-         when Query =>
+         when Query  =>
             return Needs_To_Be_Saved (Box, Single_Child);
 
          when Action =>
@@ -1509,8 +1562,7 @@ package body Src_Editor_Module is
                Filename        => File,
                Is_Load_Desktop => Is_Load_Desktop);
 
-            if File = GNATCOLL.VFS.No_File
-              and then Dir /= GNATCOLL.VFS.No_File
+            if File = GNATCOLL.VFS.No_File and then Dir /= GNATCOLL.VFS.No_File
             then
                Editor.Get_Buffer.Set_Initial_Dir (Dir);
             end if;
@@ -1534,24 +1586,24 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
       Name             : constant String := File.Display_Full_Name;
       Prefix_Menu_Name : constant String := "open recent file: ";
-      File_Menu_Paths  : constant Unbounded_String_Array := Split
-        (To_String (Menu_List_For_Action ("open file")),
-         On => '/');
+      File_Menu_Paths  : constant Unbounded_String_Array :=
+        Split (To_String (Menu_List_For_Action ("open file")), On => '/');
    begin
       Register_Action
         (Kernel,
          Name        => Prefix_Menu_Name & Name,
-         Command     => new On_Open_Recent'
-           (Interactive_Command with File => File),
+         Command     =>
+           new On_Open_Recent'(Interactive_Command with File => File),
          Description => "Reopen the file " & Name,
          Category    => "Internal");
       Register_Menu
         (Kernel,
-         Path     => To_String (File_Menu_Paths (File_Menu_Paths'First))
-         & "/Open Recent Files/"
-         & Escape_Underscore (File.Display_Base_Name),
-         Action   => Prefix_Menu_Name & Name,
-         Prepend  => Prepend);
+         Path    =>
+           To_String (File_Menu_Paths (File_Menu_Paths'First))
+           & "/Open Recent Files/"
+           & Escape_Underscore (File.Display_Base_Name),
+         Action  => Prefix_Menu_Name & Name,
+         Prepend => Prepend);
 
       if Prepend then
          M.Recent_File_Actions.Prepend (Prefix_Menu_Name & Name);
@@ -1600,9 +1652,9 @@ package body Src_Editor_Module is
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
    is
-      M        : constant Source_Editor_Module :=
+      M       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Is_Full  : Boolean := False;
+      Is_Full : Boolean := False;
    begin
       --  Make sure we won't add duplicate entries in the history.
       --  This loop is not very optimal, but we have to do this since
@@ -1654,15 +1706,13 @@ package body Src_Editor_Module is
       Style  : Tab_Style_Kind)
    is
 
-      procedure For_Child
-        (Child : not null access GPS_MDI_Child_Record'Class);
+      procedure For_Child (Child : not null access GPS_MDI_Child_Record'Class);
 
       ---------------
       -- For_Child --
       ---------------
 
-      procedure For_Child
-        (Child : not null access GPS_MDI_Child_Record'Class)
+      procedure For_Child (Child : not null access GPS_MDI_Child_Record'Class)
       is
          use Gtk.Label;
          use Gtk.Style_Context;
@@ -1675,7 +1725,7 @@ package body Src_Editor_Module is
          end if;
 
          case Style is
-            when Error =>
+            when Error   =>
                Get_Style_Context (Tab_Label).Add_Class ("mdi-errors-tab");
                Get_Style_Context (Tab_Label).Remove_Class ("mdi-warnings-tab");
 
@@ -1683,7 +1733,7 @@ package body Src_Editor_Module is
                Get_Style_Context (Tab_Label).Remove_Class ("mdi-errors-tab");
                Get_Style_Context (Tab_Label).Add_Class ("mdi-warnings-tab");
 
-            when None =>
+            when None    =>
                Get_Style_Context (Tab_Label).Remove_Class ("mdi-warnings-tab");
                Get_Style_Context (Tab_Label).Remove_Class ("mdi-errors-tab");
          end case;
@@ -1700,9 +1750,10 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self    : access On_Open_Recent;
-       Context : Interactive_Command_Context) return Command_Return_Type is
+   overriding
+   function Execute
+     (Self : access On_Open_Recent; Context : Interactive_Command_Context)
+      return Command_Return_Type is
    begin
       Open_File_Action_Hook.Run
         (Get_Kernel (Context.Context),
@@ -1730,11 +1781,10 @@ package body Src_Editor_Module is
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
       Title            : String := "";
-      Is_Load_Desktop  : Boolean := False)
-      return Source_Editor_Box
+      Is_Load_Desktop  : Boolean := False) return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
-                  Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       No_Name : constant String := -"Untitled";
       MDI     : constant MDI_Window := Get_MDI (Kernel);
       Editor  : Source_Editor_Box;
@@ -1742,8 +1792,7 @@ package body Src_Editor_Module is
       Child2  : MDI_Child;
 
       procedure Jump_To_Location_And_Give_Focus
-        (Child     : not null access MDI_Child_Record'Class;
-         Is_Opened : Boolean);
+        (Child : not null access MDI_Child_Record'Class; Is_Opened : Boolean);
       --  Jump to the location given in parameter to Open_File
 
       -------------------------------------
@@ -1751,21 +1800,20 @@ package body Src_Editor_Module is
       -------------------------------------
 
       procedure Jump_To_Location_And_Give_Focus
-        (Child     : not null access MDI_Child_Record'Class;
-         Is_Opened : Boolean)
+        (Child : not null access MDI_Child_Record'Class; Is_Opened : Boolean)
       is
          Real_Column, Real_Column_End : Basic_Types.Character_Index;
       begin
-         if Line /= 0
-           and then Is_Valid_Line (Get_Buffer (Editor), Line)
-         then
-            Real_Column := Collapse_Tabs
-              (Get_Buffer (Editor), Line, Column);
+         if Line /= 0 and then Is_Valid_Line (Get_Buffer (Editor), Line) then
+            Real_Column := Collapse_Tabs (Get_Buffer (Editor), Line, Column);
 
             --  Will emit context_changed if Focus is true
             Set_Cursor_Location
-              (Editor, Line, Real_Column, Force_Focus => False,
-               Centering => With_Margin);
+              (Editor,
+               Line,
+               Real_Column,
+               Force_Focus => False,
+               Centering   => With_Margin);
             if Focus then
                Child.Raise_Child (Focus);
             end if;
@@ -1774,11 +1822,11 @@ package body Src_Editor_Module is
 
             if Column_End /= 0
               and then Column < Column_End
-              and then Is_Valid_Position
-                (Get_Buffer (Editor), Line, Column_End)
+              and then
+                Is_Valid_Position (Get_Buffer (Editor), Line, Column_End)
             then
-               Real_Column_End := Collapse_Tabs
-                 (Get_Buffer (Editor), Line, Column_End);
+               Real_Column_End :=
+                 Collapse_Tabs (Get_Buffer (Editor), Line, Column_End);
 
                Select_Region
                  (Get_Buffer (Editor),
@@ -1802,18 +1850,25 @@ package body Src_Editor_Module is
 
    begin
       if Active (Me) then
-         Trace (Me, "Open file " & File.Display_Full_Name
-                & " Project=" & Project.Project_Path.Display_Full_Name
-                & " Focus=" & Focus'Img
-                & " Line=" & Line'Img);
+         Trace
+           (Me,
+            "Open file "
+            & File.Display_Full_Name
+            & " Project="
+            & Project.Project_Path.Display_Full_Name
+            & " Focus="
+            & Focus'Img
+            & " Line="
+            & Line'Img);
       end if;
 
       if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-         Child2 := Find_Editor
-           (Kernel        => Kernel,
-            File          => File,
-            Project       => Project,
-            Unlocked_Only => True);
+         Child2 :=
+           Find_Editor
+             (Kernel        => Kernel,
+              File          => File,
+              Project       => Project,
+              Unlocked_Only => True);
 
          if Child2 /= null then
             Trace (Me, "Reusing existing editor for same project");
@@ -1846,10 +1901,8 @@ package body Src_Editor_Module is
       --  Do we have the file opened for another project ? If yes, create a new
       --  view
 
-      Child2 := Find_Editor
-        (Kernel  => Kernel,
-         File    => File,
-         Project => No_Project);
+      Child2 :=
+        Find_Editor (Kernel => Kernel, File => File, Project => No_Project);
 
       if Child2 /= null then
          Trace (Me, "Create new view for existing file, wrong project");
@@ -1862,13 +1915,14 @@ package body Src_Editor_Module is
 
       else
          Increase_Indent (Me, "About to Create_File_Editor");
-         Editor := Create_File_Editor
-           (Kernel          => Kernel,
-            File            => File,
-            Project         => Project,
-            Dir             => Initial_Dir,
-            Create_New      => Create_New,
-            Is_Load_Desktop => Is_Load_Desktop);
+         Editor :=
+           Create_File_Editor
+             (Kernel          => Kernel,
+              File            => File,
+              Project         => Project,
+              Dir             => Initial_Dir,
+              Create_New      => Create_New,
+              Is_Load_Desktop => Is_Load_Desktop);
          Decrease_Indent (Me);
       end if;
 
@@ -1879,19 +1933,17 @@ package body Src_Editor_Module is
          Freeze_Context (Get_Buffer (Editor));
          Child := new Editor_Child_Record;
          Initialize
-           (Child, Editor,
-            Kernel         => Kernel,
-            Flags          => All_Buttons,
-            Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Group          => Group,
-            Module         => Src_Editor_Module_Id,
-            Areas          => Areas);
+           (Child,
+            Editor,
+            Kernel       => Kernel,
+            Flags        => All_Buttons,
+            Focus_Widget => Gtk_Widget (Get_View (Editor)),
+            Group        => Group,
+            Module       => Src_Editor_Module_Id,
+            Areas        => Areas);
          Child.Monitor_File (File);
 
-         Put
-           (Get_MDI (Kernel),
-            Child,
-            Initial_Position => Initial_Position);
+         Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
          if not Is_Load_Desktop then
@@ -1910,8 +1962,7 @@ package body Src_Editor_Module is
                & (if Editor.Is_Locked then Locked_Suffix else ""));
          else
             Child.Set_Icon_Name
-              (File_Pixbuf
-               & (if Editor.Is_Locked then Locked_Suffix else ""));
+              (File_Pixbuf & (if Editor.Is_Locked then Locked_Suffix else ""));
          end if;
 
          Widget_Callback.Connect
@@ -1955,21 +2006,24 @@ package body Src_Editor_Module is
 
                while The_Child /= null loop
                   if The_Child /= MDI_Child (Child)
-                    and then Get_Widget (The_Child).all in
-                    Source_Editor_Box_Record'Class
+                    and then
+                      Get_Widget (The_Child).all
+                      in Source_Editor_Box_Record'Class
                     and then Get_Filename (The_Child) = GNATCOLL.VFS.No_File
                   then
                      declare
-                        Ident : constant String := Display_Base_Name
-                          (Get_File_Identifier (The_Child));
+                        Ident : constant String :=
+                          Display_Base_Name (Get_File_Identifier (The_Child));
                         Index : Natural;
                      begin
                         if Ident = No_Name then
                            Nb_Untitled := Natural'Max (Nb_Untitled, 0);
                         else
-                           Index := Natural'Value
-                             (Ident (Ident'First + No_Name'Length + 2
-                                     .. Ident'Last - 1));
+                           Index :=
+                             Natural'Value
+                               (Ident
+                                  (Ident'First + No_Name'Length + 2
+                                   .. Ident'Last - 1));
                            Nb_Untitled := Natural'Max (Nb_Untitled, Index);
                         end if;
 
@@ -1999,8 +2053,7 @@ package body Src_Editor_Module is
                else
                   declare
                      Identifier : constant String :=
-                                    No_Name & " ("
-                                      & Image (Nb_Untitled + 1) & ")";
+                       No_Name & " (" & Image (Nb_Untitled + 1) & ")";
                   begin
                      if Title /= "" then
                         Child.Set_Title (Title);
@@ -2033,8 +2086,7 @@ package body Src_Editor_Module is
          Update_Editor_Tabs_Status (Kernel, [File]);
       else
          Kernel.Insert
-           ((-"Cannot open file ") & "'" & Display_Full_Name (File)
-            & "'",
+           ((-"Cannot open file ") & "'" & Display_Full_Name (File) & "'",
             Add_LF => True,
             Mode   => Error);
       end if;
@@ -2046,14 +2098,15 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Source : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Select_All (Get_Buffer (Source));
@@ -2065,14 +2118,15 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Insert_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Source : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          declare
@@ -2105,19 +2159,23 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self             : On_Open_File;
-      Kernel           : not null access Kernel_Handle_Record'Class;
-      File             : Virtual_File;
-      Line             : Integer;
-      Column, Column_End : Basic_Types.Visible_Column_Type;
+   overriding
+   function Execute
+     (Self                                             : On_Open_File;
+      Kernel                                           :
+        not null access Kernel_Handle_Record'Class;
+      File                                             : Virtual_File;
+      Line                                             : Integer;
+      Column, Column_End                               :
+        Basic_Types.Visible_Column_Type;
       Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project          : Project_Type;
-      Group            : Child_Group;
-      Initial_Position : Child_Position;
-      Areas            : Allowed_Areas;
-      Title            : String;
-      Is_Load_Desktop  : Boolean) return Boolean
+      Project                                          : Project_Type;
+      Group                                            : Child_Group;
+      Initial_Position                                 : Child_Position;
+      Areas                                            : Allowed_Areas;
+      Title                                            : String;
+      Is_Load_Desktop                                  : Boolean)
+      return Boolean
    is
       pragma Unreferenced (Self);
       Child  : MDI_Child;
@@ -2140,24 +2198,29 @@ package body Src_Editor_Module is
          --  Don't open a file which can't be read
 
          Kernel.Get_Messages_Window.Insert_Error
-           ((-"Cannot open file ") & "'" & Display_Full_Name (File)
-            & "', the file is not readable" & ASCII.LF);
+           ((-"Cannot open file ")
+            & "'"
+            & Display_Full_Name (File)
+            & "', the file is not readable"
+            & ASCII.LF);
          return False;
 
       else
-         Source := Open_File
-           (Kernel, File,
-            Project          => Project,
-            Create_New       => New_File,
-            Focus            => Focus,
-            Group            => Group,
-            Initial_Position => Initial_Position,
-            Line             => Editable_Line_Type (Line),
-            Column           => Column,
-            Column_End       => Column_End,
-            Areas            => Areas,
-            Title            => Title,
-            Is_Load_Desktop  => Is_Load_Desktop);
+         Source :=
+           Open_File
+             (Kernel,
+              File,
+              Project          => Project,
+              Create_New       => New_File,
+              Focus            => Focus,
+              Group            => Group,
+              Initial_Position => Initial_Position,
+              Line             => Editable_Line_Type (Line),
+              Column           => Column,
+              Column_End       => Column_End,
+              Areas            => Areas,
+              Title            => Title,
+              Is_Load_Desktop  => Is_Load_Desktop);
 
          if Force_Reload then
             Source.Get_Buffer.Load_File
@@ -2173,12 +2236,13 @@ package body Src_Editor_Module is
          if Enable_Navigation then
             Push_Marker_In_History
               (Kernel => Kernel,
-               Marker => Create_File_Marker
-                 (Kernel  => Kernel,
-                  File    => File,
-                  Project => Project,
-                  Line    => Convert (Line),
-                  Column  => Column));
+               Marker =>
+                 Create_File_Marker
+                   (Kernel  => Kernel,
+                    File    => File,
+                    Project => Project,
+                    Line    => Convert (Line),
+                    Column  => Column));
          end if;
 
          return Source /= null;
@@ -2189,7 +2253,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self       : On_File_Line_Action;
       Kernel     : not null access Kernel_Handle_Record'Class;
       Identifier : String;
@@ -2229,7 +2294,8 @@ package body Src_Editor_Module is
                --  src_editor_buffer-line_information (Add_Blank_Lines)
                Add_Side_Information
                  (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
-                  Identifier, Info.all);
+                  Identifier,
+                  Info.all);
             end if;
          end if;
       end Process_File;
@@ -2248,7 +2314,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self        : On_Character_Added;
       Kernel      : not null access Kernel_Handle_Record'Class;
       File        : Virtual_File;
@@ -2319,8 +2386,7 @@ package body Src_Editor_Module is
       Has_Warnings : Boolean := False;
 
       function Check_Messages
-        (Message : not null access Abstract_Message'Class)
-         return Boolean;
+        (Message : not null access Abstract_Message'Class) return Boolean;
       --  Check wether the message is error or warning and store result in
       --  Has_Errors & Has_Warnings
 
@@ -2328,14 +2394,13 @@ package body Src_Editor_Module is
       -- Set_Styles --
       ----------------
 
-      procedure Set_Styles
-        (Child : not null access GPS_MDI_Child_Record'Class)
+      procedure Set_Styles (Child : not null access GPS_MDI_Child_Record'Class)
       is
-         Src_Box : constant Source_Editor_Box :=
+         Src_Box   : constant Source_Editor_Box :=
            Get_Source_Box_From_MDI (MDI_Child (Child));
-         File    : constant Virtual_File := Src_Box.Get_Filename;
-         Project : constant Project_Type := Get_Project_For_File
-           (Kernel.Registry.Tree, File);
+         File      : constant Virtual_File := Src_Box.Get_Filename;
+         Project   : constant Project_Type :=
+           Get_Project_For_File (Kernel.Registry.Tree, File);
          Tab_Label : constant Gtk_Label := Child.Get_Tab_Label;
       begin
          --  Return immediately if there is no tab label (floating editors).
@@ -2356,8 +2421,7 @@ package body Src_Editor_Module is
       --------------------
 
       function Check_Messages
-        (Message : not null access Abstract_Message'Class)
-         return Boolean is
+        (Message : not null access Abstract_Message'Class) return Boolean is
       begin
          if Message.Get_Importance = High then
             Has_Errors := True;
@@ -2378,7 +2442,7 @@ package body Src_Editor_Module is
             Callback => Set_Styles'Unrestricted_Access);
 
          --  Check whether we need tab label highligting on errors/warnings
-         Has_Errors   := False;
+         Has_Errors := False;
          Has_Warnings := False;
 
          Kernel.Get_Messages_Container.For_All_Messages
@@ -2397,7 +2461,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class) is
    begin
@@ -2408,7 +2473,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self        : On_Word_Added;
       Kernel      : not null access Kernel_Handle_Record'Class;
       File        : Virtual_File;
@@ -2416,12 +2482,14 @@ package body Src_Editor_Module is
       Interactive : Boolean := True)
    is
       pragma Unreferenced (Self);
-      Buffer    : Source_Buffer;
+      Buffer : Source_Buffer;
    begin
       if File /= GNATCOLL.VFS.No_File then
          --  Get the most recent editor for this file, for any project
-         Buffer := Get_Buffer
-           (Get_Source_Box_From_MDI (Find_Editor (Kernel, File, No_Project)));
+         Buffer :=
+           Get_Buffer
+             (Get_Source_Box_From_MDI
+                (Find_Editor (Kernel, File, No_Project)));
          Autocase_Text
            (Buffer => Buffer, Character => Char, Casing => End_Of_Word);
       end if;
@@ -2431,18 +2499,19 @@ package body Src_Editor_Module is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Editor_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       Editor : constant Source_Editor_Box :=
         Source_Editor_Box (GPS_MDI_Child (Self).Get_Actual_Widget);
    begin
-      return Build_Editor_Context
-        (View     => Get_View (Editor),
-         Location => Location_Event,
-         Event    => Event);
+      return
+        Build_Editor_Context
+          (View     => Get_View (Editor),
+           Location => Location_Event,
+           Event    => Event);
    end Build_Context;
 
    -----------------------------
@@ -2468,21 +2537,21 @@ package body Src_Editor_Module is
          Box := Source_Editor_Box (W);
 
          case Special is
-            when 'l' =>
+            when 'l'    =>
                Get_Cursor_Position (Get_Buffer (Box), Line, Column);
                return Expansion & Image (Integer (Line));
 
-            when 'c' =>
+            when 'c'    =>
                Get_Cursor_Position (Get_Buffer (Box), Line, Column);
                return Expansion & Image (Integer (Column));
 
-            when 'f' =>
+            when 'f'    =>
                return Expansion & (+Base_Name (Get_Filename (Box)));
 
-            when 'd' =>
+            when 'd'    =>
                return Expansion & (+Dir_Name (Get_Filename (Box)));
 
-            when 'p' =>
+            when 'p'    =>
                Prj := Get_Project (Box);
                if Prj = No_Project then
                   Prj := Get_Registry (Kernel).Tree.Root_Project;
@@ -2490,7 +2559,7 @@ package body Src_Editor_Module is
 
                return Expansion & Prj.Name;
 
-            when 'P' =>
+            when 'P'    =>
                Prj := Get_Project (Box);
                if Prj = No_Project then
                   Prj := Get_Registry (Kernel).Tree.Root_Project;
@@ -2511,20 +2580,22 @@ package body Src_Editor_Module is
    -- Bookmark_Handler --
    ----------------------
 
-   overriding function Bookmark_Handler
+   overriding
+   function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
       Load   : XML_Utils.Node_Ptr := null;
       JSON   : JSON_Value := JSON_Null) return Location_Marker is
    begin
-      return Src_Editor_Module.Markers.Load
-        (Get_Kernel (Module.all), Load, JSON);
+      return
+        Src_Editor_Module.Markers.Load (Get_Kernel (Module.all), Load, JSON);
    end Bookmark_Handler;
 
    ---------------
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -2564,7 +2635,8 @@ package body Src_Editor_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access Is_Ada_File_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean is
    begin
@@ -2572,10 +2644,12 @@ package body Src_Editor_Module is
          return False;
       end if;
 
-      return Ada.Characters.Handling.To_Lower
-        (Get_Kernel
-           (Ctxt).Get_Language_Handler.Get_Language_From_File
-             (File_Information (Ctxt)).Get_Name) = "ada";
+      return
+        Ada.Characters.Handling.To_Lower
+          (Get_Kernel (Ctxt).Get_Language_Handler.Get_Language_From_File
+             (File_Information (Ctxt))
+             .Get_Name)
+        = "ada";
    end Filter_Matches_Primitive;
 
    -----------------------------
@@ -2583,21 +2657,20 @@ package body Src_Editor_Module is
    -----------------------------
 
    function Get_Lang_Formatter_Pref
-     (Lang : Language.Language_Access; Prefix : String)
-      return Preference
+     (Lang : Language.Language_Access; Prefix : String) return Preference
    is
       Id          : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Lang_Name   : constant String := To_Lower (Lang.Get_Name);
       Pref_Suffix : constant String :=
         (if Lang_Name = "c" or else Lang_Name = "c++" or else Lang_Name = "cpp"
-         --  Merge C and C++ together
+           --  Merge C and C++ together
          then "c++"
          else Lang_Name);
    begin
-      return Id.Get_Kernel.Get_Preferences.Get_Pref_From_Name
-           (Name                => Prefix & Pref_Suffix,
-            Create_If_Necessary => False);
+      return
+        Id.Get_Kernel.Get_Preferences.Get_Pref_From_Name
+          (Name => Prefix & Pref_Suffix, Create_If_Necessary => False);
    end Get_Lang_Formatter_Pref;
 
    -----------------------------------
@@ -2605,8 +2678,7 @@ package body Src_Editor_Module is
    -----------------------------------
 
    function Get_Range_Formatting_Provider
-     (Lang : Language.Language_Access)
-      return Editor_Formatting_Provider_Access
+     (Lang : Language.Language_Access) return Editor_Formatting_Provider_Access
    is
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -2638,8 +2710,7 @@ package body Src_Editor_Module is
    -------------------------------------
 
    function Get_On_Type_Formatting_Provider
-     (Lang : Language.Language_Access)
-     return Editor_Formatting_Provider_Access
+     (Lang : Language.Language_Access) return Editor_Formatting_Provider_Access
    is
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -2690,37 +2761,34 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      UR                          : constant Undo_Redo :=
-                                      new Undo_Redo_Information;
-      Module                      : Search_Module;
-      Selector                    : Simple_Scope_Selector;
-      Extra                       : Files_Extra_Scope;
-      Default_Options_Mask        : constant Search_Options_Mask :=
-                                      All_Options
-                                          and not Search_Backward
-                                              and not Supports_Incremental;
-      Command                     : Interactive_Command_Access;
-      Line_Numbers_Area_Filter    : Action_Filter;
+      UR                       : constant Undo_Redo :=
+        new Undo_Redo_Information;
+      Module                   : Search_Module;
+      Selector                 : Simple_Scope_Selector;
+      Extra                    : Files_Extra_Scope;
+      Default_Options_Mask     : constant Search_Options_Mask :=
+        All_Options and not Search_Backward and not Supports_Incremental;
+      Command                  : Interactive_Command_Access;
+      Line_Numbers_Area_Filter : Action_Filter;
 
       Has_Entity_Name             : constant Action_Filter :=
-                                      new Has_Entity_Name_Filter;
+        new Has_Entity_Name_Filter;
       Src_Action_Context          : constant Action_Filter :=
-                                      new Src_Editor_Action_Context;
+        new Src_Editor_Action_Context;
       No_Completion               : constant Action_Filter :=
-                                      new Completion_Context
-                                         (Is_Line_Movement => True);
+        new Completion_Context (Is_Line_Movement => True);
       Writable_Src_Action_Context : constant Action_Filter :=
-                                      new Writable_Src_Editor_Action_Context;
+        new Writable_Src_Editor_Action_Context;
       Has_Writable_Editor_Context : constant Action_Filter :=
-                                      new Has_Writable_Editor_Action_Context;
+        new Has_Writable_Editor_Action_Context;
       Is_Not_Makefile             : constant Action_Filter :=
-                                      new Is_Not_Makefile_Context;
+        new Is_Not_Makefile_Context;
       Last_Editor_Context         : constant Action_Filter :=
-                                      new Last_Editor_Action_Context;
+        new Last_Editor_Action_Context;
       Context_Has_Selection       : constant Action_Filter :=
-                                      new Has_Selection_Filter;
+        new Has_Selection_Filter;
       Is_Ada_File_Filter          : constant Action_Filter :=
-                                      new Is_Ada_File_Context;
+        new Is_Ada_File_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
@@ -2732,15 +2800,9 @@ package body Src_Editor_Module is
 
       --  Register source editor common filters
 
-      Register_Filter
-        (Kernel,
-         Src_Action_Context,
-         "Source editor");
+      Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
-      Register_Filter
-        (Kernel,
-         No_Completion,
-         "No completion");
+      Register_Filter (Kernel, No_Completion, "No completion");
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
@@ -2748,14 +2810,11 @@ package body Src_Editor_Module is
       Register_Filter
         (Kernel, Has_Writable_Editor_Context, "Has writable editor");
 
-      Register_Filter
-        (Kernel, Is_Not_Makefile, "Is not Makefile");
+      Register_Filter (Kernel, Is_Not_Makefile, "Is not Makefile");
 
-      Register_Filter
-        (Kernel, Context_Has_Selection, "Has selection");
+      Register_Filter (Kernel, Context_Has_Selection, "Has selection");
 
-      Register_Filter
-        (Kernel, Has_Entity_Name, "Has entity name");
+      Register_Filter (Kernel, Has_Entity_Name, "Has entity name");
 
       --  Commands
 
@@ -2782,8 +2841,12 @@ package body Src_Editor_Module is
                     (Kernel,
                      "Move to " & Step_Str & " " & Kind_Str & ESel_Str,
                      Command,
-                     -"Move to the " & Step_Str & " " & Kind_Str
-                     & " in the current source editor" & ESel_Str,
+                     -"Move to the "
+                     & Step_Str
+                     & " "
+                     & Kind_Str
+                     & " in the current source editor"
+                     & ESel_Str,
                      Category       => "Editor",
                      Filter         =>
                        (Src_Action_Context
@@ -2796,8 +2859,10 @@ package body Src_Editor_Module is
       end loop;
 
       Register_Action
-        (Kernel, "Center cursor on screen", new Scroll_Command,
-           -"Scroll the current source editor so that the cursor is centered",
+        (Kernel,
+         "Center cursor on screen",
+         new Scroll_Command,
+         -"Scroll the current source editor so that the cursor is centered",
          Category => "Editor",
          Filter   => Src_Action_Context);
 
@@ -2805,9 +2870,11 @@ package body Src_Editor_Module is
       Delete_Command (Command.all).Kind := Word;
       Delete_Command (Command.all).Count := 1;
       Register_Action
-        (Kernel, "Delete word forward", Command,
-           -"Delete the word following the current cursor position",
-         Category => "Editor",
+        (Kernel,
+         "Delete word forward",
+         Command,
+         -"Delete the word following the current cursor position",
+         Category     => "Editor",
          Filter       => Writable_Src_Action_Context,
          For_Learning => True);
 
@@ -2815,17 +2882,20 @@ package body Src_Editor_Module is
       Delete_Command (Command.all).Kind := Word;
       Delete_Command (Command.all).Count := -1;
       Register_Action
-        (Kernel, "Delete word backward", Command,
-           -"Delete the word preceding the current cursor position or"
+        (Kernel,
+         "Delete word backward",
+         Command,
+         -"Delete the word preceding the current cursor position or"
          & " all spaces from the current line.",
-         Category => "Editor",
+         Category     => "Editor",
          Filter       => Writable_Src_Action_Context,
          For_Learning => True);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
       Register_Action
-        (Kernel, "Lock or unlock current editor",
+        (Kernel,
+         "Lock or unlock current editor",
          new Lock_Or_Unlock_Commmand'(Root_Command with Split => False),
          -("Lock or unlock the current editor. Locked editors can be used to "
            & "maintain a given position in an editor. This is done by making "
@@ -2836,7 +2906,8 @@ package body Src_Editor_Module is
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "Lock or unlock current editor (split)",
+        (Kernel,
+         "Lock or unlock current editor (split)",
          new Lock_Or_Unlock_Commmand'(Root_Command with Split => True),
          -("Lock or unlock the current editor, and put it in separate "
            & "notebook. This will split the MDI in two if needed "
@@ -2857,8 +2928,9 @@ package body Src_Editor_Module is
          Name   => "goto other file",
          Label  => "Jump to %C File",
          Custom => Goto_Other_File_Label_Factory'Access,
-         Filter => not Context_Has_Selection
-         and Lookup_Filter (Kernel, "Source editor"),
+         Filter =>
+           not Context_Has_Selection
+           and Lookup_Filter (Kernel, "Source editor"),
          Group  => Navigation_Contextual_Group);
 
       Register_Contextual_Menu
@@ -2875,16 +2947,19 @@ package body Src_Editor_Module is
          Group  => Navigation_Contextual_Group);
 
       Register_Action
-        (Kernel, "display type hierarchy of entity",
-         Command    => new Type_Hierarchy_Command,
-         Filter     => Has_Entity_Name);
+        (Kernel,
+         "display type hierarchy of entity",
+         Command => new Type_Hierarchy_Command,
+         Filter  => Has_Entity_Name);
 
       Register_Action
-        (Kernel, "edit file",
+        (Kernel,
+         "edit file",
          Command     => new Edit_File_Command,
          Description => -"Open an editor for the selected file",
-         Filter      => Lookup_Filter (Kernel, "File")
-            and not Create (Module => Src_Editor_Module_Name));
+         Filter      =>
+           Lookup_Filter (Kernel, "File")
+           and not Create (Module => Src_Editor_Module_Name));
       Register_Contextual_Menu
         (Kernel,
          Label  => "Open %f",
@@ -2892,11 +2967,12 @@ package body Src_Editor_Module is
          Group  => Navigation_Contextual_Group);
 
       Register_Action
-        (Kernel, "edit file properties",
+        (Kernel,
+         "edit file properties",
          Command     => new Editor_Properties_Command,
          Description =>
            -"Open a dialog to edit file properties (charset, language,...)",
-         Filter   => Create (Module => Src_Editor_Module_Name),
+         Filter      => Create (Module => Src_Editor_Module_Name),
          Category    => -"Editor");
 
       Register_Contextual_Menu
@@ -2908,21 +2984,26 @@ package body Src_Editor_Module is
       Command := new Control_Command;
       Control_Command (Command.all).Mode := As_Is;
       Register_Action
-        (Kernel, "No casing/indentation on next key",
-         Command, -"Disable the casing and indentation on next key",
-         Category   => "Editor",
-         Filter     => Last_Editor_Context);
+        (Kernel,
+         "No casing/indentation on next key",
+         Command,
+         -"Disable the casing and indentation on next key",
+         Category => "Editor",
+         Filter   => Last_Editor_Context);
 
       Command := new Control_Command;
       Control_Command (Command.all).Mode := Sticky_As_Is;
       Register_Action
-        (Kernel, "Toggle auto casing/indentation",
-         Command, -"Disable or enable the casing and indentation",
+        (Kernel,
+         "Toggle auto casing/indentation",
+         Command,
+         -"Disable or enable the casing and indentation",
          Category => "Editor",
-         Filter     => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "Insert TAB with spaces",
+        (Kernel,
+         "Insert TAB with spaces",
          new Tab_As_Space_Command,
          -("Insert spaces until a column multiple of the indentation level"
            & " as set in the Preferences for the corresponding language"),
@@ -2930,7 +3011,8 @@ package body Src_Editor_Module is
          Filter   => Writable_Src_Action_Context);
 
       Register_Action
-        (Kernel, "Delete TAB with spaces",
+        (Kernel,
+         "Delete TAB with spaces",
          new Delete_Tab_Command,
          -("Delete spaces according to indentation level set in the "
            & "Preferences for the corresponding language"),
@@ -2939,24 +3021,30 @@ package body Src_Editor_Module is
 
       Command := new Add_String_Comment_Command;
       Register_Action
-        (Kernel, "Wrap string/comment", Command,
-           -"Wrap string or comment using the cursor location",
+        (Kernel,
+         "Wrap string/comment",
+         Command,
+         -"Wrap string or comment using the cursor location",
          Category => "Editor",
          Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
 
       Command := new Split_String_Command;
       Register_Action
-        (Kernel, "Insert in string template", Command,
-         -("Template splitting the string at cursor location using " &
-           "concatenation operators"),
+        (Kernel,
+         "Insert in string template",
+         Command,
+         -("Template splitting the string at cursor location using "
+           & "concatenation operators"),
          Category => "Editor",
          Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
 
       Command := new Paste_Into_String_Command;
       Register_Action
-        (Kernel, "Paste into string literal", Command,
-         -("Paste clipboard at cursor location inside a string using" &
-             " concatenation operators"),
+        (Kernel,
+         "Paste into string literal",
+         Command,
+         -("Paste clipboard at cursor location inside a string using"
+           & " concatenation operators"),
          Category => "Editor",
          Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
 
@@ -2977,25 +3065,35 @@ package body Src_Editor_Module is
       --  Menus
 
       Register_Action
-        (Kernel, New_File_Command_Name, new New_File_Command,
+        (Kernel,
+         New_File_Command_Name,
+         new New_File_Command,
          Description => -"Create a new empty editor",
          Icon_Name   => "gps-new-document-symbolic");
 
       Register_Action
-        (Kernel, "new view", new New_View_Command,
+        (Kernel,
+         "new view",
+         new New_View_Command,
          Description => -"Create a new view for the selected editor");
 
       Register_Action
-        (Kernel, Save_Command_Name, new Save_Command,
+        (Kernel,
+         Save_Command_Name,
+         new Save_Command,
          Icon_Name   => "gps-save-symbolic",
          Description => -"Save the current editor");
 
       Register_Action
-        (Kernel, "save as", new Save_As_Command,
+        (Kernel,
+         "save as",
+         new Save_As_Command,
          Description => -"Save the current editor with a different name");
 
       Register_Action
-        (Kernel, "print", new Src_Editor_Module.Commands.Print_Command,
+        (Kernel,
+         "print",
+         new Src_Editor_Module.Commands.Print_Command,
          Icon_Name   => "gps-print-symbolic",
          Description => -"Print the current editor");
 
@@ -3003,48 +3101,62 @@ package body Src_Editor_Module is
       --  by each source editor.
 
       Register_Action
-        (Kernel, "undo", new Undo_Command,
+        (Kernel,
+         "undo",
+         new Undo_Command,
          Description => -"Undo the last command",
          Icon_Name   => "gps-undo-symbolic",
          Category    => -"Editor",
          Filter      => new Has_Undo_Filter);
 
       Register_Action
-        (Kernel, "redo", new Redo_Command,
+        (Kernel,
+         "redo",
+         new Redo_Command,
          Description => -"Redo the last command that was undone",
          Icon_Name   => "gps-redo-symbolic",
          Category    => -"Editor",
          Filter      => new Has_Redo_Filter);
 
       Register_Action
-        (Kernel, "select all", new Select_All_Command,
+        (Kernel,
+         "select all",
+         new Select_All_Command,
          -"Select the whole contents of the editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "insert file", new Insert_File_Command,
+        (Kernel,
+         "insert file",
+         new Insert_File_Command,
          -"Insert the contents of the file into the current editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "refill", new Refill_Command,
-         Description   =>
+        (Kernel,
+         "refill",
+         new Refill_Command,
+         Description  =>
            -("Reformat selected lines or current paragraph so that the list"
-           & " are shorter than the grey line on the right"),
-         Category      => -"Editor",
-         Filter        => Writable_Src_Action_Context,
-         For_Learning  => True);
+             & " are shorter than the grey line on the right"),
+         Category     => -"Editor",
+         Filter       => Writable_Src_Action_Context,
+         For_Learning => True);
 
       Register_Action
-        (Kernel, "print selection", new Print_Selection_Command,
-         Description   => -"Print the current selection",
-         Category      => -"Editor",
-         Filter        => Writable_Src_Action_Context);
+        (Kernel,
+         "print selection",
+         new Print_Selection_Command,
+         Description => -"Print the current selection",
+         Category    => -"Editor",
+         Filter      => Writable_Src_Action_Context);
 
       Register_Action
-        (Kernel, "format selection", new Formatting_Command,
+        (Kernel,
+         "format selection",
+         new Formatting_Command,
          -"Format the current line or selection",
          Category => "Editor",
          Filter   => Writable_Src_Action_Context and Is_Not_Makefile);
@@ -3052,39 +3164,48 @@ package body Src_Editor_Module is
       Command := new Formatting_Command;
       Formatting_Command (Command.all).Indent := True;
       Register_Action
-        (Kernel, "indent selection", Command,
+        (Kernel,
+         "indent selection",
+         Command,
          -"Indent the current line or selection",
          Category => "Editor",
          Filter   => Writable_Src_Action_Context and Is_Not_Makefile);
 
       Register_Action
-        (Kernel, "fold all blocks", new Fold_All_Blocks_Command,
+        (Kernel,
+         "fold all blocks",
+         new Fold_All_Blocks_Command,
          -"Fold all blocks (if, loops,...)",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "fold all similar blocks",
+        (Kernel,
+         "fold all similar blocks",
          new Fold_All_Blocks_Command (Similar => True),
          -"Fold all blocks of current block type",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "unfold all blocks", new Unfold_All_Blocks_Command,
+        (Kernel,
+         "unfold all blocks",
+         new Unfold_All_Blocks_Command,
          -"Unfold all blocks (if, loops,...)",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "unfold all similar blocks",
+        (Kernel,
+         "unfold all similar blocks",
          new Unfold_All_Blocks_Command (Similar => True),
          -"Unfold all blocks of current block type",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "goto line",
+        (Kernel,
+         "goto line",
          Command      => new Goto_Line_Command,
          Description  => -"Open a dialog to select a line to go to",
          Category     => -"Editor",
@@ -3092,22 +3213,24 @@ package body Src_Editor_Module is
          Filter       => Src_Action_Context);
       Register_Contextual_Menu
         (Kernel,
-         Label   => -"Goto line...",
-         Action  => "Go To/Line",
-         Filter  => Line_Numbers_Area_Filter);
+         Label  => -"Goto line...",
+         Action => "Go To/Line",
+         Filter => Line_Numbers_Area_Filter);
 
       Register_Action
-        (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,
+        (Kernel,
+         "jump to matching delimiter",
+         new Jump_To_Delimiter_Command,
          -"Jump to the matching delimiter ()[]{}",
-         Category   => "Editor",
-         Filter     => Src_Action_Context);
+         Category => "Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
         (Kernel,
          "Show Code Actions",
          new Activate_Code_Actions_Menu_Command,
-         "Pop-up a menu with Code Actions applicable" &
-           " to the current editor location");
+         "Pop-up a menu with Code Actions applicable"
+         & " to the current editor location");
 
       File_Renamed_Hook.Add (new On_File_Renamed);
       File_Saved_Hook.Add (new On_File_Saved);
@@ -3122,14 +3245,14 @@ package body Src_Editor_Module is
       Register_Commands (Kernel);
 
       Set_Buffer_Factory
-        (Kernel, new Src_Editor_Buffer_Factory'
+        (Kernel,
+         new Src_Editor_Buffer_Factory'
            (Src_Editor_Module.Editors.Create (Kernel_Handle (Kernel))));
 
       Set_Editor_Tooltip_Handler_Factory
         (Default_Editor_Tooltip_Handler_Factory'Access);
 
-      Set_Hyper_Mode_Click_Callback
-        (Default_Hyper_Mode_Click_Callback'Access);
+      Set_Hyper_Mode_Click_Callback (Default_Hyper_Mode_Click_Callback'Access);
 
       --  Register the search modules
 
@@ -3148,9 +3271,7 @@ package body Src_Editor_Module is
          Mask     => Default_Options_Mask);
 
       Register_Search_Function
-        (Kernel     => Kernel,
-         Module     => Module,
-         Is_Default => True);
+        (Kernel => Kernel, Module => Module, Is_Default => True);
 
       Module := new Files_From_Root_Project_Search_Module;
       Initialize
@@ -3160,9 +3281,7 @@ package body Src_Editor_Module is
          Id       => Src_Editor_Module_Id,
          Mask     => Default_Options_Mask);
 
-      Register_Search_Function
-        (Kernel     => Kernel,
-         Module     => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       Module := new Runtime_Files_Search_Module;
       Initialize
@@ -3172,9 +3291,7 @@ package body Src_Editor_Module is
          Id       => Src_Editor_Module_Id,
          Mask     => Default_Options_Mask);
 
-      Register_Search_Function
-        (Kernel => Kernel,
-         Module => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       Module := new Files_Search_Module;
       Initialize
@@ -3184,21 +3301,17 @@ package body Src_Editor_Module is
          Id       => Src_Editor_Module_Id,
          Mask     => Default_Options_Mask);
 
-      Register_Search_Function
-        (Kernel => Kernel,
-         Module => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       Module := new Open_Files_Search_Module;
       Initialize
         (Module,
-         Label     => -"Open Files",
-         Selector  => Selector,
-         Id        => Src_Editor_Module_Id,
-         Mask      => Default_Options_Mask);
+         Label    => -"Open Files",
+         Selector => Selector,
+         Id       => Src_Editor_Module_Id,
+         Mask     => Default_Options_Mask);
 
-      Register_Search_Function
-        (Kernel => Kernel,
-         Module => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       Module := new Current_Selection_Search_Module;
       Initialize
@@ -3209,9 +3322,7 @@ package body Src_Editor_Module is
          Mask         => All_Options and not Supports_Incremental,
          In_Selection => True);
 
-      Register_Search_Function
-        (Kernel => Kernel,
-         Module => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       Module := new Current_File_Search_Module;
       Initialize
@@ -3221,26 +3332,30 @@ package body Src_Editor_Module is
          Id       => Src_Editor_Module_Id,
          Mask     => All_Options);
 
-      Register_Search_Function
-        (Kernel => Kernel,
-         Module => Module);
+      Register_Search_Function (Kernel => Kernel, Module => Module);
 
       --  Register the aliases special entities
 
       Register_Special_Alias_Entity
-        (Kernel, -"Current line",   'l', Expand_Aliases_Entities'Access);
+        (Kernel, -"Current line", 'l', Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, -"Current column", 'c', Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
-        (Kernel, -"Current file",   'f', Expand_Aliases_Entities'Access);
+        (Kernel, -"Current file", 'f', Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
-        (Kernel, -"Project for the current file", 'p',
+        (Kernel,
+         -"Project for the current file",
+         'p',
          Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
-        (Kernel, -"Full path of project for the current file", 'P',
+        (Kernel,
+         -"Full path of project for the current file",
+         'P',
          Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
-        (Kernel, -"Directory of current file", 'd',
+        (Kernel,
+         -"Directory of current file",
+         'd',
          Expand_Aliases_Entities'Access);
 
       Completion_Module.Register_Module (Kernel);
@@ -3288,7 +3403,7 @@ package body Src_Editor_Module is
 
       for Lang of Langs loop
          declare
-            Menu_Name : constant String :=
+            Menu_Name   : constant String :=
               (if Lang = "C++"
                then "C & C++"
                else VSS.Strings.Conversions.To_UTF_8_String (Lang));
@@ -3299,10 +3414,12 @@ package body Src_Editor_Module is
               "Editor/" & Menu_Name & ":Formatting";
             Default     : constant VSS.Strings.Virtual_String :=
               (if Lang = "Ada"
-               then VSS.Strings.Conversions.To_Virtual_String
-                 (Legacy_Formatter_Value)
-               else VSS.Strings.Conversions.To_Virtual_String
-                 (LSP_Formatter_Value));
+               then
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (Legacy_Formatter_Value)
+               else
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (LSP_Formatter_Value));
             Dummy       : Default_Preferences.Enums.Choice_Preference;
             Ignore      : Default_Preferences.Boolean_Preference;
          begin
@@ -3340,8 +3457,8 @@ package body Src_Editor_Module is
                  Label   => "Limit LSP formatting",
                  Doc     =>
                    "Limit LSP formatting request to the current selection: "
-                 & "it prevents overzealous formatting affecting unselected"
-                 & "lines.",
+                   & "it prevents overzealous formatting affecting unselected"
+                   & "lines.",
                  Path    => Path);
          end;
       end loop;
@@ -3351,22 +3468,23 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
       Pref_Display_Line_Numbers     : constant Boolean :=
-                                        Display_Line_Numbers.Get_Pref /= Never;
+        Display_Line_Numbers.Get_Pref /= Never;
       Pref_Display_Subprogram_Names : constant Boolean :=
-                                        Display_Subprogram_Names.Get_Pref;
+        Display_Subprogram_Names.Get_Pref;
 
-      Font_Has_Changed : Boolean := False;
+      Font_Has_Changed         : Boolean := False;
       Line_Display_Has_Changed : Boolean := False;
 
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
 
       Runtime_Use_ACL : C.int;
       pragma Import (C, Runtime_Use_ACL, "__gnat_use_acl");
@@ -3416,8 +3534,8 @@ package body Src_Editor_Module is
          if Id.Display_Line_Numbers then
             --  Recompute the width of the character
             declare
-               Layout : constant Pango_Layout := Create_Pango_Layout
-                 (Get_Main_Window (Kernel));
+               Layout : constant Pango_Layout :=
+                 Create_Pango_Layout (Get_Main_Window (Kernel));
                Height : Gint;
                Width  : Gint;
             begin
@@ -3430,7 +3548,7 @@ package body Src_Editor_Module is
             end;
 
             --  Tell the editors to refresh their side columns
-            Iter  := First_Child (Get_MDI (Kernel));
+            Iter := First_Child (Get_MDI (Kernel));
 
             loop
                Child := Get (Iter);
@@ -3462,7 +3580,8 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Deleting;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -3476,8 +3595,7 @@ package body Src_Editor_Module is
       -- Close_View --
       ----------------
 
-      procedure Close_View
-        (Child : not null access GPS_MDI_Child_Record'Class)
+      procedure Close_View (Child : not null access GPS_MDI_Child_Record'Class)
       is
          Box : constant Source_Editor_Box :=
            Source_Editor_Box (Get_Widget (Child));
@@ -3508,7 +3626,8 @@ package body Src_Editor_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out Source_Editor_Module_Record) is
+   overriding
+   procedure Destroy (Id : in out Source_Editor_Module_Record) is
       High_Iter : List_Of_Highlighters.Cursor;
       H         : Highlighter_Record;
    begin
@@ -3534,8 +3653,8 @@ package body Src_Editor_Module is
 
       Id.Editors.Clear;
 
-      Destroy (Src_Editor_Buffer_Factory
-               (Get_Buffer_Factory (Get_Kernel (Id)).all));
+      Destroy
+        (Src_Editor_Buffer_Factory (Get_Buffer_Factory (Get_Kernel (Id)).all));
 
       Free (Id.Undo_Redo);
       Src_Editor_Module.Messages.Unregister (Get_Kernel (Id));
@@ -3554,15 +3673,15 @@ package body Src_Editor_Module is
       Unlocked_Only : Boolean := False) return Gtkada.MDI.MDI_Child
    is
       Id    : constant Source_Editor_Module :=
-                Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       Iter  : Child_Iterator;
       Child : MDI_Child;
       Full  : GNATCOLL.VFS.Virtual_File;
 
-      function Project_Matches (Child : MDI_Child) return Boolean is
-        (Project = No_Project
-         or else Get_Project (Child) = No_Project
-         or else Get_Project (Child) = Project);
+      function Project_Matches (Child : MDI_Child) return Boolean
+      is (Project = No_Project
+          or else Get_Project (Child) = No_Project
+          or else Get_Project (Child) = Project);
       --  Whether the project associated with child matches the expected one.
       --  This could be because we allow any project (Project=No_Project), or
       --  because the child is not associated with a project yet, or because it
@@ -3617,8 +3736,9 @@ package body Src_Editor_Module is
       if Is_Absolute_Path (File) then
          Full := File;
       else
-         Full := Get_Registry (Kernel).Tree.Create
-           (File.Full_Name, Use_Object_Path => False);
+         Full :=
+           Get_Registry (Kernel).Tree.Create
+             (File.Full_Name, Use_Object_Path => False);
          if Full = No_File then
             return null;
          end if;
@@ -3629,7 +3749,8 @@ package body Src_Editor_Module is
       loop
          Child := Get (Iter);
 
-         exit when Child = null
+         exit when
+           Child = null
            or else
              ((Get_Filename (Child) = Full
                or else Get_File_Identifier (Child) = Full
@@ -3651,16 +3772,17 @@ package body Src_Editor_Module is
    ---------
 
    function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Source_Buffer
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Source_Buffer
    is
       Child : MDI_Child;
       Box   : Source_Editor_Box;
    begin
       if File /= GNATCOLL.VFS.No_File then
-         Child := Find_Editor
-           (Kernel, File,
-            GNATCOLL.Projects.No_Project);  --  ??? any project
+         Child :=
+           Find_Editor
+             (Kernel, File, GNATCOLL.Projects.No_Project);  --  ??? any project
+
       end if;
 
       if Child /= null then
@@ -3728,7 +3850,7 @@ package body Src_Editor_Module is
 
    function Line_Number_Character_Width return Gint is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       if Id = null then
          return Minimum_Character_Width;
@@ -3741,17 +3863,16 @@ package body Src_Editor_Module is
    -- Tab_Contextual --
    --------------------
 
-   overriding procedure Tab_Contextual
+   overriding
+   procedure Tab_Contextual
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Source_Box : constant Source_Editor_Box := Source_Editor_Box
-        (Child.Get_Widget);
+      Source_Box : constant Source_Editor_Box :=
+        Source_Editor_Box (Child.Get_Widget);
       Menu_Name  : constant String :=
-        (if Source_Box.Is_Locked then
-            "Unlock "
-         else
-            "Lock ") & "current editor";
+        (if Source_Box.Is_Locked then "Unlock " else "Lock ")
+        & "current editor";
       Item       : Gtk_Menu_Item;
       Sep        : Gtk_Separator_Menu_Item;
    begin
@@ -3763,7 +3884,8 @@ package body Src_Editor_Module is
       Menu.Insert (Item, 3);
 
       Kernel_Callback.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
+        (Item,
+         Gtk.Menu_Item.Signal_Activate,
          On_Lock_Or_Unlock_Tab_Contextual_Menu'Access,
          Child.Kernel);
 
@@ -3774,7 +3896,8 @@ package body Src_Editor_Module is
          Menu.Insert (Item, 4);
 
          Kernel_Callback.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
             On_Lock_Or_Unlock_Split_Tab_Contextual_Menu'Access,
             Child.Kernel);
          Gtk_New (Sep);
@@ -3789,21 +3912,24 @@ package body Src_Editor_Module is
    -- Get_Tooltip --
    -----------------
 
-   overriding function Get_Tooltip
+   overriding
+   function Get_Tooltip
      (Self : not null access Editor_Child_Record)
       return VSS.Strings.Virtual_String is
    begin
-      return Get_Tooltip_For_File
-        (Kernel    => Self.Kernel,
-         File      => Get_Filename (Self),
-         Project   => Get_Project (Self));
+      return
+        Get_Tooltip_For_File
+          (Kernel  => Self.Kernel,
+           File    => Get_Filename (Self),
+           Project => Get_Project (Self));
    end Get_Tooltip;
 
    -----------------------
    -- Get_Command_Queue --
    -----------------------
 
-   overriding function Get_Command_Queue
+   overriding
+   function Get_Command_Queue
      (Child : access Editor_Child_Record)
       return Standard.Commands.Command_Queue
    is
@@ -3819,7 +3945,7 @@ package body Src_Editor_Module is
 
    procedure Register_Highlighter (Highlighter : Highlighter_Record) is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Id.Highlighters.Append (Highlighter);
    end Register_Highlighter;
@@ -3830,15 +3956,15 @@ package body Src_Editor_Module is
 
    procedure Unregister_Highlighter (Highlighter : Highlighter_Record) is
       Id     : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       Cursor : List_Of_Highlighters.Cursor;
       use List_Of_Highlighters;
    begin
       Cursor := Id.Highlighters.First;
 
       while Has_Element (Cursor) loop
-         if List_Of_Highlighters.Element (Cursor).Pattern_String.all =
-           Highlighter.Pattern_String.all
+         if List_Of_Highlighters.Element (Cursor).Pattern_String.all
+           = Highlighter.Pattern_String.all
          then
             declare
                H : Highlighter_Record;
@@ -3877,7 +4003,7 @@ package body Src_Editor_Module is
      (Callback : not null Hyper_Mode_Click_Callback_Type)
    is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Id.Hyper_Mode_Click_Cb := Callback;
    end Set_Hyper_Mode_Click_Callback;
@@ -3886,10 +4012,10 @@ package body Src_Editor_Module is
    -- Get_Hyper_Mode_Click_Callback --
    -----------------------------------
 
-   function Get_Hyper_Mode_Click_Callback
-     return Hyper_Mode_Click_Callback_Type is
+   function Get_Hyper_Mode_Click_Callback return Hyper_Mode_Click_Callback_Type
+   is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       return Id.Hyper_Mode_Click_Cb;
    end Get_Hyper_Mode_Click_Callback;
@@ -3902,7 +4028,7 @@ package body Src_Editor_Module is
      (Tooltip_Factory : not null Editor_Tooltip_Handler_Factory_Access)
    is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Id.Tooltip_Factory := Tooltip_Factory;
    end Set_Editor_Tooltip_Handler_Factory;
@@ -3912,10 +4038,10 @@ package body Src_Editor_Module is
    ----------------------------------------
 
    function Get_Editor_Tooltip_Handler_Factory
-     return Editor_Tooltip_Handler_Factory_Access
+      return Editor_Tooltip_Handler_Factory_Access
    is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       return Id.Tooltip_Factory;
    end Get_Editor_Tooltip_Handler_Factory;
@@ -3938,7 +4064,7 @@ package body Src_Editor_Module is
 
    function Get_Highlighters return List_Of_Highlighters.List is
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       return Id.Highlighters;
    end Get_Highlighters;
@@ -3948,8 +4074,10 @@ package body Src_Editor_Module is
    ----------
 
    procedure Free (Self : in out Highlighter_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (GNAT.Regpat.Pattern_Matcher,
+           GNAT.Expect.Pattern_Matcher_Access);
    begin
       Free (Self.Pattern_String);
       Free (Self.Action);
@@ -3976,14 +4104,14 @@ package body Src_Editor_Module is
       Current  : General_Location;
       File     : constant Virtual_File := Buffer.File;
       Entity   : constant Root_Entity'Class :=
-                   Kernel.Databases.Get_Entity
-                     (Loc         =>
-                        (File         => File,
-                         Project_Path => Project.Project_Path,
-                         Line         => Integer (Line),
-                         Column       => Column),
-                      Name        => Entity_Name,
-                      Closest_Ref => Closest);
+        Kernel.Databases.Get_Entity
+          (Loc         =>
+             (File         => File,
+              Project_Path => Project.Project_Path,
+              Line         => Integer (Line),
+              Column       => Column),
+           Name        => Entity_Name,
+           Closest_Ref => Closest);
    begin
       if Entity = No_Root_Entity then
          return;
@@ -3999,9 +4127,7 @@ package body Src_Editor_Module is
       --  package on the child package declaration line.
 
       if Alternate
-        or else
-          (Location.Line = Natural (Line)
-           and then Location.File = File)
+        or else (Location.Line = Natural (Line) and then Location.File = File)
       then
          --  We asked for the alternate behavior, or we are already on
          --  the spec: in this case, go to the body
@@ -4024,7 +4150,8 @@ package body Src_Editor_Module is
             Location.File,
             Get_Project (Location),
             Editable_Line_Type (Location.Line),
-            Location.Column, Entity);
+            Location.Column,
+            Entity);
       end if;
    end Default_Hyper_Mode_Click_Callback;
 

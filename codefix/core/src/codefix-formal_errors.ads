@@ -22,10 +22,10 @@
 
 with GNAT.Regpat;
 
-with Codefix.Text_Manager;  use Codefix.Text_Manager;
+with Codefix.Text_Manager; use Codefix.Text_Manager;
 
-with Language;              use Language;
-with Language.Tree;         use Language.Tree;
+with Language;      use Language;
+with Language.Tree; use Language.Tree;
 with Projects;
 with GNATCOLL.VFS;
 with GPS_Vectors;
@@ -82,15 +82,15 @@ package Codefix.Formal_Errors is
    --  Does the message needs to be taken into account, or has it been
    --  cancelled?
 
-   overriding procedure Free (This : in out Error_Message);
+   overriding
+   procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
    type Solution_List is private;
 
    Null_Solution_List : constant Solution_List;
 
-   procedure Concat
-     (Dest : in out Solution_List; Source : Solution_List);
+   procedure Concat (Dest : in out Solution_List; Source : Solution_List);
    --  Adds the contents of Sources at the end of Dest. No deep copy is done by
    --  this function.
 
@@ -113,8 +113,7 @@ package Codefix.Formal_Errors is
    function At_End (It : Solution_List_Iterator) return Boolean;
    --  Return true if the iterator reached the end of the list.
 
-   function Get_Command
-     (It : Solution_List_Iterator) return Ptr_Command;
+   function Get_Command (It : Solution_List_Iterator) return Ptr_Command;
    --  Return the command currently pointed by this iterator.
 
    function Is_Style_Or_Warning (Error : Error_Message) return Boolean;
@@ -124,8 +123,7 @@ package Codefix.Formal_Errors is
    --  This is false for Invalid_Error_Message.
 
    function Get_Command
-     (This     : Solution_List;
-      Position : Positive) return Ptr_Command;
+     (This : Solution_List; Position : Positive) return Ptr_Command;
    --  Get the extract recorded in a solution list at the given position.
 
    procedure Set_Parser
@@ -144,7 +142,7 @@ package Codefix.Formal_Errors is
       Message      : File_Cursor'Class;
       Str_Expected : Unbounded_String;
       Str_Read     : Unbounded_String := Null_Unbounded_String;
-      Format_Read  : String_Mode      := Text_Ascii;
+      Format_Read  : String_Mode := Text_Ascii;
       Caption      : Unbounded_String := Null_Unbounded_String)
       return Solution_List;
    --  This function replace Str_Read by Str_Expected in the current text by
@@ -175,9 +173,9 @@ package Codefix.Formal_Errors is
       Message            : File_Cursor'Class;
       String_Unexpected  : Unbounded_String;
       Mode               : String_Mode := Text_Ascii;
-      Search_Forward     : Boolean     := False;
-      All_Occurrences    : Boolean     := False;
-      Apply_Also_On_Decl : Boolean     := False) return Solution_List;
+      Search_Forward     : Boolean := False;
+      All_Occurrences    : Boolean := False;
+      Apply_Also_On_Decl : Boolean := False) return Solution_List;
    --  Delete one occurrence of String_Unexpected from location Message. The
    --  Mode parameter discriminates if the unexpected string is specified in
    --  plain Ascii (default) or as a regular expression.
@@ -196,8 +194,8 @@ package Codefix.Formal_Errors is
    --    also deleted in the declaration of the entity refered by Message.
 
    function Expand_Tabs
-     (Current_Text      : Text_Navigator_Abstr'Class;
-      Message           : File_Cursor'Class) return Solution_List;
+     (Current_Text : Text_Navigator_Abstr'Class; Message : File_Cursor'Class)
+      return Solution_List;
    --  Expand all the horizontal tabs into spaces.
 
    function Wrong_Column
@@ -232,8 +230,8 @@ package Codefix.Formal_Errors is
    --  the appropriate mask.
 
    function First_Line_Pragma
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Solution_List;
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
    --  Move the pragma to the beginning of the file
 
    function Not_Modified
@@ -259,8 +257,8 @@ package Codefix.Formal_Errors is
    --  Remove the conversion at made at Cursor position.
 
    function Move_With_To_Body
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Solution_List;
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
    --  Move all use and with clauses to the body, if needed. Otherwise, their
    --  are just deleted.
 
@@ -328,8 +326,7 @@ package Codefix.Formal_Errors is
       Caption       : Unbounded_String;
       First_Clause  : String;
       Second_Clause : String := "";
-      With_Clause   : String := "")
-      return Solution_List;
+      With_Clause   : String := "") return Solution_List;
    --  Proposes to add a record representation clause to a record type
    --  declaration
 
@@ -353,58 +350,50 @@ package Codefix.Formal_Errors is
 
    function Remove_Parenthesis_Couple
      (Current_Text : Text_Navigator_Abstr'Class;
-      Open_Paren : File_Cursor'Class)
-      return Solution_List;
+      Open_Paren   : File_Cursor'Class) return Solution_List;
    --  Removes a couple of parenthesis.
 
    function Fix_Index_Number
      (Current_Text : Text_Navigator_Abstr'Class;
       Location     : File_Cursor'Class;
-      Do_Remove    : Boolean)
-      return Solution_List;
+      Do_Remove    : Boolean) return Solution_List;
    --  Adds or remove the index used in array attributes.
 
    function Reorder_Subprogram
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Location     : File_Cursor'Class)
+     (Current_Text : Text_Navigator_Abstr'Class; Location : File_Cursor'Class)
       return Solution_List;
    --  Reorders a subprogram in the list.
 
    function Remove_Statement
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Location     : File_Cursor'Class)
+     (Current_Text : Text_Navigator_Abstr'Class; Location : File_Cursor'Class)
       return Solution_List;
    --  Remove the statement located at the location given in parameter
 
    function Remove_Attribute
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Location     : File_Cursor'Class)
+     (Current_Text : Text_Navigator_Abstr'Class; Location : File_Cursor'Class)
       return Solution_List;
    --  Removes the attribute at the given location, e.g. useless 'Base.
 
    function Replace_Attribute
      (Current_Text : Text_Navigator_Abstr'Class;
       Location     : File_Cursor'Class;
-      Replace_By   : String)
-      return Solution_List;
+      Replace_By   : String) return Solution_List;
    --  Replaces the attribute at the given location with given text.
 
    function Renames_To_Constant
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Location     : File_Cursor'Class)
+     (Current_Text : Text_Navigator_Abstr'Class; Location : File_Cursor'Class)
       return Solution_List;
    --  Changes a renaming declaration to a constant variable
 
    function Remove_Comparison
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Location     : File_Cursor'Class)
+     (Current_Text : Text_Navigator_Abstr'Class; Location : File_Cursor'Class)
       return Solution_List;
    --  Removes a useless comparison, e.g. = True or /= True
 
    function Add_Elaborate_All
-     (Current_Text   : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class;
-      Package_Name   : String) return Solution_List;
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Package_Name : String) return Solution_List;
    --  Add pragma Elaborate_All for given package
 
    function Use_Named_Association
@@ -423,19 +412,20 @@ package Codefix.Formal_Errors is
    --  Propose a fix moving the misplaced tilde or percent at the cursor
    --  location to its correct place
 
-   overriding function Clone (This : Error_Message) return Error_Message;
+   overriding
+   function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
 
 private
 
    type Error_Message is new File_Cursor with record
-      Message      : Unbounded_String;
+      Message    : Unbounded_String;
       --  Message should be encoded in UTF-8.
-      Is_Style     : Boolean := False;
-      Is_Warning   : Boolean := False;
+      Is_Style   : Boolean := False;
+      Is_Warning : Boolean := False;
 
-      Order        : Long_Long_Integer;
+      Order : Long_Long_Integer;
       --  This has to be a long long integer, as it may be initialized with a
       --  timestamp on e.g. GNATbench.
 

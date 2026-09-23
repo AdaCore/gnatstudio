@@ -20,7 +20,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 
-with Glib;       use Glib;
+with Glib; use Glib;
 
 with GPS.Kernel; use GPS.Kernel;
 
@@ -53,13 +53,12 @@ package Aliases_Module is
      (Alias : Alias_Type; Name : String) return String;
    --  Return default value for given parameter of the Alias
 
-   function Has_Same_Parameters
-     (Left, Right : Alias_Type) return Boolean;
+   function Has_Same_Parameters (Left, Right : Alias_Type) return Boolean;
    --  Return True if Left and Right has the same number of parameters and if
    --  the name of their parameters match.
 
-   package Alias_Parameter_Substitution_Map is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Alias_Parameter_Substitution_Map is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => String,
         Hash            => Ada.Strings.Hash,
@@ -74,9 +73,8 @@ package Aliases_Module is
    No_Option : constant Alias_Option_Type;
 
    function Create
-     (Label         : String;
-      Default_Value : Boolean := False;
-      Doc           : String := "") return Alias_Option_Type;
+     (Label : String; Default_Value : Boolean := False; Doc : String := "")
+      return Alias_Option_Type;
    --  Create an option will be displayed in the Expand_Alias function's
    --  dialog, with the associated Doc, if any.
 
@@ -85,8 +83,8 @@ package Aliases_Module is
 
    type Alias_Filter_Type is
      access function
-       (Text      : String;
-        Error_Msg : out Ada.Strings.Unbounded.Unbounded_String) return Boolean;
+       (Text : String; Error_Msg : out Ada.Strings.Unbounded.Unbounded_String)
+        return Boolean;
    --  Type representing an alias filter.
    --  Filters can be used to prevent users from entering invalid alias
    --  parameters.
@@ -103,8 +101,7 @@ package Aliases_Module is
       Offset_Column        : Gint := 0;
       Dialog_Title         : String := "Alias Parameters Selection";
       Option               : access Alias_Option_Type := null;
-      Filter               : Alias_Filter_Type := null)
-      return String;
+      Filter               : Alias_Filter_Type := null) return String;
    --  Return the expanded version of Alias, displaying, if needed, a dialog
    --  asking the user to enter values for its parameters.
    --
@@ -130,8 +127,7 @@ package Aliases_Module is
       Cursor        : out Integer;
       Must_Reindent : out Boolean;
       Offset_Column : Gint := 0;
-      Dialog_Title  : String := "Alias Parameters Selection")
-      return String;
+      Dialog_Title  : String := "Alias Parameters Selection") return String;
    --  Same as above, but without the Params_Subsitutions parameter.
 
    function Expand_Alias_With_Values
@@ -139,8 +135,7 @@ package Aliases_Module is
       Kernel               : not null access Kernel_Handle_Record'Class;
       Params_Substitutions : Alias_Parameter_Substitution_Map.Map;
       Cursor               : out Integer;
-      Offset_Column        : Gint := 0)
-      return String;
+      Offset_Column        : Gint := 0) return String;
    --  Same as above but uses the values already provided in
    --  Params_Substitutions instead of asking the user to enter values for the
    --  parameters.
@@ -173,10 +168,11 @@ package Aliases_Module is
 
    Invalid_Expansion : constant String := "!@#$%";
 
-   type Alias_Expansion_Function is access
-     function (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-               Expansion : String;
-               Special   : Character) return String;
+   type Alias_Expansion_Function is
+     access function
+       (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+        Expansion : String;
+        Special   : Character) return String;
    --  Function called to test alias expansion.
    --  The context in which the expansion takes place can be found by calling
    --  GPS.Kernel.Get_Current_Focus_Widget.
@@ -206,35 +202,35 @@ package Aliases_Module is
 private
 
    type Alias_Param_Type is tagged record
-      Name        : SU.Unbounded_String;
+      Name : SU.Unbounded_String;
       --  The parameter's name
 
       Description : SU.Unbounded_String;
       --  The parameter's description
 
-      Initial     : SU.Unbounded_String;
+      Initial : SU.Unbounded_String;
       --  The parameter's initial value
 
-      From_Env    : Boolean;
+      From_Env : Boolean;
       --  True if the parameter's value is retrieved from an environment
       --  variable, False otherwise.
    end record;
 
-   package Params_List is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Alias_Param_Type);
+   package Params_List is new
+     Ada.Containers.Doubly_Linked_Lists (Element_Type => Alias_Param_Type);
    --  Used to store the list of parameters of a given alias
 
    type Alias_Type is tagged record
-      Name          : SU.Unbounded_String;
+      Name : SU.Unbounded_String;
       --  The alias' name
 
-      Expansion     : SU.Unbounded_String;
+      Expansion : SU.Unbounded_String;
       --  The alias' expansion text
 
-      Params        : Params_List.List;
+      Params : Params_List.List;
       --  The alias' parameters' list
 
-      Read_Only     : Boolean;
+      Read_Only : Boolean;
       --  True if the alias' should not be editable, False otherwise
 
       Must_Reindent : Boolean;
@@ -248,15 +244,17 @@ private
    end record;
 
    No_Option : constant Alias_Option_Type :=
-                 Alias_Option_Type'(Label   => SU.Null_Unbounded_String,
-                                    Doc     => SU.Null_Unbounded_String,
-                                    Enabled => False);
+     Alias_Option_Type'
+       (Label   => SU.Null_Unbounded_String,
+        Doc     => SU.Null_Unbounded_String,
+        Enabled => False);
 
    No_Alias : constant Alias_Type :=
-                Alias_Type'(Name          => SU.Null_Unbounded_String,
-                            Expansion     => SU.Null_Unbounded_String,
-                            Params        => Params_List.Empty_List,
-                            Read_Only     => False,
-                            Must_Reindent => False);
+     Alias_Type'
+       (Name          => SU.Null_Unbounded_String,
+        Expansion     => SU.Null_Unbounded_String,
+        Params        => Params_List.Empty_List,
+        Read_Only     => False,
+        Must_Reindent => False);
 
 end Aliases_Module;

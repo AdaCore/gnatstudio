@@ -22,21 +22,20 @@ package body GPS.Kernel.Messages.Multilines is
    use XML_Utils;
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr);
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr);
    --  Saves additional data in the XML node
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access;
    --  Loads additional data from the XML node and creates primary simple
@@ -90,9 +89,10 @@ package body GPS.Kernel.Messages.Multilines is
          Importance               => Importance,
          Actual_Line              => Line,
          Actual_Column            => Integer (Column),
-         Flags                    => (Editor_Side => True,
-                                      Editor_Line => False,
-                                      Locations   => Show_In_Locations),
+         Flags                    =>
+           (Editor_Side => True,
+            Editor_Line => False,
+            Locations   => Show_In_Locations),
          Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
       if Highlight_Category /= null then
@@ -105,9 +105,9 @@ package body GPS.Kernel.Messages.Multilines is
    -- Has_Multine_Highlighting --
    ------------------------------
 
-   overriding function Has_Multiline_Highlighting
-     (Self : not null access constant Multiline_Message)
-      return Boolean
+   overriding
+   function Has_Multiline_Highlighting
+     (Self : not null access constant Multiline_Message) return Boolean
    is
       pragma Unreferenced (Self);
    begin
@@ -118,7 +118,8 @@ package body GPS.Kernel.Messages.Multilines is
    -- Get_Multiline_Highlighting_Range --
    --------------------------------------
 
-   overriding procedure Get_Multiline_Highlighting_Range
+   overriding
+   procedure Get_Multiline_Highlighting_Range
      (Self         : not null access constant Multiline_Message;
       Start_Line   : out Natural;
       Start_Column : out Basic_Types.Visible_Column_Type;
@@ -146,16 +147,16 @@ package body GPS.Kernel.Messages.Multilines is
    ----------
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access
    is
@@ -163,10 +164,10 @@ package body GPS.Kernel.Messages.Multilines is
 
       Text       : constant VSS.Strings.Virtual_String :=
         Get_Attribute (XML_Node, "text", "");
-      End_Line   : constant Natural
-        := Natural'Value (Get_Attribute_S (XML_Node, "end_line", "1"));
-      End_Column : constant Basic_Types.Visible_Column_Type
-        := Basic_Types.Visible_Column_Type'Value
+      End_Line   : constant Natural :=
+        Natural'Value (Get_Attribute_S (XML_Node, "end_line", "1"));
+      End_Column : constant Basic_Types.Visible_Column_Type :=
+        Basic_Types.Visible_Column_Type'Value
           (Get_Attribute_S (XML_Node, "end_column", "1"));
    begin
       return
@@ -209,8 +210,7 @@ package body GPS.Kernel.Messages.Multilines is
    ----------
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr)
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr)
    is
       Self : constant Multiline_Message_Access :=
         Multiline_Message_Access (Message_Node);

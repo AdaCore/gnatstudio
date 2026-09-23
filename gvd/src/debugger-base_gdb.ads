@@ -26,15 +26,13 @@ package Debugger.Base_Gdb is
 
    type Base_Gdb_Debugger is abstract new Debugger.Debugger_Root with private;
 
-   overriding procedure Set_Register
-     (Debugger : access Base_Gdb_Debugger;
-      Name     : String;
-      Value    : String);
+   overriding
+   procedure Set_Register
+     (Debugger : access Base_Gdb_Debugger; Name : String; Value : String);
 
-   overriding function Is_Set_Register_Command
-     (Debugger : access Base_Gdb_Debugger;
-      Command  : String)
-      return Boolean;
+   overriding
+   function Is_Set_Register_Command
+     (Debugger : access Base_Gdb_Debugger; Command : String) return Boolean;
 
    ----------------------
    -- Version handling --
@@ -68,14 +66,14 @@ private
    --    connected to a target.
 
    type Base_Gdb_Debugger is abstract new Debugger.Debugger_Root with record
-      Initializing            : Boolean := False;
-      Executable              : GNATCOLL.VFS.Virtual_File;
-      Executable_Args         : GNAT.Strings.String_Access;
-      Stored_Language         : GNAT.Strings.String_Access;
-      Endian                  : Endian_Type     := Unknown_Endian;
-      Debuggee_Pid            : Integer         := 0;
+      Initializing    : Boolean := False;
+      Executable      : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : GNAT.Strings.String_Access;
+      Stored_Language : GNAT.Strings.String_Access;
+      Endian          : Endian_Type := Unknown_Endian;
+      Debuggee_Pid    : Integer := 0;
 
-      Target_Connected        : Boolean         := False;
+      Target_Connected : Boolean := False;
       --  Whether we are connected to a target.
 
       Remote_Mode             : Remote_GDB_Mode := Native;
@@ -85,8 +83,7 @@ private
    end record;
 
    procedure Prepare_Target_For_Send
-     (Debugger : access Base_Gdb_Debugger;
-      Cmd      : String);
+     (Debugger : access Base_Gdb_Debugger; Cmd : String);
    --  Prepare Tergate before Send
 
    procedure Detect_Debugger_Mode (Debugger : access Base_Gdb_Debugger);

@@ -20,24 +20,27 @@ with GPS.Search;
 
 package GPS.Kernel.Search.Plugins is
 
-   type Plugins_Search_Provider is new Kernel_Search_Provider
-   with private;
+   type Plugins_Search_Provider is new Kernel_Search_Provider with private;
 
-   overriding function Documentation
-     (Self    : not null access Plugins_Search_Provider) return String;
-   overriding procedure Free (Self : in out Plugins_Search_Provider);
-   overriding procedure Set_Pattern
+   overriding
+   function Documentation
+     (Self : not null access Plugins_Search_Provider) return String;
+   overriding
+   procedure Free (Self : in out Plugins_Search_Provider);
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Plugins_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Plugins_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Plugins_Search_Provider) return String
-   is
-     (Provider_Plugins);
+   overriding
+   function Display_Name
+     (Self : not null access Plugins_Search_Provider) return String
+   is (Provider_Plugins);
 
    type Plugins_Search_Result is new Kernel_Search_Result with record
       Plugin_Page : GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
@@ -54,12 +57,14 @@ package GPS.Kernel.Search.Plugins is
    --  preferences page, a short description and the calculated score for this
    --  match.
 
-   overriding procedure Free (Self : in out Plugins_Search_Result);
-   overriding procedure Execute
-     (Self       : not null access Plugins_Search_Result;
-      Give_Focus : Boolean);
-   overriding function Full
-     (Self       : not null access Plugins_Search_Result)
+   overriding
+   procedure Free (Self : in out Plugins_Search_Result);
+   overriding
+   procedure Execute
+     (Self : not null access Plugins_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
+     (Self : not null access Plugins_Search_Result)
       return Gtk.Widget.Gtk_Widget;
 
 private

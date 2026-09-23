@@ -28,15 +28,15 @@ package body Ada_Semantic_Tree.Cache is
 
    use Construct_Annotations_Pckg;
 
-   type Cache_Annotation_Record is new General_Annotation_Record
-   with record
+   type Cache_Annotation_Record is new General_Annotation_Record with record
       Cached : Cache_Access;
    end record;
 
-   overriding procedure Free
-     (Obj : in out Cache_Annotation_Record);
+   overriding
+   procedure Free (Obj : in out Cache_Annotation_Record);
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Cache_Db_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -50,8 +50,7 @@ package body Ada_Semantic_Tree.Cache is
       Cache_Key : Construct_Annotations_Pckg.Annotation_Key;
    begin
       Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Cache_Key);
+        (Get_Construct_Annotation_Key_Registry (Db).all, Cache_Key);
 
       Register_Assistant
         (Db,
@@ -66,13 +65,11 @@ package body Ada_Semantic_Tree.Cache is
 
    procedure Set_Cache (Entity : Entity_Access; Info : Cache_Access) is
       Assistant : constant Database_Assistant_Access :=
-        Get_Assistant
-          (Get_Database (Get_File (Entity)),
-           Cache_Assistant_Id);
+        Get_Assistant (Get_Database (Get_File (Entity)), Cache_Assistant_Id);
 
       My_Assistant : Cache_Db_Assistant renames
         Cache_Db_Assistant (Assistant.all);
-      Annot : Annotation;
+      Annot        : Annotation;
    begin
       Get_Annotation
         (Get_Annotation_Container
@@ -82,14 +79,16 @@ package body Ada_Semantic_Tree.Cache is
          Annot);
 
       if Annot /= Null_Annotation
-        and then Cache_Annotation_Record (Annot.Other_Val.all).Cached.all'Tag
-        /= Info.all'Tag
+        and then
+          Cache_Annotation_Record (Annot.Other_Val.all).Cached.all'Tag
+          /= Info.all'Tag
       then
          raise Inconsistent_Cache;
       end if;
 
       Annot :=
-        (Other_Kind, new Cache_Annotation_Record'
+        (Other_Kind,
+         new Cache_Annotation_Record'
            (General_Annotation_Record with Cached => Info));
 
       Set_Annotation
@@ -106,13 +105,11 @@ package body Ada_Semantic_Tree.Cache is
 
    function Get_Cache (Entity : Entity_Access) return Cache_Access is
       Assistant : constant Database_Assistant_Access :=
-        Get_Assistant
-          (Get_Database (Get_File (Entity)),
-           Cache_Assistant_Id);
+        Get_Assistant (Get_Database (Get_File (Entity)), Cache_Assistant_Id);
 
       My_Assistant : Cache_Db_Assistant renames
         Cache_Db_Assistant (Assistant.all);
-      Annot : Annotation;
+      Annot        : Annotation;
    begin
       Get_Annotation
         (Get_Annotation_Container
@@ -132,11 +129,10 @@ package body Ada_Semantic_Tree.Cache is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Obj : in out Cache_Annotation_Record)
-   is
-      procedure Dealloc is new Ada.Unchecked_Deallocation
-        (Cached_Information'Class, Cache_Access);
+   overriding
+   procedure Free (Obj : in out Cache_Annotation_Record) is
+      procedure Dealloc is new
+        Ada.Unchecked_Deallocation (Cached_Information'Class, Cache_Access);
    begin
       Free (Obj.Cached.all);
       Dealloc (Obj.Cached);
@@ -146,7 +142,8 @@ package body Ada_Semantic_Tree.Cache is
    -- File_Updated --
    ------------------
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Cache_Db_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -154,13 +151,12 @@ package body Ada_Semantic_Tree.Cache is
    is
       pragma Unreferenced (Old_Tree);
       Tree : constant Construct_Tree := Get_Tree (File);
-      It : Construct_Tree_Iterator := First (Tree);
+      It   : Construct_Tree_Iterator := First (Tree);
    begin
       if Kind in Structural_Change .. Full_Change then
          while It /= Null_Construct_Tree_Iterator loop
             Free_Annotation
-              (Get_Annotation_Container (Tree, It).all,
-               Assistant.Cache_Key);
+              (Get_Annotation_Container (Tree, It).all, Assistant.Cache_Key);
 
             It := Next (Tree, It, Jump_Into);
          end loop;

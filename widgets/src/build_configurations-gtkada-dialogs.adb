@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -37,9 +37,9 @@ with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
-with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
+with Gtkada.Stock_Labels;      use Gtkada.Stock_Labels;
 
-with GUI_Utils;                use GUI_Utils;
+with GUI_Utils; use GUI_Utils;
 
 package body Build_Configurations.Gtkada.Dialogs is
 
@@ -83,21 +83,20 @@ package body Build_Configurations.Gtkada.Dialogs is
    -- Information --
    -----------------
 
-   procedure Information
-     (UI      : access Build_UI_Record'Class;
-      Message : String)
+   procedure Information (UI : access Build_UI_Record'Class; Message : String)
    is
       R : Message_Dialog_Buttons;
       pragma Unreferenced (R);
    begin
-      R := GPS_Message_Dialog
-        (Msg            => Message,
-         Dialog_Type    => Information,
-         Buttons        => Button_OK,
-         Default_Button => Button_OK,
-         Help_Msg       => "",
-         Title          => "",
-         Parent         => Gtk_Window (Get_Toplevel (UI)));
+      R :=
+        GPS_Message_Dialog
+          (Msg            => Message,
+           Dialog_Type    => Information,
+           Buttons        => Button_OK,
+           Default_Button => Button_OK,
+           Help_Msg       => "",
+           Title          => "",
+           Parent         => Gtk_Window (Get_Toplevel (UI)));
    end Information;
 
    ------------------
@@ -125,8 +124,8 @@ package body Build_Configurations.Gtkada.Dialogs is
 
          while It /= Null_Iter loop
             --  Prevent creating 2 categories with the same name
-            if To_Lower (Get_String (Model, It, Desc_Column)) =
-              To_Lower (PP_Cat)
+            if To_Lower (Get_String (Model, It, Desc_Column))
+              = To_Lower (PP_Cat)
             then
                return It;
             end if;
@@ -136,8 +135,10 @@ package body Build_Configurations.Gtkada.Dialogs is
          --  We reach this point if no iter was found: create it
          Append (Model, It, Null_Iter);
          Set_And_Clear
-           (Model, It, (Desc_Column, Name_Column),
-            (As_String  (PP_Cat), As_String  (String'(""))));
+           (Model,
+            It,
+            (Desc_Column, Name_Column),
+            (As_String (PP_Cat), As_String (String'(""))));
 
          return It;
       end Get_Or_Create_Category;
@@ -150,8 +151,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Parent_Iter : Gtk_Tree_Iter;
 
       use Model_Map;
-      C  : Cursor;
-      M  : Target_Model_Access;
+      C : Cursor;
+      M : Target_Model_Access;
 
    begin
       Gtk_New_With_Entry (Combo);
@@ -191,12 +192,13 @@ package body Build_Configurations.Gtkada.Dialogs is
 
          Model.Append (Parent => Parent_Iter, Iter => Iter);
          Set_And_Clear
-           (Model, Iter,
+           (Model,
+            Iter,
             (Icon_Column, Name_Column, Desc_Column, Whitespace_Column),
-            (As_String  (To_String (M.Icon)),
-             As_String  (To_String (M.Name)),
-             As_String  (To_String (M.Description)),
-             As_String  (String'("        "))));
+            (As_String (To_String (M.Icon)),
+             As_String (To_String (M.Name)),
+             As_String (To_String (M.Description)),
+             As_String (String'("        "))));
 
          Next (C);
       end loop;
@@ -215,8 +217,7 @@ package body Build_Configurations.Gtkada.Dialogs is
    begin
       --  Verify that the name is not empty
       if Name = "" then
-         Information
-           (UI, -"Note: targets must have a non-empty name.");
+         Information (UI, -"Note: targets must have a non-empty name.");
          return False;
       end if;
 
@@ -279,7 +280,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
             declare
                Str : constant String :=
-                       Strip (Get_String (UI.View.Model, Iter, Name_Column));
+                 Strip (Get_String (UI.View.Model, Iter, Name_Column));
             begin
                Append_Text (Combo, Str);
 
@@ -317,7 +318,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Cat_E   : Gtk_Entry;
       Table   : Gtk_Table;
 
-      Hbox    : Gtk_Hbox;
+      Hbox : Gtk_Hbox;
 
       use Model_Map;
       C : Cursor;
@@ -325,10 +326,11 @@ package body Build_Configurations.Gtkada.Dialogs is
    begin
       Cancelled := False;
 
-      Gtk_New (Dialog => Dialog,
-               Title  => -"New target",
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent);
+      Gtk_New
+        (Dialog => Dialog,
+         Title  => -"New target",
+         Parent => Parent,
+         Flags  => Modal or Destroy_With_Parent);
       Set_Transient_For (Dialog, Parent);
 
       Gtk_New (Table, 3, 2, False);
@@ -336,9 +338,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the models combo
 
       Gtk_New (Label, -"Target model");
-      Set_Tooltip_Text
-        (Label,
-         -"Select the target model");
+      Set_Tooltip_Text (Label, -"Select the target model");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 1, 2, Expand or Fill, 0, 3, 3);
@@ -347,9 +347,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Model_E := Gtk_Entry (Get_Child (Combo));
       Model_E.Set_Name ("new_target-target_model");
       Set_Editable (Model_E, False);
-      Set_Tooltip_Text
-        (Combo,
-         -"Select the target type/model");
+      Set_Tooltip_Text (Combo, -"Select the target type/model");
 
       C := UI.Registry.Models.First;
       if Has_Element (C) then
@@ -377,8 +375,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Gtk_New (Label, -"Target category");
       Set_Tooltip_Text
-        (Label,
-         -"Type a new category name, or select an existing one");
+        (Label, -"Type a new category name, or select an existing one");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
@@ -388,8 +385,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Cat_E.Set_Name ("new_target-target_category");
       Set_Tooltip_Text
-        (Combo,
-         -"Type a new category name, or select an existing one");
+        (Combo, -"Type a new category name, or select an existing one");
 
       Fill_Combo (UI, Combo, Cat_E);
 
@@ -401,8 +397,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the buttons
 
       Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+      Button :=
+        Gtk_Button (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -420,8 +416,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       loop
          case Run (Dialog) is
             when Gtk_Response_OK =>
-               Name     := To_Unbounded_String (Get_Text (Name_E));
-               Model    := To_Unbounded_String (Get_Text (Model_E));
+               Name := To_Unbounded_String (Get_Text (Name_E));
+               Model := To_Unbounded_String (Get_Text (Model_E));
                Category := To_Unbounded_String (Get_Text (Cat_E));
 
                if New_Target_Name_Is_Valid (UI, UI.Registry, Name) then
@@ -429,7 +425,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                   exit;
                end if;
 
-            when others =>
+            when others          =>
                Cancelled := True;
                Destroy (Dialog);
                exit;
@@ -455,19 +451,20 @@ package body Build_Configurations.Gtkada.Dialogs is
       Combo  : Gtk_Combo_Box_Text;
       Label  : Gtk_Label;
 
-      Name_E  : Gtk_Entry;
-      Cat_E   : Gtk_Entry;
-      Table   : Gtk_Table;
+      Name_E : Gtk_Entry;
+      Cat_E  : Gtk_Entry;
+      Table  : Gtk_Table;
 
-      Hbox    : Gtk_Hbox;
+      Hbox : Gtk_Hbox;
 
    begin
       Cancelled := False;
 
-      Gtk_New (Dialog => Dialog,
-               Title  => -"Clone target",
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent);
+      Gtk_New
+        (Dialog => Dialog,
+         Title  => -"Clone target",
+         Parent => Parent,
+         Flags  => Modal or Destroy_With_Parent);
       Set_Transient_For (Dialog, Parent);
 
       Gtk_New (Table, 3, 2, False);
@@ -490,8 +487,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Gtk_New (Label, -"Target category");
       Set_Tooltip_Text
-        (Label,
-         -"Type a new category name, or select an existing one");
+        (Label, -"Type a new category name, or select an existing one");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
@@ -500,8 +496,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Set_Tooltip_Text
-        (Combo,
-         -"Type a new category name, or select an existing one");
+        (Combo, -"Type a new category name, or select an existing one");
 
       Fill_Combo (UI, Combo, Cat_E);
 
@@ -513,8 +508,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the buttons
 
       Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+      Button :=
+        Gtk_Button (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -540,7 +535,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                   exit;
                end if;
 
-            when others =>
+            when others          =>
                Cancelled := True;
                Destroy (Dialog);
                exit;
@@ -553,17 +548,17 @@ package body Build_Configurations.Gtkada.Dialogs is
    -------------------
 
    function Yes_No_Dialog
-     (UI : access Build_UI_Record'Class;
-      M  : String) return Boolean
+     (UI : access Build_UI_Record'Class; M : String) return Boolean
    is
       Buttons : Message_Dialog_Buttons;
    begin
-      Buttons := GPS_Message_Dialog
-        (Msg            => M,
-         Dialog_Type    => Information,
-         Buttons        => Button_Yes or Button_No,
-         Default_Button => Button_No,
-         Parent         => Gtk_Window (Get_Toplevel (UI)));
+      Buttons :=
+        GPS_Message_Dialog
+          (Msg            => M,
+           Dialog_Type    => Information,
+           Buttons        => Button_Yes or Button_No,
+           Default_Button => Button_No,
+           Parent         => Gtk_Window (Get_Toplevel (UI)));
 
       return (Buttons and Button_Yes) /= 0;
    end Yes_No_Dialog;
@@ -575,8 +570,7 @@ package body Build_Configurations.Gtkada.Dialogs is
    procedure Delete_Target_Dialog
      (UI        : access Build_UI_Record'Class;
       Target    : Target_Access;
-      Cancelled : out Boolean)
-   is
+      Cancelled : out Boolean) is
    begin
       Cancelled := False;
 
@@ -587,11 +581,17 @@ package body Build_Configurations.Gtkada.Dialogs is
          return;
       end if;
 
-      Cancelled := not Yes_No_Dialog
-        (UI => UI,
-         M  => (-"About to suppress target") & ASCII.LF
-         & "'" & To_String (Target.Name)
-         & "'." & ASCII.LF & "Would you like to continue?");
+      Cancelled :=
+        not Yes_No_Dialog
+              (UI => UI,
+               M  =>
+                 (-"About to suppress target")
+                 & ASCII.LF
+                 & "'"
+                 & To_String (Target.Name)
+                 & "'."
+                 & ASCII.LF
+                 & "Would you like to continue?");
    end Delete_Target_Dialog;
 
 end Build_Configurations.Gtkada.Dialogs;

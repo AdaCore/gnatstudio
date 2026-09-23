@@ -17,35 +17,36 @@
 
 --  Concrete implementation of the DAP 'loadedSources' request
 
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.LoadedSources;
 
 package DAP.Clients.LoadedSources is
 
    type Loaded_Sources_Request (<>) is
-     new DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request
-   with private;
+     new DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request with private;
    type Loaded_Sources_Request_Access is
      access all Loaded_Sources_Request'Class;
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return Loaded_Sources_Request_Access;
+     (Kernel : not null Kernel_Handle) return Loaded_Sources_Request_Access;
    --  Create a new DAP 'loadedSources' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Loaded_Sources_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LoadedSourcesResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Loaded_Sources_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Loaded_Sources_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
@@ -53,7 +54,7 @@ package DAP.Clients.LoadedSources is
 private
 
    type Loaded_Sources_Request is
-     new DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request with
-       null record;
+     new DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request
+   with null record;
 
 end DAP.Clients.LoadedSources;

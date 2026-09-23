@@ -160,8 +160,7 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding
    procedure Execute
-     (This         : Add_Pragma_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class);
+     (This : Add_Pragma_Cmd; Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the addition of the pragma.
 
    -----------------------
@@ -323,9 +322,9 @@ package Codefix.Text_Manager.Ada_Commands is
    type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
-     (This           : in out Change_To_Tick_Valid_Cmd;
-      Current_Text   : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class);
+     (This         : in out Change_To_Tick_Valid_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
    --  Add the missing clause in the text
 
    overriding
@@ -362,9 +361,9 @@ package Codefix.Text_Manager.Ada_Commands is
    type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
-     (This           : in out Remove_Extra_Underlines_Cmd;
-      Current_Text   : Text_Navigator_Abstr'Class;
-      Cursor         : File_Cursor'Class);
+     (This         : in out Remove_Extra_Underlines_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
    --  Add the missing clause in the text
 
    overriding
@@ -398,9 +397,9 @@ package Codefix.Text_Manager.Ada_Commands is
    --  Removes a block of parenthesis, e.g. ((a)) -> (a)
 
    procedure Initialize
-     (This            : in out Remove_Parenthesis_Cmd;
-      Current_Text    : Text_Navigator_Abstr'Class;
-      Cursor          : File_Cursor'Class);
+     (This         : in out Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
 
    overriding
    procedure Execute
@@ -423,7 +422,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Mode         : Fix_Index_Number_Cmd_Mode);
    --  Either removes the index or add the index for the array attribute
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Fix_Index_Number_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
@@ -459,7 +459,8 @@ package Codefix.Text_Manager.Ada_Commands is
    --  When placed on a tick character, remove the attribute reference, e.g.
    --  useless 'Base and insert Replace_By there.
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Replace_Attribute_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
@@ -475,7 +476,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor'Class);
    --  Modifies a V : T renames X; to V : constant T := X;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Renames_To_Constant_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
@@ -491,7 +493,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor'Class);
    --  Removes the redundant comparison, namely = True or /= True
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Remove_Comparison_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
@@ -508,7 +511,8 @@ package Codefix.Text_Manager.Ada_Commands is
       Name         : String);
    --  Force named association (Name => ...) at given position
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Named_Association_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
@@ -530,8 +534,8 @@ private
    end record;
 
    procedure Free (Item : in out Unbounded_String) is null;
-   package String_List is
-     new Ada.Containers.Vectors (Positive, Unbounded_String);
+   package String_List is new
+     Ada.Containers.Vectors (Positive, Unbounded_String);
    use String_List;
    --  ??? Should use standard string list
 
@@ -594,8 +598,8 @@ private
       File          : Virtual_File;
    end record;
 
-   type Remove_Extra_Underlines_Cmd is
-     new Text_Command (Simple) with null record;
+   type Remove_Extra_Underlines_Cmd is new Text_Command (Simple)
+   with null record;
 
    type Remove_Pragma_Element_Cmd is new Text_Command (Simple) with record
       Element_Name : Unbounded_String;

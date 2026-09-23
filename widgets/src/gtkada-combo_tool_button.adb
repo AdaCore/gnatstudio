@@ -16,24 +16,24 @@
 ------------------------------------------------------------------------------
 
 with Ada.Numerics;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-with Cairo;                    use Cairo;
-with Glib.Convert;             use Glib.Convert;
-with Glib.Main;                use Glib.Main;
-with Glib.Object;              use Glib.Object;
-with Gdk.Device;               use Gdk.Device;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Window;               use Gdk.Window;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Icon_Factory;         use Gtk.Icon_Factory;
-with Gtk.Image;                use Gtk.Image;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Style_Context;        use Gtk.Style_Context;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Cairo;             use Cairo;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Main;         use Glib.Main;
+with Glib.Object;       use Glib.Object;
+with Gdk.Device;        use Gdk.Device;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Window;        use Gdk.Window;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Handlers;      use Gtk.Handlers;
+with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
+with Gtk.Image;         use Gtk.Image;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Menu_Item;     use Gtk.Menu_Item;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.Handlers;   use Gtkada.Handlers;
 with System;
 
 package body Gtkada.Combo_Tool_Button is
@@ -43,7 +43,7 @@ package body Gtkada.Combo_Tool_Button is
    ----------------------
 
    Class_Record : aliased Ada_GObject_Class := Uninitialized_Class;
-   Signals : constant chars_ptr_array :=
+   Signals      : constant chars_ptr_array :=
      (1 => New_String (String (Signal_Selection_Changed)));
 
    ---------------
@@ -60,31 +60,31 @@ package body Gtkada.Combo_Tool_Button is
    -- Handlers --
    --------------
 
-   package Items_Callback is new Gtk.Handlers.User_Callback
-     (Menu_Item_Record, Gtkada_Combo_Tool_Button);
+   package Items_Callback is new
+     Gtk.Handlers.User_Callback (Menu_Item_Record, Gtkada_Combo_Tool_Button);
 
-   package Menu_Popup is new Popup_For_Device_User_Data
-     (Gtkada_Combo_Tool_Button);
+   package Menu_Popup is new
+     Popup_For_Device_User_Data (Gtkada_Combo_Tool_Button);
 
    ---------------------------
    -- Callback declarations --
    ---------------------------
 
-   package Button_Sources is new Glib.Main.Generic_Sources
-     (Gtkada_Combo_Tool_Button);
+   package Button_Sources is new
+     Glib.Main.Generic_Sources (Gtkada_Combo_Tool_Button);
 
    function On_Long_Click (Self : Gtkada_Combo_Tool_Button) return Boolean;
    --  Called when the user had kept the button pressed for a long time
 
    function On_Button_Press
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    function On_Button_Release
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    function On_Menu_Button_Release
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
 
    procedure Menu_Position
      (Menu    : not null access Gtk_Menu_Record'Class;
@@ -94,8 +94,7 @@ package body Gtkada.Combo_Tool_Button is
       Widget  : Gtkada_Combo_Tool_Button);
 
    procedure On_Menu_Item_Activated
-     (Item   : access Menu_Item_Record'Class;
-      Widget : Gtkada_Combo_Tool_Button);
+     (Item : access Menu_Item_Record'Class; Widget : Gtkada_Combo_Tool_Button);
 
    procedure Popup
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class);
@@ -104,8 +103,8 @@ package body Gtkada.Combo_Tool_Button is
    --  Hide or Show the popup menu
 
    function On_Draw
-     (Self : access GObject_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean;
+     (Self : access GObject_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean;
 
    function Get_Button
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
@@ -148,9 +147,9 @@ package body Gtkada.Combo_Tool_Button is
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
    is
       M_Item, Active : Menu_Item;
-      Label  : Gtk_Label;
-      Icon   : Gtk_Image;
-      Hbox   : Gtk_Hbox;
+      Label          : Gtk_Label;
+      Icon           : Gtk_Image;
+      Hbox           : Gtk_Hbox;
    begin
       if Self.Menu = null then
          Gtk_New (Self.Menu);
@@ -168,7 +167,7 @@ package body Gtkada.Combo_Tool_Button is
 
          for Item of Self.Items loop
             M_Item := new Menu_Item_Record;
-            M_Item.Data      := Item.Data;
+            M_Item.Data := Item.Data;
             M_Item.Full_Name := Item.Full_Name;
             Gtk.Menu_Item.Initialize (M_Item);
 
@@ -198,9 +197,9 @@ package body Gtkada.Combo_Tool_Button is
 
             Add_Watch
               (Items_Callback.Connect
-                 (M_Item, Gtk.Menu_Item.Signal_Activate,
-                  Items_Callback.To_Marshaller
-                    (On_Menu_Item_Activated'Access),
+                 (M_Item,
+                  Gtk.Menu_Item.Signal_Activate,
+                  Items_Callback.To_Marshaller (On_Menu_Item_Activated'Access),
                   Gtkada_Combo_Tool_Button (Self)),
                Self);
          end loop;
@@ -235,15 +234,15 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    function On_Draw
-     (Self : access GObject_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean
+     (Self : access GObject_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean
    is
-      B : constant Gtkada_Combo_Tool_Button :=
+      B      : constant Gtkada_Combo_Tool_Button :=
         Gtkada_Combo_Tool_Button (Self);
-      W, H    : Gint;
-      Result  : Boolean;
-      Alloc   : Gtk_Allocation;
-      Size : constant Gdouble := 6.0;
+      W, H   : Gint;
+      Result : Boolean;
+      Alloc  : Gtk_Allocation;
+      Size   : constant Gdouble := 6.0;
    begin
       if not B.Items.Is_Empty then
          Icon_Size_Lookup (B.Get_Icon_Size, W, H, Result);
@@ -263,14 +262,14 @@ package body Gtkada.Combo_Tool_Button is
    ---------------------
 
    function On_Button_Press
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
-      B : constant Gtkada_Combo_Tool_Button :=
+      B    : constant Gtkada_Combo_Tool_Button :=
         Gtkada_Combo_Tool_Button (Button);
       Stub : Gdk_Device_Record;
       pragma Unmodified (Stub);
-      Tmp : Boolean;
+      Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
       Popdown (B);
@@ -279,8 +278,7 @@ package body Gtkada.Combo_Tool_Button is
       B.Popup_Device := Gdk_Device (Get_User_Data (Event.Device, Stub));
       Ref (B.Popup_Device);
 
-      if Event.Button = 3
-        or else (Event.Button = 1 and then B.Click_Pops_Up)
+      if Event.Button = 3 or else (Event.Button = 1 and then B.Click_Pops_Up)
       then
          --  Immediately popup the dialog.
          --  This is a workaround for a OSX-specific bug in gtk+ 3.8.2: if we
@@ -301,8 +299,8 @@ package body Gtkada.Combo_Tool_Button is
          if B.Popup_Timeout /= No_Source_Id then
             Remove (B.Popup_Timeout);
          end if;
-         B.Popup_Timeout := Button_Sources.Timeout_Add
-           (300, On_Long_Click'Access, B);
+         B.Popup_Timeout :=
+           Button_Sources.Timeout_Add (300, On_Long_Click'Access, B);
       end if;
       return False;
    end On_Button_Press;
@@ -312,8 +310,8 @@ package body Gtkada.Combo_Tool_Button is
    -----------------------
 
    function On_Button_Release
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       pragma Unreferenced (Event);
 
@@ -343,10 +341,10 @@ package body Gtkada.Combo_Tool_Button is
    ----------------------------
 
    function On_Menu_Button_Release
-     (Button : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
+     (Button : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
-      B : constant Gtkada_Combo_Tool_Button :=
+      B   : constant Gtkada_Combo_Tool_Button :=
         Gtkada_Combo_Tool_Button (Button);
       Obj : GObject;
    begin
@@ -407,8 +405,8 @@ package body Gtkada.Combo_Tool_Button is
       Widget  : Gtkada_Combo_Tool_Button)
    is
       pragma Unreferenced (Menu);
-      Menu_Req    : Gtk_Requisition;
-      Allo : Gtk_Allocation;
+      Menu_Req : Gtk_Requisition;
+      Allo     : Gtk_Allocation;
 
    begin
       Size_Request (Widget.Menu, Menu_Req);
@@ -430,8 +428,7 @@ package body Gtkada.Combo_Tool_Button is
    ----------------------------
 
    procedure On_Menu_Item_Activated
-     (Item   : access Menu_Item_Record'Class;
-      Widget : Gtkada_Combo_Tool_Button)
+     (Item : access Menu_Item_Record'Class; Widget : Gtkada_Combo_Tool_Button)
    is
    begin
       Select_Item (Widget, To_String (Item.Full_Name));
@@ -493,16 +490,16 @@ package body Gtkada.Combo_Tool_Button is
    begin
       Widget.Items.Append
         (Item_Record'
-           (Icon_Name   =>
-                (if Icon_Name /= ""
-                 then To_Unbounded_String (Icon_Name)
-                 else Widget.Icon_Name),
-            Full_Name   => To_Unbounded_String (Item),
-            Short_Name  =>
+           (Icon_Name  =>
+              (if Icon_Name /= ""
+               then To_Unbounded_String (Icon_Name)
+               else Widget.Icon_Name),
+            Full_Name  => To_Unbounded_String (Item),
+            Short_Name =>
               (if Short_Name /= ""
                then To_Unbounded_String (Short_Name)
                else To_Unbounded_String (Item)),
-            Data        => Data));
+            Data       => Data));
    end Add_Item;
 
    ---------------
@@ -511,8 +508,9 @@ package body Gtkada.Combo_Tool_Button is
 
    procedure Remove_If
      (Self      : not null access Gtkada_Combo_Tool_Button_Record;
-      Predicate : not null access function
-        (Item : String; Data : User_Data) return Boolean)
+      Predicate :
+        not null access function
+          (Item : String; Data : User_Data) return Boolean)
    is
       Index : Natural := 0;
    begin
@@ -535,8 +533,7 @@ package body Gtkada.Combo_Tool_Button is
    -----------------
 
    procedure Select_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Item   : String) is
+     (Widget : access Gtkada_Combo_Tool_Button_Record; Item : String) is
    begin
       --  Avoid loop when selected an item executes an action that refreshes
       --  the contents of the combo
@@ -588,9 +585,7 @@ package body Gtkada.Combo_Tool_Button is
    ----------------------------
 
    function Get_Selected_Item_Data
-     (Widget : access Gtkada_Combo_Tool_Button_Record)
-      return User_Data
-   is
+     (Widget : access Gtkada_Combo_Tool_Button_Record) return User_Data is
    begin
       for Item of Widget.Items loop
          if Item.Full_Name = Widget.Selected then
@@ -605,8 +600,7 @@ package body Gtkada.Combo_Tool_Button is
    ---------------
 
    function Has_Items
-     (Self : not null access Gtkada_Combo_Tool_Button_Record)
-      return Boolean is
+     (Self : not null access Gtkada_Combo_Tool_Button_Record) return Boolean is
    begin
       return not Self.Items.Is_Empty;
    end Has_Items;

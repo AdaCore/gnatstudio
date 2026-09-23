@@ -22,32 +22,30 @@ pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On, ".*is an internal GNAT unit");
 with GNAT.OS_Lib;
-with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Interactive; use GPS.Kernel.Interactive;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 
-with Basic_Types;            use Basic_Types;
-with Interactive_Consoles;   use Interactive_Consoles;
-with Password_Manager;       use Password_Manager;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with XML_Utils;              use XML_Utils;
+with Basic_Types;          use Basic_Types;
+with Interactive_Consoles; use Interactive_Consoles;
+with Password_Manager;     use Password_Manager;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with XML_Utils;            use XML_Utils;
 
 package body Remote.Db is
 
    Me : constant Trace_Handle := Create ("GPS.REMOTE.DB");
 
    Prompt_Regexp : constant Pattern_Matcher :=
-                     Compile
-                       ("^[^\n]*[#$%>\]}\\] *$",
-                        Multiple_Lines or Single_Line);
+     Compile ("^[^\n]*[#$%>\]}\\] *$", Multiple_Lines or Single_Line);
    --  Default regexp for shell prompts
 
-   Login_Regexp  : constant Pattern_Matcher :=
-                     Compile
-                       ("^[^\n]*([Ll]ogin|[Nn]ame|[Cc]onnexion)[^\n]*: *$",
-                        Multiple_Lines or Single_Line);
+   Login_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("^[^\n]*([Ll]ogin|[Nn]ame|[Cc]onnexion)[^\n]*: *$",
+        Multiple_Lines or Single_Line);
    --  Default regexp for login prompts
 
    procedure Parse_Machine_Node
@@ -65,31 +63,31 @@ package body Remote.Db is
    --  Parse a remote_path node
 
    procedure Parse_Shell_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr);
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr);
    --  Parse a remote_shell_config node
 
    procedure Parse_Access_Tool_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr);
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr);
    --  Parse a remote_connection_config node
 
    procedure Parse_Sync_Tool_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr);
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr);
    --  Parse a remote_sync_config node
 
-   procedure Free (Shell      : in out Shell_Access);
-   procedure Free (Tool       : in out Access_Tool_Access);
-   procedure Free (Sync_Tool  : in out Sync_Tool_Access);
-   procedure Free (Shells     : in out Shell_Db.Map);
-   procedure Free (Tools      : in out Access_Tools_Db.Map);
+   procedure Free (Shell : in out Shell_Access);
+   procedure Free (Tool : in out Access_Tool_Access);
+   procedure Free (Sync_Tool : in out Sync_Tool_Access);
+   procedure Free (Shells : in out Shell_Db.Map);
+   procedure Free (Tools : in out Access_Tools_Db.Map);
    procedure Free (Sync_Tools : in out Sync_Tools_Db.Map);
-   procedure Free (Machines   : in out Machine_Db.Map);
-   procedure Free (Points     : in out Mount_Points_Db.Map);
+   procedure Free (Machines : in out Machine_Db.Map);
+   procedure Free (Points : in out Mount_Points_Db.Map);
    --  Free the memory used by the parameters
 
    ------------------------
@@ -103,17 +101,17 @@ package body Remote.Db is
       Is_System : Boolean)
    is
       Nickname           : constant String :=
-                             Get_Attribute_S (Node, "nickname");
+        Get_Attribute_S (Node, "nickname");
       Network_Name       : constant String :=
-                             Get_Attribute_S (Node, "network_name");
+        Get_Attribute_S (Node, "network_name");
       Remote_Access      : constant String :=
-                             Get_Attribute_S (Node, "remote_access");
+        Get_Attribute_S (Node, "remote_access");
       Remote_Shell       : constant String :=
-                             Get_Attribute_S (Node, "remote_shell");
+        Get_Attribute_S (Node, "remote_shell");
       Remote_Sync        : constant String :=
-                             Get_Attribute_S (Node, "remote_sync", "rsync");
+        Get_Attribute_S (Node, "remote_sync", "rsync");
       Debug_Console      : constant String :=
-                             Get_Attribute_S (Node, "debug_console", "false");
+        Get_Attribute_S (Node, "debug_console", "false");
       Field              : XML_Utils.String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : GNAT.Strings.String_Access;
@@ -128,36 +126,40 @@ package body Remote.Db is
    begin
       if Nickname = "" then
          Kernel.Insert
-           (-("XML Error: remote_machine_descriptor tags missing" &
-              " a nickname attribute"),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_machine_descriptor tags missing"
+              & " a nickname attribute"),
+            Add_LF => True,
+            Mode   => Error);
 
          return;
       end if;
 
       if Network_Name = "" then
          Kernel.Insert
-           (-("XML Error: remote_machine_descriptor tags missing" &
-              " a network_name attribute"),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_machine_descriptor tags missing"
+              & " a network_name attribute"),
+            Add_LF => True,
+            Mode   => Error);
 
          return;
       end if;
 
       if Remote_Access = "" then
          Kernel.Insert
-           (-("XML Error: remote_machine_descriptor tags missing" &
-              " a remote_access attribute"),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_machine_descriptor tags missing"
+              & " a remote_access attribute"),
+            Add_LF => True,
+            Mode   => Error);
 
          return;
       end if;
 
       if Remote_Shell = "" then
          Kernel.Insert
-           (-("XML Error: remote_machine_descriptor tags missing" &
-              " a remote_shell attribute"),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_machine_descriptor tags missing"
+              & " a remote_shell attribute"),
+            Add_LF => True,
+            Mode   => Error);
 
          return;
       end if;
@@ -231,24 +233,25 @@ package body Remote.Db is
          end loop;
       end if;
 
-      Desc := new Machine_Type'
-        (Kernel              => Kernel,
-         Nickname            => new String'(Nickname),
-         Network_Name        => new String'(Network_Name),
-         Access_Tool_Name    => new String'(Remote_Access),
-         Access_Tool         => null,
-         Shell_Name          => new String'(Remote_Shell),
-         Shell               => null,
-         Sync_Tool_Name      => new String'(Remote_Sync),
-         Sync_Tool           => null,
-         Max_Nb_Connections  => Max_Nb_Connections,
-         User_Name           => User_Name,
-         Timeout             => Timeout,
-         Cr_Lf               => Cr_Lf,
-         Extra_Init_Commands => Extra_Init_Cmds,
-         Use_Dbg             => Debug_Console = "true",
-         User_Data           => null,
-         Ref_Counter         => 1);
+      Desc :=
+        new Machine_Type'
+          (Kernel              => Kernel,
+           Nickname            => new String'(Nickname),
+           Network_Name        => new String'(Network_Name),
+           Access_Tool_Name    => new String'(Remote_Access),
+           Access_Tool         => null,
+           Shell_Name          => new String'(Remote_Shell),
+           Shell               => null,
+           Sync_Tool_Name      => new String'(Remote_Sync),
+           Sync_Tool           => null,
+           Max_Nb_Connections  => Max_Nb_Connections,
+           User_Name           => User_Name,
+           Timeout             => Timeout,
+           Cr_Lf               => Cr_Lf,
+           Extra_Init_Commands => Extra_Init_Cmds,
+           Use_Dbg             => Debug_Console = "true",
+           User_Data           => null,
+           Ref_Counter         => 1);
 
       Add_Or_Replace (Db, Desc, Is_System => Is_System);
    end Parse_Machine_Node;
@@ -293,8 +296,7 @@ package body Remote.Db is
             Sync        =>
               Get_Sync (Get_Attribute_S (Child, "sync", "Never")));
 
-         if M_Point.Local_Root = No_File
-           or else M_Point.Remote_Root = No_File
+         if M_Point.Local_Root = No_File or else M_Point.Remote_Root = No_File
          then
             Kernel.Insert
               (-("XML Error: local_path and/or remote_path invalid in remote"
@@ -308,7 +310,7 @@ package body Remote.Db is
          if Db.Mount_Points.Contains (M_Point.Remote_Root.Get_Host) then
             declare
                Old : constant Mount_Point_Array :=
-                       Db.Mount_Points.Element (M_Point.Remote_Root.Get_Host);
+                 Db.Mount_Points.Element (M_Point.Remote_Root.Get_Host);
                Arr : Mount_Point_Array (Old'First .. Old'Last + 1);
             begin
                Arr (Old'First .. Old'Last) := Old;
@@ -329,13 +331,12 @@ package body Remote.Db is
    ----------------------
 
    procedure Parse_Shell_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr)
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr)
    is
       Tmp             : XML_Utils.String_Ptr;
-      Shell_Name      : constant String :=
-                          Get_Attribute_S (Node, "name", "");
+      Shell_Name      : constant String := Get_Attribute_S (Node, "name", "");
       Shell_Cmd       : String_Access;
       Generic_Prompt  : Pattern_Matcher_Access;
       GPS_Prompt      : Pattern_Matcher_Access;
@@ -372,17 +373,17 @@ package body Remote.Db is
 
          while Child /= null loop
             N_Cmds := N_Cmds + 1;
-            Child  := Child.Next;
+            Child := Child.Next;
          end loop;
 
-         Ret    := new String_List (1 .. N_Cmds);
-         Child  := Node.Child;
+         Ret := new String_List (1 .. N_Cmds);
+         Child := Node.Child;
          N_Cmds := 0;
 
          while Child /= null loop
             N_Cmds := N_Cmds + 1;
             Ret (N_Cmds) := new String'(Child.Value.all);
-            Child  := Child.Next;
+            Child := Child.Next;
          end loop;
 
          return Ret;
@@ -397,8 +398,9 @@ package body Remote.Db is
 
       elsif Db.Shells.Contains (Shell_Name) then
          Kernel.Insert
-           (-"XML Error: remote_shell_config " & Shell_Name &
-            (-" is defined twice"),
+           (-"XML Error: remote_shell_config "
+            & Shell_Name
+            & (-" is defined twice"),
             Mode => Error);
          return;
       end if;
@@ -406,8 +408,9 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "start_command");
       if Tmp = null then
          Kernel.Insert
-           (-"XML Error for " & Shell_Name &
-            (-": missing 'start_command' child in remote_shell_config"),
+           (-"XML Error for "
+            & Shell_Name
+            & (-": missing 'start_command' child in remote_shell_config"),
             Mode => Error);
          return;
       end if;
@@ -415,8 +418,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "generic_prompt");
       if Tmp /= null then
-         Generic_Prompt := new Pattern_Matcher'
-           (Compile (Tmp.all, Multiple_Lines));
+         Generic_Prompt :=
+           new Pattern_Matcher'(Compile (Tmp.all, Multiple_Lines));
       else
          Generic_Prompt := new Pattern_Matcher'(Prompt_Regexp);
       end if;
@@ -424,8 +427,9 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "gps_prompt");
       if Tmp = null then
          Kernel.Insert
-           ("XML Error for shell " & Shell_Name &
-            ": missing 'gps_prompt' child in remote_shell_config",
+           ("XML Error for shell "
+            & Shell_Name
+            & ": missing 'gps_prompt' child in remote_shell_config",
             Mode => Error);
          return;
       end if;
@@ -434,8 +438,9 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "filesystem");
       if Tmp = null then
          Kernel.Insert
-           ("XML Error in shell " & Shell_Name &
-            ": missing 'filesystem' child in remote_shell_config",
+           ("XML Error in shell "
+            & Shell_Name
+            & ": missing 'filesystem' child in remote_shell_config",
             Mode => Error);
          return;
       end if;
@@ -448,9 +453,11 @@ package body Remote.Db is
          FS := FS_Unix_Case_Insensitive;
       else
          Kernel.Insert
-           ("XML Error for shell " & Shell_Name &
-            ": 'filesystem' child has " & Tmp.all &
-            " value. Only 'windows' or 'unix' values are supported",
+           ("XML Error for shell "
+            & Shell_Name
+            & ": 'filesystem' child has "
+            & Tmp.all
+            & " value. Only 'windows' or 'unix' values are supported",
             Mode => Error);
          return;
       end if;
@@ -468,8 +475,9 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "cd_command");
       if Tmp = null then
          Kernel.Insert
-           ("XML Error for shell " & Shell_Name &
-            ": missing 'cd_command' child in remote_shell_config",
+           ("XML Error for shell "
+            & Shell_Name
+            & ": missing 'cd_command' child in remote_shell_config",
             Mode => Error);
          return;
       end if;
@@ -478,9 +486,10 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "get_status_command");
       if Tmp = null then
          Kernel.Insert
-           ("XML Error for shell " & Shell_Name &
-            ": missing 'get_status_command' child in " &
-            "remote_shell_config",
+           ("XML Error for shell "
+            & Shell_Name
+            & ": missing 'get_status_command' child in "
+            & "remote_shell_config",
             Mode => Error);
          return;
       end if;
@@ -489,26 +498,28 @@ package body Remote.Db is
       Tmp := Get_Field (Node, "get_status_ptrn");
       if Tmp = null then
          Kernel.Insert
-           ("XML Error for shell " & Shell_Name &
-            ": missing 'get_status_ptrn' child in remote_shell_config",
+           ("XML Error for shell "
+            & Shell_Name
+            & ": missing 'get_status_ptrn' child in remote_shell_config",
             Mode => Error);
          return;
       end if;
-      Get_Status_Ptrn := new Pattern_Matcher'
-        (Compile (Tmp.all, Multiple_Lines));
+      Get_Status_Ptrn :=
+        new Pattern_Matcher'(Compile (Tmp.all, Multiple_Lines));
 
-      Desc := new Shell_Record'
-        (Name             => new String'(Shell_Name),
-         Filesystem       => FS,
-         Start_Cmd        => Shell_Cmd,
-         No_Echo_Cmd      => No_Echo_Cmd,
-         Init_Cmds        => Init_Cmds,
-         Exit_Cmds        => Exit_Cmds,
-         Cd_Cmd           => Cd_Cmd,
-         Get_Status_Cmd   => Get_Status_Cmd,
-         Get_Status_Ptrn  => Get_Status_Ptrn,
-         Generic_Prompt   => Generic_Prompt,
-         Prompt           => GPS_Prompt);
+      Desc :=
+        new Shell_Record'
+          (Name            => new String'(Shell_Name),
+           Filesystem      => FS,
+           Start_Cmd       => Shell_Cmd,
+           No_Echo_Cmd     => No_Echo_Cmd,
+           Init_Cmds       => Init_Cmds,
+           Exit_Cmds       => Exit_Cmds,
+           Cd_Cmd          => Cd_Cmd,
+           Get_Status_Cmd  => Get_Status_Cmd,
+           Get_Status_Ptrn => Get_Status_Ptrn,
+           Generic_Prompt  => Generic_Prompt,
+           Prompt          => GPS_Prompt);
 
       --  Let's assume the Db is now resolved with the added shell
       Db.Resolved := True;
@@ -548,13 +559,13 @@ package body Remote.Db is
    ----------------------------
 
    procedure Parse_Access_Tool_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr)
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr)
    is
       Child                     : Node_Ptr;
       Name                      : constant String :=
-                                    Get_Attribute_S (Node, "name");
+        Get_Attribute_S (Node, "name");
       Start_Command             : String_Access;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
@@ -574,16 +585,19 @@ package body Remote.Db is
    begin
       if Name = "" then
          Kernel.Insert
-           (-("XML Error: remote_connection_config tag is missing a " &
-              "name attribute."),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_connection_config tag is missing a "
+              & "name attribute."),
+            Add_LF => True,
+            Mode   => Error);
          return;
 
       elsif Db.Access_Tools.Contains (Name) then
          Kernel.Insert
-           (-("XML Error: remote_connection_config has a duplicate " &
-              "configuration for " & Name),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_connection_config has a duplicate "
+              & "configuration for "
+              & Name),
+            Add_LF => True,
+            Mode   => Error);
          return;
       end if;
 
@@ -600,13 +614,15 @@ package body Remote.Db is
             --  No such tool on the system, just ignore this config
             return;
 
-         elsif Ada.Strings.Fixed.Index (Start_Command.all, "Windows") in
-           Start_Command'Range
+         elsif Ada.Strings.Fixed.Index (Start_Command.all, "Windows")
+               in Start_Command'Range
          then
             --  Microsoft tools located in the Windows folder are not supported
             Trace
-              (Me, "Ignoring Access tool " & Name &
-               " as this version is not supported by GNAT Studio");
+              (Me,
+               "Ignoring Access tool "
+               & Name
+               & " as this version is not supported by GNAT Studio");
             Free (Start_Command);
 
             return;
@@ -614,9 +630,11 @@ package body Remote.Db is
 
       else
          Kernel.Insert
-           (-("XML Error: remote_connection_config is missing a " &
-              "start_command field for " & Name),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_connection_config is missing a "
+              & "start_command field for "
+              & Name),
+            Add_LF => True,
+            Mode   => Error);
 
          return;
       end if;
@@ -646,28 +664,31 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "user_prompt_ptrn");
       if Tmp /= null then
-         User_Prompt_Ptrn := new Pattern_Matcher'
-           (Compile (Tmp.all, Single_Line or Multiple_Lines));
+         User_Prompt_Ptrn :=
+           new Pattern_Matcher'
+             (Compile (Tmp.all, Single_Line or Multiple_Lines));
       else
          User_Prompt_Ptrn := new Pattern_Matcher'(Login_Regexp);
       end if;
 
       Tmp := Get_Field (Node, "password_prompt_ptrn");
       if Tmp /= null then
-         Password_Prompt_Ptrn := new Pattern_Matcher'
-           (Compile (Tmp.all, Single_Line or Multiple_Lines));
+         Password_Prompt_Ptrn :=
+           new Pattern_Matcher'
+             (Compile (Tmp.all, Single_Line or Multiple_Lines));
       else
-         Password_Prompt_Ptrn := new Pattern_Matcher'
-           (Get_Default_Password_Regexp);
+         Password_Prompt_Ptrn :=
+           new Pattern_Matcher'(Get_Default_Password_Regexp);
       end if;
 
       Tmp := Get_Field (Node, "passphrase_prompt_ptrn");
       if Tmp /= null then
-         Passphrase_Prompt_Ptrn := new Pattern_Matcher'
-           (Compile (Tmp.all, Single_Line or Multiple_Lines));
+         Passphrase_Prompt_Ptrn :=
+           new Pattern_Matcher'
+             (Compile (Tmp.all, Single_Line or Multiple_Lines));
       else
-         Passphrase_Prompt_Ptrn := new Pattern_Matcher'
-           (Get_Default_Passphrase_Regexp);
+         Passphrase_Prompt_Ptrn :=
+           new Pattern_Matcher'(Get_Default_Passphrase_Regexp);
       end if;
 
       Child := Node.Child;
@@ -689,41 +710,46 @@ package body Remote.Db is
       while Child /= null loop
          if Child.Tag.all = "extra_ptrn" then
             Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
-            Auto_Answer := Boolean'Value
-              (Get_Attribute_S (Child, "auto_answer", "true"));
+            Auto_Answer :=
+              Boolean'Value (Get_Attribute_S (Child, "auto_answer", "true"));
 
             if Auto_Answer then
                Extra_Ptrns (Extra_Ptrn_Length) :=
                  (Auto_Answer => True,
-                  Ptrn        => new Pattern_Matcher'(Compile
-                    (Child.Value.all, Single_Line or Multiple_Lines)),
-                  Answer      => new String'(Get_Attribute_S
-                    (Child, "answer", "")));
+                  Ptrn        =>
+                    new Pattern_Matcher'
+                      (Compile
+                         (Child.Value.all, Single_Line or Multiple_Lines)),
+                  Answer      =>
+                    new String'(Get_Attribute_S (Child, "answer", "")));
             else
                Extra_Ptrns (Extra_Ptrn_Length) :=
                  (Auto_Answer => False,
-                  Ptrn        => new Pattern_Matcher'(Compile
-                    (Child.Value.all, Single_Line or Multiple_Lines)),
-                  Question    => new String'(Get_Attribute_S
-                    (Child, "question", "")));
+                  Ptrn        =>
+                    new Pattern_Matcher'
+                      (Compile
+                         (Child.Value.all, Single_Line or Multiple_Lines)),
+                  Question    =>
+                    new String'(Get_Attribute_S (Child, "question", "")));
             end if;
          end if;
 
          Child := Child.Next;
       end loop;
 
-      Desc := new Access_Tool_Record'
-        (Name                   => new String'(Name),
-         Start_Cmd              => Start_Command,
-         Start_Cmd_Common_Args  => Start_Command_Common_Args,
-         Start_Cmd_User_Args    => Start_Command_User_Args,
-         Send_Interrupt         => Interrupt,
-         User_Prompt_Ptrn       => User_Prompt_Ptrn,
-         Password_Prompt_Ptrn   => Password_Prompt_Ptrn,
-         Passphrase_Prompt_Ptrn => Passphrase_Prompt_Ptrn,
-         Extra_Prompts          => Extra_Ptrns,
-         Use_Pipes              => Use_Pipes,
-         Max_Password_Prompt    => 3);
+      Desc :=
+        new Access_Tool_Record'
+          (Name                   => new String'(Name),
+           Start_Cmd              => Start_Command,
+           Start_Cmd_Common_Args  => Start_Command_Common_Args,
+           Start_Cmd_User_Args    => Start_Command_User_Args,
+           Send_Interrupt         => Interrupt,
+           User_Prompt_Ptrn       => User_Prompt_Ptrn,
+           Password_Prompt_Ptrn   => Password_Prompt_Ptrn,
+           Passphrase_Prompt_Ptrn => Passphrase_Prompt_Ptrn,
+           Extra_Prompts          => Extra_Ptrns,
+           Use_Pipes              => Use_Pipes,
+           Max_Password_Prompt    => 3);
 
       Db.Access_Tools.Insert (Name, Desc);
 
@@ -763,9 +789,9 @@ package body Remote.Db is
    --------------------------
 
    procedure Parse_Sync_Tool_Node
-     (Db        : access Remote_Db_Type;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Node      : XML_Utils.Node_Ptr)
+     (Db     : access Remote_Db_Type;
+      Kernel : access Kernel_Handle_Record'Class;
+      Node   : XML_Utils.Node_Ptr)
    is
       Name         : constant String := Get_Attribute_S (Node, "name");
       Child        : Node_Ptr;
@@ -776,16 +802,19 @@ package body Remote.Db is
    begin
       if Name = "" then
          Kernel.Insert
-           (-("XML Error: remote_connection_config tag is missing a " &
-              "name attribute."),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_connection_config tag is missing a "
+              & "name attribute."),
+            Add_LF => True,
+            Mode   => Error);
          return;
 
       elsif Db.Access_Tools.Contains (Name) then
          Kernel.Insert
-           (-("XML Error: remote_connection_config has a duplicate " &
-              "configuration for " & Name),
-            Add_LF => True, Mode => Error);
+           (-("XML Error: remote_connection_config has a duplicate "
+              & "configuration for "
+              & Name),
+            Add_LF => True,
+            Mode   => Error);
          return;
       end if;
 
@@ -795,9 +824,7 @@ package body Remote.Db is
          Args := GNAT.OS_Lib.Argument_String_To_List (Child.Value.all);
       end if;
 
-      Desc := new Sync_Tool_Record'
-        (Name => new String'(Name),
-         Args => Args);
+      Desc := new Sync_Tool_Record'(Name => new String'(Name), Args => Args);
 
       Db.Sync_Tools.Insert (Name, Desc);
 
@@ -850,8 +877,8 @@ package body Remote.Db is
    ----------
 
    procedure Free (Shell : in out Shell_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Shell_Record, Shell_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Shell_Record, Shell_Access);
    begin
       if Shell /= null then
          Free (Shell.Name);
@@ -877,8 +904,11 @@ package body Remote.Db is
       Unchecked_Free (Prompt.Ptrn);
 
       case Prompt.Auto_Answer is
-         when True  => Free (Prompt.Answer);
-         when False => Free (Prompt.Question);
+         when True  =>
+            Free (Prompt.Answer);
+
+         when False =>
+            Free (Prompt.Question);
       end case;
    end Free;
 
@@ -887,8 +917,10 @@ package body Remote.Db is
    ----------
 
    procedure Free (Prompts : in out Extra_Prompt_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Extra_Prompt_Array, Extra_Prompt_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Extra_Prompt_Array,
+           Extra_Prompt_Array_Access);
    begin
       if Prompts /= null then
          for P in Prompts'Range loop
@@ -903,8 +935,8 @@ package body Remote.Db is
    ----------
 
    procedure Free (Tool : in out Access_Tool_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Access_Tool_Record, Access_Tool_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Access_Tool_Record, Access_Tool_Access);
    begin
       if Tool /= null then
          Free (Tool.Name);
@@ -948,9 +980,9 @@ package body Remote.Db is
    -- Free --
    ----------
 
-   procedure Free (Sync_Tool  : in out Sync_Tool_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Sync_Tool_Record, Sync_Tool_Access);
+   procedure Free (Sync_Tool : in out Sync_Tool_Access) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Sync_Tool_Record, Sync_Tool_Access);
    begin
       if Sync_Tool /= null then
          Free (Sync_Tool.Name);
@@ -996,8 +1028,10 @@ package body Remote.Db is
    ----------
 
    procedure Free (DB : in out Remote_Db_Type_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Remote_Db_Type'Class, Remote_Db_Type_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Remote_Db_Type'Class,
+           Remote_Db_Type_Access);
    begin
       if DB /= null then
          Free (DB.Shells);
@@ -1018,8 +1052,7 @@ package body Remote.Db is
      (Db        : access Remote_Db_Type;
       Kernel    : access Kernel_Handle_Record'Class;
       Node      : XML_Utils.Node_Ptr;
-      Is_System : Boolean)
-   is
+      Is_System : Boolean) is
    begin
       if Node.Tag.all = "remote_machine_descriptor" then
          Trace (Me, "Read_From_XML: 'remote_machine_descriptor'");
@@ -1044,8 +1077,7 @@ package body Remote.Db is
    -----------------
 
    procedure Save_To_XML
-     (Db      : access Remote_Db_Type;
-      Node    : XML_Utils.Node_Ptr)
+     (Db : access Remote_Db_Type; Node : XML_Utils.Node_Ptr)
    is
       Machine_Cursor : Machine_Db.Cursor;
       Mount_P_Cursor : Mount_Points_Db.Cursor;
@@ -1063,16 +1095,13 @@ package body Remote.Db is
          Main_Child.Tag := new String'("remote_machine_descriptor");
          Add_Child (Node, Main_Child, True);
 
-         Set_Attribute_S
-           (Main_Child, "nickname", Nickname (Machine.all));
+         Set_Attribute_S (Main_Child, "nickname", Nickname (Machine.all));
          Set_Attribute_S
            (Main_Child, "network_name", Network_Name (Machine.all));
          Set_Attribute_S
            (Main_Child, "remote_access", Access_Tool (Machine.all));
-         Set_Attribute_S
-           (Main_Child, "remote_shell", Shell (Machine.all));
-         Set_Attribute_S
-           (Main_Child, "remote_sync", Sync_Tool (Machine.all));
+         Set_Attribute_S (Main_Child, "remote_shell", Shell (Machine.all));
+         Set_Attribute_S (Main_Child, "remote_sync", Sync_Tool (Machine.all));
          Set_Attribute_S
            (Main_Child, "debug_console", Use_Dbg (Machine.all)'Img);
 
@@ -1126,7 +1155,7 @@ package body Remote.Db is
       while Mount_Points_Db.Has_Element (Mount_P_Cursor) loop
          declare
             Mount_Pts : constant Mount_Point_Array :=
-                          Mount_Points_Db.Element (Mount_P_Cursor);
+              Mount_Points_Db.Element (Mount_P_Cursor);
          begin
             for J in Mount_Pts'Range loop
                Child := new XML_Utils.Node;
@@ -1134,8 +1163,7 @@ package body Remote.Db is
                Add_Child (Main_Child, Child);
 
                Set_Attribute_S (Child, "sync", Mount_Pts (J).Sync'Img);
-               Add_File_Child
-                 (Child, "local_path", Mount_Pts (J).Local_Root);
+               Add_File_Child (Child, "local_path", Mount_Pts (J).Local_Root);
                Add_File_Child
                  (Child, "remote_path", Mount_Pts (J).Remote_Root);
             end loop;
@@ -1149,10 +1177,9 @@ package body Remote.Db is
    -- Is_Configured --
    -------------------
 
-   overriding function Is_Configured
-     (Db       : Remote_Db_Type;
-      Nickname : String)
-      return Boolean
+   overriding
+   function Is_Configured
+     (Db : Remote_Db_Type; Nickname : String) return Boolean
    is
       Machine : Machine_Access;
    begin
@@ -1161,7 +1188,8 @@ package body Remote.Db is
 
       if Db.Resolved then
 
-         return Db.Machines.Contains (Nickname)
+         return
+           Db.Machines.Contains (Nickname)
            or else Db.Sys_Machines.Contains (Nickname);
 
       elsif Db.Machines.Contains (Nickname)
@@ -1169,8 +1197,7 @@ package body Remote.Db is
       then
          Machine := Db.Get_Machine (Nickname);
 
-         return Machine.Shell /= null
-           and then Machine.Access_Tool /= null;
+         return Machine.Shell /= null and then Machine.Access_Tool /= null;
       else
          return False;
       end if;
@@ -1180,8 +1207,8 @@ package body Remote.Db is
    -- Get_Servers --
    -----------------
 
-   overriding function Get_Servers (Db : Remote_Db_Type) return String_List
-   is
+   overriding
+   function Get_Servers (Db : Remote_Db_Type) return String_List is
       N_Machines : Natural := Natural (Db.Machines.Length);
       Cursor     : Machine_Db.Cursor;
 
@@ -1190,8 +1217,7 @@ package body Remote.Db is
       Cursor := Db.Sys_Machines.First;
       while Machine_Db.Has_Element (Cursor) loop
          --  Take care of overridden system machines.
-         if not Db.Machines.Contains
-           (Machine_Db.Element (Cursor).Nickname.all)
+         if not Db.Machines.Contains (Machine_Db.Element (Cursor).Nickname.all)
          then
             N_Machines := N_Machines + 1;
          end if;
@@ -1199,8 +1225,8 @@ package body Remote.Db is
       end loop;
 
       declare
-         Ret    : String_List (1 .. N_Machines);
-         Idx    : Natural := 1;
+         Ret : String_List (1 .. N_Machines);
+         Idx : Natural := 1;
       begin
          Cursor := Db.Machines.First;
 
@@ -1217,7 +1243,7 @@ package body Remote.Db is
          while Machine_Db.Has_Element (Cursor) loop
             --  Take care of overridden system machines.
             if not Db.Machines.Contains
-              (Machine_Db.Element (Cursor).Nickname.all)
+                     (Machine_Db.Element (Cursor).Nickname.all)
             then
                Ret (Idx) := Machine_Db.Element (Cursor).Nickname;
                Trace (Me, " - " & Ret (Idx).all);
@@ -1236,8 +1262,7 @@ package body Remote.Db is
    -- Get_Shells --
    ----------------
 
-   function Get_Shells (Db : Remote_Db_Type) return String_List
-   is
+   function Get_Shells (Db : Remote_Db_Type) return String_List is
       Ret    : String_List (1 .. Natural (Db.Shells.Length));
       Cursor : Shell_Db.Cursor;
    begin
@@ -1254,8 +1279,7 @@ package body Remote.Db is
    -- Get_Access_Tools --
    ----------------------
 
-   function Get_Access_Tools (Db : Remote_Db_Type) return String_List
-   is
+   function Get_Access_Tools (Db : Remote_Db_Type) return String_List is
       Ret    : String_List (1 .. Natural (Db.Access_Tools.Length));
       Cursor : Access_Tools_Db.Cursor;
    begin
@@ -1272,8 +1296,7 @@ package body Remote.Db is
    -- Get_Sync_Tools --
    ---------------------
 
-   function Get_Sync_Tools (Db : Remote_Db_Type) return String_List
-   is
+   function Get_Sync_Tools (Db : Remote_Db_Type) return String_List is
       Ret    : String_List (1 .. Natural (Db.Sync_Tools.Length));
       Cursor : Sync_Tools_Db.Cursor;
    begin
@@ -1290,28 +1313,23 @@ package body Remote.Db is
    -- Get_Server --
    ----------------
 
-   overriding function Get_Server
-     (Db       : Remote_Db_Type;
-      Nickname : String)
-      return Gexpect.Machine_Access
-   is
+   overriding
+   function Get_Server
+     (Db : Remote_Db_Type; Nickname : String) return Gexpect.Machine_Access is
    begin
-      return Gexpect.Machine_Access
-        (Db.Get_Machine (Nickname));
+      return Gexpect.Machine_Access (Db.Get_Machine (Nickname));
    end Get_Server;
 
    ----------------
    -- Get_Server --
    ----------------
 
-   overriding function Get_Server
-     (Config   : Remote_Db_Type;
-      Nickname : String)
-      return GNATCOLL.Remote.Server_Access
-   is
+   overriding
+   function Get_Server
+     (Config : Remote_Db_Type; Nickname : String)
+      return GNATCOLL.Remote.Server_Access is
    begin
-      return GNATCOLL.Remote.Server_Access
-        (Config.Get_Machine (Nickname));
+      return GNATCOLL.Remote.Server_Access (Config.Get_Machine (Nickname));
    end Get_Server;
 
    -----------------
@@ -1319,9 +1337,7 @@ package body Remote.Db is
    -----------------
 
    function Get_Machine
-     (Db       : Remote_Db_Type;
-      Nickname : String) return Machine_Access
-   is
+     (Db : Remote_Db_Type; Nickname : String) return Machine_Access is
    begin
       if Db.Machines.Contains (Nickname) then
          return Db.Machines.Element (Nickname);
@@ -1335,8 +1351,7 @@ package body Remote.Db is
    ----------------------
 
    function Get_Mount_Points
-     (Config   : Remote_Db_Type;
-      Nickname : String) return Mount_Point_Array is
+     (Config : Remote_Db_Type; Nickname : String) return Mount_Point_Array is
    begin
       if Config.Mount_Points.Contains (Nickname) then
          return Config.Mount_Points.Element (Nickname);
@@ -1368,9 +1383,7 @@ package body Remote.Db is
    --------------------
 
    function Is_Sys_Default
-     (Config   : Remote_Db_Type;
-      Nickname : String) return Boolean
-   is
+     (Config : Remote_Db_Type; Nickname : String) return Boolean is
    begin
       return not Config.Machines.Contains (Nickname);
    end Is_Sys_Default;
@@ -1380,8 +1393,7 @@ package body Remote.Db is
    ---------------------
 
    function Has_Sys_Default
-     (Config   : Remote_Db_Type;
-      Nickname : String) return Boolean is
+     (Config : Remote_Db_Type; Nickname : String) return Boolean is
    begin
       return Config.Sys_Machines.Contains (Nickname);
    end Has_Sys_Default;
@@ -1391,8 +1403,7 @@ package body Remote.Db is
    ---------------------
 
    function Get_Sys_Default
-     (Config   : Remote_Db_Type;
-      Nickname : String) return Machine_Access is
+     (Config : Remote_Db_Type; Nickname : String) return Machine_Access is
    begin
       return Config.Sys_Machines.Element (Nickname);
    end Get_Sys_Default;
@@ -1404,8 +1415,7 @@ package body Remote.Db is
    procedure Add_Or_Replace
      (Config    : access Remote_Db_Type;
       Machine   : Machine_Access;
-      Is_System : Boolean := False)
-   is
+      Is_System : Boolean := False) is
    begin
       if Machine.Shell = null
         and then Config.Shells.Contains (Machine.Shell_Name.all)
@@ -1435,11 +1445,10 @@ package body Remote.Db is
 
       if Is_System then
          if Config.Sys_Machines.Contains (Machine.Nickname.all) then
-            Insert (Machine.Kernel,
-                    -"Warning: " &
-                    Machine.Nickname.all &
-                    (-" is defined twice !"),
-                    Mode => Error);
+            Insert
+              (Machine.Kernel,
+               -"Warning: " & Machine.Nickname.all & (-" is defined twice !"),
+               Mode => Error);
             return;
          end if;
 
@@ -1470,10 +1479,7 @@ package body Remote.Db is
    -- Remove --
    ------------
 
-   procedure Remove
-     (Config   : access Remote_Db_Type;
-      Nickname : String)
-   is
+   procedure Remove (Config : access Remote_Db_Type; Nickname : String) is
       Old : Machine_Access;
    begin
       if not Config.Machines.Contains (Nickname) then
@@ -1496,9 +1502,9 @@ package body Remote.Db is
    -- Nb_Mount_Points --
    ---------------------
 
-   overriding function Nb_Mount_Points
-     (Config   : Remote_Db_Type;
-      Nickname : String) return Natural is
+   overriding
+   function Nb_Mount_Points
+     (Config : Remote_Db_Type; Nickname : String) return Natural is
    begin
       return Get_Mount_Points (Config, Nickname)'Length;
    end Nb_Mount_Points;
@@ -1507,10 +1513,10 @@ package body Remote.Db is
    -- Get_Mount_Point_Local_Root --
    --------------------------------
 
-   overriding function Get_Mount_Point_Local_Root
-     (Config   : Remote_Db_Type;
-      Nickname : String;
-      Index    : Natural) return FS_String
+   overriding
+   function Get_Mount_Point_Local_Root
+     (Config : Remote_Db_Type; Nickname : String; Index : Natural)
+      return FS_String
    is
       Ret : Filesystem_String renames
         Get_Mount_Points (Config, Nickname) (Index).Local_Root.Full_Name;
@@ -1522,10 +1528,10 @@ package body Remote.Db is
    -- Get_Mount_Point_Host_Root --
    -------------------------------
 
-   overriding function Get_Mount_Point_Host_Root
-     (Config   : Remote_Db_Type;
-      Nickname : String;
-      Index    : Natural) return FS_String
+   overriding
+   function Get_Mount_Point_Host_Root
+     (Config : Remote_Db_Type; Nickname : String; Index : Natural)
+      return FS_String
    is
       Ret : Filesystem_String renames
         Get_Mount_Points (Config, Nickname) (Index).Remote_Root.Full_Name;
@@ -1537,7 +1543,8 @@ package body Remote.Db is
    -- Ref --
    ---------
 
-   overriding procedure Ref (Machine : in out Machine_Type) is
+   overriding
+   procedure Ref (Machine : in out Machine_Type) is
    begin
       Machine.Ref_Counter := Machine.Ref_Counter + 1;
    end Ref;
@@ -1546,11 +1553,14 @@ package body Remote.Db is
    -- Unref --
    -----------
 
-   overriding procedure Unref (Machine : access Machine_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Machine_Type'Class, Machine_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Machine_User_Data_Type'Class, Machine_User_Data_Access);
+   overriding
+   procedure Unref (Machine : access Machine_Type) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Machine_Type'Class, Machine_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Machine_User_Data_Type'Class,
+           Machine_User_Data_Access);
 
       The_Machine : Machine_Access := Machine_Access (Machine);
    begin
@@ -1579,8 +1589,8 @@ package body Remote.Db is
    -----------------
 
    function New_Machine
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Nickname : String) return Machine_Type
+     (Kernel : access Kernel_Handle_Record'Class; Nickname : String)
+      return Machine_Type
    is
       Ret : Machine_Type;
    begin
@@ -1593,10 +1603,8 @@ package body Remote.Db is
    -- Nickname --
    --------------
 
-   overriding function Nickname
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Nickname (Machine : Machine_Type) return String is
    begin
       return Machine.Nickname.all;
    end Nickname;
@@ -1605,10 +1613,8 @@ package body Remote.Db is
    -- Network_Name --
    ------------------
 
-   overriding function Network_Name
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Network_Name (Machine : Machine_Type) return String is
    begin
       if Machine.Network_Name = null then
          return "";
@@ -1621,9 +1627,7 @@ package body Remote.Db is
    ----------------------
 
    procedure Set_Network_Name
-     (Machine       : in out Machine_Type;
-      Network_Name  : String)
-   is
+     (Machine : in out Machine_Type; Network_Name : String) is
    begin
       Free (Machine.Network_Name);
       Machine.Network_Name := new String'(Network_Name);
@@ -1633,10 +1637,8 @@ package body Remote.Db is
    -- Access_Tool --
    -----------------
 
-   overriding function Access_Tool
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Access_Tool (Machine : Machine_Type) return String is
    begin
       if Machine.Access_Tool_Name = null then
          return "";
@@ -1649,23 +1651,19 @@ package body Remote.Db is
    ---------------------
 
    procedure Set_Access_Tool
-     (Machine      : in out Machine_Type;
-      Access_Tool  : String)
-   is
+     (Machine : in out Machine_Type; Access_Tool : String) is
    begin
       Free (Machine.Access_Tool_Name);
       Machine.Access_Tool_Name := new String'(Access_Tool);
-      Machine.Access_Tool      := null;
+      Machine.Access_Tool := null;
    end Set_Access_Tool;
 
    -----------
    -- Shell --
    -----------
 
-   overriding function Shell
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Shell (Machine : Machine_Type) return String is
    begin
       if Machine.Shell_Name = null then
          return "";
@@ -1678,23 +1676,19 @@ package body Remote.Db is
    -- Set_Shell --
    ---------------
 
-   procedure Set_Shell
-     (Machine : in out Machine_Type;
-      Shell   : String)
-   is
+   procedure Set_Shell (Machine : in out Machine_Type; Shell : String) is
    begin
       Free (Machine.Shell_Name);
       Machine.Shell_Name := new String'(Shell);
-      Machine.Shell      := null;
+      Machine.Shell := null;
    end Set_Shell;
 
    ---------------
    -- Sync_Tool --
    ---------------
 
-   overriding function Sync_Tool
-     (Machine : Machine_Type) return String
-   is
+   overriding
+   function Sync_Tool (Machine : Machine_Type) return String is
    begin
       if Machine.Sync_Tool_Name = null then
          return "";
@@ -1707,8 +1701,8 @@ package body Remote.Db is
    -- Sync_Tool_Args --
    --------------------
 
-   overriding function Sync_Tool_Args
-     (Machine : Machine_Type) return String_List is
+   overriding
+   function Sync_Tool_Args (Machine : Machine_Type) return String_List is
    begin
       if Machine.Sync_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -1725,9 +1719,7 @@ package body Remote.Db is
    -- Set_Sync_Tool --
    -------------------
 
-   procedure Set_Sync_Tool
-     (Machine   : in out Machine_Type;
-      Sync_Func : String)
+   procedure Set_Sync_Tool (Machine : in out Machine_Type; Sync_Func : String)
    is
    begin
       Free (Machine.Sync_Tool_Name);
@@ -1739,10 +1731,8 @@ package body Remote.Db is
    -- Extra_Init_Commands --
    -------------------------
 
-   overriding function Extra_Init_Commands
-     (Machine : Machine_Type)
-      return String_List
-   is
+   overriding
+   function Extra_Init_Commands (Machine : Machine_Type) return String_List is
    begin
       if Machine.Extra_Init_Commands = null then
          return (1 .. 0 => <>);
@@ -1756,9 +1746,7 @@ package body Remote.Db is
    -----------------------------
 
    procedure Set_Extra_Init_Commands
-     (Machine : in out Machine_Type;
-      Cmds    : String_List)
-   is
+     (Machine : in out Machine_Type; Cmds : String_List) is
    begin
       Free (Machine.Extra_Init_Commands);
       Machine.Extra_Init_Commands := new String_List'(Cmds);
@@ -1768,10 +1756,8 @@ package body Remote.Db is
    -- User_Name --
    ---------------
 
-   overriding function User_Name
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function User_Name (Machine : Machine_Type) return String is
    begin
       if Machine.User_Name = null then
          return "";
@@ -1784,9 +1770,8 @@ package body Remote.Db is
    -- Set_User_Name --
    -------------------
 
-   overriding procedure Set_User_Name
-     (Machine   : in out Machine_Type;
-      User_Name : String)
+   overriding
+   procedure Set_User_Name (Machine : in out Machine_Type; User_Name : String)
    is
    begin
       Free (Machine.User_Name);
@@ -1797,10 +1782,8 @@ package body Remote.Db is
    -- Max_Nb_Connections --
    ------------------------
 
-   overriding function Max_Nb_Connections
-     (Machine : Machine_Type)
-      return Natural
-   is
+   overriding
+   function Max_Nb_Connections (Machine : Machine_Type) return Natural is
    begin
       return Machine.Max_Nb_Connections;
    end Max_Nb_Connections;
@@ -1810,9 +1793,7 @@ package body Remote.Db is
    ----------------------------
 
    procedure Set_Max_Nb_Connections
-     (Machine : in out Machine_Type;
-      Nb      : Natural)
-   is
+     (Machine : in out Machine_Type; Nb : Natural) is
    begin
       Machine.Max_Nb_Connections := Nb;
    end Set_Max_Nb_Connections;
@@ -1821,10 +1802,8 @@ package body Remote.Db is
    -- Timeout --
    -------------
 
-   overriding function Timeout
-     (Machine : Machine_Type)
-      return Natural
-   is
+   overriding
+   function Timeout (Machine : Machine_Type) return Natural is
    begin
       return Machine.Timeout;
    end Timeout;
@@ -1833,10 +1812,7 @@ package body Remote.Db is
    -- Set_Timeout --
    -----------------
 
-   procedure Set_Timeout
-     (Machine   : in out Machine_Type;
-      MSeconds  : Natural)
-   is
+   procedure Set_Timeout (Machine : in out Machine_Type; MSeconds : Natural) is
    begin
       Machine.Timeout := MSeconds;
    end Set_Timeout;
@@ -1845,10 +1821,8 @@ package body Remote.Db is
    -- Cr_Lf --
    -----------
 
-   overriding function Cr_Lf
-     (Machine : Machine_Type)
-      return Cr_Lf_Handling
-   is
+   overriding
+   function Cr_Lf (Machine : Machine_Type) return Cr_Lf_Handling is
    begin
       return Machine.Cr_Lf;
    end Cr_Lf;
@@ -1857,9 +1831,7 @@ package body Remote.Db is
    -- Set_Cr_Lf --
    ---------------
 
-   procedure Set_Cr_Lf
-     (Machine : in out Machine_Type;
-      Cr_Lf   : Cr_Lf_Handling)
+   procedure Set_Cr_Lf (Machine : in out Machine_Type; Cr_Lf : Cr_Lf_Handling)
    is
    begin
       Machine.Cr_Lf := Cr_Lf;
@@ -1869,8 +1841,8 @@ package body Remote.Db is
    -- Use_Dbg --
    -------------
 
-   overriding function Use_Dbg
-     (Machine : Machine_Type) return Boolean is
+   overriding
+   function Use_Dbg (Machine : Machine_Type) return Boolean is
    begin
       return Machine.Use_Dbg;
    end Use_Dbg;
@@ -1879,10 +1851,7 @@ package body Remote.Db is
    -- Set_Use_Dbg --
    -----------------
 
-   procedure Set_Use_Dbg
-     (Machine : in out Machine_Type;
-      Dbg     : Boolean)
-   is
+   procedure Set_Use_Dbg (Machine : in out Machine_Type; Dbg : Boolean) is
    begin
       Machine.Use_Dbg := Dbg;
    end Set_Use_Dbg;
@@ -1891,19 +1860,20 @@ package body Remote.Db is
    -- Dbg --
    ---------
 
-   overriding procedure Dbg
-     (Machine : access Machine_Type;
-      Str     : String;
-      Mode    : Mode_Type)
+   overriding
+   procedure Dbg
+     (Machine : access Machine_Type; Str : String; Mode : Mode_Type)
    is
       Console : Interactive_Console;
    begin
-      Console := Create_Interactive_Console
-        (Machine.Kernel, Machine.Nickname.all & " session");
+      Console :=
+        Create_Interactive_Console
+          (Machine.Kernel, Machine.Nickname.all & " session");
 
       case Mode is
-         when Input =>
+         when Input  =>
             Insert (Console, Str, Add_LF => True, Mode => Error);
+
          when Output =>
             Insert (Console, Str, Add_LF => False, Mode => Info);
       end case;
@@ -1913,10 +1883,8 @@ package body Remote.Db is
    -- Shell_Command --
    -------------------
 
-   overriding function Shell_Command
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Shell_Command (Machine : Machine_Type) return String is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -1929,10 +1897,9 @@ package body Remote.Db is
    -- Shell_Generic_Prompt --
    --------------------------
 
-   overriding function Shell_Generic_Prompt
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Shell_Generic_Prompt
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -1945,10 +1912,9 @@ package body Remote.Db is
    -- Shell_Configured_Prompt --
    -----------------------------
 
-   overriding function Shell_Configured_Prompt
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Shell_Configured_Prompt
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -1961,10 +1927,8 @@ package body Remote.Db is
    -- Shell_FS --
    --------------
 
-   overriding function Shell_FS
-     (Machine : Machine_Type)
-      return FS_Type
-   is
+   overriding
+   function Shell_FS (Machine : Machine_Type) return FS_Type is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -1977,10 +1941,8 @@ package body Remote.Db is
    -- Shell_No_Echo_Cmd --
    -----------------------
 
-   overriding function Shell_No_Echo_Cmd
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Shell_No_Echo_Cmd (Machine : Machine_Type) return String is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -1993,10 +1955,8 @@ package body Remote.Db is
    -- Shell_Init_Cmds --
    ---------------------
 
-   overriding function Shell_Init_Cmds
-     (Machine : Machine_Type)
-      return String_List
-   is
+   overriding
+   function Shell_Init_Cmds (Machine : Machine_Type) return String_List is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -2009,10 +1969,8 @@ package body Remote.Db is
    -- Shell_Exit_Cmds --
    ---------------------
 
-   overriding function Shell_Exit_Cmds
-     (Machine : Machine_Type)
-      return String_List
-   is
+   overriding
+   function Shell_Exit_Cmds (Machine : Machine_Type) return String_List is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -2025,10 +1983,8 @@ package body Remote.Db is
    -- Shell_Cd_Cmd --
    ------------------
 
-   overriding function Shell_Cd_Cmd
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Shell_Cd_Cmd (Machine : Machine_Type) return String is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -2041,10 +1997,8 @@ package body Remote.Db is
    -- Shell_Get_Status_Cmd --
    --------------------------
 
-   overriding function Shell_Get_Status_Cmd
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Shell_Get_Status_Cmd (Machine : Machine_Type) return String is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -2057,10 +2011,9 @@ package body Remote.Db is
    -- Shell_Get_Status_Pattern --
    ------------------------------
 
-   overriding function Shell_Get_Status_Pattern
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Shell_Get_Status_Pattern
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Shell = null then
          raise Invalid_Remote_Configuration;
@@ -2073,10 +2026,8 @@ package body Remote.Db is
    -- Access_Tool_Command --
    -------------------------
 
-   overriding function Access_Tool_Command
-     (Machine : Machine_Type)
-      return String
-   is
+   overriding
+   function Access_Tool_Command (Machine : Machine_Type) return String is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2089,9 +2040,8 @@ package body Remote.Db is
    -- Access_Tool_Common_Args --
    -----------------------------
 
-   overriding function Access_Tool_Common_Args
-     (Machine : Machine_Type)
-      return String_List
+   overriding
+   function Access_Tool_Common_Args (Machine : Machine_Type) return String_List
    is
    begin
       if Machine.Access_Tool = null then
@@ -2105,9 +2055,8 @@ package body Remote.Db is
    -- Access_Tool_User_Args --
    ---------------------------
 
-   overriding function Access_Tool_User_Args
-     (Machine : Machine_Type)
-      return String_List
+   overriding
+   function Access_Tool_User_Args (Machine : Machine_Type) return String_List
    is
    begin
       if Machine.Access_Tool = null then
@@ -2121,9 +2070,8 @@ package body Remote.Db is
    -- Access_Tool_Send_Interrupt --
    --------------------------------
 
-   overriding function Access_Tool_Send_Interrupt
-     (Machine : Machine_Type)
-      return String
+   overriding
+   function Access_Tool_Send_Interrupt (Machine : Machine_Type) return String
    is
    begin
       if Machine.Access_Tool = null then
@@ -2137,10 +2085,9 @@ package body Remote.Db is
    -- Access_Tool_User_Prompt_Ptrn --
    ----------------------------------
 
-   overriding function Access_Tool_User_Prompt_Ptrn
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Access_Tool_User_Prompt_Ptrn
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2153,10 +2100,9 @@ package body Remote.Db is
    -- Access_Tool_Password_Prompt_Ptrn --
    --------------------------------------
 
-   overriding function Access_Tool_Password_Prompt_Ptrn
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Access_Tool_Password_Prompt_Ptrn
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2169,10 +2115,9 @@ package body Remote.Db is
    -- Access_Tool_Passphrase_Prompt_Ptrn --
    ----------------------------------------
 
-   overriding function Access_Tool_Passphrase_Prompt_Ptrn
-     (Machine : Machine_Type)
-      return Pattern_Matcher_Access
-   is
+   overriding
+   function Access_Tool_Passphrase_Prompt_Ptrn
+     (Machine : Machine_Type) return Pattern_Matcher_Access is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2185,10 +2130,9 @@ package body Remote.Db is
    -- Access_Tool_Extra_Prompts --
    -------------------------------
 
-   overriding function Access_Tool_Extra_Prompts
-     (Machine : Machine_Type)
-      return Extra_Prompt_Array
-   is
+   overriding
+   function Access_Tool_Extra_Prompts
+     (Machine : Machine_Type) return Extra_Prompt_Array is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2201,10 +2145,8 @@ package body Remote.Db is
    -- Access_Tool_Use_Pipes --
    ---------------------------
 
-   overriding function Access_Tool_Use_Pipes
-     (Machine : Machine_Type)
-      return Boolean
-   is
+   overriding
+   function Access_Tool_Use_Pipes (Machine : Machine_Type) return Boolean is
    begin
       if Machine.Access_Tool = null then
          raise Invalid_Remote_Configuration;
@@ -2217,10 +2159,9 @@ package body Remote.Db is
    -- Set_Data --
    --------------
 
-   overriding procedure Set_Data
-     (Machine : in out Machine_Type;
-      Data    : Machine_User_Data_Access)
-   is
+   overriding
+   procedure Set_Data
+     (Machine : in out Machine_Type; Data : Machine_User_Data_Access) is
    begin
       Machine.User_Data := Data;
    end Set_Data;
@@ -2229,9 +2170,8 @@ package body Remote.Db is
    -- Get_Data --
    --------------
 
-   overriding function Get_Data
-     (Machine : Machine_Type)
-      return Machine_User_Data_Access
+   overriding
+   function Get_Data (Machine : Machine_Type) return Machine_User_Data_Access
    is
    begin
       return Machine.User_Data;
@@ -2241,7 +2181,8 @@ package body Remote.Db is
    -- Execute_Remotely --
    ----------------------
 
-   overriding procedure Execute_Remotely
+   overriding
+   procedure Execute_Remotely
      (Server              : access Machine_Type;
       Args                : GNAT.Strings.String_List;
       Status              : out Boolean;
@@ -2258,7 +2199,8 @@ package body Remote.Db is
    -- Execute_Remotely --
    ----------------------
 
-   overriding procedure Execute_Remotely
+   overriding
+   procedure Execute_Remotely
      (Server              : access Machine_Type;
       Args                : GNAT.Strings.String_List;
       Result              : out GNAT.Strings.String_Access;
@@ -2277,10 +2219,11 @@ package body Remote.Db is
    -- Spawn_Remotely --
    --------------------
 
-   overriding procedure Spawn_Remotely
-     (Server              : access Machine_Type;
-      Descriptor          : out GNAT.Expect.Process_Descriptor_Access;
-      Args                : GNAT.Strings.String_List) is
+   overriding
+   procedure Spawn_Remotely
+     (Server     : access Machine_Type;
+      Descriptor : out GNAT.Expect.Process_Descriptor_Access;
+      Args       : GNAT.Strings.String_List) is
    begin
       GNAT.Expect.TTY.Remote.Remote_Spawn
         (Descriptor      => Descriptor,

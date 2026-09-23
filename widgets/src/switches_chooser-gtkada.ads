@@ -24,12 +24,11 @@ with Pango.Font; use Pango.Font;
 
 package Switches_Chooser.Gtkada is
 
-   package Gtk_Switches_Editors is new Switches_Editors
-     (Gtk.Widget.Gtk_Widget_Record,
-      Gtk.Box.Gtk_Vbox_Record);
+   package Gtk_Switches_Editors is new
+     Switches_Editors (Gtk.Widget.Gtk_Widget_Record, Gtk.Box.Gtk_Vbox_Record);
 
-   type Switches_Editor_Record is new Gtk_Switches_Editors.Root_Switches_Editor
-   with private;
+   type Switches_Editor_Record is
+     new Gtk_Switches_Editors.Root_Switches_Editor with private;
    type Switches_Editor is access all Switches_Editor_Record'Class;
 
    procedure Gtk_New
@@ -67,9 +66,11 @@ private
    type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
-   overriding procedure Set_Graphical_Command_Line
-     (Editor    : in out Switches_Editor_Record; Cmd_Line  : String);
-   overriding procedure Set_Graphical_Widget
+   overriding
+   procedure Set_Graphical_Command_Line
+     (Editor : in out Switches_Editor_Record; Cmd_Line : String);
+   overriding
+   procedure Set_Graphical_Widget
      (Editor     : in out Switches_Editor_Record;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Switch     : Switch_Type;

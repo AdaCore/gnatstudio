@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Code_Analysis_GUI;        use Code_Analysis_GUI;
-with Code_Coverage;            use Code_Coverage;
+with Code_Analysis_GUI; use Code_Analysis_GUI;
+with Code_Coverage;     use Code_Coverage;
 with GNATCOLL.VFS;
 with System;
 
@@ -49,13 +49,18 @@ package body Code_Analysis_Tree_Model is
 
       else
          Set_And_Clear
-           (Model, Iter,
-            (Cov_Col, Cov_Sort, Cov_Bar_Txt, Cov_Bar_Val, Cov_Bar_Label,
+           (Model,
+            Iter,
+            (Cov_Col,
+             Cov_Sort,
+             Cov_Bar_Txt,
+             Cov_Bar_Val,
+             Cov_Bar_Label,
              Cov_Tooltip),
             (1 => As_String (String'("n/a")),
-             2 => As_Int    (0),
+             2 => As_Int (0),
              3 => As_String (String'("n/a")),
-             4 => As_Int    (0),
+             4 => As_Int (0),
              5 => As_String (String'("")),
              6 => As_String (String'("n/a"))));
       end if;
@@ -76,7 +81,8 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Model, Iter, Parent);
       Set_Columns_Values
-        (Model, Iter,
+        (Model,
+         Iter,
          Icon     => Subp_Pixbuf_Cst,
          Name     => Subp_Node.Name.all,
          Node     => Subp_Node.all'Address,
@@ -100,7 +106,8 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Model, Iter, Null_Iter);
       Set_Columns_Values
-        (Model, Iter,
+        (Model,
+         Iter,
          Icon     => Subp_Pixbuf_Cst,
          Name     => Subp_Node.Name.all,
          Node     => Subp_Node.all'Address,
@@ -126,8 +133,8 @@ package body Code_Analysis_Tree_Model is
       use Subprogram_Maps;
       Map_Cur   : Subprogram_Maps.Cursor := File_Node.Subprograms.First;
       Self_Iter : Gtk_Tree_Iter;
-      Sort_Arr  : Subprogram_Array
-        (1 .. Integer (File_Node.Subprograms.Length));
+      Sort_Arr  :
+        Subprogram_Array (1 .. Integer (File_Node.Subprograms.Length));
 
    begin
       if File_Node.Analysis_Data.Coverage_Data /= null
@@ -142,7 +149,8 @@ package body Code_Analysis_Tree_Model is
       Self_Iter := Iter;
 
       Set_Columns_Values
-        (Model, Iter,
+        (Model,
+         Iter,
          Icon     => File_Pixbuf_Cst,
          Name     => GNATCOLL.VFS.Display_Base_Name (File_Node.Name),
          Node     => File_Node.all'Address,
@@ -159,8 +167,14 @@ package body Code_Analysis_Tree_Model is
       Sort_Subprograms (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Self_Iter, Prj_Node, File_Node, Sort_Arr (J),
-                    Bin_Mode);
+         Fill_Iter
+           (Model,
+            Iter,
+            Self_Iter,
+            Prj_Node,
+            File_Node,
+            Sort_Arr (J),
+            Bin_Mode);
       end loop;
    end Fill_Iter;
 
@@ -186,7 +200,8 @@ package body Code_Analysis_Tree_Model is
       end if;
 
       Set_Columns_Values
-        (Model, Iter,
+        (Model,
+         Iter,
          Icon     => File_Pixbuf_Cst,
          Name     => GNATCOLL.VFS.Display_Base_Name (File_Node.Name),
          Node     => File_Node.all'Address,
@@ -208,9 +223,9 @@ package body Code_Analysis_Tree_Model is
       Bin_Mode  : Boolean := False)
    is
       use Subprogram_Maps;
-      Map_Cur   : Subprogram_Maps.Cursor := File_Node.Subprograms.First;
-      Sort_Arr  : Subprogram_Array
-        (1 .. Integer (File_Node.Subprograms.Length));
+      Map_Cur  : Subprogram_Maps.Cursor := File_Node.Subprograms.First;
+      Sort_Arr :
+        Subprogram_Array (1 .. Integer (File_Node.Subprograms.Length));
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := (Element (Map_Cur));
@@ -255,9 +270,11 @@ package body Code_Analysis_Tree_Model is
       Self_Iter := Iter;
 
       Set_And_Clear
-        (Model, Iter, (Icon_Name_Col, Name_Col, Node_Col),
-         (1 => As_String  (Prj_Pixbuf_Cst),
-          2 => As_String  (Prj_Node.View.Name),
+        (Model,
+         Iter,
+         (Icon_Name_Col, Name_Col, Node_Col),
+         (1 => As_String (Prj_Pixbuf_Cst),
+          2 => As_String (Prj_Node.View.Name),
           3 => As_Pointer (Prj_Node.all'Address)));
 
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);
@@ -270,8 +287,14 @@ package body Code_Analysis_Tree_Model is
       Sort_Files (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter (Model, Iter, Child_Sibl, Self_Iter, Prj_Node, Sort_Arr (J),
-                    Bin_Mode);
+         Fill_Iter
+           (Model,
+            Iter,
+            Child_Sibl,
+            Self_Iter,
+            Prj_Node,
+            Sort_Arr (J),
+            Bin_Mode);
       end loop;
    end Fill_Iter;
 
@@ -280,15 +303,15 @@ package body Code_Analysis_Tree_Model is
    --------------------------
 
    procedure Fill_Iter_With_Files
-     (Model     : Gtk_Tree_Store;
-      Iter      : in out Gtk_Tree_Iter;
-      Sibling   : in out Gtk_Tree_Iter;
-      Prj_Node  : Project_Access;
-      Bin_Mode  : Boolean := False)
+     (Model    : Gtk_Tree_Store;
+      Iter     : in out Gtk_Tree_Iter;
+      Sibling  : in out Gtk_Tree_Iter;
+      Prj_Node : Project_Access;
+      Bin_Mode : Boolean := False)
    is
       use File_Maps;
-      Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
-      Sort_Arr  : File_Array (1 .. Integer (Prj_Node.Files.Length));
+      Map_Cur  : File_Maps.Cursor := Prj_Node.Files.First;
+      Sort_Arr : File_Array (1 .. Integer (Prj_Node.Files.Length));
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -314,8 +337,8 @@ package body Code_Analysis_Tree_Model is
       Bin_Mode : Boolean := False)
    is
       use File_Maps;
-      Map_Cur   : File_Maps.Cursor := Prj_Node.Files.First;
-      Sort_Arr  : File_Array (1 .. Integer (Prj_Node.Files.Length));
+      Map_Cur  : File_Maps.Cursor := Prj_Node.Files.First;
+      Sort_Arr : File_Array (1 .. Integer (Prj_Node.Files.Length));
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -406,8 +429,7 @@ package body Code_Analysis_Tree_Model is
       Sort_Projects (Sort_Arr);
 
       for J in Sort_Arr'Range loop
-         Fill_Iter_With_Subprograms
-           (Model, Iter, Sort_Arr (J), Bin_Mode);
+         Fill_Iter_With_Subprograms (Model, Iter, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Subprograms;
 
@@ -425,9 +447,11 @@ package body Code_Analysis_Tree_Model is
       Prjoject : System.Address) is
    begin
       Set_And_Clear
-        (Model, Iter, (Icon_Name_Col, Name_Col, Node_Col, File_Col, Prj_Col),
-         (1 => As_String  (Icon),
-          2 => As_String  (Name),
+        (Model,
+         Iter,
+         (Icon_Name_Col, Name_Col, Node_Col, File_Col, Prj_Col),
+         (1 => As_String (Icon),
+          2 => As_String (Name),
           3 => As_Pointer (Node),
           4 => As_Pointer (File),
           5 => As_Pointer (Prjoject)));

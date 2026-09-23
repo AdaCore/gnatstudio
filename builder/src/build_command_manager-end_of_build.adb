@@ -17,32 +17,31 @@
 
 with VSS.Strings.Conversions;
 
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
-with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Location_View;
-with GPS.Main_Window;                  use GPS.Main_Window;
-with Build_Configurations;             use Build_Configurations;
-with Command_Lines;                    use Command_Lines;
+with GPS.Main_Window;             use GPS.Main_Window;
+with Build_Configurations;        use Build_Configurations;
+with Command_Lines;               use Command_Lines;
 with Commands.Builder;
-with Extending_Environments;           use Extending_Environments;
-with Remote;                           use Remote;
-with Build_Configurations.Gtkada;      use Build_Configurations.Gtkada;
-with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
-with GNATCOLL.Projects;                use GNATCOLL.Projects;
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Utils;           use GNATCOLL.Scripts.Utils;
-with Gtk.Window;                       use Gtk.Window;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with Pango.Font;                       use Pango.Font;
+with Extending_Environments;      use Extending_Environments;
+with Remote;                      use Remote;
+with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
+with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Utils;      use GNATCOLL.Scripts.Utils;
+with Gtk.Window;                  use Gtk.Window;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Pango.Font;                  use Pango.Font;
 
 package body Build_Command_Manager.End_Of_Build is
 
    procedure Local_Expand_Command_Line
-     (Builder : Builder_Context;
-      Build   : in out Build_Information);
+     (Builder : Builder_Context; Build : in out Build_Information);
    --  Expand all macros using parameters from Build and assign result
    --  to Build.Full property.
 
@@ -51,16 +50,15 @@ package body Build_Command_Manager.End_Of_Build is
    -------------------------------
 
    procedure Local_Expand_Command_Line
-     (Builder : Builder_Context;
-      Build   : in out Build_Information)
+     (Builder : Builder_Context; Build : in out Build_Information)
    is
-      Mode       : constant String := To_String (Build.Mode);
-      Server     : constant Server_Type := Get_Server
-        (Builder.Registry, Mode, Build.Target);
-      Subdir     : constant Filesystem_String :=
+      Mode   : constant String := To_String (Build.Mode);
+      Server : constant Server_Type :=
+        Get_Server (Builder.Registry, Mode, Build.Target);
+      Subdir : constant Filesystem_String :=
         Get_Mode_Subdir (Builder.Registry, Mode);
 
-      Directory  : constant Virtual_File := Build.Full.Dir;
+      Directory : constant Virtual_File := Build.Full.Dir;
 
       function Expand_Cmd_Line (CL : String) return String;
       --  Callback for Single_Target_Dialog
@@ -75,26 +73,27 @@ package body Build_Command_Manager.End_Of_Build is
       function Expand_Cmd_Line (CL : String) return String is
          --  GNAT.OS_Lib.Argument_String_To_List does not properly handle
          --  quotes, as in  %python("foo")
-         CL_Args    : Argument_List_Access :=
+         CL_Args   : Argument_List_Access :=
            Argument_String_To_List_With_Triple_Quotes (CL);
-         Mode_Args  : Command_Line :=
+         Mode_Args : Command_Line :=
            Build.Target.Apply_Mode_Args (Mode, CL_Args.all);
-         Res : Expansion_Result;
+         Res       : Expansion_Result;
 
       begin
          Mode_Args.Append_Switches (Build.Extra_Args.all);
-         Res := Expand_Command_Line
-           (Builder,
-            Mode_Args,
-            Build.Target,
-            Server,
-            Build.Force_File,
-            Main           => Build.Main,
-            Main_Project   => Build.Main_Project,
-            Subdir         => Subdir,
-            Background     => Build.Shadow,
-            Simulate       => True,
-            Background_Env => Build.Env);
+         Res :=
+           Expand_Command_Line
+             (Builder,
+              Mode_Args,
+              Build.Target,
+              Server,
+              Build.Force_File,
+              Main           => Build.Main,
+              Main_Project   => Build.Main_Project,
+              Subdir         => Subdir,
+              Background     => Build.Shadow,
+              Simulate       => True,
+              Background_Env => Build.Env);
 
          Free (CL_Args);
          return To_Display_String (Res.Args);
@@ -106,34 +105,34 @@ package body Build_Command_Manager.End_Of_Build is
 
       function Should_Display_Dialog return Boolean is
       begin
-         if Build.Shadow
-           or else Build.Background
-         then
+         if Build.Shadow or else Build.Background then
             return False;
          end if;
 
          case Build.Dialog is
-            when Force_Dialog =>
+            when Force_Dialog                           =>
                return True;
 
-            when Force_No_Dialog =>
+            when Force_No_Dialog                        =>
                return False;
 
             when Force_Dialog_Unless_Disabled_By_Target =>
-               return Get_Properties (Build.Target).Launch_Mode /=
-                 Manually_With_No_Dialog;
+               return
+                 Get_Properties (Build.Target).Launch_Mode
+                 /= Manually_With_No_Dialog;
 
-            when Default =>
+            when Default                                =>
                case Get_Properties (Build.Target).Launch_Mode is
-                  when Manually =>
+                  when Manually
+                  =>
                      return Build.Via_Menu;
 
-                  when Manually_With_Dialog =>
+                  when Manually_With_Dialog
+                  =>
                      return True;
 
-                  when Manually_With_No_Dialog
-                     | On_File_Save
-                     | In_Background =>
+                  when Manually_With_No_Dialog | On_File_Save | In_Background
+                  =>
                      return False;
                end case;
          end case;
@@ -145,26 +144,31 @@ package body Build_Command_Manager.End_Of_Build is
       procedure Set_Size (W : not null access Gtk_Window_Record'Class) is
       begin
          Set_Default_Size_From_History
-            (W, "builder-single-target", Kernel_Handle (Builder.Kernel),
-             800, 500);
+           (W,
+            "builder-single-target",
+            Kernel_Handle (Builder.Kernel),
+            800,
+            500);
       end Set_Size;
 
-      Command_Line   : Argument_List_Access;
+      Command_Line : Argument_List_Access;
 
    begin
       if Should_Display_Dialog then
 
          --  Use the single target dialog to get the unexpanded command line
          Single_Target_Dialog
-           (Registry        => Builder.Registry,
+           (Registry                      => Builder.Registry,
             Set_Default_Size_From_History => Set_Size'Access,
-            Parent          => Get_Main_Window
-              (Kernel_Handle (Builder.Kernel)),
-            Target          => Get_Name (Build.Target),
-            History         => Get_History (Kernel_Handle (Builder.Kernel)),
-            Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
-            Result          => Command_Line,
-            Fixed_Font      => View_Fixed_Font.Get_Pref);
+            Parent                        =>
+              Get_Main_Window (Kernel_Handle (Builder.Kernel)),
+            Target                        => Get_Name (Build.Target),
+            History                       =>
+              Get_History (Kernel_Handle (Builder.Kernel)),
+            Expand_Cmd_Line               =>
+              Expand_Cmd_Line'Unrestricted_Access,
+            Result                        => Command_Line,
+            Fixed_Font                    => View_Fixed_Font.Get_Pref);
 
          if Command_Line = null then
             --  The dialog was cancelled: return
@@ -173,32 +177,33 @@ package body Build_Command_Manager.End_Of_Build is
          end if;
 
          declare
-            CL_Mode    : Command_Lines.Command_Line :=
+            CL_Mode : Command_Lines.Command_Line :=
               Build.Target.Apply_Mode_Args (Mode, Command_Line.all);
          begin
             CL_Mode.Append_Switches (Build.Extra_Args.all);
-            Build.Full := Expand_Command_Line
-              (Builder,
-               CL_Mode,
-               Build.Target,
-               Server,
-               Force_File        => Build.Force_File,
-               Main              => Build.Main,
-               Main_Project      => Build.Main_Project,
-               Subdir            => Subdir,
-               Background        => False,
-               Simulate          => False,
-               Background_Env    => Build.Env,
-               Explicit_Scenario =>
-                 GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
+            Build.Full :=
+              Expand_Command_Line
+                (Builder,
+                 CL_Mode,
+                 Build.Target,
+                 Server,
+                 Force_File        => Build.Force_File,
+                 Main              => Build.Main,
+                 Main_Project      => Build.Main_Project,
+                 Subdir            => Subdir,
+                 Background        => False,
+                 Simulate          => False,
+                 Background_Env    => Build.Env,
+                 Explicit_Scenario =>
+                   GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
             Free (Command_Line);
          end;
 
       else
          declare
-            CL         : constant Argument_List :=
-                        Get_Command_Line_Unexpanded (Build.Target);
-            CL_Mode    : Command_Lines.Command_Line :=
+            CL      : constant Argument_List :=
+              Get_Command_Line_Unexpanded (Build.Target);
+            CL_Mode : Command_Lines.Command_Line :=
               Build.Target.Apply_Mode_Args (Mode, CL);
          begin
             --  Sanity check that the command line contains at least one
@@ -207,8 +212,8 @@ package body Build_Command_Manager.End_Of_Build is
 
             if CL_Mode.Is_Empty then
                Builder.Kernel.Messages_Window.Insert
-                 (-"Command line is empty for target: " &
-                    Get_Name (Build.Target),
+                 (-"Command line is empty for target: "
+                  & Get_Name (Build.Target),
                   Mode => Error);
                Build.Launch := False;
                return;
@@ -218,17 +223,21 @@ package body Build_Command_Manager.End_Of_Build is
 
             CL_Mode.Append_Switches (Build.Extra_Args.all);
 
-            Build.Full := Expand_Command_Line
-              (Builder, CL_Mode, Build.Target,
-               Server, Build.Force_File,
-               Main              => Build.Main,
-               Main_Project      => Build.Main_Project,
-               Subdir            => Subdir,
-               Background        => Build.Background,
-               Simulate          => False,
-               Background_Env    => Build.Env,
-               Explicit_Scenario =>
-                 GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
+            Build.Full :=
+              Expand_Command_Line
+                (Builder,
+                 CL_Mode,
+                 Build.Target,
+                 Server,
+                 Build.Force_File,
+                 Main              => Build.Main,
+                 Main_Project      => Build.Main_Project,
+                 Subdir            => Subdir,
+                 Background        => Build.Background,
+                 Simulate          => False,
+                 Background_Env    => Build.Env,
+                 Explicit_Scenario =>
+                   GPS.Kernel.Preferences.Explicit_Default_Value.Get_Pref);
          end;
       end if;
 
@@ -246,23 +255,24 @@ package body Build_Command_Manager.End_Of_Build is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
       Build      : Build_Information := Self.Builder.Get_Last_Build;
       Force_File : Virtual_File;
    begin
       if Build.Launch and then not Is_Run (Build.Target) then
-         Build.Launch := Compilation_Starting_Hook.Run
-           (Kernel          => Kernel_Handle (Self.Builder.Kernel),
-            Category        =>
-              VSS.Strings.Conversions.To_UTF_8_String (Build.Category),
-            Quiet           => Build.Quiet,
-            Shadow          => Build.Shadow,
-            Background      => Build.Background,
-            Preserve_Output => Build.Preserve_Output);
+         Build.Launch :=
+           Compilation_Starting_Hook.Run
+             (Kernel          => Kernel_Handle (Self.Builder.Kernel),
+              Category        =>
+                VSS.Strings.Conversions.To_UTF_8_String (Build.Category),
+              Quiet           => Build.Quiet,
+              Shadow          => Build.Shadow,
+              Background      => Build.Background,
+              Preserve_Output => Build.Preserve_Output);
       end if;
 
       Local_Expand_Command_Line (Self.Builder, Build);
@@ -279,10 +289,12 @@ package body Build_Command_Manager.End_Of_Build is
       --  Update Builder.Last_Build with new Full expanded command line
       Self.Builder.Set_Last_Build (Build);
 
-      return new Parser'(Child      => Child,
-                         Builder    => Self.Builder,
-                         Build      => Self.Builder.Get_Last_Build,
-                         Force_File => Force_File);
+      return
+        new Parser'
+          (Child      => Child,
+           Builder    => Self.Builder,
+           Build      => Self.Builder.Get_Last_Build,
+           Force_File => Force_File);
    end Create;
 
    ---------
@@ -290,8 +302,7 @@ package body Build_Command_Manager.End_Of_Build is
    ---------
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context) is
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context) is
    begin
       Self.Builder := Builder;
    end Set;
@@ -300,7 +311,8 @@ package body Build_Command_Manager.End_Of_Build is
    -- End_Of_Stream --
    -------------------
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Parser;
       Status  : Integer;
       Command : access Root_Command'Class)
@@ -355,10 +367,12 @@ package body Build_Command_Manager.End_Of_Build is
 
       --  Reopen Locations view for same file
       if Self.Force_File /= No_File
-        and then Get_Messages
-          (Get_Messages_Container (Kernel),
-           Commands.Builder.Error_Category,
-           Self.Force_File)'Length > 0
+        and then
+          Get_Messages
+            (Get_Messages_Container (Kernel),
+             Commands.Builder.Error_Category,
+             Self.Force_File)'Length
+          > 0
       then
          GPS.Location_View.Expand_File
            (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
@@ -371,7 +385,8 @@ package body Build_Command_Manager.End_Of_Build is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : not null access Parser) is
+   overriding
+   procedure Destroy (Self : not null access Parser) is
    begin
       if Self.Build.On_Exit /= null then
          Free (Self.Build.On_Exit);

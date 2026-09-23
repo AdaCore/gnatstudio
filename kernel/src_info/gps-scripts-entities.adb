@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;                      use Basic_Types;
+with Basic_Types;      use Basic_Types;
 with GNATCOLL.VFS;
-with GNATCOLL.Xref;                    use GNATCOLL.Xref;
-with GPS.Core_Kernels;                 use GPS.Core_Kernels;
-with GPS.Intl;                         use GPS.Intl;
+with GNATCOLL.Xref;    use GNATCOLL.Xref;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
+with GPS.Intl;         use GPS.Intl;
 with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
 
@@ -29,7 +29,7 @@ package body GPS.Scripts.Entities is
       H : Root_Entity_Ref;
    end record;
 
-   Entity_Class_Name        : constant String := "Entity";
+   Entity_Class_Name : constant String := "Entity";
 
    --  Name of the class for shell commands associated with this package
 
@@ -43,16 +43,16 @@ package body GPS.Scripts.Entities is
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Xref.Root_Entity'Class)
-      return Class_Instance
+      Entity : Xref.Root_Entity'Class) return Class_Instance
    is
       Instance : Class_Instance;
    begin
       if Entity = No_Root_Entity then
          return No_Class_Instance;
       else
-         Instance := New_Instance
-           (Script, New_Class (Get_Repository (Script), Entity_Class_Name));
+         Instance :=
+           New_Instance
+             (Script, New_Class (Get_Repository (Script), Entity_Class_Name));
          Set_Data (Instance, Entity);
          return Instance;
       end if;
@@ -72,8 +72,7 @@ package body GPS.Scripts.Entities is
       -- Get_Body --
       --------------
 
-      function Get_Body_N
-        (Entity : Root_Entity'Class) return General_Location
+      function Get_Body_N (Entity : Root_Entity'Class) return General_Location
       is
          Location     : General_Location := No_Location;
          Cur_Location : General_Location := No_Location;
@@ -88,18 +87,20 @@ package body GPS.Scripts.Entities is
          return Location;
       end Get_Body_N;
 
-      Kernel    : constant Core_Kernel := Get_Kernel (Data);
-      Entity    : constant Root_Entity'Class := Get_Data (Data, 1);
+      Kernel : constant Core_Kernel := Get_Kernel (Data);
+      Entity : constant Root_Entity'Class := Get_Data (Data, 1);
    begin
       if Command = Constructor_Method then
          declare
-            Name   : constant String  := Nth_Arg (Data, 2);
-            File   : constant Class_Instance  :=
-              Nth_Arg (Data, 3,
-                       GPS.Scripts.Files.Get_File_Class (Kernel),
-                       Default    => No_Class_Instance,
-                       Allow_Null => True);
-            Loc    : General_Location;
+            Name          : constant String := Nth_Arg (Data, 2);
+            File          : constant Class_Instance :=
+              Nth_Arg
+                (Data,
+                 3,
+                 GPS.Scripts.Files.Get_File_Class (Kernel),
+                 Default    => No_Class_Instance,
+                 Allow_Null => True);
+            Loc           : General_Location;
             Approx_Search : constant Boolean := Nth_Arg (Data, 6, True);
 
          begin
@@ -108,11 +109,11 @@ package body GPS.Scripts.Entities is
                Loc := No_Location;
             else
                Loc :=
-                 (File    => GPS.Scripts.Files.Get_Data (File),
+                 (File         => GPS.Scripts.Files.Get_Data (File),
                   Project_Path => GNATCOLL.VFS.No_File,  --  ??? unknown
-                  Line    => Nth_Arg (Data, 4, Default => -1),
-                  Column  => Visible_Column_Type
-                    (Nth_Arg (Data, 5, Default => -1)));
+                  Line         => Nth_Arg (Data, 4, Default => -1),
+                  Column       =>
+                    Visible_Column_Type (Nth_Arg (Data, 5, Default => -1)));
             end if;
 
             declare
@@ -149,7 +150,7 @@ package body GPS.Scripts.Entities is
       elsif Command = "attributes" then
          --  ??? Should be made obsolete and replaced by separate functions.
          declare
-            Subp   : constant Root_Entity'Class := Entity.Is_Parameter_Of;
+            Subp : constant Root_Entity'Class := Entity.Is_Parameter_Of;
          begin
             Set_Return_Value (Data, Entity.Is_Global);
             Set_Return_Value_Key (Data, "global");
@@ -164,11 +165,11 @@ package body GPS.Scripts.Entities is
                   for P in Params'Range loop
                      if Params (P).Parameter.all = Entity then
                         case Params (P).Kind is
-                           when In_Parameter =>
+                           when In_Parameter     =>
                               Set_Return_Value (Data, True);
                               Set_Return_Value_Key (Data, "in");
 
-                           when Out_Parameter =>
+                           when Out_Parameter    =>
                               Set_Return_Value (Data, True);
                               Set_Return_Value_Key (Data, "out");
 
@@ -216,11 +217,11 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "declaration" then
          declare
-            Location : constant General_Location :=
-              Entity.Get_Declaration.Loc;
+            Location : constant General_Location := Entity.Get_Declaration.Loc;
          begin
             Set_Return_Value
-              (Data, GPS.Scripts.File_Locations.Create_File_Location
+              (Data,
+               GPS.Scripts.File_Locations.Create_File_Location
                  (Get_Script (Data),
                   File   => Location.File,
                   Line   => Location.Line,
@@ -233,7 +234,8 @@ package body GPS.Scripts.Entities is
          begin
             if Location /= No_Location then
                Set_Return_Value
-                 (Data, GPS.Scripts.File_Locations.Create_File_Location
+                 (Data,
+                  GPS.Scripts.File_Locations.Create_File_Location
                     (Get_Script (Data),
                      File   => Location.File,
                      Line   => Location.Line,
@@ -251,7 +253,8 @@ package body GPS.Scripts.Entities is
             Location := Entity.End_Of_Scope;
             if Location /= No_Location then
                Set_Return_Value
-                 (Data, GPS.Scripts.File_Locations.Create_File_Location
+                 (Data,
+                  GPS.Scripts.File_Locations.Create_File_Location
                     (Get_Script (Data),
                      File   => Location.File,
                      Line   => Location.Line,
@@ -289,8 +292,8 @@ package body GPS.Scripts.Entities is
             Set_Return_Value_As_List (Data);
             for P in Params'Range loop
                Set_Return_Value
-                 (Data, Create_Entity
-                    (Get_Script (Data), Params (P).Parameter.all));
+                 (Data,
+                  Create_Entity (Get_Script (Data), Params (P).Parameter.all));
             end loop;
             Free (Params);
          end;
@@ -298,8 +301,7 @@ package body GPS.Scripts.Entities is
       elsif Command = "methods" then
          declare
             Methods : Xref.Entity_Array :=
-              Entity.Methods
-                (Include_Inherited => Nth_Arg (Data, 2, False));
+              Entity.Methods (Include_Inherited => Nth_Arg (Data, 2, False));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -338,13 +340,11 @@ package body GPS.Scripts.Entities is
                     Entity.Get_Type_Of.Pointed_Type;
                begin
                   Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data),
-                     Res_2));
+                    (Data, Create_Entity (Get_Script (Data), Res_2));
                end;
             else
                Set_Return_Value
-                 (Data, Create_Entity (Get_Script (Data),
-                  Result));
+                 (Data, Create_Entity (Get_Script (Data), Result));
             end if;
          end;
 
@@ -357,8 +357,7 @@ package body GPS.Scripts.Entities is
            (Data, Create_Entity (Get_Script (Data), Entity.Instance_Of));
 
       elsif Command = "is_predefined" then
-         Set_Return_Value
-           (Data, Entity.Is_Predefined_Entity);
+         Set_Return_Value (Data, Entity.Is_Predefined_Entity);
 
       elsif Command = "fields" then
          declare
@@ -397,8 +396,7 @@ package body GPS.Scripts.Entities is
 
             for C in Children'Range loop
                Set_Return_Value
-                 (Data, Create_Entity
-                    (Get_Script (Data), Children (C).all));
+                 (Data, Create_Entity (Get_Script (Data), Children (C).all));
             end loop;
 
             Free (Children);
@@ -459,15 +457,13 @@ package body GPS.Scripts.Entities is
    --------------
 
    function Get_Data
-     (Data : Callback_Data'Class;
-      N : Positive)
-      return Xref.Root_Entity'Class
+     (Data : Callback_Data'Class; N : Positive) return Xref.Root_Entity'Class
    is
       Kernel : constant Core_Kernel := Get_Kernel (Data);
-      Class : constant Class_Type := Get_Entity_Class (Kernel);
-      Inst  : constant Class_Instance := Nth_Arg
-        (Data, N, Class, Allow_Null => True);
-      Props : Instance_Property;
+      Class  : constant Class_Type := Get_Entity_Class (Kernel);
+      Inst   : constant Class_Instance :=
+        Nth_Arg (Data, N, Class, Allow_Null => True);
+      Props  : Instance_Property;
    begin
       if Inst = No_Class_Instance then
          return No_General_Entity;
@@ -503,145 +499,102 @@ package body GPS.Scripts.Entities is
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class        => C,
-         Params       => (Param ("name"),
-                          Param ("file",   Optional => True),
-                          Param ("line",   Optional => True),
-                          Param ("column", Optional => True),
-                          Param ("approximate_search_fallback", True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  =>
+           (Param ("name"),
+            Param ("file", Optional => True),
+            Param ("line", Optional => True),
+            Param ("column", Optional => True),
+            Param ("approximate_search_fallback", True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("name",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("name", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("full_name",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("full_name", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("attributes",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("attributes", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("is_subprogram",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_generic",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_generic", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_global",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_global", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_access",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_access", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_array",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_array", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_type",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_type", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("overrides",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("overrides", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("is_container",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("is_container", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("declaration",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("declaration", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("body",
-         Class        => C,
-         Params       => (1 => Param ("nth", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (1 => Param ("nth", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("end_of_scope",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("end_of_scope", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("category",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("category", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("discriminants",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("fields",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("fields", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("literals",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("literals", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("is_predefined",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("parameters",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("parameters", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("methods",
-         Class        => C,
-         Params       => (2 => Param ("include_inherited", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (2 => Param ("include_inherited", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("return_type",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("return_type", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("pointed_type",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("pointed_type", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("derived_types",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("parent_types",
-         Class        => C,
-         Params       => (2 => Param ("recursive", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (2 => Param ("recursive", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("child_types",
-         Class        => C,
-         Params       => (2 => Param ("recursive", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (2 => Param ("recursive", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_called_entities",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("instance_of",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("instance_of", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("primitive_of",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("primitive_of", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("type",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("type", Class => C, Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("requires_body",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("has_body",
-         Class        => C,
-         Handler      => Entity_Command_Handler'Access);
+        ("has_body", Class => C, Handler => Entity_Command_Handler'Access);
    end Register_Commands;
 
    --------------
@@ -649,8 +602,7 @@ package body GPS.Scripts.Entities is
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance;
-      Entity : Xref.Root_Entity'Class)
+     (Instance : Class_Instance; Entity : Xref.Root_Entity'Class)
    is
       R : Entity_Properties_Record;
    begin

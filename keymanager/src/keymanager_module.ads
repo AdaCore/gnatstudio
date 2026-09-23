@@ -44,7 +44,7 @@ package KeyManager_Module is
    --  Register menus for KeyManager module
 
    procedure Load_Custom_Keys
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Load the customized key bindings. This needs to be done after all
    --  XML files and themes have been loaded, so that the user's choice
    --  overrides everything.
@@ -70,8 +70,8 @@ package KeyManager_Module is
      (Themes_List : Key_Theme_Type_List) return Key_Theme_Type_Cursor;
    procedure Next (Theme_Cursor : in out Key_Theme_Type_Cursor);
    function Find_By_Name
-     (Themes_List : Key_Theme_Type_List;
-      Name        : String) return Key_Theme_Type_Cursor;
+     (Themes_List : Key_Theme_Type_List; Name : String)
+      return Key_Theme_Type_Cursor;
    function Get_Key_Theme
      (Theme_Cursor : Key_Theme_Type_Cursor) return Key_Theme_Type;
 
@@ -111,18 +111,18 @@ package KeyManager_Module is
    --  Return all known key themes.
 
    procedure Block_Key_Shortcuts
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Block all handling of key shortcuts defined in GNAT Studio. gtk+'s own
    --  key handling, though, will be performed as usual.
 
    procedure Unblock_Key_Shortcuts
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Reactivate the handling of key shortcuts
 
-   type General_Event_Handler_Callback is access function
-     (Event : Gdk.Event.Gdk_Event;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
+   type General_Event_Handler_Callback is
+     access function
+       (Event  : Gdk.Event.Gdk_Event;
+        Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
    --  A function called when any event reaches any of the GNAT Studio
    --  windows. It must return True if the event was processed, False
    --  otherwise (in which case the event will be further processed).
@@ -148,25 +148,26 @@ private
       User_Defined : Boolean;
    end record;
 
-   package Key_Theme_Type_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Key_Theme_Type,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
-      "="             => "=");
+   package Key_Theme_Type_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Key_Theme_Type,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+        "="             => "=");
 
    type Key_Theme_Type_List is new Key_Theme_Type_Maps.Map with null record;
    type Key_Theme_Type_Cursor is record
       C : Key_Theme_Type_Maps.Cursor;
    end record;
 
-   Null_Key_Theme : constant Key_Theme_Type := Key_Theme_Type'
-     (Name         => Ada.Strings.Unbounded.Null_Unbounded_String,
-      User_Defined => False);
+   Null_Key_Theme : constant Key_Theme_Type :=
+     Key_Theme_Type'
+       (Name         => Ada.Strings.Unbounded.Null_Unbounded_String,
+        User_Defined => False);
 
    Null_Key_Theme_Type_Cursor : constant Key_Theme_Type_Cursor :=
-                                  Key_Theme_Type_Cursor'
-                                    (C => Key_Theme_Type_Maps.No_Element);
+     Key_Theme_Type_Cursor'(C => Key_Theme_Type_Maps.No_Element);
 
    type Keymap_Record;
    type Keymap_Access is access Keymap_Record;
@@ -177,9 +178,9 @@ private
    type Key_Description;
    type Key_Description_List is access Key_Description;
    type Key_Description is record
-      Action  : GNAT.Strings.String_Access;
-      Next    : Key_Description_List;
-      Keymap  : Keymap_Access := null;
+      Action : GNAT.Strings.String_Access;
+      Next   : Key_Description_List;
+      Keymap : Keymap_Access := null;
       --  This is the secondary keymap
 
       User_Defined : Boolean := False;
@@ -192,14 +193,15 @@ private
    procedure Free (Element : in out Key_Description_List);
    --  Support functions for creating the htable
 
-   package Key_Htable is new HTables.Simple_HTable
-     (Header_Num   => Keys_Header_Num,
-      Element      => Key_Description_List,
-      Free_Element => Free,
-      No_Element   => No_Key,
-      Key          => Key_Binding,
-      Hash         => Hash,
-      Equal        => "=");
+   package Key_Htable is new
+     HTables.Simple_HTable
+       (Header_Num   => Keys_Header_Num,
+        Element      => Key_Description_List,
+        Free_Element => Free,
+        No_Element   => No_Key,
+        Key          => Key_Binding,
+        Hash         => Hash,
+        Equal        => "=");
 
    type HTable_Access is access Key_Htable.Instance;
 
@@ -213,24 +215,24 @@ private
    --  shortcuts editor has been opened.
 
    Empty_Keymap : constant Keymap_Record :=
-                    Keymap_Record'(Table => Key_Htable.Nil);
+     Keymap_Record'(Table => Key_Htable.Nil);
    --  Constant representing an empty keymap (i.e: a keymap that does not
    --  contain key bindings).
 
-   Disabled_String   : constant String := "";
+   Disabled_String : constant String := "";
    --  Displayed for the shortcut of unassigned actions
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Key_Htable.Instance, HTable_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Key_Htable.Instance, HTable_Access);
 
    function Lookup_Key_From_Action
-     (Table             : HTable_Access;
-      Action            : String;
-      Default           : String := "none";
-      Use_Markup        : Boolean := True;
-      Return_Multiple   : Boolean := True;
-      For_Display       : Boolean := True;
-      Is_User_Changed   : access Boolean) return String;
+     (Table           : HTable_Access;
+      Action          : String;
+      Default         : String := "none";
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True;
+      For_Display     : Boolean := True;
+      Is_User_Changed : access Boolean) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
    --  parsing as a keybinding. The list of keybindings includes the
@@ -248,17 +250,15 @@ private
    --  the shortcut to the user, but not to parse it into its components.
 
    function Lookup_Keys_From_Action
-     (Table       : HTable_Access;
-      Action      : String;
-      For_Display : Boolean := True)
+     (Table : HTable_Access; Action : String; For_Display : Boolean := True)
       return GNATCOLL.Utils.Unbounded_String_Array;
    --  Convenience function return the key bindings set for Action as a list.
    --  If For_Display is true, the returned string is suitable for displaying
    --  the shortcut to the user, but not to parse it into its components.
 
    function Lookup_Actions_From_Key
-     (Key      : String;
-      Bindings : HTable_Access) return GNATCOLL.Utils.Unbounded_String_Array;
+     (Key : String; Bindings : HTable_Access)
+      return GNATCOLL.Utils.Unbounded_String_Array;
    --  Return the action names currently bound to Key (possibly a multi-
    --  key binding). An empty array is returned if the key is not bound yet.
 
@@ -271,7 +271,8 @@ private
    --  separated by the given character.
 
    procedure Bind_Default_Key_Internal
-     (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel                               :
+        access GPS.Kernel.Kernel_Handle_Record'Class;
       Table                                : in out Key_Htable.Instance;
       Action                               : String;
       Key                                  : String;

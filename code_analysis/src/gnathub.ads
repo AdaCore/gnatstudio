@@ -18,7 +18,7 @@
 
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Basic_Types;
 with GNATCOLL.VFS;
@@ -60,15 +60,14 @@ package GNAThub is
    type Severity_Access is access all Severity_Record;
 
    function Get_Name
-     (Item : Severity_Record)
-      return Ada.Strings.Unbounded.Unbounded_String;
+     (Item : Severity_Record) return Ada.Strings.Unbounded.Unbounded_String;
 
    function Hash (Item : Severity_Access) return Ada.Containers.Hash_Type;
 
    function Less (L, R : GNAThub.Severity_Access) return Boolean;
 
-   package Severities_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (GNAThub.Severity_Access, Less, "=");
+   package Severities_Ordered_Sets is new
+     Ada.Containers.Ordered_Sets (GNAThub.Severity_Access, Less, "=");
 
    Severity_History_Prefix : constant String := "gnathub-severities";
 
@@ -82,8 +81,7 @@ package GNAThub is
 
    function Less (Left : Rule_Access; Right : Rule_Access) return Boolean;
 
-   package Rule_Sets is
-     new Ada.Containers.Ordered_Sets (Rule_Access, Less);
+   package Rule_Sets is new Ada.Containers.Ordered_Sets (Rule_Access, Less);
 
    ----------
    -- Tool --
@@ -91,13 +89,12 @@ package GNAThub is
 
    type Tool_Record is limited new Filterable_Item with private;
 
-   package Tool_Vectors is
-     new Ada.Containers.Vectors (Positive, Tool_Access);
+   package Tool_Vectors is new Ada.Containers.Vectors (Positive, Tool_Access);
 
    function Less (L, R : GNAThub.Tool_Access) return Boolean;
 
-   package Tools_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (GNAThub.Tool_Access, Less, "=");
+   package Tools_Ordered_Sets is new
+     Ada.Containers.Ordered_Sets (GNAThub.Tool_Access, Less, "=");
 
    --------------
    -- Analysis --
@@ -107,8 +104,8 @@ package GNAThub is
 
    No_Entity_Data : constant Entity_Data;
 
-   package Messages_Vectors is
-     new Ada.Containers.Vectors (Positive, Message_Reference);
+   package Messages_Vectors is new
+     Ada.Containers.Vectors (Positive, Message_Reference);
 
    type Counts_Array is array (Positive range <>) of Integer;
    type Counts_Array_Access is access all Counts_Array;
@@ -152,8 +149,7 @@ private
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Entity : Entity_Data)
-      return Entity_Data;
+      Entity : Entity_Data) return Entity_Data;
    --  From a entity built with the information from the database, retrieve
    --  the semantic entity defined in the file.
    --  If the preference GNAThub_Semantic_Pass is False, then this

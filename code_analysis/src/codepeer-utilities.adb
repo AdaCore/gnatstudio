@@ -56,14 +56,14 @@ package body CodePeer.Utilities is
 
       procedure Process (Position : Message_Vectors.Cursor) is
          Message : constant Message_Access :=
-                     Message_Vectors.Element (Position);
+           Message_Vectors.Element (Position);
 
       begin
          --  Count messages of specified categories, lifeage and review status.
 
          if (Categories.Contains (Message.Category)
-               or else not Categories.Intersection (Message.Checks).Is_Empty
-               or else not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
+             or else not Categories.Intersection (Message.Checks).Is_Empty
+             or else not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
            and Lifeages (Message.Lifeage)
            and Statuses (Message.Status.Id)
          then
@@ -89,9 +89,9 @@ package body CodePeer.Utilities is
       Counts := (others => (others => 0));
       Checks := 0;
 
-      Subprogram_Data'Class
-        (Subprogram.Analysis_Data.CodePeer_Data.all).Messages.Iterate
-        (Process'Access);
+      Subprogram_Data'Class (Subprogram.Analysis_Data.CodePeer_Data.all)
+        .Messages
+        .Iterate (Process'Access);
    end Compute_Messages_Count;
 
    ----------------------------
@@ -116,7 +116,7 @@ package body CodePeer.Utilities is
 
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
          Subprogram : constant Code_Analysis.Subprogram_Access :=
-                        Code_Analysis.Subprogram_Maps.Element (Position);
+           Code_Analysis.Subprogram_Maps.Element (Position);
          Aux_Counts : Messages_Counts;
          Aux_Checks : Natural;
 
@@ -165,7 +165,7 @@ package body CodePeer.Utilities is
 
       procedure Process (Position : Code_Analysis.File_Maps.Cursor) is
          File       : constant Code_Analysis.File_Access :=
-                        Code_Analysis.File_Maps.Element (Position);
+           Code_Analysis.File_Maps.Element (Position);
          Aux_Counts : Messages_Counts;
          Aux_Checks : Natural;
 
@@ -184,8 +184,8 @@ package body CodePeer.Utilities is
          Checks := Checks + Aux_Checks;
          Total_Checks :=
            Total_Checks
-             + CodePeer.File_Data'Class
-                 (File.Analysis_Data.CodePeer_Data.all).Total_Checks;
+           + CodePeer.File_Data'Class (File.Analysis_Data.CodePeer_Data.all)
+               .Total_Checks;
       end Process;
 
    begin
@@ -219,7 +219,7 @@ package body CodePeer.Utilities is
 
       procedure Process (Position : Code_Analysis.Project_Maps.Cursor) is
          Project    : constant Code_Analysis.Project_Access :=
-                        Code_Analysis.Project_Maps.Element (Position);
+           Code_Analysis.Project_Maps.Element (Position);
          Aux_Counts : Messages_Counts;
          Aux_Checks : Natural;
          Aux_Total  : Natural;

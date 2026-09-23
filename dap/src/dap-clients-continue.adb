@@ -22,8 +22,7 @@ package body DAP.Clients.Continue is
    ------------
 
    function Create
-     (Kernel    : not null Kernel_Handle;
-      Thread_Id : Integer)
+     (Kernel : not null Kernel_Handle; Thread_Id : Integer)
       return Continue_Request_Access
    is
       Self : constant Continue_Request_Access := new Continue_Request (Kernel);
@@ -36,7 +35,8 @@ package body DAP.Clients.Continue is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Continue_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ContinueResponse;

@@ -27,18 +27,18 @@ package body Refactoring is
    function To_Location
      (File   : Language.Tree.Database.Structured_File_Access;
       Line   : Integer;
-      Column : Basic_Types.Visible_Column_Type) return Universal_Location
-   is
+      Column : Basic_Types.Visible_Column_Type) return Universal_Location is
    begin
-      return Universal_Location'
-        (File                      => File,
-         Line                      => Line,
-         Column                    => Column,
-         Index_In_Line             => 0,
-         Index_In_File             => 0,
-         Is_Column_Computed        => True,
-         Is_Index_In_File_Computed => False,
-         Is_Index_In_Line_Computed => False);
+      return
+        Universal_Location'
+          (File                      => File,
+           Line                      => Line,
+           Column                    => Column,
+           Index_In_Line             => 0,
+           Index_In_File             => 0,
+           Is_Column_Computed        => True,
+           Is_Index_In_File_Computed => False,
+           Is_Index_In_Line_Computed => False);
    end To_Location;
 
    -----------------
@@ -47,19 +47,19 @@ package body Refactoring is
 
    function To_Location
      (File          : Language.Tree.Database.Structured_File_Access;
-      Index_In_File : Basic_Types.String_Index_Type)
-      return Universal_Location
+      Index_In_File : Basic_Types.String_Index_Type) return Universal_Location
    is
    begin
-      return Universal_Location'
-        (File                      => File,
-         Line                      => 0,
-         Column                    => 0,
-         Index_In_Line             => 0,
-         Index_In_File             => Index_In_File,
-         Is_Column_Computed        => False,
-         Is_Index_In_File_Computed => True,
-         Is_Index_In_Line_Computed => False);
+      return
+        Universal_Location'
+          (File                      => File,
+           Line                      => 0,
+           Column                    => 0,
+           Index_In_Line             => 0,
+           Index_In_File             => Index_In_File,
+           Is_Column_Computed        => False,
+           Is_Index_In_File_Computed => True,
+           Is_Index_In_Line_Computed => False);
    end To_Location;
 
    --------------
@@ -67,8 +67,7 @@ package body Refactoring is
    --------------
 
    function Get_File
-     (Location : access Universal_Location) return Structured_File_Access
-   is
+     (Location : access Universal_Location) return Structured_File_Access is
    begin
       return Location.File;
    end Get_File;
@@ -100,14 +99,14 @@ package body Refactoring is
 
    function Get_Column
      (Location : access Universal_Location)
-      return Basic_Types.Visible_Column_Type
-   is
+      return Basic_Types.Visible_Column_Type is
    begin
       if not Location.Is_Column_Computed then
          if not Location.Is_Index_In_File_Computed then
             Location.Index_In_File :=
               Get_Offset_Of_Line (Location.File, Location.Line)
-              + Location.Index_In_Line - 1;
+              + Location.Index_In_Line
+              - 1;
             Location.Is_Index_In_File_Computed := True;
          end if;
 
@@ -129,14 +128,14 @@ package body Refactoring is
 
    function Get_Index_In_File
      (Location : access Universal_Location)
-      return Basic_Types.String_Index_Type
-   is
+      return Basic_Types.String_Index_Type is
    begin
       if not Location.Is_Index_In_File_Computed then
-         Location.Index_In_File := To_String_Index
-           (File   => Location.File,
-            Line   => Location.Line,
-            Column => Location.Column);
+         Location.Index_In_File :=
+           To_String_Index
+             (File   => Location.File,
+              Line   => Location.Line,
+              Column => Location.Column);
 
          Location.Is_Index_In_File_Computed := True;
       end if;
@@ -150,12 +149,12 @@ package body Refactoring is
 
    function Get_Index_In_Line
      (Location : access Universal_Location)
-      return Basic_Types.String_Index_Type
-   is
+      return Basic_Types.String_Index_Type is
    begin
       if not Location.Is_Index_In_Line_Computed then
-         Location.Index_In_Line := To_Line_String_Index
-           (Location.File, Get_Line (Location), Get_Column (Location));
+         Location.Index_In_Line :=
+           To_Line_String_Index
+             (Location.File, Get_Line (Location), Get_Column (Location));
 
          Location.Is_Index_In_Line_Computed := True;
       end if;
@@ -168,8 +167,7 @@ package body Refactoring is
    ----------------
 
    procedure Set_Column
-     (Location : access Universal_Location;
-      Column   : Visible_Column_Type)
+     (Location : access Universal_Location; Column : Visible_Column_Type)
    is
       Dummy : Visible_Column_Type;
       pragma Unreferenced (Dummy);
@@ -242,8 +240,7 @@ package body Refactoring is
 
    procedure Set_Index_In_File
      (Location : access Universal_Location;
-      Index    : Basic_Types.String_Index_Type)
-   is
+      Index    : Basic_Types.String_Index_Type) is
    begin
       Location.Index_In_File := Index;
       Location.Is_Index_In_File_Computed := True;

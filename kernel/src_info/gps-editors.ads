@@ -23,18 +23,18 @@ with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Finalization;      use Ada.Finalization;
 
-with GNATCOLL.JSON;         use GNATCOLL.JSON;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.JSON;     use GNATCOLL.JSON;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with VSS.Characters;
 with VSS.Strings;
 
-with Basic_Types;           use Basic_Types;
-with Commands;              use Commands;
-with GPS.Markers;           use GPS.Markers;
-with Language;              use Language;
+with Basic_Types; use Basic_Types;
+with Commands;    use Commands;
+with GPS.Markers; use GPS.Markers;
+with Language;    use Language;
 with System;
 with XML_Utils;
 
@@ -65,8 +65,7 @@ package GPS.Editors is
    type Editor_Buffer is abstract new Controlled with null record;
    Nil_Editor_Buffer : constant Editor_Buffer'Class;
 
-   type Controlled_Editor_Buffer_Holder is
-     new Limited_Controlled with private;
+   type Controlled_Editor_Buffer_Holder is new Limited_Controlled with private;
    --  Keeps a buffer and automatically closes it when
    --  the holder is destroyed. This is done only if the buffer was opened
    --  specifically for this holder.
@@ -92,7 +91,7 @@ package GPS.Editors is
    type Editor_Formatting_Provider_Access is
      access all Editor_Formatting_Provider'Class;
 
-   Editor_Exception : exception;
+   Editor_Exception   : exception;
    --  Exception raised by the subprograms below when the arguments are not
    --  expected (all kind of errors, the specific error is part of the
    --  exception's Error_Message).
@@ -116,66 +115,73 @@ package GPS.Editors is
    function Name (This : Editor_Overlay) return String is abstract;
    --  Return the name associated with this overlay
 
-   function Get_Property
-     (This : Editor_Overlay; Name : String) return String  is abstract;
-   function Get_Property
-     (This : Editor_Overlay; Name : String) return Boolean is abstract;
-   function Get_Property
-     (This : Editor_Overlay; Name : String) return Integer is abstract;
+   function Get_Property (This : Editor_Overlay; Name : String) return String
+   is abstract;
+   function Get_Property (This : Editor_Overlay; Name : String) return Boolean
+   is abstract;
+   function Get_Property (This : Editor_Overlay; Name : String) return Integer
+   is abstract;
    --  Retrieve the value of specific properties.
    --  See the python documentation for a list of supported properties
 
    procedure Set_Property
-     (This : Editor_Overlay; Name : String; Value : String) is abstract;
+     (This : Editor_Overlay; Name : String; Value : String)
+   is abstract;
    procedure Set_Property
-     (This : Editor_Overlay; Name : String; Value : Boolean) is abstract;
+     (This : Editor_Overlay; Name : String; Value : Boolean)
+   is abstract;
    procedure Set_Property
-     (This : Editor_Overlay; Name : String; Value : Integer) is abstract;
+     (This : Editor_Overlay; Name : String; Value : Integer)
+   is abstract;
    --  Set the value of specific properties.
 
-   package Overlay_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Editor_Overlay'Class);
+   package Overlay_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Editor_Overlay'Class);
 
    ---------------------
    -- Editor_Location --
    ---------------------
 
-   overriding function "=" (Left, Right : Editor_Location) return Boolean
-     is abstract;
+   overriding
+   function "=" (Left, Right : Editor_Location) return Boolean is abstract;
 
-   function ">" (Left, Right : Editor_Location) return Boolean
-     is abstract;
+   function ">" (Left, Right : Editor_Location) return Boolean is abstract;
 
    function Beginning_Of_Line
-     (This : Editor_Location) return Editor_Location'Class is abstract;
+     (This : Editor_Location) return Editor_Location'Class
+   is abstract;
    --  Return a location located at the beginning of the line on which This is
 
-   function End_Of_Line
-     (This : Editor_Location) return Editor_Location'Class is abstract;
+   function End_Of_Line (This : Editor_Location) return Editor_Location'Class
+   is abstract;
    --  Return a location located at the end of the line on which self is
 
    function Block_Start
-     (This        : Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
+   is abstract;
    --  Return the location of the beginning of the current block.
    --  Update_Tree indicates whether the internal cache should first be
    --  refreshed.
 
    function Block_End
-     (This        : Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
+   is abstract;
    --  Return the location of the end of the current block
 
    function Block_Type
-     (This        : Editor_Location;
-      Update_Tree : Boolean := True) return Language_Category is abstract;
+     (This : Editor_Location; Update_Tree : Boolean := True)
+      return Language_Category
+   is abstract;
    --  Return the type of the block surrounding the location. This type
    --  indicates whether the block is a subprogram, an if statement,...
 
    function Block_Name
      (This        : Editor_Location;
       Subprogram  : Boolean;
-      Update_Tree : Boolean := True) return String is abstract;
+      Update_Tree : Boolean := True) return String
+   is abstract;
    --  Return the name of the current block (if Subprogram is False) or the
    --  current subprogram (if Subprogram is True).
 
@@ -185,20 +191,18 @@ package GPS.Editors is
    --  screen, except for its first line. Clicking on the icon next to this
    --  first line will unfold the block and make it visible to the user
 
-   function Block_Level
-     (This : Editor_Location) return Natural is abstract;
+   function Block_Level (This : Editor_Location) return Natural is abstract;
    --  Return the nesting level of the block surrounding the location. The
    --  definition of a block depends on the specific programming language
 
    function Line (This : Editor_Location) return Integer is abstract;
    --  Return the line of the location
 
-   function Column
-     (This : Editor_Location) return Visible_Column_Type is abstract;
+   function Column (This : Editor_Location) return Visible_Column_Type
+   is abstract;
    --  Return the column of the location
 
-   function Line_Offset
-     (This : Editor_Location) return Natural is abstract;
+   function Line_Offset (This : Editor_Location) return Natural is abstract;
    --  Return the line offset of the location
 
    function Offset (This : Editor_Location) return Natural is abstract;
@@ -211,15 +215,15 @@ package GPS.Editors is
    --  0 if they are at the same position, and 1 if This occurs after To.
    --  They must both be in the same editor, this isn't checked
 
-   function Buffer
-     (This : Editor_Location) return Editor_Buffer'Class is abstract;
+   function Buffer (This : Editor_Location) return Editor_Buffer'Class
+   is abstract;
    --  Return the editor in which the location is found
 
    function Create_Mark
-     (This : Editor_Location;
-      Name : String := "";
-      Left_Gravity : Boolean := True)
-      return Editor_Mark'Class is abstract;
+     (This         : Editor_Location;
+      Name         : String := "";
+      Left_Gravity : Boolean := True) return Editor_Mark'Class
+   is abstract;
    --  Create a mark at that location in the buffer. The mark will stay
    --  permanently at that location, and follows if the buffer is modified. If
    --  the name is specified, this creates a named mark, which can be retrieved
@@ -229,35 +233,37 @@ package GPS.Editors is
    --  closed. It is not preserved across GNAT Studio sessions.
 
    function Forward_Char
-     (This  : Editor_Location;
-      Count : Integer) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Count : Integer) return Editor_Location'Class
+   is abstract;
    procedure Forward_Character
-     (This  : in out Editor_Location;
-      Count : Integer := 1) is abstract;
+     (This : in out Editor_Location; Count : Integer := 1)
+   is abstract;
    --  Return a new location located count characters after self (which might
    --  be several bytes). If count is negative, the location is moved backward
    --  instead
 
    function Forward_Word
-     (This  : Editor_Location;
-      Count : Integer) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Count : Integer) return Editor_Location'Class
+   is abstract;
    --  Return a new location located count words after self. If count is
    --  negative, the location is moved backward instead. The definition of a
    --  word depends on the language used
 
    function Backward_To_Word_Start
-     (This : Editor_Location) return Editor_Location'Class is abstract;
+     (This : Editor_Location) return Editor_Location'Class
+   is abstract;
    --  Return a new location located at the start of the current word.
    --  The same location is returned if the location is not inside a word.
 
    function Forward_To_Word_End
-     (This : Editor_Location) return Editor_Location'Class is abstract;
+     (This : Editor_Location) return Editor_Location'Class
+   is abstract;
    --  Return a new location located at the end of the current word.
    --  The same location is returned if the location is not inside a word.
 
    function Forward_Line
-     (This  : Editor_Location;
-      Count : Integer) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Count : Integer) return Editor_Location'Class
+   is abstract;
    --  Return a new location located count lines after self. The location is
    --  moved back to the beginning of the line. In case self is on the last
    --  line, the beginning of the last line is returned.
@@ -292,7 +298,8 @@ package GPS.Editors is
       Dialog_On_Failure : Boolean := True;
       Success           : out Boolean;
       Starts            : out Editor_Location;
-      Ends              : out Editor_Location) is abstract;
+      Ends              : out Editor_Location)
+   is abstract;
    --  Returns a list of two GPS.EditorLocation
    --  This function searches for the next occurrence of Pattern in the editor,
    --  starting at the given location. If there is such a match, this function
@@ -303,24 +310,26 @@ package GPS.Editors is
    --  the user asking whether the search should restart at the beginning of
    --  the buffer
 
-   function Get_Overlays
-     (This    : Editor_Location) return Overlay_Lists.List is abstract;
+   function Get_Overlays (This : Editor_Location) return Overlay_Lists.List
+   is abstract;
    --  This function returns the list of all the overlays that apply at this
    --  specific location. The color and font of the text is composed through
    --  the contents of these overlays
 
    function Has_Overlay
-     (This    : Editor_Location;
-      Overlay : Editor_Overlay'Class) return Boolean is abstract;
+     (This : Editor_Location; Overlay : Editor_Overlay'Class) return Boolean
+   is abstract;
    --  This function returns True if the given overlay applies to the character
    --  at that location
 
    function Forward_Overlay
-     (This    : Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
+   is abstract;
    function Backward_Overlay
-     (This    : Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class is abstract;
+     (This : Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
+   is abstract;
    --  Moves to the next change in the list of overlays applying to the
    --  character. If overlay is specified, go to the next change for this
    --  specific overlay (ie the next beginning or end of range where it
@@ -340,8 +349,8 @@ package GPS.Editors is
    --  open.
 
    function Location
-     (This : Editor_Mark;
-      Open : Boolean := True) return Editor_Location'Class is abstract;
+     (This : Editor_Mark; Open : Boolean := True) return Editor_Location'Class
+   is abstract;
    --  Returns the current location of the mark. This location will vary
    --  depending on the changes that take place in the buffer.
    --  If no editor for the location exists, one will be open if Open is True.
@@ -356,38 +365,39 @@ package GPS.Editors is
    --  Return the name of the mark (if one was provided in the call to
    --  Create_Mark)
 
-   procedure Move
-     (This : Editor_Mark; Location : Editor_Location'Class) is abstract;
+   procedure Move (This : Editor_Mark; Location : Editor_Location'Class)
+   is abstract;
    --  Move the mark to a different location
 
    procedure Forward_Chars (This : Editor_Mark; Offset : Integer) is abstract;
    --  Move the mark forward by offset characters
 
    function Create_Instance
-     (This   : Editor_Mark;
-      Script : access Scripting_Language_Record'Class)
-      return Class_Instance is abstract;
+     (This : Editor_Mark; Script : access Scripting_Language_Record'Class)
+      return Class_Instance
+   is abstract;
    --  Return an Class_Instance for the mark
 
-   package Mark_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Editor_Mark'Class);
+   package Mark_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Editor_Mark'Class);
 
    -------------------
    -- Editor_Cursor --
    -------------------
 
    procedure Move
-     (This : Editor_Cursor; Where : Editor_Location'Class;
-      Extend_Selection : Boolean) is abstract;
+     (This             : Editor_Cursor;
+      Where            : Editor_Location'Class;
+      Extend_Selection : Boolean)
+   is abstract;
 
-   function Get_Insert_Mark
-     (This : Editor_Cursor) return Editor_Mark'Class is abstract;
+   function Get_Insert_Mark (This : Editor_Cursor) return Editor_Mark'Class
+   is abstract;
 
-   function Get_Selection_Mark
-     (This : Editor_Cursor) return Editor_Mark'Class is abstract;
+   function Get_Selection_Mark (This : Editor_Cursor) return Editor_Mark'Class
+   is abstract;
 
-   procedure Set_Manual_Sync
-     (This : Editor_Cursor) is abstract;
+   procedure Set_Manual_Sync (This : Editor_Cursor) is abstract;
    --  This sets the buffer in "slave manual mode" regarding multi cursor
    --  insertion, with the corresponding text mark as the multi-cursors mark.
    --  This should be called before the corresponding multi cursor's action is
@@ -398,21 +408,21 @@ package GPS.Editors is
    --  The action will be recorded as part of the same group as the main
    --  cursor's action regarding undo/redo groups.
 
-   package Cursors_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Editor_Cursor'Class);
+   package Cursors_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Editor_Cursor'Class);
 
    function Create_Instance
-     (This   : Editor_Location;
-      Script : access Scripting_Language_Record'Class)
-      return Class_Instance is abstract;
+     (This : Editor_Location; Script : access Scripting_Language_Record'Class)
+      return Class_Instance
+   is abstract;
    --  Return an Class_Instance for the location
 
    -----------------
    -- Editor_View --
    -----------------
 
-   procedure Set_Read_Only
-     (This : Editor_View; Read_Only : Boolean) is abstract;
+   procedure Set_Read_Only (This : Editor_View; Read_Only : Boolean)
+   is abstract;
    function Is_Read_Only (This : Editor_View) return Boolean is abstract;
    --  Indicates whether the user should be able to edit interactively through
    --  this view. Setting a view Writable/Read Only will also modify the status
@@ -430,7 +440,8 @@ package GPS.Editors is
    procedure Center
      (This      : Editor_View;
       Location  : Editor_Location'Class := Nil_Editor_Location;
-      Centering : Centering_Type := With_Margin) is abstract;
+      Centering : Centering_Type := With_Margin)
+   is abstract;
    --  Scrolls the view so that the location is centered. By default, the
    --  editor is centered around the location of the cursor.
 
@@ -439,11 +450,12 @@ package GPS.Editors is
    --  similar to on-the-fly typing should do.
 
    procedure Cursor_Goto
-     (This       : Editor_View;
-      Location   : Editor_Location'Class;
-      Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin;
-      Extend_Selection : Boolean := False) is abstract;
+     (This             : Editor_View;
+      Location         : Editor_Location'Class;
+      Raise_View       : Boolean := False;
+      Centering        : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False)
+   is abstract;
    --  Moves the cursor at the given location. Each view of a particular buffer
    --  has its own cursor position, which is where characters typed by the user
    --  will be inserted.
@@ -452,77 +464,75 @@ package GPS.Editors is
    --  If Extend_Selection is True, extend the selection from the current
    --  selection bound to the Location.
 
-   function Cursor
-     (This : Editor_View) return Editor_Location'Class is abstract;
+   function Cursor (This : Editor_View) return Editor_Location'Class
+   is abstract;
    --  Return the current location of the cursor in this view
 
-   function Title
-     (This : Editor_View; Short : Boolean) return String is abstract;
+   function Title (This : Editor_View; Short : Boolean) return String
+   is abstract;
    --  Return the title of the editor window (or the short title if Short
    --  is True).
 
    function Buffer (This : Editor_View) return Editor_Buffer'Class is abstract;
    --  Return the buffer that This is displaying
 
-   function Get_MDI_Child
-     (This : Editor_View) return System.Address is abstract;
+   function Get_MDI_Child (This : Editor_View) return System.Address
+   is abstract;
    --  Return the MDI child created for this view.
    --  The address returned is a GtkAda.MDI.MDI_Child (the C pointer, so
    --  Get_User_Data needs to be used to convert to a MDI_Child -- this is
    --  to prevent the need for a No_Strict_Aliasing pragma on MDI_Child).
 
    procedure Set_Activity_Progress_Bar_Visibility
-     (This    : Editor_View;
-      Visible : Boolean) is null;
+     (This : Editor_View; Visible : Boolean)
+   is null;
    --  Show or hide the editor view's activity progress bar at the top.
    --  This progress bar can be used to tell the user that something is being
    --  computed in the background and that the editor is waiting for displaying
    --  the results.
 
-   package View_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Editor_View'Class);
+   package View_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Editor_View'Class);
 
    -------------------
    -- Editor_Buffer --
    -------------------
 
-   function Version
-     (This : Editor_Buffer) return Integer is abstract;
+   function Version (This : Editor_Buffer) return Integer is abstract;
 
-   function Has_Slave_Cursors
-     (This : Editor_Buffer) return Boolean is abstract;
+   function Has_Slave_Cursors (This : Editor_Buffer) return Boolean
+   is abstract;
 
-   function Get_Main_Cursor
-     (This : Editor_Buffer) return Editor_Cursor'Class is abstract;
+   function Get_Main_Cursor (This : Editor_Buffer) return Editor_Cursor'Class
+   is abstract;
 
-   procedure Newline_And_Indent
-     (This : Editor_Buffer) is abstract;
+   procedure Newline_And_Indent (This : Editor_Buffer) is abstract;
 
    function New_Location
-     (This   : Editor_Buffer;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class is abstract;
+     (This : Editor_Buffer; Line : Integer; Column : Visible_Column_Type)
+      return Editor_Location'Class
+   is abstract;
    --  Return a new location
 
    function New_Location_At_Line
-     (This   : Editor_Buffer'Class;
-      Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class;
+     (This : Editor_Buffer'Class; Line : Basic_Types.Editable_Line_Type)
+      return Editor_Location'Class;
 
    function New_Location
-     (This   : Editor_Buffer;
-      Offset : VSS.Strings.Character_Count)
-      return Editor_Location'Class is abstract;
+     (This : Editor_Buffer; Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class
+   is abstract;
 
-   function New_View
-     (This : Editor_Buffer) return Editor_View'Class is abstract;
+   function New_View (This : Editor_Buffer) return Editor_View'Class
+   is abstract;
    --  Creates a new view for the given buffer, and insert it in the MDI
 
    function Open (This : Editor_Buffer) return Editor_View'Class is abstract;
    --  Opens a view for the given buffer. If the view is already exists, it
    --  will get the focus, otherwise a new view will be opened.
 
-   procedure Close
-     (This : Editor_Buffer; Force : Boolean := False) is abstract;
+   procedure Close (This : Editor_Buffer; Force : Boolean := False)
+   is abstract;
    --  Close all views and internal representations of the given buffer.
    --  If Force is false and the editor has been edited and not saved, an
    --  interactive dialog is displayed asking the user whether to save.
@@ -533,20 +543,19 @@ package GPS.Editors is
    function Is_Modified (This : Editor_Buffer) return Boolean is abstract;
    --  Whether the buffer has been modified since it was opened or saved.
 
-   function Current_View
-     (This : Editor_Buffer) return Editor_View'Class is abstract;
+   function Current_View (This : Editor_Buffer) return Editor_View'Class
+   is abstract;
    --  Returns the last view used for this buffer, ie the last view that had
    --  the focus and through which the user might have edited the buffer's
    --  contents
 
-   function Views
-     (This : Editor_Buffer) return View_Lists.List is abstract;
+   function Views (This : Editor_Buffer) return View_Lists.List is abstract;
    --  Returns the list of all views currently editing the buffer. There is
    --  always at least one such view. When the last view is destroyed, the
    --  buffer itself is destroyed
 
-   function Lines_Count
-     (This : Editor_Buffer) return Editable_Line_Type is abstract;
+   function Lines_Count (This : Editor_Buffer) return Editable_Line_Type
+   is abstract;
    --  Returns the total number of lines in the buffer
 
    function Characters_Count (This : Editor_Buffer) return Natural is abstract;
@@ -555,7 +564,8 @@ package GPS.Editors is
    procedure Select_Text
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Selects an area in the buffer. The boundaries are included in the
    --  selection. The order of the boundaries is irrelevant, but the cursor
    --  will be left on to. By default, From is set to the beginning of the
@@ -564,10 +574,10 @@ package GPS.Editors is
    procedure Unselect (This : Editor_Buffer) is abstract;
    --  Remove any selection that might exist in the buffer
 
-   function Selection_Start
-     (This : Editor_Buffer) return Editor_Location'Class is abstract;
-   function Selection_End
-     (This : Editor_Buffer) return Editor_Location'Class is abstract;
+   function Selection_Start (This : Editor_Buffer) return Editor_Location'Class
+   is abstract;
+   function Selection_End (This : Editor_Buffer) return Editor_Location'Class
+   is abstract;
    --  Return the bounds of the selection. The start will always be located
    --  before the end of the selection, no matter the order of parameters given
    --  to Select_Text were.
@@ -576,8 +586,8 @@ package GPS.Editors is
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True)
-      return VSS.Strings.Virtual_String is abstract;
+      Include_Hidden_Chars : Boolean := True) return VSS.Strings.Virtual_String
+   is abstract;
    --  Returns the contents of the buffer between the two locations given in
    --  parameter. Modifying the returned value has no effect on the buffer.
    --  If Include_Hidden_Chars is True, the returned text will also include
@@ -587,14 +597,14 @@ package GPS.Editors is
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True)
-      return String is abstract;
+      Include_Hidden_Chars : Boolean := True) return String
+   is abstract;
    function Get_Chars_U
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True)
-      return Unbounded_String is abstract;
+      Include_Hidden_Chars : Boolean := True) return Unbounded_String
+   is abstract;
    --  These functions are obsolete, please don't use them in new code and
    --  replace by `Get_Text` when modify existing code.
    --
@@ -605,26 +615,27 @@ package GPS.Editors is
 
    function Get_Entity_Name
      (This     : Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location)
-      return String is abstract;
+      Location : Editor_Location'Class := Nil_Editor_Location) return String
+   is abstract;
    --  Find an entity bounds and return it
 
    procedure Insert
-     (This : Editor_Buffer;
-      From : Editor_Location'Class;
-      Text : String) is abstract;
+     (This : Editor_Buffer; From : Editor_Location'Class; Text : String)
+   is abstract;
    --  Inserts some text in the buffer
 
    procedure Delete
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Delete the given range of text from the buffer
 
    procedure Indent
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Recompute the indentation of the given range of text. This feature is
    --  language-dependent. By default, from points to the beginning of the
    --  buffer and to the end of the buffer.
@@ -632,7 +643,8 @@ package GPS.Editors is
    procedure Refill
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Refill the given range of text, ie cut long lines if necessary so that
    --  they fit in the limit specified in the GNAT Studio preferences
 
@@ -640,32 +652,35 @@ package GPS.Editors is
      (This   : Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
-      Append : Boolean := False) is abstract;
+      Append : Boolean := False)
+   is abstract;
    procedure Cut
      (This   : Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
-      Append : Boolean := False) is abstract;
-   procedure Paste
-     (This   : Editor_Buffer;
-      From   : Editor_Location'Class) is abstract;
+      Append : Boolean := False)
+   is abstract;
+   procedure Paste (This : Editor_Buffer; From : Editor_Location'Class)
+   is abstract;
    --  Copy/Paste management. If Append is true, the text is appended to the
    --  clipboard instead of replacing it. The range defaults to beginning and
    --  end of the buffer.
 
    function Beginning_Of_Buffer
-     (This : Editor_Buffer) return Editor_Location'Class is abstract;
+     (This : Editor_Buffer) return Editor_Location'Class
+   is abstract;
    --  Returns a location pointing to the first character in the buffer
 
-   function End_Of_Buffer
-     (This : Editor_Buffer) return Editor_Location'Class is abstract;
+   function End_Of_Buffer (This : Editor_Buffer) return Editor_Location'Class
+   is abstract;
    --  Returns a location pointing to the last character in the buffer
 
    procedure Save
      (This        : Editor_Buffer;
       Interactive : Boolean := True;
       File        : Virtual_File := No_File;
-      Internal    : Boolean := False) is abstract;
+      Internal    : Boolean := False)
+   is abstract;
    --  Saves the buffer to the given file. If interactive is true, a dialog is
    --  open to ask for confirmation from the user first, which gives him a
    --  chance to cancel the saving. "interactive" is ignored if file is
@@ -674,20 +689,21 @@ package GPS.Editors is
    --  If Internal is True, the file is saved but the editor is not changed.
 
    function Get_Mark
-     (This : Editor_Buffer;
-      Name : String) return Editor_Mark'Class is abstract;
+     (This : Editor_Buffer; Name : String) return Editor_Mark'Class
+   is abstract;
    --  Check whether there is a mark with that name in the buffer, and return
    --  it. A Nil_Editor_Mark is returned if there is no such mark
 
    function Get_Subprogram_Name
-     (This     : Editor_Buffer;
-      Location : Editor_Location'Class) return String is abstract;
+     (This : Editor_Buffer; Location : Editor_Location'Class) return String
+   is abstract;
    --  Return the name for the subprogram enclosing Location.
 
    function Expand_Tabs
      (This   : Editor_Buffer;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) return Visible_Column_Type is abstract;
+      Column : Character_Offset_Type) return Visible_Column_Type
+   is abstract;
    --  Returns the visible column corresponding to the character position.
 
    -------------------------
@@ -714,15 +730,17 @@ package GPS.Editors is
 
    function Current_Undo_Group (This : Editor_Buffer) return Group_Block;
    pragma Annotate (AJIS, Bind, Current_Undo_Group, False);
-   pragma Annotate (AJIS, Bind, Current_Undo_Group,
-                    "Allow_Java_Creation_And_Child_Types");
+   pragma
+     Annotate
+       (AJIS, Bind, Current_Undo_Group, "Allow_Java_Creation_And_Child_Types");
    --  Enter the current undo/redo group. The group is in effect until
    --  Group_Block is finalized: see documentation in Commands.
 
    function New_Undo_Group (This : Editor_Buffer) return Group_Block;
    pragma Annotate (AJIS, Bind, New_Undo_Group, False);
-   pragma Annotate (AJIS, Bind, New_Undo_Group,
-                    "Allow_Java_Creation_And_Child_Types");
+   pragma
+     Annotate
+       (AJIS, Bind, New_Undo_Group, "Allow_Java_Creation_And_Child_Types");
    --  Enter a new undo/redo group. The group is in effect until
    --  Group_Block is finalized: see documentation in Commands.
 
@@ -733,8 +751,8 @@ package GPS.Editors is
    function Can_Undo (This : Editor_Buffer) return Boolean is abstract;
    --  Return True if the last command can be undone on the editor
 
-   function Has_Blocks_Information
-     (This : Editor_Buffer) return Boolean is abstract;
+   function Has_Blocks_Information (This : Editor_Buffer) return Boolean
+   is abstract;
    --  Returns True when the buffer has computed information about blocks
    --  (e.g: if/else block in Ada).
 
@@ -747,17 +765,18 @@ package GPS.Editors is
    --  A small icon is displayed to the left of the first line so that it can
    --  be unfolded later on
 
-   procedure Set_Read_Only
-     (This : Editor_Buffer; Read_Only : Boolean) is abstract;
+   procedure Set_Read_Only (This : Editor_Buffer; Read_Only : Boolean)
+   is abstract;
    function Is_Read_Only (This : Editor_Buffer) return Boolean is abstract;
    --  Indicates whether the user should be able to edit the buffer
    --  interactively (through any view).
 
    procedure Apply_Style
-     (This  : Editor_Buffer;
-      Style : String;
-      Line  : Integer;
-      From_Column, To_Column : Visible_Column_Type := -1) is abstract;
+     (This                   : Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
+      From_Column, To_Column : Visible_Column_Type := -1)
+   is abstract;
    --  Apply a specific style to part of a buffer.
    --  If From_Column and To_Column are equal, the highlighting is drawn so
    --  that the whole line including the trailing spaces appear selected.
@@ -767,14 +786,16 @@ package GPS.Editors is
      (This      : Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type) is abstract;
+      To_Line   : Editable_Line_Type)
+   is abstract;
    --  Apply a specific style between From_Line and To_Line
 
    procedure Remove_Style
-     (This  : Editor_Buffer;
-      Style : String;
-      Line  : Integer;
-      From_Column, To_Column : Visible_Column_Type := -1) is abstract;
+     (This                   : Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
+      From_Column, To_Column : Visible_Column_Type := -1)
+   is abstract;
    --  Remove highlighting from a specific part of the text.
    --  If Line is 0, the removal is done on the whole buffer.
 
@@ -782,12 +803,13 @@ package GPS.Editors is
      (This      : Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type) is abstract;
+      To_Line   : Editable_Line_Type)
+   is abstract;
    --  Remove the given style in the given line range
 
    function Create_Overlay
-     (This : Editor_Buffer;
-      Name : String := "") return Editor_Overlay'Class is abstract;
+     (This : Editor_Buffer; Name : String := "") return Editor_Overlay'Class
+   is abstract;
    --  Create a new overlay. Properties can be set on this overlay, which can
    --  then be applied to one or more ranges of text to changes its visual
    --  rendering or to associate user data with it. If name is specified, this
@@ -804,7 +826,8 @@ package GPS.Editors is
      (This    : Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
-      To      : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To      : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Applies the overlay to the given range of text. This immediately changes
    --  the rendering of the text based on the properties of the overlay.
    --  Defaults to the whole buffer
@@ -813,25 +836,29 @@ package GPS.Editors is
      (This    : Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
-      To      : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      To      : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Removes all instances of the overlay in the given range of text. It
    --  isn't an error if the overlay is not applied to any of the character in
    --  the range, it just has no effect in that case
 
    procedure Add_Cursor
      (This     : Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Add a multi cursor at the specified location
 
    function Add_Cursor
      (This     : Editor_Buffer;
       Location : Editor_Location'Class := Nil_Editor_Location)
-      return Editor_Cursor'Class is abstract;
+      return Editor_Cursor'Class
+   is abstract;
    --  Add a multi cursor at the specified location
 
    procedure Delete_Cursor
      (This     : Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+   is abstract;
    --  Delete a multi cursor at the specified location
 
    procedure Remove_All_Slave_Cursors (This : Editor_Buffer) is abstract;
@@ -843,17 +870,16 @@ package GPS.Editors is
    --  in the buffer. Do not forget to set that back after a manual multi
    --  cursor operation !
 
-   function Get_Cursors
-     (This : Editor_Buffer) return Cursors_Lists.List is abstract;
+   function Get_Cursors (This : Editor_Buffer) return Cursors_Lists.List
+   is abstract;
    --  Get the list of all multi cursor's marks
 
-   procedure Update_Cursors_Selection
-     (This : Editor_Buffer) is abstract;
+   procedure Update_Cursors_Selection (This : Editor_Buffer) is abstract;
    --  Update the overlay corresponding to the multi cursors selection. *MUST*
    --  be called if you change any selection marks for multi cursors
 
-   overriding function "="
-     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
+   overriding
+   function "=" (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
    --     is abstract; --  ??? workaround, for J617-004
    --  Compare two buffers. Since an Editor_Buffer is just a wrapper and we
    --  recreate as many of them as we need even for the same widget
@@ -862,17 +888,19 @@ package GPS.Editors is
    --  live widget anymore.
 
    function Get_Language
-     (Buffer : Editor_Buffer) return Language.Language_Access is (null);
+     (Buffer : Editor_Buffer) return Language.Language_Access
+   is (null);
    procedure Set_Language
-      (Buffer : Editor_Buffer;
-       Lang   : Language.Language_Access) is null;
+     (Buffer : Editor_Buffer; Lang : Language.Language_Access)
+   is null;
    --  Set the language of the given buffer. The syntax highlighting is
    --  recomputed using the new language.
 
    procedure Set_Extend_Existing_Selection
-     (This : Editor_Buffer; Extend : Boolean) is abstract;
-   function Extend_Existing_Selection
-     (This : Editor_Buffer) return Boolean is abstract;
+     (This : Editor_Buffer; Extend : Boolean)
+   is abstract;
+   function Extend_Existing_Selection (This : Editor_Buffer) return Boolean
+   is abstract;
    --  This mode controls the handling of selection when the cursor is
    --  moved:
    --  * for subprograms that receive an Extend_Selection parameter set to
@@ -894,28 +922,28 @@ package GPS.Editors is
    --         same.
 
    function Has_Information_Column
-      (This : Editor_Buffer; Id : String) return Boolean is abstract;
+     (This : Editor_Buffer; Id : String) return Boolean
+   is abstract;
    --  Editors can display information on the side.
    --  This extra information is grouped into columns, each of which has a
    --  name. This function returns True if a column with the given Id exists
 
-   function Buffer_Address
-     (This : Editor_Buffer) return System.Address is abstract;
+   function Buffer_Address (This : Editor_Buffer) return System.Address
+   is abstract;
    --  Return the address of the Gtk_Text_Buffer, if defined. To be used
    --  only for the handling of the low-level Python request
    --  "gtk_text_buffer".
 
-   procedure Set_Opened_On_LSP_Server
-     (This  : Editor_Buffer;
-      Value : Boolean) is abstract;
+   procedure Set_Opened_On_LSP_Server (This : Editor_Buffer; Value : Boolean)
+   is abstract;
    --  Set opened on the LSP server side status
 
-   function Is_Opened_On_LSP_Server
-     (This : Editor_Buffer) return Boolean is abstract;
+   function Is_Opened_On_LSP_Server (This : Editor_Buffer) return Boolean
+   is abstract;
    --  Get opened status on the LSP server side
 
-   package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Editor_Buffer'Class);
+   package Buffer_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Editor_Buffer'Class);
 
    ---------------------------
    -- Editor_Buffer_Factory --
@@ -929,8 +957,8 @@ package GPS.Editors is
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
       Only_If_Focused : Boolean := False;
-      Unlocked_Only   : Boolean := False)
-      return Editor_Buffer'Class is abstract;
+      Unlocked_Only   : Boolean := False) return Editor_Buffer'Class
+   is abstract;
    --  If file is not specified, the current editor is returned, ie the last
    --  one that had the keyboard focus.
    --
@@ -957,39 +985,40 @@ package GPS.Editors is
    --  actions (e.g: Go to declaration), clicks on the Locations view etc.
 
    function Get_Holder
-     (This : Editor_Buffer_Factory'Class;
-      File : Virtual_File)
+     (This : Editor_Buffer_Factory'Class; File : Virtual_File)
       return Controlled_Editor_Buffer_Holder;
    --  Open a buffer for the given file, without opening a view, and
    --  encapsulates it in an holder. The buffer will be automatically
    --  unref once the holder is destroyed.
 
-   function Get_New
-     (This : Editor_Buffer_Factory)
-      return Editor_Buffer'Class is abstract;
+   function Get_New (This : Editor_Buffer_Factory) return Editor_Buffer'Class
+   is abstract;
    --  Create a new blank editor
 
    function New_Mark
      (This   : Editor_Buffer_Factory;
       File   : Virtual_File := No_File;
       Line   : Integer;
-      Column : Integer) return Editor_Mark'Class is abstract;
+      Column : Integer) return Editor_Mark'Class
+   is abstract;
    --  Return a new mark without having to create an editor buffer
 
-   function Buffers
-     (This   : Editor_Buffer_Factory) return Buffer_Lists.List is abstract;
+   function Buffers (This : Editor_Buffer_Factory) return Buffer_Lists.List
+   is abstract;
    --  Return the list of all buffers
 
    function Buffer_From_Instance
-     (This       : Editor_Buffer_Factory;
-      Instance   : Class_Instance) return Editor_Buffer'Class is abstract;
+     (This : Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_Buffer'Class
+   is abstract;
    --  Get buffer from class instance or raise exception if no object is
    --  stored in the instance.
 
    procedure File_Renamed
      (This     : Editor_Buffer_Factory;
       Old_File : GNATCOLL.VFS.Virtual_File;
-      New_File : GNATCOLL.VFS.Virtual_File) is null;
+      New_File : GNATCOLL.VFS.Virtual_File)
+   is null;
    --  Called to inform that the file has been renamed
 
    ---------------------
@@ -999,43 +1028,48 @@ package GPS.Editors is
    procedure Finalize (Self : in out Editor_Listener) is null;
    --  Called before deallocation of the listener.
 
-   procedure File_Edited (Self : in out Editor_Listener;
-                          File : Virtual_File) is null;
+   procedure File_Edited (Self : in out Editor_Listener; File : Virtual_File)
+   is null;
    --  Called when the editor has been opened and filled
 
-   procedure File_Closed (Self : in out Editor_Listener;
-                          File : Virtual_File) is null;
+   procedure File_Closed (Self : in out Editor_Listener; File : Virtual_File)
+   is null;
    --  Called when the editor is being closed
 
-   procedure File_Renamed (Self : in out Editor_Listener;
-                           From : GNATCOLL.VFS.Virtual_File;
-                           To   : GNATCOLL.VFS.Virtual_File) is null;
+   procedure File_Renamed
+     (Self : in out Editor_Listener;
+      From : GNATCOLL.VFS.Virtual_File;
+      To   : GNATCOLL.VFS.Virtual_File)
+   is null;
    --  Called after the editor is renamed from From to
 
    procedure Before_Delete_Range
      (Self           : in out Editor_Listener;
       Start_Location : Editor_Location'Class;
       End_Location   : Editor_Location'Class;
-      From_User      : Boolean) is null;
+      From_User      : Boolean)
+   is null;
    --  Called before the removal of text between Start_Location
    --  and End_Location.
 
    procedure After_Delete_Range
-     (Self      : in out Editor_Listener;
-      From_User : Boolean) is null;
+     (Self : in out Editor_Listener; From_User : Boolean)
+   is null;
    --  Called after text has been deleted
 
    procedure After_Insert_Text
      (Self      : in out Editor_Listener;
       Location  : Editor_Location'Class;
       Text      : String := "";
-      From_User : Boolean) is null;
+      From_User : Boolean)
+   is null;
    --  Called after Text has been inserted at Location
 
    procedure After_Cursor_Moved
      (Self            : in out Editor_Listener;
       Cursor_Location : Editor_Location'Class;
-      From_User       : Boolean) is null;
+      From_User       : Boolean)
+   is null;
    --  Called when insertion point of the text buffer has been moved.
 
    -----------------------------
@@ -1046,8 +1080,9 @@ package GPS.Editors is
    --  Called before deallocation of the listener.
 
    function Compute_Blocks
-     (Self : in out Editor_Folding_Provider;
-      File : Virtual_File) return Boolean is abstract;
+     (Self : in out Editor_Folding_Provider; File : Virtual_File)
+      return Boolean
+   is abstract;
    --  Called for folding blocks computation. Return False when provider
    --  can't provide information.
 
@@ -1059,8 +1094,8 @@ package GPS.Editors is
      (Self        : in out Editor_Formatting_Provider;
       From, To    : Editor_Location'Class;
       Cursor_Line : Natural;
-      Cursor_Move : in out Integer)
-      return Boolean is abstract;
+      Cursor_Move : in out Integer) return Boolean
+   is abstract;
    --  Ask the provider to format between From and To.
    --  Cursor_Line and Cursor_Move are the current location of the Cursor in
    --  the editor. Cursor_Move should return the number of characters the
@@ -1070,8 +1105,8 @@ package GPS.Editors is
    function On_Type_Formatting
      (Self        : in out Editor_Formatting_Provider;
       From, To    : Editor_Location'Class;
-      Cursor_Line : Natural)
-      return Boolean is abstract;
+      Cursor_Line : Natural) return Boolean
+   is abstract;
    --  Ask the provider to format between From and To.
    --  Cursor_Line is the current location of the Cursor in the Editor.
 
@@ -1083,37 +1118,39 @@ package GPS.Editors is
    -- Location markers --
    ----------------------
 
-   type Abstract_File_Marker_Data is
-      new Location_Marker_Data with null record;
+   type Abstract_File_Marker_Data is new Location_Marker_Data with null record;
    type Abstract_File_Marker is access all Abstract_File_Marker_Data'Class;
    --  Type should be abstract, but AJIS fails in that case.
 
    function Get_File
      (Self : not null access Abstract_File_Marker_Data)
-      return GNATCOLL.VFS.Virtual_File is (GNATCOLL.VFS.No_File);
+      return GNATCOLL.VFS.Virtual_File
+   is (GNATCOLL.VFS.No_File);
    function Get_Line
      (Self : not null access Abstract_File_Marker_Data)
-      return Editable_Line_Type is (0);
+      return Editable_Line_Type
+   is (0);
    function Get_Column
      (Self : not null access Abstract_File_Marker_Data)
-      return Visible_Column_Type is (0);
+      return Visible_Column_Type
+   is (0);
    --  Return the current location of the marker
 
    function Get_File (Self : Location_Marker) return GNATCOLL.VFS.Virtual_File
-     is (if Self.Is_Null
+   is (if Self.Is_Null
          or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
-         then GNATCOLL.VFS.No_File
-         else Get_File (Abstract_File_Marker (Self.Unchecked_Get)));
+       then GNATCOLL.VFS.No_File
+       else Get_File (Abstract_File_Marker (Self.Unchecked_Get)));
    function Get_Line (Self : Location_Marker) return Editable_Line_Type
-     is (if Self.Is_Null
+   is (if Self.Is_Null
          or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
-         then 0
-         else Get_Line (Abstract_File_Marker (Self.Unchecked_Get)));
+       then 0
+       else Get_Line (Abstract_File_Marker (Self.Unchecked_Get)));
    function Get_Column (Self : Location_Marker) return Visible_Column_Type
-     is (if Self.Is_Null
+   is (if Self.Is_Null
          or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
-         then 0
-         else Get_Column (Abstract_File_Marker (Self.Unchecked_Get)));
+       then 0
+       else Get_Column (Abstract_File_Marker (Self.Unchecked_Get)));
 
    function Create_Marker
      (This    : Editor_Buffer_Factory;
@@ -1121,22 +1158,25 @@ package GPS.Editors is
       Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
-      Length  : Natural := 0) return Location_Marker is abstract;
+      Length  : Natural := 0) return Location_Marker
+   is abstract;
    --  Create a mark at a specific location in a file.
    --  Whenever the file is edited, the mark will move to keep pointing to the
    --  same position (hooks are set up even if the file is not currently
    --  edited).
 
-   package Editor_Mark_Holders is
-     new Ada.Containers.Indefinite_Holders (Editor_Mark'Class);
+   package Editor_Mark_Holders is new
+     Ada.Containers.Indefinite_Holders (Editor_Mark'Class);
    --  Holder to store editor mark.
 
-   package Editor_Buffer_Holders is
-     new Ada.Containers.Indefinite_Holders (Editor_Buffer'Class);
+   package Editor_Buffer_Holders is new
+     Ada.Containers.Indefinite_Holders (Editor_Buffer'Class);
    --  Holder to store editor buffer.
 
-   package Editor_Buffer_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Editor_Buffer_Holders.Holder, Editor_Buffer_Holders."=");
+   package Editor_Buffer_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Editor_Buffer_Holders.Holder,
+        Editor_Buffer_Holders."=");
    --  Lists to store editor buffers.
 
    -------------------------------------
@@ -1144,31 +1184,36 @@ package GPS.Editors is
    -------------------------------------
 
    function Editor
-     (Self : Controlled_Editor_Buffer_Holder)
-      return Editor_Buffer'Class;
+     (Self : Controlled_Editor_Buffer_Holder) return Editor_Buffer'Class;
    --  Returns buffer.
 
 private
 
    function Get_Char
      (This : Editor_Location'Class)
-      return VSS.Characters.Virtual_Character'Base is
-        (VSS.Characters.Virtual_Character'Base'Val (This.Get_Char_GB));
+      return VSS.Characters.Virtual_Character'Base
+   is (VSS.Characters.Virtual_Character'Base'Val (This.Get_Char_GB));
 
-   overriding function Go_To
-     (Self  : not null access Abstract_File_Marker_Data) return Boolean
-     is (False);
-   overriding function To_String
-     (Self : not null access Abstract_File_Marker_Data) return String is ("");
-   overriding function Save
+   overriding
+   function Go_To
+     (Self : not null access Abstract_File_Marker_Data) return Boolean
+   is (False);
+   overriding
+   function To_String
+     (Self : not null access Abstract_File_Marker_Data) return String
+   is ("");
+   overriding
+   function Save
      (Self : not null access Abstract_File_Marker_Data)
-     return XML_Utils.Node_Ptr is (null);
+      return XML_Utils.Node_Ptr
+   is (null);
    --  Dummy functions for the sake of AJIS. Will be removed when we can make
    --  Abstract_File_Marker_Data abstract
 
-   overriding procedure Save
-     (Self  : not null access Abstract_File_Marker_Data;
-      Value : out JSON_Value) is null;
+   overriding
+   procedure Save
+     (Self : not null access Abstract_File_Marker_Data; Value : out JSON_Value)
+   is null;
 
    -------------------------
    -- Nil_Editor_Location --
@@ -1176,101 +1221,127 @@ private
 
    type Dummy_Editor_Location is new Editor_Location with null record;
 
-   overriding function "=" (Left, Right : Dummy_Editor_Location) return Boolean
-     is (True);
+   overriding
+   function "=" (Left, Right : Dummy_Editor_Location) return Boolean
+   is (True);
 
-   overriding function ">" (Left, Right : Dummy_Editor_Location) return Boolean
-     is (False);
+   overriding
+   function ">" (Left, Right : Dummy_Editor_Location) return Boolean
+   is (False);
 
-   overriding function Beginning_Of_Line
+   overriding
+   function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class;
 
-   overriding function End_Of_Line
+   overriding
+   function End_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class;
 
-   overriding function Block_Start
-     (This        : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class;
-   overriding function Block_End
-     (This        : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class;
-   overriding function Block_Name
+   overriding
+   function Block_Start
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class;
+   overriding
+   function Block_End
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class;
+   overriding
+   function Block_Name
      (This        : Dummy_Editor_Location;
       Subprogram  : Boolean;
       Update_Tree : Boolean := True) return String;
-   overriding function Block_Level
-     (This : Dummy_Editor_Location) return Natural;
-   overriding procedure Block_Fold (This : Dummy_Editor_Location) is null;
-   overriding procedure Block_Unfold (This : Dummy_Editor_Location) is null;
-   overriding function Block_Type
-     (This        : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Language_Category;
+   overriding
+   function Block_Level (This : Dummy_Editor_Location) return Natural;
+   overriding
+   procedure Block_Fold (This : Dummy_Editor_Location) is null;
+   overriding
+   procedure Block_Unfold (This : Dummy_Editor_Location) is null;
+   overriding
+   function Block_Type
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Language_Category;
 
-   overriding function Line (This : Dummy_Editor_Location) return Integer
-     is (0);
-   overriding function Column
-     (This : Dummy_Editor_Location) return Visible_Column_Type is (0);
-   overriding function Line_Offset
-     (This : Dummy_Editor_Location) return Natural is (0);
-   overriding function Offset (This : Dummy_Editor_Location) return Natural;
+   overriding
+   function Line (This : Dummy_Editor_Location) return Integer
+   is (0);
+   overriding
+   function Column (This : Dummy_Editor_Location) return Visible_Column_Type
+   is (0);
+   overriding
+   function Line_Offset (This : Dummy_Editor_Location) return Natural
+   is (0);
+   overriding
+   function Offset (This : Dummy_Editor_Location) return Natural;
 
-   overriding function Buffer
-     (This : Dummy_Editor_Location) return Editor_Buffer'Class;
+   overriding
+   function Buffer (This : Dummy_Editor_Location) return Editor_Buffer'Class;
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Dummy_Editor_Location;
-      Script : access Scripting_Language_Record'Class)
-      return Class_Instance;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
 
-   overriding function Create_Mark
+   overriding
+   function Create_Mark
      (This               : Dummy_Editor_Location;
       Dummy_Name         : String := "";
-      Dummy_Left_Gravity : Boolean := True)
-      return Editor_Mark'Class is (Nil_Editor_Mark);
+      Dummy_Left_Gravity : Boolean := True) return Editor_Mark'Class
+   is (Nil_Editor_Mark);
 
-   overriding function Forward_Char
-     (This : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding procedure Forward_Character
-     (This  : in out Dummy_Editor_Location;
-      Count : Integer) is null;
-   overriding function Forward_Word
-     (This  : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding function Forward_Line
-     (This  : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding function Backward_To_Word_Start
+   overriding
+   function Forward_Char
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   procedure Forward_Character
+     (This : in out Dummy_Editor_Location; Count : Integer)
+   is null;
+   overriding
+   function Forward_Word
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   function Forward_Line
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   function Backward_To_Word_Start
      (This : Dummy_Editor_Location) return Editor_Location'Class;
-   overriding function Forward_To_Word_End
+   overriding
+   function Forward_To_Word_End
      (This : Dummy_Editor_Location) return Editor_Location'Class;
-   overriding function Starts_Word
-     (This : Dummy_Editor_Location) return Boolean;
-   overriding function Ends_Word
-     (This : Dummy_Editor_Location) return Boolean;
-   overriding function Inside_Word
-     (This : Dummy_Editor_Location) return Boolean;
-   overriding function Is_End_Of_Line
-     (This : Dummy_Editor_Location) return Boolean;
+   overriding
+   function Starts_Word (This : Dummy_Editor_Location) return Boolean;
+   overriding
+   function Ends_Word (This : Dummy_Editor_Location) return Boolean;
+   overriding
+   function Inside_Word (This : Dummy_Editor_Location) return Boolean;
+   overriding
+   function Is_End_Of_Line (This : Dummy_Editor_Location) return Boolean;
 
-   overriding function Get_Overlays
-     (This    : Dummy_Editor_Location) return Overlay_Lists.List;
-   overriding function Has_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Boolean;
-   overriding function Forward_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class;
-   overriding function Backward_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class;
+   overriding
+   function Get_Overlays
+     (This : Dummy_Editor_Location) return Overlay_Lists.List;
+   overriding
+   function Has_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Boolean;
+   overriding
+   function Forward_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class;
+   overriding
+   function Backward_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class;
 
-   overriding function Get_Char_GB
-     (This : Dummy_Editor_Location) return Integer is
-       (VSS.Characters.Virtual_Character'Base'Pos
+   overriding
+   function Get_Char_GB (This : Dummy_Editor_Location) return Integer
+   is (VSS.Characters.Virtual_Character'Base'Pos
          (VSS.Characters.Virtual_Character'Base'Last));
 
-   overriding procedure Search
+   overriding
+   procedure Search
      (This              : Dummy_Editor_Location;
       Pattern           : String;
       Backward          : Boolean := False;
@@ -1289,31 +1360,37 @@ private
 
    type Dummy_Editor_Mark is new Editor_Mark with null record;
 
-   overriding function Line (This : Dummy_Editor_Mark) return Integer;
+   overriding
+   function Line (This : Dummy_Editor_Mark) return Integer;
 
-   overriding function Column
-     (This : Dummy_Editor_Mark) return Visible_Column_Type;
+   overriding
+   function Column (This : Dummy_Editor_Mark) return Visible_Column_Type;
 
-   overriding function Location
-     (This : Dummy_Editor_Mark;
-      Open : Boolean) return Editor_Location'Class;
+   overriding
+   function Location
+     (This : Dummy_Editor_Mark; Open : Boolean) return Editor_Location'Class;
 
-   overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean;
+   overriding
+   function Is_Present (This : Dummy_Editor_Mark) return Boolean;
 
-   overriding procedure Delete (This : in out Dummy_Editor_Mark) is null;
+   overriding
+   procedure Delete (This : in out Dummy_Editor_Mark) is null;
 
-   overriding procedure Move
-     (This : Dummy_Editor_Mark; Location : Editor_Location'Class) is null;
+   overriding
+   procedure Move (This : Dummy_Editor_Mark; Location : Editor_Location'Class)
+   is null;
 
-   overriding procedure Forward_Chars
-     (This : Dummy_Editor_Mark; Offset : Integer) is null;
+   overriding
+   procedure Forward_Chars (This : Dummy_Editor_Mark; Offset : Integer)
+   is null;
 
-   overriding function Name (This : Dummy_Editor_Mark) return String;
+   overriding
+   function Name (This : Dummy_Editor_Mark) return String;
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Dummy_Editor_Mark;
-      Script : access Scripting_Language_Record'Class)
-      return Class_Instance;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
 
    Nil_Editor_Mark : constant Editor_Mark'Class :=
      Dummy_Editor_Mark'(Controlled with null record);
@@ -1327,250 +1404,313 @@ private
 
    type Dummy_Editor_Buffer is new Editor_Buffer with null record;
 
-   overriding procedure Newline_And_Indent
-     (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Newline_And_Indent (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Version
-     (This : Dummy_Editor_Buffer) return Integer is (0);
+   overriding
+   function Version (This : Dummy_Editor_Buffer) return Integer
+   is (0);
 
-   overriding function Get_Main_Cursor
+   overriding
+   function Get_Main_Cursor
      (This : Dummy_Editor_Buffer) return Editor_Cursor'Class
    is (Nil_Editor_Cursor);
 
-   overriding function Has_Slave_Cursors
-     (This : Dummy_Editor_Buffer) return Boolean is (False);
+   overriding
+   function Has_Slave_Cursors (This : Dummy_Editor_Buffer) return Boolean
+   is (False);
 
-   overriding procedure Close
-     (This : Dummy_Editor_Buffer; Force : Boolean) is null;
+   overriding
+   procedure Close (This : Dummy_Editor_Buffer; Force : Boolean) is null;
 
-   overriding function New_Location
-     (This   : Dummy_Editor_Buffer;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class;
+   overriding
+   function New_Location
+     (This : Dummy_Editor_Buffer; Line : Integer; Column : Visible_Column_Type)
+      return Editor_Location'Class;
 
-   overriding function New_Location
-     (This         : Dummy_Editor_Buffer;
-      Dummy_Offset : VSS.Strings.Character_Count) return Editor_Location'Class
+   overriding
+   function New_Location
+     (This : Dummy_Editor_Buffer; Dummy_Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class
    is (Nil_Editor_Location);
 
-   overriding function New_View
-     (This : Dummy_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function New_View (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
-   overriding function Open
-     (This : Dummy_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function Open (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
-   overriding function Current_View
-     (This : Dummy_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function Current_View (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
-   overriding function Lines_Count
-     (This : Dummy_Editor_Buffer) return Editable_Line_Type;
-   overriding function Characters_Count
-     (This : Dummy_Editor_Buffer) return Natural;
+   overriding
+   function Lines_Count (This : Dummy_Editor_Buffer) return Editable_Line_Type;
+   overriding
+   function Characters_Count (This : Dummy_Editor_Buffer) return Natural;
 
-   overriding function Is_Modified (This : Dummy_Editor_Buffer) return Boolean;
+   overriding
+   function Is_Modified (This : Dummy_Editor_Buffer) return Boolean;
 
-   overriding procedure Select_Text
+   overriding
+   procedure Select_Text
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is null;
-   overriding procedure Unselect (This : Dummy_Editor_Buffer) is null;
-   overriding function Selection_Start
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is null;
+   overriding
+   procedure Unselect (This : Dummy_Editor_Buffer) is null;
+   overriding
+   function Selection_Start
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
-   overriding function Selection_End
+   overriding
+   function Selection_End
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True)
-      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
-   overriding function Get_Chars_S
+      Include_Hidden_Chars : Boolean := True) return VSS.Strings.Virtual_String
+   is (VSS.Strings.Empty_Virtual_String);
+   overriding
+   function Get_Chars_S
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True) return String is ("");
-   overriding function Get_Chars_U
+      Include_Hidden_Chars : Boolean := True) return String
+   is ("");
+   overriding
+   function Get_Chars_U
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return Unbounded_String;
 
-   overriding function Get_Entity_Name
+   overriding
+   function Get_Entity_Name
      (This     : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location)
-      return String;
+      Location : Editor_Location'Class := Nil_Editor_Location) return String;
 
-   overriding procedure Insert
-     (This : Dummy_Editor_Buffer;
-      From : Editor_Location'Class;
-      Text : String) is null;
+   overriding
+   procedure Insert
+     (This : Dummy_Editor_Buffer; From : Editor_Location'Class; Text : String)
+   is null;
 
-   overriding procedure Delete
-     (This : Dummy_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is null;
-
-   overriding procedure Indent
+   overriding
+   procedure Delete
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is null;
-   overriding procedure Refill
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is null;
+
+   overriding
+   procedure Indent
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location) is null;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is null;
+   overriding
+   procedure Refill
+     (This : Dummy_Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is null;
 
-   overriding function Beginning_Of_Buffer
+   overriding
+   function Beginning_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
-   overriding function End_Of_Buffer
+   overriding
+   function End_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (This        : Dummy_Editor_Buffer;
       Interactive : Boolean := True;
       File        : Virtual_File := No_File;
-      Internal    : Boolean := False) is null;
+      Internal    : Boolean := False)
+   is null;
 
-   overriding function Get_Mark
-     (This : Dummy_Editor_Buffer;
-      Name : String) return Editor_Mark'Class;
+   overriding
+   function Get_Mark
+     (This : Dummy_Editor_Buffer; Name : String) return Editor_Mark'Class;
 
-   overriding function Get_Subprogram_Name
-     (This     : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) return String;
+   overriding
+   function Get_Subprogram_Name
+     (This : Dummy_Editor_Buffer; Location : Editor_Location'Class)
+      return String;
 
-   overriding procedure Start_Undo_Group (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Start_Undo_Group (This : Dummy_Editor_Buffer) is null;
 
-   overriding procedure Finish_Undo_Group (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Finish_Undo_Group (This : Dummy_Editor_Buffer) is null;
 
-   overriding procedure Undo (This : Dummy_Editor_Buffer) is null;
-   overriding procedure Redo (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Undo (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Redo (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Can_Undo (This : Dummy_Editor_Buffer) return Boolean
+   overriding
+   function Can_Undo (This : Dummy_Editor_Buffer) return Boolean
    is (False);
 
-   overriding procedure Set_Read_Only
-     (This : Dummy_Editor_Buffer; Read_Only : Boolean) is null;
-   overriding function Is_Read_Only
-     (This : Dummy_Editor_Buffer) return Boolean;
+   overriding
+   procedure Set_Read_Only (This : Dummy_Editor_Buffer; Read_Only : Boolean)
+   is null;
+   overriding
+   function Is_Read_Only (This : Dummy_Editor_Buffer) return Boolean;
 
-   overriding procedure Apply_Style
-     (This  : Dummy_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
-      From_Column, To_Column : Visible_Column_Type := -1) is null;
+   overriding
+   procedure Apply_Style
+     (This                   : Dummy_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
+      From_Column, To_Column : Visible_Column_Type := -1)
+   is null;
 
-   overriding procedure Apply_Style_To_Lines
+   overriding
+   procedure Apply_Style_To_Lines
      (This      : Dummy_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type) is null;
+      To_Line   : Editable_Line_Type)
+   is null;
 
-   overriding procedure Remove_Style
-     (This  : Dummy_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
-      From_Column, To_Column : Visible_Column_Type := -1) is null;
+   overriding
+   procedure Remove_Style
+     (This                   : Dummy_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
+      From_Column, To_Column : Visible_Column_Type := -1)
+   is null;
 
-   overriding procedure Remove_Style_On_Lines
+   overriding
+   procedure Remove_Style_On_Lines
      (This      : Dummy_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type) is null;
+      To_Line   : Editable_Line_Type)
+   is null;
 
-   overriding function File (This : Dummy_Editor_Buffer) return Virtual_File;
+   overriding
+   function File (This : Dummy_Editor_Buffer) return Virtual_File;
 
-   overriding function Has_Information_Column
-      (This     : Dummy_Editor_Buffer;
-       Dummy_Id : String) return Boolean is (False);
-   overriding procedure Copy
+   overriding
+   function Has_Information_Column
+     (This : Dummy_Editor_Buffer; Dummy_Id : String) return Boolean
+   is (False);
+   overriding
+   procedure Copy
      (This   : Dummy_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
-      Append : Boolean := False) is null;
-   overriding procedure Cut
+      Append : Boolean := False)
+   is null;
+   overriding
+   procedure Cut
      (This   : Dummy_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
-      Append : Boolean := False) is null;
-   overriding procedure Paste
-     (This   : Dummy_Editor_Buffer;
-      From   : Editor_Location'Class) is null;
-   overriding procedure Blocks_Fold (This : Dummy_Editor_Buffer) is null;
-   overriding procedure Blocks_Unfold (This : Dummy_Editor_Buffer) is null;
+      Append : Boolean := False)
+   is null;
+   overriding
+   procedure Paste (This : Dummy_Editor_Buffer; From : Editor_Location'Class)
+   is null;
+   overriding
+   procedure Blocks_Fold (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Blocks_Unfold (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Create_Overlay
-     (This : Dummy_Editor_Buffer;
-      Name : String := "") return Editor_Overlay'Class;
-   overriding procedure Apply_Overlay
+   overriding
+   function Create_Overlay
+     (This : Dummy_Editor_Buffer; Name : String := "")
+      return Editor_Overlay'Class;
+   overriding
+   procedure Apply_Overlay
      (This    : Dummy_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
-      To      : Editor_Location'Class := Nil_Editor_Location) is null;
-   overriding procedure Remove_Overlay
+      To      : Editor_Location'Class := Nil_Editor_Location)
+   is null;
+   overriding
+   procedure Remove_Overlay
      (This    : Dummy_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
-      To      : Editor_Location'Class := Nil_Editor_Location) is null;
+      To      : Editor_Location'Class := Nil_Editor_Location)
+   is null;
 
-   overriding procedure Add_Cursor
-     (This : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) is null;
+   overriding
+   procedure Add_Cursor
+     (This : Dummy_Editor_Buffer; Location : Editor_Location'Class)
+   is null;
 
-   overriding function Add_Cursor
-     (This           : Dummy_Editor_Buffer;
-      Dummy_Location : Editor_Location'Class) return Editor_Cursor'Class
-   is
-      (Nil_Editor_Cursor);
+   overriding
+   function Add_Cursor
+     (This : Dummy_Editor_Buffer; Dummy_Location : Editor_Location'Class)
+      return Editor_Cursor'Class
+   is (Nil_Editor_Cursor);
 
-   overriding procedure Delete_Cursor
-     (This     : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) is null;
+   overriding
+   procedure Delete_Cursor
+     (This : Dummy_Editor_Buffer; Location : Editor_Location'Class)
+   is null;
 
-   overriding procedure Remove_All_Slave_Cursors
-     (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Remove_All_Slave_Cursors (This : Dummy_Editor_Buffer) is null;
 
-   overriding procedure Set_Cursors_Auto_Sync
-     (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Set_Cursors_Auto_Sync (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Get_Cursors
-     (This : Dummy_Editor_Buffer) return Cursors_Lists.List
+   overriding
+   function Get_Cursors (This : Dummy_Editor_Buffer) return Cursors_Lists.List
    is (Cursors_Lists.Empty_List);
 
-   overriding procedure Update_Cursors_Selection
-     (This : Dummy_Editor_Buffer) is null;
+   overriding
+   procedure Update_Cursors_Selection (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Views
-     (This : Dummy_Editor_Buffer) return View_Lists.List;
+   overriding
+   function Views (This : Dummy_Editor_Buffer) return View_Lists.List;
 
-   overriding function "="
+   overriding
+   function "="
      (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean;
 
-   overriding procedure Set_Extend_Existing_Selection
-     (This : Dummy_Editor_Buffer; Extend : Boolean) is null;
-   overriding function Extend_Existing_Selection
-     (This : Dummy_Editor_Buffer) return Boolean is (False);
+   overriding
+   procedure Set_Extend_Existing_Selection
+     (This : Dummy_Editor_Buffer; Extend : Boolean)
+   is null;
+   overriding
+   function Extend_Existing_Selection
+     (This : Dummy_Editor_Buffer) return Boolean
+   is (False);
 
-   overriding function Buffer_Address
-     (This : Dummy_Editor_Buffer)
-      return System.Address is (System.Null_Address);
+   overriding
+   function Buffer_Address (This : Dummy_Editor_Buffer) return System.Address
+   is (System.Null_Address);
 
-   overriding procedure Set_Opened_On_LSP_Server
-     (This  : Dummy_Editor_Buffer;
-      Value : Boolean) is null;
+   overriding
+   procedure Set_Opened_On_LSP_Server
+     (This : Dummy_Editor_Buffer; Value : Boolean)
+   is null;
 
-   overriding function Is_Opened_On_LSP_Server
-     (This : Dummy_Editor_Buffer) return Boolean is (False);
+   overriding
+   function Is_Opened_On_LSP_Server (This : Dummy_Editor_Buffer) return Boolean
+   is (False);
 
-   overriding function Expand_Tabs
+   overriding
+   function Expand_Tabs
      (This   : Dummy_Editor_Buffer;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) return Visible_Column_Type is (0);
+      Column : Character_Offset_Type) return Visible_Column_Type
+   is (0);
 
-   overriding function Has_Blocks_Information
-     (This : Dummy_Editor_Buffer)
-      return Boolean is (False);
+   overriding
+   function Has_Blocks_Information (This : Dummy_Editor_Buffer) return Boolean
+   is (False);
 
    ---------------------
    -- Nil_Editor_View --
@@ -1578,37 +1718,42 @@ private
 
    type Dummy_Editor_View is new Editor_View with null record;
 
-   overriding function Get_MDI_Child
-     (This : Dummy_Editor_View) return System.Address;
+   overriding
+   function Get_MDI_Child (This : Dummy_Editor_View) return System.Address;
 
-   overriding procedure Set_Read_Only
-     (This : Dummy_Editor_View; Read_Only : Boolean) is null;
-   overriding function Is_Read_Only
-     (This : Dummy_Editor_View) return Boolean;
+   overriding
+   procedure Set_Read_Only (This : Dummy_Editor_View; Read_Only : Boolean)
+   is null;
+   overriding
+   function Is_Read_Only (This : Dummy_Editor_View) return Boolean;
 
-   overriding procedure Center
+   overriding
+   procedure Center
      (This      : Dummy_Editor_View;
       Location  : Editor_Location'Class := Nil_Editor_Location;
-      Centering : Centering_Type := With_Margin) is null;
+      Centering : Centering_Type := With_Margin)
+   is null;
 
-   overriding procedure Scroll_To_Cursor_Location
-     (This     : Dummy_Editor_View) is null;
+   overriding
+   procedure Scroll_To_Cursor_Location (This : Dummy_Editor_View) is null;
 
-   overriding procedure Cursor_Goto
-     (This       : Dummy_Editor_View;
-      Location   : Editor_Location'Class;
-      Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin;
-      Extend_Selection : Boolean := False) is null;
+   overriding
+   procedure Cursor_Goto
+     (This             : Dummy_Editor_View;
+      Location         : Editor_Location'Class;
+      Raise_View       : Boolean := False;
+      Centering        : Centering_Type := With_Margin;
+      Extend_Selection : Boolean := False)
+   is null;
 
-   overriding function Cursor
-     (This : Dummy_Editor_View) return Editor_Location'Class;
+   overriding
+   function Cursor (This : Dummy_Editor_View) return Editor_Location'Class;
 
-   overriding function Title
-     (This : Dummy_Editor_View; Short : Boolean) return String;
+   overriding
+   function Title (This : Dummy_Editor_View; Short : Boolean) return String;
 
-   overriding function Buffer
-     (This : Dummy_Editor_View) return Editor_Buffer'Class;
+   overriding
+   function Buffer (This : Dummy_Editor_View) return Editor_Buffer'Class;
 
    Nil_Editor_View : constant Editor_View'Class :=
      Dummy_Editor_View'(Controlled with null record);
@@ -1619,40 +1764,55 @@ private
 
    type Dummy_Editor_Overlay is new Editor_Overlay with null record;
 
-   overriding function Name (This : Dummy_Editor_Overlay) return String;
-   overriding function Get_Property
+   overriding
+   function Name (This : Dummy_Editor_Overlay) return String;
+   overriding
+   function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return String;
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return Boolean;
-   overriding function Get_Property
-     (This : Dummy_Editor_Overlay; Dummy_Name : String) return Integer is (0);
-   overriding procedure Set_Property
-     (This : Dummy_Editor_Overlay; Name : String; Value : String) is null;
-   overriding procedure Set_Property
-     (This : Dummy_Editor_Overlay; Name : String; Value : Boolean) is null;
-   overriding procedure Set_Property
-     (This : Dummy_Editor_Overlay; Name : String; Value : Integer) is null;
+   overriding
+   function Get_Property
+     (This : Dummy_Editor_Overlay; Dummy_Name : String) return Integer
+   is (0);
+   overriding
+   procedure Set_Property
+     (This : Dummy_Editor_Overlay; Name : String; Value : String)
+   is null;
+   overriding
+   procedure Set_Property
+     (This : Dummy_Editor_Overlay; Name : String; Value : Boolean)
+   is null;
+   overriding
+   procedure Set_Property
+     (This : Dummy_Editor_Overlay; Name : String; Value : Integer)
+   is null;
 
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
      Dummy_Editor_Overlay'(Controlled with null record);
 
    type Dummy_Editor_Cursor is new Editor_Cursor with null record;
 
-   overriding function Get_Insert_Mark
+   overriding
+   function Get_Insert_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class
    is (Nil_Editor_Mark);
 
-   overriding procedure Move
-     (This : Dummy_Editor_Cursor; Where : Editor_Location'Class;
-      Extend_Selection : Boolean) is null;
+   overriding
+   procedure Move
+     (This             : Dummy_Editor_Cursor;
+      Where            : Editor_Location'Class;
+      Extend_Selection : Boolean)
+   is null;
 
-   overriding function Get_Selection_Mark
+   overriding
+   function Get_Selection_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class
-   is
-     (Nil_Editor_Mark);
+   is (Nil_Editor_Mark);
 
-   overriding procedure Set_Manual_Sync
-     (This : Dummy_Editor_Cursor) is null;
+   overriding
+   procedure Set_Manual_Sync (This : Dummy_Editor_Cursor) is null;
 
    Nil_Editor_Cursor : constant Editor_Cursor'Class :=
      Dummy_Editor_Cursor'(Controlled with null record);
@@ -1671,7 +1831,7 @@ private
       Buffer : Editor_Buffer_Access;
    end record;
 
-   overriding procedure Finalize
-     (Self : in out Controlled_Editor_Buffer_Holder);
+   overriding
+   procedure Finalize (Self : in out Controlled_Editor_Buffer_Holder);
 
 end GPS.Editors;

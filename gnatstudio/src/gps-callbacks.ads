@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Messages;          use Glib.Messages;
-with Glib.Object;            use Glib.Object;
-with Gtk;                    use Gtk;
-with Gtk.Enums;              use Gtk.Enums;
-with GPS.Kernel;             use GPS.Kernel;
+with Glib.Messages; use Glib.Messages;
+with Glib.Object;   use Glib.Object;
+with Gtk;           use Gtk;
+with Gtk.Enums;     use Gtk.Enums;
+with GPS.Kernel;    use GPS.Kernel;
 
 package GPS.Callbacks is
 
@@ -28,19 +28,15 @@ package GPS.Callbacks is
    --  Handler for Ctrl-C events
 
    procedure Child_Selected
-     (Mdi    : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Mdi : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when a new child is selected
 
    procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the title of an MDI child has changed
 
    procedure Gtk_Log
-     (Log_Domain : String;
-      Log_Level  : Log_Level_Flags;
-      Message    : String);
+     (Log_Domain : String; Log_Level : Log_Level_Flags; Message : String);
    --  Log level glib handler for redirecting Gtk+ messages to our log file.
 
 end GPS.Callbacks;

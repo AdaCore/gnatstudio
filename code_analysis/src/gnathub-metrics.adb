@@ -61,36 +61,29 @@ package body GNAThub.Metrics is
 
    function Get_Severity
      (Self : not null access Metric_Record) return Severity_Access
-   is
-      (Self.Severity);
+   is (Self.Severity);
 
    ---------------
    -- Get_Value --
    ---------------
 
-   function Get_Value
-     (Self : not null access Metric_Record) return Float
-   is
-     (Self.Value);
+   function Get_Value (Self : not null access Metric_Record) return Float
+   is (Self.Value);
 
    --------------
    -- Get_Rule --
    --------------
 
-   function Get_Rule
-     (Self : not null access Metric_Record) return Rule_Access
-   is
-      (Self.Rule);
+   function Get_Rule (Self : not null access Metric_Record) return Rule_Access
+   is (Self.Rule);
 
    --------------
    -- Get_File --
    --------------
 
    function Get_File
-     (Self : not null access Metric_Record)
-      return GNATCOLL.VFS.Virtual_File
-   is
-      (Self.File);
+     (Self : not null access Metric_Record) return GNATCOLL.VFS.Virtual_File
+   is (Self.File);
 
    ----------------
    -- Get_Entity --
@@ -98,16 +91,14 @@ package body GNAThub.Metrics is
 
    function Get_Entity
      (Self : not null access Metric_Record) return Entity_Data
-   is
-     (Self.Entity);
+   is (Self.Entity);
 
    ----------
    -- Less --
    ----------
 
    function Less (L, R : Metric_Access) return Boolean
-   is
-     (Less (L.Rule, R.Rule));
+   is (Less (L.Rule, R.Rule));
 
    -----------------------
    -- Register_Listener --
@@ -126,8 +117,8 @@ package body GNAThub.Metrics is
    procedure Unregister_Listener
      (Listener : not null access Metrics_Listener_Interface'Class)
    is
-      Position : Metrics_Listener_Vectors.Cursor := Module.Listeners.Find
-        (Metrics_Listener (Listener));
+      Position : Metrics_Listener_Vectors.Cursor :=
+        Module.Listeners.Find (Metrics_Listener (Listener));
    begin
       if Metrics_Listener_Vectors.Has_Element (Position) then
          Module.Listeners.Delete (Position);
@@ -139,8 +130,7 @@ package body GNAThub.Metrics is
    -------------------
 
    function Get_Listeners return Metrics_Listener_Vectors.Vector
-   is
-      (Module.Listeners);
+   is (Module.Listeners);
 
    ---------------------
    -- Register_Module --

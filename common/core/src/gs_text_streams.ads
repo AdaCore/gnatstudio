@@ -30,8 +30,8 @@ with VSS.Text_Streams;
 
 package GS_Text_Streams is
 
-   type File_UTF8_Output_Stream is
-     limited new VSS.Text_Streams.Output_Text_Stream with private;
+   type File_UTF8_Output_Stream is limited
+     new VSS.Text_Streams.Output_Text_Stream with private;
 
    procedure Open
      (Self : in out File_UTF8_Output_Stream'Class;
@@ -43,36 +43,42 @@ package GS_Text_Streams is
 
 private
 
-   type File_UTF8_Output_Stream is
-     limited new VSS.Text_Streams.Output_Text_Stream with record
+   type File_UTF8_Output_Stream is limited
+     new VSS.Text_Streams.Output_Text_Stream
+   with record
       Writable : GNATCOLL.VFS.Writable_File;
       Buffer   : String (1 .. 4_096);
       Last     : Natural := 0;
    end record;
 
-   overriding procedure Put
+   overriding
+   procedure Put
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Characters.Virtual_Character;
       Success : in out Boolean);
 
-   overriding procedure Put
+   overriding
+   procedure Put
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Strings.Virtual_String;
       Success : in out Boolean);
 
-   overriding procedure Put_Line
+   overriding
+   procedure Put_Line
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Strings.Virtual_String;
       Success : in out Boolean);
 
-   overriding procedure New_Line
-     (Self    : in out File_UTF8_Output_Stream;
-      Success : in out Boolean);
+   overriding
+   procedure New_Line
+     (Self : in out File_UTF8_Output_Stream; Success : in out Boolean);
 
-   overriding function Has_Error
-     (Self : File_UTF8_Output_Stream) return Boolean is (False);
+   overriding
+   function Has_Error (Self : File_UTF8_Output_Stream) return Boolean
+   is (False);
 
-   overriding function Error_Message
+   overriding
+   function Error_Message
      (Self : File_UTF8_Output_Stream) return VSS.Strings.Virtual_String
    is (VSS.Strings.Empty_Virtual_String);
 

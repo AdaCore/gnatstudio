@@ -21,13 +21,13 @@ package GNATCOLL.VFS.VSS_Utils is
 
    function Create
      (Full_Filename : VSS.Strings.Virtual_String;
-      Host          : String  := Local_Host;
+      Host          : String := Local_Host;
       Normalize     : Boolean := False) return Virtual_File;
    --  Equivalent of `Create_From_UTF8`
 
    function Full_Name
-     (File      : Virtual_File;
-      Normalize : Boolean := False) return VSS.Strings.Virtual_String;
+     (File : Virtual_File; Normalize : Boolean := False)
+      return VSS.Strings.Virtual_String;
    --  Equivalent of `Display_Full_Name`
 
    function Base_Name
@@ -37,8 +37,8 @@ package GNATCOLL.VFS.VSS_Utils is
    --  Equivalent of `Display_Base_Name`
 
    function Relative_Path
-     (File : Virtual_File;
-      From : Virtual_File) return VSS.Strings.Virtual_String;
+     (File : Virtual_File; From : Virtual_File)
+      return VSS.Strings.Virtual_String;
    --  Return the path of File relative to From. Return the full_name in case
    --  From and File are not on the same drive.
 

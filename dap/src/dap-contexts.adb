@@ -17,14 +17,14 @@
 
 with Ada.Strings.Unbounded;
 
-with Language;                   use Language;
-with Language_Handlers;          use Language_Handlers;
+with Language;          use Language;
+with Language_Handlers; use Language_Handlers;
 
 with VSS.Strings.Conversions;
-with VSS.Transformers.Casing;    use VSS.Transformers.Casing;
+with VSS.Transformers.Casing; use VSS.Transformers.Casing;
 
-with Xref;                       use Xref;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with Xref;                use Xref;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 
 package body DAP.Contexts is
 
@@ -38,31 +38,34 @@ package body DAP.Contexts is
    -----------------------
 
    function Get_Variable_Name
-     (Context     : Selection_Context;
-      Dereference : Boolean) return String
+     (Context : Selection_Context; Dereference : Boolean) return String
    is
-      Lang  : Language_Access;
+      Lang : Language_Access;
    begin
       if Context = No_Context then
          return "";
       end if;
 
       if Has_File_Information (Context) then
-         Lang := Get_Language_From_File
-           (Get_Language_Handler (Get_Kernel (Context)),
-            File_Information (Context));
+         Lang :=
+           Get_Language_From_File
+             (Get_Language_Handler (Get_Kernel (Context)),
+              File_Information (Context));
       end if;
 
       if Has_Debugging_Variable (Context) then
          if Dereference and then Lang /= null then
-            return Dereference_Name
-              (Lang, Ada.Strings.Unbounded.To_String
-                 (Context_Item_Info_Access
-                      (Debugging_Variable (Context)).Text));
+            return
+              Dereference_Name
+                (Lang,
+                 Ada.Strings.Unbounded.To_String
+                   (Context_Item_Info_Access (Debugging_Variable (Context))
+                      .Text));
          end if;
 
-         return Ada.Strings.Unbounded.To_String
-           (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
+         return
+           Ada.Strings.Unbounded.To_String
+             (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
       end if;
 
       if Has_Area_Information (Context) then
@@ -87,15 +90,14 @@ package body DAP.Contexts is
          begin
             if Dereference
               and then Lang /= null
-              and then (Is_Fuzzy (Entity)
-                        or else (not Is_Type (Entity)
-                                 and then Is_Access (Entity)))
+              and then
+                (Is_Fuzzy (Entity)
+                 or else (not Is_Type (Entity) and then Is_Access (Entity)))
             then
-               return Dereference_Name
-                 (Lang, Entity_Name_Information (Context));
+               return
+                 Dereference_Name (Lang, Entity_Name_Information (Context));
 
-            elsif Is_Fuzzy (Entity)
-              or else Is_Printable_In_Debugger (Entity)
+            elsif Is_Fuzzy (Entity) or else Is_Printable_In_Debugger (Entity)
             then
                return Entity_Name_Information (Context);
             end if;
@@ -110,12 +112,13 @@ package body DAP.Contexts is
    ------------------
 
    function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info'Class is
+     (Context : GPS.Kernel.Selection_Context) return Item_Info'Class is
    begin
       if Has_Debugging_Variable (Context) then
-         return Context_Item_Info_Access
-           (Debugging_Variable (Context)).Holder.Info.all;
+         return
+           Context_Item_Info_Access (Debugging_Variable (Context))
+             .Holder
+             .Info.all;
       else
          return DAP.Modules.Variables.Items.No_Item;
       end if;
@@ -134,10 +137,11 @@ package body DAP.Contexts is
       Item   : Context_Item_Info_Access;
    begin
       Set (Holder, Info);
-      Item := new Context_Item_Info'
-        (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-           (To_Lowercase.Transform (Full_Name)),
-         Holder);
+      Item :=
+        new Context_Item_Info'
+          (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+             (To_Lowercase.Transform (Full_Name)),
+           Holder);
       Set_Debugging_Variable (Context, Context_Item_Access (Item));
    end Store_Variable;
 

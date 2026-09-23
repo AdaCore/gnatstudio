@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                   use Glib;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Icon_Factory;       use Gtk.Icon_Factory;
-with Gtk.Icon_Theme;         use Gtk.Icon_Theme;
+with Glib;             use Glib;
+with Gtk.Enums;        use Gtk.Enums;
+with Gtk.Icon_Factory; use Gtk.Icon_Factory;
+with Gtk.Icon_Theme;   use Gtk.Icon_Theme;
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
@@ -39,9 +39,9 @@ package body GPS.Stock_Icons is
      (Kernel     : not null access Kernel_Handle_Record'Class;
       System_Dir : Virtual_File)
    is
-      W, H     : Gint;
-      Result   : Boolean;
-      Theme    : Gtk_Icon_Theme;
+      W, H                : Gint;
+      Result              : Boolean;
+      Theme               : Gtk_Icon_Theme;
       GNATStudio_Home_Dir : constant Virtual_File := Kernel.Get_Home_Dir;
    begin
       Icon_Size_Local_Toolbar :=
@@ -81,10 +81,9 @@ package body GPS.Stock_Icons is
       Theme.Prepend_Search_Path
         (Create_From_Dir
            (Create_From_Dir
-              (Create_From_Dir (System_Dir, "share"),
-               "gnatstudio"),
+              (Create_From_Dir (System_Dir, "share"), "gnatstudio"),
             "icons")
-         .Display_Full_Name);
+           .Display_Full_Name);
 
       Theme.Prepend_Search_Path
         (Create_From_Dir (GNATStudio_Home_Dir, "icons").Display_Full_Name);
@@ -104,10 +103,8 @@ package body GPS.Stock_Icons is
    --------------------------------------
 
    function Get_Icon_Size_For_Local_Toolbars return Gtk.Enums.Gtk_Icon_Size
-   is
-     (if Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) = Large_Icons then
-         Icon_Size_Local_Toolbar_Large
-      else
-         Icon_Size_Local_Toolbar);
+   is (if Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) = Large_Icons
+       then Icon_Size_Local_Toolbar_Large
+       else Icon_Size_Local_Toolbar);
 
 end GPS.Stock_Icons;

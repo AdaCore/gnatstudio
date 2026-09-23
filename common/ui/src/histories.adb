@@ -15,29 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;         use Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 
-with Glib;                use Glib;
+with Glib; use Glib;
 
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.List_Store;      use Gtk.List_Store;
-with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
+with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
+with Gtk.Combo_Box;          use Gtk.Combo_Box;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.List_Store;         use Gtk.List_Store;
+with Gtk.Toggle_Button;      use Gtk.Toggle_Button;
 with Gtk.Toggle_Tool_Button; use Gtk.Toggle_Tool_Button;
-with Gtk.Tree_Model;      use Gtk.Tree_Model;
-with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Widget;             use Gtk.Widget;
 
-with GUI_Utils;             use GUI_Utils;
-with XML_Utils;             use XML_Utils;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GUI_Utils;       use GUI_Utils;
+with XML_Utils;       use XML_Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with XML_Parsers;
 
 package body Histories is
@@ -46,35 +46,34 @@ package body Histories is
 
    use History_Hash.String_Hash_Table;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (History_Key_Record, History_Key_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Changed_Notifier_Record'Class, Changed_Notifier);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (History_Hash.String_Hash_Table.Instance, HTable_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (History_Key_Record, History_Key_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Changed_Notifier_Record'Class,
+        Changed_Notifier);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (History_Hash.String_Hash_Table.Instance,
+        HTable_Access);
 
-   package Value_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, History_Key_Access);
+   package Value_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, History_Key_Access);
 
    procedure Update_History
-     (Button : access Gtk_Widget_Record'Class;
-      Value  : History_Key_Access);
+     (Button : access Gtk_Widget_Record'Class; Value : History_Key_Access);
    procedure Update_History_Tool_Button
-     (Button : access Gtk_Widget_Record'Class;
-      Value  : History_Key_Access);
+     (Button : access Gtk_Widget_Record'Class; Value : History_Key_Access);
    procedure Update_History_Item
-     (Item : access Gtk_Widget_Record'Class;
-      Value  : History_Key_Access);
+     (Item : access Gtk_Widget_Record'Class; Value : History_Key_Access);
    --  Called when the button is toggled
 
    function Create_New_Key_If_Necessary
-     (Hist     : History_Record;
-      Key      : History_Key;
-      Key_Type : History_Key_Type) return History_Key_Access;
+     (Hist : History_Record; Key : History_Key; Key_Type : History_Key_Type)
+      return History_Key_Access;
    function Create_New_Boolean_Key_If_Necessary
-     (Hist          : in out History_Record;
-      Key           : History_Key;
-      Default_Value : Boolean) return History_Key_Access;
+     (Hist : in out History_Record; Key : History_Key; Default_Value : Boolean)
+      return History_Key_Access;
    --  Internal versions of the public procedures
 
    Type_Name     : constant String := "type";
@@ -104,9 +103,8 @@ package body Histories is
    ---------------------------------
 
    function Create_New_Key_If_Necessary
-     (Hist     : History_Record;
-      Key      : History_Key;
-      Key_Type : History_Key_Type) return History_Key_Access
+     (Hist : History_Record; Key : History_Key; Key_Type : History_Key_Type)
+      return History_Key_Access
    is
       Value : History_Key_Access := Get (Hist.Table.all, String (Key));
    begin
@@ -126,9 +124,8 @@ package body Histories is
    -----------------------------------------
 
    function Create_New_Boolean_Key_If_Necessary
-     (Hist          : in out History_Record;
-      Key           : History_Key;
-      Default_Value : Boolean) return History_Key_Access
+     (Hist : in out History_Record; Key : History_Key; Default_Value : Boolean)
+      return History_Key_Access
    is
       Value : History_Key_Access := Get (Hist.Table.all, String (Key));
    begin
@@ -145,9 +142,7 @@ package body Histories is
    -----------------------------------------
 
    procedure Create_New_Boolean_Key_If_Necessary
-     (Hist          : in out History_Record;
-      Key           : History_Key;
-      Default_Value : Boolean)
+     (Hist : in out History_Record; Key : History_Key; Default_Value : Boolean)
    is
       Tmp : History_Key_Access;
       pragma Unreferenced (Tmp);
@@ -160,8 +155,7 @@ package body Histories is
    --------------
 
    function Get_Type
-     (Hist : access History_Record;
-      Key  : History_Key) return History_Key_Type
+     (Hist : access History_Record; Key : History_Key) return History_Key_Type
    is
       Val : constant History_Key_Access := Get (Hist.Table.all, String (Key));
    begin
@@ -221,7 +215,7 @@ package body Histories is
       Merge_First : Boolean := False)
    is
       Current : constant History_Key_Access :=
-                  Create_New_Key_If_Necessary (Hist, Key, Strings);
+        Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       Current.Allow_Duplicates := Allow;
       Current.Merge_First := Merge_First;
@@ -232,12 +226,10 @@ package body Histories is
    --------------------
 
    procedure Set_Persistent
-     (Hist  : in out History_Record;
-      Key   : History_Key;
-      Value : Boolean)
+     (Hist : in out History_Record; Key : History_Key; Value : Boolean)
    is
       Current : constant History_Key_Access :=
-                  Create_New_Key_If_Necessary (Hist, Key, Strings);
+        Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       Current.Persistent := Value;
    end Set_Persistent;
@@ -246,10 +238,7 @@ package body Histories is
    -- Load --
    ----------
 
-   procedure Load
-     (Hist      : in out History_Record;
-      File_Name : Virtual_File)
-   is
+   procedure Load (Hist : in out History_Record; File_Name : Virtual_File) is
       N     : Node_Ptr;
       File  : Node_Ptr;
       Key   : Node_Ptr;
@@ -276,22 +265,27 @@ package body Histories is
                if Key.Attributes = null
                  or else Get_Attribute_S (Key, Type_Name) = Strings_Name
                then
-                  Value := Create_New_Key_If_Necessary
-                    (Hist,
-                     History_Key (Get_Attribute_S (Key, Name_Name)),
-                     Strings);
+                  Value :=
+                    Create_New_Key_If_Necessary
+                      (Hist,
+                       History_Key (Get_Attribute_S (Key, Name_Name)),
+                       Strings);
 
                elsif Get_Attribute_S (Key, Type_Name) = Booleans_Name then
-                  Value := Create_New_Key_If_Necessary
-                    (Hist,
-                     History_Key (Get_Attribute_S (Key, Name_Name)),
-                     Booleans);
+                  Value :=
+                    Create_New_Key_If_Necessary
+                      (Hist,
+                       History_Key (Get_Attribute_S (Key, Name_Name)),
+                       Booleans);
 
                else
                   Value := null;
-                  Trace (Me, "Invalid data type in "
-                         & File_Name.Display_Full_Name
-                         & " : " & Get_Attribute_S (Key, Type_Name));
+                  Trace
+                    (Me,
+                     "Invalid data type in "
+                     & File_Name.Display_Full_Name
+                     & " : "
+                     & Get_Attribute_S (Key, Type_Name));
                end if;
 
             exception
@@ -304,7 +298,7 @@ package body Histories is
                N := Key.Child;
 
                case Value.Typ is
-                  when Strings =>
+                  when Strings  =>
                      Num := 0;
 
                      while N /= null loop
@@ -321,7 +315,7 @@ package body Histories is
                         Value.List := null;
                      end if;
 
-                     N   := Key.Child;
+                     N := Key.Child;
                      Num := 1;
 
                      while N /= null loop
@@ -329,12 +323,14 @@ package body Histories is
                            begin
                               Value.Max_Length := Integer'Value (N.Value.all);
                            exception
-                              when Constraint_Error => null;
+                              when Constraint_Error =>
+                                 null;
                            end;
 
                         else
-                           Value.List (Num) := new String'
-                             ((if N.Value /= null then N.Value.all else ""));
+                           Value.List (Num) :=
+                             new String'
+                               ((if N.Value /= null then N.Value.all else ""));
                            Num := Num + 1;
                         end if;
 
@@ -342,9 +338,7 @@ package body Histories is
                      end loop;
 
                   when Booleans =>
-                     if N /= null
-                       and then N.Tag.all = Value_Name
-                     then
+                     if N /= null and then N.Tag.all = Value_Name then
                         Value.Value := Boolean'Value (N.Value.all);
                      else
                         Value.Value := False;
@@ -390,7 +384,7 @@ package body Histories is
          Set_Attribute_S (Key, Name_Name, Get_Key (Iter));
 
          case Value.Typ is
-            when Strings =>
+            when Strings  =>
                Set_Attribute_S (Key, Type_Name, Strings_Name);
 
                if Value.Max_Length /= -1 then
@@ -442,8 +436,11 @@ package body Histories is
          exit when Value = Null_History;
 
          case Value.Typ is
-            when Strings  => Free (Value.List);
-            when Booleans => null;
+            when Strings  =>
+               Free (Value.List);
+
+            when Booleans =>
+               null;
          end case;
 
          if Value.Notifier /= null then
@@ -468,15 +465,15 @@ package body Histories is
       return VSS.String_Vectors.Virtual_String_Vector
    is
       Val : constant History_Key_Access :=
-              Create_New_Key_If_Necessary (Hist, Key, Strings);
+        Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       return Result : VSS.String_Vectors.Virtual_String_Vector do
          if Val.List /= null then
             for Item of Val.List.all loop
                Result.Append
                  (if Item /= null
-                    then VSS.Strings.Conversions.To_Virtual_String (Item.all)
-                    else VSS.Strings.Empty_Virtual_String);
+                  then VSS.Strings.Conversions.To_Virtual_String (Item.all)
+                  else VSS.Strings.Empty_Virtual_String);
             end loop;
          end if;
       end return;
@@ -493,8 +490,9 @@ package body Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Gint := 0;
-      Filter      : access
-        function (Item : VSS.Strings.Virtual_String) return Boolean := null)
+      Filter      :
+        access function (Item : VSS.Strings.Virtual_String) return Boolean :=
+          null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
       Value : constant VSS.String_Vectors.Virtual_String_Vector :=
@@ -514,9 +512,7 @@ package body Histories is
             --  Do not add the empty item. It is stored internally to properly
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
-            if not V.Is_Empty
-              and then (Filter = null or else Filter (V))
-            then
+            if not V.Is_Empty and then (Filter = null or else Filter (V)) then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared
                if Clear_Combo then
@@ -550,10 +546,10 @@ package body Histories is
       Key       : History_Key;
       New_Entry : VSS.Strings.Virtual_String)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_List, String_List_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (String_List, String_List_Access);
       Value : constant History_Key_Access :=
-                Create_New_Key_If_Necessary (Hist, Key, Strings);
+        Create_New_Key_If_Necessary (Hist, Key, Strings);
       Tmp   : String_Access;
       Tmp2  : String_List_Access;
    begin
@@ -564,7 +560,7 @@ package body Histories is
          if not Value.Allow_Duplicates then
             for V in Value.List'Range loop
                if Value.List (V).all
-                    = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
+                 = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
                then
                   Tmp := Value.List (V);
                   Value.List (Value.List'First + 1 .. V) :=
@@ -575,8 +571,9 @@ package body Histories is
             end loop;
 
          elsif Value.Merge_First
-           and then Value.List (Value.List'First).all
-                      = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
+           and then
+             Value.List (Value.List'First).all
+             = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
          then
             return;
          end if;
@@ -586,8 +583,8 @@ package body Histories is
          if (Value.Max_Length /= -1
              and then Value.List'Length >= Value.Max_Length)
            or else
-           (Value.Max_Length = -1
-            and then Value.List'Length >= Hist.Max_Length)
+             (Value.Max_Length = -1
+              and then Value.List'Length >= Hist.Max_Length)
          then
             Free (Value.List (Value.List'Last));
             Value.List (Value.List'First + 1 .. Value.List'Last) :=
@@ -611,8 +608,9 @@ package body Histories is
       else
          Value.List :=
            new String_List'
-             (1 => new String'
-                (VSS.Strings.Conversions.To_UTF_8_String (New_Entry)));
+             (1 =>
+                new String'
+                  (VSS.Strings.Conversions.To_UTF_8_String (New_Entry)));
       end if;
    end Add_To_History;
 
@@ -625,8 +623,8 @@ package body Histories is
       Key             : History_Key;
       Entry_To_Remove : VSS.Strings.Virtual_String)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_List, String_List_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (String_List, String_List_Access);
       Value : constant History_Key_Access :=
         Create_New_Key_If_Necessary (Hist, Key, Strings);
       Tmp   : String_List_Access := null;
@@ -648,12 +646,11 @@ package body Histories is
                --  Create a new list by appending the slices before and after
                --  the position of the entry to remove.
                if Value.List'Length > 1 then
-                  Tmp := new String_List
-                    (Value.List'First .. Value.List'Last - 1);
+                  Tmp :=
+                    new String_List (Value.List'First .. Value.List'Last - 1);
                   Tmp (Tmp'First .. J - 1) :=
                     Value.List (Value.List'First .. J - 1);
-                  Tmp (J .. Tmp'Last) :=
-                    Value.List (J + 1 .. Value.List'Last);
+                  Tmp (J .. Tmp'Last) := Value.List (J + 1 .. Value.List'Last);
                end if;
                Free (Value.List (J));
                Unchecked_Free (Value.List);
@@ -671,12 +668,10 @@ package body Histories is
    -----------------
 
    procedure Set_History
-     (Hist  : in out History_Record;
-      Key   : History_Key;
-      Value : Boolean)
+     (Hist : in out History_Record; Key : History_Key; Value : Boolean)
    is
       Val : constant History_Key_Access :=
-              Create_New_Key_If_Necessary (Hist, Key, Booleans);
+        Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       Val.Value := Value;
 
@@ -690,11 +685,10 @@ package body Histories is
    -----------------
 
    function Get_History
-     (Hist : History_Record;
-      Key  : History_Key) return Boolean
+     (Hist : History_Record; Key : History_Key) return Boolean
    is
       Val : constant History_Key_Access :=
-              Create_New_Key_If_Necessary (Hist, Key, Booleans);
+        Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       return Val.Value;
    end Get_History;
@@ -704,8 +698,7 @@ package body Histories is
    --------------------
 
    procedure Update_History
-     (Button : access Gtk_Widget_Record'Class;
-      Value  : History_Key_Access) is
+     (Button : access Gtk_Widget_Record'Class; Value : History_Key_Access) is
    begin
       Value.Value := Get_Active (Gtk_Toggle_Button (Button));
    end Update_History;
@@ -715,8 +708,7 @@ package body Histories is
    --------------------------------
 
    procedure Update_History_Tool_Button
-     (Button : access Gtk_Widget_Record'Class;
-      Value  : History_Key_Access) is
+     (Button : access Gtk_Widget_Record'Class; Value : History_Key_Access) is
    begin
       Value.Value := Get_Active (Gtk_Toggle_Tool_Button (Button));
    end Update_History_Tool_Button;
@@ -726,8 +718,7 @@ package body Histories is
    -------------------------
 
    procedure Update_History_Item
-     (Item  : access Gtk_Widget_Record'Class;
-      Value : History_Key_Access) is
+     (Item : access Gtk_Widget_Record'Class; Value : History_Key_Access) is
    begin
       Value.Value := Get_Active (Gtk_Check_Menu_Item (Item));
    end Update_History_Item;
@@ -747,8 +738,10 @@ package body Histories is
       Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Button.Set_Active (Val.Value);
       Value_Callback.Connect
-        (Button, Gtk.Toggle_Button.Signal_Toggled,
-         Update_History'Access, User_Data => Val);
+        (Button,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Update_History'Access,
+         User_Data => Val);
    end Associate;
 
    ---------------
@@ -756,10 +749,11 @@ package body Histories is
    ---------------
 
    procedure Associate
-     (Hist   : in out History_Record;
-      Key    : History_Key;
-      Button : not null access
-        Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Button  :
+        not null access
+          Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
       Default : Boolean := True)
    is
       Val : History_Key_Access;
@@ -767,8 +761,10 @@ package body Histories is
       Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Button.Set_Active (Val.Value);
       Value_Callback.Connect
-        (Button, Gtk.Toggle_Tool_Button.Signal_Toggled,
-         Update_History_Tool_Button'Access, User_Data => Val);
+        (Button,
+         Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Update_History_Tool_Button'Access,
+         User_Data => Val);
    end Associate;
 
    ---------------
@@ -776,9 +772,9 @@ package body Histories is
    ---------------
 
    procedure Associate
-     (Hist : in out History_Record;
-      Key  : History_Key;
-      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Item    : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
       Default : Boolean := True)
    is
       Val : History_Key_Access;
@@ -786,8 +782,10 @@ package body Histories is
       Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
-        (Item, Gtk.Toggle_Button.Signal_Toggled,
-         Update_History_Item'Access, User_Data => Val);
+        (Item,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Update_History_Item'Access,
+         User_Data => Val);
    end Associate;
 
    -----------------

@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
-with GNATCOLL.Utils;                 use GNATCOLL.Utils;
-with Language.Ada;                   use Language.Ada;
-with String_Utils;                   use String_Utils;
-with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
-with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
-with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Cache;        use Ada_Semantic_Tree.Cache;
+with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with Language.Ada;                      use Language.Ada;
+with String_Utils;                      use String_Utils;
+with Ada_Semantic_Tree.Lang;            use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Units;           use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Parts;           use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Cache;           use Ada_Semantic_Tree.Cache;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 
 package body Ada_Semantic_Tree.Visibility is
@@ -33,20 +33,21 @@ package body Ada_Semantic_Tree.Visibility is
       null;
    end record;
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Ada_Visibibility_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
-   type Clause_Val is new Cached_Information
-   with record
+   type Clause_Val is new Cached_Information with record
       Unit            : Entity_Persistent_Access;
       Generic_Context : Persistent_Instance_Info :=
         Null_Persistent_Instance_Info;
    end record;
 
-   overriding procedure Free (This : in out Clause_Val);
+   overriding
+   procedure Free (This : in out Clause_Val);
 
    ------------------------
    -- Register_Assistant --
@@ -63,8 +64,7 @@ package body Ada_Semantic_Tree.Visibility is
    -------------------
 
    function Get_Assistant
-     (Db : Construct_Database_Access) return Database_Assistant_Access
-   is
+     (Db : Construct_Database_Access) return Database_Assistant_Access is
    begin
       return Get_Assistant (Db, Ada_Visibility_Id);
    end Get_Assistant;
@@ -76,15 +76,16 @@ package body Ada_Semantic_Tree.Visibility is
    function Is_Public_Library_Visible (Entity : Entity_Access) return Boolean
    is
    begin
-      return Get_Construct (Entity).Attributes
-        (Ada_Library_Visibility_Attribute);
+      return
+        Get_Construct (Entity).Attributes (Ada_Library_Visibility_Attribute);
    end Is_Public_Library_Visible;
 
    ------------------
    -- File_Updated --
    ------------------
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Ada_Visibibility_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -101,8 +102,7 @@ package body Ada_Semantic_Tree.Visibility is
       Tree : constant Construct_Tree := Get_Tree (File);
 
       procedure Add_Scope
-        (Scope           : Construct_Tree_Iterator;
-         Parameters_Only : Boolean := False);
+        (Scope : Construct_Tree_Iterator; Parameters_Only : Boolean := False);
 
       procedure Mark_Scope_Not_Vible (Scope : Construct_Tree_Iterator);
 
@@ -111,8 +111,7 @@ package body Ada_Semantic_Tree.Visibility is
       ---------------
 
       procedure Add_Scope
-        (Scope           : Construct_Tree_Iterator;
-         Parameters_Only : Boolean := False)
+        (Scope : Construct_Tree_Iterator; Parameters_Only : Boolean := False)
       is
          It        : Construct_Tree_Iterator;
          Scope_End : Construct_Tree_Iterator;
@@ -124,8 +123,8 @@ package body Ada_Semantic_Tree.Visibility is
          end if;
 
          while Is_Parent_Scope (Scope, It) loop
-            if Parameters_Only and then
-              Get_Construct (It).Category /= Cat_Parameter
+            if Parameters_Only
+              and then Get_Construct (It).Category /= Cat_Parameter
             then
                exit;
             end if;
@@ -144,18 +143,18 @@ package body Ada_Semantic_Tree.Visibility is
                     Get_Construct (It).Is_Declaration;
                else
                   Get_Construct (It).Attributes
-                    (Ada_Library_Visibility_Attribute) := True;
+                    (Ada_Library_Visibility_Attribute) :=
+                    True;
                end if;
 
                if not Parameters_Only then
                   if (Get_Construct (It).Category = Cat_Package
                       and then Get_Construct (It).Is_Declaration)
-                    or else Get_Construct (It).Category
-                  in Cat_Class .. Cat_Type
+                    or else
+                      Get_Construct (It).Category in Cat_Class .. Cat_Type
                   then
                      Add_Scope (It);
-                  elsif Get_Construct (It).Category
-                  in Cat_Task .. Cat_Entry
+                  elsif Get_Construct (It).Category in Cat_Task .. Cat_Entry
                   then
                      Add_Scope (It, True);
                   else
@@ -176,8 +175,8 @@ package body Ada_Semantic_Tree.Visibility is
          end if;
 
          while It /= Scope_End loop
-            Get_Construct (It).Attributes
-              (Ada_Library_Visibility_Attribute) := False;
+            Get_Construct (It).Attributes (Ada_Library_Visibility_Attribute) :=
+              False;
 
             It := Next (Tree, It, Jump_Into);
          end loop;
@@ -188,13 +187,13 @@ package body Ada_Semantic_Tree.Visibility is
       --------------------------
 
       procedure Mark_Scope_Not_Vible (Scope : Construct_Tree_Iterator) is
-         It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
+         It        : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
          Scope_End : constant Construct_Tree_Iterator :=
            Next (Tree, Scope, Jump_Over);
       begin
          while It /= Scope_End loop
-            Get_Construct (It).Attributes
-              (Ada_Library_Visibility_Attribute) := False;
+            Get_Construct (It).Attributes (Ada_Library_Visibility_Attribute) :=
+              False;
 
             It := Next (Tree, It, Jump_Into);
          end loop;
@@ -202,7 +201,7 @@ package body Ada_Semantic_Tree.Visibility is
 
    begin
       case Kind is
-         when Minor_Change | Removed =>
+         when Minor_Change | Removed                           =>
             null;
 
          when Full_Change | Structural_Change | Project_Change =>
@@ -221,7 +220,7 @@ package body Ada_Semantic_Tree.Visibility is
       Tree_From   : Construct_Tree;
       Offset_From : String_Index_Type) return Location_Relation
    is
-      Path_To   : constant Construct_Tree_Iterator_Array :=
+      Path_To : constant Construct_Tree_Iterator_Array :=
         Full_Construct_Path (Tree_To, Object_To);
 
       Path_From : constant Construct_Tree_Iterator_Array :=
@@ -234,9 +233,7 @@ package body Ada_Semantic_Tree.Visibility is
      (Tree_To   : Construct_Tree;
       Path_To   : Construct_Tree_Iterator_Array;
       Tree_From : Construct_Tree;
-      Path_From : Construct_Tree_Iterator_Array)
-      return Location_Relation
-   is
+      Path_From : Construct_Tree_Iterator_Array) return Location_Relation is
    begin
       if Path_To'Length > Path_From'Length then
          return None;
@@ -262,13 +259,15 @@ package body Ada_Semantic_Tree.Visibility is
                --  this entity. Return the max potential visibility
 
                if Tree_To = Tree_From
-                 and then Encloses
-                   (Path_To (Path_To'Last),
-                    String_Index_Type
-                      (Get_Construct
-                         (Path_From (Path_From'Last)).Sloc_Start.Index))
-                 and then not Get_Construct
-                   (Path_To (Path_To'Last)).Is_Declaration
+                 and then
+                   Encloses
+                     (Path_To (Path_To'Last),
+                      String_Index_Type
+                        (Get_Construct (Path_From (Path_From'Last))
+                           .Sloc_Start
+                           .Index))
+                 and then
+                   not Get_Construct (Path_To (Path_To'Last)).Is_Declaration
                then
                   return Package_Body;
                else
@@ -281,9 +280,7 @@ package body Ada_Semantic_Tree.Visibility is
                --  visibility priviledge other than public.
 
                return None;
-            elsif Index_In_To_Path > 1
-              and then Index_In_From_Path > 1
-            then
+            elsif Index_In_To_Path > 1 and then Index_In_From_Path > 1 then
                --  If we analyzed the first item, then we only need to check
                --  the name of the remaining ones - no composite identifier is
                --  expected pass this point.
@@ -293,16 +290,14 @@ package body Ada_Semantic_Tree.Visibility is
                then
                   return None;
                end if;
-            elsif Index_In_From_Path = 1
-              and then Index_In_To_Path = 1
-            then
+            elsif Index_In_From_Path = 1 and then Index_In_To_Path = 1 then
                --  We're still analyzing the first index - which may be a
                --  composite identifier.
 
                if not Equal
-                 (Get_Item (Root_To_Name, Index_In_To_Root),
-                  Get_Item (Root_From_Name, Index_In_From_Root),
-                  False)
+                        (Get_Item (Root_To_Name, Index_In_To_Root),
+                         Get_Item (Root_From_Name, Index_In_From_Root),
+                         False)
                then
                   return None;
                end if;
@@ -312,10 +307,11 @@ package body Ada_Semantic_Tree.Visibility is
                --  composite "from" against the next path element of "to"
 
                if not Equal
-                 (Get_Item (Root_To_Name, Index_In_To_Root),
-                  Get
-                    (Get_Construct (Path_From (Index_In_From_Path)).Name).all,
-                  False)
+                        (Get_Item (Root_To_Name, Index_In_To_Root),
+                         Get
+                           (Get_Construct (Path_From (Index_In_From_Path))
+                              .Name).all,
+                         False)
                then
                   return None;
                end if;
@@ -325,10 +321,11 @@ package body Ada_Semantic_Tree.Visibility is
                --  composite "to" against the next path element of "from"
 
                if not Equal
-                 (Get_Item (Root_From_Name, Index_In_From_Root),
-                  Get (Get_Construct
-                    (Path_To (Index_In_To_Path)).Name).all,
-                  False)
+                        (Get_Item (Root_From_Name, Index_In_From_Root),
+                         Get
+                           (Get_Construct (Path_To (Index_In_To_Path))
+                              .Name).all,
+                         False)
                then
                   return None;
                end if;
@@ -374,28 +371,33 @@ package body Ada_Semantic_Tree.Visibility is
          return False;
       end if;
 
-      Rel := Get_Location_Relation
-        (Tree_To     => Get_Tree (Get_File (Entity)),
-         Object_To   => Get_Parent_Scope
-           (Get_Tree (Get_File (Entity)), To_Construct_Tree_Iterator (Entity)),
-         Tree_From   => Get_Tree (From_File),
-         Offset_From => From_Offset);
+      Rel :=
+        Get_Location_Relation
+          (Tree_To     => Get_Tree (Get_File (Entity)),
+           Object_To   =>
+             Get_Parent_Scope
+               (Get_Tree (Get_File (Entity)),
+                To_Construct_Tree_Iterator (Entity)),
+           Tree_From   => Get_Tree (From_File),
+           Offset_From => From_Offset);
 
       case Rel is
-         when  Package_Body =>
+         when Package_Body                 =>
             --  If we've got visibility on the entire package, then
             --  it's OK.
 
             return True;
 
-         when Full_Spec_Hierarchy =>
+         when Full_Spec_Hierarchy          =>
             --  If we've got visibility only on the private spec, then
             --  check if the entity is indeed coming from the spec.
 
-            return Get_Construct (Get_Parent_Scope
-              (Get_Tree
-                 (Get_File (Entity)),
-                 To_Construct_Tree_Iterator (Entity))).Is_Declaration;
+            return
+              Get_Construct
+                (Get_Parent_Scope
+                   (Get_Tree (Get_File (Entity)),
+                    To_Construct_Tree_Iterator (Entity)))
+                .Is_Declaration;
 
          when None | Public_Spec_Hierarchy =>
             --  If we have just visibilty on the public part, since
@@ -412,17 +414,18 @@ package body Ada_Semantic_Tree.Visibility is
    ------------------------
 
    function To_Clause_Iterator
-     (Visibility_Info : Visibility_Context;
-      Category        : Language_Category) return Clause_Iterator
+     (Visibility_Info : Visibility_Context; Category : Language_Category)
+      return Clause_Iterator
    is
       Tree   : constant Construct_Tree := Get_Tree (Visibility_Info.File);
       It     : Construct_Tree_Iterator;
       Result : Clause_Iterator;
    begin
-      It := Get_Iterator_At
-        (Tree     => Tree,
-         Location => To_Location (Visibility_Info.Offset),
-         Position => Before);
+      It :=
+        Get_Iterator_At
+          (Tree     => Tree,
+           Location => To_Location (Visibility_Info.Offset),
+           Position => Before);
 
       Result.Current := To_Entity_Access (Visibility_Info.File, It);
       Result.Category := Category;
@@ -440,7 +443,8 @@ package body Ada_Semantic_Tree.Visibility is
 
    function Is_Valid (This : Clause_Iterator) return Boolean is
    begin
-      return At_End (This)
+      return
+        At_End (This)
         or else
           (This.Category = Cat_Use
            and then Get_Construct (This.Current).Category = Cat_Use)
@@ -449,8 +453,8 @@ package body Ada_Semantic_Tree.Visibility is
            and then Get_Construct (This.Current).Category = Cat_With)
         or else
           (This.Category = Cat_Unknown
-           and then Get_Construct
-             (This.Current).Category in Cat_With .. Cat_Use);
+           and then
+             Get_Construct (This.Current).Category in Cat_With .. Cat_Use);
    end Is_Valid;
 
    ----------
@@ -459,14 +463,15 @@ package body Ada_Semantic_Tree.Visibility is
 
    procedure Prev (This : in out Clause_Iterator) is
       Tree : constant Construct_Tree := Get_Tree (Get_File (This.Current));
-      It   : Construct_Tree_Iterator := To_Construct_Tree_Iterator
-        (This.Current);
+      It   : Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (This.Current);
       Unit : Unit_Access;
    begin
       loop
          It := Prev (Tree, It, Jump_Over);
 
-         exit when It = Null_Construct_Tree_Iterator
+         exit when
+           It = Null_Construct_Tree_Iterator
            or else
              (This.Category = Cat_Use
               and then Get_Construct (It).Category = Cat_Use)
@@ -488,7 +493,7 @@ package body Ada_Semantic_Tree.Visibility is
                Unit_It   : Construct_Tree_Iterator :=
                  To_Construct_Tree_Iterator (Start_E);
                Scope_It  : constant Construct_Tree_Iterator := Unit_It;
-               Last_It  : Construct_Tree_Iterator;
+               Last_It   : Construct_Tree_Iterator;
                Unit_File : constant Structured_File_Access :=
                  Get_File (Start_E);
                Unit_Tree : constant Construct_Tree := Get_Tree (Unit_File);
@@ -546,8 +551,7 @@ package body Ada_Semantic_Tree.Visibility is
    -- Get_Generic_Context --
    -------------------------
 
-   function Get_Generic_Context
-     (This : Clause_Iterator) return Instance_Info
+   function Get_Generic_Context (This : Clause_Iterator) return Instance_Info
    is
    begin
       return Get_Generic_Context (Get_Clause_Info (This.Current));
@@ -558,11 +562,11 @@ package body Ada_Semantic_Tree.Visibility is
    -----------------------------
 
    function Is_Visible_From_Clauses
-     (Entity         : Entity_Access;
-      From_Visiblity : Visibility_Context) return Entity_Access
+     (Entity : Entity_Access; From_Visiblity : Visibility_Context)
+      return Entity_Access
    is
-      Clause_It : Clause_Iterator := To_Clause_Iterator
-        (From_Visiblity, Cat_Unknown);
+      Clause_It : Clause_Iterator :=
+        To_Clause_Iterator (From_Visiblity, Cat_Unknown);
 
       Clause : Entity_Access;
 
@@ -579,9 +583,7 @@ package body Ada_Semantic_Tree.Visibility is
          Prefix_Id := Prefix'First;
          Full_Id := Full'First;
 
-         while Full_Id <= Full'Last
-           and then Prefix_Id <= Prefix'Last
-         loop
+         while Full_Id <= Full'Last and then Prefix_Id <= Prefix'Last loop
             Skip_Blanks (Prefix, Prefix_Id);
             Skip_Blanks (Full, Full_Id);
 
@@ -626,11 +628,11 @@ package body Ada_Semantic_Tree.Visibility is
          Clause := Get_Entity (Clause_It);
 
          case Get_Construct (Clause).Category is
-            when Cat_Use =>
+            when Cat_Use  =>
                declare
-                  Unit : Entity_Access :=
+                  Unit       : Entity_Access :=
                     Get_Target (Get_Clause_Info (Clause));
-                  View : Entity_View;
+                  View       : Entity_View;
                   Use_Clause : Entity_Access;
                begin
                   if Is_Generic_Instance (Unit) then
@@ -649,21 +651,23 @@ package body Ada_Semantic_Tree.Visibility is
 
             when Cat_With =>
                if (Get_Construct (Entity).Category = Cat_Package
-                   or else Get_Construct (Entity).Category in
-                     Cat_Procedure .. Cat_Function)
-                 and then Is_Compilation_Unit
-                   (To_Construct_Tree_Iterator (Entity))
+                   or else
+                     Get_Construct (Entity).Category
+                     in Cat_Procedure .. Cat_Function)
+                 and then
+                   Is_Compilation_Unit (To_Construct_Tree_Iterator (Entity))
                then
                   if Is_Prefix_Of
-                    (Get (Entity_Id).all,
-                     Get (Get_Identifier
-                       (To_Construct_Tree_Iterator (Clause))).all)
+                       (Get (Entity_Id).all,
+                        Get
+                          (Get_Identifier
+                             (To_Construct_Tree_Iterator (Clause))).all)
                   then
                      return Get_Target (Get_Clause_Info (Clause));
                   end if;
                end if;
 
-            when others =>
+            when others   =>
                null;
 
          end case;
@@ -687,7 +691,8 @@ package body Ada_Semantic_Tree.Visibility is
    -- Free --
    ----------
 
-   overriding procedure Free (This : in out Clause_Val) is
+   overriding
+   procedure Free (This : in out Clause_Val) is
    begin
       Free (This.Generic_Context);
       Unref (This.Unit);

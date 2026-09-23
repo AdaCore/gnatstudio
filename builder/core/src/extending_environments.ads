@@ -21,7 +21,7 @@
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with GPS.Core_Kernels;   use GPS.Core_Kernels;
+with GPS.Core_Kernels;  use GPS.Core_Kernels;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Extending_Environments is

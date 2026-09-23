@@ -39,8 +39,8 @@ package body GPS.Kernel.Commands is
       Index            : Integer;
       Stop             : Boolean := False;
 
-      Chunk_Size       : Integer := 1;
-      Callback         : File_Callback;
+      Chunk_Size : Integer := 1;
+      Callback   : File_Callback;
    end record;
    type File_Iterate_Data_Access is access File_Iterate_Data;
 
@@ -53,9 +53,10 @@ package body GPS.Kernel.Commands is
       Result  : out Command_Return_Type);
    --  Iterate on a file
 
-   package File_Iterate_Commands is new Generic_Asynchronous
-     (Data_Type => File_Iterate_Data_Access,
-      Free      => Free);
+   package File_Iterate_Commands is new
+     Generic_Asynchronous
+       (Data_Type => File_Iterate_Data_Access,
+        Free      => Free);
 
    function Kill_File_Queue
      (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
@@ -97,10 +98,7 @@ package body GPS.Kernel.Commands is
          Index := Stop + 1;
          Data.Current_Progress := Data.Current_Progress + 1;
          Set_Progress
-           (Command,
-            (Running,
-             Data.Current_Progress,
-             Data.Total_Progress));
+           (Command, (Running, Data.Current_Progress, Data.Total_Progress));
       end Iter_From_File_Array;
 
    begin
@@ -138,9 +136,10 @@ package body GPS.Kernel.Commands is
       if Old_Command /= null then
          --  If there is already something in the queue, then interrupt it
 
-         Old_Data := Get_Data
-           (File_Iterate_Commands.Generic_Asynchronous_Command_Access
-              (Get_Command (Old_Command)));
+         Old_Data :=
+           Get_Data
+             (File_Iterate_Commands.Generic_Asynchronous_Command_Access
+                (Get_Command (Old_Command)));
          Old_Data.Stop := True;   --  modify in place via the pointer
 
          return True;
@@ -165,15 +164,14 @@ package body GPS.Kernel.Commands is
 
       C              : Generic_Asynchronous_Command_Access;
       Projects_Count : Natural := 0;
-      Iter           : Project_Iterator :=
-                         Start (Get_Project (Handle));
+      Iter           : Project_Iterator := Start (Get_Project (Handle));
 
       Project_Files  : File_Array_Access;
       All_Files      : File_Array_Access;
       Total_Progress : Natural;
 
-      Old_Command    : Scheduled_Command_Access;
-      Command_Data   : File_Iterate_Data_Access;
+      Old_Command  : Scheduled_Command_Access;
+      Command_Data : File_Iterate_Data_Access;
 
    begin
       while Current (Iter) /= No_Project loop
@@ -184,9 +182,10 @@ package body GPS.Kernel.Commands is
       if Files = null then
          Project_Files := Get_Project (Handle).Source_Files (True);
 
-         All_Files := new File_Array'
-           (Get_Registry (Handle).Environment.Predefined_Source_Files
-            & Project_Files.all);
+         All_Files :=
+           new File_Array'
+             (Get_Registry (Handle).Environment.Predefined_Source_Files
+              & Project_Files.all);
          Unchecked_Free (Project_Files);
       else
          All_Files := Files;
@@ -200,25 +199,26 @@ package body GPS.Kernel.Commands is
 
       Old_Command := Head (Get_Task_Manager (Handle), Queue_Name);
 
-      Command_Data := new File_Iterate_Data'
-        (Kernel_Handle (Handle),
-         Current_Progress => 0,
-         Total_Progress   => Total_Progress,
-         Files            => All_Files,
-         Index            => All_Files'First,
-         Stop             => False,
-         Chunk_Size       => Chunk_Size,
-         Callback         => Callback);
+      Command_Data :=
+        new File_Iterate_Data'
+          (Kernel_Handle (Handle),
+           Current_Progress => 0,
+           Total_Progress   => Total_Progress,
+           Files            => All_Files,
+           Index            => All_Files'First,
+           Stop             => False,
+           Chunk_Size       => Chunk_Size,
+           Callback         => Callback);
 
       if Old_Command /= null then
-         C := File_Iterate_Commands.Generic_Asynchronous_Command_Access
-           (Get_Command (Old_Command));
+         C :=
+           File_Iterate_Commands.Generic_Asynchronous_Command_Access
+             (Get_Command (Old_Command));
          Set_Data (C, Command_Data);  --  Free the old data as well
+
       else
          File_Iterate_Commands.Create
-           (C, Operation_Name,
-            Command_Data,
-            File_Iterate'Access);
+           (C, Operation_Name, Command_Data, File_Iterate'Access);
 
          Launch_Background_Command
            (Handle,
@@ -235,8 +235,10 @@ package body GPS.Kernel.Commands is
    ----------
 
    procedure Free (D : in out File_Iterate_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (File_Iterate_Data, File_Iterate_Data_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (File_Iterate_Data,
+           File_Iterate_Data_Access);
    begin
       if D /= null then
          Unchecked_Free (D.Files);

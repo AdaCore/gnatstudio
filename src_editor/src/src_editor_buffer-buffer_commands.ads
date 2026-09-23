@@ -24,7 +24,8 @@ with Commands.Interactive; use Commands.Interactive;
 package Src_Editor_Buffer.Buffer_Commands is
 
    type Jump_To_Delimiter_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Jump_To_Delimiter_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Jump to the next delimiter for the one currently under the cursor.

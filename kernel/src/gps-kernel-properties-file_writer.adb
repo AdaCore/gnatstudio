@@ -39,8 +39,7 @@ package body GPS.Kernel.Properties.File_Writer is
    use Key_Value;
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class;
-      Dump   : Boolean := False)
+     (Kernel : access Kernel_Handle_Record'Class; Dump : Boolean := False)
       return Virtual_File;
    --  Return the filename to use when saving the persistent properties for the
    --  current project
@@ -53,17 +52,17 @@ package body GPS.Kernel.Properties.File_Writer is
    -----------------------------
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class;
-      Dump   : Boolean := False)
+     (Kernel : access Kernel_Handle_Record'Class; Dump : Boolean := False)
       return Virtual_File is
    begin
       --  We are using the .gnatstudio directory. This means we have to keep
       --  in database information for files that do not belong to the current
       --  project.
 
-      return Create_From_Dir
-        (Get_Home_Dir (Kernel), "properties" &
-           (if Dump then ".dump" else ".json"));
+      return
+        Create_From_Dir
+          (Get_Home_Dir (Kernel),
+           "properties" & (if Dump then ".dump" else ".json"));
    end Get_Properties_Filename;
 
    -----------------
@@ -71,8 +70,7 @@ package body GPS.Kernel.Properties.File_Writer is
    -----------------
 
    function Constructor
-     (Kernel : access Kernel_Handle_Record'Class) return
-     GPS.Properties.Writer
+     (Kernel : access Kernel_Handle_Record'Class) return GPS.Properties.Writer
    is
       File : constant Virtual_File := Get_Properties_Filename (Kernel);
       Root : JSON_Value := JSON_Null;
@@ -98,8 +96,8 @@ package body GPS.Kernel.Properties.File_Writer is
          Trace (Me, "Properties file not present");
       end if;
 
-      return W : constant GPS.Properties.Writer := new File_Writer_Record
-        (Kernel)
+      return
+         W : constant GPS.Properties.Writer := new File_Writer_Record (Kernel)
       do
          if Arr /= Empty_Array then
             for J in 1 .. Length (Arr) loop
@@ -118,7 +116,7 @@ package body GPS.Kernel.Properties.File_Writer is
    procedure Write_To_File (Self : File_Writer_Record; File : Virtual_File) is
       Root : JSON_Value;
       Arr  : JSON_Array;
-      C     : Cursor;
+      C    : Cursor;
    begin
       Root := Create_Object;
 
@@ -149,8 +147,9 @@ package body GPS.Kernel.Properties.File_Writer is
       exception
          when E : others =>
             Trace (Me, E);
-            Trace (Me, "Could not write to properties file "
-                     & File.Display_Full_Name);
+            Trace
+              (Me,
+               "Could not write to properties file " & File.Display_Full_Name);
       end;
    end Write_To_File;
 
@@ -158,18 +157,20 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : out Property_Record'Class;
-      Found : out Boolean)
+      Found    : out Boolean)
    is
       C : Cursor;
    begin
       Found := False;
-      C := Self.Map.Find
-        ((To_Unbounded_String (Key), To_Unbounded_String (Name)));
+      C :=
+        Self.Map.Find
+          ((To_Unbounded_String (Key), To_Unbounded_String (Name)));
       if C = No_Element then
          return;
       else
@@ -181,12 +182,14 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Get_Values --
    ----------------
 
-   overriding procedure Get_Values
-     (Self     :        not null access File_Writer_Record;
+   overriding
+   procedure Get_Values
+     (Self     : not null access File_Writer_Record;
       Name     : String;
       Property : in out Property_Record'Class;
-      Callback :        access procedure
-        (Key : String; Property : in out Property_Record'Class))
+      Callback :
+        access procedure
+          (Key : String; Property : in out Property_Record'Class))
    is
       Valid : Boolean;
       C     : Cursor;
@@ -213,67 +216,66 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Insert --
    ------------
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description)
    is
-      Value : constant GNATCOLL.JSON.JSON_Value :=
-        Property.Value.Store;
+      Value : constant GNATCOLL.JSON.JSON_Value := Property.Value.Store;
    begin
-      Self.Map.Insert (Key      => (To_Unbounded_String (Key),
-                                    To_Unbounded_String (Name)),
-                       New_Item => Write (Value));
+      Self.Map.Insert
+        (Key      => (To_Unbounded_String (Key), To_Unbounded_String (Name)),
+         New_Item => Write (Value));
    end Insert;
 
    -------------
    -- Include --
    -------------
 
-   overriding procedure Include
+   overriding
+   procedure Include
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description)
    is
-      Value : constant GNATCOLL.JSON.JSON_Value :=
-        Property.Value.Store;
+      Value : constant GNATCOLL.JSON.JSON_Value := Property.Value.Store;
    begin
-      Self.Map.Include (Key      => (To_Unbounded_String (Key),
-                                     To_Unbounded_String (Name)),
-                        New_Item => Write (Value));
+      Self.Map.Include
+        (Key      => (To_Unbounded_String (Key), To_Unbounded_String (Name)),
+         New_Item => Write (Value));
    end Include;
 
    --------------
    -- Contains --
    --------------
 
-   overriding function Contains
-     (Self : not null access File_Writer_Record;
-      Key  : String;
-      Name : String)
+   overriding
+   function Contains
+     (Self : not null access File_Writer_Record; Key : String; Name : String)
       return Boolean is
    begin
-      return Self.Map.Contains
-        ((To_Unbounded_String (Key),
-         To_Unbounded_String (Name)));
+      return
+        Self.Map.Contains
+          ((To_Unbounded_String (Key), To_Unbounded_String (Name)));
    end Contains;
 
    ------------
    -- Update --
    ------------
 
-   overriding procedure Update
+   overriding
+   procedure Update
      (Self     : not null access File_Writer_Record;
       Key      : String;
       Name     : String;
       Property : Property_Description)
    is
-      Value : constant GNATCOLL.JSON.JSON_Value :=
-         Property.Value.Store;
-      K : constant Key_Name := (To_Unbounded_String (Key),
-                                To_Unbounded_String (Name));
+      Value : constant GNATCOLL.JSON.JSON_Value := Property.Value.Store;
+      K     : constant Key_Name :=
+        (To_Unbounded_String (Key), To_Unbounded_String (Name));
    begin
       if Self.Map.Contains (K) then
          Self.Map.Replace (Key => K, New_Item => Write (Value));
@@ -286,10 +288,9 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Remove --
    ------------
 
-   overriding procedure Remove
-     (Self : not null access File_Writer_Record;
-      Key  : String;
-      Name : String)
+   overriding
+   procedure Remove
+     (Self : not null access File_Writer_Record; Key : String; Name : String)
    is
       K : constant Key_Name :=
         (To_Unbounded_String (Key), To_Unbounded_String (Name));
@@ -303,20 +304,24 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Dump_Database --
    -------------------
 
-   overriding procedure Dump_Database
-     (Self : not null access File_Writer_Record)
-   is
-      C    : Cursor;
-      W    : Writable_File;
+   overriding
+   procedure Dump_Database (Self : not null access File_Writer_Record) is
+      C : Cursor;
+      W : Writable_File;
    begin
       W := Write_File (Get_Properties_Filename (Self.Kernel, Dump => True));
 
       C := Self.Map.First;
 
       while C /= No_Element loop
-         Write (W, To_String (Key (C).Key)
-                & "@" & To_String (Key (C).Name) & ":"
-                & To_String (Element (C)) & ASCII.LF);
+         Write
+           (W,
+            To_String (Key (C).Key)
+            & "@"
+            & To_String (Key (C).Name)
+            & ":"
+            & To_String (Element (C))
+            & ASCII.LF);
          Next (C);
       end loop;
 
@@ -331,11 +336,11 @@ package body GPS.Kernel.Properties.File_Writer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out File_Writer_Record) is
+   overriding
+   procedure Finalize (Self : in out File_Writer_Record) is
    begin
       Write_To_File
-        (Self,
-         Get_Properties_Filename (Self.Kernel, Dump => False));
+        (Self, Get_Properties_Filename (Self.Kernel, Dump => False));
 
       if Active (Dump) then
          Dump_Database (Self'Access);

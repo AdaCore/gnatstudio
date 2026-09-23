@@ -17,26 +17,25 @@
 
 --  Concrete implementation of the DAP 'continue' request
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Continue;
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
 
 package DAP.Clients.Continue is
 
    type Continue_Request (<>) is
-     new DAP.Requests.Continue.Continue_DAP_Request
-   with private;
+     new DAP.Requests.Continue.Continue_DAP_Request with private;
    type Continue_Request_Access is access all Continue_Request'Class;
 
    function Create
-     (Kernel    : not null Kernel_Handle;
-      Thread_Id : Integer)
+     (Kernel : not null Kernel_Handle; Thread_Id : Integer)
       return Continue_Request_Access;
    --  Create a new DAP 'continue' request.
    --  Thread_Id specifies the active thread. Only the thread with this ID is
    --  resumed if the debug adapter supports single thread execution.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Continue_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ContinueResponse;
@@ -44,8 +43,7 @@ package DAP.Clients.Continue is
 
 private
 
-   type Continue_Request is
-     new DAP.Requests.Continue.Continue_DAP_Request with
-       null record;
+   type Continue_Request is new DAP.Requests.Continue.Continue_DAP_Request
+   with null record;
 
 end DAP.Clients.Continue;

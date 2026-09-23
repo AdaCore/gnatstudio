@@ -17,29 +17,29 @@
 
 --  Declare parser to collect builder output.
 
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 package Commands.Builder.Build_Output_Collectors is
 
    type Build_Output_Collector is new Tools_Output_Parser with private;
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Build_Output_Collector;
       Item    : String;
       Command : access Root_Command'Class);
-   overriding procedure Destroy
-     (Self : not null access Build_Output_Collector);
+   overriding
+   procedure Destroy (Self : not null access Build_Output_Collector);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context);
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context);
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to collect builder output for Target.
    --  Collected output is then available with function
@@ -47,9 +47,9 @@ package Commands.Builder.Build_Output_Collectors is
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
-      Builder    : Builder_Context;
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
+      Builder : Builder_Context;
    end record;
 
    type Build_Output_Collector is new Tools_Output_Parser with record

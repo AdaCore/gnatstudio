@@ -23,7 +23,8 @@ package body GPS_Vectors is
    -- Clear --
    -----------
 
-   overriding procedure Clear (Container : in out Vector) is
+   overriding
+   procedure Clear (Container : in out Vector) is
    begin
       for Item of Container loop
          Free (Item);
@@ -35,7 +36,8 @@ package body GPS_Vectors is
    -- Delete --
    ------------
 
-   overriding procedure Delete
+   overriding
+   procedure Delete
      (Container : in out Vector;
       Index     : Extended_Index;
       Count     : Ada.Containers.Count_Type := 1)
@@ -49,7 +51,8 @@ package body GPS_Vectors is
    -- Delete --
    ------------
 
-   overriding procedure Delete
+   overriding
+   procedure Delete
      (Container : in out Vector;
       Position  : in out Cursor;
       Count     : Ada.Containers.Count_Type := 1)
@@ -58,9 +61,7 @@ package body GPS_Vectors is
       Index : Ada.Containers.Count_Type := Count;
       Data  : Data_Type;
    begin
-      while Index > 0
-        and then Has_Element (P)
-      loop
+      while Index > 0 and then Has_Element (P) loop
          Data := Element (P);
          Free (Data);
          Index := Index - 1;
@@ -73,17 +74,15 @@ package body GPS_Vectors is
    -- Delete_First --
    ------------------
 
-   overriding procedure Delete_First
-     (Container : in out Vector;
-      Count     : Ada.Containers.Count_Type := 1)
+   overriding
+   procedure Delete_First
+     (Container : in out Vector; Count : Ada.Containers.Count_Type := 1)
    is
       Position : Cursor := Container.First;
       Index    : Ada.Containers.Count_Type := Count;
       Data     : Data_Type;
    begin
-      while Index > 0
-        and then Has_Element (Position)
-      loop
+      while Index > 0 and then Has_Element (Position) loop
          Data := Element (Position);
          Free (Data);
          Index := Index - 1;
@@ -96,17 +95,15 @@ package body GPS_Vectors is
    -- Delete_Last --
    -----------------
 
-   overriding procedure Delete_Last
-     (Container : in out Vector;
-      Count     : Ada.Containers.Count_Type := 1)
+   overriding
+   procedure Delete_Last
+     (Container : in out Vector; Count : Ada.Containers.Count_Type := 1)
    is
       Position : Cursor := Container.Last;
       Index    : Ada.Containers.Count_Type := Count;
       Data     : Data_Type;
    begin
-      while Index > 0
-        and then Has_Element (Position)
-      loop
+      while Index > 0 and then Has_Element (Position) loop
          Data := Element (Position);
          Free (Data);
          Index := Index - 1;

@@ -18,7 +18,7 @@
 --  This package provides containers & process used to analyze formal / actual
 --  list of entities, in particular parameters.
 
-with GNAT.Strings;     use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 package Ada_Semantic_Tree.List_Resolver is
 
@@ -57,8 +57,8 @@ package Ada_Semantic_Tree.List_Resolver is
    type Profile_Kind is (Regular_Profile, Generic_Profile);
 
    function Is_Entity_With_Profile
-     (Entity       : Entity_Access;
-      Visible_From : Visibility_Context) return Boolean;
+     (Entity : Entity_Access; Visible_From : Visibility_Context)
+      return Boolean;
    --  Return true if the entity is expected to have a "profile", (subprograms,
    --  arrays, records) false otherwise.
 
@@ -155,8 +155,7 @@ package Ada_Semantic_Tree.List_Resolver is
    --  Return the number of actual parameters set in this resolver.
 
    function Get_Missing_Formals
-     (Params : Actual_Parameter_Resolver)
-      return Formal_Parameter_Array;
+     (Params : Actual_Parameter_Resolver) return Formal_Parameter_Array;
    --  Return all the formal parameters that are not set with an actual yet.
 
    function Any_Named_Formal_Missing
@@ -165,8 +164,8 @@ package Ada_Semantic_Tree.List_Resolver is
    --  actual. This formal has to have a name.
 
    function Get_Expression_For_Formal
-     (Params : Actual_Parameter_Resolver;
-      Name   : String) return Parsed_Expression;
+     (Params : Actual_Parameter_Resolver; Name : String)
+      return Parsed_Expression;
    --  Return the expression provided to the parameter of the name given.
    --  Null_Parsed_Expression if it can't be found.
 
@@ -201,10 +200,10 @@ private
    type Actual_Params_Array is array (Integer range <>) of Actual_Parameter;
 
    type Actual_Parameter_Resolver (Length : Integer) is record
-      Profile              : List_Profile (Length);
-      Actual_Params        : Actual_Params_Array (1 .. Length) :=
+      Profile       : List_Profile (Length);
+      Actual_Params : Actual_Params_Array (1 .. Length) :=
         (others => Null_Actual_Parameter);
-      Params_Set           : Integer := 0;
+      Params_Set    : Integer := 0;
    end record;
 
 end Ada_Semantic_Tree.List_Resolver;

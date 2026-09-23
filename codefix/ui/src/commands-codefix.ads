@@ -27,9 +27,11 @@ package Commands.Codefix is
       Kernel            : Kernel_Handle;
       Session_Timestamp : Integer := 0;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Codefix_Command) return Command_Return_Type;
-   overriding function Undo (Command : access Codefix_Command) return Boolean;
+   overriding
+   function Undo (Command : access Codefix_Command) return Boolean;
 
    type Codefix_Add_Command is new Root_Command with record
       Kernel            : Kernel_Handle;
@@ -39,11 +41,13 @@ package Commands.Codefix is
       Errors_Fixed      : Natural := 0;
       Session_Timestamp : Integer := 0;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type;
-   overriding function Progress
+   overriding
+   function Progress
      (Command : access Codefix_Add_Command) return Progress_Record;
-   overriding function Name
-     (Command : access Codefix_Add_Command) return String;
+   overriding
+   function Name (Command : access Codefix_Add_Command) return String;
 
 end Commands.Codefix;

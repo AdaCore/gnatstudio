@@ -18,7 +18,7 @@
 --  Traces configuration and preferences.
 
 with GNATCOLL.VFS;
-with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GPS.Traces is
 

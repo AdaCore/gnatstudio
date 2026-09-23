@@ -31,8 +31,8 @@ with Engine_Wrappers; use Engine_Wrappers;
 
 package Completion_Utils is
 
-   package Proposals_List
-   is new Ada.Containers.Doubly_Linked_Lists (Root_Proposal_Access);
+   package Proposals_List is new
+     Ada.Containers.Doubly_Linked_Lists (Root_Proposal_Access);
 
    type Notes_Window_Info is record
       Notes_Box      : Gtk_Vbox;

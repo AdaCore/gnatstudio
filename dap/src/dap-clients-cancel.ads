@@ -17,22 +17,22 @@
 
 --  Concrete implementation of the DAP 'cancel' request
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Cancel;
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
 
 package DAP.Clients.Cancel is
 
    type Cancel_Request (<>) is
-     new DAP.Requests.Cancel.Cancel_DAP_Request
-   with private;
+     new DAP.Requests.Cancel.Cancel_DAP_Request with private;
    type Cancel_Request_Access is access all Cancel_Request'Class;
 
    procedure Send_Cancel_Request
      (Client : in out DAP.Clients.DAP_Client'Class);
    --  Send a new DAP 'cancel' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Cancel_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.CancelResponse;
@@ -40,12 +40,11 @@ package DAP.Clients.Cancel is
 
 private
 
-   type Cancel_Request is
-     new DAP.Requests.Cancel.Cancel_DAP_Request with null record;
+   type Cancel_Request is new DAP.Requests.Cancel.Cancel_DAP_Request
+   with null record;
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return Cancel_Request_Access;
+     (Kernel : not null Kernel_Handle) return Cancel_Request_Access;
    --  Create a new DAP 'cancel' request.
 
 end DAP.Clients.Cancel;

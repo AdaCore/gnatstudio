@@ -24,8 +24,7 @@ package body DAP.Clients.LoadedSources is
    ------------
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return Loaded_Sources_Request_Access
+     (Kernel : not null Kernel_Handle) return Loaded_Sources_Request_Access
    is
       Self : constant Loaded_Sources_Request_Access :=
         new Loaded_Sources_Request (Kernel);
@@ -37,7 +36,8 @@ package body DAP.Clients.LoadedSources is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Loaded_Sources_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LoadedSourcesResponse;
@@ -63,27 +63,29 @@ package body DAP.Clients.LoadedSources is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Loaded_Sources_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.LoadedSources.On_Rejected
-        (DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request (Self),
-         Client);
+        (DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request (Self), Client);
    end On_Rejected;
 
    ----------------------
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Loaded_Sources_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       DAP.Requests.LoadedSources.On_Error_Message
         (DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request (Self),
-         Client, Message);
+         Client,
+         Message);
    end On_Error_Message;
 
 end DAP.Clients.LoadedSources;

@@ -38,30 +38,35 @@ package Virtual_Lists.Extensive is
 
    type Extensive_List_Component is new Virtual_List_Component with private;
 
-   type Extensive_List_Iterator is new Virtual_List_Component_Iterator
-   with private;
+   type Extensive_List_Iterator is
+     new Virtual_List_Component_Iterator with private;
 
-   function To_Extensive_List (L : Extensive_List_Pckg.Vector)
-      return Extensive_List_Component;
+   function To_Extensive_List
+     (L : Extensive_List_Pckg.Vector) return Extensive_List_Component;
    --  Return an extensive list corresponding to the list given in parameter.
    --  Note that no hard copy is done, so the two lists will share the same
    --  nodes.
 
-   overriding function First (List : Extensive_List_Component)
+   overriding
+   function First
+     (List : Extensive_List_Component)
       return Virtual_List_Component_Iterator'Class;
    --  See inherited documentation
 
-   overriding function At_End (It : Extensive_List_Iterator) return Boolean;
+   overriding
+   function At_End (It : Extensive_List_Iterator) return Boolean;
    --  See inherited documentation
 
-   overriding procedure Next (It : in out Extensive_List_Iterator);
+   overriding
+   procedure Next (It : in out Extensive_List_Iterator);
    --  See inherited documentation
 
-   overriding function Get
-     (It : in out Extensive_List_Iterator) return Data_Type;
+   overriding
+   function Get (It : in out Extensive_List_Iterator) return Data_Type;
    --  See inherited documentation
 
-   overriding procedure Free (List : in out Extensive_List_Component);
+   overriding
+   procedure Free (List : in out Extensive_List_Component);
    --  See inherited documentation
 
 private
@@ -69,9 +74,9 @@ private
       Content : Extensive_List_Pckg.Vector;
    end record;
 
-   type Extensive_List_Iterator is new Virtual_List_Component_Iterator with
-      record
-         It : Extensive_List_Pckg.Std_Vectors.Cursor;
-      end record;
+   type Extensive_List_Iterator is new Virtual_List_Component_Iterator
+   with record
+      It : Extensive_List_Pckg.Std_Vectors.Cursor;
+   end record;
 
 end Virtual_Lists.Extensive;

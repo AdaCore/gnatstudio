@@ -24,10 +24,11 @@
 --  ...), numbers and/or identifiers.  The output of the lexer is a list of
 --  tokens to be directly forwarded to the parser.
 
-with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
-with Ada.Finalization;                   use Ada.Finalization;
-with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
-with Ada.Text_IO.Text_Streams;           use Ada.Text_IO.Text_Streams;
+with Ada.Containers.Doubly_Linked_Lists;
+use Ada.Containers;
+with Ada.Finalization;         use Ada.Finalization;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Text_IO.Text_Streams; use Ada.Text_IO.Text_Streams;
 
 package MI.Lexer is
 
@@ -35,10 +36,26 @@ package MI.Lexer is
    --  The lexer error type exception which is raised on fatal errors during
    --  the lexing phase.
 
-   type Token_Code is (Token_No, Identifier, Newline, Ampersand, At_Sign,
-                       Tilde, Comma, Asterisk, Plus_Sign, Equal_Sign, Caret,
-                       L_Bracket, R_Bracket, L_Brace, R_Brace, C_String,
-                       Gdb_Prompt, End_Of_File, Unknown);
+   type Token_Code is
+     (Token_No,
+      Identifier,
+      Newline,
+      Ampersand,
+      At_Sign,
+      Tilde,
+      Comma,
+      Asterisk,
+      Plus_Sign,
+      Equal_Sign,
+      Caret,
+      L_Bracket,
+      R_Bracket,
+      L_Brace,
+      R_Brace,
+      C_String,
+      Gdb_Prompt,
+      End_Of_File,
+      Unknown);
 
    --  Token code type enumeration.
    --  List all the possible tokens one can encounter when parsing GDB/MI
@@ -69,7 +86,8 @@ package MI.Lexer is
    --  In the Identifier and C_String case, the structure contains a pointer to
    --  a String.
 
-   overriding function "=" (Left, Right : Token_Type) return Boolean;
+   overriding
+   function "=" (Left, Right : Token_Type) return Boolean;
    --  Equality operator on Token_Type. Needed by the Token_List declared
    --  further.
 
@@ -92,11 +110,12 @@ package MI.Lexer is
 
    function Image (Item : Token_Type) return String;
 
-   type Token_List_Controller is
-     new Ada.Finalization.Limited_Controlled with record
+   type Token_List_Controller is new Ada.Finalization.Limited_Controlled
+   with record
       List : Token_List;
    end record;
 
-   overriding procedure Finalize (This : in out Token_List_Controller);
+   overriding
+   procedure Finalize (This : in out Token_List_Controller);
 
 end MI.Lexer;

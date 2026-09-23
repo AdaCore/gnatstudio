@@ -21,14 +21,15 @@ package body LAL.Switching_Tree_Providers is
    -- Get_Tree_For_File --
    -----------------------
 
-   overriding function Get_Tree_For_File
+   overriding
+   function Get_Tree_For_File
      (Self    : in out Provider;
       Context : String;
-      File    : GNATCOLL.VFS.Virtual_File)
-      return Semantic_Tree'Class is
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class is
    begin
-      return Self.Nested.Kernel.Default_Language_Tree_Provider.
-        Get_Tree_For_File (Context, File);
+      return
+        Self.Nested.Kernel.Default_Language_Tree_Provider.Get_Tree_For_File
+          (Context, File);
    end Get_Tree_For_File;
 
 end LAL.Switching_Tree_Providers;

@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;          use Ada.Calendar;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with Ada.Calendar;   use Ada.Calendar;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 with System;            use System;
 with String_Utils;      use String_Utils;
@@ -25,23 +25,24 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Language.Tree.Database is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.LANGUAGE.TREE_DATABASE");
-   Test_Update_Cache : constant Trace_Handle := Create
-     ("GPS.INTERNAL.Language.Tree.Database.Test_Update_Cache", Off);
+   Me                : constant Trace_Handle :=
+     Create ("GPS.LANGUAGE.TREE_DATABASE");
+   Test_Update_Cache : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.Language.Tree.Database.Test_Update_Cache", Off);
 
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Purge : Boolean);
    --  Same as Update_Contents.
 
    procedure Free
-     (This : in out Construct_Db_Data_Access;
-      Db   : access Construct_Database);
+     (This : in out Construct_Db_Data_Access; Db : access Construct_Database);
    --  Removes all indexes contained in This from the database, and the
    --  deallocates it.
 
-   procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-     (Construct_Db_Data_Array, Construct_Db_Data_Access);
+   procedure Unchecked_Free is new
+     Standard.Ada.Unchecked_Deallocation
+       (Construct_Db_Data_Array,
+        Construct_Db_Data_Access);
 
    procedure Free (File : in out Structured_File_Access);
 
@@ -54,8 +55,7 @@ package body Language.Tree.Database is
    ---------------------------------
 
    function Get_Last_Relevant_Construct
-     (Tree : Construct_Tree; Offset : Natural)
-      return Construct_Tree_Iterator
+     (Tree : Construct_Tree; Offset : Natural) return Construct_Tree_Iterator
    is
       Last_Relevant_Construct : Construct_Tree_Iterator :=
         Null_Construct_Tree_Iterator;
@@ -80,7 +80,7 @@ package body Language.Tree.Database is
                --  one.
 
                if not Is_Parent_Scope
-                 (Get_Parent_Scope (Tree, Last_Relevant_Construct), It)
+                        (Get_Parent_Scope (Tree, Last_Relevant_Construct), It)
                then
                   Last_Relevant_Construct := It;
                end if;
@@ -99,9 +99,10 @@ package body Language.Tree.Database is
    -- Get_Name_Index --
    --------------------
 
-   overriding function Get_Name_Index
-     (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return Symbol
+   overriding
+   function Get_Name_Index
+     (Lang : access Tree_Language; Construct : Simple_Construct_Information)
+      return Symbol
    is
       pragma Unreferenced (Lang);
    begin
@@ -113,22 +114,22 @@ package body Language.Tree.Database is
    -----------------
 
    procedure Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
-      Formater   : access Profile_Formater'Class;
+     (Lang         : access Tree_Language;
+      Entity       : Entity_Access;
+      Formater     : access Profile_Formater'Class;
       With_Aspects : Boolean := False)
    is
       pragma Unreferenced (With_Aspects);
-      Tree   : constant Construct_Tree :=
+      Tree                 : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
-      Buffer : constant GNAT.Strings.String_Access :=
+      Buffer               : constant GNAT.Strings.String_Access :=
         Get_Buffer (Get_File (Entity));
-      Node   : constant Construct_Tree_Iterator :=
+      Node                 : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
-      Language  : constant Language_Access :=
+      Language             : constant Language_Access :=
         Get_Language (Tree_Language'Class (Lang.all)'Access);
       Type_Start, Type_End : Source_Location;
-      Success   : Boolean;
+      Success              : Boolean;
 
    begin
       if Get_Construct (Node).Category in Subprogram_Category then
@@ -138,8 +139,9 @@ package body Language.Tree.Database is
          begin
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  Longest := Integer'Max
-                    (Longest, Get (Get_Construct (Sub_Iter).Name)'Length);
+                  Longest :=
+                    Integer'Max
+                      (Longest, Get (Get_Construct (Sub_Iter).Name)'Length);
                end if;
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
             end loop;
@@ -157,7 +159,7 @@ package body Language.Tree.Database is
                      Success);
 
                   declare
-                     Name : constant String :=
+                     Name        : constant String :=
                        Get (Get_Construct (Sub_Iter).Name).all;
                      Padded_Name : constant String :=
                        Name & ((Longest - Name'Length) * ' ');
@@ -229,7 +231,7 @@ package body Language.Tree.Database is
       Show_Param_Names : Boolean := True) return String
    is
       Formater : aliased Text_Profile_Formater;
-      Node   : constant Construct_Tree_Iterator :=
+      Node     : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
       Sym      : Symbol_Table_Access;
    begin
@@ -237,11 +239,9 @@ package body Language.Tree.Database is
       --  the computation of the Unique_Id). Otherwise, this is for display
       --  only, and is cached at other levels when needed.
 
-      if not Show_Param_Names
-        or else Get_Construct (Node).Profile = No_Symbol
+      if not Show_Param_Names or else Get_Construct (Node).Profile = No_Symbol
       then
-         Formater.Configure
-           (Show_Param_Names => Show_Param_Names);
+         Formater.Configure (Show_Param_Names => Show_Param_Names);
          Tree_Language_Access (Lang).Get_Profile
            (Entity, Formater'Access, With_Aspects => With_Aspects);
 
@@ -265,8 +265,7 @@ package body Language.Tree.Database is
    ---------------------
 
    function Get_Declaration
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+     (Lang : access Tree_Language; Entity : Entity_Access) return Entity_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -277,7 +276,8 @@ package body Language.Tree.Database is
    -- Diff --
    ----------
 
-   overriding procedure Diff
+   overriding
+   procedure Diff
      (Lang               : access Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback)
@@ -303,7 +303,8 @@ package body Language.Tree.Database is
    -- Get_Language --
    ------------------
 
-   overriding function Get_Language
+   overriding
+   function Get_Language
      (Tree : access Unknown_Tree_Language) return Language_Access
    is
       pragma Unreferenced (Tree);
@@ -316,10 +317,10 @@ package body Language.Tree.Database is
    ----------------------
 
    function Find_Declaration
-     (Lang     : access Tree_Language;
-      File     : Structured_File_Access;
-      Line     : Integer;
-      Column   : String_Index_Type) return Entity_Access
+     (Lang   : access Tree_Language;
+      File   : Structured_File_Access;
+      Line   : Integer;
+      Column : String_Index_Type) return Entity_Access
    is
       pragma Unreferenced (Lang, File, Line, Column);
    begin
@@ -331,8 +332,7 @@ package body Language.Tree.Database is
    ---------------------
 
    function Find_First_Part
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+     (Lang : access Tree_Language; Entity : Entity_Access) return Entity_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -344,8 +344,7 @@ package body Language.Tree.Database is
    --------------------
 
    function Find_Next_Part
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+     (Lang : access Tree_Language; Entity : Entity_Access) return Entity_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -356,9 +355,10 @@ package body Language.Tree.Database is
    -- Get_Timestamp --
    -------------------
 
-   overriding function Get_Timestamp
-     (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return Integer
+   overriding
+   function Get_Timestamp
+     (Provider : access File_Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return Integer
    is
       pragma Unreferenced (Provider);
       Stamp : Time;
@@ -376,9 +376,10 @@ package body Language.Tree.Database is
    -- Get_Buffer --
    ----------------
 
-   overriding function Get_Buffer
-     (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
+   overriding
+   function Get_Buffer
+     (Provider : access File_Buffer_Provider; File : GNATCOLL.VFS.Virtual_File)
+      return GNAT.Strings.String_Access
    is
       Tmp     : GNAT.Strings.String_Access;
       Tmp2    : GNAT.Strings.String_Access;
@@ -408,8 +409,10 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Buffer_Provider_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Buffer_Provider'Class, Buffer_Provider_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (Buffer_Provider'Class,
+           Buffer_Provider_Access);
    begin
       Internal (This);
    end Free;
@@ -439,8 +442,7 @@ package body Language.Tree.Database is
    ------------------------------
 
    function Is_Externally_Referenced
-     (File : Structured_File_Access) return Boolean
-   is
+     (File : Structured_File_Access) return Boolean is
    begin
       return File.Ref > 0;
    end Is_Externally_Referenced;
@@ -450,8 +452,10 @@ package body Language.Tree.Database is
    -----------
 
    procedure Free (File : in out Structured_File_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Structured_File, Structured_File_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (Structured_File,
+           Structured_File_Access);
    begin
       Free_Annotations (File.Tree);
       Free (File.Tree);
@@ -482,8 +486,7 @@ package body Language.Tree.Database is
    Empty_String : aliased String := "";
 
    function Get_Buffer
-     (File : Structured_File_Access) return GNAT.Strings.String_Access
-   is
+     (File : Structured_File_Access) return GNAT.Strings.String_Access is
    begin
       if Is_Null (File) then
          return Empty_String'Access;
@@ -498,8 +501,8 @@ package body Language.Tree.Database is
    -- Get_File_Path --
    -------------------
 
-   function Get_File_Path
-     (File : Structured_File_Access) return Virtual_File is
+   function Get_File_Path (File : Structured_File_Access) return Virtual_File
+   is
    begin
       if File = null then
          return No_File;
@@ -513,8 +516,7 @@ package body Language.Tree.Database is
    ------------------------
 
    function Get_Offset_Of_Line
-     (File : Structured_File_Access; Line : Integer)
-      return String_Index_Type
+     (File : Structured_File_Access; Line : Integer) return String_Index_Type
    is
       Buffer : constant GNAT.Strings.String_Access := Get_Buffer (File);
    begin
@@ -541,8 +543,8 @@ package body Language.Tree.Database is
                end if;
             end loop;
 
-            File.Line_Starts := new Line_Start_Indexes'
-              (Lines (1 .. Lines_Index - 1));
+            File.Line_Starts :=
+              new Line_Start_Indexes'(Lines (1 .. Lines_Index - 1));
             Free (Lines);
          end;
       end if;
@@ -568,7 +570,7 @@ package body Language.Tree.Database is
       Line_Offset : String_Index_Type) return Visible_Column_Type
    is
       Current_Col : Visible_Column_Type;
-      Index : String_Index_Type := Get_Offset_Of_Line (File, Line);
+      Index       : String_Index_Type := Get_Offset_Of_Line (File, Line);
    begin
       Skip_To_Index
         (Buffer        => Get_Buffer (File).all,
@@ -590,12 +592,15 @@ package body Language.Tree.Database is
    is
       Current_Index : Integer := Integer (Get_Offset_Of_Line (File, Line));
    begin
-      Skip_To_Column (Str     => Get_Buffer (File).all,
-                      Columns => Integer (Column),
-                      Index   => Current_Index);
+      Skip_To_Column
+        (Str     => Get_Buffer (File).all,
+         Columns => Integer (Column),
+         Index   => Current_Index);
 
-      return String_Index_Type
-        (Current_Index) - Get_Offset_Of_Line (File, Line) + 1;
+      return
+        String_Index_Type (Current_Index)
+        - Get_Offset_Of_Line (File, Line)
+        + 1;
    end To_Line_String_Index;
 
    ---------------------
@@ -607,8 +612,10 @@ package body Language.Tree.Database is
       Line   : Integer;
       Column : Visible_Column_Type) return String_Index_Type is
    begin
-      return Get_Offset_Of_Line (File, Line)
-        + To_Line_String_Index (File, Line, Column) - 1;
+      return
+        Get_Offset_Of_Line (File, Line)
+        + To_Line_String_Index (File, Line, Column)
+        - 1;
    end To_String_Index;
 
    --------------------
@@ -642,8 +649,8 @@ package body Language.Tree.Database is
          Line := File.Line_Starts'Last;
       end if;
 
-      Index_In_Line := Absolute_Byte_Offset -
-        Get_Offset_Of_Line (File, Line) + 1;
+      Index_In_Line :=
+        Absolute_Byte_Offset - Get_Offset_Of_Line (File, Line) + 1;
 
       Column := To_Visible_Column (File, Line, Index_In_Line);
    end To_Line_Column;
@@ -663,8 +670,7 @@ package body Language.Tree.Database is
    ---------------------
 
    procedure Update_Contents
-     (File    : Structured_File_Access;
-      Purge : Boolean := False) is
+     (File : Structured_File_Access; Purge : Boolean := False) is
    begin
       Internal_Update_Contents (File, Purge => Purge);
    end Update_Contents;
@@ -707,7 +713,7 @@ package body Language.Tree.Database is
       procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator) is
          Data      : Trie_Additional_Data;
          Construct : constant access Simple_Construct_Information :=
-                       Get_Construct (It);
+           Get_Construct (It);
       begin
          --  We add only named constructs in the database, and we dismiss some
          --  categories.
@@ -740,27 +746,27 @@ package body Language.Tree.Database is
         (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind) is
       begin
          case Kind is
-            when Removed =>
+            when Removed   =>
                Current_Update_Kind := Structural_Change;
 
-               Delete
-                 (File.Db.Entities_Db,
-                  File.Db_Data_Tree (Old_Obj.Index));
+               Delete (File.Db.Entities_Db, File.Db_Data_Tree (Old_Obj.Index));
 
                Construct_Annotations_Pckg.Free
                  (Get_Annotation_Container (File.Tree, Old_Obj).all);
 
-            when Added =>
+            when Added     =>
                Current_Update_Kind := Structural_Change;
                Add_New_Construct_If_Needed (New_Obj);
 
             when Preserved =>
-               if Get_Construct (Old_Obj).Attributes /=
-                 Get_Construct (New_Obj).Attributes
-                 or else Get_Construct (Old_Obj).Is_Declaration /=
-                 Get_Construct (New_Obj).Is_Declaration
-                 or else Get_Construct (Old_Obj).Visibility /=
-                 Get_Construct (New_Obj).Visibility
+               if Get_Construct (Old_Obj).Attributes
+                 /= Get_Construct (New_Obj).Attributes
+                 or else
+                   Get_Construct (Old_Obj).Is_Declaration
+                   /= Get_Construct (New_Obj).Is_Declaration
+                 or else
+                   Get_Construct (Old_Obj).Visibility
+                   /= Get_Construct (New_Obj).Visibility
                then
                   Current_Update_Kind := Structural_Change;
                end if;
@@ -776,8 +782,8 @@ package body Language.Tree.Database is
                --  Update the construct wrapper if the construct is stored
                --  in the database.
 
-               if New_Db_Data_Tree (New_Obj.Index) /=
-                 Construct_Db_Trie.Null_Construct_Trie_Index
+               if New_Db_Data_Tree (New_Obj.Index)
+                 /= Construct_Db_Trie.Null_Construct_Trie_Index
                then
                   Replace
                     (File.Db.Entities_Db'Access,
@@ -791,12 +797,12 @@ package body Language.Tree.Database is
                declare
                   use Construct_Annotations_Pckg;
 
-                  Annotations : constant access Annotation_Container :=
-                    Get_Annotation_Container (New_Tree, New_Obj);
+                  Annotations           :
+                    constant access Annotation_Container :=
+                      Get_Annotation_Container (New_Tree, New_Obj);
                   Persistent_Annotation : Annotation (Other_Kind);
                begin
-                  if Is_Set
-                    (Annotations.all, File.Db.Persistent_Entity_Key)
+                  if Is_Set (Annotations.all, File.Db.Persistent_Entity_Key)
                   then
                      Get_Annotation
                        (Annotations.all,
@@ -804,7 +810,9 @@ package body Language.Tree.Database is
                         Persistent_Annotation);
 
                      Entity_Persistent_Annotation
-                       (Persistent_Annotation.Other_Val.all).Info.Index :=
+                       (Persistent_Annotation.Other_Val.all)
+                       .Info
+                       .Index :=
                        New_Obj.Index;
                   end if;
                end;
@@ -851,11 +859,10 @@ package body Language.Tree.Database is
          Parse_Constructs (File.Lang, File.File, Buffer.all, Constructs);
          New_Tree := To_Construct_Tree (Constructs'Access, True);
 
-         Analyze_Referenced_Identifiers
-           (Buffer.all, File.Lang, New_Tree);
+         Analyze_Referenced_Identifiers (Buffer.all, File.Lang, New_Tree);
          Analyze_Constructs_Identifiers (File.Lang, New_Tree);
-         New_Db_Data_Tree := new Construct_Db_Data_Array
-           (1 .. New_Tree.Contents'Length);
+         New_Db_Data_Tree :=
+           new Construct_Db_Data_Array (1 .. New_Tree.Contents'Length);
 
          --  Use a loop to avoid an "others =>" construct which blows the
          --  stack.
@@ -889,9 +896,10 @@ package body Language.Tree.Database is
                   File.Tree,
                   New_Tree,
                   Diff_Callback'Unrestricted_Access);
-               --  Diff of Tree_Language uses simpler method of update.
-               --  It just drops old contents and create new one from scratch.
-               --  It's faster in some cases then applying all changes.
+            --  Diff of Tree_Language uses simpler method of update.
+            --  It just drops old contents and create new one from scratch.
+            --  It's faster in some cases then applying all changes.
+
             else
                Current_Update_Kind := Minor_Change;
 
@@ -935,8 +943,10 @@ package body Language.Tree.Database is
          Free (Old_Tree);
       else
          if Active (Me) then
-            Trace (Me, "File's tree is already up-to-date: "
-                   & File.File.Display_Full_Name);
+            Trace
+              (Me,
+               "File's tree is already up-to-date: "
+               & File.File.Display_Full_Name);
          end if;
       end if;
    end Internal_Update_Contents;
@@ -946,8 +956,8 @@ package body Language.Tree.Database is
    ------------------
 
    function Lock_Updates
-     (File : Structured_File_Access;
-      Kind : Lock_Kind_Type := Defer_Updates) return Update_Lock
+     (File : Structured_File_Access; Kind : Lock_Kind_Type := Defer_Updates)
+      return Update_Lock
    is
       Last_Lock_Kind : Lock_Kind_Type := Kind;
    begin
@@ -958,9 +968,8 @@ package body Language.Tree.Database is
       end if;
 
       return
-        (Limited_Controlled with
-         File_Locked => File,
-         Last_Lock_Kind => Last_Lock_Kind);
+        (Limited_Controlled
+         with File_Locked => File, Last_Lock_Kind => Last_Lock_Kind);
    end Lock_Updates;
 
    ------------
@@ -995,7 +1004,8 @@ package body Language.Tree.Database is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (This : in out Update_Lock) is
+   overriding
+   procedure Finalize (This : in out Update_Lock) is
    begin
       Unlock (This);
    end Finalize;
@@ -1004,7 +1014,8 @@ package body Language.Tree.Database is
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Structured_File) return Boolean is
+   overriding
+   function "=" (Left, Right : Structured_File) return Boolean is
    begin
       return Left.File = Right.File;
    end "=";
@@ -1023,8 +1034,10 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Construct_Database_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Construct_Database, Construct_Database_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (Construct_Database,
+           Construct_Database_Access);
    begin
       Destroy (This);
       Internal (This);
@@ -1035,8 +1048,7 @@ package body Language.Tree.Database is
    ----------------
 
    procedure Initialize
-     (Db         : Construct_Database_Access;
-      Lg_Handler : Abstract_Language_Handler)
+     (Db : Construct_Database_Access; Lg_Handler : Abstract_Language_Handler)
    is
    begin
       Db.Tree_Registry := Tree_Annotations_Pckg.Create_Annotation_Key_Registry;
@@ -1053,9 +1065,7 @@ package body Language.Tree.Database is
    ------------------
 
    procedure Set_Provider
-     (Db         : Construct_Database_Access;
-      Provider   : Buffer_Provider_Access)
-   is
+     (Db : Construct_Database_Access; Provider : Buffer_Provider_Access) is
    begin
       Db.Provider := Provider;
    end Set_Provider;
@@ -1113,8 +1123,8 @@ package body Language.Tree.Database is
    --------------
 
    function Get_File
-     (Db   : Construct_Database_Access;
-      File : Virtual_File) return Structured_File_Access
+     (Db : Construct_Database_Access; File : Virtual_File)
+      return Structured_File_Access
    is
       C : constant File_Map.Cursor := Db.Files_Db.Find (File);
    begin
@@ -1129,9 +1139,7 @@ package body Language.Tree.Database is
    -- Remove_File --
    -----------------
 
-   procedure Remove_File
-     (Db        : Construct_Database_Access;
-      File      : Virtual_File)
+   procedure Remove_File (Db : Construct_Database_Access; File : Virtual_File)
    is
       S_File : Structured_File_Access := Get_File (Db, File);
    begin
@@ -1159,9 +1167,7 @@ package body Language.Tree.Database is
    -- Get_Project --
    -----------------
 
-   function Get_Project
-     (File : Structured_File_Access) return Project_Type
-   is
+   function Get_Project (File : Structured_File_Access) return Project_Type is
    begin
       return File.Project;
    end Get_Project;
@@ -1171,8 +1177,7 @@ package body Language.Tree.Database is
    -----------------
 
    procedure Set_Project
-     (File : Structured_File_Access; Project : Project_Type)
-   is
+     (File : Structured_File_Access; Project : Project_Type) is
    begin
       if Project /= File.Project then
          File.Project := Project;
@@ -1196,12 +1201,12 @@ package body Language.Tree.Database is
    ---------------------
 
    procedure Update_Contents
-     (Db   : access Construct_Database;
-      File : Virtual_File;
+     (Db    : access Construct_Database;
+      File  : Virtual_File;
       Purge : Boolean := False)
    is
       S : constant Structured_File_Access :=
-         Get_File (Construct_Database_Access (Db), File);
+        Get_File (Construct_Database_Access (Db), File);
    begin
       if S /= null then
          Update_Contents (S, Purge);
@@ -1243,9 +1248,12 @@ package body Language.Tree.Database is
 
       procedure Unchecked_Free_Assistant is new
         Standard.Ada.Unchecked_Deallocation
-          (Database_Assistant'Class, Database_Assistant_Access);
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Buffer_Provider'Class, Buffer_Provider_Access);
+          (Database_Assistant'Class,
+           Database_Assistant_Access);
+      procedure Unchecked_Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Buffer_Provider'Class,
+           Buffer_Provider_Access);
    begin
       Clear (Db);
 
@@ -1270,8 +1278,7 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free
-     (This : in out Construct_Db_Data_Access;
-      Db    : access Construct_Database)
+     (This : in out Construct_Db_Data_Access; Db : access Construct_Database)
    is
    begin
       if This /= null then
@@ -1303,8 +1310,7 @@ package body Language.Tree.Database is
    -------------------
 
    function Get_Construct
-     (It : Construct_Db_Iterator) return Construct_Tree_Iterator
-   is
+     (It : Construct_Db_Iterator) return Construct_Tree_Iterator is
    begin
       return Get_Construct_It (It.It);
    end Get_Construct;
@@ -1322,8 +1328,8 @@ package body Language.Tree.Database is
    -- Get_File --
    --------------
 
-   function Get_File
-     (It : Construct_Db_Iterator) return Structured_File_Access is
+   function Get_File (It : Construct_Db_Iterator) return Structured_File_Access
+   is
    begin
       return Get_Additional_Data (It.It).File;
    end Get_File;
@@ -1392,8 +1398,7 @@ package body Language.Tree.Database is
 
    function Get_Construct_Annotation_Key_Registry
      (Db : Construct_Database_Access)
-      return access Construct_Annotations_Pckg.Annotation_Key_Registry
-   is
+      return access Construct_Annotations_Pckg.Annotation_Key_Registry is
    begin
       return Db.Construct_Registry'Access;
    end Get_Construct_Annotation_Key_Registry;
@@ -1403,8 +1408,8 @@ package body Language.Tree.Database is
    ----------------------
 
    function To_Entity_Access
-     (File       : Structured_File_Access;
-      Construct  : Construct_Tree_Iterator) return Entity_Access
+     (File : Structured_File_Access; Construct : Construct_Tree_Iterator)
+      return Entity_Access
    is
       Result : Entity_Access;
    begin
@@ -1425,8 +1430,7 @@ package body Language.Tree.Database is
    --------------------------------
 
    function To_Construct_Tree_Iterator
-     (Entity : Entity_Access) return Construct_Tree_Iterator
-   is
+     (Entity : Entity_Access) return Construct_Tree_Iterator is
    begin
       return Entity.It;
    end To_Construct_Tree_Iterator;
@@ -1459,8 +1463,10 @@ package body Language.Tree.Database is
       if Entity = Null_Entity_Access then
          return "[null]";
       else
-         return To_String
-           (Entity.It) & " from " & String (Full_Name (Entity.File.File).all);
+         return
+           To_String (Entity.It)
+           & " from "
+           & String (Full_Name (Entity.File.File).all);
       end if;
    end To_String;
 
@@ -1469,8 +1475,7 @@ package body Language.Tree.Database is
    --------------
 
    function Contains
-     (Scope : Entity_Access; Entity : Entity_Access) return Boolean
-   is
+     (Scope : Entity_Access; Entity : Entity_Access) return Boolean is
    begin
       if Scope.File = Entity.File then
          declare
@@ -1488,8 +1493,10 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Entity_Array_Access) is
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Entity_Array, Entity_Array_Access);
+      procedure Unchecked_Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Entity_Array,
+           Entity_Array_Access);
    begin
       Unchecked_Free (This);
    end Free;
@@ -1502,16 +1509,17 @@ package body Language.Tree.Database is
    begin
       --  Since file comparison is very expensive, it has to be tried first
 
-      return Left.It < Right.It
-        or else (Left.It = Right.It
-          and then Left.File < Right.File);
+      return
+        Left.It < Right.It
+        or else (Left.It = Right.It and then Left.File < Right.File);
    end "<";
 
    ---------
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Entity_Access) return Boolean is
+   overriding
+   function "=" (Left, Right : Entity_Access) return Boolean is
    begin
       --  Since file comparison is very expensive, it has to be tried first
 
@@ -1528,10 +1536,11 @@ package body Language.Tree.Database is
       if not Exists (Entity) then
          return Null_Entity_Access;
       else
-         return To_Entity_Access
-           (Entity.File,
-            (Get_Tree (Entity.File).Contents (Entity.Index)'Access,
-             Entity.Index));
+         return
+           To_Entity_Access
+             (Entity.File,
+              (Get_Tree (Entity.File).Contents (Entity.Index)'Access,
+               Entity.Index));
       end if;
    end To_Entity_Access;
 
@@ -1562,8 +1571,7 @@ package body Language.Tree.Database is
    -- Hash --
    ----------
 
-   function Hash (Entity : Entity_Access) return Hash_Type
-   is
+   function Hash (Entity : Entity_Access) return Hash_Type is
    begin
       return Hash_Type (Entity.It.Index);
    end Hash;
@@ -1573,8 +1581,10 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Entity_Persistent_Array_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Entity_Persistent_Array, Entity_Persistent_Array_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (Entity_Persistent_Array,
+           Entity_Persistent_Array_Access);
    begin
       Internal (This);
    end Free;
@@ -1601,26 +1611,29 @@ package body Language.Tree.Database is
       end if;
 
       Db := Get_Database (Get_File (Entity));
-      Annotations := Get_Annotation_Container
-        (Get_Tree (Get_File (Entity)), It);
+      Annotations :=
+        Get_Annotation_Container (Get_Tree (Get_File (Entity)), It);
 
       if Is_Set (Annotations.all, Db.Persistent_Entity_Key) then
          Get_Annotation
            (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
       else
-         Persistent_Annotation.Other_Val := new Entity_Persistent_Annotation'
-           (Info => new Entity_Persistent_Info'
-              (Exists => True,
-               File   => Get_File (Entity),
-               Index  => To_Construct_Tree_Iterator (Entity).Index,
-               Refs   => 0));
+         Persistent_Annotation.Other_Val :=
+           new Entity_Persistent_Annotation'
+             (Info =>
+                new Entity_Persistent_Info'
+                  (Exists => True,
+                   File   => Get_File (Entity),
+                   Index  => To_Construct_Tree_Iterator (Entity).Index,
+                   Refs   => 0));
 
          Set_Annotation
            (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
       end if;
 
-      return Entity_Persistent_Annotation
-        (Persistent_Annotation.Other_Val.all).Info;
+      return
+        Entity_Persistent_Annotation (Persistent_Annotation.Other_Val.all)
+          .Info;
    end To_Unrefed_Entity_Persistent_Access;
 
    ---------------------------------
@@ -1645,27 +1658,31 @@ package body Language.Tree.Database is
       end if;
 
       Db := Get_Database (Get_File (Entity));
-      Annotations := Get_Annotation_Container
-        (Get_Tree (Get_File (Entity)), It);
+      Annotations :=
+        Get_Annotation_Container (Get_Tree (Get_File (Entity)), It);
 
       if Is_Set (Annotations.all, Db.Persistent_Entity_Key) then
          Get_Annotation
            (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
-         Ref (Entity_Persistent_Annotation
-              (Persistent_Annotation.Other_Val.all).Info);
+         Ref
+           (Entity_Persistent_Annotation (Persistent_Annotation.Other_Val.all)
+              .Info);
       else
-         Persistent_Annotation.Other_Val := new Entity_Persistent_Annotation'
-           (Info => new Entity_Persistent_Info'
-              (Exists => True,
-               File   => Get_File (Entity),
-               Index  => To_Construct_Tree_Iterator (Entity).Index,
-               Refs   => 1));
+         Persistent_Annotation.Other_Val :=
+           new Entity_Persistent_Annotation'
+             (Info =>
+                new Entity_Persistent_Info'
+                  (Exists => True,
+                   File   => Get_File (Entity),
+                   Index  => To_Construct_Tree_Iterator (Entity).Index,
+                   Refs   => 1));
          Set_Annotation
            (Annotations.all, Db.Persistent_Entity_Key, Persistent_Annotation);
       end if;
 
-      return Entity_Persistent_Annotation
-        (Persistent_Annotation.Other_Val.all).Info;
+      return
+        Entity_Persistent_Annotation (Persistent_Annotation.Other_Val.all)
+          .Info;
    end To_Entity_Persistent_Access;
 
    -------------------
@@ -1675,8 +1692,8 @@ package body Language.Tree.Database is
    function Get_Construct
      (Entity : Entity_Persistent_Access) return Simple_Construct_Information is
    begin
-      return Get_Tree (Entity.File).
-        Contents (Natural (Entity.Index)).Construct;
+      return
+        Get_Tree (Entity.File).Contents (Natural (Entity.Index)).Construct;
    end Get_Construct;
 
    ---------
@@ -1695,8 +1712,10 @@ package body Language.Tree.Database is
    -----------
 
    procedure Unref (Entity : in out Entity_Persistent_Access) is
-      procedure Free is new Standard.Ada.Unchecked_Deallocation
-        (Entity_Persistent_Info, Entity_Persistent_Access);
+      procedure Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Entity_Persistent_Info,
+           Entity_Persistent_Access);
    begin
       if Entity /= Null_Entity_Persistent_Access then
          Entity.Refs := Entity.Refs - 1;
@@ -1733,9 +1752,7 @@ package body Language.Tree.Database is
    ---------------------------
 
    procedure Add_Database_Listener
-     (Db       : Construct_Database_Access;
-      Listener : Database_Listener_Access)
-   is
+     (Db : Construct_Database_Access; Listener : Database_Listener_Access) is
    begin
       Db.Listeners.Append (Listener);
    end Add_Database_Listener;
@@ -1745,8 +1762,7 @@ package body Language.Tree.Database is
    ------------------------------
 
    procedure Remove_Database_Listener
-     (Db       : Construct_Database_Access;
-      Listener : Database_Listener_Access)
+     (Db : Construct_Database_Access; Listener : Database_Listener_Access)
    is
       It : Database_Listeners.Cursor := First (Db.Listeners);
    begin
@@ -1768,8 +1784,7 @@ package body Language.Tree.Database is
    procedure Register_Assistant
      (Db        : Construct_Database_Access;
       Name      : String;
-      Assistant : Database_Assistant_Access)
-   is
+      Assistant : Database_Assistant_Access) is
    begin
       Insert (Db.Assistants, Name, Assistant);
       Append (Db.Listeners, Database_Listener_Access (Assistant));
@@ -1781,8 +1796,7 @@ package body Language.Tree.Database is
 
    function Get_Assistant
      (Db : Construct_Database_Access; Name : String)
-      return Database_Assistant_Access
-   is
+      return Database_Assistant_Access is
    begin
       return Element (Db.Assistants, Name);
    end Get_Assistant;
@@ -1801,11 +1815,12 @@ package body Language.Tree.Database is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Obj : in out Entity_Persistent_Annotation)
-   is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Entity_Persistent_Info, Entity_Persistent_Access);
+   overriding
+   procedure Free (Obj : in out Entity_Persistent_Annotation) is
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (Entity_Persistent_Info,
+           Entity_Persistent_Access);
    begin
       Obj.Info.Exists := False;
 
@@ -1818,9 +1833,7 @@ package body Language.Tree.Database is
    -- Get_Identifier --
    --------------------
 
-   function Get_Identifier
-     (Entity : Entity_Access) return Normalized_Symbol
-   is
+   function Get_Identifier (Entity : Entity_Access) return Normalized_Symbol is
    begin
       return Entity.It.Node.Id;
    end Get_Identifier;
@@ -1835,10 +1848,10 @@ package body Language.Tree.Database is
       Removed_Files, Added_Files : out File_Array_Access)
    is
       Local_Removed : File_Array (1 .. Integer (Db.Files_Db.Length));
-      Local_Added : File_Array (1 .. New_Set'Length);
+      Local_Added   : File_Array (1 .. New_Set'Length);
       Removed_Index : Integer := 1;
       Added_Index   : Integer := 1;
-      New_File_Map : File_Map.Map;
+      New_File_Map  : File_Map.Map;
    begin
       --  Computes files removed in the new set
 
@@ -1870,19 +1883,16 @@ package body Language.Tree.Database is
 
       --  Build the result
 
-      Removed_Files := new File_Array'
-        (Local_Removed (1 .. Removed_Index - 1));
-      Added_Files := new File_Array'
-        (Local_Added (1 .. Added_Index - 1));
+      Removed_Files := new File_Array'(Local_Removed (1 .. Removed_Index - 1));
+      Added_Files := new File_Array'(Local_Added (1 .. Added_Index - 1));
    end Analyze_File_Differences;
 
    ---------
    -- "=" --
    ---------
 
-   overriding function "="
-     (Left, Right : Structured_File_Access) return Boolean
-   is
+   overriding
+   function "=" (Left, Right : Structured_File_Access) return Boolean is
       type Tmp_Acc is access all Structured_File;
    begin
       --  The null definition include both cases where the actual value of the
@@ -1899,10 +1909,11 @@ package body Language.Tree.Database is
    -- Find_Reference_Details --
    ----------------------------
 
-   overriding function Find_Reference_Details
-     (Lang    : access Unknown_Tree_Language;
-      File    : Structured_File_Access;
-      Index   : String_Index_Type) return Entity_Reference_Details
+   overriding
+   function Find_Reference_Details
+     (Lang  : access Unknown_Tree_Language;
+      File  : Structured_File_Access;
+      Index : String_Index_Type) return Entity_Reference_Details
    is
       pragma Unreferenced (Lang, File, Index);
    begin
@@ -1925,7 +1936,7 @@ package body Language.Tree.Database is
    -------------
 
    function Symbols
-     (Self    : access Construct_Database)
+     (Self : access Construct_Database)
       return GNATCOLL.Symbols.Symbol_Table_Access is
    begin
       return Self.Symbols;
@@ -1940,8 +1951,8 @@ package body Language.Tree.Database is
 
    type Automatic_Update_Lock_Access is access all Automatic_Update_Lock;
 
-   package Update_Lock_Lists is
-      new Ada.Containers.Doubly_Linked_Lists (Automatic_Update_Lock_Access);
+   package Update_Lock_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Automatic_Update_Lock_Access);
 
    Update_Lock_List : Update_Lock_Lists.List;
    --  The Update_Lock created by the Global_Update_Lock feature.
@@ -1969,9 +1980,11 @@ package body Language.Tree.Database is
             while Update_Lock_Lists.Has_Element (C) loop
                declare
                   Automatic_Lock : Automatic_Update_Lock_Access :=
-                     Update_Lock_Lists.Element (C);
-                  procedure Internal is new Standard.Ada.Unchecked_Deallocation
-                     (Automatic_Update_Lock, Automatic_Update_Lock_Access);
+                    Update_Lock_Lists.Element (C);
+                  procedure Internal is new
+                    Standard.Ada.Unchecked_Deallocation
+                      (Automatic_Update_Lock,
+                       Automatic_Update_Lock_Access);
                begin
                   Unlock (Automatic_Lock.Lock);
                   Internal (Automatic_Lock);
@@ -1991,8 +2004,8 @@ package body Language.Tree.Database is
    procedure Lock_If_Needed (File : Structured_File_Access) is
    begin
       if Global_Update_Lock and then File.Lock_Depth = 0 then
-         Update_Lock_List.Append (new Automatic_Update_Lock'
-            (Lock => Lock_Updates (File)));
+         Update_Lock_List.Append
+           (new Automatic_Update_Lock'(Lock => Lock_Updates (File)));
       end if;
    end Lock_If_Needed;
 

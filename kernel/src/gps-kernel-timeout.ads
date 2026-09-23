@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with Commands;                use Commands;
-with GNAT.Expect;             use GNAT.Expect;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
-with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
-with Interactive_Consoles;    use Interactive_Consoles;
-with Remote;                  use Remote;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Commands;              use Commands;
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GPS.Scripts.Commands;  use GPS.Scripts.Commands;
+with Interactive_Consoles;  use Interactive_Consoles;
+with Remote;                use Remote;
 
 package GPS.Kernel.Timeout is
 
@@ -126,7 +126,8 @@ package GPS.Kernel.Timeout is
    procedure On_Output
      (Self     : not null access External_Process_Data;
       External : not null access Root_Command'Class;
-      Output   : String) is null;
+      Output   : String)
+   is null;
    --  Called when some new data is available from the process.
    --  Override to perform your own processing, but you should in general
    --  call the inherited On_Output.
@@ -135,7 +136,8 @@ package GPS.Kernel.Timeout is
 
    procedure On_Before_Kill
      (Self     : not null access External_Process_Data;
-      External : not null access Root_Command'Class) is null;
+      External : not null access Root_Command'Class)
+   is null;
    --  Called just before the external process is killed by a call to
    --  Interrupt (or when GNAT Studio terminates).
    --  Not called when the process terminates normally.
@@ -144,7 +146,8 @@ package GPS.Kernel.Timeout is
 
    procedure On_Exit
      (Self     : not null access External_Process_Data;
-      External : not null access Root_Command'Class) is null;
+      External : not null access Root_Command'Class)
+   is null;
    --  Called when the process terminates
 
    procedure Copy
@@ -159,37 +162,37 @@ package GPS.Kernel.Timeout is
    --  (Severe all links with python for example)
 
    procedure Free
-     (Self            : in out External_Process_Data;
-      Owned_By_Python : Boolean := True) is null;
+     (Self : in out External_Process_Data; Owned_By_Python : Boolean := True)
+   is null;
    --  Free memory used by Self.
    --  If Own_By_Python then free only the allocated Ada memory.
 
    function Kernel
      (Self : not null access External_Process_Data)
-     return not null access Kernel_Handle_Record'Class
-     with Inline;
+      return not null access Kernel_Handle_Record'Class
+   with Inline;
    --  Return the kernel
 
    function Descriptor
      (Self : not null access External_Process_Data)
       return access GNAT.Expect.Process_Descriptor'Class
-     with Inline;
+   with Inline;
    --  Return a handle on the external process
 
    function Process_Died
      (Self : not null access External_Process_Data) return Boolean
-     with Inline;
+   with Inline;
    --  Whether the external process has finished executing
 
    function Exit_Status
      (Self : not null access External_Process_Data) return Integer
-     with Inline;
+   with Inline;
    --  Return the exit status of the command.
    --  This is only meaningful once the external process has finished running
 
    function Exit_Output
      (Self : not null access External_Process_Data) return Unbounded_String
-     with Inline;
+   with Inline;
    --  Return output when exiting the command.
    --  This is only meaningful once the external process has finished running
 
@@ -199,8 +202,7 @@ package GPS.Kernel.Timeout is
       Regexp              : GNAT.Regpat.Pattern_Matcher;
       Timeout             : Integer;
       Output              : out Ada.Strings.Unbounded.Unbounded_String;
-      Stop_At_First_Match : Boolean := True)
-      return Expect_Status;
+      Stop_At_First_Match : Boolean := True) return Expect_Status;
    --  Check whether the external process's output buffer contains data that
    --  matches Regexp. Wait for such data for up to Timeout milliseconds.
    --  Calls On_Output and On_Exit as appropriate.
@@ -214,8 +216,7 @@ package GPS.Kernel.Timeout is
    --  needs to be called again.
 
    procedure Suspend_Monitoring
-     (Self    : not null access External_Process_Data'Class;
-      Suspend : Boolean);
+     (Self : not null access External_Process_Data'Class; Suspend : Boolean);
    --  If Suspend is True, stop monitoring the external process (although the
    --  process itself still runs). This is useful if you are doing your own
    --  monitoring loop (which calls Expect above)
@@ -246,11 +247,13 @@ private
 
    function Kernel
      (Self : not null access External_Process_Data)
-      return not null access Kernel_Handle_Record'Class is (Self.Kernel);
+      return not null access Kernel_Handle_Record'Class
+   is (Self.Kernel);
 
    function Descriptor
      (Self : not null access External_Process_Data)
-      return access GNAT.Expect.Process_Descriptor'Class is (Self.Descriptor);
+      return access GNAT.Expect.Process_Descriptor'Class
+   is (Self.Descriptor);
 
    function Process_Died
      (Self : not null access External_Process_Data) return Boolean

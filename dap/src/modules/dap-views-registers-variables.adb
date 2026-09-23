@@ -15,31 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings;               use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 with VSS.Strings.Conversions;
 
-with Glib;                      use Glib;
-with Glib.Values;               use Glib.Values;
-with Glib_Values_Utils;         use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gdk.RGBA;
 
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Flow_Box;              use Gtk.Flow_Box;
-with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Flow_Box;        use Gtk.Flow_Box;
+with Gtk.Flow_Box_Child;  use Gtk.Flow_Box_Child;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
 
 with Gtkada.Style;
-with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
+with Gtkada.Stock_Labels; use Gtkada.Stock_Labels;
 
-with GPS.Dialogs;               use GPS.Dialogs;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Dialogs;            use GPS.Dialogs;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
-with DAP.Tools;                 use DAP.Tools;
-with GUI_Utils;                 use GUI_Utils;
+with DAP.Tools; use DAP.Tools;
+with GUI_Utils; use GUI_Utils;
 
 package body DAP.Views.Registers.Variables is
 
@@ -47,7 +47,8 @@ package body DAP.Views.Registers.Variables is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Variables_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
@@ -56,9 +57,7 @@ package body DAP.Views.Registers.Variables is
       use Registers_MDI_Views;
 
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
 
    begin
       New_Request := null;
@@ -68,10 +67,12 @@ package body DAP.Views.Registers.Variables is
       end if;
 
       case Self.Kind is
-         when Select_Names =>
+         when Select_Names     =>
             Self.Select_Names (Result);
+
          when Select_All_Names =>
             Self.Select_All_Names (Result);
+
          when Update_Registers =>
             Self.Update_Registers (Result);
       end case;
@@ -88,11 +89,9 @@ package body DAP.Views.Registers.Variables is
       use Registers_MDI_Views;
 
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
 
-      Names    : DAP.Types.Strings_Vectors.Vector;
+      Names : DAP.Types.Strings_Vectors.Vector;
 
       Scrolled : Gtk_Scrolled_Window;
       Dialog   : GPS_Dialog;
@@ -111,12 +110,11 @@ package body DAP.Views.Registers.Variables is
       procedure Is_Selected_Register
         (Widget : not null access Gtk_Widget_Record'Class) is
       begin
-         if Gtk_Check_Button
-           (Gtk_Flow_Box_Child (Widget).Get_Child).Get_Active
+         if Gtk_Check_Button (Gtk_Flow_Box_Child (Widget).Get_Child).Get_Active
          then
             View.Registers.Include
-              (Gtk_Check_Button
-                 (Gtk_Flow_Box_Child (Widget).Get_Child).Get_Label);
+              (Gtk_Check_Button (Gtk_Flow_Box_Child (Widget).Get_Child)
+                 .Get_Label);
          end if;
       end Is_Selected_Register;
 
@@ -127,12 +125,13 @@ package body DAP.Views.Registers.Variables is
               (Result.a_body.variables (Index).name));
       end loop;
 
-      Gtk_New (Dialog,
-               Title          => "Registers Selector",
-               Kernel         => View.Kernel,
-               Flags          => Destroy_With_Parent,
-               Default_Width  => 500,
-               Default_Length => 400);
+      Gtk_New
+        (Dialog,
+         Title          => "Registers Selector",
+         Kernel         => View.Kernel,
+         Flags          => Destroy_With_Parent,
+         Default_Width  => 500,
+         Default_Length => 400);
 
       Gtk_New (Scrolled);
       Gtk_New (Flow_Box);
@@ -164,11 +163,10 @@ package body DAP.Views.Registers.Variables is
             --  Update the list of visible child
             View.Registers.Clear;
             View.Old_Values.Clear;
-            Flow_Box.Foreach
-              (Is_Selected_Register'Unrestricted_Access);
+            Flow_Box.Foreach (Is_Selected_Register'Unrestricted_Access);
             Destroy (Dialog);
 
-         when others =>
+         when others          =>
             Destroy (Dialog);
       end case;
 
@@ -185,9 +183,7 @@ package body DAP.Views.Registers.Variables is
       Result : in out DAP.Tools.VariablesResponse)
    is
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
    begin
       for Index in 1 .. Length (Result.a_body.variables) loop
          View.Registers.Include
@@ -212,18 +208,16 @@ package body DAP.Views.Registers.Variables is
       use DAP.Types.String_To_String_Maps;
 
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
 
-      Model      : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
-      Detached   : Gtk.Tree_Model.Gtk_Tree_Model;
+      Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Detached : Gtk.Tree_Model.Gtk_Tree_Model;
 
-      Row        : Gtk_Tree_Iter;
-      Current    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Values     : Glib.Values.GValue_Array (1 .. 8);
-      Columns    : Columns_Array (Values'Range);
-      Last       : Gint := 0;
+      Row     : Gtk_Tree_Iter;
+      Current : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Values  : Glib.Values.GValue_Array (1 .. 8);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint := 0;
 
       Index         : Integer := 0;
       Bg_Name       : Gdk.RGBA.Gdk_RGBA;
@@ -249,18 +243,18 @@ package body DAP.Views.Registers.Variables is
       View.Tree.Set_Model (Null_Gtk_Tree_Model);
       Model.Clear;
 
-      Bg_Value      := Default_Style.Get_Pref_Bg;
+      Bg_Value := Default_Style.Get_Pref_Bg;
       Bg_Value_Dark := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.05);
-      Bg_Name       := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.1);
-      Bg_Name_Dark  := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.15);
-      Modified_Fg   := Numbers_Style.Get_Pref_Fg;
+      Bg_Name := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.1);
+      Bg_Name_Dark := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.15);
+      Modified_Fg := Numbers_Style.Get_Pref_Fg;
 
       Row := Model.Get_Iter_First;
 
       for Item of View.Registers loop
          for Index in 1 .. Length (Result.a_body.variables) loop
-            if Result.a_body.variables (Index).name =
-              VSS.Strings.Conversions.To_Virtual_String (Item)
+            if Result.a_body.variables (Index).name
+              = VSS.Strings.Conversions.To_Virtual_String (Item)
             then
                Var := Result.a_body.variables (Index);
                exit;
@@ -274,7 +268,7 @@ package body DAP.Views.Registers.Variables is
          Columns (2) := BG_Name_Color_Column;
          Columns (3) := BG_Value_Color_Column;
 
-         Values  (1) := As_String (Item);
+         Values (1) := As_String (Item);
 
          if Index rem 2 = 0 then
             Gdk.RGBA.Set_Value (Values (2), Bg_Name);
@@ -288,8 +282,9 @@ package body DAP.Views.Registers.Variables is
 
          Cursor := View.Old_Values.Find (Item);
          if Has_Element (Cursor)
-           and then VSS.Strings.Conversions.To_Virtual_String
-             (Element (Cursor)) /= Var.value
+           and then
+             VSS.Strings.Conversions.To_Virtual_String (Element (Cursor))
+             /= Var.value
          then
             Last := 4;
             Columns (4) := FG_Color_Column;
@@ -298,26 +293,24 @@ package body DAP.Views.Registers.Variables is
 
          Last := Last + 1;
          Columns (Last) := Raw_Column;
-         Values  (Last) := As_String
-           (VSS.Strings.Conversions.To_UTF_8_String (Var.value));
+         Values (Last) :=
+           As_String (VSS.Strings.Conversions.To_UTF_8_String (Var.value));
 
          Last := Last + 1;
          Columns (Last) := Type_Column;
-         Values  (Last) := As_String
-           (VSS.Strings.Conversions.To_UTF_8_String (Var.a_type));
+         Values (Last) :=
+           As_String (VSS.Strings.Conversions.To_UTF_8_String (Var.a_type));
 
          Last := Last + 1;
          Columns (Last) := Editable_Column;
-         Values  (Last) := As_Boolean (True);
+         Values (Last) := As_Boolean (True);
 
          Last := Last + 1;
          Columns (Last) := Id_Column;
-         Values  (Last) := As_Int (Gint (Var.variablesReference));
+         Values (Last) := As_Int (Gint (Var.variablesReference));
 
          Model.Set
-           (Row,
-            Glib.Gint_Array (Columns (1 .. Last)),
-            Values (1 .. Last));
+           (Row, Glib.Gint_Array (Columns (1 .. Last)), Values (1 .. Last));
          Unset (Values (1 .. Last));
 
          View.Old_Values.Include

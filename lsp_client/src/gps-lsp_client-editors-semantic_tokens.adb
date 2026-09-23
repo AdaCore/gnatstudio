@@ -626,32 +626,31 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       function To_Wire_Name
         (Value : LSP.Enumerations.SemanticTokenTypes)
          return VSS.Strings.Virtual_String
-      is
-        (VSS.Strings.Conversions.To_Virtual_String
-           (case Value is
-               when namespace     => "namespace",
-               when a_type        => "type",
-               when class         => "class",
-               when enum          => "enum",
-               when an_interface  => "interface",
-               when struct        => "struct",
-               when typeParameter => "typeParameter",
-               when parameter     => "parameter",
-               when variable      => "variable",
-               when property      => "property",
-               when enumMember    => "enumMember",
-               when event         => "event",
-               when a_function    => "function",
-               when method        => "method",
-               when macro         => "macro",
-               when keyword       => "keyword",
-               when modifier      => "modifier",
-               when comment       => "comment",
+      is (VSS.Strings.Conversions.To_Virtual_String
+            (case Value is
+               when namespace               => "namespace",
+               when a_type                  => "type",
+               when class                   => "class",
+               when enum                    => "enum",
+               when an_interface            => "interface",
+               when struct                  => "struct",
+               when typeParameter           => "typeParameter",
+               when parameter               => "parameter",
+               when variable                => "variable",
+               when property                => "property",
+               when enumMember              => "enumMember",
+               when event                   => "event",
+               when a_function              => "function",
+               when method                  => "method",
+               when macro                   => "macro",
+               when keyword                 => "keyword",
+               when modifier                => "modifier",
+               when comment                 => "comment",
                when LSP.Enumerations.string => "string",
-               when number        => "number",
-               when regexp        => "regexp",
-               when operator      => "operator",
-               when decorator     => "decorator"));
+               when number                  => "number",
+               when regexp                  => "regexp",
+               when operator                => "operator",
+               when decorator               => "decorator"));
 
       ------------------
       -- To_Wire_Name --
@@ -660,21 +659,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       function To_Wire_Name
         (Value : LSP.Enumerations.SemanticTokenModifiers)
          return VSS.Strings.Virtual_String
-      is
-        (VSS.Strings.Conversions.To_Virtual_String
-           (case Value is
-               when LSP.Enumerations.declaration    => "declaration",
-               when LSP.Enumerations.definition     => "definition",
-               when LSP.Enumerations.readonly       => "readonly",
-               when LSP.Enumerations.static         => "static",
-               when LSP.Enumerations.deprecated     => "deprecated",
-               when LSP.Enumerations.an_abstract    => "abstract",
-               when LSP.Enumerations.async          => "async",
-               when LSP.Enumerations.modification   => "modification",
-               when LSP.Enumerations.documentation  => "documentation",
-               when LSP.Enumerations.defaultLibrary => "defaultLibrary",
-               when LSP.Enumerations.globalVariable => "globalVariable",
-               when LSP.Enumerations.localVariable  => "localVariable",
+      is (VSS.Strings.Conversions.To_Virtual_String
+            (case Value is
+               when LSP.Enumerations.declaration     => "declaration",
+               when LSP.Enumerations.definition      => "definition",
+               when LSP.Enumerations.readonly        => "readonly",
+               when LSP.Enumerations.static          => "static",
+               when LSP.Enumerations.deprecated      => "deprecated",
+               when LSP.Enumerations.an_abstract     => "abstract",
+               when LSP.Enumerations.async           => "async",
+               when LSP.Enumerations.modification    => "modification",
+               when LSP.Enumerations.documentation   => "documentation",
+               when LSP.Enumerations.defaultLibrary  => "defaultLibrary",
+               when LSP.Enumerations.globalVariable  => "globalVariable",
+               when LSP.Enumerations.localVariable   => "localVariable",
                when LSP.Enumerations.dispatchingCall => "dispatchingCall"));
 
       -------------------------------

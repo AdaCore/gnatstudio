@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 with Cairo;                    use Cairo;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
-with Glib.Object;              use Glib, Glib.Object;
+with Glib.Object;
+use Glib, Glib.Object;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
 with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Pango.Enums;              use Pango.Enums;
@@ -30,10 +31,10 @@ with Pango.Font;               use Pango.Font;
 
 package body Browsers is
 
-   function On_Item_Event_Key_Navigate
-   is new On_Item_Event_Key_Navigate_Generic (Modifier => 0);
-   function On_Item_Event_Key_Scrolls is new On_Item_Event_Key_Scrolls_Generic
-     (Modifier => Mod1_Mask);
+   function On_Item_Event_Key_Navigate is new
+     On_Item_Event_Key_Navigate_Generic (Modifier => 0);
+   function On_Item_Event_Key_Scrolls is new
+     On_Item_Event_Key_Scrolls_Generic (Modifier => Mod1_Mask);
 
    function On_Item_Event
      (Self    : not null access GObject_Record'Class;
@@ -41,9 +42,8 @@ package body Browsers is
    --  Called when an item is clicked, to possibly execute its action
 
    function On_Item_Event_Zoom_Internal
-     (View   : not null access Glib.Object.GObject_Record'Class;
-      Event : Event_Details_Access)
-      return Boolean;
+     (View  : not null access Glib.Object.GObject_Record'Class;
+      Event : Event_Details_Access) return Boolean;
    --  Wrapper for On_Item_Event_Zoom which gives Primary_Mask as a Modifier.
 
    Primary_Mask : Gdk.Types.Gdk_Modifier_Type := 0;
@@ -57,13 +57,13 @@ package body Browsers is
       Details : Event_Details_Access) return Boolean
    is
       Canvas : constant GPS_Canvas_View := GPS_Canvas_View (Self);
-      It : Abstract_Item;
+      It     : Abstract_Item;
    begin
       if not Canvas.Read_Only
-         and then
-            (On_Item_Event_Select (Self, Details)
-             or else On_Item_Event_Move_Item (Self, Details)
-             or else On_Item_Event_Edit (Self, Details))
+        and then
+          (On_Item_Event_Select (Self, Details)
+           or else On_Item_Event_Move_Item (Self, Details)
+           or else On_Item_Event_Edit (Self, Details))
       then
          return True;
       end if;
@@ -91,17 +91,17 @@ package body Browsers is
    -- Draw_Internal --
    -------------------
 
-   overriding procedure Draw_Internal
+   overriding
+   procedure Draw_Internal
      (Self    : not null access GPS_Canvas_View_Record;
       Context : Draw_Context;
-      Area    : Model_Rectangle)
-   is
+      Area    : Model_Rectangle) is
    begin
       case Self.Background is
-         when Background_None =>
+         when Background_None                              =>
             null;
 
-         when Background_Color =>
+         when Background_Color                             =>
             if Self.Grid_Style.Get_Fill /= Null_Pattern then
                Set_Source (Context.Cr, Self.Grid_Style.Get_Fill);
                Paint (Context.Cr);
@@ -124,8 +124,7 @@ package body Browsers is
 
    procedure Gtk_New
      (Self  : out GPS_Canvas_View;
-      Model : not null access Gtkada.Canvas_View.Canvas_Model_Record'Class)
-   is
+      Model : not null access Gtkada.Canvas_View.Canvas_Model_Record'Class) is
    begin
       Self := new GPS_Canvas_View_Record;
       Gtkada.Canvas_View.Initialize (Self, Model);
@@ -148,12 +147,10 @@ package body Browsers is
    ----------------
 
    procedure Initialize
-     (Self : not null access Left_Arrow_Record'Class;
-      Font : Font_Style) is
+     (Self : not null access Left_Arrow_Record'Class; Font : Font_Style) is
    begin
       Self.Initialize_Text
-        (Gtk_New (Stroke => Null_RGBA,
-                  Font   => Font),
+        (Gtk_New (Stroke => Null_RGBA, Font => Font),
          Left_Arrow,
          Height => 12.0);
    end Initialize;
@@ -163,12 +160,10 @@ package body Browsers is
    ----------------
 
    procedure Initialize
-     (Self : not null access Right_Arrow_Record'Class;
-      Font : Font_Style) is
+     (Self : not null access Right_Arrow_Record'Class; Font : Font_Style) is
    begin
       Self.Initialize_Text
-        (Gtk_New (Stroke => Null_RGBA,
-                  Font   => Font),
+        (Gtk_New (Stroke => Null_RGBA, Font => Font),
          Right_Arrow,
          Height => 12.0);
    end Initialize;
@@ -182,19 +177,20 @@ package body Browsers is
       Self := new Close_Button_Record;
       Self.Initialize_Image
         (Gtk_New (Stroke => Null_RGBA),
-         Icon_Name => "gps-close-symbolic",
+         Icon_Name     => "gps-close-symbolic",
          Allow_Rescale => False,
-         Width => 12.0,
-         Height => 12.0);
+         Width         => 12.0,
+         Height        => 12.0);
    end Gtk_New;
 
    --------------
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
-     (Self : not null access Close_Button_Record;
-      View : not null access GPS_Canvas_View_Record'Class;
+   overriding
+   procedure On_Click
+     (Self    : not null access Close_Button_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
    is
       pragma Unreferenced (Details);
@@ -222,16 +218,14 @@ package body Browsers is
    procedure Create_Styles (Self : not null access GPS_Canvas_View_Record) is
 
       function Create_Title_Style
-        (Base       : Gdk_RGBA;
-         Font_Color : Gdk_RGBA) return Drawing_Style;
+        (Base : Gdk_RGBA; Font_Color : Gdk_RGBA) return Drawing_Style;
 
       ------------------------
       -- Create_Title_Style --
       ------------------------
 
       function Create_Title_Style
-        (Base       : Gdk_RGBA;
-         Font_Color : Gdk_RGBA) return Drawing_Style
+        (Base : Gdk_RGBA; Font_Color : Gdk_RGBA) return Drawing_Style
       is
          B : Gdk_RGBA;
          P : Cairo_Pattern;
@@ -241,17 +235,19 @@ package body Browsers is
          Pattern_Add_Color_Stop_Rgb (P, 0.0, B.Red, B.Green, B.Blue);
          B := Shade (Base, 0.05);
          Pattern_Add_Color_Stop_Rgb (P, 1.0, B.Red, B.Green, B.Blue);
-         return Gtk_New
-           (Fill   => P,
-            Stroke => Null_RGBA,
-            Font   => (Name   => From_String ("sans 8"),
-                       Color  => Font_Color,
-                       Halign => Pango.Enums.Pango_Align_Center,
-                       others => <>));
+         return
+           Gtk_New
+             (Fill   => P,
+              Stroke => Null_RGBA,
+              Font   =>
+                (Name   => From_String ("sans 8"),
+                 Color  => Font_Color,
+                 Halign => Pango.Enums.Pango_Align_Center,
+                 others => <>));
       end Create_Title_Style;
 
-      Selected : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
-      F        : constant Pango_Font_Description :=
+      Selected   : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
+      F          : constant Pango_Font_Description :=
         GPS.Kernel.Preferences.Default_Font.Get_Pref;
       F2, F3, F4 : Pango_Font_Description;
 
@@ -270,76 +266,82 @@ package body Browsers is
       Set_Size (F4, Get_Size (F) - Gint (0.5 * Pango_Scale));
 
       Self.Styles :=
-        (Item => Gtk_New
-           (Fill => Create_Rgba_Pattern
-                (Lighten (Default_Style.Get_Pref_Bg, 0.05)),
-            Shadow => (Color => (0.0, 0.0, 0.0, 0.1), others => <>)),
-         Nested => Gtk_New
-           (Stroke => (0.8, 0.8, 0.8, 0.8)),
-         Title      =>
+        (Item          =>
+           Gtk_New
+             (Fill   =>
+                Create_Rgba_Pattern
+                  (Lighten (Default_Style.Get_Pref_Bg, 0.05)),
+              Shadow => (Color => (0.0, 0.0, 0.0, 0.1), others => <>)),
+         Nested        => Gtk_New (Stroke => (0.8, 0.8, 0.8, 0.8)),
+         Title         =>
            Create_Title_Style
-             (Default_Style.Get_Pref_Bg,
-              Default_Style.Get_Pref_Fg),
-         Title_Font => Gtk_New
-           (Font   => (Name   => Copy (F),
-                       Halign => Pango.Enums.Pango_Align_Center,
-                       Color  => Default_Style.Get_Pref_Fg,
-                       others => <>),
-            Stroke => Null_RGBA),
-         Text_Font  => Gtk_New
-           (Font   => (Name => F2,
-                       Color => Default_Style.Get_Pref_Fg,
-                       others => <>),
-            Stroke => Null_RGBA),
-         Hyper_Link  => Gtk_New
-           (Font      => (Name => F4,
-                          Color     => Hyper_Links_Style.Get_Pref_Fg,
-                          Underline => Pango_Underline_Single,
-                          others => <>),
-            Stroke    => Null_RGBA),
-         Link_Label => Gtk_New (Font => (Name => F3, others => <>)),
-         Link       => Gtk_New
-           (Stroke   => Unselected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Unselected_Link_Color.Get_Pref,
-                         others => <>)),
-         Link2      =>  Gtk_New
-           (Stroke   => Unselected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Unselected_Link_Color.Get_Pref,
-                         others => <>),
-            Dashes   => (5.0, 5.0)),
-         Highlight  =>  Gtk_New
-           (Stroke     => Parent_Linked_Item_Color.Get_Pref,
-            Line_Width => 2.0),
-         Search     => Gtk_New
-           (Stroke     => (0.8, 0.0, 0.0, 0.7),
-            Line_Width => 2.0),
-         Circle     => Gtk_New
-           (Stroke     => (0.27, 0.5, 0.7, 1.0),
-            Line_Width => 2.0),
-         Label      => Gtk_New
-           (Stroke => Null_RGBA,
-            Fill => Create_Rgba_Pattern ((1.0, 1.0, 1.0, 0.6)),
-            Font   => (Name => From_String ("sans 8"),
-                       others => <>)),
-         Invisible  => Gtk_New (Stroke => Null_RGBA),
-         Selected_Link => Gtk_New
-           (Stroke   => Selected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Selected_Link_Color.Get_Pref,
-                         others => <>)));
+             (Default_Style.Get_Pref_Bg, Default_Style.Get_Pref_Fg),
+         Title_Font    =>
+           Gtk_New
+             (Font   =>
+                (Name   => Copy (F),
+                 Halign => Pango.Enums.Pango_Align_Center,
+                 Color  => Default_Style.Get_Pref_Fg,
+                 others => <>),
+              Stroke => Null_RGBA),
+         Text_Font     =>
+           Gtk_New
+             (Font   =>
+                (Name => F2, Color => Default_Style.Get_Pref_Fg, others => <>),
+              Stroke => Null_RGBA),
+         Hyper_Link    =>
+           Gtk_New
+             (Font   =>
+                (Name      => F4,
+                 Color     => Hyper_Links_Style.Get_Pref_Fg,
+                 Underline => Pango_Underline_Single,
+                 others    => <>),
+              Stroke => Null_RGBA),
+         Link_Label    => Gtk_New (Font => (Name => F3, others => <>)),
+         Link          =>
+           Gtk_New
+             (Stroke   => Unselected_Link_Color.Get_Pref,
+              Arrow_To =>
+                (Head   => Solid,
+                 Stroke => Null_RGBA,
+                 Length => 8.0,
+                 Fill   => Unselected_Link_Color.Get_Pref,
+                 others => <>)),
+         Link2         =>
+           Gtk_New
+             (Stroke   => Unselected_Link_Color.Get_Pref,
+              Arrow_To =>
+                (Head   => Solid,
+                 Stroke => Null_RGBA,
+                 Length => 8.0,
+                 Fill   => Unselected_Link_Color.Get_Pref,
+                 others => <>),
+              Dashes   => (5.0, 5.0)),
+         Highlight     =>
+           Gtk_New
+             (Stroke => Parent_Linked_Item_Color.Get_Pref, Line_Width => 2.0),
+         Search        =>
+           Gtk_New (Stroke => (0.8, 0.0, 0.0, 0.7), Line_Width => 2.0),
+         Circle        =>
+           Gtk_New (Stroke => (0.27, 0.5, 0.7, 1.0), Line_Width => 2.0),
+         Label         =>
+           Gtk_New
+             (Stroke => Null_RGBA,
+              Fill   => Create_Rgba_Pattern ((1.0, 1.0, 1.0, 0.6)),
+              Font   => (Name => From_String ("sans 8"), others => <>)),
+         Invisible     => Gtk_New (Stroke => Null_RGBA),
+         Selected_Link =>
+           Gtk_New
+             (Stroke   => Selected_Link_Color.Get_Pref,
+              Arrow_To =>
+                (Head   => Solid,
+                 Stroke => Null_RGBA,
+                 Length => 8.0,
+                 Fill   => Selected_Link_Color.Get_Pref,
+                 others => <>)));
 
       Self.Set_Selection_Style
-        (Gtk_New
-           (Stroke     => Selected,
-            Line_Width => 3.0));
+        (Gtk_New (Stroke => Selected, Line_Width => 3.0));
    end Create_Styles;
 
    ---------------------------------
@@ -347,12 +349,12 @@ package body Browsers is
    ---------------------------------
 
    function On_Item_Event_Zoom_Internal
-     (View   : not null access Glib.Object.GObject_Record'Class;
-      Event : Event_Details_Access)
-      return Boolean is
+     (View  : not null access Glib.Object.GObject_Record'Class;
+      Event : Event_Details_Access) return Boolean is
    begin
-      return On_Item_Event_Zoom
-        (View, Event, Primary_Mask, 1.1, 0.0, Easing_In_Out_Cubic'Access);
+      return
+        On_Item_Event_Zoom
+          (View, Event, Primary_Mask, 1.1, 0.0, Easing_In_Out_Cubic'Access);
    end On_Item_Event_Zoom_Internal;
 
    -------------------
@@ -360,8 +362,8 @@ package body Browsers is
    -------------------
 
    procedure Set_Read_Only
-      (Self : not null access GPS_Canvas_View_Record;
-       Read_Only : Boolean := True) is
+     (Self      : not null access GPS_Canvas_View_Record;
+      Read_Only : Boolean := True) is
    begin
       Self.Read_Only := Read_Only;
    end Set_Read_Only;
@@ -371,7 +373,7 @@ package body Browsers is
    ------------------
 
    function Is_Read_Only
-      (Self : not null access GPS_Canvas_View_Record) return Boolean is
+     (Self : not null access GPS_Canvas_View_Record) return Boolean is
    begin
       return Self.Read_Only;
    end Is_Read_Only;
@@ -400,10 +402,8 @@ package body Browsers is
          Format := To_Page_Format (Letter_Landscape);
       elsif Is_Digit (F (F'First)) then
          Comma := Index (F, ",");
-         Format.Width_In_Inches :=
-           Gdouble'Value (F (F'First .. Comma - 1));
-         Format.Height_In_Inches :=
-           Gdouble'Value (F (Comma + 1 .. F'Last));
+         Format.Width_In_Inches := Gdouble'Value (F (F'First .. Comma - 1));
+         Format.Height_In_Inches := Gdouble'Value (F (Comma + 1 .. F'Last));
       else
          Format := To_Page_Format (A4_Portrait);
       end if;

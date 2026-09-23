@@ -15,65 +15,67 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation; use Ada;
-with Ada.Calendar;               use Ada.Calendar;
+with Ada.Unchecked_Deallocation;
+use Ada;
+with Ada.Calendar;          use Ada.Calendar;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 
-with Glib;                       use Glib;
-with Glib.Main;                  use Glib.Main;
-with Glib.Object;                use Glib.Object;
-with Glib.Values;                use Glib.Values;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Main;         use Glib.Main;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Dnd;                    use Gdk.Dnd;
-with Gdk.Event;                  use Gdk.Event;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Dnd;                    use Gtk.Dnd;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;                  use Gtk.Enums;
+with Gdk.Dnd;                  use Gdk.Dnd;
+with Gdk.Event;                use Gdk.Event;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Dnd;                  use Gtk.Dnd;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Toolbar;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gdk.Types;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.File_Selector;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.Tree_View;           use Gtkada.Tree_View;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
-with Commands.Interactive;       use Commands, Commands.Interactive;
-with Default_Preferences;        use Default_Preferences;
-with Filter_Panels;              use Filter_Panels;
-with Generic_Views;              use Generic_Views;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Search;                 use GPS.Search;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.VCS;                    use GPS.VCS;
-with Projects;                   use Projects;
-with GUI_Utils;                  use GUI_Utils;
-with Tooltips;                   use Tooltips;
-with Project_Explorers_Common;   use Project_Explorers_Common;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
+with Filter_Panels;            use Filter_Panels;
+with Generic_Views;            use Generic_Views;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Search;               use GPS.Search;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.VCS;                  use GPS.VCS;
+with Projects;                 use Projects;
+with GUI_Utils;                use GUI_Utils;
+with Tooltips;                 use Tooltips;
+with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
    Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.FILES");
@@ -83,22 +85,23 @@ package body Project_Explorers_Files is
    File_View_Shows_Only_Project : Boolean_Preference;
    Dirs_From_Project            : Boolean_Preference;
 
-   package Virtual_Files_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Virtual_File);
-   package Source_Id_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (G_Source_Id);
+   package Virtual_Files_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Virtual_File);
+   package Source_Id_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (G_Source_Id);
 
    type Files_View_Config is record
-      Shows_Only_Project   : Boolean := False;
-      Dirs_From_Project    : Boolean := False;
-      Show_Hidden_Files    : Boolean := False;
+      Shows_Only_Project : Boolean := False;
+      Dirs_From_Project  : Boolean := False;
+      Show_Hidden_Files  : Boolean := False;
    end record;
 
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => GNATCOLL.VFS.Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => GNATCOLL.VFS."=",
-      "="                 => GNATCOLL.VFS."=");
+   package File_Sets is new
+     Ada.Containers.Hashed_Sets
+       (Element_Type        => GNATCOLL.VFS.Virtual_File,
+        Hash                => GNATCOLL.VFS.Full_Name_Hash,
+        Equivalent_Elements => GNATCOLL.VFS."=",
+        "="                 => GNATCOLL.VFS."=");
 
    type Files_Tree_View_Record is new Base_Explorer_Tree_Record with record
       Config      : Files_View_Config;
@@ -109,50 +112,54 @@ package body Project_Explorers_Files is
       --  Set of expanded nodes in tree view. Valid only during Refresh call.
    end record;
    type Files_Tree_View is access all Files_Tree_View_Record'Class;
-   overriding procedure Add_Children
+   overriding
+   procedure Add_Children
      (Self       : not null access Files_Tree_View_Record;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
 
-   type Project_Explorer_Files_Record is new Generic_Views.View_Record with
-      record
-         Tree      : Files_Tree_View;
+   type Project_Explorer_Files_Record is new Generic_Views.View_Record
+   with record
+      Tree : Files_Tree_View;
 
-         Directory : GNATCOLL.VFS.Virtual_File;
-         --  Directory selected by user to be shown
-      end record;
-   overriding procedure Create_Menu
+      Directory : GNATCOLL.VFS.Virtual_File;
+      --  Directory selected by user to be shown
+   end record;
+   overriding
+   procedure Create_Menu
      (View : not null access Project_Explorer_Files_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Project_Explorer_Files_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (View    : not null access Project_Explorer_Files_Record;
       Pattern : in out Search_Pattern_Access);
 
    function Initialize
-     (Explorer : access Project_Explorer_Files_Record'Class)
-      return Gtk_Widget;
+     (Explorer : access Project_Explorer_Files_Record'Class) return Gtk_Widget;
    --  Create a new explorer and returns the focus widget
 
-   type Explorer_Child_Record is
-      new MDI_Explorer_Child_Record with null record;
-   overriding function Build_Context
+   type Explorer_Child_Record is new MDI_Explorer_Child_Record
+   with null record;
+   overriding
+   function Build_Context
      (Self  : not null access Explorer_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
-   package Explorer_Files_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Files_View",
-      View_Name          => -"Files",
-      Formal_View_Record => Project_Explorer_Files_Record,
-      Formal_MDI_Child   => Explorer_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Left);
+   package Explorer_Files_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Files_View",
+        View_Name          => -"Files",
+        Formal_View_Record => Project_Explorer_Files_Record,
+        Formal_MDI_Child   => Explorer_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Position_Left);
    use Explorer_Files_Views;
    subtype Project_Explorer_Files is Explorer_Files_Views.View_Access;
 
@@ -176,17 +183,17 @@ package body Project_Explorers_Files is
       File_Index : Natural := 0;
       Id         : G_Source_Id;
 
-      Next_Iter  : Gtk_Tree_Iter;   --  Node to expand for the next level
-      Next_File  : Virtual_File;    --  Directory to expand for next level
+      Next_Iter : Gtk_Tree_Iter;   --  Node to expand for the next level
+      Next_File : Virtual_File;    --  Directory to expand for next level
 
       VCS_Engine : Abstract_VCS_Engine_Access;
       --  The VCS engine used for the current directory
 
-      Detached   : Explorer_Expansion.Detached_Model_Access;
+      Detached : Explorer_Expansion.Detached_Model_Access;
       --  when set and then destroyed, this will detach and reattach the view,
       --  to optimize insertion time.
 
-      Lib_Dirs   : GNATCOLL.VFS.File_Array_Access;
+      Lib_Dirs : GNATCOLL.VFS.File_Array_Access;
       --  For holding directories from Lib_Dir attributes of projects.
    end record;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
@@ -194,11 +201,11 @@ package body Project_Explorers_Files is
 
    procedure Free (Self : in out Append_Directory_Idle_Data_Access);
 
-   package Map_Expanded_Rows is
-     new Map_Expanded_Rows_User_Data (Files_Tree_View);
+   package Map_Expanded_Rows is new
+     Map_Expanded_Rows_User_Data (Files_Tree_View);
 
-   package File_Append_Directory_Timeout is
-     new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
+   package File_Append_Directory_Timeout is new
+     Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types
      (Tree : not null access Gtk_Tree_View_Record'Class);
@@ -208,7 +215,7 @@ package body Project_Explorers_Files is
      (Self          : not null access Files_Tree_View_Record'Class;
       Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
-      Append_To_Dir : Virtual_File  := No_File;
+      Append_To_Dir : Virtual_File := No_File;
       Idle          : Boolean := False);
    --  Add to the file view the directory Dir, at node given by Iter.
    --  If Append_To_Dir is not No_File, and is a sub-directory of Dir, then
@@ -236,7 +243,7 @@ package body Project_Explorers_Files is
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+      Params   : Glib.Values.GValues);
    --  Callback for the "destroy" event on the file view
 
    procedure File_Remove_Idle_Calls
@@ -244,13 +251,13 @@ package body Project_Explorers_Files is
    --  Remove the idle calls for filling the file view
 
    function File_Button_Press
-     (Explorer : access GObject_Record'Class;
-      Event    : Gdk_Event_Button) return Boolean;
+     (Explorer : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    --  Callback for the "button_press" event on the file view
 
    function File_Key_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Explorer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "key_press" event on the file view
 
    procedure File_Selection_Changed
@@ -265,15 +272,16 @@ package body Project_Explorers_Files is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Explorer : Project_Explorer_Files;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when preferences change
 
-   type Locate_File_In_Files_View is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Locate_File_In_Files_View is new Interactive_Command with null record;
+   overriding
+   function Execute
      (Command : access Locate_File_In_Files_View;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch a timeout waiting for the other timeout to finish, then
@@ -283,20 +291,22 @@ package body Project_Explorers_Files is
    --  This function must be called in synchronous mode
 
    type Refresh_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Refresh_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Refresh_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer
 
    type Select_Directory_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Select_Directory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type File_View_Filter_Record is new Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
+   type File_View_Filter_Record is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Context : access File_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
@@ -305,36 +315,38 @@ package body Project_Explorers_Files is
    -----------
 
    type On_Deleted is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Deleted;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_deleted" hook
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
 
    type On_File_Renamed is new File2_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File, Renamed   : Virtual_File);
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
    procedure Remove_File
-     (View : Project_Explorer_Files;
-      File : GNATCOLL.VFS.Virtual_File);
+     (View : Project_Explorer_Files; File : GNATCOLL.VFS.Virtual_File);
    --  Remove a file or directory node from the tree
 
    procedure Add_File
-     (View : Project_Explorer_Files;
-      File : GNATCOLL.VFS.Virtual_File);
+     (View : Project_Explorer_Files; File : GNATCOLL.VFS.Virtual_File);
    --  Add a file or directory node in the tree
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (View    : not null access Project_Explorer_Files_Record;
       Pattern : in out Search_Pattern_Access)
    is
@@ -365,7 +377,8 @@ package body Project_Explorers_Files is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access File_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -390,9 +403,9 @@ package body Project_Explorers_Files is
    begin
       Self.Model.Append (Iter, Parent => Parent);
       Values :=
-        (1 => As_File   (Dir),
+        (1 => As_File (Dir),
          2 => As_String (Dir.Display_Base_Dir_Name),
-         3 => As_Int    (Gint (Node_Types'Pos (Directory_Node))),
+         3 => As_Int (Gint (Node_Types'Pos (Directory_Node))),
          4 => As_String (Stock_For_Node (Directory_Node, Expanded => False)));
       Set_And_Clear (Self.Model, Iter, Columns, Values);
       Self.Set_Might_Have_Children (Iter);
@@ -403,10 +416,10 @@ package body Project_Explorers_Files is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Explorer_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       Context  : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
@@ -426,13 +439,16 @@ package body Project_Explorers_Files is
    ----------
 
    procedure Free (Self : in out Append_Directory_Idle_Data_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
+      procedure Unchecked_Free is new
+        Unchecked_Deallocation
+          (Append_Directory_Idle_Data,
+           Append_Directory_Idle_Data_Access);
       C : Source_Id_Lists.Cursor;
    begin
       if Self /= null then
-         Trace (Me, "Free append_directory_idle_data "
-            & Self.Dir.Display_Full_Name);
+         Trace
+           (Me,
+            "Free append_directory_idle_data " & Self.Dir.Display_Full_Name);
 
          C := Self.Tree.Timeout_Ids.Find (Self.Id);
          if Source_Id_Lists.Has_Element (C) then
@@ -471,8 +487,9 @@ package body Project_Explorers_Files is
          T : constant Project_Tree_Access := Get_Registry (D.Tree.Kernel).Tree;
       begin
          if F.Is_Directory then
-            return T.Directory_Belongs_To_Project
-              (F.Full_Name, Direct_Only => False);
+            return
+              T.Directory_Belongs_To_Project
+                (F.Full_Name, Direct_Only => False);
 
          else
             declare
@@ -483,7 +500,7 @@ package body Project_Explorers_Files is
                --  to base our guess on
                F_Info : constant File_Info'Class :=
                  File_Info'Class (T.Info_Set (File).First_Element);
-               P      : constant Project_Type    := F_Info.Project;
+               P      : constant Project_Type := F_Info.Project;
             begin
                --  If not part of a project, then we remove the file
                return P /= No_Project and then File = F;
@@ -494,12 +511,12 @@ package body Project_Explorers_Files is
       function Is_Dir_From_Project (F : Virtual_File) return Boolean is
       begin
          if Get_Registry (D.Tree.Kernel).Tree.Directory_Belongs_To_Project
-           (F.Full_Name, Direct_Only => False)
+              (F.Full_Name, Direct_Only => False)
          then
             return True;
 
-            --  Checking whether a directory is a library
-            --  directory or is a parent of a library directory
+         --  Checking whether a directory is a library
+         --  directory or is a parent of a library directory
          elsif D.Lib_Dirs /= null then
             for I in D.Lib_Dirs'Range loop
                if F = D.Lib_Dirs (I) or else Is_Parent (F, D.Lib_Dirs (I)) then
@@ -513,8 +530,8 @@ package body Project_Explorers_Files is
 
    begin
       if Active (Me) then
-         Trace (Me, "Read dir " & D.Dir.Display_Full_Name
-                & " step=" & D.Step'Img);
+         Trace
+           (Me, "Read dir " & D.Dir.Display_Full_Name & " step=" & D.Step'Img);
       end if;
 
       case D.Step is
@@ -523,15 +540,13 @@ package body Project_Explorers_Files is
          -- Step_Read_Files --
          ---------------------
 
-         when Step_Read_Files =>
+         when Step_Read_Files   =>
             --  If we are appending at the base, create a node indicating the
             --  absolute path to the directory.
 
             if D.Base = Null_Iter then
                Trace (Me, "Create base node for " & D.Dir.Display_Full_Name);
-               D.Base := Create_Directory_Node
-                 (Self   => D.Tree,
-                  Dir    => D.Dir);
+               D.Base := Create_Directory_Node (Self => D.Tree, Dir => D.Dir);
             end if;
 
             --  Prepare the list of files.
@@ -560,8 +575,8 @@ package body Project_Explorers_Files is
                declare
                   Iterator : GNATCOLL.Projects.Project_Iterator :=
                     GNATCOLL.Projects.Start
-                    (Get_Registry (D.Tree.Kernel).Tree.Root_Project);
-                  F : GNATCOLL.VFS.Virtual_File;
+                      (Get_Registry (D.Tree.Kernel).Tree.Root_Project);
+                  F        : GNATCOLL.VFS.Virtual_File;
                begin
                   while Current (Iterator) /= No_Project loop
                      F := Current (Iterator).Library_Directory;
@@ -582,6 +597,7 @@ package body Project_Explorers_Files is
 
                if Clock - Start > Max_Idle_Duration then
                   return True;  --  will continue at next iteration
+
                end if;
 
                if D.Files (D.File_Index) = No_File then
@@ -629,9 +645,13 @@ package body Project_Explorers_Files is
                end loop;
 
                if Empty then
-                  Set (D.Tree.Model, D.Base, Icon_Column,
-                       Stock_For_Node (Directory_Node, Expanded => False));
+                  Set
+                    (D.Tree.Model,
+                     D.Base,
+                     Icon_Column,
+                     Stock_For_Node (Directory_Node, Expanded => False));
                   return False;  --  done processing this directory
+
                end if;
             end;
 
@@ -640,11 +660,15 @@ package body Project_Explorers_Files is
             --  Ensure that all files will eventually get some VCS info if a
             --  repository is found for the given directory.
 
-            if VCS  /= null then
+            if VCS /= null then
                D.VCS_Engine := VCS.Guess_VCS_For_Directory (D.Dir);
                if Active (Me) then
-                  Trace (Me, "VCS for " & D.Dir.Display_Full_Name & " is "
-                         & D.VCS_Engine.Name);
+                  Trace
+                    (Me,
+                     "VCS for "
+                     & D.Dir.Display_Full_Name
+                     & " is "
+                     & D.VCS_Engine.Name);
                end if;
 
                D.VCS_Engine.Ensure_Status_For_Files (D.Files.all);
@@ -654,8 +678,9 @@ package body Project_Explorers_Files is
             D.File_Index := D.Files'First;
 
             if D.Detached = null then
-               D.Detached := new Explorer_Expansion.Detached_Model'
-                 (Explorer_Expansion.Detach_Model_From_View (D.Tree));
+               D.Detached :=
+                 new Explorer_Expansion.Detached_Model'
+                   (Explorer_Expansion.Detach_Model_From_View (D.Tree));
             end if;
 
             D.Tree.Remove_Dummy_Child (D.Base);
@@ -666,7 +691,7 @@ package body Project_Explorers_Files is
          -- Step_Insert_Dirs --
          ----------------------
 
-         when Step_Insert_Dirs =>
+         when Step_Insert_Dirs  =>
             --  Free list of library directories
             Unchecked_Free (D.Lib_Dirs);
 
@@ -674,15 +699,17 @@ package body Project_Explorers_Files is
 
                if Clock - Start > Max_Idle_Duration then
                   return True;  --  will continue at next iteration
+
                end if;
 
                if D.Files (D.File_Index) /= No_File
                  and then D.Files (D.File_Index).Is_Directory
                then
-                  Iter := Create_Directory_Node
-                    (Self   => D.Tree,
-                     Dir    => D.Files (D.File_Index),
-                     Parent => D.Base);
+                  Iter :=
+                    Create_Directory_Node
+                      (Self   => D.Tree,
+                       Dir    => D.Files (D.File_Index),
+                       Parent => D.Base);
 
                   if Is_Parent (D.Files (D.File_Index), D.Norm_Dest) then
                      D.Next_Iter := Iter;
@@ -690,6 +717,7 @@ package body Project_Explorers_Files is
                   end if;
 
                   D.Files (D.File_Index) := No_File;  --  already inserted
+
                end if;
 
                D.File_Index := D.File_Index + 1;
@@ -709,20 +737,25 @@ package body Project_Explorers_Files is
 
                if Clock - Start > Max_Idle_Duration then
                   return True;  --  will continue at next iteration
+
                end if;
 
                if D.Files (D.File_Index) /= No_File then
-                  Iter := Create_File
-                    (D.Tree, D.Base, D.Files (D.File_Index),
-                     Icon_Name =>
-                       (if D.VCS_Engine /= null then
-                             To_String
-                                (D.VCS_Engine.Get_Display
-                                   (D.VCS_Engine.File_Properties_From_Cache
-                                      (D.Files
-                                         (D.File_Index)).Status).Icon_Name)
-                           else
-                              ""));
+                  Iter :=
+                    Create_File
+                      (D.Tree,
+                       D.Base,
+                       D.Files (D.File_Index),
+                       Icon_Name =>
+                         (if D.VCS_Engine /= null
+                          then
+                            To_String
+                              (D.VCS_Engine.Get_Display
+                                 (D.VCS_Engine.File_Properties_From_Cache
+                                    (D.Files (D.File_Index))
+                                    .Status)
+                                 .Icon_Name)
+                          else ""));
                end if;
 
                D.File_Index := D.File_Index + 1;
@@ -737,6 +770,7 @@ package body Project_Explorers_Files is
                D.Next_Iter := Null_Iter;
                D.Next_File := No_File;
                return True;   --  will now process that directory
+
             end if;
 
             D.Step := Step_Setup_View;
@@ -747,7 +781,7 @@ package body Project_Explorers_Files is
          -- Step_Setup_View --
          ---------------------
 
-         when Step_Setup_View =>
+         when Step_Setup_View   =>
 
             --  Try to expand every directory in D.Tree.Expanded
             for Dir of D.Tree.Expanded loop
@@ -787,7 +821,7 @@ package body Project_Explorers_Files is
          -- Step_Wait_Alone --
          ---------------------
 
-         when Step_Wait_Alone =>
+         when Step_Wait_Alone   =>
             if Integer (D.Tree.Timeout_Ids.Length) = 1 then
                Locate_File (D.Tree, D.Norm_Dest);
                --  The search is ended
@@ -821,24 +855,24 @@ package body Project_Explorers_Files is
       Append_To_Dir : Virtual_File := No_File;
       Idle          : Boolean := False)
    is
-      D          : constant Append_Directory_Idle_Data_Access :=
-                     new Append_Directory_Idle_Data;
+      D : constant Append_Directory_Idle_Data_Access :=
+        new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
    begin
-      D.Dir           := Dir;
+      D.Dir := Dir;
       Ensure_Directory (D.Dir);
-      D.Norm_Dest     := Append_To_Dir;
-      D.Base          := Base;
-      D.Tree          := Files_Tree_View (Self);
+      D.Norm_Dest := Append_To_Dir;
+      D.Base := Base;
+      D.Tree := Files_Tree_View (Self);
 
       if Idle and not D.Tree.Is_Locate then
          --  Do not append the first item in an idle loop.
          --  Necessary for preserving order in drive names.
          if Read_Directory (D) then
-            D.Id := File_Append_Directory_Timeout.Timeout_Add
-               (1, Read_Directory'Access, D,
-                  Notify => Free'Access);
+            D.Id :=
+              File_Append_Directory_Timeout.Timeout_Add
+                (1, Read_Directory'Access, D, Notify => Free'Access);
             Self.Timeout_Ids.Append (D.Id);
          end if;
 
@@ -881,8 +915,7 @@ package body Project_Explorers_Files is
    ----------------
 
    function Initialize
-     (Explorer : access Project_Explorer_Files_Record'Class)
-      return Gtk_Widget
+     (Explorer : access Project_Explorer_Files_Record'Class) return Gtk_Widget
    is
       Tooltip  : Explorer_Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
@@ -897,8 +930,7 @@ package body Project_Explorers_Files is
 
       Explorer.Tree := new Files_Tree_View_Record;
       Explorer.Tree.Kernel := Explorer.Kernel;
-      Explorer.Tree.Initialize
-        (Column_Types => Columns_Types);
+      Explorer.Tree.Initialize (Column_Types => Columns_Types);
       Explorer.Tree.Set_Enable_Search (False);
       Set_Mode (Explorer.Tree.Get_Selection, Selection_Multiple);
       Set_Name (Explorer.Tree, "File Explorer Tree");
@@ -907,8 +939,7 @@ package body Project_Explorers_Files is
 
       Set_Headers_Visible (Explorer.Tree, False);
 
-      Explorer.Tree.On_Button_Press_Event
-        (File_Button_Press'Access, Explorer);
+      Explorer.Tree.On_Button_Press_Event (File_Button_Press'Access, Explorer);
       Explorer.Tree.On_Button_Release_Event
         (File_Button_Press'Access, Explorer);
 
@@ -929,8 +960,7 @@ package body Project_Explorers_Files is
       Set_Column_Types (Explorer.Tree);
 
       Setup_Contextual_Menu
-        (Kernel          => Explorer.Kernel,
-         Event_On_Widget => Explorer.Tree);
+        (Kernel => Explorer.Kernel, Event_On_Widget => Explorer.Tree);
 
       Widget_Callback.Object_Connect
         (Explorer.Tree,
@@ -947,8 +977,11 @@ package body Project_Explorers_Files is
          False);
 
       Widget_Callback.Object_Connect
-        (Explorer.Tree, Signal_Destroy,
-         On_File_Destroy'Access, Explorer, False);
+        (Explorer.Tree,
+         Signal_Destroy,
+         On_File_Destroy'Access,
+         Explorer,
+         False);
 
       Gtk.Dnd.Dest_Set
         (Explorer.Tree, Dest_No_Default, Target_Table_Url, Action_Any);
@@ -960,8 +993,10 @@ package body Project_Explorers_Files is
       Explorer.Tree.Enable_Model_Drag_Source
         (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.Tree, Signal_Drag_Data_Get,
-         Drag_Data_Get'Access, Explorer.Kernel);
+        (Explorer.Tree,
+         Signal_Drag_Data_Get,
+         Drag_Data_Get'Access,
+         Explorer.Kernel);
 
       File_Deleted_Hook.Add (new On_Deleted, Watch => Explorer);
       File_Saved_Hook.Add (new On_File_Saved, Watch => Explorer);
@@ -993,7 +1028,8 @@ package body Project_Explorers_Files is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (View : not null access Project_Explorer_Files_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
@@ -1006,7 +1042,8 @@ package body Project_Explorers_Files is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Project_Explorer_Files_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -1073,7 +1110,8 @@ package body Project_Explorers_Files is
    -- Add_Children --
    ------------------
 
-   overriding procedure Add_Children
+   overriding
+   procedure Add_Children
      (Self       : not null access Files_Tree_View_Record;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
    is
@@ -1084,10 +1122,9 @@ package body Project_Explorers_Files is
       case N_Type is
          when Directory_Node =>
             File := Self.Get_File_From_Node (Store_Iter);
-            File_Append_Directory
-              (Self, File, Store_Iter, Idle => True);
+            File_Append_Directory (Self, File, Store_Iter, Idle => True);
 
-         when others =>
+         when others         =>
             null;
       end case;
    end Add_Children;
@@ -1117,15 +1154,15 @@ package body Project_Explorers_Files is
    -- File_Selection_Changed --
    ----------------------------
 
-   procedure File_Selection_Changed
-     (Explorer : access Gtk_Widget_Record'Class)
+   procedure File_Selection_Changed (Explorer : access Gtk_Widget_Record'Class)
    is
-      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      T     : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Explorer);
       Child : constant GPS_MDI_Child :=
         Explorer_Files_Views.Child_From_View (T);
    begin
       if Child /= null
-         and then MDI_Child (Child) = Get_MDI (T.Kernel).Get_Focus_Child
+        and then MDI_Child (Child) = Get_MDI (T.Kernel).Get_Focus_Child
       then
          T.Kernel.Context_Changed (Child.Build_Context);
       end if;
@@ -1136,14 +1173,16 @@ package body Project_Explorers_Files is
    -----------------------
 
    function File_Button_Press
-     (Explorer : access GObject_Record'Class;
-      Event    : Gdk_Event_Button) return Boolean
+     (Explorer : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
-      return On_Button_Press
-        (MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
-         T.Tree, Event);
+      return
+        On_Button_Press
+          (MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
+           T.Tree,
+           Event);
    end File_Button_Press;
 
    --------------------
@@ -1151,8 +1190,8 @@ package body Project_Explorers_Files is
    --------------------
 
    function File_Key_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean is
+     (Explorer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean is
    begin
       return On_Key_Press (Project_Explorer_Files (Explorer).Tree, Event);
    end File_Key_Press;
@@ -1161,17 +1200,18 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Locate_File_In_Files_View;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      V      : constant Project_Explorer_Files            :=
+      V     : constant Project_Explorer_Files :=
         Explorer_Files_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
-      D      : constant Append_Directory_Idle_Data_Access :=
+      D     : constant Append_Directory_Idle_Data_Access :=
         new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
-      Dummy  : Boolean;
+      Dummy : Boolean;
    begin
       if not V.Tree.Is_Locate then
          --  Need to be synchronized
@@ -1180,8 +1220,9 @@ package body Project_Explorers_Files is
          D.Tree := V.Tree;
          D.Step := Step_Wait_Alone;
          D.Norm_Dest := File_Information (Context.Context);
-         D.Id := File_Append_Directory_Timeout.Timeout_Add
-           (1, Read_Directory'Access, D, Notify => Free'Access);
+         D.Id :=
+           File_Append_Directory_Timeout.Timeout_Add
+             (1, Read_Directory'Access, D, Notify => Free'Access);
          V.Tree.Timeout_Ids.Append (D.Id);
          Dummy := Read_Directory (D);
 
@@ -1195,14 +1236,13 @@ package body Project_Explorers_Files is
    -- Locate_File --
    -----------------
 
-   procedure Locate_File (V : Files_Tree_View; F : Virtual_File)
-   is
+   procedure Locate_File (V : Files_Tree_View; F : Virtual_File) is
       Parent : Gtk_Tree_Iter;
       Iter   : Gtk_Tree_Iter;
       Path   : Gtk_Tree_Path;
 
       function Find_Node
-        (File   : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter;
+        (File : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter;
       --  Expand the node for File (and its parent directories)
 
       ---------------
@@ -1212,9 +1252,9 @@ package body Project_Explorers_Files is
       function Find_Node
         (File : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter
       is
-         Path : Gtk_Tree_Path;
-         Iter : Gtk_Tree_Iter;
-         F    : Virtual_File;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter;
+         F     : Virtual_File;
          Dummy : Boolean;
       begin
          if File = No_File
@@ -1278,8 +1318,11 @@ package body Project_Explorers_Files is
          V.Get_Selection.Select_Iter (Iter);
          Path := V.Model.Get_Path (Iter);
          V.Scroll_To_Cell
-           (Path, V.Get_Column (0),
-            Use_Align => False, Row_Align => 0.0, Col_Align => 0.0);
+           (Path,
+            V.Get_Column (0),
+            Use_Align => False,
+            Row_Align => 0.0,
+            Col_Align => 0.0);
          V.Set_Cursor (Path, V.Get_Column (0), False);
          Path_Free (Path);
       end if;
@@ -1289,9 +1332,10 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Refresh_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Refresh_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       V : constant Project_Explorer_Files :=
@@ -1305,15 +1349,17 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Select_Directory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
 
-      Dir : constant Virtual_File := Gtkada.File_Selector.Select_Directory
-        (Parent  => Get_Current_Window (Get_Kernel (Context.Context)),
-         History => Get_History (Get_Kernel (Context.Context)));
+      Dir : constant Virtual_File :=
+        Gtkada.File_Selector.Select_Directory
+          (Parent  => Get_Current_Window (Get_Kernel (Context.Context)),
+           History => Get_History (Get_Kernel (Context.Context)));
 
       V : constant Project_Explorer_Files :=
         Explorer_Files_Views.Retrieve_View (Get_Kernel (Context.Context));
@@ -1360,17 +1406,17 @@ package body Project_Explorers_Files is
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Explorer     : constant Project_Explorer_Files :=
-                       Project_Explorer_Files (Files);
+        Project_Explorer_Files (Files);
       Drives       : File_Array_Access;
       Cur_Dir      : constant Virtual_File := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
-      Iter         : Gtk_Tree_Iter with Unreferenced;
+      Iter         : Gtk_Tree_Iter
+      with Unreferenced;
 
       procedure Add_Drives_From_Files (Files : File_Array);
       --  Add all the logical drives used by Files in the files explorer.
 
-      procedure Add_Drives_From_Files (Files : File_Array)
-      is
+      procedure Add_Drives_From_Files (Files : File_Array) is
          Added_Drives : Virtual_Files_Lists.List;
       begin
          for File of Files loop
@@ -1399,15 +1445,12 @@ package body Project_Explorers_Files is
 
       if Explorer.Directory /= No_File then
          File_Append_Directory
-           (Explorer.Tree,
-            Explorer.Directory,
-            Null_Iter,
-            Idle => True);
+           (Explorer.Tree, Explorer.Directory, Null_Iter, Idle => True);
          return;
       end if;
 
       if Explorer.Tree.Config.Shows_Only_Project
-         or else Explorer.Tree.Config.Dirs_From_Project
+        or else Explorer.Tree.Config.Dirs_From_Project
       then
          declare
             Inc         : constant File_Array :=
@@ -1437,21 +1480,25 @@ package body Project_Explorers_Files is
             for J in Drives'Range loop
                if Drives (J).Is_Parent (Cur_Dir) then
                   File_Append_Directory
-                    (Explorer.Tree, Drives (J),
+                    (Explorer.Tree,
+                     Drives (J),
                      Null_Iter,
-                     Append_To_Dir => Cur_Dir, Idle    => True);
+                     Append_To_Dir => Cur_Dir,
+                     Idle          => True);
                   Dir_Inserted := True;
 
                else
-                  Iter := Create_Directory_Node
-                    (Explorer.Tree, Null_Iter, Drives (J));
+                  Iter :=
+                    Create_Directory_Node
+                      (Explorer.Tree, Null_Iter, Drives (J));
                end if;
             end loop;
          end if;
 
          if not Dir_Inserted then
             File_Append_Directory
-              (Explorer.Tree, Cur_Dir.Get_Root,
+              (Explorer.Tree,
+               Cur_Dir.Get_Root,
                Null_Iter,
                Append_To_Dir => Cur_Dir,
                Idle          => True);
@@ -1464,8 +1511,7 @@ package body Project_Explorers_Files is
    -----------------
 
    procedure Remove_File
-     (View : Project_Explorer_Files;
-      File : GNATCOLL.VFS.Virtual_File)
+     (View : Project_Explorer_Files; File : GNATCOLL.VFS.Virtual_File)
    is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -1513,8 +1559,7 @@ package body Project_Explorers_Files is
    --------------
 
    procedure Add_File
-     (View : Project_Explorer_Files;
-      File : GNATCOLL.VFS.Virtual_File)
+     (View : Project_Explorer_Files; File : GNATCOLL.VFS.Virtual_File)
    is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -1562,8 +1607,7 @@ package body Project_Explorers_Files is
             Next_Iter := Children (View.Tree.Model, Iter);
 
             while Next_Iter /= Null_Iter loop
-               if Get_File (View.Tree.Model, Next_Iter, File_Column) =
-                 File
+               if Get_File (View.Tree.Model, Next_Iter, File_Column) = File
                then
                   --  File already present. Do nothing
                   return;
@@ -1595,11 +1639,9 @@ package body Project_Explorers_Files is
                         end if;
                      end;
 
-                  elsif View.Tree.Get_Node_Type (Next_Iter) in
-                    File_Node_Types
+                  elsif View.Tree.Get_Node_Type (Next_Iter) in File_Node_Types
                   then
-                     Insert_Before
-                       (View.Tree.Model, Iter2, Iter, Next_Iter);
+                     Insert_Before (View.Tree.Model, Iter2, Iter, Next_Iter);
                      Done := True;
 
                      exit;
@@ -1613,9 +1655,10 @@ package body Project_Explorers_Files is
                end if;
 
                Set_And_Clear
-                 (View.Tree.Model, Iter2,
+                 (View.Tree.Model,
+                  Iter2,
                   (File_Column, Display_Name_Column),
-                  (1 => As_File   (File),
+                  (1 => As_File (File),
                    2 => As_String (File.Display_Base_Dir_Name)));
 
                View.Tree.Set_Node_Type (Iter2, Directory_Node, False);
@@ -1657,7 +1700,8 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Deleted;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1673,7 +1717,8 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1689,7 +1734,8 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_File_Renamed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       File    : Virtual_File;
@@ -1707,7 +1753,8 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -1720,9 +1767,9 @@ package body Project_Explorers_Files is
            (Self.Explorer.Tree, Fixed_Font => True, Pref => Pref);
 
          Config :=
-           (Shows_Only_Project   => File_View_Shows_Only_Project.Get_Pref,
-            Dirs_From_Project    => Dirs_From_Project.Get_Pref,
-            Show_Hidden_Files    => Show_Hidden_Files.Get_Pref);
+           (Shows_Only_Project => File_View_Shows_Only_Project.Get_Pref,
+            Dirs_From_Project  => Dirs_From_Project.Get_Pref,
+            Show_Hidden_Files  => Show_Hidden_Files.Get_Pref);
 
          if Config /= Self.Explorer.Tree.Config then
             Self.Explorer.Tree.Config := Config;
@@ -1738,34 +1785,36 @@ package body Project_Explorers_Files is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File_View_Filter : constant Action_Filter :=
-                           new File_View_Filter_Record;
+      File_View_Filter : constant Action_Filter := new File_View_Filter_Record;
    begin
       Explorer_Files_Views.Register_Module (Kernel);
       Register_Filter
-        (Kernel,
-         Filter => File_View_Filter,
-         Name   => "File_View");
+        (Kernel, Filter => File_View_Filter, Name => "File_View");
 
       File_View_Shows_Only_Project :=
         Kernel.Get_Preferences.Create_Invisible_Pref
-          ("explorers-file-show-project-only", False,
+          ("explorers-file-show-project-only",
+           False,
            Label => -"Show files from project only",
-           Doc => -("Binary files are not shown"
-                & " in object directories, and source directories only"
-                & " contain files that match the project naming scheme."));
+           Doc   =>
+             -("Binary files are not shown"
+               & " in object directories, and source directories only"
+               & " contain files that match the project naming scheme."));
 
       Dirs_From_Project :=
         Kernel.Get_Preferences.Create_Invisible_Pref
-          ("explorers-file-dirs-from-project", False,
+          ("explorers-file-dirs-from-project",
+           False,
            Label => -"Show all files in any project directory",
-           Doc =>
-                -("In particular, shows binary files in object directories"
-                & " and all files found in any of the source directories."
-                & " No effect if 'Show files from project only' is selected"));
+           Doc   =>
+             -("In particular, shows binary files in object directories"
+               & " and all files found in any of the source directories."
+               & " No effect if 'Show files from project only' is selected"));
 
       Register_Action
-        (Kernel, "refresh files view", new Refresh_Command,
+        (Kernel,
+         "refresh files view",
+         new Refresh_Command,
          -"Refresh the contents of the Files view",
          Category  => -"Files view",
          Icon_Name => "gps-refresh-symbolic");
@@ -1779,13 +1828,13 @@ package body Project_Explorers_Files is
          Icon_Name   => "gps-open-file-symbolic");
 
       Register_Action
-        (Kernel, "Locate in Files view",
-         Command => new Locate_File_In_Files_View,
+        (Kernel,
+         "Locate in Files view",
+         Command     => new Locate_File_In_Files_View,
          Description =>
            -("Display the files view, and expand nodes to show the"
              & " selected file"),
-         Filter      => Kernel.Lookup_Filter ("File")
-            and not File_View_Filter,
+         Filter      => Kernel.Lookup_Filter ("File") and not File_View_Filter,
          Category    => -"Files view");
    end Register_Module;
 

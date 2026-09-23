@@ -20,8 +20,8 @@
 
 with CodePeer.Generic_Criteria_Editors;
 
-package CodePeer.Lifeage_Categories_Criteria_Editors is
-  new CodePeer.Generic_Criteria_Editors
+package CodePeer.Lifeage_Categories_Criteria_Editors is new
+  CodePeer.Generic_Criteria_Editors
     (CodePeer.Lifeage_Kinds,
      CodePeer.Lifeage_Kind_Access,
      CodePeer.Get_Name,

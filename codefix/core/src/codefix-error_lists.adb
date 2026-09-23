@@ -38,8 +38,10 @@ package body Codefix.Error_Lists is
    ----------
 
    procedure Free (This : in out Error_Message_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Error_Message_List_Record, Error_Message_List);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Error_Message_List_Record,
+           Error_Message_List);
    begin
       Clear_Messages (This);
       Free (This.File_Regexp);
@@ -146,7 +148,7 @@ package body Codefix.Error_Lists is
    --------------------
 
    procedure Clear_Messages (List : Error_Message_List) is
-      Cur : Error_Message_Container.Cursor := First (List.Messages);
+      Cur      : Error_Message_Container.Cursor := First (List.Messages);
       Loc_List : Internal_List_Access;
    begin
       while Cur /= Error_Message_Container.No_Element loop
@@ -169,7 +171,7 @@ package body Codefix.Error_Lists is
       Line   : Integer;
       Column : Visible_Column_Type)
    is
-      Loc : Messages_Loc;
+      Loc      : Messages_Loc;
       Loc_List : Internal_List_Access;
    begin
       Loc.File := File;
@@ -187,8 +189,7 @@ package body Codefix.Error_Lists is
    -- First --
    -----------
 
-   function First (List : Error_Message_List) return Error_Message_Iterator
-   is
+   function First (List : Error_Message_List) return Error_Message_Iterator is
       It : Error_Message_Iterator;
    begin
       It.Map_Cur := First (List.Messages);
@@ -212,11 +213,10 @@ package body Codefix.Error_Lists is
       File   : Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type;
-      Order  : Long_Long_Integer)
-      return Error_Message_Iterator
+      Order  : Long_Long_Integer) return Error_Message_Iterator
    is
       Loc : Messages_Loc;
-      It : Error_Message_Iterator;
+      It  : Error_Message_Iterator;
    begin
       Loc.File := File;
       Loc.Line := Line;
@@ -237,8 +237,8 @@ package body Codefix.Error_Lists is
             declare
                Message : constant Error_Message := Get_Message (It);
             begin
-               exit when Message.Get_Order = Order
-                 and then not Message.Is_Cancelled;
+               exit when
+                 Message.Get_Order = Order and then not Message.Is_Cancelled;
             end;
 
             It.List_Cur := Next (It.List_Cur);
@@ -320,12 +320,12 @@ package body Codefix.Error_Lists is
       Warning_Index_In_Regexp : Integer) is
    begin
       Free (This.File_Regexp);
-      This.File_Regexp   := new Pattern_Matcher'(File_Location_Regexp);
-      This.File_Index    := File_Index_In_Regexp;
-      This.Line_Index    := Line_Index_In_Regexp;
-      This.Col_Index     := Col_Index_In_Regexp;
-      This.Msg_Index     := Msg_Index_In_Regexp;
-      This.Style_Index   := Style_Index_In_Regexp;
+      This.File_Regexp := new Pattern_Matcher'(File_Location_Regexp);
+      This.File_Index := File_Index_In_Regexp;
+      This.Line_Index := Line_Index_In_Regexp;
+      This.Col_Index := Col_Index_In_Regexp;
+      This.Msg_Index := Msg_Index_In_Regexp;
+      This.Style_Index := Style_Index_In_Regexp;
       This.Warning_Index := Warning_Index_In_Regexp;
    end Set_Regexp;
 
@@ -344,14 +344,14 @@ package body Codefix.Error_Lists is
 
    function "<" (Left, Right : Messages_Loc) return Boolean is
    begin
-      return Left.Line < Right.Line
+      return
+        Left.Line < Right.Line
         or else
           (Left.Line = Right.Line
            and then
              (Left.Column < Right.Column
               or else
-                (Left.Column = Right.Column
-                 and then Left.File < Right.File)));
+                (Left.Column = Right.Column and then Left.File < Right.File)));
    end "<";
 
 end Codefix.Error_Lists;

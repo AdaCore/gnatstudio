@@ -23,9 +23,9 @@ with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Widget;          use Gtk.Widget;
 
-with GPS.Dialogs;         use GPS.Dialogs;
-with GPS.Kernel;          use GPS.Kernel;
-with Debugger;            use Debugger;
+with GPS.Dialogs; use GPS.Dialogs;
+with GPS.Kernel;  use GPS.Kernel;
+with Debugger;    use Debugger;
 
 package GVD.Dialogs is
 

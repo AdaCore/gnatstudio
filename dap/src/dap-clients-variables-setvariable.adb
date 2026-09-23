@@ -30,12 +30,13 @@ package body DAP.Clients.Variables.SetVariable is
    is
       use DAP.Modules.Variables.Items;
 
-      Req : Set_Variable_Request_Access := new Set_Variable_Request
-        (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
+      Req : Set_Variable_Request_Access :=
+        new Set_Variable_Request
+              (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       Req.Params := Params;
       Req.Parameters.arguments.variablesReference := Id;
-      Req.Parameters.arguments.name  := Params.Name;
+      Req.Parameters.arguments.name := Params.Name;
       Req.Parameters.arguments.value := Params.Value;
       if Params.Item.Info /= null
         and then Params.Item.Info.Format /= Default_Format
@@ -51,7 +52,8 @@ package body DAP.Clients.Variables.SetVariable is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Variable_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetVariableResponse;
@@ -65,8 +67,8 @@ package body DAP.Clients.Variables.SetVariable is
 
       if Result.success then
          Cursor := Var.Scopes.Root;
-         Cursor := Var.Find_By_Id
-           (Self.Parameters.arguments.variablesReference);
+         Cursor :=
+           Var.Find_By_Id (Self.Parameters.arguments.variablesReference);
 
          if Cursor /= Variables_References_Trees.No_Element then
             Cursor := First_Child (Cursor);
@@ -74,12 +76,11 @@ package body DAP.Clients.Variables.SetVariable is
                if Element (Cursor).Data.name = Self.Params.Name then
                   Variable := Element (Cursor);
 
-                  Variable.Data.a_type             := Result.a_body.a_type;
-                  Variable.Data.value              := Result.a_body.value;
-                  Variable.Data.indexedVariables   :=
+                  Variable.Data.a_type := Result.a_body.a_type;
+                  Variable.Data.value := Result.a_body.value;
+                  Variable.Data.indexedVariables :=
                     Result.a_body.indexedVariables;
-                  Variable.Data.namedVariables     :=
-                    Result.a_body.namedVariables;
+                  Variable.Data.namedVariables := Result.a_body.namedVariables;
                   Variable.Data.variablesReference :=
                     (if Result.a_body.variablesReference.Is_Set
                      then Result.a_body.variablesReference.Value
@@ -96,8 +97,8 @@ package body DAP.Clients.Variables.SetVariable is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.Name) &
-              " is not set.");
+           (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.Name)
+            & " is not set.");
          Free (Self.Params);
       end if;
    end On_Result_Message;
@@ -106,13 +107,14 @@ package body DAP.Clients.Variables.SetVariable is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Set_Variable_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.SetVariable.Set_Variable_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.SetVariable.Set_Variable_DAP_Request (Self).On_Error_Message
+        (Client, Message);
       Free (Self.Params);
    end On_Error_Message;
 
@@ -120,12 +122,13 @@ package body DAP.Clients.Variables.SetVariable is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Set_Variable_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP.Requests.SetVariable.Set_Variable_DAP_Request
-        (Self).On_Rejected (Client);
+      DAP.Requests.SetVariable.Set_Variable_DAP_Request (Self).On_Rejected
+        (Client);
       Free (Self.Params);
    end On_Rejected;
 

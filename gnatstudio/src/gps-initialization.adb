@@ -203,8 +203,7 @@ package body GPS.Initialization is
 
          if not Home_Dir.Is_Directory then
             declare
-               As_UTF8 : constant Glib.UTF8_String :=
-                 Glib.Utils.Get_Home_Dir;
+               As_UTF8 : constant Glib.UTF8_String := Glib.Utils.Get_Home_Dir;
                Tmp     : constant Virtual_File := Create (+(As_UTF8));
             begin
                if Tmp.Is_Directory then
@@ -219,7 +218,10 @@ package body GPS.Initialization is
          when others =>
             Report_Error
               ("Could not create/access the GNAT Studio home in"
-               & ASCII.LF & "'" & Home_Dir.Display_Full_Name & "'");
+               & ASCII.LF
+               & "'"
+               & Home_Dir.Display_Full_Name
+               & "'");
       end;
 
       GNATStudio_Home_Dir := Create_From_Dir (Home_Dir, ".gnatstudio");
@@ -283,8 +285,9 @@ package body GPS.Initialization is
          Prefix : constant String := Prefix_Dir.Display_Full_Name;
          Bin    : constant String :=
            (if Prefix (Prefix'Last) = Directory_Separator
-            then Prefix else Prefix & Directory_Separator) &
-           "bin";
+            then Prefix
+            else Prefix & Directory_Separator)
+           & "bin";
 
       begin
          if Tmp = "" then
@@ -302,15 +305,18 @@ package body GPS.Initialization is
 
       begin
          if Python_Path = "" then
-            New_Val := new String'
-              (+Create_From_Dir
-                 (Prefix_Dir, "share/gnatstudio/python").Full_Name);
+            New_Val :=
+              new String'
+                (+Create_From_Dir (Prefix_Dir, "share/gnatstudio/python")
+                    .Full_Name);
          else
-            New_Val := new String'
-              (+To_Path
-                 (From_Path (+Python_Path) &
-                  (1 => Create_From_Dir
-                       (Prefix_Dir, "share/gnatstudio/python"))));
+            New_Val :=
+              new String'
+                (+To_Path
+                    (From_Path (+Python_Path)
+                     & (1 =>
+                          Create_From_Dir
+                            (Prefix_Dir, "share/gnatstudio/python"))));
          end if;
 
          Setenv ("PYTHONPATH", New_Val.all);
@@ -324,8 +330,8 @@ package body GPS.Initialization is
          DAP_GDB_Path : constant String := Env.Value ("DAP_GDB", "");
       begin
          if DAP_GDB_Path /= "" then
-            DAP_GDB_Adapter := VSS.Strings.Conversions.To_Virtual_String
-              (DAP_GDB_Path);
+            DAP_GDB_Adapter :=
+              VSS.Strings.Conversions.To_Virtual_String (DAP_GDB_Path);
          end if;
       end;
 
@@ -339,7 +345,7 @@ package body GPS.Initialization is
    --------------------------
 
    procedure Initialize_Low_Level (Status_Code : out Glib.Gint) is
-      Ignored     : Log_Handler_Id;
+      Ignored : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
       procedure Create_ALS_Traces_File_If_Needed (Language : String);
@@ -365,9 +371,12 @@ package body GPS.Initialization is
                   ">log/"
                   & Language
                   & "_ls_log.$T.txt:buffer_size=0:buffer_size=0"
-                  & "ALS.MAIN=yes" & ASCII.LF
-                  & "ALS.IN=yes" & ASCII.LF
-                  & "ALS.OUT=yes" & ASCII.LF);
+                  & "ALS.MAIN=yes"
+                  & ASCII.LF
+                  & "ALS.IN=yes"
+                  & ASCII.LF
+                  & "ALS.OUT=yes"
+                  & ASCII.LF);
             else
                Write
                  (File,
@@ -377,12 +386,16 @@ package body GPS.Initialization is
                   & ASCII.LF
                   & "DEBUG.ABSOLUTE_TIME=yes"
                   & ASCII.LF
-                  & "ALS.MAIN=yes" & ASCII.LF
+                  & "ALS.MAIN=yes"
+                  & ASCII.LF
                   & ASCII.LF
                   & "## uncomment the following 2 lines"
-                  & " to activate full traces" & ASCII.LF
-                  & "#ALS.IN=yes" & ASCII.LF
-                  & "#ALS.OUT=yes" & ASCII.LF);
+                  & " to activate full traces"
+                  & ASCII.LF
+                  & "#ALS.IN=yes"
+                  & ASCII.LF
+                  & "#ALS.OUT=yes"
+                  & ASCII.LF);
             end if;
 
             Close (File);
@@ -397,22 +410,15 @@ package body GPS.Initialization is
 
       --  Redirect all default Gtk+ logs to our own trace mechanism
 
-      Ignored := Log_Set_Handler
-        ("", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("GLib", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("GLib-GObject", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("Pango", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("Atk", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("GdkPixbuf", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("Gdk", Log_Level_Mask, Gtk_Log'Access);
-      Ignored := Log_Set_Handler
-        ("Gtk", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("GLib", Log_Level_Mask, Gtk_Log'Access);
+      Ignored :=
+        Log_Set_Handler ("GLib-GObject", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("Pango", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("Atk", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("GdkPixbuf", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("Gdk", Log_Level_Mask, Gtk_Log'Access);
+      Ignored := Log_Set_Handler ("Gtk", Log_Level_Mask, Gtk_Log'Access);
 
       declare
          Plug_Ins           : constant Virtual_File :=
@@ -423,8 +429,8 @@ package body GPS.Initialization is
            Create_From_Dir (GNATStudio_Home_Dir, "gnatinspect_traces.cfg");
          File               : Writable_File;
       begin
-            --  If the GNAT Studio home dir is not found, create it, and make
-            --  sure to display the preferences assistant at the end.
+         --  If the GNAT Studio home dir is not found, create it, and make
+         --  sure to display the preferences assistant at the end.
 
          if not Is_Directory (GNATStudio_Home_Dir) then
             Show_Preferences_Assistant := True;
@@ -448,8 +454,10 @@ package body GPS.Initialization is
             end if;
          exception
             when VFS_Directory_Error =>
-               Report_Error ((-"Cannot create logs directory ") &
-                               GPS_Log_Dir.Display_Full_Name & ASCII.LF);
+               Report_Error
+                 ((-"Cannot create logs directory ")
+                  & GPS_Log_Dir.Display_Full_Name
+                  & ASCII.LF);
                Status_Code := 1;
                return;
          end;
@@ -479,8 +487,9 @@ package body GPS.Initialization is
       exception
          when VFS_Directory_Error =>
             Report_Error
-              ((-"Cannot create config directory ") &
-                 GNATStudio_Home_Dir.Display_Full_Name & ASCII.LF);
+              ((-"Cannot create config directory ")
+               & GNATStudio_Home_Dir.Display_Full_Name
+               & ASCII.LF);
             Status_Code := 1;
             return;
       end;
@@ -490,8 +499,8 @@ package body GPS.Initialization is
       begin
          if not Is_Directory (Tmp) then
             Report_Error
-              ((-"Cannot access temporary directory ") &
-                 Tmp.Display_Full_Name);
+              ((-"Cannot access temporary directory ")
+               & Tmp.Display_Full_Name);
             Status_Code := 1;
             return;
          end if;
@@ -501,7 +510,7 @@ package body GPS.Initialization is
 
       declare
          File : constant Virtual_File :=
-                  Create_From_Dir (GNATStudio_Home_Dir, "traces.cfg");
+           Create_From_Dir (GNATStudio_Home_Dir, "traces.cfg");
       begin
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
@@ -537,14 +546,22 @@ package body GPS.Initialization is
          & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
          & ") hosted on "
          & VSS.Strings.Conversions.To_UTF_8_String (Config.Target));
-      Trace (Main_Trace, "Gtk+ static version: "
-             & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
-             & String_Utils.Image (Integer (Gtk.Minor_Version)) & '.'
-             & String_Utils.Image (Integer (Gtk.Micro_Version)));
-      Trace (Main_Trace, "Gtk+ dynamic version: "
-             & String_Utils.Image (Gtk_Major_Version) & '.'
-             & String_Utils.Image (Gtk_Minor_Version) & '.'
-             & String_Utils.Image (Gtk_Micro_Version));
+      Trace
+        (Main_Trace,
+         "Gtk+ static version: "
+         & String_Utils.Image (Integer (Gtk.Major_Version))
+         & '.'
+         & String_Utils.Image (Integer (Gtk.Minor_Version))
+         & '.'
+         & String_Utils.Image (Integer (Gtk.Micro_Version)));
+      Trace
+        (Main_Trace,
+         "Gtk+ dynamic version: "
+         & String_Utils.Image (Gtk_Major_Version)
+         & '.'
+         & String_Utils.Image (Gtk_Minor_Version)
+         & '.'
+         & String_Utils.Image (Gtk_Micro_Version));
 
       Status_Code := 0;
    end Initialize_Low_Level;
@@ -584,298 +601,291 @@ package body GPS.Initialization is
          return Glib.Gchar (Interfaces.C.char'(Interfaces.C.To_C (C)));
       end To_Gchar;
 
-      Opt_Project  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("project"),
-                        Short_Name      => To_Gchar ('P'),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Load project file project or project.gpr"),
-                        Arg_Description => New_String ("project"));
+      Opt_Project   : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("project"),
+         Short_Name      => To_Gchar ('P'),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Load project file project or project.gpr"),
+         Arg_Description => New_String ("project"));
       Opt_Scenario  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("scenario"),
-                        Short_Name      => To_Gchar ('X'),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Set the value of a scenario variable"),
-                        Arg_Description => New_String ("var=value"));
-      Opt_Help     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("help"),
-                        Short_Name      => To_Gchar ('h'),
-                        Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Show this help message and exit"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
-      Opt_Help_All : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("help-all"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           =>
-                          Glib.Option.G_Option_Flag_No_Arg
-                        + Glib.Option.G_Option_Flag_Hidden,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Show this help message with all options"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
-      Opt_Version  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("version"),
-                        Short_Name      => To_Gchar ('v'),
-                        Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Show the GNAT Studio version and exit"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
-      Opt_Debug    : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("debug"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           =>
-                          Glib.Option.G_Option_Flag_Optional_Arg
-                        + Glib.Option.G_Option_Flag_Filename,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Start a debug session"),
-                        Arg_Description => New_String ("[program]"));
-      Opt_Hide     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("hide"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Hide GNAT Studio main window"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
-      Opt_Host     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("host"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Use tools_host to launch tools (e.g. gdb)"),
-                        Arg_Description => New_String ("tools_host"));
-      Opt_Target   : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("target"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Load program on machine TARG using " &
-                           "protocol PRO"),
-                        Arg_Description => New_String ("TARG:PRO"));
-      Opt_Load     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("load"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Execute an external file written in " &
-                           "the language lang"),
-                        Arg_Description => New_String ("lang:file"));
-      Opt_Eval     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("eval"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Execute a command written in the language " &
-                           "lang (before --load)"),
-                        Arg_Description => New_String ("lang:cmd"));
-      Opt_Readonly : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("readonly"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Open all files in read-only mode"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
-      Opt_Server   : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("server"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Start GNAT Studio in server mode, opening a " &
-                           "socket on the given port"),
-                        Arg_Description => New_String ("port"));
-      Opt_Traceon  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("traceon"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Activate traces for a specific debug stream"),
-                        Arg_Description => New_String ("stream"));
-      Opt_Traceoff : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("traceoff"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => 0,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Disable traces for a specific debug stream"),
-                        Arg_Description => New_String ("stream"));
+        (Long_Name       => New_String ("scenario"),
+         Short_Name      => To_Gchar ('X'),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Set the value of a scenario variable"),
+         Arg_Description => New_String ("var=value"));
+      Opt_Help      : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("help"),
+         Short_Name      => To_Gchar ('h'),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Show this help message and exit"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
+      Opt_Help_All  : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("help-all"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           =>
+           Glib.Option.G_Option_Flag_No_Arg + Glib.Option.G_Option_Flag_Hidden,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Show this help message with all options"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
+      Opt_Version   : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("version"),
+         Short_Name      => To_Gchar ('v'),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Show the GNAT Studio version and exit"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
+      Opt_Debug     : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("debug"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           =>
+           Glib.Option.G_Option_Flag_Optional_Arg
+           + Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Start a debug session"),
+         Arg_Description => New_String ("[program]"));
+      Opt_Hide      : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("hide"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Hide GNAT Studio main window"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
+      Opt_Host      : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("host"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Use tools_host to launch tools (e.g. gdb)"),
+         Arg_Description => New_String ("tools_host"));
+      Opt_Target    : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("target"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Load program on machine TARG using " & "protocol PRO"),
+         Arg_Description => New_String ("TARG:PRO"));
+      Opt_Load      : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("load"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String
+             ("Execute an external file written in " & "the language lang"),
+         Arg_Description => New_String ("lang:file"));
+      Opt_Eval      : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("eval"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String
+             ("Execute a command written in the language "
+              & "lang (before --load)"),
+         Arg_Description => New_String ("lang:cmd"));
+      Opt_Readonly  : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("readonly"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Open all files in read-only mode"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
+      Opt_Server    : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("server"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String
+             ("Start GNAT Studio in server mode, opening a "
+              & "socket on the given port"),
+         Arg_Description => New_String ("port"));
+      Opt_Traceon   : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("traceon"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Activate traces for a specific debug stream"),
+         Arg_Description => New_String ("stream"));
+      Opt_Traceoff  : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("traceoff"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => 0,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Disable traces for a specific debug stream"),
+         Arg_Description => New_String ("stream"));
       Opt_Tracefile : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("tracefile"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Load traces configuration from file"),
-                         Arg_Description => New_String ("file"));
+        (Long_Name       => New_String ("tracefile"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Load traces configuration from file"),
+         Arg_Description => New_String ("file"));
       Opt_Tracelist : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("tracelist"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("List all available debug streams"),
-                         Arg_Description => Gtkada.Types.Null_Ptr);
+        (Long_Name       => New_String ("tracelist"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("List all available debug streams"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Pwd       : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("pwd"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Initial current directory"),
-                         Arg_Description => New_String ("PWD"));
+        (Long_Name       => New_String ("pwd"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Initial current directory"),
+         Arg_Description => New_String ("PWD"));
       Opt_Path      : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("path"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Prepend to PATH environment variable"),
-                         Arg_Description => New_String ("PATH"));
+        (Long_Name       => New_String ("path"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Prepend to PATH environment variable"),
+         Arg_Description => New_String ("PATH"));
 
       --  Config files
 
-      Opt_Config : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("config"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Specify the configuration file (.cgpr) to load"),
-                         Arg_Description => New_String ("file"));
+      Opt_Config   : constant Glib.Option.GOption_Entry :=
+        (Long_Name       => New_String ("config"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Specify the configuration file (.cgpr) to load"),
+         Arg_Description => New_String ("file"));
       Opt_Autoconf : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("autoconf"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Generate .cgpr automatically if needed"),
-                         Arg_Description => Gtkada.Types.Null_Ptr);
+        (Long_Name       => New_String ("autoconf"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Generate .cgpr automatically if needed"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Configdb : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("configdb"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Extra directories for gprconfig"),
-                         Arg_Description => New_String ("dir"));
+        (Long_Name       => New_String ("configdb"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     => New_String ("Extra directories for gprconfig"),
+         Arg_Description => New_String ("dir"));
       Opt_Relocate : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("relocate-build-tree"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Relocate build directories for the "
-                            & "current project"),
-                         Arg_Description => New_String ("dir"));
+        (Long_Name       => New_String ("relocate-build-tree"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String
+             ("Relocate build directories for the " & "current project"),
+         Arg_Description => New_String ("dir"));
       Opt_Rootdir  : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String ("root-dir"),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_Switch'Address,
-                         Description     => New_String
-                           ("Root directory for the current project: "
-                            & "must be used with relocate-build-tree"),
-                         Arg_Description => New_String ("dir"));
+        (Long_Name       => New_String ("root-dir"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String
+             ("Root directory for the current project: "
+              & "must be used with relocate-build-tree"),
+         Arg_Description => New_String ("dir"));
       Opt_Ignore   : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       =>
-                          New_String ("ignore-saved-scenario-values"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => Glib.Option.G_Option_Flag_No_Arg,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Ignore the scenario values saved in .gnatstudio"),
-                        Arg_Description => Gtkada.Types.Null_Ptr);
+        (Long_Name       => New_String ("ignore-saved-scenario-values"),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_No_Arg,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_Switch'Address,
+         Description     =>
+           New_String ("Ignore the scenario values saved in .gnatstudio"),
+         Arg_Description => Gtkada.Types.Null_Ptr);
 
       --  Option for remaining arguments
       Opt_Remaining : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => New_String (""),
-                         Short_Name      => To_Gchar (ASCII.NUL),
-                         Flags           => Glib.Option.G_Option_Flag_Filename,
-                         Arg             => Glib.Option.G_Option_Arg_Callback,
-                         Arg_Data        => On_File_Switch'Address,
-                         Description     => Gtkada.Types.Null_Ptr,
-                         Arg_Description => Gtkada.Types.Null_Ptr);
+        (Long_Name       => New_String (""),
+         Short_Name      => To_Gchar (ASCII.NUL),
+         Flags           => Glib.Option.G_Option_Flag_Filename,
+         Arg             => Glib.Option.G_Option_Arg_Callback,
+         Arg_Data        => On_File_Switch'Address,
+         Description     => Gtkada.Types.Null_Ptr,
+         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Entries   : constant Glib.Option.GOption_Entry_Array :=
-                        (Opt_Project,
-                         Opt_Scenario,
-                         Opt_Help,
-                         Opt_Help_All,
-                         Opt_Version,
-                         Opt_Debug,
-                         Opt_Hide,
-                         Opt_Host,
-                         Opt_Target,
-                         Opt_Load,
-                         Opt_Eval,
-                         Opt_Readonly,
-                         Opt_Server,
-                         Opt_Traceon,
-                         Opt_Traceoff,
-                         Opt_Tracefile,
-                         Opt_Tracelist,
-                         Opt_Config,
-                         Opt_Autoconf,
-                         Opt_Relocate,
-                         Opt_Rootdir,
-                         Opt_Ignore,
-                         Opt_Configdb,
-                         Opt_Remaining,
-                         Opt_Pwd,
-                         Opt_Path,
-                         Glib.Option.Null_GOption_Entry);
+        (Opt_Project,
+         Opt_Scenario,
+         Opt_Help,
+         Opt_Help_All,
+         Opt_Version,
+         Opt_Debug,
+         Opt_Hide,
+         Opt_Host,
+         Opt_Target,
+         Opt_Load,
+         Opt_Eval,
+         Opt_Readonly,
+         Opt_Server,
+         Opt_Traceon,
+         Opt_Traceoff,
+         Opt_Tracefile,
+         Opt_Tracelist,
+         Opt_Config,
+         Opt_Autoconf,
+         Opt_Relocate,
+         Opt_Rootdir,
+         Opt_Ignore,
+         Opt_Configdb,
+         Opt_Remaining,
+         Opt_Pwd,
+         Opt_Path,
+         Glib.Option.Null_GOption_Entry);
 
       function Get_Gtk_Option_Group
         (Open_Default_Display : Glib.Gboolean)
-            return Glib.Option.GOption_Group;
+         return Glib.Option.GOption_Group;
       pragma Import (C, Get_Gtk_Option_Group, "gtk_get_option_group");
 
    begin
-      GPS_Command_Line.Context := Glib.Option.G_New
-        ("[[+line1] source1] [[+line2] source2] ...");
+      GPS_Command_Line.Context :=
+        Glib.Option.G_New ("[[+line1] source1] [[+line2] source2] ...");
 
       GPS_Command_Line.Context.Set_Summary
-        ("source1, source2, ..." & ASCII.LF
-           & "    Name of files to load. Start with '=' to load from project"
-           & ASCII.LF
-           & "    and use +line to go to <line> directly, e.g. +40 source1");
+        ("source1, source2, ..."
+         & ASCII.LF
+         & "    Name of files to load. Start with '=' to load from project"
+         & ASCII.LF
+         & "    and use +line to go to <line> directly, e.g. +40 source1");
 
       GPS_Command_Line.Context.Add_Group (Get_Gtk_Option_Group (1));
       GPS_Command_Line.Context.Add_Main_Entries (Opt_Entries, "gps");
@@ -895,11 +905,9 @@ package body GPS.Initialization is
       if Config.Host = Windows then
          declare
             Tmp_Log_File          : constant Virtual_File :=
-                                      Create_From_Dir
-                                        (Get_Tmp_Directory,
-                                         "gnatstudio_error_log.txt");
-            Writable_Tmp_Log_File : Writable_File := Tmp_Log_File.Write_File
-              (Append => False);
+              Create_From_Dir (Get_Tmp_Directory, "gnatstudio_error_log.txt");
+            Writable_Tmp_Log_File : Writable_File :=
+              Tmp_Log_File.Write_File (Append => False);
          begin
             Write (Writable_Tmp_Log_File, Str => Message);
             Close (Writable_Tmp_Log_File);
@@ -985,8 +993,7 @@ package body GPS.Initialization is
 
             declare
                Args  : constant String := ICS.Value (Value);
-               Blank : constant Natural :=
-                 Ada.Strings.Fixed.Index (Args, " ");
+               Blank : constant Natural := Ada.Strings.Fixed.Index (Args, " ");
 
             begin
                if Blank = 0 then
@@ -1018,11 +1025,11 @@ package body GPS.Initialization is
          declare
             Obsolete_Msg : constant String :=
               "Note: you are attempting to use the GNAT Studio remote mode; "
-            & "this feature is deprecated and will be removed in an "
-            & "upcoming GNAT Studio release. "
-            & ASCII.LF
-            & "For now, you can still access this feature by enabling "
-            & "the GPS.INTERNAL.MODULE_REMOTE trace.";
+              & "this feature is deprecated and will be removed in an "
+              & "upcoming GNAT Studio release. "
+              & ASCII.LF
+              & "For now, you can still access this feature by enabling "
+              & "the GPS.INTERNAL.MODULE_REMOTE trace.";
 
          begin
             Put_Line (Standard_Error, Obsolete_Msg);
@@ -1053,8 +1060,7 @@ package body GPS.Initialization is
          declare
             Param  : constant String := ICS.Value (Value);
             Column : constant Natural :=
-                       Ada.Strings.Fixed.Index
-                         (Param, ":", Ada.Strings.Backward);
+              Ada.Strings.Fixed.Index (Param, ":", Ada.Strings.Backward);
 
          begin
             --  Param should be of the form target:protocol
@@ -1065,30 +1071,32 @@ package body GPS.Initialization is
 
             Free (GPS.Globals.Target);
             Free (Protocol);
-            GPS.Globals.Target   :=
-              new String '(Param (Param'First .. Column - 1));
-            Protocol :=
-              new String '(Param (Column + 1 .. Param'Last));
+            GPS.Globals.Target :=
+              new String'(Param (Param'First .. Column - 1));
+            Protocol := new String'(Param (Column + 1 .. Param'Last));
          end;
 
       elsif Switch = "--config" then
-         Config_Files.Config_File := Create_From_Base
-            (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+         Config_Files.Config_File :=
+           Create_From_Base
+             (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
 
       elsif Switch = "--configdb" then
          Append
-            (Config_Files.DB_Dirs,
-             Create_From_Base
-               (+ICS.Value (Value), Get_Current_Dir.Full_Name.all));
+           (Config_Files.DB_Dirs,
+            Create_From_Base
+              (+ICS.Value (Value), Get_Current_Dir.Full_Name.all));
 
       elsif Switch = "--relocate-build-tree" then
-         GPS.Globals.Build_Tree_Dir := Create_From_Base
-           (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+         GPS.Globals.Build_Tree_Dir :=
+           Create_From_Base
+             (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
          Normalize_Path (GPS.Globals.Build_Tree_Dir);
 
       elsif Switch = "--root-dir" then
-         GPS.Globals.Root_Dir := Create_From_Base
-           (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+         GPS.Globals.Root_Dir :=
+           Create_From_Base
+             (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
          Normalize_Path (GPS.Globals.Root_Dir);
 
       elsif Switch = "--autoconf" then
@@ -1168,7 +1176,7 @@ package body GPS.Initialization is
          --  +<line number> means open next file on command line at a
          --  specific line number
          GPS_Command_Line.Line :=
-            Positive'Value (FName (FName'First + 1 .. FName'Last));
+           Positive'Value (FName (FName'First + 1 .. FName'Last));
 
       else
          Item.File := To_Unbounded_String (FName);
@@ -1185,9 +1193,9 @@ package body GPS.Initialization is
    ------------------------
 
    function Local_Command_Line
-      (Self        : System.Address;
-       Arguments   : access chars_ptr_array_access;
-       Exit_Status : access Glib.Gint) return Glib.Gboolean
+     (Self        : System.Address;
+      Arguments   : access chars_ptr_array_access;
+      Exit_Status : access Glib.Gint) return Glib.Gboolean
    is
       pragma Unreferenced (Self);
       Err     : Glib.Error.GError;
@@ -1216,14 +1224,14 @@ package body GPS.Initialization is
 
       while Arguments.all (A) /= Null_Ptr loop
          declare
-            Val : constant String := Value (Arguments.all (A));
+            Val     : constant String := Value (Arguments.all (A));
             Handled : Boolean := False;
          begin
             --  Ignore when -P is separate, it will be handled later
             if Val'Length > 2 and then Val (Val'First) = '-' then
                if Val (Val'First + 1) = 'P' then
                   Passed_Project_Name :=
-                     new String'(Val (Val'First + 2 .. Val'Last));
+                    new String'(Val (Val'First + 2 .. Val'Last));
                   Handled := True;
 
                elsif Val (Val'First + 1) = 'X' then

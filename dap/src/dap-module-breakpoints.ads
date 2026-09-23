@@ -17,14 +17,14 @@
 
 --  Used to manage DAP breakpoints.
 
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with VSS.Strings;
 
-with Basic_Types;             use Basic_Types;
-with GPS.Kernel;              use GPS.Kernel;
-with DAP.Types;               use DAP.Types;
-with DAP.Types.Breakpoints;   use DAP.Types.Breakpoints;
+with Basic_Types;           use Basic_Types;
+with GPS.Kernel;            use GPS.Kernel;
+with DAP.Types;             use DAP.Types;
+with DAP.Types.Breakpoints; use DAP.Types.Breakpoints;
 
 --  Used to manage DAP breakpoints as a whole, dealing with persistant
 --  breakpoints and debugger-specific ones.
@@ -46,7 +46,7 @@ package DAP.Module.Breakpoints is
    --  An empty breakpoint is returned if there is no breakpoint for this ID.
 
    function Get_Breakpoint_From_Index
-     (Index  : Positive) return Breakpoint_Data;
+     (Index : Positive) return Breakpoint_Data;
    --  Retrieve breakpoint at the given index.
 
    procedure Set_Breakpoint_At_Index
@@ -78,8 +78,7 @@ package DAP.Module.Breakpoints is
    --  Called when GNAT Studio is terminating.
 
    procedure Store_As_Persistent
-     (Executable  : Virtual_File;
-      Breakpoints : Breakpoint_Vectors.Vector);
+     (Executable : Virtual_File; Breakpoints : Breakpoint_Vectors.Vector);
    --  Store the given list of breakpoints in the persistent ones.
    --  Persistent breakpoints will be restored in newer sessions on the same
    --  project.

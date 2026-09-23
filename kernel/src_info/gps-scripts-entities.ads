@@ -18,7 +18,7 @@
 --  Implementation of Entity class
 
 with GPS.Core_Kernels;
-with Xref;                   use Xref;
+with Xref; use Xref;
 
 package GPS.Scripts.Entities is
 
@@ -35,8 +35,7 @@ package GPS.Scripts.Entities is
    procedure Set_Data
      (Instance : Class_Instance; Entity : Xref.Root_Entity'Class);
    function Get_Data
-     (Data : Callback_Data'Class; N : Positive)
-      return Xref.Root_Entity'Class;
+     (Data : Callback_Data'Class; N : Positive) return Xref.Root_Entity'Class;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data

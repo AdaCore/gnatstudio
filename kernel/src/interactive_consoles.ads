@@ -48,23 +48,23 @@ with String_List_Utils;
 with GPS.Kernel.MDI;
 with GPS.Messages_Windows;
 with GPS.Search;
-with Default_Preferences;  use Default_Preferences;
-with GPS.Kernel;           use GPS.Kernel;
+with Default_Preferences; use Default_Preferences;
+with GPS.Kernel;          use GPS.Kernel;
 
 package Interactive_Consoles is
 
-   type Interactive_Console_Record is new
-     Generic_Views.View_Record with private;
-   type Interactive_Console is
-     access all Interactive_Console_Record'Class;
+   type Interactive_Console_Record is
+     new Generic_Views.View_Record with private;
+   type Interactive_Console is access all Interactive_Console_Record'Class;
    pragma No_Strict_Aliasing (Interactive_Console);
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Interactive_Console_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
 
-   type Command_Handler is access
-     function
+   type Command_Handler is
+     access function
        (Console   : access Interactive_Console_Record'Class;
         Input     : String;
         User_Data : System.Address) return String;
@@ -73,9 +73,10 @@ package Interactive_Consoles is
    --  expecting complete lines (e.g. its standard input) is responsible for
    --  adding back a line terminator itself: the console does not do it.
 
-   type Interrupt_Handler is access function
-     (Console   : access Interactive_Console_Record'Class;
-      User_Data : System.Address) return Boolean;
+   type Interrupt_Handler is
+     access function
+       (Console   : access Interactive_Console_Record'Class;
+        User_Data : System.Address) return Boolean;
    --  Called when ctrl-c is pressed in an interactive console.
    --  Should return true if the process was interrupted, False if nothing was
    --  done.
@@ -90,8 +91,7 @@ package Interactive_Consoles is
    function Default_Completion_Handler
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
-      return String_List_Utils.String_List.Vector;
+      User_Data : System.Address) return String_List_Utils.String_List.Vector;
    --  The default completion handler for a console, which queries the
    --  associated scripting language.
    --  When called, User_Data will be the Console itself, and not the one
@@ -181,8 +181,8 @@ package Interactive_Consoles is
    --  output from the process that the console shows.
 
    function Read
-     (Console    : access Interactive_Console_Record;
-      Whole_Line : Boolean) return String;
+     (Console : access Interactive_Console_Record; Whole_Line : Boolean)
+      return String;
    --  Read the characters currently available in the console.
    --  If Whole_Line is true, then this call is blocking until a newline
    --  character has been read
@@ -194,8 +194,7 @@ package Interactive_Consoles is
    --  Clear the current input line (up to the last prompt)
 
    procedure Enable_Prompt_Display
-     (Console : access Interactive_Console_Record;
-      Enable  : Boolean);
+     (Console : access Interactive_Console_Record; Enable : Boolean);
    --  When Enable is False, the Prompt is not redisplayed automatically
    --  and the console is uneditable by the user.
 
@@ -208,14 +207,12 @@ package Interactive_Consoles is
    --  Displays the prompt at the end of the current text
 
    procedure Set_Prompt
-     (Console : access Interactive_Console_Record;
-      Prompt  : String);
+     (Console : access Interactive_Console_Record; Prompt : String);
    --  Dynamically change the prompt. This doesn't impact the currently
    --  displayed prompt.
 
    procedure Set_Automatic_Scroll
-     (Console : access Interactive_Console_Record;
-      Active  : Boolean);
+     (Console : access Interactive_Console_Record; Active : Boolean);
    --  Control if the console should scroll to the last inserted line.
 
    procedure Set_Wrap_Mode
@@ -249,8 +246,8 @@ package Interactive_Consoles is
    --  console. A default interrupt handler is provided that asks the scripting
    --  language to do the necessary work.
 
-   type Key_Handler is access
-     function
+   type Key_Handler is
+     access function
        (Console   : access Interactive_Console_Record'Class;
         Modifier  : Gdk.Types.Gdk_Modifier_Type;
         Key       : Gdk.Types.Gdk_Key_Type := 0;
@@ -284,8 +281,7 @@ package Interactive_Consoles is
 
    function Export
      (View : access Interactive_Console_Record;
-      File : GNATCOLL.VFS.Virtual_File)
-      return Boolean;
+      File : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Export buffer's contents to the file
 
    procedure Paste_Text
@@ -309,9 +305,8 @@ package Interactive_Consoles is
 
    type Hyper_Link_Callback_Record is abstract tagged null record;
    type Hyper_Link_Callback is access all Hyper_Link_Callback_Record'Class;
-   procedure On_Click
-     (Link : access Hyper_Link_Callback_Record;
-      Text : String) is abstract;
+   procedure On_Click (Link : access Hyper_Link_Callback_Record; Text : String)
+   is abstract;
    --  Called when a link is clicked on
 
    procedure On_Destroy (Link : in out Hyper_Link_Callback_Record) is null;
@@ -348,9 +343,9 @@ package Interactive_Consoles is
    --  Delete all hyper-links registered in console
 
    procedure Insert_With_Links
-     (Console   : access Interactive_Console_Record;
-      Text      : String;
-      Add_LF    : Boolean := True);
+     (Console : access Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True);
    --  Insert text in the console, highlighting any text that matches one of
    --  hyper links registered with Create_Hyper_Link.
    --  Clicking on these links will call On_Click on the matching Callback.
@@ -374,16 +369,17 @@ package Interactive_Consoles is
    --  Callback will be destroyed when the console itself is destroyed.
 
    procedure Paste_Clipboard
-     (Console  : not null access Interactive_Console_Record'Class);
+     (Console : not null access Interactive_Console_Record'Class);
    --  Paste the clipboard content into Console
 
    ---------------------
    -- Support for MDI --
    ---------------------
 
-   type GPS_Console_MDI_Child_Record is
-     new GPS.Kernel.MDI.GPS_MDI_Child_Record with null record;
-   overriding function Interrupt
+   type GPS_Console_MDI_Child_Record is new GPS.Kernel.MDI.GPS_MDI_Child_Record
+   with null record;
+   overriding
+   function Interrupt
      (Child : access GPS_Console_MDI_Child_Record) return Boolean;
    --  A special MDI child that handles interrupts (and forwards them to the
    --  child widget, which must be an interactive console).
@@ -420,8 +416,7 @@ package Interactive_Consoles is
      new GPS.Messages_Windows.Abstract_Messages_Window with private;
 
    function Get_Interactive_Console
-     (Self : access Console_Messages_Window)
-      return Interactive_Console;
+     (Self : access Console_Messages_Window) return Interactive_Console;
    --  Convert Console_Messages_Window to Interactive_Console
 
    function Get_Console_Messages_Window
@@ -448,8 +443,7 @@ package Interactive_Consoles is
    ------------
 
    function Find_Interactive_Console
-     (From : Gtk.Widget.Gtk_Widget)
-      return Gtk.Widget.Gtk_Widget;
+     (From : Gtk.Widget.Gtk_Widget) return Gtk.Widget.Gtk_Widget;
    --  Returns Interactive_Console if it is parent of the From or null
 
 private
@@ -465,7 +459,7 @@ private
 
    type Console_Messages_Window
      (Console : access Interactive_Console_Record'Class)
-     is new GPS.Messages_Windows.Abstract_Messages_Window with null record;
+   is new GPS.Messages_Windows.Abstract_Messages_Window with null record;
 
    type Reserved_Tag_Kinds is
      (Uneditable_Tag,
@@ -487,18 +481,19 @@ private
      array (Reserved_Tag_Kinds) of Gtk.Text_Tag.Gtk_Text_Tag;
    --  Array of tags reserved in console
 
-   type Tag_Array is
-     array (Glib.Gint range <>) of Gtk.Text_Tag.Gtk_Text_Tag;
+   type Tag_Array is array (Glib.Gint range <>) of Gtk.Text_Tag.Gtk_Text_Tag;
    type Tag_Array_Access is access Tag_Array;
 
-   package Lines_List is new Ada.Containers.Doubly_Linked_Lists
-     (Ada.Strings.Unbounded.Unbounded_String, Ada.Strings.Unbounded."=");
+   package Lines_List is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Ada.Strings.Unbounded.Unbounded_String,
+        Ada.Strings.Unbounded."=");
 
    type Interactive_Console_Record is new Generic_Views.View_Record with record
-      Handler    : Command_Handler;
-      Virtual    : GNATCOLL.Scripts.Virtual_Console;
-      Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Console    : GPS.Messages_Windows.Abstract_Messages_Window_Access;
+      Handler  : Command_Handler;
+      Virtual  : GNATCOLL.Scripts.Virtual_Console;
+      Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Console  : GPS.Messages_Windows.Abstract_Messages_Window_Access;
 
       Completion           : GUI_Utils.Completion_Handler;
       Completion_User_Data : System.Address;
@@ -506,10 +501,10 @@ private
       Interrupt           : Interrupt_Handler;
       Interrupt_User_Data : System.Address;
 
-      On_Key              : Key_Handler;
-      Key_User_Data       : System.Address;
+      On_Key        : Key_Handler;
+      Key_User_Data : System.Address;
 
-      User_Data  : System.Address;
+      User_Data : System.Address;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       View   : Gtk.Text_View.Gtk_Text_View;
@@ -557,7 +552,7 @@ private
       Current_Position : Integer := -1;
       --  The current position when browsing the command history
 
-      Idle_Id : Glib.Main.G_Source_Id := 0;
+      Idle_Id         : Glib.Main.G_Source_Id := 0;
       Idle_Registered : Boolean := False;
       --  The handler for idle callbacks
 
@@ -605,26 +600,29 @@ private
       --  Index in the array above
    end record;
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self   : not null access Console_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
       Mode   : GPS.Kernel.Message_Type);
 
-   overriding procedure Insert_UTF8
+   overriding
+   procedure Insert_UTF8
      (Self   : not null access Console_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
       Mode   : GPS.Kernel.Message_Type);
 
-   overriding procedure Clear
-     (Self   : not null access Console_Messages_Window);
+   overriding
+   procedure Clear (Self : not null access Console_Messages_Window);
 
-   overriding procedure Raise_Console
-     (Self       : not null access Console_Messages_Window;
-      Give_Focus : Boolean);
+   overriding
+   procedure Raise_Console
+     (Self : not null access Console_Messages_Window; Give_Focus : Boolean);
 
-   overriding function Get_Virtual_Console
+   overriding
+   function Get_Virtual_Console
      (Self : not null access Console_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console;
 

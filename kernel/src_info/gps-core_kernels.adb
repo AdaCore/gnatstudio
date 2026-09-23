@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;                use GNATCOLL.Projects;
-with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
-with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
 with GPS.Scripts;
 
-with Language_Handlers;                use Language_Handlers;
-with Language.Unknown;                 use Language.Unknown;
+with Language_Handlers; use Language_Handlers;
+with Language.Unknown;  use Language.Unknown;
 with Remote;
 
 package body GPS.Core_Kernels is
@@ -32,8 +32,8 @@ package body GPS.Core_Kernels is
    ----------------------
 
    function Create_From_Base
-     (Kernel : access Core_Kernel_Record'Class;
-      Name   : Filesystem_String) return Virtual_File
+     (Kernel : access Core_Kernel_Record'Class; Name : Filesystem_String)
+      return Virtual_File
    is
       File : constant Virtual_File :=
         Kernel.Registry.Create (Base_Name (Name));
@@ -52,14 +52,13 @@ package body GPS.Core_Kernels is
    function To_File
      (Kernel      : access Core_Kernel_Record'Class;
       Name        : String;
-      Check_Exist : Boolean := True)
-      return GNATCOLL.VFS.Virtual_File
+      Check_Exist : Boolean := True) return GNATCOLL.VFS.Virtual_File
    is
       F : Virtual_File;
    begin
       --  Translate filename into local file if needed
-      F := To_Local
-        (Create (+Name, Remote.Get_Nickname (Remote.Debug_Server)));
+      F :=
+        To_Local (Create (+Name, Remote.Get_Nickname (Remote.Debug_Server)));
 
       --  Convert from a path returned by the debugger to the actual
       --  path in the project, in case sources have changed
@@ -80,8 +79,9 @@ package body GPS.Core_Kernels is
      (Self   : not null access Core_Kernel_Record;
       Result : out GNATCOLL.Scripts.Scripts_Repository) is
    begin
-      Result := new GPS.Scripts.Kernel_Scripts_Repository'
-        (GPS.Scripts.Create (Core_Kernel (Self)));
+      Result :=
+        new GPS.Scripts.Kernel_Scripts_Repository'
+          (GPS.Scripts.Create (Core_Kernel (Self)));
    end Create_Scripts_Repository;
 
    ---------------
@@ -136,9 +136,9 @@ package body GPS.Core_Kernels is
    -- Get_Project_Tree --
    ----------------------
 
-   overriding function Get_Project_Tree
-     (Self : Core_Kernel_Record)
-      return GNATCOLL.Projects.Project_Tree_Access
+   overriding
+   function Get_Project_Tree
+     (Self : Core_Kernel_Record) return GNATCOLL.Projects.Project_Tree_Access
    is
       use type Projects.Project_Registry_Access;
    begin
@@ -174,8 +174,8 @@ package body GPS.Core_Kernels is
    ------------
 
    function Module
-     (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module
+     (Kernel : access Core_Kernel_Record'Class; Tag : Ada.Tags.Tag)
+      return Abstract_Module
    is
       use Abstract_Module_List;
       Sequence : constant List := Kernel.Module_List (Tag);
@@ -192,8 +192,8 @@ package body GPS.Core_Kernels is
    -----------------
 
    function Module_List
-     (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List
+     (Kernel : access Core_Kernel_Record'Class; Tag : Ada.Tags.Tag)
+      return Abstract_Module_List.List
    is
       Pos : constant Module_Maps.Cursor := Kernel.Modules.Find (Tag);
    begin
@@ -250,8 +250,7 @@ package body GPS.Core_Kernels is
 
    function Get_Construct_Database
      (Kernel : not null access Core_Kernel_Record)
-      return Language.Tree.Database.Construct_Database_Access
-   is
+      return Language.Tree.Database.Construct_Database_Access is
    begin
       return Kernel.Databases.Constructs;
    end Get_Construct_Database;
@@ -263,8 +262,7 @@ package body GPS.Core_Kernels is
    procedure Register_Tree_Provider
      (Kernel   : not null access Core_Kernel_Record;
       Lang     : Language_Access;
-      Provider : Semantic_Tree_Provider_Access)
-   is
+      Provider : Semantic_Tree_Provider_Access) is
    begin
       Kernel.Semantic_Tree_Providers.Include (Lang, Provider);
    end Register_Tree_Provider;
@@ -275,7 +273,8 @@ package body GPS.Core_Kernels is
 
    function Default_Language_Tree_Provider
      (Kernel : not null access Core_Kernel_Record)
-      return Semantic_Tree_Provider_Access is (null);
+      return Semantic_Tree_Provider_Access
+   is (null);
 
    --------------------------------
    -- Get_Abstract_Tree_For_File --
@@ -301,8 +300,10 @@ package body GPS.Core_Kernels is
          --  default provider
 
          if Core_Kernel (Kernel).Default_Language_Tree_Provider /= null then
-            return Core_Kernel (Kernel).Default_Language_Tree_Provider
-              .Get_Tree_For_File (Context, File);
+            return
+              Core_Kernel (Kernel)
+                .Default_Language_Tree_Provider
+                .Get_Tree_For_File (Context, File);
          else
             return No_Semantic_Tree;
          end if;
@@ -311,8 +312,9 @@ package body GPS.Core_Kernels is
 
          --  If there is a specific provider for Language, use that to return
          --  the file
-         return Kernel.Semantic_Tree_Providers
-           .Element (Language).Get_Tree_For_File (Context, File);
+         return
+           Kernel.Semantic_Tree_Providers.Element (Language).Get_Tree_For_File
+             (Context, File);
       end if;
    end Get_Abstract_Tree_For_File;
 

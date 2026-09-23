@@ -15,45 +15,45 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
 
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with VSS.Strings;
 
-with Gdk.RGBA;                  use Gdk.RGBA;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
-with Pango.Enums;               use Pango.Enums;
+with Gdk.RGBA;           use Gdk.RGBA;
+with Glib.Object;        use Glib.Object;
+with Glib.Properties;    use Glib.Properties;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtk.Text_Mark;      use Gtk.Text_Mark;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
+with Pango.Enums;        use Pango.Enums;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Search;                use GPS.Search;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel.Clipboard; use GPS.Kernel.Clipboard;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
+with GPS.Search;           use GPS.Search;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_View;           use Src_Editor_View;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_Buffer.Cursors;          use Src_Editor_Buffer.Cursors;
+with Src_Editor_Box;                     use Src_Editor_Box;
+with Src_Editor_View;                    use Src_Editor_View;
+with Src_Editor_Module.Markers;          use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
-with Find_Utils;                use Find_Utils;
-with Commands;                  use Commands;
-with Language;                  use Language;
+with Find_Utils;                         use Find_Utils;
+with Commands;                           use Commands;
+with Language;                           use Language;
 with Language.Tree;
-with Src_Contexts;              use Src_Contexts;
+with Src_Contexts;                       use Src_Contexts;
 with GUI_Utils;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -62,23 +62,22 @@ package body Src_Editor_Module.Editors is
 
    use type Basic_Types.Visible_Column_Type;
 
-   Me : constant Trace_Handle := Create
-     ("GPS.SOURCE_EDITOR.EDITOR_BUFFER",
-      Default => GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle :=
+     Create
+       ("GPS.SOURCE_EDITOR.EDITOR_BUFFER", Default => GNATCOLL.Traces.Off);
 
    package MC renames Src_Editor_Buffer.Cursors;
 
    type Buffer_Reference is record
-      Kernel     : Kernel_Handle;
-      Buffer     : Source_Buffer;    --  Reset to null when buffer is destroyed
-      File       : Virtual_File;
-      Factory    : Src_Editor_Buffer_Factory;
-      Ref_Count  : Natural := 1;
+      Kernel    : Kernel_Handle;
+      Buffer    : Source_Buffer;    --  Reset to null when buffer is destroyed
+      File      : Virtual_File;
+      Factory   : Src_Editor_Buffer_Factory;
+      Ref_Count : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
 
-   type Src_Editor_Buffer is
-     new GPS.Editors.Line_Information.GPS_Editor_Buffer
+   type Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
    with record
       Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
@@ -93,14 +92,14 @@ package body Src_Editor_Module.Editors is
    -- Frozen_Cursor_Controller --
    ------------------------------
 
-   type Frozen_Cursor_Controller
-     (Editor : Src_Editor_Buffer_Access) is
-     new Cursor_Movement_Controller with null record;
+   type Frozen_Cursor_Controller (Editor : Src_Editor_Buffer_Access) is
+     new Cursor_Movement_Controller
+   with null record;
 
-   overriding procedure Initialize
-     (Object : in out Frozen_Cursor_Controller);
-   overriding procedure Finalize
-     (Object : in out Frozen_Cursor_Controller);
+   overriding
+   procedure Initialize (Object : in out Frozen_Cursor_Controller);
+   overriding
+   procedure Finalize (Object : in out Frozen_Cursor_Controller);
 
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
       Buffer : Src_Editor_Buffer;
@@ -127,7 +126,7 @@ package body Src_Editor_Module.Editors is
    --  the user
 
    type Src_Editor_Overlay is new GPS.Editors.Editor_Overlay with record
-      Tag    : Gtk_Text_Tag; --  one ref owned by the overlay
+      Tag : Gtk_Text_Tag; --  one ref owned by the overlay
    end record;
 
    type Src_Editor_Cursor is new GPS.Editors.Editor_Cursor with record
@@ -137,22 +136,23 @@ package body Src_Editor_Module.Editors is
 
    type Editor_Properties_Type is (Locations);
 
-   type Editors_Props_Record (Typ : Editor_Properties_Type)
-     is new Instance_Property_Record
+   type Editors_Props_Record (Typ : Editor_Properties_Type) is
+     new Instance_Property_Record
    with record
       case Typ is
          when Locations =>
-            Loc   : Editor_Location_Access;
+            Loc : Editor_Location_Access;
       end case;
    end record;
 
    type Editors_Props is access all Editors_Props_Record'Class;
-   overriding procedure Destroy (Prop : in out Editors_Props_Record);
+   overriding
+   procedure Destroy (Prop : in out Editors_Props_Record);
    --  See inherited documentation
 
    function Create_Editor_Location
-     (Buffer   : Src_Editor_Buffer'Class;
-      Location : Gtk_Text_Iter) return Src_Editor_Location'Class;
+     (Buffer : Src_Editor_Buffer'Class; Location : Gtk_Text_Iter)
+      return Src_Editor_Location'Class;
    --  Return an instance of Editor_Location
 
    function Create_Editor_Location
@@ -162,7 +162,7 @@ package body Src_Editor_Module.Editors is
    --  Return an instance of EditorLocation
 
    function Create_Editor_Overlay
-     (Tag    : Gtk_Text_Tag) return Src_Editor_Overlay'Class;
+     (Tag : Gtk_Text_Tag) return Src_Editor_Overlay'Class;
    --  Return an instance of Src_Editor_Overlay
 
    procedure Get_Location
@@ -175,11 +175,11 @@ package body Src_Editor_Module.Editors is
    --  is Nil_Editor_Location), Iter is Set to Default and Success to False.
 
    procedure Get_Block
-     (Location : Editor_Location'Class;
-      Block    : out Block_Record;
-      Success  : out Boolean;
+     (Location      : Editor_Location'Class;
+      Block         : out Block_Record;
+      Success       : out Boolean;
       As_Subprogram : Boolean := False;
-      Update_Tree : Boolean := True);
+      Update_Tree   : Boolean := True);
    --  Similar to Get_Location, but return the block information instead.
    --  Update_Tree indicates whether the tree needs to be refreshed first
 
@@ -201,8 +201,8 @@ package body Src_Editor_Module.Editors is
    --  iterators, since they stop to operate just before the last iterator.
 
    function Create_Editor_Mark
-     (Buffer : Src_Editor_Buffer'Class;
-      Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class;
+     (Buffer : Src_Editor_Buffer'Class; Mark : Gtk_Text_Mark)
+      return Src_Editor_Mark'Class;
    --  Returns an instance of Editor_Mark encapsulating Mark. Mark must not be
    --  null.
 
@@ -210,54 +210,65 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_Location --
    -------------------------
 
-   overriding function "=" (Left, Right : Src_Editor_Location) return Boolean
-   is
-     (Left.Line = Right.Line
-      and then Left.Column = Right.Column
-      and then
-      String (Src_Editor_Buffer'Class (Left.Buffer).File.Full_Name.all)
-      =
-        String (Src_Editor_Buffer'Class (Right.Buffer).File.Full_Name.all));
+   overriding
+   function "=" (Left, Right : Src_Editor_Location) return Boolean
+   is (Left.Line = Right.Line
+       and then Left.Column = Right.Column
+       and then
+         String (Src_Editor_Buffer'Class (Left.Buffer).File.Full_Name.all)
+         = String (Src_Editor_Buffer'Class (Right.Buffer).File.Full_Name.all));
 
-   overriding function ">" (Left, Right : Src_Editor_Location) return Boolean
-   is
-     (Left.Line > Right.Line
-      or else (Left.Line = Right.Line and then Left.Column > Right.Column));
+   overriding
+   function ">" (Left, Right : Src_Editor_Location) return Boolean
+   is (Left.Line > Right.Line
+       or else (Left.Line = Right.Line and then Left.Column > Right.Column));
 
-   overriding function Beginning_Of_Line
+   overriding
+   function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
 
-   overriding function End_Of_Line
+   overriding
+   function End_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
 
-   overriding function Block_Start
-     (This : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class;
+   overriding
+   function Block_Start
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class;
 
-   overriding function Block_End
-     (This : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class;
+   overriding
+   function Block_End
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class;
 
-   overriding function Block_Type
-     (This : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Language_Category;
+   overriding
+   function Block_Type
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Language_Category;
 
-   overriding function Block_Name
+   overriding
+   function Block_Name
      (This        : Src_Editor_Location;
       Subprogram  : Boolean;
       Update_Tree : Boolean := True) return String;
-   overriding function Block_Level (This : Src_Editor_Location) return Natural;
-   overriding procedure Block_Fold (This : Src_Editor_Location);
-   overriding procedure Block_Unfold (This : Src_Editor_Location);
+   overriding
+   function Block_Level (This : Src_Editor_Location) return Natural;
+   overriding
+   procedure Block_Fold (This : Src_Editor_Location);
+   overriding
+   procedure Block_Unfold (This : Src_Editor_Location);
 
-   overriding function Line (This : Src_Editor_Location) return Integer;
-   overriding function Column
-     (This : Src_Editor_Location) return Visible_Column_Type;
-   overriding function Line_Offset
-     (This : Src_Editor_Location) return Natural;
-   overriding function Offset (This : Src_Editor_Location) return Natural;
+   overriding
+   function Line (This : Src_Editor_Location) return Integer;
+   overriding
+   function Column (This : Src_Editor_Location) return Visible_Column_Type;
+   overriding
+   function Line_Offset (This : Src_Editor_Location) return Natural;
+   overriding
+   function Offset (This : Src_Editor_Location) return Natural;
 
-   overriding procedure Search
+   overriding
+   procedure Search
      (This              : Src_Editor_Location;
       Pattern           : String;
       Backward          : Boolean := False;
@@ -270,56 +281,66 @@ package body Src_Editor_Module.Editors is
       Starts            : out Src_Editor_Location;
       Ends              : out Src_Editor_Location);
 
-   overriding function Buffer
-     (This : Src_Editor_Location) return Editor_Buffer'Class;
+   overriding
+   function Buffer (This : Src_Editor_Location) return Editor_Buffer'Class;
 
-   overriding function Create_Mark
-     (This : Src_Editor_Location;
-      Name : String := "";
-      Left_Gravity : Boolean := True)
-      return Editor_Mark'Class;
+   overriding
+   function Create_Mark
+     (This         : Src_Editor_Location;
+      Name         : String := "";
+      Left_Gravity : Boolean := True) return Editor_Mark'Class;
 
-   overriding function Forward_Char
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding procedure Forward_Character
-     (This  : in out Src_Editor_Location;
-      Count : Integer);
-   overriding function Forward_Word
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding function Forward_Line
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class;
-   overriding function Backward_To_Word_Start
-     (This  : Src_Editor_Location) return Editor_Location'Class;
-   overriding function Forward_To_Word_End
-     (This  : Src_Editor_Location) return Editor_Location'Class;
-   overriding function Starts_Word
-     (This  : Src_Editor_Location) return Boolean;
-   overriding function Ends_Word
-     (This  : Src_Editor_Location) return Boolean;
-   overriding function Inside_Word
-     (This  : Src_Editor_Location) return Boolean;
-   overriding function Is_End_Of_Line
-     (This : Src_Editor_Location) return Boolean;
+   overriding
+   function Forward_Char
+     (This : Src_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   procedure Forward_Character
+     (This : in out Src_Editor_Location; Count : Integer);
+   overriding
+   function Forward_Word
+     (This : Src_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   function Forward_Line
+     (This : Src_Editor_Location; Count : Integer)
+      return Editor_Location'Class;
+   overriding
+   function Backward_To_Word_Start
+     (This : Src_Editor_Location) return Editor_Location'Class;
+   overriding
+   function Forward_To_Word_End
+     (This : Src_Editor_Location) return Editor_Location'Class;
+   overriding
+   function Starts_Word (This : Src_Editor_Location) return Boolean;
+   overriding
+   function Ends_Word (This : Src_Editor_Location) return Boolean;
+   overriding
+   function Inside_Word (This : Src_Editor_Location) return Boolean;
+   overriding
+   function Is_End_Of_Line (This : Src_Editor_Location) return Boolean;
 
-   overriding function Get_Overlays
-     (This    : Src_Editor_Location) return Overlay_Lists.List;
-   overriding function Has_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Boolean;
-   overriding function Forward_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class;
-   overriding function Backward_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class;
+   overriding
+   function Get_Overlays
+     (This : Src_Editor_Location) return Overlay_Lists.List;
+   overriding
+   function Has_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Boolean;
+   overriding
+   function Forward_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class;
+   overriding
+   function Backward_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class;
 
-   overriding function Get_Char_GB
-     (This : Src_Editor_Location) return Integer;
+   overriding
+   function Get_Char_GB (This : Src_Editor_Location) return Integer;
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Src_Editor_Location;
       Script : access Scripting_Language_Record'Class) return Class_Instance;
 
@@ -327,65 +348,74 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_Mark --
    ---------------------
 
-   overriding function Line (This : Src_Editor_Mark) return Integer;
+   overriding
+   function Line (This : Src_Editor_Mark) return Integer;
 
-   overriding function Column
-     (This : Src_Editor_Mark) return Visible_Column_Type;
+   overriding
+   function Column (This : Src_Editor_Mark) return Visible_Column_Type;
 
-   overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
+   overriding
+   function Is_Present (This : Src_Editor_Mark) return Boolean;
 
-   overriding procedure Delete (This : in out Src_Editor_Mark);
+   overriding
+   procedure Delete (This : in out Src_Editor_Mark);
 
-   overriding function Location
-     (This : Src_Editor_Mark;
-      Open : Boolean) return Editor_Location'Class;
+   overriding
+   function Location
+     (This : Src_Editor_Mark; Open : Boolean) return Editor_Location'Class;
 
-   overriding function Name (This : Src_Editor_Mark) return String;
+   overriding
+   function Name (This : Src_Editor_Mark) return String;
 
-   overriding function Create_Instance
-     (This   : Src_Editor_Mark;
-      Script : access Scripting_Language_Record'Class)
+   overriding
+   function Create_Instance
+     (This : Src_Editor_Mark; Script : access Scripting_Language_Record'Class)
       return Class_Instance;
 
-   overriding procedure Move
-     (This : Src_Editor_Mark; Location : Editor_Location'Class);
+   overriding
+   procedure Move (This : Src_Editor_Mark; Location : Editor_Location'Class);
 
-   overriding procedure Forward_Chars
-     (This : Src_Editor_Mark; Offset : Integer);
+   overriding
+   procedure Forward_Chars (This : Src_Editor_Mark; Offset : Integer);
 
    -----------------------
    -- Src_Editor_Buffer --
    -----------------------
 
-   overriding procedure Newline_And_Indent
-     (This : Src_Editor_Buffer);
+   overriding
+   procedure Newline_And_Indent (This : Src_Editor_Buffer);
 
-   overriding procedure Close
-     (This : Src_Editor_Buffer; Force : Boolean := False);
+   overriding
+   procedure Close (This : Src_Editor_Buffer; Force : Boolean := False);
 
-   overriding function New_Location
-     (This   : Src_Editor_Buffer;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class;
+   overriding
+   function New_Location
+     (This : Src_Editor_Buffer; Line : Integer; Column : Visible_Column_Type)
+      return Editor_Location'Class;
 
-   overriding function New_Location
-     (This   : Src_Editor_Buffer;
-      Offset : VSS.Strings.Character_Count) return Editor_Location'Class;
+   overriding
+   function New_Location
+     (This : Src_Editor_Buffer; Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class;
 
-   overriding function New_View
-     (This : Src_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function New_View (This : Src_Editor_Buffer) return Editor_View'Class;
 
-   overriding function Open
-     (This : Src_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function Open (This : Src_Editor_Buffer) return Editor_View'Class;
 
-   overriding function File (This : Src_Editor_Buffer) return Virtual_File;
+   overriding
+   function File (This : Src_Editor_Buffer) return Virtual_File;
 
-   overriding function Has_Blocks_Information
-     (This : Src_Editor_Buffer) return Boolean;
-   overriding procedure Blocks_Fold (This : Src_Editor_Buffer);
-   overriding procedure Blocks_Unfold (This : Src_Editor_Buffer);
+   overriding
+   function Has_Blocks_Information (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   procedure Blocks_Fold (This : Src_Editor_Buffer);
+   overriding
+   procedure Blocks_Unfold (This : Src_Editor_Buffer);
 
-   overriding function Add_Special_Line
+   overriding
+   function Add_Special_Line
      (This       : Src_Editor_Buffer;
       Start_Line : Integer;
       Text       : String;
@@ -394,232 +424,275 @@ package body Src_Editor_Module.Editors is
       Column_Id  : String := "";
       Info       : Line_Information_Data := null) return Editor_Mark'Class;
 
-   overriding procedure Remove_Special_Lines
-     (This  : Src_Editor_Buffer;
-      Mark  : Editor_Mark'Class;
-      Lines : Integer);
+   overriding
+   procedure Remove_Special_Lines
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class; Lines : Integer);
 
-   overriding function Flatten_Area
+   overriding
+   function Flatten_Area
      (This      : Src_Editor_Buffer;
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type) return Boolean;
 
-   overriding function Click_On_Side_Column
+   overriding
+   function Click_On_Side_Column
      (This      : Src_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
       Icon_Name : String := "") return Boolean;
 
-   overriding procedure Click_On_Line_Number
-     (This       : Src_Editor_Buffer;
-      Line       : Integer;
-      Click_Type : Line_Click_Type);
+   overriding
+   procedure Click_On_Line_Number
+     (This : Src_Editor_Buffer; Line : Integer; Click_Type : Line_Click_Type);
 
-   overriding function Create_Overlay
-     (This : Src_Editor_Buffer;
-      Name : String := "") return Editor_Overlay'Class;
-   overriding procedure Apply_Overlay
+   overriding
+   function Create_Overlay
+     (This : Src_Editor_Buffer; Name : String := "")
+      return Editor_Overlay'Class;
+   overriding
+   procedure Apply_Overlay
      (This    : Src_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location);
-   overriding procedure Remove_Overlay
+   overriding
+   procedure Remove_Overlay
      (This    : Src_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location);
 
-   overriding procedure Add_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class);
-   overriding function Add_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class;
-   overriding procedure Delete_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class);
-   overriding function Get_Insert_Mark
-     (This     : Src_Editor_Cursor) return Editor_Mark'Class;
-   overriding procedure Set_Manual_Sync
-     (This : Src_Editor_Cursor);
-   overriding function Get_Selection_Mark
-     (This     : Src_Editor_Cursor) return Editor_Mark'Class;
-   overriding procedure Move
-     (This : Src_Editor_Cursor; Where : Editor_Location'Class;
+   overriding
+   procedure Add_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class);
+   overriding
+   function Add_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class)
+      return GPS.Editors.Editor_Cursor'Class;
+   overriding
+   procedure Delete_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class);
+   overriding
+   function Get_Insert_Mark
+     (This : Src_Editor_Cursor) return Editor_Mark'Class;
+   overriding
+   procedure Set_Manual_Sync (This : Src_Editor_Cursor);
+   overriding
+   function Get_Selection_Mark
+     (This : Src_Editor_Cursor) return Editor_Mark'Class;
+   overriding
+   procedure Move
+     (This             : Src_Editor_Cursor;
+      Where            : Editor_Location'Class;
       Extend_Selection : Boolean);
-   overriding procedure Remove_All_Slave_Cursors
-     (This     : Src_Editor_Buffer);
-   overriding function Get_Main_Cursor
+   overriding
+   procedure Remove_All_Slave_Cursors (This : Src_Editor_Buffer);
+   overriding
+   function Get_Main_Cursor
      (This : Src_Editor_Buffer) return Editor_Cursor'Class;
-   overriding function Has_Slave_Cursors
-     (This     : Src_Editor_Buffer) return Boolean;
-   overriding procedure Set_Cursors_Auto_Sync
-     (This : Src_Editor_Buffer);
-   overriding function Get_Cursors
+   overriding
+   function Has_Slave_Cursors (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   procedure Set_Cursors_Auto_Sync (This : Src_Editor_Buffer);
+   overriding
+   function Get_Cursors
      (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List;
-   overriding procedure Update_Cursors_Selection
-     (This : Src_Editor_Buffer);
-   overriding function Current_View
-     (This : Src_Editor_Buffer) return Editor_View'Class;
-   overriding function Version
-     (This : Src_Editor_Buffer) return Integer
-     is (This.Contents.Buffer.Get_Version);
-   overriding function Views
-     (This : Src_Editor_Buffer) return View_Lists.List;
-   overriding function Lines_Count
-     (This : Src_Editor_Buffer) return Editable_Line_Type;
-   overriding function Characters_Count
-     (This : Src_Editor_Buffer) return Natural;
-   overriding function Is_Modified (This : Src_Editor_Buffer) return Boolean;
-   overriding procedure Copy
+   overriding
+   procedure Update_Cursors_Selection (This : Src_Editor_Buffer);
+   overriding
+   function Current_View (This : Src_Editor_Buffer) return Editor_View'Class;
+   overriding
+   function Version (This : Src_Editor_Buffer) return Integer
+   is (This.Contents.Buffer.Get_Version);
+   overriding
+   function Views (This : Src_Editor_Buffer) return View_Lists.List;
+   overriding
+   function Lines_Count (This : Src_Editor_Buffer) return Editable_Line_Type;
+   overriding
+   function Characters_Count (This : Src_Editor_Buffer) return Natural;
+   overriding
+   function Is_Modified (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   procedure Copy
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
       Append : Boolean := False);
-   overriding procedure Cut
+   overriding
+   procedure Cut
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
       Append : Boolean := False);
-   overriding procedure Paste
-     (This   : Src_Editor_Buffer;
-      From   : Editor_Location'Class);
-   overriding procedure Select_Text
+   overriding
+   procedure Paste (This : Src_Editor_Buffer; From : Editor_Location'Class);
+   overriding
+   procedure Select_Text
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-   overriding function Selection_Start
+   overriding
+   function Selection_Start
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-   overriding function Selection_End
+   overriding
+   function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-   overriding procedure Unselect (This : Src_Editor_Buffer);
-   overriding function Get_Text
+   overriding
+   procedure Unselect (This : Src_Editor_Buffer);
+   overriding
+   function Get_Text
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True)
       return VSS.Strings.Virtual_String;
-   overriding function Get_Chars_S
+   overriding
+   function Get_Chars_S
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return String;
-   overriding function Get_Chars_U
+   overriding
+   function Get_Chars_U
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return Unbounded_String;
-   overriding function Get_Entity_Name
+   overriding
+   function Get_Entity_Name
      (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location)
-      return String;
-   overriding procedure Insert
-     (This : Src_Editor_Buffer;
-      From : Editor_Location'Class;
-      Text : String);
-   overriding procedure Delete
-     (This : Src_Editor_Buffer;
-      From : Editor_Location'Class := Nil_Editor_Location;
-      To   : Editor_Location'Class := Nil_Editor_Location);
-   overriding procedure Indent
+      Location : Editor_Location'Class := Nil_Editor_Location) return String;
+   overriding
+   procedure Insert
+     (This : Src_Editor_Buffer; From : Editor_Location'Class; Text : String);
+   overriding
+   procedure Delete
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-   overriding procedure Refill
+   overriding
+   procedure Indent
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-   overriding function Beginning_Of_Buffer
+   overriding
+   procedure Refill
+     (This : Src_Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location);
+   overriding
+   function Beginning_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-   overriding function End_Of_Buffer
+   overriding
+   function End_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-   overriding procedure Save
+   overriding
+   procedure Save
      (This        : Src_Editor_Buffer;
       Interactive : Boolean := True;
       File        : Virtual_File := No_File;
       Internal    : Boolean := False);
-   overriding function Get_Mark
-     (This : Src_Editor_Buffer;
-      Name : String) return Editor_Mark'Class;
-   overriding procedure Set_Language
-     (This   : Src_Editor_Buffer;
-      Lang   : Language.Language_Access);
-   overriding function Get_Language
-     (This   : Src_Editor_Buffer) return Language.Language_Access;
-   overriding procedure Start_Undo_Group (This : Src_Editor_Buffer);
-   overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer);
-   overriding procedure Undo (This : Src_Editor_Buffer);
-   overriding procedure Redo (This : Src_Editor_Buffer);
-   overriding function Can_Undo (This : Src_Editor_Buffer) return Boolean;
-   overriding procedure Set_Read_Only
-     (This : Src_Editor_Buffer; Read_Only : Boolean);
-   overriding function Is_Read_Only
-     (This : Src_Editor_Buffer) return Boolean;
-   overriding procedure Apply_Style
-     (This  : Src_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
+   overriding
+   function Get_Mark
+     (This : Src_Editor_Buffer; Name : String) return Editor_Mark'Class;
+   overriding
+   procedure Set_Language
+     (This : Src_Editor_Buffer; Lang : Language.Language_Access);
+   overriding
+   function Get_Language
+     (This : Src_Editor_Buffer) return Language.Language_Access;
+   overriding
+   procedure Start_Undo_Group (This : Src_Editor_Buffer);
+   overriding
+   procedure Finish_Undo_Group (This : Src_Editor_Buffer);
+   overriding
+   procedure Undo (This : Src_Editor_Buffer);
+   overriding
+   procedure Redo (This : Src_Editor_Buffer);
+   overriding
+   function Can_Undo (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   procedure Set_Read_Only (This : Src_Editor_Buffer; Read_Only : Boolean);
+   overriding
+   function Is_Read_Only (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   procedure Apply_Style
+     (This                   : Src_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-   overriding procedure Apply_Style_To_Lines
+   overriding
+   procedure Apply_Style_To_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type);
-   overriding procedure Remove_Style
-     (This  : Src_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
+   overriding
+   procedure Remove_Style
+     (This                   : Src_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-   overriding procedure Remove_Style_On_Lines
+   overriding
+   procedure Remove_Style_On_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type);
-   overriding function Get_Subprogram_Name
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return String;
+   overriding
+   function Get_Subprogram_Name
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class)
+      return String;
 
-   overriding procedure Add_File_Information
+   overriding
+   procedure Add_File_Information
      (This       : Src_Editor_Buffer;
       Identifier : String;
       Info       : Line_Information_Data);
-   overriding procedure Adjust (This : in out Src_Editor_Buffer);
-   overriding procedure Finalize (This : in out Src_Editor_Buffer);
-   overriding function "="
+   overriding
+   procedure Adjust (This : in out Src_Editor_Buffer);
+   overriding
+   procedure Finalize (This : in out Src_Editor_Buffer);
+   overriding
+   function "="
      (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean;
-   overriding procedure Set_Extend_Existing_Selection
+   overriding
+   procedure Set_Extend_Existing_Selection
      (This : Src_Editor_Buffer; Extend : Boolean);
-   overriding function Extend_Existing_Selection
+   overriding
+   function Extend_Existing_Selection
      (This : Src_Editor_Buffer) return Boolean;
-   overriding function Has_Information_Column
+   overriding
+   function Has_Information_Column
      (This : Src_Editor_Buffer; Id : String) return Boolean;
 
-   overriding function Current_Undo_Group
-     (This : Src_Editor_Buffer) return Group_Block;
-   overriding function New_Undo_Group
-     (This : Src_Editor_Buffer) return Group_Block;
+   overriding
+   function Current_Undo_Group (This : Src_Editor_Buffer) return Group_Block;
+   overriding
+   function New_Undo_Group (This : Src_Editor_Buffer) return Group_Block;
 
-   overriding function Buffer_Address
-     (This : Src_Editor_Buffer) return System.Address;
+   overriding
+   function Buffer_Address (This : Src_Editor_Buffer) return System.Address;
 
-   overriding procedure Set_Opened_On_LSP_Server
-     (This  : Src_Editor_Buffer;
-      Value : Boolean);
+   overriding
+   procedure Set_Opened_On_LSP_Server
+     (This : Src_Editor_Buffer; Value : Boolean);
 
-   overriding function Is_Opened_On_LSP_Server
-     (This : Src_Editor_Buffer) return Boolean;
+   overriding
+   function Is_Opened_On_LSP_Server (This : Src_Editor_Buffer) return Boolean;
 
-   overriding function Freeze_Cursor
-     (This  : in out Src_Editor_Buffer)
-      return Cursor_Movement_Controller'Class;
+   overriding
+   function Freeze_Cursor
+     (This : in out Src_Editor_Buffer) return Cursor_Movement_Controller'Class;
 
-   overriding function Expand_Tabs
+   overriding
+   function Expand_Tabs
      (This   : Src_Editor_Buffer;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (Buffer_Reference_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (Buffer_Reference_Access, System.Address);
 
    procedure On_Buffer_Destroyed
      (Contents : System.Address; Buffer : System.Address);
@@ -630,50 +703,56 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_View --
    ---------------------
 
-   overriding procedure Set_Read_Only
-     (This : Src_Editor_View; Read_Only : Boolean);
-   overriding function Is_Read_Only (This : Src_Editor_View) return Boolean;
+   overriding
+   procedure Set_Read_Only (This : Src_Editor_View; Read_Only : Boolean);
+   overriding
+   function Is_Read_Only (This : Src_Editor_View) return Boolean;
 
-   overriding procedure Center
+   overriding
+   procedure Center
      (This      : Src_Editor_View;
       Location  : Editor_Location'Class := Nil_Editor_Location;
       Centering : Centering_Type := With_Margin);
 
-   overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View);
+   overriding
+   procedure Scroll_To_Cursor_Location (This : Src_Editor_View);
 
-   overriding procedure Cursor_Goto
+   overriding
+   procedure Cursor_Goto
      (This             : Src_Editor_View;
       Location         : Editor_Location'Class;
       Raise_View       : Boolean := False;
       Centering        : Centering_Type := With_Margin;
       Extend_Selection : Boolean := False);
 
-   overriding function Cursor
-     (This : Src_Editor_View) return Editor_Location'Class;
+   overriding
+   function Cursor (This : Src_Editor_View) return Editor_Location'Class;
 
-   overriding function Title
-     (This : Src_Editor_View; Short : Boolean) return String;
+   overriding
+   function Title (This : Src_Editor_View; Short : Boolean) return String;
 
-   overriding function Get_MDI_Child
-     (This : Src_Editor_View) return System.Address;
+   overriding
+   function Get_MDI_Child (This : Src_Editor_View) return System.Address;
 
-   overriding function Buffer
-     (This : Src_Editor_View) return Editor_Buffer'Class;
+   overriding
+   function Buffer (This : Src_Editor_View) return Editor_Buffer'Class;
 
-   overriding procedure Set_Activity_Progress_Bar_Visibility
-     (This    : Src_Editor_View;
-      Visible : Boolean);
+   overriding
+   procedure Set_Activity_Progress_Bar_Visibility
+     (This : Src_Editor_View; Visible : Boolean);
 
-   overriding procedure Adjust (This : in out Src_Editor_View);
-   overriding procedure Finalize (This : in out Src_Editor_View);
+   overriding
+   procedure Adjust (This : in out Src_Editor_View);
+   overriding
+   procedure Finalize (This : in out Src_Editor_View);
 
    function Get
      (Buffer : Src_Editor_Buffer'Class; Box : Source_Editor_Box)
       return Editor_View'Class;
    --  Wrap Box into a view
 
-   function Convert is new Ada.Unchecked_Conversion
-     (View_Reference_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (View_Reference_Access, System.Address);
 
    procedure On_View_Destroyed
      (Contents : System.Address; View : System.Address);
@@ -684,30 +763,40 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_Overlay --
    ------------------------
 
-   overriding function Name (This : Src_Editor_Overlay) return String;
-   overriding function Get_Property
+   overriding
+   function Name (This : Src_Editor_Overlay) return String;
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return String;
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Boolean;
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Integer;
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : String);
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Boolean);
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Integer);
-   overriding procedure Initialize (This : in out Src_Editor_Overlay);
-   overriding procedure Adjust (This : in out Src_Editor_Overlay);
-   overriding procedure Finalize (This : in out Src_Editor_Overlay);
+   overriding
+   procedure Initialize (This : in out Src_Editor_Overlay);
+   overriding
+   procedure Adjust (This : in out Src_Editor_Overlay);
+   overriding
+   procedure Finalize (This : in out Src_Editor_Overlay);
 
    ----------------------------
    -- Create_Editor_Location --
    ----------------------------
 
    function Create_Editor_Location
-     (Buffer   : Src_Editor_Buffer'Class;
-      Location : Gtk_Text_Iter) return Src_Editor_Location'Class
+     (Buffer : Src_Editor_Buffer'Class; Location : Gtk_Text_Iter)
+      return Src_Editor_Location'Class
    is
       Editor_Loc : Src_Editor_Location;
    begin
@@ -730,8 +819,7 @@ package body Src_Editor_Module.Editors is
       Iter : Gtk_Text_Iter;
    begin
       Ensure_Valid_Position (Buffer.Contents.Buffer, Line, Column);
-      Get_Iter_At_Screen_Position
-        (Buffer.Contents.Buffer, Iter, Line, Column);
+      Get_Iter_At_Screen_Position (Buffer.Contents.Buffer, Iter, Line, Column);
 
       return Create_Editor_Location (Buffer, Iter);
    end Create_Editor_Location;
@@ -744,24 +832,25 @@ package body Src_Editor_Module.Editors is
      (Iter     : out Gtk_Text_Iter;
       Location : Editor_Location'Class;
       Default  : Gtk_Text_Iter;
-      Success  : out Boolean)
-   is
+      Success  : out Boolean) is
    begin
       Success := True;
 
       if Location not in Src_Editor_Location'Class
         or else Src_Editor_Location (Location).Buffer.Contents.Buffer = null
-        or else not Is_Valid_Position
-          (Src_Editor_Location (Location).Buffer.Contents.Buffer,
-           Src_Editor_Location (Location).Line,
-           Src_Editor_Location (Location).Column)
+        or else
+          not Is_Valid_Position
+                (Src_Editor_Location (Location).Buffer.Contents.Buffer,
+                 Src_Editor_Location (Location).Line,
+                 Src_Editor_Location (Location).Column)
       then
          Copy (Source => Default, Dest => Iter);
          Success := False;
 
       else
          Get_Iter_At_Screen_Position
-           (Src_Editor_Location (Location).Buffer.Contents.Buffer, Iter,
+           (Src_Editor_Location (Location).Buffer.Contents.Buffer,
+            Iter,
             Line   => Src_Editor_Location (Location).Line,
             Column => Src_Editor_Location (Location).Column);
       end if;
@@ -850,26 +939,28 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    function Create_Editor_Mark
-     (Buffer : Src_Editor_Buffer'Class;
-      Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class
+     (Buffer : Src_Editor_Buffer'Class; Mark : Gtk_Text_Mark)
+      return Src_Editor_Mark'Class
    is
-      New_Ref : constant Location_Marker := Create_File_Marker
-        (Buffer.Contents.Kernel,
-         Buffer.Contents.File,
-         No_Project,   --  any project
-         Mark);
+      New_Ref : constant Location_Marker :=
+        Create_File_Marker
+          (Buffer.Contents.Kernel,
+           Buffer.Contents.File,
+           No_Project,   --  any project
+           Mark);
    begin
       pragma Assert (Mark /= null);
-      return Src_Editor_Mark'
-        (Editor_Mark with Mark => New_Ref, Kernel => Buffer.Contents.Kernel);
+      return
+        Src_Editor_Mark'
+          (Editor_Mark with Mark => New_Ref, Kernel => Buffer.Contents.Kernel);
    end Create_Editor_Mark;
 
    ------------------------
    -- Newline_And_Indent --
    ------------------------
 
-   overriding procedure Newline_And_Indent
-     (This : Src_Editor_Buffer) is
+   overriding
+   procedure Newline_And_Indent (This : Src_Editor_Buffer) is
    begin
       This.Contents.Buffer.Newline_And_Indent (False);
    end Newline_And_Indent;
@@ -878,8 +969,8 @@ package body Src_Editor_Module.Editors is
    -- Close --
    -----------
 
-   overriding procedure Close
-     (This : Src_Editor_Buffer; Force : Boolean := False) is
+   overriding
+   procedure Close (This : Src_Editor_Buffer; Force : Boolean := False) is
    begin
       if This.Contents.Buffer /= null then
          --  Close all views
@@ -888,17 +979,16 @@ package body Src_Editor_Module.Editors is
             Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
             for V in Views'Range loop
-               Close (Get_MDI (This.Contents.Kernel), Views (V),
-                      Force => Force);
+               Close
+                 (Get_MDI (This.Contents.Kernel), Views (V), Force => Force);
             end loop;
          end;
 
-         while This.Contents.Factory.Pure_Buffers.Contains
-           (This.Contents.File)
+         while This.Contents.Factory.Pure_Buffers.Contains (This.Contents.File)
          loop
             Unref
-              (This.Contents.Factory.Pure_Buffers.all
-                 (This.Contents.File).Buf);
+              (This.Contents.Factory.Pure_Buffers.all (This.Contents.File)
+                 .Buf);
             This.Contents.Factory.Pure_Buffers.Delete (This.Contents.File);
          end loop;
       end if;
@@ -908,7 +998,8 @@ package body Src_Editor_Module.Editors is
    -- Get --
    ---------
 
-   overriding function Get
+   overriding
+   function Get
      (This            : Src_Editor_Buffer_Factory;
       File            : Virtual_File;
       Force           : Boolean := False;
@@ -927,15 +1018,16 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       if File = GNATCOLL.VFS.No_File then
-         Child := Find_Current_Editor
-           (This.Kernel,
-            Only_If_Focused => Only_If_Focused);
+         Child :=
+           Find_Current_Editor
+             (This.Kernel, Only_If_Focused => Only_If_Focused);
       else
-         Child := Find_Editor
-           (Kernel        => This.Kernel,
-            File          => File,
-            Project       => Project,
-            Unlocked_Only => Unlocked_Only);
+         Child :=
+           Find_Editor
+             (Kernel        => This.Kernel,
+              File          => File,
+              Project       => Project,
+              Unlocked_Only => Unlocked_Only);
       end if;
 
       if Child = null then
@@ -943,16 +1035,20 @@ package body Src_Editor_Module.Editors is
             return Nil_Editor_Buffer;
          end if;
 
-         if File.Is_Regular_File
-           and then not File.Is_Readable
-         then
+         if File.Is_Regular_File and then not File.Is_Readable then
             return Nil_Editor_Buffer;
          end if;
 
          if Open_View then
-            Box := Open_File
-              (This.Kernel, File, Project,
-               Line => 0, Column => 0, Column_End => 0, Focus => Focus);
+            Box :=
+              Open_File
+                (This.Kernel,
+                 File,
+                 Project,
+                 Line       => 0,
+                 Column     => 0,
+                 Column_End => 0,
+                 Focus      => Focus);
          else
             if This.Pure_Buffers.Contains (File) then
                return Get (This, This.Pure_Buffers.Element (File).Buf);
@@ -976,12 +1072,9 @@ package body Src_Editor_Module.Editors is
          if Force then
             declare
                Current_File : constant GNATCOLL.VFS.Virtual_File :=
-                 (if File /= No_File
-                  then File
-                  else Get_Filename (Child));
+                 (if File /= No_File then File else Get_Filename (Child));
             begin
-               Box.Get_Buffer.Load_File
-                 (Current_File, Success => Success);
+               Box.Get_Buffer.Load_File (Current_File, Success => Success);
                if not Success then
                   Trace
                     (Me, "Failed to reload " & Current_File.Display_Full_Name);
@@ -1001,14 +1094,20 @@ package body Src_Editor_Module.Editors is
    -- Get_New --
    -------------
 
-   overriding function Get_New
+   overriding
+   function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class
    is
       Box : Source_Editor_Box;
    begin
-      Box := Open_File
-        (This.Kernel, No_File, No_Project,
-         Line => 1, Column => 1, Column_End => 1);
+      Box :=
+        Open_File
+          (This.Kernel,
+           No_File,
+           No_Project,
+           Line       => 1,
+           Column     => 1,
+           Column_End => 1);
       return Get (This, Get_Buffer (Box));
    end Get_New;
 
@@ -1019,8 +1118,8 @@ package body Src_Editor_Module.Editors is
    procedure On_View_Destroyed
      (Contents : System.Address; View : System.Address)
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, View_Reference_Access);
+      function Convert is new
+        Ada.Unchecked_Conversion (System.Address, View_Reference_Access);
       pragma Unreferenced (View);
       C : constant View_Reference_Access := Convert (Contents);
    begin
@@ -1034,8 +1133,8 @@ package body Src_Editor_Module.Editors is
    procedure On_Buffer_Destroyed
      (Contents : System.Address; Buffer : System.Address)
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Buffer_Reference_Access);
+      function Convert is new
+        Ada.Unchecked_Conversion (System.Address, Buffer_Reference_Access);
       pragma Unreferenced (Buffer);
       C : constant Buffer_Reference_Access := Convert (Contents);
    begin
@@ -1048,17 +1147,17 @@ package body Src_Editor_Module.Editors is
 
    function Get
      (This   : Src_Editor_Buffer_Factory'Class;
-      Buffer : access Source_Buffer_Record'Class)
-      return Editor_Buffer'Class
+      Buffer : access Source_Buffer_Record'Class) return Editor_Buffer'Class
    is
       Contents : Buffer_Reference_Access;
    begin
-      Contents := new Buffer_Reference'
-        (Ref_Count => 1,
-         File      => Get_Filename (Buffer),
-         Factory   => Src_Editor_Buffer_Factory (This),
-         Kernel    => This.Kernel,
-         Buffer    => Source_Buffer (Buffer));
+      Contents :=
+        new Buffer_Reference'
+          (Ref_Count => 1,
+           File      => Get_Filename (Buffer),
+           Factory   => Src_Editor_Buffer_Factory (This),
+           Kernel    => This.Kernel,
+           Buffer    => Source_Buffer (Buffer));
 
       --  If the buffer is destroyed while we still exist, we must reset the
       --  field to null to avoid Storage_Error
@@ -1073,8 +1172,7 @@ package body Src_Editor_Module.Editors is
    ---------------------
 
    function Get_Pure_Buffer
-     (This : Src_Editor_Buffer_Factory'Class;
-      File : GNATCOLL.VFS.Virtual_File)
+     (This : Src_Editor_Buffer_Factory'Class; File : GNATCOLL.VFS.Virtual_File)
       return Source_Buffer is
    begin
       if This.Pure_Buffers.Contains (File) then
@@ -1088,7 +1186,8 @@ package body Src_Editor_Module.Editors is
    -- File_Renamed --
    ------------------
 
-   overriding procedure File_Renamed
+   overriding
+   procedure File_Renamed
      (This     : Src_Editor_Buffer_Factory;
       Old_File : GNATCOLL.VFS.Virtual_File;
       New_File : GNATCOLL.VFS.Virtual_File)
@@ -1108,28 +1207,32 @@ package body Src_Editor_Module.Editors is
    -- New_Mark --
    --------------
 
-   overriding function New_Mark
+   overriding
+   function New_Mark
      (This   : Src_Editor_Buffer_Factory;
       File   : Virtual_File := No_File;
       Line   : Integer;
       Column : Integer) return Editor_Mark'Class
    is
-      New_Ref : constant Location_Marker := Create_File_Marker
-        (This.Kernel,
-         File,
-         No_Project,
-         Editable_Line_Type (Line),
-         Visible_Column_Type (Column));
+      New_Ref : constant Location_Marker :=
+        Create_File_Marker
+          (This.Kernel,
+           File,
+           No_Project,
+           Editable_Line_Type (Line),
+           Visible_Column_Type (Column));
    begin
-      return Src_Editor_Mark'
-         (Editor_Mark with Mark => New_Ref, Kernel => This.Kernel);
+      return
+        Src_Editor_Mark'
+          (Editor_Mark with Mark => New_Ref, Kernel => This.Kernel);
    end New_Mark;
 
    -----------------------
    -- Beginning_Of_Line --
    -----------------------
 
-   overriding function Beginning_Of_Line
+   overriding
+   function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class
    is
       Success : Boolean;
@@ -1155,7 +1258,8 @@ package body Src_Editor_Module.Editors is
    -- End_Of_Line --
    -----------------
 
-   overriding function End_Of_Line
+   overriding
+   function End_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class
    is
       Iter    : Gtk_Text_Iter;
@@ -1203,16 +1307,19 @@ package body Src_Editor_Module.Editors is
 
       if Success then
          Buffer := Source_Buffer (Get_Buffer (Iter));
-         Line   := Buffer_Line_Type (Get_Line (Iter) + 1);
+         Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
          if As_Subprogram then
-            Block  := Get_Subprogram_Block
-              (Buffer, Get_Editable_Line (Buffer, Line));
+            Block :=
+              Get_Subprogram_Block (Buffer, Get_Editable_Line (Buffer, Line));
          else
-            Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line),
-               Filter => Language.Tree.Categories_For_Block_Highlighting,
-               Update_Immediately => Update_Tree);
+            Block :=
+              Get_Block
+                (Buffer,
+                 Get_Editable_Line (Buffer, Line),
+                 Filter             =>
+                   Language.Tree.Categories_For_Block_Highlighting,
+                 Update_Immediately => Update_Tree);
          end if;
       end if;
    end Get_Block;
@@ -1221,9 +1328,10 @@ package body Src_Editor_Module.Editors is
    -- Block_Start --
    -----------------
 
-   overriding function Block_Start
-     (This        : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class
+   overriding
+   function Block_Start
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
    is
       Success : Boolean;
       Block   : Block_Record;
@@ -1231,12 +1339,14 @@ package body Src_Editor_Module.Editors is
       Get_Block (This, Block, Success, Update_Tree => Update_Tree);
 
       if Success then
-         return Src_Editor_Location'
-           (Editor_Location with
-            Buffer => This.Buffer,
-            Line   => Block.First_Line,
-            Column => 1,
-            Offset => 1);
+         return
+           Src_Editor_Location'
+             (Editor_Location
+              with
+                Buffer => This.Buffer,
+                Line   => Block.First_Line,
+                Column => 1,
+                Offset => 1);
       else
          return Nil_Editor_Location;
       end if;
@@ -1246,9 +1356,10 @@ package body Src_Editor_Module.Editors is
    -- Block_End --
    ---------------
 
-   overriding function Block_End
-     (This        : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class
+   overriding
+   function Block_End
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
    is
       Success     : Boolean;
       Block       : Block_Record;
@@ -1264,7 +1375,9 @@ package body Src_Editor_Module.Editors is
             Success  => Success);
 
          Get_Iter_At_Screen_Position
-           (Source_Buffer (Get_Buffer (Iter)), Iter2, Block.Last_Line,
+           (Source_Buffer (Get_Buffer (Iter)),
+            Iter2,
+            Block.Last_Line,
             Character_Index'(1));
 
          Forward_To_Line_End (Iter2, Success);
@@ -1283,9 +1396,10 @@ package body Src_Editor_Module.Editors is
    -- Block_Type --
    ----------------
 
-   overriding function Block_Type
-     (This        : Src_Editor_Location;
-      Update_Tree : Boolean := True) return Language_Category
+   overriding
+   function Block_Type
+     (This : Src_Editor_Location; Update_Tree : Boolean := True)
+      return Language_Category
    is
       Success : Boolean;
       Block   : Block_Record;
@@ -1303,7 +1417,8 @@ package body Src_Editor_Module.Editors is
    -- Block_Name --
    ----------------
 
-   overriding function Block_Name
+   overriding
+   function Block_Name
      (This        : Src_Editor_Location;
       Subprogram  : Boolean;
       Update_Tree : Boolean := True) return String
@@ -1311,8 +1426,12 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
       Block   : Block_Record;
    begin
-      Get_Block (This, Block, Success, As_Subprogram => Subprogram,
-                 Update_Tree => Update_Tree);
+      Get_Block
+        (This,
+         Block,
+         Success,
+         As_Subprogram => Subprogram,
+         Update_Tree   => Update_Tree);
 
       if Success then
          return Get (Block.Name, True).all;
@@ -1325,9 +1444,8 @@ package body Src_Editor_Module.Editors is
    -- Block_Level --
    -----------------
 
-   overriding function Block_Level
-     (This : Src_Editor_Location) return Natural
-   is
+   overriding
+   function Block_Level (This : Src_Editor_Location) return Natural is
       Success : Boolean;
       Block   : Block_Record;
    begin
@@ -1344,7 +1462,8 @@ package body Src_Editor_Module.Editors is
    -- Block_Fold --
    ----------------
 
-   overriding procedure Block_Fold (This : Src_Editor_Location) is
+   overriding
+   procedure Block_Fold (This : Src_Editor_Location) is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Buffer  : Source_Buffer;
@@ -1368,7 +1487,8 @@ package body Src_Editor_Module.Editors is
    -- Block_Unfold --
    ------------------
 
-   overriding procedure Block_Unfold (This : Src_Editor_Location) is
+   overriding
+   procedure Block_Unfold (This : Src_Editor_Location) is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
       Buffer  : Source_Buffer;
@@ -1384,8 +1504,8 @@ package body Src_Editor_Module.Editors is
          Buffer := Source_Buffer (Get_Buffer (Iter));
          Unfold_Line
            (Buffer,
-            Get_Editable_Line (Buffer,
-              Buffer_Line_Type (Get_Line (Iter) + 1)));
+            Get_Editable_Line
+              (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)));
       end if;
    end Block_Unfold;
 
@@ -1393,9 +1513,8 @@ package body Src_Editor_Module.Editors is
    -- Get_Char_GB --
    -----------------
 
-   overriding function Get_Char_GB
-     (This : Src_Editor_Location) return Integer
-   is
+   overriding
+   function Get_Char_GB (This : Src_Editor_Location) return Integer is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1417,7 +1536,8 @@ package body Src_Editor_Module.Editors is
    -- Line --
    ----------
 
-   overriding function Line (This : Src_Editor_Location) return Integer is
+   overriding
+   function Line (This : Src_Editor_Location) return Integer is
    begin
       return Integer (This.Line);
    end Line;
@@ -1426,9 +1546,8 @@ package body Src_Editor_Module.Editors is
    -- Line_Offset --
    -----------------
 
-   overriding function Line_Offset
-     (This : Src_Editor_Location) return Natural
-   is
+   overriding
+   function Line_Offset (This : Src_Editor_Location) return Natural is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1446,9 +1565,8 @@ package body Src_Editor_Module.Editors is
    -- Column --
    ------------
 
-   overriding function Column
-     (This : Src_Editor_Location) return Visible_Column_Type
-   is
+   overriding
+   function Column (This : Src_Editor_Location) return Visible_Column_Type is
    begin
       return This.Column;
    end Column;
@@ -1457,7 +1575,8 @@ package body Src_Editor_Module.Editors is
    -- Offset --
    ------------
 
-   overriding function Offset (This : Src_Editor_Location) return Natural is
+   overriding
+   function Offset (This : Src_Editor_Location) return Natural is
    begin
       return This.Offset;
    end Offset;
@@ -1466,8 +1585,8 @@ package body Src_Editor_Module.Editors is
    -- Buffer --
    ------------
 
-   overriding function Buffer
-     (This : Src_Editor_Location) return Editor_Buffer'Class is
+   overriding
+   function Buffer (This : Src_Editor_Location) return Editor_Buffer'Class is
    begin
       return This.Buffer;
    end Buffer;
@@ -1476,24 +1595,25 @@ package body Src_Editor_Module.Editors is
    -- Create_Instance --
    ---------------------
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Src_Editor_Location;
       Script : access Scripting_Language_Record'Class) return Class_Instance is
    begin
-      return Src_Editor_Module.Shell.Create_Editor_Location
-        (Script   => Script,
-         Location => This);
+      return
+        Src_Editor_Module.Shell.Create_Editor_Location
+          (Script => Script, Location => This);
    end Create_Instance;
 
    -----------------
    -- Create_Mark --
    -----------------
 
-   overriding function Create_Mark
-     (This : Src_Editor_Location;
-      Name : String := "";
-      Left_Gravity : Boolean := True)
-      return Editor_Mark'Class
+   overriding
+   function Create_Mark
+     (This         : Src_Editor_Location;
+      Name         : String := "";
+      Left_Gravity : Boolean := True) return Editor_Mark'Class
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
@@ -1512,11 +1632,12 @@ package body Src_Editor_Module.Editors is
          end if;
 
          if Mark = null then
-            Mark := Create_Mark
-              (Get_Buffer (Iter),
-               Mark_Name    => Name,
-               Where        => Iter,
-               Left_Gravity => Left_Gravity);
+            Mark :=
+              Create_Mark
+                (Get_Buffer (Iter),
+                 Mark_Name    => Name,
+                 Where        => Iter,
+                 Left_Gravity => Left_Gravity);
          else
             Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
          end if;
@@ -1531,9 +1652,9 @@ package body Src_Editor_Module.Editors is
    -- Forward_Char --
    ------------------
 
-   overriding function Forward_Char
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Char
+     (This : Src_Editor_Location; Count : Integer) return Editor_Location'Class
    is
       Begin_Col : Character_Index;
 
@@ -1541,8 +1662,8 @@ package body Src_Editor_Module.Editors is
       End_Col  : Character_Index;
 
    begin
-      Begin_Col := Collapse_Tabs
-        (This.Buffer.Contents.Buffer, This.Line, This.Column);
+      Begin_Col :=
+        Collapse_Tabs (This.Buffer.Contents.Buffer, This.Line, This.Column);
 
       Forward_Position
         (Buffer       => This.Buffer.Contents.Buffer,
@@ -1559,9 +1680,9 @@ package body Src_Editor_Module.Editors is
    -- Forward_Character --
    -----------------------
 
-   overriding procedure Forward_Character
-     (This  : in out Src_Editor_Location;
-      Count : Integer)
+   overriding
+   procedure Forward_Character
+     (This : in out Src_Editor_Location; Count : Integer)
    is
       Begin_Col : Character_Index;
 
@@ -1570,8 +1691,8 @@ package body Src_Editor_Module.Editors is
       Iter     : Gtk_Text_Iter;
 
    begin
-      Begin_Col := Collapse_Tabs
-        (This.Buffer.Contents.Buffer, This.Line, This.Column);
+      Begin_Col :=
+        Collapse_Tabs (This.Buffer.Contents.Buffer, This.Line, This.Column);
 
       Forward_Position
         (Buffer       => This.Buffer.Contents.Buffer,
@@ -1581,8 +1702,7 @@ package body Src_Editor_Module.Editors is
          End_Line     => End_Line,
          End_Column   => End_Col);
 
-      Ensure_Valid_Position
-        (This.Buffer.Contents.Buffer, End_Line, End_Col);
+      Ensure_Valid_Position (This.Buffer.Contents.Buffer, End_Line, End_Col);
       Get_Iter_At_Screen_Position
         (This.Buffer.Contents.Buffer, Iter, End_Line, End_Col);
 
@@ -1595,9 +1715,9 @@ package body Src_Editor_Module.Editors is
    -- Forward_Word --
    ------------------
 
-   overriding function Forward_Word
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Word
+     (This : Src_Editor_Location; Count : Integer) return Editor_Location'Class
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
@@ -1625,9 +1745,9 @@ package body Src_Editor_Module.Editors is
    -- Forward_Line --
    ------------------
 
-   overriding function Forward_Line
-     (This  : Src_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Line
+     (This : Src_Editor_Location; Count : Integer) return Editor_Location'Class
    is
       Success : Boolean;
       Iter    : Gtk_Text_Iter;
@@ -1655,8 +1775,9 @@ package body Src_Editor_Module.Editors is
    -- Forward_To_Word_End --
    -------------------------
 
-   overriding function Forward_To_Word_End
-     (This  : Src_Editor_Location) return Editor_Location'Class
+   overriding
+   function Forward_To_Word_End
+     (This : Src_Editor_Location) return Editor_Location'Class
    is
       End_Loc : Src_Editor_Location := This;
    begin
@@ -1675,8 +1796,9 @@ package body Src_Editor_Module.Editors is
    -- Backward_To_Word_Start --
    ----------------------------
 
-   overriding function Backward_To_Word_Start
-     (This  : Src_Editor_Location) return Editor_Location'Class
+   overriding
+   function Backward_To_Word_Start
+     (This : Src_Editor_Location) return Editor_Location'Class
    is
       Start_Loc : Src_Editor_Location := This;
    begin
@@ -1695,9 +1817,8 @@ package body Src_Editor_Module.Editors is
    -- Starts_Word --
    -----------------
 
-   overriding function Starts_Word
-     (This : Src_Editor_Location) return Boolean
-   is
+   overriding
+   function Starts_Word (This : Src_Editor_Location) return Boolean is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1708,18 +1829,19 @@ package body Src_Editor_Module.Editors is
          Default  => Null_Text_Iter,
          Success  => Success);
 
-      return Success
-        and then Standard.Src_Editor_Buffer.Starts_Word
-          (This.Buffer.Contents.Buffer, Iter);
+      return
+        Success
+        and then
+          Standard.Src_Editor_Buffer.Starts_Word
+            (This.Buffer.Contents.Buffer, Iter);
    end Starts_Word;
 
    ---------------
    -- Ends_Word --
    ---------------
 
-   overriding function Ends_Word
-     (This : Src_Editor_Location) return Boolean
-   is
+   overriding
+   function Ends_Word (This : Src_Editor_Location) return Boolean is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1730,18 +1852,19 @@ package body Src_Editor_Module.Editors is
          Default  => Null_Text_Iter,
          Success  => Success);
 
-      return Success
-        and then Standard.Src_Editor_Buffer.Ends_Word
-          (This.Buffer.Contents.Buffer, Iter);
+      return
+        Success
+        and then
+          Standard.Src_Editor_Buffer.Ends_Word
+            (This.Buffer.Contents.Buffer, Iter);
    end Ends_Word;
 
    -----------------
    -- Inside_Word --
    -----------------
 
-   overriding function Inside_Word
-     (This : Src_Editor_Location) return Boolean
-   is
+   overriding
+   function Inside_Word (This : Src_Editor_Location) return Boolean is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1752,18 +1875,19 @@ package body Src_Editor_Module.Editors is
          Default  => Null_Text_Iter,
          Success  => Success);
 
-      return Success
-        and then Standard.Src_Editor_Buffer.Inside_Word
-          (This.Buffer.Contents.Buffer, Iter);
+      return
+        Success
+        and then
+          Standard.Src_Editor_Buffer.Inside_Word
+            (This.Buffer.Contents.Buffer, Iter);
    end Inside_Word;
 
    --------------------
    -- Is_End_Of_Line --
    --------------------
 
-   overriding function Is_End_Of_Line
-     (This : Src_Editor_Location) return Boolean
-   is
+   overriding
+   function Is_End_Of_Line (This : Src_Editor_Location) return Boolean is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1774,15 +1898,15 @@ package body Src_Editor_Module.Editors is
          Default  => Null_Text_Iter,
          Success  => Success);
 
-      return Success
-        and then Ends_Line (Iter);
+      return Success and then Ends_Line (Iter);
    end Is_End_Of_Line;
 
    ------------
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (This : in out Src_Editor_View) is
+   overriding
+   procedure Adjust (This : in out Src_Editor_View) is
    begin
       if This.Contents /= null then
          This.Contents.Ref_Count := This.Contents.Ref_Count + 1;
@@ -1793,9 +1917,10 @@ package body Src_Editor_Module.Editors is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (This : in out Src_Editor_View) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (View_Reference, View_Reference_Access);
+   overriding
+   procedure Finalize (This : in out Src_Editor_View) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (View_Reference, View_Reference_Access);
       Contents : View_Reference_Access := This.Contents;
    begin
       This.Contents := null;  --  Make Finalize idempotent
@@ -1804,8 +1929,7 @@ package body Src_Editor_Module.Editors is
          if Contents.Ref_Count = 0 then
             if Contents.Box /= null then
                Weak_Unref
-                 (Contents.Box, On_View_Destroyed'Access,
-                  Convert (Contents));
+                 (Contents.Box, On_View_Destroyed'Access, Convert (Contents));
             end if;
 
             Unchecked_Free (Contents);
@@ -1817,7 +1941,8 @@ package body Src_Editor_Module.Editors is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (This : in out Src_Editor_Buffer) is
+   overriding
+   procedure Adjust (This : in out Src_Editor_Buffer) is
    begin
       if This.Contents /= null then
          This.Contents.Ref_Count := This.Contents.Ref_Count + 1;
@@ -1828,9 +1953,10 @@ package body Src_Editor_Module.Editors is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (This : in out Src_Editor_Buffer) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Buffer_Reference, Buffer_Reference_Access);
+   overriding
+   procedure Finalize (This : in out Src_Editor_Buffer) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Buffer_Reference, Buffer_Reference_Access);
       Contents : Buffer_Reference_Access := This.Contents;
    begin
       This.Contents := null;  --  Make Finalize idempotent
@@ -1840,7 +1966,8 @@ package body Src_Editor_Module.Editors is
          if Contents.Ref_Count = 0 then
             if Contents.Buffer /= null then
                Weak_Unref
-                 (Contents.Buffer, On_Buffer_Destroyed'Access,
+                 (Contents.Buffer,
+                  On_Buffer_Destroyed'Access,
                   Convert (Contents));
             end if;
             Unchecked_Free (Contents);
@@ -1852,7 +1979,8 @@ package body Src_Editor_Module.Editors is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (This : in out Src_Editor_Overlay) is
+   overriding
+   procedure Initialize (This : in out Src_Editor_Overlay) is
    begin
       if This.Tag /= null then
          Ref (This.Tag);
@@ -1863,7 +1991,8 @@ package body Src_Editor_Module.Editors is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (This : in out Src_Editor_Overlay) is
+   overriding
+   procedure Adjust (This : in out Src_Editor_Overlay) is
    begin
       if This.Tag /= null then
          Ref (This.Tag);
@@ -1874,7 +2003,8 @@ package body Src_Editor_Module.Editors is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (This : in out Src_Editor_Overlay) is
+   overriding
+   procedure Finalize (This : in out Src_Editor_Overlay) is
    begin
       if This.Tag /= null then
          Unref (This.Tag);
@@ -1885,11 +2015,11 @@ package body Src_Editor_Module.Editors is
    -- Location --
    --------------
 
-   overriding function Location
-     (This : Src_Editor_Mark;
-      Open : Boolean) return Editor_Location'Class
+   overriding
+   function Location
+     (This : Src_Editor_Mark; Open : Boolean) return Editor_Location'Class
    is
-      Mark : Gtk_Text_Mark;
+      Mark   : Gtk_Text_Mark;
       Iter   : Gtk_Text_Iter;
       Buffer : Src_Editor_Buffer;
    begin
@@ -1898,16 +2028,16 @@ package body Src_Editor_Module.Editors is
          --  the gtk+ mark
 
          declare
-            M   : constant File_Marker := File_Marker
-              (This.Mark.Unchecked_Get);
+            M   : constant File_Marker :=
+              File_Marker (This.Mark.Unchecked_Get);
             Buf : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (This.Kernel).Get
-              (Get_File (M),
-               Force         => False,
-               Open_Buffer   => False,
-               Open_View     => Open,
-               Focus         => False,
-               Unlocked_Only => False);
+                (Get_File (M),
+                 Force         => False,
+                 Open_Buffer   => False,
+                 Open_View     => Open,
+                 Focus         => False,
+                 Unlocked_Only => False);
          begin
             if Buf = Nil_Editor_Buffer then
                return Nil_Editor_Location;
@@ -1934,9 +2064,8 @@ package body Src_Editor_Module.Editors is
    -- Move --
    ----------
 
-   overriding procedure Move
-     (This : Src_Editor_Mark; Location : Editor_Location'Class)
-   is
+   overriding
+   procedure Move (This : Src_Editor_Mark; Location : Editor_Location'Class) is
       Mark    : Gtk_Text_Mark;
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -1975,9 +2104,8 @@ package body Src_Editor_Module.Editors is
    -- Forward_Chars --
    -------------------
 
-   overriding procedure Forward_Chars
-     (This : Src_Editor_Mark; Offset : Integer)
-   is
+   overriding
+   procedure Forward_Chars (This : Src_Editor_Mark; Offset : Integer) is
       Mark  : Gtk_Text_Mark;
       Iter  : Gtk_Text_Iter;
       M     : File_Marker;
@@ -2009,17 +2137,15 @@ package body Src_Editor_Module.Editors is
    -- New_Location --
    ------------------
 
-   overriding function New_Location
-     (This   : Src_Editor_Buffer;
-      Offset : VSS.Strings.Character_Count) return Editor_Location'Class
+   overriding
+   function New_Location
+     (This : Src_Editor_Buffer; Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class
    is
-      Iter : Gtk_Text_Iter;
+      Iter   : Gtk_Text_Iter;
       Result : Src_Editor_Location;
    begin
-      Get_Iter_At_Offset
-        (This.Contents.Buffer,
-         Iter,
-         Gint (Offset));
+      Get_Iter_At_Offset (This.Contents.Buffer, Iter, Gint (Offset));
       Result := Src_Editor_Location (Create_Editor_Location (This, Iter));
       Get_Iter_Position
         (This.Contents.Buffer, Iter, Result.Line, Result.Column);
@@ -2036,18 +2162,15 @@ package body Src_Editor_Module.Editors is
    -- New_Location --
    ------------------
 
-   overriding function New_Location
-     (This   : Src_Editor_Buffer;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class
+   overriding
+   function New_Location
+     (This : Src_Editor_Buffer; Line : Integer; Column : Visible_Column_Type)
+      return Editor_Location'Class
    is
       Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Screen_Position
-        (This.Contents.Buffer,
-         Iter,
-         Editable_Line_Type (Line),
-         Column);
+        (This.Contents.Buffer, Iter, Editable_Line_Type (Line), Column);
       return Create_Editor_Location (This, Iter);
    exception
       when Editor_Exception =>
@@ -2072,10 +2195,9 @@ package body Src_Editor_Module.Editors is
    is
       Contents : View_Reference_Access;
    begin
-      Contents := new View_Reference'
-        (Box       => Box,
-         Buffer    => Src_Editor_Buffer (Buffer),
-         Ref_Count => 1);
+      Contents :=
+        new View_Reference'
+          (Box => Box, Buffer => Src_Editor_Buffer (Buffer), Ref_Count => 1);
 
       Weak_Ref (Contents.Box, On_View_Destroyed'Access, Convert (Contents));
       return Src_Editor_View'(Editor_View with Contents => Contents);
@@ -2085,19 +2207,20 @@ package body Src_Editor_Module.Editors is
    -- New_View --
    --------------
 
-   overriding function New_View
-     (This : Src_Editor_Buffer) return Editor_View'Class
-   is
+   overriding
+   function New_View (This : Src_Editor_Buffer) return Editor_View'Class is
    begin
       if This.Contents.Buffer /= null then
          declare
             Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
-            return Get
-              (This, New_View
-                 (This.Contents.Kernel,
-                  Views (Views'First),
-                  Get_Project (Views (Views'First))));
+            return
+              Get
+                (This,
+                 New_View
+                   (This.Contents.Kernel,
+                    Views (Views'First),
+                    Get_Project (Views (Views'First))));
          end;
       end if;
 
@@ -2108,7 +2231,8 @@ package body Src_Editor_Module.Editors is
    -- File --
    ----------
 
-   overriding function File (This : Src_Editor_Buffer) return Virtual_File is
+   overriding
+   function File (This : Src_Editor_Buffer) return Virtual_File is
    begin
       return This.Contents.Buffer.Get_Filename;
    end File;
@@ -2117,9 +2241,8 @@ package body Src_Editor_Module.Editors is
    -- Open --
    ----------
 
-   overriding function Open
-     (This : Src_Editor_Buffer) return Editor_View'Class
-   is
+   overriding
+   function Open (This : Src_Editor_Buffer) return Editor_View'Class is
       Current_View : constant Editor_View'Class := This.Current_View;
    begin
       if Current_View = Nil_Editor_View then
@@ -2133,7 +2256,8 @@ package body Src_Editor_Module.Editors is
    -- Add_Special_Line --
    ----------------------
 
-   overriding function Add_Special_Line
+   overriding
+   function Add_Special_Line
      (This       : Src_Editor_Buffer;
       Start_Line : Integer;
       Text       : String;
@@ -2145,14 +2269,15 @@ package body Src_Editor_Module.Editors is
       Mark : Gtk_Text_Mark;
    begin
       if This.Contents.Buffer /= null then
-         Mark := Add_Special_Lines
-           (This.Contents.Buffer,
-            Editable_Line_Type (Start_Line),
-            Style,
-            Text,
-            Name,
-            Column_Id,
-            Info);
+         Mark :=
+           Add_Special_Lines
+             (This.Contents.Buffer,
+              Editable_Line_Type (Start_Line),
+              Style,
+              Text,
+              Name,
+              Column_Id,
+              Info);
 
          if Mark = null then
             return Nil_Editor_Mark;
@@ -2168,21 +2293,18 @@ package body Src_Editor_Module.Editors is
    -- Remove_Special_Lines --
    --------------------------
 
-   overriding procedure Remove_Special_Lines
-     (This  : Src_Editor_Buffer;
-      Mark  : Editor_Mark'Class;
-      Lines : Integer)
-   is
+   overriding
+   procedure Remove_Special_Lines
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class; Lines : Integer) is
    begin
       if This.Contents.Buffer /= null and then Mark /= Nil_Editor_Mark then
          declare
             Src_Mark : Src_Editor_Mark renames Src_Editor_Mark (Mark);
-            M : File_Marker;
+            M        : File_Marker;
          begin
             if not Src_Mark.Mark.Is_Null then
                M := File_Marker (Src_Mark.Mark.Unchecked_Get);
-               Remove_Blank_Lines
-                 (This.Contents.Buffer, Get_Mark (M), Lines);
+               Remove_Blank_Lines (This.Contents.Buffer, Get_Mark (M), Lines);
             end if;
          end;
       end if;
@@ -2192,7 +2314,8 @@ package body Src_Editor_Module.Editors is
    -- Flatten_Area --
    ------------------
 
-   overriding function Flatten_Area
+   overriding
+   function Flatten_Area
      (This      : Src_Editor_Buffer;
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type) return Boolean is
@@ -2201,17 +2324,21 @@ package body Src_Editor_Module.Editors is
          return False;
       end if;
 
-      return Flatten_Area
-        (This.Contents.Buffer, From_Line, To_Line,
-         Buffer_Line_Type (From_Line + 1),
-         Buffer_Line_Type (To_Line + 1));
+      return
+        Flatten_Area
+          (This.Contents.Buffer,
+           From_Line,
+           To_Line,
+           Buffer_Line_Type (From_Line + 1),
+           Buffer_Line_Type (To_Line + 1));
    end Flatten_Area;
 
    --------------------------
    -- Click_On_Side_Column --
    --------------------------
 
-   overriding function Click_On_Side_Column
+   overriding
+   function Click_On_Side_Column
      (This      : Src_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
@@ -2223,9 +2350,9 @@ package body Src_Editor_Module.Editors is
          return False;
       end if;
 
-      Info := Get_Side_Information
-        (Buffer => This.Contents.Buffer,
-         Line   => Editable_Line_Type (Line));
+      Info :=
+        Get_Side_Information
+          (Buffer => This.Contents.Buffer, Line => Editable_Line_Type (Line));
 
       if Info = null or else Column not in Info.all'Range then
          return False;
@@ -2242,7 +2369,7 @@ package body Src_Editor_Module.Editors is
 
       declare
          Line_Infos : constant Line_Information_Array :=
-                        Get_Line_Infos (Info (Column));
+           Get_Line_Infos (Info (Column));
       begin
          for Line_Info of Line_Infos loop
             --  Try to match line information with the gievn Icon_Name
@@ -2253,17 +2380,21 @@ package body Src_Editor_Module.Editors is
                Execute_Line_Info
                  (Buffer    => This.Contents.Buffer,
                   Line_Info => Line_Info,
-                  At_Line   => This.Contents.Buffer.Get_Buffer_Line
-                    (Editable_Line_Type (Line)));
+                  At_Line   =>
+                    This.Contents.Buffer.Get_Buffer_Line
+                      (Editable_Line_Type (Line)));
 
                return True;
 
             elsif not Line_Info.Message.Is_Empty then
                declare
                   Message   : constant Message_Access :=
-                                Line_Info.Message.Message;
-                  Line_Info : constant GPS.Editors.Line_Information.
-                    Line_Information_Access := Message.Get_Action;
+                    Line_Info.Message.Message;
+                  Line_Info :
+                    constant GPS
+                               .Editors
+                               .Line_Information
+                               .Line_Information_Access := Message.Get_Action;
                begin
                   if Line_Info /= null
                     and then To_String (Line_Info.Image) = Icon_Name
@@ -2271,8 +2402,9 @@ package body Src_Editor_Module.Editors is
                      Execute_Line_Info
                        (Buffer    => This.Contents.Buffer,
                         Line_Info => Line_Info.all,
-                        At_Line   => This.Contents.Buffer.Get_Buffer_Line
-                          (Editable_Line_Type (Line)));
+                        At_Line   =>
+                          This.Contents.Buffer.Get_Buffer_Line
+                            (Editable_Line_Type (Line)));
 
                      return True;
                   end if;
@@ -2288,10 +2420,10 @@ package body Src_Editor_Module.Editors is
    -- Click_On_Line_Number --
    --------------------------
 
-   overriding procedure Click_On_Line_Number
-     (This       : Src_Editor_Buffer;
-      Line       : Integer;
-      Click_Type : Line_Click_Type) is
+   overriding
+   procedure Click_On_Line_Number
+     (This : Src_Editor_Buffer; Line : Integer; Click_Type : Line_Click_Type)
+   is
    begin
       if This.Contents.Buffer = null then
          return;
@@ -2308,9 +2440,8 @@ package body Src_Editor_Module.Editors is
    -- Current_View --
    ------------------
 
-   overriding function Current_View
-     (This : Src_Editor_Buffer) return Editor_View'Class
-   is
+   overriding
+   function Current_View (This : Src_Editor_Buffer) return Editor_View'Class is
       Child : MDI_Child;
    begin
       if This.Contents.Buffer /= null then
@@ -2322,8 +2453,11 @@ package body Src_Editor_Module.Editors is
                File := Get_File_Identifier (This.Contents.Buffer);
             end if;
 
-            Child := Find_Editor
-              (This.Contents.Kernel, File, No_Project); --  most recent project
+            Child :=
+              Find_Editor
+                (This.Contents.Kernel,
+                 File,
+                 No_Project); --  most recent project
          end;
 
          if Child = null then
@@ -2343,9 +2477,8 @@ package body Src_Editor_Module.Editors is
    -- Lines_Count --
    -----------------
 
-   overriding function Lines_Count
-     (This : Src_Editor_Buffer) return Editable_Line_Type
-   is
+   overriding
+   function Lines_Count (This : Src_Editor_Buffer) return Editable_Line_Type is
       Iter : Gtk_Text_Iter;
    begin
       if This.Contents.Buffer /= null then
@@ -2369,8 +2502,8 @@ package body Src_Editor_Module.Editors is
    -- Characters_Count --
    ----------------------
 
-   overriding function Characters_Count
-     (This : Src_Editor_Buffer) return Natural is
+   overriding
+   function Characters_Count (This : Src_Editor_Buffer) return Natural is
    begin
       if This.Contents.Buffer /= null then
          return Integer (Get_Char_Count (This.Contents.Buffer));
@@ -2384,7 +2517,8 @@ package body Src_Editor_Module.Editors is
    -- Select_Text --
    -----------------
 
-   overriding procedure Select_Text
+   overriding
+   procedure Select_Text
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location)
@@ -2401,13 +2535,15 @@ package body Src_Editor_Module.Editors is
    -------------------------
    -- Get_Subprogram_Name --
    -------------------------
-   overriding function Get_Subprogram_Name
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return String is
+   overriding
+   function Get_Subprogram_Name
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class) return String
+   is
    begin
       if This.Contents.Buffer /= null then
-         return This.Contents.Buffer.Get_Subprogram_Name
-           (Src_Editor_Location (Location).Line);
+         return
+           This.Contents.Buffer.Get_Subprogram_Name
+             (Src_Editor_Location (Location).Line);
       else
          return "";
       end if;
@@ -2417,14 +2553,16 @@ package body Src_Editor_Module.Editors is
    -- Expand_Tabs --
    -----------------
 
-   overriding function Expand_Tabs
+   overriding
+   function Expand_Tabs
      (This   : Src_Editor_Buffer;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type is
    begin
       if This.Contents.Buffer /= null then
-         return This.Contents.Buffer.Expand_Tabs
-           (Line, Character_Index'Max (1, Character_Index'Base (Column)));
+         return
+           This.Contents.Buffer.Expand_Tabs
+             (Line, Character_Index'Max (1, Character_Index'Base (Column)));
       else
          return 0;
       end if;
@@ -2434,7 +2572,8 @@ package body Src_Editor_Module.Editors is
    -- Selection_Start --
    ---------------------
 
-   overriding function Selection_Start
+   overriding
+   function Selection_Start
      (This : Src_Editor_Buffer) return Editor_Location'Class is
    begin
       if This.Contents.Buffer /= null then
@@ -2443,7 +2582,7 @@ package body Src_Editor_Module.Editors is
             IMark, ICursor : Gtk_Text_Iter;
             Mark_First     : Boolean;
          begin
-            Mark   := Get_Selection_Bound (This.Contents.Buffer);
+            Mark := Get_Selection_Bound (This.Contents.Buffer);
             Cursor := Get_Insert (This.Contents.Buffer);
             Get_Iter_At_Mark (This.Contents.Buffer, IMark, Mark);
             Get_Iter_At_Mark (This.Contents.Buffer, ICursor, Cursor);
@@ -2465,7 +2604,8 @@ package body Src_Editor_Module.Editors is
    -- Selection_End --
    -------------------
 
-   overriding function Selection_End
+   overriding
+   function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class is
    begin
       if This.Contents.Buffer /= null then
@@ -2474,7 +2614,7 @@ package body Src_Editor_Module.Editors is
             IMark, ICursor : Gtk_Text_Iter;
             Mark_First     : Boolean;
          begin
-            Mark   := Get_Selection_Bound (This.Contents.Buffer);
+            Mark := Get_Selection_Bound (This.Contents.Buffer);
             Cursor := Get_Insert (This.Contents.Buffer);
             Get_Iter_At_Mark (This.Contents.Buffer, IMark, Mark);
             Get_Iter_At_Mark (This.Contents.Buffer, ICursor, Cursor);
@@ -2496,7 +2636,8 @@ package body Src_Editor_Module.Editors is
    -- Unselect --
    --------------
 
-   overriding procedure Unselect (This : Src_Editor_Buffer) is
+   overriding
+   procedure Unselect (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          Select_Region
@@ -2512,12 +2653,12 @@ package body Src_Editor_Module.Editors is
    -- Get_Chars_S --
    -----------------
 
-   overriding function Get_Chars_S
+   overriding
+   function Get_Chars_S
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True) return String
-   is
+      Include_Hidden_Chars : Boolean := True) return String is
    begin
       return To_String (Get_Chars_U (This, From, To, Include_Hidden_Chars));
    end Get_Chars_S;
@@ -2526,16 +2667,17 @@ package body Src_Editor_Module.Editors is
    -- Get_Chars_U --
    -----------------
 
-   overriding function Get_Chars_U
+   overriding
+   function Get_Chars_U
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return Unbounded_String
    is
       Iter, Iter2 : Gtk_Text_Iter;
-      Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Index;
-      End_Line   : Editable_Line_Type;
+      Begin_Line  : Editable_Line_Type;
+      Begin_Col   : Character_Index;
+      End_Line    : Editable_Line_Type;
       End_Col     : Character_Index;
    begin
       if This.Contents.Buffer /= null then
@@ -2564,16 +2706,17 @@ package body Src_Editor_Module.Editors is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True) return VSS.Strings.Virtual_String
    is
       Iter, Iter2 : Gtk_Text_Iter;
-      Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Index;
-      End_Line   : Editable_Line_Type;
+      Begin_Line  : Editable_Line_Type;
+      Begin_Col   : Character_Index;
+      End_Line    : Editable_Line_Type;
       End_Col     : Character_Index;
    begin
       if This.Contents.Buffer /= null then
@@ -2603,17 +2746,17 @@ package body Src_Editor_Module.Editors is
    -- Get_Entity_Name --
    ---------------------
 
-   overriding function Get_Entity_Name
+   overriding
+   function Get_Entity_Name
      (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location)
-      return String
+      Location : Editor_Location'Class := Nil_Editor_Location) return String
    is
       Iter, Iter2 : Gtk_Text_Iter;
-      Success    : Boolean;
-      Begin_Line : Editable_Line_Type;
-      Begin_Col  : Character_Index;
-      End_Line   : Editable_Line_Type;
-      End_Col    : Character_Index;
+      Success     : Boolean;
+      Begin_Line  : Editable_Line_Type;
+      Begin_Col   : Character_Index;
+      End_Line    : Editable_Line_Type;
+      End_Col     : Character_Index;
 
    begin
       Get_Location (Iter, Location, Null_Text_Iter, Success);
@@ -2627,23 +2770,23 @@ package body Src_Editor_Module.Editors is
       Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
       Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
 
-      return To_String
-        (Get_Text
-          (Buffer       => This.Contents.Buffer,
-           Start_Line   => Begin_Line,
-           Start_Column => Begin_Col,
-           End_Line     => End_Line,
-           End_Column   => As_Optional (End_Col)));
+      return
+        To_String
+          (Get_Text
+             (Buffer       => This.Contents.Buffer,
+              Start_Line   => Begin_Line,
+              Start_Column => Begin_Col,
+              End_Line     => End_Line,
+              End_Column   => As_Optional (End_Col)));
    end Get_Entity_Name;
 
    ------------
    -- Insert --
    ------------
 
-   overriding procedure Insert
-     (This : Src_Editor_Buffer;
-      From : Editor_Location'Class;
-      Text : String)
+   overriding
+   procedure Insert
+     (This : Src_Editor_Buffer; From : Editor_Location'Class; Text : String)
    is
       Src_From : Src_Editor_Location renames Src_Editor_Location (From);
       Iter     : Gtk_Text_Iter;
@@ -2677,7 +2820,8 @@ package body Src_Editor_Module.Editors is
    -- Delete --
    ------------
 
-   overriding procedure Delete
+   overriding
+   procedure Delete
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location)
@@ -2697,7 +2841,7 @@ package body Src_Editor_Module.Editors is
               (This.Contents.Buffer, Editable_Line_Type (To.Line));
          end if;
 
-         if Get_Writable (This.Contents.Buffer)  then
+         if Get_Writable (This.Contents.Buffer) then
             Delete_Interactive (This.Contents.Buffer, Iter, Iter2, True, Res);
             End_Action (This.Contents.Buffer);
          else
@@ -2710,7 +2854,8 @@ package body Src_Editor_Module.Editors is
    -- Indent --
    ------------
 
-   overriding procedure Indent
+   overriding
+   procedure Indent
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location)
@@ -2732,7 +2877,8 @@ package body Src_Editor_Module.Editors is
    -- Has_Information_Column --
    ----------------------------
 
-   overriding function Has_Information_Column
+   overriding
+   function Has_Information_Column
      (This : Src_Editor_Buffer; Id : String) return Boolean is
    begin
       return Has_Information_Column (This.Contents.Buffer, Id);
@@ -2742,7 +2888,8 @@ package body Src_Editor_Module.Editors is
    -- Refill --
    ------------
 
-   overriding procedure Refill
+   overriding
+   procedure Refill
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location)
@@ -2754,9 +2901,7 @@ package body Src_Editor_Module.Editors is
 
          if Get_Writable (This.Contents.Buffer) then
             Select_Region
-              (This.Contents.Buffer,
-               Cursor_Iter  => Iter2,
-               Bound_Iter   => Iter);
+              (This.Contents.Buffer, Cursor_Iter => Iter2, Bound_Iter => Iter);
             if not Do_Refill (This.Contents.Buffer) then
                raise Editor_Exception with -"Error while refilling buffer";
             end if;
@@ -2772,7 +2917,8 @@ package body Src_Editor_Module.Editors is
    -- Beginning_Of_Buffer --
    -------------------------
 
-   overriding function Beginning_Of_Buffer
+   overriding
+   function Beginning_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class
    is
       Iter   : Gtk_Text_Iter;
@@ -2783,12 +2929,14 @@ package body Src_Editor_Module.Editors is
          Get_Start_Iter (This.Contents.Buffer, Iter);
          Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
-         return Src_Editor_Location'
-           (Editor_Location with
-            Buffer => This,
-            Line   => Line,
-            Column => Column,
-            Offset => Integer (Get_Offset (Iter)));
+         return
+           Src_Editor_Location'
+             (Editor_Location
+              with
+                Buffer => This,
+                Line   => Line,
+                Column => Column,
+                Offset => Integer (Get_Offset (Iter)));
       else
          return Nil_Editor_Location;
       end if;
@@ -2798,7 +2946,8 @@ package body Src_Editor_Module.Editors is
    -- End_Of_Buffer --
    -------------------
 
-   overriding function End_Of_Buffer
+   overriding
+   function End_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class
    is
       Iter   : Gtk_Text_Iter;
@@ -2809,12 +2958,14 @@ package body Src_Editor_Module.Editors is
          Get_End_Iter (This.Contents.Buffer, Iter);
          Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
-         return Src_Editor_Location'
-           (Editor_Location with
-            Buffer => This,
-            Line   => Line,
-            Column => Column,
-            Offset => Integer (Get_Offset (Iter)));
+         return
+           Src_Editor_Location'
+             (Editor_Location
+              with
+                Buffer => This,
+                Line   => Line,
+                Column => Column,
+                Offset => Integer (Get_Offset (Iter)));
       else
          return Nil_Editor_Location;
       end if;
@@ -2824,13 +2975,14 @@ package body Src_Editor_Module.Editors is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (This        : Src_Editor_Buffer;
       Interactive : Boolean := True;
       File        : Virtual_File := No_File;
       Internal    : Boolean := False)
    is
-      F : Virtual_File;
+      F      : Virtual_File;
       Ignore : Boolean;
    begin
       if This.Contents.Buffer /= null then
@@ -2852,9 +3004,9 @@ package body Src_Editor_Module.Editors is
    -- Set_Language --
    ------------------
 
-   overriding procedure Set_Language
-     (This   : Src_Editor_Buffer;
-      Lang   : Language.Language_Access) is
+   overriding
+   procedure Set_Language
+     (This : Src_Editor_Buffer; Lang : Language.Language_Access) is
    begin
       if This.Contents.Buffer /= null then
          This.Contents.Buffer.Set_Language (Lang);
@@ -2865,8 +3017,9 @@ package body Src_Editor_Module.Editors is
    -- Get_Language --
    ------------------
 
-   overriding function Get_Language
-     (This   : Src_Editor_Buffer) return Language.Language_Access is
+   overriding
+   function Get_Language
+     (This : Src_Editor_Buffer) return Language.Language_Access is
    begin
       if This.Contents.Buffer /= null then
          return This.Contents.Buffer.Get_Language;
@@ -2879,9 +3032,9 @@ package body Src_Editor_Module.Editors is
    -- Get_Mark --
    --------------
 
-   overriding function Get_Mark
-     (This : Src_Editor_Buffer;
-      Name : String) return Editor_Mark'Class
+   overriding
+   function Get_Mark
+     (This : Src_Editor_Buffer; Name : String) return Editor_Mark'Class
    is
       Mark : Gtk_Text_Mark;
    begin
@@ -2902,10 +3055,11 @@ package body Src_Editor_Module.Editors is
    -- Apply_Style --
    -----------------
 
-   overriding procedure Apply_Style
-     (This  : Src_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
+   overriding
+   procedure Apply_Style
+     (This                   : Src_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
       From_Column, To_Column : Visible_Column_Type := -1)
    is
       The_Style : Style_Access;
@@ -2926,10 +3080,7 @@ package body Src_Editor_Module.Editors is
 
          else
             Buffer.Get_Highlighter.Highlight_Range
-              (The_Style,
-               Editable_Line_Type (Line),
-               From_Column,
-               To_Column);
+              (The_Style, Editable_Line_Type (Line), From_Column, To_Column);
          end if;
       end if;
    end Apply_Style;
@@ -2938,7 +3089,8 @@ package body Src_Editor_Module.Editors is
    -- Apply_Style_Line_Range --
    ----------------------------
 
-   overriding procedure Apply_Style_To_Lines
+   overriding
+   procedure Apply_Style_To_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
@@ -2967,10 +3119,11 @@ package body Src_Editor_Module.Editors is
    -- Remove_Style --
    ------------------
 
-   overriding procedure Remove_Style
-     (This  : Src_Editor_Buffer;
-      Style : String;
-      Line  : Integer;
+   overriding
+   procedure Remove_Style
+     (This                   : Src_Editor_Buffer;
+      Style                  : String;
+      Line                   : Integer;
       From_Column, To_Column : Visible_Column_Type := -1)
    is
       The_Style : Style_Access;
@@ -2997,7 +3150,8 @@ package body Src_Editor_Module.Editors is
    -- Remove_Style_Line_Range --
    -----------------------------
 
-   overriding procedure Remove_Style_On_Lines
+   overriding
+   procedure Remove_Style_On_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
@@ -3016,7 +3170,8 @@ package body Src_Editor_Module.Editors is
    -- Start_Undo_Group --
    ----------------------
 
-   overriding procedure Start_Undo_Group (This : Src_Editor_Buffer) is
+   overriding
+   procedure Start_Undo_Group (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          This.Contents.Buffer.Start_Undo_Group;
@@ -3027,7 +3182,8 @@ package body Src_Editor_Module.Editors is
    -- Finish_Undo_Group --
    -----------------------
 
-   overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer) is
+   overriding
+   procedure Finish_Undo_Group (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          This.Contents.Buffer.Finish_Undo_Group;
@@ -3038,7 +3194,8 @@ package body Src_Editor_Module.Editors is
    -- Undo --
    ----------
 
-   overriding procedure Undo (This : Src_Editor_Buffer) is
+   overriding
+   procedure Undo (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          if Get_Writable (This.Contents.Buffer) then
@@ -3053,7 +3210,8 @@ package body Src_Editor_Module.Editors is
    -- Can_Undo --
    --------------
 
-   overriding function Can_Undo (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Can_Undo (This : Src_Editor_Buffer) return Boolean is
    begin
       if This.Contents.Buffer /= null then
          if Get_Writable (This.Contents.Buffer) then
@@ -3070,7 +3228,8 @@ package body Src_Editor_Module.Editors is
    -- Redo --
    ----------
 
-   overriding procedure Redo (This : Src_Editor_Buffer) is
+   overriding
+   procedure Redo (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          if Get_Writable (This.Contents.Buffer) then
@@ -3085,9 +3244,8 @@ package body Src_Editor_Module.Editors is
    -- Set_Read_Only --
    -------------------
 
-   overriding procedure Set_Read_Only
-     (This : Src_Editor_Buffer; Read_Only : Boolean)
-   is
+   overriding
+   procedure Set_Read_Only (This : Src_Editor_Buffer; Read_Only : Boolean) is
       File : Virtual_File;
    begin
       --  ??? duplicates with Src_Editor_Box.Set_Writable
@@ -3118,10 +3276,11 @@ package body Src_Editor_Module.Editors is
    -- Is_Read_Only --
    ------------------
 
-   overriding function Is_Read_Only
-     (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Is_Read_Only (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Contents.Buffer = null
+      return
+        This.Contents.Buffer = null
         or else not Get_Writable (This.Contents.Buffer);
    end Is_Read_Only;
 
@@ -3129,7 +3288,8 @@ package body Src_Editor_Module.Editors is
    -- Add_File_Information --
    --------------------------
 
-   overriding procedure Add_File_Information
+   overriding
+   procedure Add_File_Information
      (This       : Src_Editor_Buffer;
       Identifier : String;
       Info       : Line_Information_Data) is
@@ -3145,7 +3305,8 @@ package body Src_Editor_Module.Editors is
    -- Line --
    ----------
 
-   overriding function Line (This : Src_Editor_Mark) return Integer is
+   overriding
+   function Line (This : Src_Editor_Mark) return Integer is
    begin
       return Integer (Get_Line (File_Marker (This.Mark.Unchecked_Get)));
    end Line;
@@ -3154,8 +3315,8 @@ package body Src_Editor_Module.Editors is
    -- Column --
    ------------
 
-   overriding function Column
-     (This : Src_Editor_Mark) return Visible_Column_Type is
+   overriding
+   function Column (This : Src_Editor_Mark) return Visible_Column_Type is
    begin
       return Get_Column (File_Marker (This.Mark.Unchecked_Get));
    end Column;
@@ -3164,7 +3325,8 @@ package body Src_Editor_Module.Editors is
    -- Is_Present --
    ----------------
 
-   overriding function Is_Present (This : Src_Editor_Mark) return Boolean is
+   overriding
+   function Is_Present (This : Src_Editor_Mark) return Boolean is
       M : File_Marker;
    begin
       if not This.Mark.Is_Null then
@@ -3179,7 +3341,8 @@ package body Src_Editor_Module.Editors is
    -- Delete --
    ------------
 
-   overriding procedure Delete (This : in out Src_Editor_Mark) is
+   overriding
+   procedure Delete (This : in out Src_Editor_Mark) is
    begin
       if not This.Mark.Is_Null then
          File_Marker (This.Mark.Unchecked_Get).Delete;
@@ -3191,8 +3354,9 @@ package body Src_Editor_Module.Editors is
    -- Extend_Existing_Selection --
    -------------------------------
 
-   overriding function Extend_Existing_Selection
-     (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Extend_Existing_Selection (This : Src_Editor_Buffer) return Boolean
+   is
    begin
       return This.Contents.Buffer.Extend_Existing_Selection;
    end Extend_Existing_Selection;
@@ -3201,7 +3365,8 @@ package body Src_Editor_Module.Editors is
    -- Set_Extend_Existing_Selection --
    -----------------------------------
 
-   overriding procedure Set_Extend_Existing_Selection
+   overriding
+   procedure Set_Extend_Existing_Selection
      (This : Src_Editor_Buffer; Extend : Boolean) is
    begin
       This.Contents.Buffer.Set_Extend_Existing_Selection (Extend);
@@ -3211,8 +3376,8 @@ package body Src_Editor_Module.Editors is
    -- Current_Undo_Group --
    ------------------------
 
-   overriding function Current_Undo_Group
-     (This : Src_Editor_Buffer) return Group_Block is
+   overriding
+   function Current_Undo_Group (This : Src_Editor_Buffer) return Group_Block is
    begin
       return This.Contents.Buffer.Current_Undo_Group;
    end Current_Undo_Group;
@@ -3221,8 +3386,8 @@ package body Src_Editor_Module.Editors is
    -- New_Undo_Group --
    --------------------
 
-   overriding function New_Undo_Group
-     (This : Src_Editor_Buffer) return Group_Block is
+   overriding
+   function New_Undo_Group (This : Src_Editor_Buffer) return Group_Block is
    begin
       return This.Contents.Buffer.New_Undo_Group;
    end New_Undo_Group;
@@ -3231,8 +3396,8 @@ package body Src_Editor_Module.Editors is
    -- Buffer_Address --
    --------------------
 
-   overriding function Buffer_Address
-     (This : Src_Editor_Buffer) return System.Address is
+   overriding
+   function Buffer_Address (This : Src_Editor_Buffer) return System.Address is
    begin
       return Get_Object (This.Contents.Buffer);
    end Buffer_Address;
@@ -3241,13 +3406,11 @@ package body Src_Editor_Module.Editors is
    -- Set_Opened_On_LSP_Server --
    ------------------------------
 
-   overriding procedure Set_Opened_On_LSP_Server
-     (This  : Src_Editor_Buffer;
-      Value : Boolean) is
+   overriding
+   procedure Set_Opened_On_LSP_Server
+     (This : Src_Editor_Buffer; Value : Boolean) is
    begin
-      if This.Contents /= null
-        and then This.Contents.Buffer /= null
-      then
+      if This.Contents /= null and then This.Contents.Buffer /= null then
          This.Contents.Buffer.Set_Opened_On_LSP_Server (Value);
       end if;
    end Set_Opened_On_LSP_Server;
@@ -3256,12 +3419,11 @@ package body Src_Editor_Module.Editors is
    -- Is_Opened_On_LSP_Server --
    -----------------------------
 
-   overriding function Is_Opened_On_LSP_Server
-     (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Is_Opened_On_LSP_Server (This : Src_Editor_Buffer) return Boolean
+   is
    begin
-      if This.Contents /= null
-        and then This.Contents.Buffer /= null
-      then
+      if This.Contents /= null and then This.Contents.Buffer /= null then
          return This.Contents.Buffer.Is_Opened_On_LSP_Server;
       else
          return False;
@@ -3272,9 +3434,8 @@ package body Src_Editor_Module.Editors is
    -- Set_Read_Only --
    -------------------
 
-   overriding procedure Set_Read_Only
-     (This : Src_Editor_View; Read_Only : Boolean)
-   is
+   overriding
+   procedure Set_Read_Only (This : Src_Editor_View; Read_Only : Boolean) is
    begin
       if This.Contents.Box /= null then
          Set_Writable (This.Contents.Box, not Read_Only);
@@ -3285,10 +3446,12 @@ package body Src_Editor_Module.Editors is
    -- Is_Read_Only --
    ------------------
 
-   overriding function Is_Read_Only (This : Src_Editor_View) return Boolean is
+   overriding
+   function Is_Read_Only (This : Src_Editor_View) return Boolean is
    begin
       --  If no box, return False so that we do not raise further errors later
-      return This.Contents.Box /= null
+      return
+        This.Contents.Box /= null
         and then not Get_Writable (Get_Buffer (This.Contents.Box));
    end Is_Read_Only;
 
@@ -3296,7 +3459,8 @@ package body Src_Editor_Module.Editors is
    -- Center --
    ------------
 
-   overriding procedure Center
+   overriding
+   procedure Center
      (This      : Src_Editor_View;
       Location  : Editor_Location'Class := Nil_Editor_Location;
       Centering : Centering_Type := With_Margin)
@@ -3330,11 +3494,11 @@ package body Src_Editor_Module.Editors is
          if Success then
             declare
                View : constant Source_View := Get_View (This.Contents.Box);
-               M : constant Gtk_Text_Mark :=
+               M    : constant Gtk_Text_Mark :=
                  Create_Mark (Get_Buffer (This.Contents.Box), "", Iter);
             begin
                case Centering is
-                  when Minimal =>
+                  when Minimal     =>
                      --  Perform minimal scrolling
                      Scroll_To_Mark
                        (View          => View,
@@ -3344,7 +3508,7 @@ package body Src_Editor_Module.Editors is
                         Xalign        => 0.5,
                         Yalign        => 0.5);
 
-                  when Center =>
+                  when Center      =>
                      --  Place the cursor in the exact center of the screen
                      Scroll_To_Mark
                        (View          => View,
@@ -3380,7 +3544,8 @@ package body Src_Editor_Module.Editors is
    -- Scroll_To_Cursor_Location --
    -------------------------------
 
-   overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View) is
+   overriding
+   procedure Scroll_To_Cursor_Location (This : Src_Editor_View) is
    begin
       if This.Contents.Box /= null then
          Scroll_To_Cursor_Location (Get_View (This.Contents.Box));
@@ -3391,7 +3556,8 @@ package body Src_Editor_Module.Editors is
    -- Cursor_Goto --
    -----------------
 
-   overriding procedure Cursor_Goto
+   overriding
+   procedure Cursor_Goto
      (This             : Src_Editor_View;
       Location         : Editor_Location'Class;
       Raise_View       : Boolean := False;
@@ -3403,8 +3569,8 @@ package body Src_Editor_Module.Editors is
             Src_Location : constant Src_Editor_Location :=
               Src_Editor_Location (Location);
 
-            Iter         : Gtk_Text_Iter;
-            Success      : Boolean;
+            Iter    : Gtk_Text_Iter;
+            Success : Boolean;
 
          begin
             if Src_Location.Line = 0 then
@@ -3431,11 +3597,11 @@ package body Src_Editor_Module.Editors is
 
                   Set_Cursor_Location
                     (This.Contents.Box,
-                     Line         => Line,
-                     Column       => Col,
-                     Force_Focus  => Raise_View,
-                     Raise_Child  => Raise_View,
-                     Centering    => Centering,
+                     Line             => Line,
+                     Column           => Col,
+                     Force_Focus      => Raise_View,
+                     Raise_Child      => Raise_View,
+                     Centering        => Centering,
                      Extend_Selection => Extend_Selection);
 
                   --  Remembrer new location in history for /Navigate/Forward
@@ -3450,9 +3616,8 @@ package body Src_Editor_Module.Editors is
    -- Cursor --
    ------------
 
-   overriding function Cursor
-     (This : Src_Editor_View) return Editor_Location'Class
-   is
+   overriding
+   function Cursor (This : Src_Editor_View) return Editor_Location'Class is
       Iter : Gtk_Text_Iter;
    begin
       if This.Contents.Box /= null then
@@ -3472,9 +3637,8 @@ package body Src_Editor_Module.Editors is
    -- Title --
    -----------
 
-   overriding function Title
-     (This : Src_Editor_View; Short : Boolean) return String
-   is
+   overriding
+   function Title (This : Src_Editor_View; Short : Boolean) return String is
       Child : Gtkada.MDI.MDI_Child;
    begin
       if This.Contents.Box /= null then
@@ -3494,8 +3658,8 @@ package body Src_Editor_Module.Editors is
    -- Buffer --
    ------------
 
-   overriding function Buffer
-     (This : Src_Editor_View) return Editor_Buffer'Class is
+   overriding
+   function Buffer (This : Src_Editor_View) return Editor_Buffer'Class is
    begin
       return This.Contents.Buffer;
    end Buffer;
@@ -3504,9 +3668,9 @@ package body Src_Editor_Module.Editors is
    -- Set_Activity_Progress_Bar_Visibility --
    ------------------------------------------
 
-   overriding procedure Set_Activity_Progress_Bar_Visibility
-     (This    : Src_Editor_View;
-      Visible : Boolean) is
+   overriding
+   procedure Set_Activity_Progress_Bar_Visibility
+     (This : Src_Editor_View; Visible : Boolean) is
    begin
       This.Contents.Box.Set_Activity_Progress_Bar_Visibility (Visible);
    end Set_Activity_Progress_Bar_Visibility;
@@ -3515,9 +3679,8 @@ package body Src_Editor_Module.Editors is
    -- Get_MDI_Child --
    -------------------
 
-   overriding function Get_MDI_Child
-     (This : Src_Editor_View) return System.Address
-   is
+   overriding
+   function Get_MDI_Child (This : Src_Editor_View) return System.Address is
       Child : Gtkada.MDI.MDI_Child;
    begin
       Child := Find_MDI_Child_From_Widget (This.Contents.Box);
@@ -3557,9 +3720,11 @@ package body Src_Editor_Module.Editors is
    -- Is_Modified --
    -----------------
 
-   overriding function Is_Modified (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Is_Modified (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Contents.Buffer /= null
+      return
+        This.Contents.Buffer /= null
         and then Get_Status (This.Contents.Buffer) = Modified;
    end Is_Modified;
 
@@ -3567,7 +3732,8 @@ package body Src_Editor_Module.Editors is
    -- Copy --
    ----------
 
-   overriding procedure Copy
+   overriding
+   procedure Copy
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
@@ -3594,7 +3760,8 @@ package body Src_Editor_Module.Editors is
    -- Cut --
    ---------
 
-   overriding procedure Cut
+   overriding
+   procedure Cut
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
       To     : Editor_Location'Class := Nil_Editor_Location;
@@ -3609,8 +3776,8 @@ package body Src_Editor_Module.Editors is
          Select_Range (This.Contents.Buffer, Iter, Iter2);
 
          if Get_Writable (This.Contents.Buffer) then
-            Cut_Clipboard (Get_Clipboard (This.Contents.Kernel),
-                           This.Contents.Buffer);
+            Cut_Clipboard
+              (Get_Clipboard (This.Contents.Kernel), This.Contents.Buffer);
             End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";
@@ -3626,10 +3793,8 @@ package body Src_Editor_Module.Editors is
    -- Paste --
    -----------
 
-   overriding procedure Paste
-     (This   : Src_Editor_Buffer;
-      From   : Editor_Location'Class)
-   is
+   overriding
+   procedure Paste (This : Src_Editor_Buffer; From : Editor_Location'Class) is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -3662,8 +3827,8 @@ package body Src_Editor_Module.Editors is
    -- Has_Blocks_Information --
    ----------------------------
 
-   overriding function Has_Blocks_Information
-     (This : Src_Editor_Buffer) return Boolean is
+   overriding
+   function Has_Blocks_Information (This : Src_Editor_Buffer) return Boolean is
    begin
       if This.Contents.Buffer /= null then
          return Blocks_Are_Exact (This.Contents.Buffer);
@@ -3676,7 +3841,8 @@ package body Src_Editor_Module.Editors is
    -- Blocks_Fold --
    -----------------
 
-   overriding procedure Blocks_Fold (This : Src_Editor_Buffer) is
+   overriding
+   procedure Blocks_Fold (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          Fold_All (This.Contents.Buffer);
@@ -3687,7 +3853,8 @@ package body Src_Editor_Module.Editors is
    -- Blocks_Unfold --
    -------------------
 
-   overriding procedure Blocks_Unfold (This : Src_Editor_Buffer) is
+   overriding
+   procedure Blocks_Unfold (This : Src_Editor_Buffer) is
    begin
       if This.Contents.Buffer /= null then
          Unfold_All (This.Contents.Buffer);
@@ -3698,7 +3865,8 @@ package body Src_Editor_Module.Editors is
    -- Name --
    ----------
 
-   overriding function Name (This : Src_Editor_Mark) return String is
+   overriding
+   function Name (This : Src_Editor_Mark) return String is
       Mark : Gtk_Text_Mark;
    begin
       if not This.Mark.Is_Null then
@@ -3714,9 +3882,9 @@ package body Src_Editor_Module.Editors is
    -- Create_Instance --
    ---------------------
 
-   overriding function Create_Instance
-     (This   : Src_Editor_Mark;
-      Script : access Scripting_Language_Record'Class)
+   overriding
+   function Create_Instance
+     (This : Src_Editor_Mark; Script : access Scripting_Language_Record'Class)
       return Class_Instance is
    begin
       return Src_Editor_Module.Shell.Create_Editor_Mark (Script, This);
@@ -3726,7 +3894,8 @@ package body Src_Editor_Module.Editors is
    -- Search --
    ------------
 
-   overriding procedure Search
+   overriding
+   procedure Search
      (This              : Src_Editor_Location;
       Pattern           : String;
       Backward          : Boolean := False;
@@ -3739,16 +3908,16 @@ package body Src_Editor_Module.Editors is
       Starts            : out Src_Editor_Location;
       Ends              : out Src_Editor_Location)
    is
-      Context     : Current_File_Context_Access :=
+      Context    : Current_File_Context_Access :=
         Current_File_Context_Access
           (Current_File_Factory
-               (Kernel          => This.Buffer.Contents.Kernel,
-                All_Occurrences => False,
-                Scope           => Search_Scope'Value (Scope)));
-      Iter        : Gtk_Text_Iter;
-      From, To    : Editor_Coordinates;
-      Aux_Starts  : Src_Editor_Location;
-      Aux_Ends    : Src_Editor_Location;
+             (Kernel          => This.Buffer.Contents.Kernel,
+              All_Occurrences => False,
+              Scope           => Search_Scope'Value (Scope)));
+      Iter       : Gtk_Text_Iter;
+      From, To   : Editor_Coordinates;
+      Aux_Starts : Src_Editor_Location;
+      Aux_Ends   : Src_Editor_Location;
 
    begin
       Context.Set_Pattern
@@ -3765,24 +3934,24 @@ package body Src_Editor_Module.Editors is
 
       if Success then
          Search_In_Editor
-           (Context           => Context,
-            Start_At          => Iter,
-            Kernel            => This.Buffer.Contents.Kernel,
-            Match_From        => From,
-            Match_Up_To       => To,
-            Search_Backward   => Backward,
-            Failure_Response  => (if Dialog_On_Failure then Dialog else None),
-            Found             => Success);
+           (Context          => Context,
+            Start_At         => Iter,
+            Kernel           => This.Buffer.Contents.Kernel,
+            Match_From       => From,
+            Match_Up_To      => To,
+            Search_Backward  => Backward,
+            Failure_Response => (if Dialog_On_Failure then Dialog else None),
+            Found            => Success);
 
          if Success then
-            Aux_Starts := Src_Editor_Location
-              (Create_Editor_Location (This.Buffer, From.Line, From.Col));
-            Aux_Ends   := Src_Editor_Location
-              (Create_Editor_Location (This.Buffer, To.Line, To.Col));
+            Aux_Starts :=
+              Src_Editor_Location
+                (Create_Editor_Location (This.Buffer, From.Line, From.Col));
+            Aux_Ends :=
+              Src_Editor_Location
+                (Create_Editor_Location (This.Buffer, To.Line, To.Col));
 
-            if Aux_Starts.Line = From.Line
-              and Aux_Ends.Line = To.Line
-            then
+            if Aux_Starts.Line = From.Line and Aux_Ends.Line = To.Line then
                Starts := Aux_Starts;
                Ends := Aux_Ends;
 
@@ -3812,7 +3981,7 @@ package body Src_Editor_Module.Editors is
       if Overlay.Tag /= null then
          Unref (Tag);
       end if;
-      Overlay.Tag    := Tag;
+      Overlay.Tag := Tag;
       if Tag /= null then
          Ref (Tag);
       end if;
@@ -3823,9 +3992,10 @@ package body Src_Editor_Module.Editors is
    -- Create_Overlay --
    --------------------
 
-   overriding function Create_Overlay
-     (This : Src_Editor_Buffer;
-      Name : String := "") return Editor_Overlay'Class
+   overriding
+   function Create_Overlay
+     (This : Src_Editor_Buffer; Name : String := "")
+      return Editor_Overlay'Class
    is
       Tag     : Gtk_Text_Tag;
       Created : Boolean := False;
@@ -3845,6 +4015,7 @@ package body Src_Editor_Module.Editors is
             pragma Unreferenced (Ovy);
             if Created then
                Unref (Tag);  --  reference now owned by Ovy
+
             end if;
          end return;
       end if;
@@ -3856,13 +4027,15 @@ package body Src_Editor_Module.Editors is
    -- Apply_Overlay --
    -------------------
 
-   overriding procedure Apply_Overlay
+   overriding
+   procedure Apply_Overlay
      (This    : Src_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location)
    is
-      Ovy        : constant Src_Editor_Overlay := Src_Editor_Overlay (Overlay);
+      Ovy          : constant Src_Editor_Overlay :=
+        Src_Editor_Overlay (Overlay);
       Iter1, Iter2 : Gtk_Text_Iter;
    begin
       if This.Contents.Buffer /= null and then Ovy.Tag /= null then
@@ -3875,13 +4048,15 @@ package body Src_Editor_Module.Editors is
    -- Remove_Overlay --
    --------------------
 
-   overriding procedure Remove_Overlay
+   overriding
+   procedure Remove_Overlay
      (This    : Src_Editor_Buffer;
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location)
    is
-      Ovy        : constant Src_Editor_Overlay := Src_Editor_Overlay (Overlay);
+      Ovy          : constant Src_Editor_Overlay :=
+        Src_Editor_Overlay (Overlay);
       Iter1, Iter2 : Gtk_Text_Iter;
    begin
       if This.Contents.Buffer /= null and then Ovy.Tag /= null then
@@ -3894,9 +4069,9 @@ package body Src_Editor_Module.Editors is
    -- Add_Cursor --
    ----------------
 
-   overriding procedure Add_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class)
+   overriding
+   procedure Add_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -3908,9 +4083,9 @@ package body Src_Editor_Module.Editors is
    -- Delete_Cursor --
    -------------------
 
-   overriding procedure Delete_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class)
+   overriding
+   procedure Delete_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -3922,26 +4097,28 @@ package body Src_Editor_Module.Editors is
    -- Add_Cursor --
    ----------------
 
-   overriding function Add_Cursor
-     (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class
+   overriding
+   function Add_Cursor
+     (This : Src_Editor_Buffer; Location : Editor_Location'Class)
+      return GPS.Editors.Editor_Cursor'Class
    is
       Iter : Gtk_Text_Iter;
    begin
       This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
-      return Src_Editor_Cursor'
-        (GPS.Editors.Editor_Cursor with
-           C => Holder (Add_Cursor (This.Contents.Buffer, Iter)),
-           Buffer => Src_Editor_Location (Location).Buffer);
+      return
+        Src_Editor_Cursor'
+          (GPS.Editors.Editor_Cursor
+           with
+             C      => Holder (Add_Cursor (This.Contents.Buffer, Iter)),
+             Buffer => Src_Editor_Location (Location).Buffer);
    end Add_Cursor;
 
    ---------------------
    -- Set_Manual_Sync --
    ---------------------
 
-   overriding procedure Set_Manual_Sync
-     (This : Src_Editor_Cursor)
-   is
+   overriding
+   procedure Set_Manual_Sync (This : Src_Editor_Cursor) is
    begin
       Set_Manual_Sync (This.C.Element);
    end Set_Manual_Sync;
@@ -3950,8 +4127,10 @@ package body Src_Editor_Module.Editors is
    -- Move --
    ----------
 
-   overriding procedure Move
-     (This : Src_Editor_Cursor; Where : Editor_Location'Class;
+   overriding
+   procedure Move
+     (This             : Src_Editor_Cursor;
+      Where            : Editor_Location'Class;
       Extend_Selection : Boolean)
    is
       Iter : Gtk_Text_Iter;
@@ -3973,8 +4152,9 @@ package body Src_Editor_Module.Editors is
    -- Get_Insert_Mark --
    ---------------------
 
-   overriding function Get_Insert_Mark
-     (This : Src_Editor_Cursor) return Editor_Mark'Class is
+   overriding
+   function Get_Insert_Mark (This : Src_Editor_Cursor) return Editor_Mark'Class
+   is
    begin
       return This.Buffer.Create_Editor_Mark (Get_Mark (This.C.Element));
    end Get_Insert_Mark;
@@ -3983,7 +4163,8 @@ package body Src_Editor_Module.Editors is
    -- Get_Selection_Mark --
    ------------------------
 
-   overriding function Get_Selection_Mark
+   overriding
+   function Get_Selection_Mark
      (This : Src_Editor_Cursor) return Editor_Mark'Class is
    begin
       return This.Buffer.Create_Editor_Mark (Get_Sel_Mark (This.C.Element));
@@ -3993,27 +4174,29 @@ package body Src_Editor_Module.Editors is
    -- Has_Slave_Cursors --
    -----------------------
 
-   overriding function Has_Slave_Cursors
-     (This : Src_Editor_Buffer) return Boolean
+   overriding
+   function Has_Slave_Cursors (This : Src_Editor_Buffer) return Boolean
    is (Has_Slave_Cursors (This.Contents.Buffer));
 
    ---------------------
    -- Get_Main_Cursor --
    ---------------------
 
-   overriding function Get_Main_Cursor
+   overriding
+   function Get_Main_Cursor
      (This : Src_Editor_Buffer) return Editor_Cursor'Class
    is (Src_Editor_Cursor'
-        (GPS.Editors.Editor_Cursor
-         with C => Holder (Get_Main_Cursor (This.Contents.Buffer)),
-         Buffer => This));
+         (GPS.Editors.Editor_Cursor
+          with
+            C      => Holder (Get_Main_Cursor (This.Contents.Buffer)),
+            Buffer => This));
 
    ------------------------------
    -- Remove_All_Slave_Cursors --
    ------------------------------
 
-   overriding procedure Remove_All_Slave_Cursors
-     (This     : Src_Editor_Buffer) is
+   overriding
+   procedure Remove_All_Slave_Cursors (This : Src_Editor_Buffer) is
    begin
       Remove_All_Slave_Cursors (This.Contents.Buffer);
    end Remove_All_Slave_Cursors;
@@ -4022,8 +4205,8 @@ package body Src_Editor_Module.Editors is
    -- Set_Cursors_Auto_Sync --
    ---------------------------
 
-   overriding procedure Set_Cursors_Auto_Sync
-     (This : Src_Editor_Buffer) is
+   overriding
+   procedure Set_Cursors_Auto_Sync (This : Src_Editor_Buffer) is
    begin
       Set_Cursors_Auto_Sync (This.Contents.Buffer);
    end Set_Cursors_Auto_Sync;
@@ -4032,7 +4215,8 @@ package body Src_Editor_Module.Editors is
    -- Get_Cursors --
    -----------------
 
-   overriding function Get_Cursors
+   overriding
+   function Get_Cursors
      (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List
    is
       List : GPS.Editors.Cursors_Lists.List;
@@ -4050,9 +4234,8 @@ package body Src_Editor_Module.Editors is
    -- Update_Cursors_Selection --
    ------------------------------
 
-   overriding procedure Update_Cursors_Selection
-     (This : Src_Editor_Buffer)
-   is
+   overriding
+   procedure Update_Cursors_Selection (This : Src_Editor_Buffer) is
    begin
       Update_MC_Selection (This.Contents.Buffer);
    end Update_Cursors_Selection;
@@ -4061,7 +4244,8 @@ package body Src_Editor_Module.Editors is
    -- Name --
    ----------
 
-   overriding function Name (This : Src_Editor_Overlay) return String is
+   overriding
+   function Name (This : Src_Editor_Overlay) return String is
    begin
       if This.Tag /= null then
          return Get_Property (This.Tag, Gtk.Text_Tag.Name_Property);
@@ -4073,18 +4257,22 @@ package body Src_Editor_Module.Editors is
    -- Get_Property --
    ------------------
 
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Integer is
    begin
-      return Integer (Get_Property
-         (This.Tag, Property_Int'(Glib.Properties.Build (Name))));
+      return
+        Integer
+          (Get_Property
+             (This.Tag, Property_Int'(Glib.Properties.Build (Name))));
    end Get_Property;
 
    ------------------
    -- Get_Property --
    ------------------
 
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return String
    is
       Color : Gdk_RGBA;
@@ -4108,26 +4296,31 @@ package body Src_Editor_Module.Editors is
             case W is
                when Pango_Weight_Ultralight .. Pango_Weight_Light =>
                   return "light";
-               when Pango_Weight_Normal .. Pango_Weight_Medium =>
+
+               when Pango_Weight_Normal .. Pango_Weight_Medium    =>
                   return "normal";
-               when others =>
+
+               when others                                        =>
                   return "bold";
             end case;
 
          elsif Name = "style" then
             S := Get_Property (This.Tag, Gtk.Text_Tag.Style_Property);
             case S is
-               when Pango_Style_Normal =>
+               when Pango_Style_Normal  =>
                   return "normal";
+
                when Pango_Style_Oblique =>
                   return "oblique";
-               when Pango_Style_Italic =>
+
+               when Pango_Style_Italic  =>
                   return "italic";
             end case;
 
          else
-            return Get_Property
-               (This.Tag, Property_String'(Glib.Properties.Build (Name)));
+            return
+              Get_Property
+                (This.Tag, Property_String'(Glib.Properties.Build (Name)));
          end if;
       end if;
 
@@ -4138,12 +4331,14 @@ package body Src_Editor_Module.Editors is
    -- Get_Property --
    ------------------
 
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Boolean is
    begin
       if This.Tag /= null then
-         return Get_Property
-            (This.Tag, Property_Boolean'(Glib.Properties.Build (Name)));
+         return
+           Get_Property
+             (This.Tag, Property_Boolean'(Glib.Properties.Build (Name)));
       end if;
 
       return False;
@@ -4153,7 +4348,8 @@ package body Src_Editor_Module.Editors is
    -- Set_Property --
    ------------------
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : String) is
    begin
       if This.Tag /= null then
@@ -4185,30 +4381,33 @@ package body Src_Editor_Module.Editors is
             end if;
 
          else
-            Set_Property (This.Tag,
-                          Property_String'(Glib.Properties.Build (Name)),
-                          Value);
+            Set_Property
+              (This.Tag,
+               Property_String'(Glib.Properties.Build (Name)),
+               Value);
          end if;
       end if;
    end Set_Property;
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Boolean) is
    begin
       if This.Tag /= null then
-         Set_Property (This.Tag,
-                       Property_Boolean'(Glib.Properties.Build (Name)),
-                       Value);
+         Set_Property
+           (This.Tag, Property_Boolean'(Glib.Properties.Build (Name)), Value);
       end if;
    end Set_Property;
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Integer) is
    begin
       if This.Tag /= null then
-         Set_Property (This.Tag,
-                       Property_Int'(Glib.Properties.Build (Name)),
-                       Gint (Value));
+         Set_Property
+           (This.Tag,
+            Property_Int'(Glib.Properties.Build (Name)),
+            Gint (Value));
       end if;
    end Set_Property;
 
@@ -4216,8 +4415,8 @@ package body Src_Editor_Module.Editors is
    -- Get_Overlays --
    ------------------
 
-   overriding function Get_Overlays
-     (This    : Src_Editor_Location) return Overlay_Lists.List
+   overriding
+   function Get_Overlays (This : Src_Editor_Location) return Overlay_Lists.List
    is
       use Overlay_Lists, Gtk.Text_Tag.Text_Tag_List;
 
@@ -4253,9 +4452,10 @@ package body Src_Editor_Module.Editors is
    -- Has_Overlay --
    -----------------
 
-   overriding function Has_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Boolean
+   overriding
+   function Has_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Boolean
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -4279,9 +4479,10 @@ package body Src_Editor_Module.Editors is
    -- Forward_Overlay --
    ---------------------
 
-   overriding function Forward_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   overriding
+   function Forward_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -4312,9 +4513,10 @@ package body Src_Editor_Module.Editors is
    -- Backward_Overlay --
    ----------------------
 
-   overriding function Backward_Overlay
-     (This    : Src_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   overriding
+   function Backward_Overlay
+     (This : Src_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -4345,10 +4547,9 @@ package body Src_Editor_Module.Editors is
    -- Views --
    -----------
 
-   overriding function Views
-     (This : Src_Editor_Buffer) return View_Lists.List
-   is
-      List  : View_Lists.List := View_Lists.Empty_List;
+   overriding
+   function Views (This : Src_Editor_Buffer) return View_Lists.List is
+      List : View_Lists.List := View_Lists.Empty_List;
    begin
       if This.Contents.Buffer /= null then
          declare
@@ -4367,11 +4568,11 @@ package body Src_Editor_Module.Editors is
    -- Buffers --
    -------------
 
-   overriding function Buffers
-     (This   : Src_Editor_Buffer_Factory) return Buffer_Lists.List
+   overriding
+   function Buffers (This : Src_Editor_Buffer_Factory) return Buffer_Lists.List
    is
       Result : Buffer_Lists.List := Buffer_Lists.Empty_List;
-      List : constant Source_Buffer_Array := Buffer_List (This.Kernel);
+      List   : constant Source_Buffer_Array := Buffer_List (This.Kernel);
    begin
       --  ??? Should we look in This.Pure_Buffers ?
 
@@ -4386,9 +4587,10 @@ package body Src_Editor_Module.Editors is
    -- Buffer_From_Instance --
    --------------------------
 
-   overriding function Buffer_From_Instance
-     (This       : Src_Editor_Buffer_Factory;
-      Instance   : Class_Instance) return Editor_Buffer'Class
+   overriding
+   function Buffer_From_Instance
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_Buffer'Class
    is
       Buffer : Source_Buffer;
    begin
@@ -4406,9 +4608,9 @@ package body Src_Editor_Module.Editors is
    --------------------------
 
    function Instance_From_Buffer
-     (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
-      Buffer  : Editor_Buffer'Class) return Class_Instance
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      Buffer : Editor_Buffer'Class) return Class_Instance
    is
       Inst : Class_Instance;
    begin
@@ -4434,8 +4636,8 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    function View_From_Instance
-     (This       : Src_Editor_Buffer_Factory;
-      Instance   : Class_Instance) return Editor_View'Class
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_View'Class
    is
       View : Source_Editor_Box;
    begin
@@ -4453,9 +4655,9 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    function Instance_From_View
-     (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
-      View    : Editor_View'Class) return Class_Instance
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      View   : Editor_View'Class) return Class_Instance
    is
       Inst : Class_Instance;
    begin
@@ -4479,9 +4681,7 @@ package body Src_Editor_Module.Editors is
    -- Set_Data --
    --------------
 
-   procedure Set_Data
-     (Instance   : Class_Instance;
-      View       : Editor_View'Class) is
+   procedure Set_Data (Instance : Class_Instance; View : Editor_View'Class) is
    begin
       Set_Data (Instance, GObject (Src_Editor_View (View).Contents.Box));
    end Set_Data;
@@ -4518,7 +4718,7 @@ package body Src_Editor_Module.Editors is
    ---------------------------
 
    function Overlay_From_Instance
-     (Instance   : Class_Instance) return Editor_Overlay'Class
+     (Instance : Class_Instance) return Editor_Overlay'Class
    is
       Tag : Gtk_Text_Tag;
    begin
@@ -4536,17 +4736,17 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    function Instance_From_Mark
-     (Script  : access Scripting_Language_Record'Class;
-      Mark    : Editor_Mark'Class) return Class_Instance
-   is
+     (Script : access Scripting_Language_Record'Class;
+      Mark   : Editor_Mark'Class) return Class_Instance is
    begin
       if Mark not in Src_Editor_Mark'Class
         or else Src_Editor_Mark (Mark).Mark.Is_Null
       then
          return No_Class_Instance;
       else
-         return Src_Editor_Module.Markers.Get_Or_Create_Instance
-           (Src_Editor_Mark (Mark).Mark, Script => Script);
+         return
+           Src_Editor_Module.Markers.Get_Or_Create_Instance
+             (Src_Editor_Mark (Mark).Mark, Script => Script);
       end if;
    end Instance_From_Mark;
 
@@ -4555,12 +4755,12 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    function Mark_From_Instance
-     (This     : Src_Editor_Buffer_Factory;
-      Instance : Class_Instance) return Editor_Mark'Class
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_Mark'Class
    is
       S : Src_Editor_Mark;
    begin
-      S.Mark   := Src_Editor_Module.Markers.From_Instance (Instance);
+      S.Mark := Src_Editor_Module.Markers.From_Instance (Instance);
       S.Kernel := This.Kernel;
       return S;
    end Mark_From_Instance;
@@ -4569,12 +4769,16 @@ package body Src_Editor_Module.Editors is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Prop : in out Editors_Props_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Editor_Location'Class, Editor_Location_Access);
+   overriding
+   procedure Destroy (Prop : in out Editors_Props_Record) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Editor_Location'Class,
+           Editor_Location_Access);
    begin
       case Prop.Typ is
-         when Locations => Unchecked_Free (Prop.Loc);
+         when Locations =>
+            Unchecked_Free (Prop.Loc);
       end case;
    end Destroy;
 
@@ -4588,7 +4792,9 @@ package body Src_Editor_Module.Editors is
       Location   : Editor_Location'Class) is
    begin
       Set_Data
-        (Instance, Class_Name, Editors_Props_Record'
+        (Instance,
+         Class_Name,
+         Editors_Props_Record'
            (Typ => Locations, Loc => new Editor_Location'Class'(Location)));
    end Set_Data;
 
@@ -4603,8 +4809,8 @@ package body Src_Editor_Module.Editors is
       Props : Editors_Props;
    begin
       if Instance /= No_Class_Instance then
-         Props := Editors_Props
-           (Instance_Property'(Get_Data (Instance, Class_Name)));
+         Props :=
+           Editors_Props (Instance_Property'(Get_Data (Instance, Class_Name)));
          if Props /= null then
             return Props.Loc;
          end if;
@@ -4616,16 +4822,14 @@ package body Src_Editor_Module.Editors is
    -- "=" --
    ---------
 
-   overriding function "="
-     (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean
-   is
+   overriding
+   function "="
+     (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean is
    begin
       --  If the gtk+ object has been deallocated (.Buffer = null), we never
       --  have equality, since we can't do anything with the buffers anyway
 
-      if This.Contents.Buffer = null
-        or else Buffer.Contents.Buffer = null
-      then
+      if This.Contents.Buffer = null or else Buffer.Contents.Buffer = null then
          return False;
       else
          return This.Contents.Buffer = Buffer.Contents.Buffer;
@@ -4636,34 +4840,34 @@ package body Src_Editor_Module.Editors is
    -- Create_Marker --
    -------------------
 
-   overriding function Create_Marker
+   overriding
+   function Create_Marker
      (This    : Src_Editor_Buffer_Factory;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
-      Length  : Natural := 0) return Location_Marker
-   is
+      Length  : Natural := 0) return Location_Marker is
    begin
-      return Create_File_Marker
-        (Kernel  => This.Kernel,
-         File    => File,
-         Project => Project,
-         Line    => Line,
-         Column  => Column,
-         Length  => Length);
+      return
+        Create_File_Marker
+          (Kernel  => This.Kernel,
+           File    => File,
+           Project => Project,
+           Line    => Line,
+           Column  => Column,
+           Length  => Length);
    end Create_Marker;
 
    -------------------
    -- Freeze_Cursor --
    -------------------
 
-   overriding function Freeze_Cursor
-     (This  : in out Src_Editor_Buffer)
-      return Cursor_Movement_Controller'Class
+   overriding
+   function Freeze_Cursor
+     (This : in out Src_Editor_Buffer) return Cursor_Movement_Controller'Class
    is
-      Pointer : constant Src_Editor_Buffer_Access :=
-        This'Unchecked_Access;
+      Pointer : constant Src_Editor_Buffer_Access := This'Unchecked_Access;
    begin
       return Dummy : Frozen_Cursor_Controller (Pointer) do
          null;
@@ -4674,8 +4878,8 @@ package body Src_Editor_Module.Editors is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
-     (Object : in out Frozen_Cursor_Controller) is
+   overriding
+   procedure Initialize (Object : in out Frozen_Cursor_Controller) is
    begin
       if Object.Editor.Contents.Buffer /= null then
          Object.Editor.Contents.Buffer.Freeze_Context;
@@ -4687,8 +4891,8 @@ package body Src_Editor_Module.Editors is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize
-     (Object : in out Frozen_Cursor_Controller) is
+   overriding
+   procedure Finalize (Object : in out Frozen_Cursor_Controller) is
    begin
       Object.Editor.Unselect;
       if Object.Editor.Contents.Buffer /= null then

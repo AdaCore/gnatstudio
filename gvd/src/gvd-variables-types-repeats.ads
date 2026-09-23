@@ -30,23 +30,19 @@ package GVD.Variables.Types.Repeats is
    function New_Repeat_Type return GVD_Type_Holder;
 
    function Get_Repeat_Num
-     (Self : not null access GVD_Repeat_Type)
-      return Integer;
+     (Self : not null access GVD_Repeat_Type) return Integer;
    --  Return the number of times the item is repeated.
 
    procedure Set_Repeat_Num
-     (Self : not null access GVD_Repeat_Type;
-      Num  : Integer);
+     (Self : not null access GVD_Repeat_Type; Num : Integer);
    --  Set the repeat number of the item.
 
    function Get_Value
-     (Self : not null access GVD_Repeat_Type)
-      return GVD_Type_Holder;
+     (Self : not null access GVD_Repeat_Type) return GVD_Type_Holder;
    --  Return the repeated value.
 
    procedure Set_Value
-     (Self  : not null access GVD_Repeat_Type;
-      Value : GVD_Type_Holder);
+     (Self : not null access GVD_Repeat_Type; Value : GVD_Type_Holder);
    --  Set the repeated value.
    --  It does not copy Value itself.
 
@@ -55,40 +51,45 @@ private
    --  To handle the '0 <repeats .. times>' case.
 
    type GVD_Repeat_Type is new GVD_Generic_Type with record
-      Repeat_Num       : Integer         := 0;
-      Repeat_Str_Width : Glib.Gint       := 0;
+      Repeat_Num       : Integer := 0;
+      Repeat_Str_Width : Glib.Gint := 0;
       Value            : GVD_Type_Holder := Empty_GVD_Type_Holder;
    end record;
 
-   overriding function Get_Type_Descr
-     (Self : not null access GVD_Repeat_Type) return String is ("Repeat");
+   overriding
+   function Get_Type_Descr
+     (Self : not null access GVD_Repeat_Type) return String
+   is ("Repeat");
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Repeat_Type) return String;
 
-   overriding function Get_Type_Name
+   overriding
+   function Get_Type_Name
      (Self : not null access GVD_Repeat_Type) return String;
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Repeat_Type;
       Item : not null GVD_Generic_Type_Access);
 
-   overriding procedure Free
-     (Self : not null access GVD_Repeat_Type);
+   overriding
+   procedure Free (Self : not null access GVD_Repeat_Type);
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Repeat_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class;
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Repeat_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Repeat_Type; Item : GVD_Type_Holder'Class)
       return Boolean;
 
-   overriding function Start
-     (Self : not null access GVD_Repeat_Type)
-      return Generic_Iterator'Class;
+   overriding
+   function Start
+     (Self : not null access GVD_Repeat_Type) return Generic_Iterator'Class;
 
 end GVD.Variables.Types.Repeats;

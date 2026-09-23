@@ -26,8 +26,7 @@ package body DAP.Clients.Next is
    function Create
      (Kernel      : not null Kernel_Handle;
       Thread_Id   : Integer;
-      Instruction : Boolean)
-      return Next_Request_Access
+      Instruction : Boolean) return Next_Request_Access
    is
       Self : constant Next_Request_Access := new Next_Request (Kernel);
    begin
@@ -44,7 +43,8 @@ package body DAP.Clients.Next is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Next_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.NextResponse;

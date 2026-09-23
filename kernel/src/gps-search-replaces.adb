@@ -20,18 +20,20 @@ with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;
-with GNAT.Strings;          use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with Glib.Unicode;          use Glib.Unicode;
-with Glib;                  use Glib;
+with Glib.Unicode; use Glib.Unicode;
+with Glib;         use Glib;
 
 package body GPS.Search.Replaces is
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Regexp_Reference_Array, Regexp_Reference_Array_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Regexp_Reference_Array,
+        Regexp_Reference_Array_Access);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Subexpression'Class, Subexpression_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Subexpression'Class, Subexpression_Access);
 
    ---------------------------
    -- Regexp_Subexpressions --
@@ -43,16 +45,15 @@ package body GPS.Search.Replaces is
          Match : Positive;
       end record;
 
-      procedure Create
-        (Self   : in out Subexpression_Access;
-         Origin : String);
+      procedure Create (Self : in out Subexpression_Access; Origin : String);
       --  Initialize Self as Regexp_Subexpression, use Origin as image of
       --  regexp subexpression number
 
-      overriding function Origin_Length
-        (Self : Regexp_Subexpression) return Positive;
+      overriding
+      function Origin_Length (Self : Regexp_Subexpression) return Positive;
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Regexp_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String;
@@ -65,10 +66,7 @@ package body GPS.Search.Replaces is
       -- Create --
       ------------
 
-      procedure Create
-        (Self   : in out Subexpression_Access;
-         Origin : String)
-      is
+      procedure Create (Self : in out Subexpression_Access; Origin : String) is
          Match : constant Positive := Natural'Value (Origin);
       begin
          --  Avoid deallocation then allocation of Regexp_Subexpression if we
@@ -85,9 +83,8 @@ package body GPS.Search.Replaces is
       -- Origin_Length --
       -------------------
 
-      overriding function Origin_Length
-        (Self : Regexp_Subexpression) return Positive
-      is
+      overriding
+      function Origin_Length (Self : Regexp_Subexpression) return Positive is
          pragma Unreferenced (Self);
       begin
          return 2;  --  Length of "\1" .. "\9" pattern
@@ -97,7 +94,8 @@ package body GPS.Search.Replaces is
       -- Replace --
       -------------
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Regexp_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String
@@ -123,10 +121,11 @@ package body GPS.Search.Replaces is
       procedure Create (Self : in out Subexpression_Access);
       --  Initialize Self as Whole_Subexpression
 
-      overriding function Origin_Length
-        (Self : Whole_Subexpression) return Positive;
+      overriding
+      function Origin_Length (Self : Whole_Subexpression) return Positive;
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Whole_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String;
@@ -153,9 +152,8 @@ package body GPS.Search.Replaces is
       -- Origin_Length --
       -------------------
 
-      overriding function Origin_Length
-        (Self : Whole_Subexpression) return Positive
-      is
+      overriding
+      function Origin_Length (Self : Whole_Subexpression) return Positive is
          pragma Unreferenced (Self);
       begin
          return 2;  --  Length of "\0" pattern
@@ -165,7 +163,8 @@ package body GPS.Search.Replaces is
       -- Replace --
       -------------
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Whole_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String
@@ -191,21 +190,21 @@ package body GPS.Search.Replaces is
          Origin_Length : Positive;
       end record;
 
-      procedure Create
-        (Self   : in out Subexpression_Access;
-         Origin : String);
+      procedure Create (Self : in out Subexpression_Access; Origin : String);
       --  Initialize Self as Sequence_Subexpression, use Origin as parameters
       --  in form (start, increment)
 
-      overriding function Origin_Length
-        (Self : Sequence_Subexpression) return Positive;
+      overriding
+      function Origin_Length (Self : Sequence_Subexpression) return Positive;
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Sequence_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String;
 
-      overriding procedure Reset (Self : access Sequence_Subexpression);
+      overriding
+      procedure Reset (Self : access Sequence_Subexpression);
 
    end Sequence_Subexpressions;
 
@@ -215,10 +214,7 @@ package body GPS.Search.Replaces is
       -- Create --
       ------------
 
-      procedure Create
-        (Self   : in out Subexpression_Access;
-         Origin : String)
-      is
+      procedure Create (Self : in out Subexpression_Access; Origin : String) is
          Pos           : Positive;
          Close         : constant Natural := Index (Origin, ")");
          Start         : Natural := 1;
@@ -247,11 +243,12 @@ package body GPS.Search.Replaces is
          --  already have correct object. Check EXACT match of type here.
          if Self = null or else Self.all not in Sequence_Subexpression then
             Free (Self);
-            Self := new Sequence_Subexpression'
-              (Start         => Start,
-               Saved_Start   => Start,
-               Increment     => Increment,
-               Origin_Length => Origin_Length);
+            Self :=
+              new Sequence_Subexpression'
+                (Start         => Start,
+                 Saved_Start   => Start,
+                 Increment     => Increment,
+                 Origin_Length => Origin_Length);
          else
             Sequence_Subexpression (Self.all).Start := Start;
             Sequence_Subexpression (Self.all).Increment := Increment;
@@ -263,8 +260,8 @@ package body GPS.Search.Replaces is
       -- Origin_Length --
       -------------------
 
-      overriding function Origin_Length
-        (Self : Sequence_Subexpression) return Positive is
+      overriding
+      function Origin_Length (Self : Sequence_Subexpression) return Positive is
       begin
          return Self.Origin_Length;
       end Origin_Length;
@@ -273,7 +270,8 @@ package body GPS.Search.Replaces is
       -- Replace --
       -------------
 
-      overriding function Replace
+      overriding
+      function Replace
         (Self    : access Sequence_Subexpression;
          Context : GPS.Search.Search_Context;
          Matched : String) return String
@@ -294,7 +292,8 @@ package body GPS.Search.Replaces is
       -- Reset --
       -----------
 
-      overriding procedure Reset (Self : access Sequence_Subexpression) is
+      overriding
+      procedure Reset (Self : access Sequence_Subexpression) is
       begin
          Self.Start := Self.Saved_Start;
       end Reset;
@@ -323,8 +322,7 @@ package body GPS.Search.Replaces is
    ------------------
 
    function Guess_Casing
-     (S        : String;
-      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+     (S : String; Keywords : GNAT.Expect.Pattern_Matcher_Access)
       return Casing_Type
    is
       Result : Casing_Type := Unchanged;
@@ -448,7 +446,7 @@ package body GPS.Search.Replaces is
       end if;
 
       Self.Case_Preserving := Case_Preserving;
-      Self.Is_Regexp       := Is_Regexp;
+      Self.Is_Regexp := Is_Regexp;
    end Initialize;
 
    ----------------------
@@ -459,8 +457,7 @@ package body GPS.Search.Replaces is
      (Pattern      : Replacement_Pattern;
       Result       : GPS.Search.Search_Context;
       Matched_Text : String;
-      Keywords     : GNAT.Expect.Pattern_Matcher_Access)
-      return String
+      Keywords     : GNAT.Expect.Pattern_Matcher_Access) return String
    is
       Current_Casing : Casing_Type := Unchanged;
       Regexp_Result  : Unbounded_String;
@@ -487,8 +484,7 @@ package body GPS.Search.Replaces is
                   Pattern.Replace_String (Last .. Ref.Offset - 1));
 
                Append
-                 (Regexp_Result,
-                  Obj.Replace (Result, Matched (Matched_Text)));
+                 (Regexp_Result, Obj.Replace (Result, Matched (Matched_Text)));
 
                Last := Ref.Offset + Obj.Origin_Length;
             end;
@@ -505,27 +501,25 @@ package body GPS.Search.Replaces is
                return To_String (Regexp_Result);
 
             else
-               return To_Casing
-                 (UTF8_Strdown (To_String (Regexp_Result)),
-                  Current_Casing,
-                  Keywords);
+               return
+                 To_Casing
+                   (UTF8_Strdown (To_String (Regexp_Result)),
+                    Current_Casing,
+                    Keywords);
             end if;
          end if;
 
          return To_String (Regexp_Result);
 
       else
-         if Pattern.Is_Replace_Lower
-           and then Pattern.Case_Preserving
-         then
+         if Pattern.Is_Replace_Lower and then Pattern.Case_Preserving then
             --  use guessing only when replacing string is typed in lower case
             Current_Casing := Guess_Casing (Matched_Text, Keywords);
 
             if Current_Casing /= Unchanged then
-               return To_Casing
-                 (Pattern.Replace_String.all,
-                  Current_Casing,
-                  Keywords);
+               return
+                 To_Casing
+                   (Pattern.Replace_String.all, Current_Casing, Keywords);
 
             else
                return Pattern.Replace_String.all;
@@ -557,8 +551,7 @@ package body GPS.Search.Replaces is
    function To_Casing
      (S        : String;
       Casing   : Casing_Type;
-      Keywords : GNAT.Expect.Pattern_Matcher_Access)
-      return String
+      Keywords : GNAT.Expect.Pattern_Matcher_Access) return String
    is
       use GNAT.Regpat;
       use GNAT.Expect;
@@ -578,13 +571,13 @@ package body GPS.Search.Replaces is
       end if;
 
       case Casing is
-         when Unchanged =>
+         when Unchanged   =>
             return S;
 
-         when Lower =>
+         when Lower       =>
             return Lower_S;
 
-         when Upper =>
+         when Upper       =>
             return UTF8_Strup (S);
 
          when Smart_Mixed =>
@@ -604,8 +597,8 @@ package body GPS.Search.Replaces is
 
                   if Matched (0) /= GNAT.Regpat.No_Match then
                      --  Copy found keyword in lower case
-                     O (I1 .. Matched (0).Last) := UTF8_Strdown
-                       (S (I1 .. Matched (0).Last));
+                     O (I1 .. Matched (0).Last) :=
+                       UTF8_Strdown (S (I1 .. Matched (0).Last));
 
                      I2 := Matched (0).Last + 1;
 
@@ -618,8 +611,8 @@ package body GPS.Search.Replaces is
                         O (I1 .. I2 - 1) := S (I1 .. I2 - 1);
                      end if;
 
-                     Capitalize_Next := not Is_Alpha
-                       (UTF8_Get_Char (S (I1 .. I2 - 1)));
+                     Capitalize_Next :=
+                       not Is_Alpha (UTF8_Get_Char (S (I1 .. I2 - 1)));
                   end if;
 
                   if I2 > S'Last then

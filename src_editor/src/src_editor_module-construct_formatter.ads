@@ -17,7 +17,7 @@
 
 --  Package declaring GNAT Studio own formatter which is based on constructs.
 
-with GPS.Kernel;  use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Src_Editor_Module.Construct_Formatter is
 

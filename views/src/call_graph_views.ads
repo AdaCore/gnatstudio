@@ -23,8 +23,7 @@ with Language;
 
 package Call_Graph_Views is
 
-   procedure Register_Module
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Module (Kernel : access Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    -------------------------
@@ -35,9 +34,9 @@ package Call_Graph_Views is
    type Call_Graph_Provider_Access is access all Call_Graph_Provider'Class;
 
    function Supports_Language
-     (Self : access Call_Graph_Provider;
-      Lang : Language.Language_Access)
-      return Boolean is abstract;
+     (Self : access Call_Graph_Provider; Lang : Language.Language_Access)
+      return Boolean
+   is abstract;
    --  Return True if the Provider can give results for Lang
 
    type View_Type is (View_Calls, View_Called_By);
@@ -47,14 +46,16 @@ package Call_Graph_Views is
       ID       : String;
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class;
-      Kind     : View_Type) is abstract;
+      Kind     : View_Type)
+   is abstract;
    --  Resolve the proper node for File/Location
 
    procedure Is_Called_By
      (Self     : access Call_Graph_Provider;
       ID       : String;
       File     : Virtual_File;
-      Location : GPS.Editors.Editor_Location'Class) is abstract;
+      Location : GPS.Editors.Editor_Location'Class)
+   is abstract;
    --  Request Is_Called_By references of the entity defined in File
    --  at (Line, Column)
    --  ID is unique and must be sent back when calling Add_Row
@@ -64,7 +65,8 @@ package Call_Graph_Views is
      (Self     : access Call_Graph_Provider;
       ID       : String;
       File     : Virtual_File;
-      Location : GPS.Editors.Editor_Location'Class) is abstract;
+      Location : GPS.Editors.Editor_Location'Class)
+   is abstract;
    --  Request Calls references of the entity defined in File
    --  at (Line, Column)
    --  ID is unique and must be sent back when calling Add_Row

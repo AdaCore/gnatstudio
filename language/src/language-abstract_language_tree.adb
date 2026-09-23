@@ -22,19 +22,20 @@ package body Language.Abstract_Language_Tree is
    ----------
 
    function Info
-     (Self             : Semantic_Node'Class;
-      Show_Param_Names : Boolean := True) return Semantic_Node_Info
-   is
+     (Self : Semantic_Node'Class; Show_Param_Names : Boolean := True)
+      return Semantic_Node_Info is
    begin
       return A : Semantic_Node_Info do
-         A := (Category => Self.Category,
-               Name     => Self.Name,
-               Profile  => Self.Profile (Show_Param_Names => Show_Param_Names),
-               Unique_Id  => Self.Unique_Id,
-               Is_Decl    => Self.Is_Declaration,
-               Visibility => Self.Visibility,
-               Sloc_Start_No_Tab => Self.Sloc_Start,
-               Sloc_Def_No_Tab   => Self.Sloc_Def);
+         A :=
+           (Category          => Self.Category,
+            Name              => Self.Name,
+            Profile           =>
+              Self.Profile (Show_Param_Names => Show_Param_Names),
+            Unique_Id         => Self.Unique_Id,
+            Is_Decl           => Self.Is_Declaration,
+            Visibility        => Self.Visibility,
+            Sloc_Start_No_Tab => Self.Sloc_Start,
+            Sloc_Def_No_Tab   => Self.Sloc_Def);
 
          pragma Assert (A.Name = No_Symbol or else A.Unique_Id /= No_Symbol);
       end return;

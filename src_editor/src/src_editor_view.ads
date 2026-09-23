@@ -20,16 +20,16 @@
 --  many functionalities related to source code editing.
 --  </description>
 
-with Cairo;                        use Cairo;
+with Cairo;         use Cairo;
 with Glib.Main;
 with Gdk.Event;
 with Gdk.RGBA;
-with Glib;                         use Glib;
+with Glib;          use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark;                use Gtk.Text_Mark;
-with Gtk.Text_View;                use Gtk.Text_View;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
+with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Handlers;
 with Gtkada.Style;
 
@@ -42,7 +42,7 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
-with Basic_Types;                  use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 package Src_Editor_View is
 
@@ -98,7 +98,7 @@ package Src_Editor_View is
    --  module. Project will be computed automatically if none is given.
 
    procedure Set_Background_Color
-     (Self : not null access Source_View_Record'Class;
+     (Self   : not null access Source_View_Record'Class;
       Forced : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA);
    --  Update the background color of the window, based on the user preferences
    --  and whether the editor is editable.
@@ -159,8 +159,7 @@ package Src_Editor_View is
    --  Free memory associated to View
 
    procedure Set_Synchronized_Editor
-     (View  : access Source_View_Record;
-      Other : Source_View);
+     (View : access Source_View_Record; Other : Source_View);
    --  Set the synchronized editor.
    --  In order to synchronize two editors, call
    --     Set_Synchronized_Editor (A, B);
@@ -172,12 +171,10 @@ package Src_Editor_View is
    --  with it are no longer synchronized between themselves.
 
    procedure Set_Child
-     (View  : access Source_View_Record;
-      Child : GPS.Kernel.MDI.GPS_MDI_Child);
+     (View : access Source_View_Record; Child : GPS.Kernel.MDI.GPS_MDI_Child);
    function Get_Child
-     (View  : access Source_View_Record)
-      return GPS.Kernel.MDI.GPS_MDI_Child;
-      --  Inform View that it is being contained in Child
+     (View : access Source_View_Record) return GPS.Kernel.MDI.GPS_MDI_Child;
+   --  Inform View that it is being contained in Child
 
    procedure Acquire_Focus (View : access Source_View_Record);
    --  Get the MDI focus on the view
@@ -190,8 +187,7 @@ package Src_Editor_View is
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the cursor location in that view
 
-   procedure Start_Completion
-     (View : access Source_View_Record'Class);
+   procedure Start_Completion (View : access Source_View_Record'Class);
    procedure End_Completion (View : access Source_View_Record'Class);
    --  Inform the view that autocompletion is starting/ending
 
@@ -209,8 +205,7 @@ package Src_Editor_View is
    --  Set As_Mode to false
 
    function Position_Set_Explicitely
-     (Self   : access Source_View_Record;
-      Reset  : Boolean) return Boolean;
+     (Self : access Source_View_Record; Reset : Boolean) return Boolean;
    --  Return True if the position of the cursor has been set explicitely (ie
    --  not as a side effect of a text change)
    --  If Reset is true, deactivate the flag saying that the cursor has been
@@ -243,14 +238,14 @@ private
       case To_Cursor is
          when True =>
             Centering : Centering_Type := Minimal;
+
          when False =>
-            Value     : Gdouble;
+            Value : Gdouble;
       end case;
    end record;
 
    No_Scroll_Command : constant Scrolling_Command_Type :=
-                         Scrolling_Command_Type'(To_Cursor => False,
-                                                 Value     => 0.0);
+     Scrolling_Command_Type'(To_Cursor => False, Value => 0.0);
 
    type Source_View_Record is new Gtk_Text_View_Record with record
       Project_Path : GNATCOLL.VFS.Virtual_File;
@@ -260,30 +255,30 @@ private
       --  the first possible project for that file, which might not be the one
       --  that was originally intended.
 
-      Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
+      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view
 
       Scrollbar_Stepper_Size : Gint := 0;
       --  The size taken on the scrollbar by the stepper and its offset.
 
-      Draw_The_Scrollbar  : Boolean := False;
+      Draw_The_Scrollbar : Boolean := False;
       --  Whether to do the actual scrollbar drawing
 
-      Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Area : Gtk.Drawing_Area.Gtk_Drawing_Area;
       --  The drawing area used for the speed column
 
-      Side_Info_Width     : Gint := 0;
+      Side_Info_Width : Gint := 0;
       --  The width of the side info
 
-      Speed_Bar_Width     : Gint := 0;
+      Speed_Bar_Width   : Gint := 0;
       --  The width of the speed bar
-      Kernel              : GPS.Kernel.Kernel_Handle;
-      Saved_Cursor_Mark   : Gtk_Text_Mark;
+      Kernel            : GPS.Kernel.Kernel_Handle;
+      Saved_Cursor_Mark : Gtk_Text_Mark;
 
-      Current_Line_Color  : Gdk.RGBA.Gdk_RGBA;
+      Current_Line_Color : Gdk.RGBA.Gdk_RGBA;
 
-      Highlight_Current   : Boolean := False;
-      Highlight_As_Line   : Current_Line_Highlighting_Type := Gutter_Only;
+      Highlight_Current : Boolean := False;
+      Highlight_As_Line : Current_Line_Highlighting_Type := Gutter_Only;
 
       Cursor_Set_Explicitely : Boolean := False;
       --  True when the user requested to scroll to this position when the
@@ -297,38 +292,38 @@ private
       --  location when it is first opened, but keep the user location
       --  at other times.
 
-      Top_Line            : Buffer_Line_Type := 1;
-      Bottom_Line         : Buffer_Line_Type := 0;
+      Top_Line    : Buffer_Line_Type := 1;
+      Bottom_Line : Buffer_Line_Type := 0;
 
-      Buffer_Column_Size  : Gint := 1;
+      Buffer_Column_Size : Gint := 1;
 
       Side_Columns_Up_To_Date : Boolean := False;
 
-      Connect_Expose_Id : Glib.Main.G_Source_Id := 0;
+      Connect_Expose_Id         : Glib.Main.G_Source_Id := 0;
       --  Handler ID for the Connect_Expose idle callback
       Connect_Expose_Registered : Boolean := False;
       --  Whether the Connect_Expose idle callback has been registered
 
-      Idle_Redraw_Id : Glib.Main.G_Source_Id := 0;
+      Idle_Redraw_Id         : Glib.Main.G_Source_Id := 0;
       --  Handler ID for Idle redraw of the side columns
       Idle_Redraw_Registered : Boolean := False;
       --  Whether the Idle_Redraw has been registered
 
-      Width_Of_256_Chars  : Gint := -1;
+      Width_Of_256_Chars : Gint := -1;
 
       Current_Block_Color : Gdk.RGBA.Gdk_RGBA;
 
-      Highlight_Blocks    : Boolean := False;
+      Highlight_Blocks : Boolean := False;
       --  Whether source blocks should be highlighted
 
-      Current_Line        : Gint := 0;
+      Current_Line : Gint := 0;
       --  The line that contains the cursor
 
-      Current_Block       : Src_Editor_Buffer.Block_Record;
+      Current_Block : Src_Editor_Buffer.Block_Record;
       --  Cache used to prevent redrawing the whole buffer when the cursor
       --  doesn't leave the current block.
 
-      Scrolling           : Boolean := False;
+      Scrolling : Boolean := False;
       --  Whether the editor is currently scrolling. Used as a flag to avoid
       --  loops in circuitries when using synchronized scrolling.
 
@@ -336,38 +331,38 @@ private
       --  An editor which should have a scrolling synchronized with this
       --  editor.
 
-      Speed_Column_Buffer  : Cairo_Surface := Null_Surface;
+      Speed_Column_Buffer : Cairo_Surface := Null_Surface;
       --  Cache for avoiding to redraw the speed column too often
 
-      Scroll_Timeout       : Glib.Main.G_Source_Id := 0;
-      Scroll_Command       : Scrolling_Command_Type := No_Scroll_Command;
+      Scroll_Timeout : Glib.Main.G_Source_Id := 0;
+      Scroll_Command : Scrolling_Command_Type := No_Scroll_Command;
 
-      Forced_Bg_Color       : Boolean := False;
-      Background_Color      : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);
+      Forced_Bg_Color  : Boolean := False;
+      Background_Color : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);
       --  The editor background color and its ligthened/darkened version.
       --  Forced_Bg_Color is true if the python's set_background_color was
       --  called.
 
-      Text_Color           : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Text_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The editor text color
 
-      Button_Pressed       : Boolean := False;
+      Button_Pressed : Boolean := False;
       --  Whether the button 1 is pressed
 
-      Double_Click         : Boolean := False;
+      Double_Click : Boolean := False;
       --  Whether a double-click on button 1 was performed
 
-      As_Is_Mode           : As_Is_Status := Disabled;
+      As_Is_Mode : As_Is_Status := Disabled;
       --  Set to True when the as-is-key has been pressed, in this case the
       --  indentation and casing are disabled for the next key.
 
-      Cursor_Position      : Gdouble := Gdouble'Last;
+      Cursor_Position : Gdouble := Gdouble'Last;
       --  Stores the cursor position relative to the screen
 
-      Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
+      Child : GPS.Kernel.MDI.GPS_MDI_Child := null;
       --  The child that contains Editor
 
-      Redraw_Registered    : Boolean := False;
+      Redraw_Registered : Boolean := False;
       --  Whether we have registered an idle redraw of the highlights
 
       Redraw_Idle_Handler : Glib.Main.G_Source_Id;
@@ -375,13 +370,13 @@ private
 
       --  Handling of hyper mode
 
-      Hyper_Mode                        : Boolean := False;
+      Hyper_Mode : Boolean := False;
 
-      Hyper_Mode_Motion_Handler         : Gtk.Handlers.Handler_Id :=
+      Hyper_Mode_Motion_Handler : Gtk.Handlers.Handler_Id :=
         (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to the motion
 
-      Hyper_Mode_Button_Handler         : Gtk.Handlers.Handler_Id :=
+      Hyper_Mode_Button_Handler : Gtk.Handlers.Handler_Id :=
         (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to mouse button presses
 
@@ -389,11 +384,11 @@ private
         (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to toplevel focus out
 
-      Cursor_Needs_Change               : Boolean := False;
+      Cursor_Needs_Change : Boolean := False;
       --  Whether we just entered hyper mode, and the cursor aspect needs
       --  to be changed.
 
-      Source_Buffer_Handlers            : Handlers_Array (1 .. 5);
+      Source_Buffer_Handlers : Handlers_Array (1 .. 5);
    end record;
 
 end Src_Editor_View;

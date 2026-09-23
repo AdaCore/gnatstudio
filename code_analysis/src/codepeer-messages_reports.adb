@@ -22,24 +22,24 @@ with System;
 
 with VSS.Strings.Conversions;
 
-with Gdk.Rectangle;         use Gdk.Rectangle;
+with Gdk.Rectangle;  use Gdk.Rectangle;
 with Glib.Object;
 with Glib.Values;
-with Gtk.Box;               use Gtk.Box;
+with Gtk.Box;        use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;             use Gtk.Label;
+with Gtk.Label;      use Gtk.Label;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
 with Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
-with Gtkada.MDI;            use Gtkada.MDI;
+with Gtkada.MDI;     use Gtkada.MDI;
 
 with Histories;             use Histories;
 with GNATCOLL.Projects;
@@ -62,40 +62,42 @@ package body CodePeer.Messages_Reports is
 
    use type Glib.Signal_Name;
 
-   package Tree_View_Report_Return_Boolean_Callbacks is
-     new Gtk.Handlers.User_Return_Callback
-           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Messages_Report);
+   package Tree_View_Report_Return_Boolean_Callbacks is new
+     Gtk.Handlers.User_Return_Callback
+       (Gtk.Tree_View.Gtk_Tree_View_Record,
+        Boolean,
+        Messages_Report);
 
-   package Summary_Report_Callbacks is new Gtk.Handlers.Callback
-     (Messages_Report_Record);
+   package Summary_Report_Callbacks is new
+     Gtk.Handlers.Callback (Messages_Report_Record);
 
-   package Message_Categories_Criteria_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record,
-           Messages_Report);
+   package Message_Categories_Criteria_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record,
+        Messages_Report);
 
-   package CWE_Categories_Criteria_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record,
-           Messages_Report);
+   package CWE_Categories_Criteria_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record,
+        Messages_Report);
 
-   package Lifeage_Criteria_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (CodePeer.Lifeage_Categories_Criteria_Editors.Criteria_Editor_Record,
-           Messages_Report);
+   package Lifeage_Criteria_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (CodePeer.Lifeage_Categories_Criteria_Editors.Criteria_Editor_Record,
+        Messages_Report);
 
-   package Ranking_Criteria_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor_Record,
-           Messages_Report);
+   package Ranking_Criteria_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor_Record,
+        Messages_Report);
 
-   package Audit_Statuses_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor_Record,
-           Messages_Report);
+   package Audit_Statuses_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor_Record,
+        Messages_Report);
 
-   package Compare_Functions is
-     new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
+   package Compare_Functions is new
+     Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
@@ -103,35 +105,42 @@ package body CodePeer.Messages_Reports is
    --  Callback for filter-canged signal
 
    procedure On_Categories_Criteria_Changed
-     (Object : access
-        CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
 
    procedure On_CWE_Criteria_Changed
-     (Object : access
-        CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
+     (Object :
+        access CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible CWE's categories.
 
    procedure On_Lifeage_Criteria_Changed
-     (Object : access
-        CodePeer.Lifeage_Categories_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Lifeage_Categories_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's lifeages.
 
    procedure On_Ranking_Criteria_Changed
-     (Object : access
-        CodePeer.Ranking_Categories_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Ranking_Categories_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's ranking.
 
    procedure On_Audit_Statuses_Changed
-     (Object : access
-        CodePeer.Audit_Statuses_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Audit_Statuses_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's audit status.
 
@@ -143,44 +152,39 @@ package body CodePeer.Messages_Reports is
    --  selection on mouse press, and activation on double-press/release events.
 
    function Compare
-     (Model     : Gtk_Tree_Model;
-      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self      : Messages_Report) return Glib.Gint;
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
 
    function Compute_Level
-     (Project_Data : CodePeer.Project_Data'Class)
-      return Natural;
+     (Project_Data : CodePeer.Project_Data'Class) return Natural;
    --  Using information in the given Project_Data, compute the level of the
    --  current analysis
 
-   procedure Emit_By_Name
-     (Object : System.Address;
-      Name   : Glib.Signal_Name);
+   procedure Emit_By_Name (Object : System.Address; Name : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
    Ranking_History_Prefix : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-";
 
-   Status_History_Prefix : constant Histories.History_Key :=
+   Status_History_Prefix  : constant Histories.History_Key :=
      "codepeer-summary_report-status-";
    Lifeage_History_Prefix : constant Histories.History_Key :=
      "codepeer-summary_report-lifeage-";
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Activated)),
       2 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-     (1 => (1 => Glib.GType_None),
-      2 => (1 => Glib.GType_None));
+     (1 => (1 => Glib.GType_None), 2 => (1 => Glib.GType_None));
 
-   CWE_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+   CWE_Attribute : constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build
        (VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name), "CWE");
 
@@ -188,13 +192,13 @@ package body CodePeer.Messages_Reports is
    -- Tooltips --
    --------------
 
-   type Codepeer_Message_View_Tooltip_Handler is
-     new Tooltips.Tooltip_Handler with
-      record
-         Report : Messages_Report;
-      end record;
+   type Codepeer_Message_View_Tooltip_Handler is new Tooltips.Tooltip_Handler
+   with record
+      Report : Messages_Report;
+   end record;
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Codepeer_Message_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
@@ -204,7 +208,8 @@ package body CodePeer.Messages_Reports is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Codepeer_Message_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
@@ -231,11 +236,11 @@ package body CodePeer.Messages_Reports is
 
          --  Get the file/project information from code_analysis
          declare
-            File  : constant File_Access :=
+            File    : constant File_Access :=
               Tooltip.Report.Analysis_Model.File_At (Iter);
             Project : constant Project_Access :=
               Tooltip.Report.Analysis_Model.Project_At (Iter);
-            Label : Gtk_Label;
+            Label   : Gtk_Label;
          begin
             if File /= null and then File.Name.Is_Regular_File then
                Gtk_New (Label, File.Name.Display_Full_Name);
@@ -261,17 +266,16 @@ package body CodePeer.Messages_Reports is
    -------------
 
    function Compare
-     (Model     : Gtk_Tree_Model;
-      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self      : Messages_Report) return Glib.Gint
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Messages_Report) return Glib.Gint
    is
       pragma Unreferenced (Self);
 
       use type Glib.Gint;
 
-      type Column_Sort_Order is
-        (High_Current, Medium_Current, Low_Current);
+      type Column_Sort_Order is (High_Current, Medium_Current, Low_Current);
       --  Literals in this type are in the comparison order. To change
       --  comparison order just reorder literals.
 
@@ -281,8 +285,8 @@ package body CodePeer.Messages_Reports is
       B_Counts : Counts;
 
       function Get
-        (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Column : Glib.Gint) return Glib.Gint;
+        (Iter : Gtk.Tree_Model.Gtk_Tree_Iter; Column : Glib.Gint)
+         return Glib.Gint;
       --  Returns value at the specified row and column in the model.
 
       function Get (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Counts;
@@ -293,8 +297,8 @@ package body CodePeer.Messages_Reports is
       ---------
 
       function Get
-        (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Column : Glib.Gint) return Glib.Gint
+        (Iter : Gtk.Tree_Model.Gtk_Tree_Iter; Column : Glib.Gint)
+         return Glib.Gint
       is
          Aux   : Glib.Gint;
          Value : Glib.Values.GValue;
@@ -326,7 +330,7 @@ package body CodePeer.Messages_Reports is
       function Get (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Counts is
       begin
          return
-           (High_Current =>
+           (High_Current   =>
               Get
                 (Iter,
                  CodePeer.Messages_Summary_Models.High_Current_Count_Column),
@@ -334,7 +338,7 @@ package body CodePeer.Messages_Reports is
               Get
                 (Iter,
                  CodePeer.Messages_Summary_Models.Medium_Current_Count_Column),
-            Low_Current =>
+            Low_Current    =>
               Get
                 (Iter,
                  CodePeer.Messages_Summary_Models.Low_Current_Count_Column));
@@ -365,9 +369,8 @@ package body CodePeer.Messages_Reports is
    -------------------
 
    function Build_Context
-     (Self   : not null access Messages_Report_Record'Class;
-      Event  : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+     (Self  : not null access Messages_Report_Record'Class;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Model_Path : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -375,7 +378,7 @@ package body CodePeer.Messages_Reports is
       Project    : Code_Analysis.Project_Access;
       File       : Code_Analysis.File_Access;
       Subprogram : Code_Analysis.Subprogram_Access;
-      Context  : Selection_Context :=
+      Context    : Selection_Context :=
         New_Context
           (Self.Kernel,
            Get_Module_From_Child
@@ -391,9 +394,9 @@ package body CodePeer.Messages_Reports is
 
          Model_Path :=
            Self.Analysis_Sort_Model.Convert_Path_To_Child_Path (Path);
-         Iter       := Self.Analysis_Model.Get_Iter (Model_Path);
-         Project    := Self.Analysis_Model.Project_At (Iter);
-         File       := Self.Analysis_Model.File_At (Iter);
+         Iter := Self.Analysis_Model.Get_Iter (Model_Path);
+         Project := Self.Analysis_Model.Project_At (Iter);
+         File := Self.Analysis_Model.File_At (Iter);
          Subprogram := Self.Analysis_Model.Subprogram_At (Iter);
 
          if Subprogram /= null then
@@ -402,8 +405,7 @@ package body CodePeer.Messages_Reports is
                Project => Project.View.Get_Project_Type,
                Files   => (1 => File.Name));
             GPS.Kernel.Contexts.Set_Entity_Information
-              (Context     => Context,
-               Entity_Name => Subprogram.Name.all);
+              (Context => Context, Entity_Name => Subprogram.Name.all);
 
          elsif File /= null then
             GPS.Kernel.Contexts.Set_File_Information
@@ -413,8 +415,7 @@ package body CodePeer.Messages_Reports is
 
          elsif Project /= null then
             GPS.Kernel.Contexts.Set_File_Information
-              (Context => Context,
-               Project => Project.View.Get_Project_Type);
+              (Context => Context, Project => Project.View.Get_Project_Type);
          end if;
 
          Gtk.Tree_Model.Path_Free (Model_Path);
@@ -502,8 +503,7 @@ package body CodePeer.Messages_Reports is
    -------------------
 
    function Compute_Level
-     (Project_Data : CodePeer.Project_Data'Class)
-      return Natural
+     (Project_Data : CodePeer.Project_Data'Class) return Natural
    is
       use GNATCOLL.Strings;
 
@@ -555,13 +555,14 @@ package body CodePeer.Messages_Reports is
       Tooltip         : Tooltips.Tooltip_Handler_Access;
       pragma Warnings (Off, Dummy);
 
-      Project_View    : constant Projects.Views.Project_View_Reference :=
+      Project_View   : constant Projects.Views.Project_View_Reference :=
         GPS.Kernel.Project.Get_Root_Project_View (Kernel);
-      Project_Data    : CodePeer.Project_Data'Class renames
+      Project_Data   : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
-          (Code_Analysis.Get_Or_Create
-               (Tree, Project_View).Analysis_Data.CodePeer_Data.all);
-      Analysis_Level  : constant Natural := Compute_Level (Project_Data);
+          (Code_Analysis.Get_Or_Create (Tree, Project_View)
+             .Analysis_Data
+             .CodePeer_Data.all);
+      Analysis_Level : constant Natural := Compute_Level (Project_Data);
    begin
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Box.Get_Vbox_Type,
@@ -576,32 +577,36 @@ package body CodePeer.Messages_Reports is
          Gtk.Widget.Signal_Destroy,
          Summary_Report_Callbacks.To_Marshaller (On_Destroy'Access));
 
-      Self.Kernel  := Kernel;
+      Self.Kernel := Kernel;
       Self.Version := Version;
-      Self.Tree    := Tree;
+      Self.Tree := Tree;
 
       --  Restore filter settings from histories.
 
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all,
-         Ranking_History_Prefix &
-           Histories.History_Key (Image (CodePeer.Suppressed)), False);
+         Ranking_History_Prefix
+         & Histories.History_Key (Image (CodePeer.Suppressed)),
+         False);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all,
-         Ranking_History_Prefix &
-           Histories.History_Key (Image (CodePeer.Info)), False);
+         Ranking_History_Prefix
+         & Histories.History_Key (Image (CodePeer.Info)),
+         False);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all,
-         Ranking_History_Prefix &
-           Histories.History_Key (Image (CodePeer.Low)), False);
+         Ranking_History_Prefix & Histories.History_Key (Image (CodePeer.Low)),
+         False);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all,
-         Ranking_History_Prefix &
-           Histories.History_Key (Image (CodePeer.Medium)), True);
+         Ranking_History_Prefix
+         & Histories.History_Key (Image (CodePeer.Medium)),
+         True);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all,
-         Ranking_History_Prefix &
-           Histories.History_Key (Image (CodePeer.High)), True);
+         Ranking_History_Prefix
+         & Histories.History_Key (Image (CodePeer.High)),
+         True);
 
       Self.Show_Ranking :=
         (Not_An_Error => False,
@@ -609,29 +614,29 @@ package body CodePeer.Messages_Reports is
          Info         =>
            Histories.Get_History
              (Kernel.Get_History.all,
-              Ranking_History_Prefix &
-                Histories.History_Key (Image (CodePeer.Info))),
+              Ranking_History_Prefix
+              & Histories.History_Key (Image (CodePeer.Info))),
          Low          =>
            Histories.Get_History
              (Kernel.Get_History.all,
-              Ranking_History_Prefix &
-                Histories.History_Key (Image (CodePeer.Low))),
+              Ranking_History_Prefix
+              & Histories.History_Key (Image (CodePeer.Low))),
          Medium       =>
            Histories.Get_History
              (Kernel.Get_History.all,
-              Ranking_History_Prefix &
-                Histories.History_Key (Image (CodePeer.Medium))),
+              Ranking_History_Prefix
+              & Histories.History_Key (Image (CodePeer.Medium))),
          High         =>
            Histories.Get_History
              (Kernel.Get_History.all,
-              Ranking_History_Prefix &
-                Histories.History_Key (Image (CodePeer.High))));
+              Ranking_History_Prefix
+              & Histories.History_Key (Image (CodePeer.High))));
 
       for Status of Audit_Statuses loop
          declare
             Name : constant History_Key :=
-              Status_History_Prefix &
-              History_Key (Standardize (Image (Status.all)));
+              Status_History_Prefix
+              & History_Key (Standardize (Image (Status.all)));
          begin
             Histories.Create_New_Boolean_Key_If_Necessary
               (Kernel.Get_History.all, Name, Status.Category /= Not_A_Bug);
@@ -643,8 +648,7 @@ package body CodePeer.Messages_Reports is
       for Lifeage of Project_Data.Lifeage_Subcategories loop
          declare
             Name : constant History_Key :=
-              Lifeage_History_Prefix &
-              History_Key (Get_Name (Lifeage.all));
+              Lifeage_History_Prefix & History_Key (Get_Name (Lifeage.all));
          begin
             Histories.Create_New_Boolean_Key_If_Necessary
               (Kernel.Get_History.all, Name, Lifeage.all /= Removed);
@@ -674,8 +678,7 @@ package body CodePeer.Messages_Reports is
       Summary_Report_Callbacks.Object_Connect
         (Self.Filter,
          Filter_Panels.Signal_Filter_Changed,
-         Summary_Report_Callbacks.To_Marshaller
-           (On_Filter_Changed'Access),
+         Summary_Report_Callbacks.To_Marshaller (On_Filter_Changed'Access),
          Self);
       Filter_Panel.Pack1 (Self.Filter, Resize => False);
 
@@ -689,15 +692,12 @@ package body CodePeer.Messages_Reports is
       Panel.Pack1 (Filter_Panel, Resize => True);
 
       CodePeer.Messages_Summary_Models.Gtk_New
-        (Self.Analysis_Model,
-         Tree,
-         Project_Data.Message_Categories);
+        (Self.Analysis_Model, Tree, Project_Data.Message_Categories);
       Gtk.Tree_Model_Sort.Gtk_New_With_Model
         (Self.Analysis_Sort_Model, To_Interface (Self.Analysis_Model));
       Compare_Functions.Set_Default_Sort_Func
         (+Self.Analysis_Sort_Model, Compare'Access, Messages_Report (Self));
-      Gtk.Tree_View.Gtk_New
-        (Self.Analysis_View, +Self.Analysis_Sort_Model);
+      Gtk.Tree_View.Gtk_New (Self.Analysis_View, +Self.Analysis_Sort_Model);
       Self.Analysis_View.Set_Name ("gnatsas-messages_summary_tree");
       Scrolled.Add (Self.Analysis_View);
 
@@ -852,9 +852,11 @@ package body CodePeer.Messages_Reports is
       --  CWEs categories
 
       if Is_GNATSAS
-        or else (Project_View.Has_Attribute (CWE_Attribute)
-          and then To_Lower
-            (Project_View.Get_Attribute_Value (CWE_Attribute)) = "true")
+        or else
+          (Project_View.Has_Attribute (CWE_Attribute)
+           and then
+             To_Lower (Project_View.Get_Attribute_Value (CWE_Attribute))
+             = "true")
       then
          CodePeer.CWE_Criteria_Editors.Gtk_New
            (Editor         => Self.CWE_Editor,
@@ -908,10 +910,11 @@ package body CodePeer.Messages_Reports is
         (Editor         => Self.Ranking_Editor,
          Kernel         => Self.Kernel,
          Title          => -"Message ranking",
-         History_Prefix => String
-           (Ranking_History_Prefix
-                (Ranking_History_Prefix'First ..
-                     Ranking_History_Prefix'Last - 1)),  --  Delete last '-'
+         History_Prefix =>
+           String
+             (Ranking_History_Prefix
+                (Ranking_History_Prefix'First
+                 .. Ranking_History_Prefix'Last - 1)),  --  Delete last '-'
          Items          => Project_Data.Ranking_Subcategories,
          Default        => True,
          Tree_Name      => "gnatsas-message_ranking");
@@ -964,15 +967,15 @@ package body CodePeer.Messages_Reports is
 
       --  Register tooltip handler
 
-      Tooltip := new Codepeer_Message_View_Tooltip_Handler'
-        (Tooltips.Tooltip_Handler with Report => Messages_Report (Self));
+      Tooltip :=
+        new Codepeer_Message_View_Tooltip_Handler'
+          (Tooltips.Tooltip_Handler with Report => Messages_Report (Self));
       Tooltip.Associate_To_Widget (Self.Analysis_View);
 
       --  Register contextual menu handler
 
       Setup_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Self.Analysis_View);
+        (Kernel => Kernel, Event_On_Widget => Self.Analysis_View);
    end Initialize;
 
    -----------------------
@@ -1019,7 +1022,7 @@ package body CodePeer.Messages_Reports is
               (Iter, Sort_Iter);
 
             declare
-               File_Node       : constant Code_Analysis.File_Access :=
+               File_Node : constant Code_Analysis.File_Access :=
                  Self.Analysis_Model.File_At (Iter);
 
             begin
@@ -1061,8 +1064,9 @@ package body CodePeer.Messages_Reports is
    ------------------------------------
 
    procedure On_Categories_Criteria_Changed
-     (Object : access
-        CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
@@ -1087,8 +1091,8 @@ package body CodePeer.Messages_Reports is
    -----------------------------
 
    procedure On_CWE_Criteria_Changed
-     (Object : access
-        CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
+     (Object :
+        access CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
@@ -1125,9 +1129,8 @@ package body CodePeer.Messages_Reports is
    -- On_Filter_Changed --
    -----------------------
 
-   procedure On_Filter_Changed (Self : access Messages_Report_Record'Class)
-   is
-      P : constant GPS.Search.Search_Pattern_Access :=
+   procedure On_Filter_Changed (Self : access Messages_Report_Record'Class) is
+      P           : constant GPS.Search.Search_Pattern_Access :=
         Self.Filter.Get_Filter_Pattern;
       Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
@@ -1141,9 +1144,11 @@ package body CodePeer.Messages_Reports is
    ---------------------------------
 
    procedure On_Lifeage_Criteria_Changed
-     (Object : access
-        CodePeer.Lifeage_Categories_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Lifeage_Categories_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
@@ -1187,9 +1192,11 @@ package body CodePeer.Messages_Reports is
    ---------------------------------
 
    procedure On_Ranking_Criteria_Changed
-     (Object : access
-        CodePeer.Ranking_Categories_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Ranking_Categories_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
@@ -1213,8 +1220,8 @@ package body CodePeer.Messages_Reports is
    -- Set_Visible_Message_Status --
    --------------------------------
 
-   procedure Set_Visible_Message_Status
-     (Self : in out Messages_Report_Record) is
+   procedure Set_Visible_Message_Status (Self : in out Messages_Report_Record)
+   is
    begin
       for Status of Audit_Statuses loop
          Self.Show_Status (Status.Id) := False;
@@ -1227,8 +1234,8 @@ package body CodePeer.Messages_Reports is
       for Status of Audit_Statuses loop
          Histories.Set_History
            (Self.Kernel.Get_History.all,
-            Status_History_Prefix &
-              History_Key (Standardize (Image (Status.all))),
+            Status_History_Prefix
+            & History_Key (Standardize (Image (Status.all))),
             Self.Show_Status (Status.Id));
       end loop;
 
@@ -1240,9 +1247,11 @@ package body CodePeer.Messages_Reports is
    -------------------------------
 
    procedure On_Audit_Statuses_Changed
-     (Object : access
-        CodePeer.Audit_Statuses_Criteria_Editors.
-          Criteria_Editor_Record'Class;
+     (Object :
+        access
+          CodePeer
+            .Audit_Statuses_Criteria_Editors
+            .Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
@@ -1286,14 +1295,15 @@ package body CodePeer.Messages_Reports is
       Criteria.Categories :=
         Self.Warning_Categories_Editor.Get_Visible_Items.Union
           (Self.Check_Categories_Editor.Get_Visible_Items);
-      Criteria.CWEs       :=
+      Criteria.CWEs :=
         (if Self.CWE_Editor /= null
          then Self.CWE_Editor.Get_Visible_Items
          else CodePeer.CWE_Category_Sets.Empty_Set);
-      Criteria.Rankings   := Self.Show_Ranking;
-      Criteria.Lineages   := CodePeer.To_Lifeage_Kinds_Flags
-        (Self.Lifeage_Editor.Get_Visible_Items);
-      Criteria.Statuses   := Self.Show_Status;
+      Criteria.Rankings := Self.Show_Ranking;
+      Criteria.Lineages :=
+        CodePeer.To_Lifeage_Kinds_Flags
+          (Self.Lifeage_Editor.Get_Visible_Items);
+      Criteria.Statuses := Self.Show_Status;
    end Update_Criteria;
 
 end CodePeer.Messages_Reports;

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.Kernel.Hooks;
 
@@ -28,10 +28,10 @@ package body Task_Manager is
    --  This is a counter used to generate unique queue Ids - OK to leave this
    --  a global variable.
 
-   package Task_Manager_Idle is new Glib.Main.Generic_Sources
-     (Task_Manager_Access);
-   package Task_Manager_Timeout is new Glib.Main.Generic_Sources
-     (Task_Manager_Access);
+   package Task_Manager_Idle is new
+     Glib.Main.Generic_Sources (Task_Manager_Access);
+   package Task_Manager_Timeout is new
+     Glib.Main.Generic_Sources (Task_Manager_Access);
 
    function Get_Or_Create_Task_Queue
      (Manager    : not null access Task_Manager_Record'Class;
@@ -45,17 +45,14 @@ package body Task_Manager is
    --  queue is returned.
    --  If Queue_Id is empty, the queue will be given an unique identifier.
 
-   function Active_Incremental
-     (Manager : Task_Manager_Access) return Boolean;
+   function Active_Incremental (Manager : Task_Manager_Access) return Boolean;
    --  Incremental function for the active loop
 
-   function Passive_Incremental
-     (Manager : Task_Manager_Access) return Boolean;
+   function Passive_Incremental (Manager : Task_Manager_Access) return Boolean;
    --  Incremental function for the passive loop
 
    function Execute_Incremental
-     (Manager : Task_Manager_Access;
-      Active  : Boolean) return Boolean;
+     (Manager : Task_Manager_Access; Active : Boolean) return Boolean;
    --  Incremental function to execute the task manager. Ruturn False when no
    --  more tasks to execute.
 
@@ -64,14 +61,11 @@ package body Task_Manager is
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
 
-   procedure Run
-     (Manager : Task_Manager_Access;
-      Active  : Boolean);
+   procedure Run (Manager : Task_Manager_Access; Active : Boolean);
    --  Runs the task manager, if it is not already running
 
    procedure Interrupt_Queue_N
-     (Manager : not null access Task_Manager_Record;
-      Index   : Natural);
+     (Manager : not null access Task_Manager_Record; Index : Natural);
    --  Internal factorization function.
    --  Interrupt the queue at the given index.
 
@@ -85,8 +79,8 @@ package body Task_Manager is
    -------------------
 
    function Queue_From_Id
-     (Manager : not null access Task_Manager_Record;
-      Id      : String) return Task_Queue_Access is
+     (Manager : not null access Task_Manager_Record; Id : String)
+      return Task_Queue_Access is
    begin
       if Manager.Queues = null then
          return null;
@@ -128,10 +122,9 @@ package body Task_Manager is
    -----------------------
 
    procedure Interrupt_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String)
+     (Manager : not null access Task_Manager_Record; Id : String)
    is
-      Task_Q  : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
+      Task_Q : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
       if Task_Q /= null then
          Interrupt_Task (Manager, Task_Q);
@@ -164,10 +157,9 @@ package body Task_Manager is
    -- Active_Incremental --
    ------------------------
 
-   function Active_Incremental
-     (Manager : Task_Manager_Access) return Boolean
+   function Active_Incremental (Manager : Task_Manager_Access) return Boolean
    is
-      Ignore      : Boolean;
+      Ignore : Boolean;
       pragma Unreferenced (Ignore);
 
    begin
@@ -201,8 +193,7 @@ package body Task_Manager is
    -- Passive_Incremental --
    -------------------------
 
-   function Passive_Incremental
-     (Manager : Task_Manager_Access) return Boolean
+   function Passive_Incremental (Manager : Task_Manager_Access) return Boolean
    is
       Continue : Boolean;
    begin
@@ -228,8 +219,7 @@ package body Task_Manager is
    -------------------------
 
    function Execute_Incremental
-     (Manager : Task_Manager_Access;
-      Active  : Boolean) return Boolean
+     (Manager : Task_Manager_Access; Active : Boolean) return Boolean
    is
       function Free_Queue (Index : Natural) return Boolean;
       --  Free queue referenced by Queue.
@@ -240,9 +230,9 @@ package body Task_Manager is
       ----------------
 
       function Free_Queue (Index : Natural) return Boolean is
-         Queue : Task_Queue_Access := Manager.Queues (Index);
-         New_Queues : Task_Queue_Array
-           (Manager.Queues'First .. Manager.Queues'Last - 1);
+         Queue      : Task_Queue_Access := Manager.Queues (Index);
+         New_Queues :
+           Task_Queue_Array (Manager.Queues'First .. Manager.Queues'Last - 1);
       begin
          if Manager.Queues'Length = 1 then
             Unchecked_Free (Queue);
@@ -294,11 +284,11 @@ package body Task_Manager is
 
          if Active then
             First := Manager.Queues'First;
-            Last  := Manager.Passive_Index - 1;
+            Last := Manager.Passive_Index - 1;
             Previous_Prio := Manager.Minimal_Active_Priority;
          else
             First := Manager.Passive_Index;
-            Last  := Manager.Queues'Last;
+            Last := Manager.Queues'Last;
             Previous_Prio := Manager.Minimal_Passive_Priority;
          end if;
 
@@ -374,7 +364,7 @@ package body Task_Manager is
                   return Free_Queue (Index);
                end if;
 
-            when Execute_Again =>
+            when Execute_Again     =>
                null;
          end case;
 
@@ -390,17 +380,18 @@ package body Task_Manager is
    -- Run --
    ---------
 
-   procedure Run
-     (Manager : Task_Manager_Access;
-      Active  : Boolean) is
+   procedure Run (Manager : Task_Manager_Access; Active : Boolean) is
    begin
       if Manager.Passive_Handler_Id = No_Source_Id then
          --  ??? we should fix the task_manager so that it does not run
          --  iterations of the Passive loop when only Active commands
          --  are running.
-         Manager.Passive_Handler_Id := Task_Manager_Timeout.Timeout_Add
-           (Timeout, Passive_Incremental'Access, Manager,
-            Priority => Glib.Main.Priority_Default_Idle);
+         Manager.Passive_Handler_Id :=
+           Task_Manager_Timeout.Timeout_Add
+             (Timeout,
+              Passive_Incremental'Access,
+              Manager,
+              Priority => Glib.Main.Priority_Default_Idle);
       end if;
 
       if Active then
@@ -428,8 +419,8 @@ package body Task_Manager is
          --  an Active loop running. We should fix this impredictability.
          if Manager.Active_Handler_Id = No_Source_Id
 
-         --  When running an Active command, we first do one iteration
-         --  immediately, using Active_Incremental here.
+           --  When running an Active command, we first do one iteration
+           --  immediately, using Active_Incremental here.
 
            and then Active_Incremental (Manager)
          then
@@ -437,8 +428,8 @@ package body Task_Manager is
             --  If Active_Incremental returned True, it means "keep going": run
             --  the active idle loop to continue processing.
 
-            Manager.Active_Handler_Id := Task_Manager_Idle.Idle_Add
-              (Active_Incremental'Access, Manager);
+            Manager.Active_Handler_Id :=
+              Task_Manager_Idle.Idle_Add (Active_Incremental'Access, Manager);
          end if;
 
          Manager.Prevent_Active_Reentry := False;
@@ -516,8 +507,9 @@ package body Task_Manager is
          end loop;
 
          declare
-            New_Queues : Task_Queue_Array
-              (Manager.Queues'First .. Manager.Queues'Last + 1);
+            New_Queues :
+              Task_Queue_Array
+                (Manager.Queues'First .. Manager.Queues'Last + 1);
          begin
             if Active then
                New_Queues
@@ -532,8 +524,7 @@ package body Task_Manager is
                return Manager.Queues'First;
 
             else
-               New_Queues
-                 (Manager.Queues'First .. Manager.Queues'Last) :=
+               New_Queues (Manager.Queues'First .. Manager.Queues'Last) :=
                  Manager.Queues.all;
                Init (New_Queues (New_Queues'Last));
                Unchecked_Free (Manager.Queues);
@@ -550,9 +541,8 @@ package body Task_Manager is
    ---------------
 
    function Has_Queue
-     (Manager  : not null access Task_Manager_Record;
-      Queue_Id : String) return Boolean
-   is
+     (Manager : not null access Task_Manager_Record; Queue_Id : String)
+      return Boolean is
    begin
       if Manager.Queues = null then
          return False;
@@ -584,9 +574,9 @@ package body Task_Manager is
       Task_Queue : Integer;
       Status     : Queue_Status := Running;
    begin
-      Task_Queue := Get_Or_Create_Task_Queue
-        (Manager, Queue_Id, Active, Show_Bar, Block_Exit,
-         Status => Status);
+      Task_Queue :=
+        Get_Or_Create_Task_Queue
+          (Manager, Queue_Id, Active, Show_Bar, Block_Exit, Status => Status);
 
       Manager.Queues (Task_Queue).Queue.Append (Command_Access (Command));
       Manager.Queues (Task_Queue).Total :=
@@ -598,12 +588,13 @@ package body Task_Manager is
             when Success | Failure =>
                --  Can't free the command immediately, so we still queue it.
                Status := Completed;
-            when Execute_Again =>
+
+            when Execute_Again     =>
                Status := Running;
          end case;
       end if;
 
-      Run (Task_Manager_Access (Manager),  Active);
+      Run (Task_Manager_Access (Manager), Active);
    end Add_Command;
 
    -----------------------
@@ -611,8 +602,7 @@ package body Task_Manager is
    -----------------------
 
    procedure Interrupt_Queue_N
-     (Manager : not null access Task_Manager_Record;
-      Index   : Natural) is
+     (Manager : not null access Task_Manager_Record; Index : Natural) is
    begin
       if Manager.Queues = null then
          return;
@@ -676,8 +666,7 @@ package body Task_Manager is
    ---------------------
 
    procedure Interrupt_Queue
-     (Manager  : not null access Task_Manager_Record;
-      Queue_Id : String) is
+     (Manager : not null access Task_Manager_Record; Queue_Id : String) is
    begin
       if Manager.Queues = null then
          return;
@@ -699,7 +688,7 @@ package body Task_Manager is
 
    function Head
      (Manager : not null access Task_Manager_Record; Id : String)
-     return Scheduled_Command_Access is
+      return Scheduled_Command_Access is
    begin
       if Manager.Queues /= null then
          for J in Manager.Queues'Range loop
@@ -709,8 +698,9 @@ package body Task_Manager is
                if Manager.Queues (J).Queue.Is_Empty then
                   return null;
                else
-                  return Scheduled_Command_Access
-                     (Manager.Queues (J).Queue.First_Element);
+                  return
+                    Scheduled_Command_Access
+                      (Manager.Queues (J).Queue.First_Element);
                end if;
             end if;
          end loop;
@@ -723,8 +713,7 @@ package body Task_Manager is
    -- Destroy --
    -------------
 
-   procedure Destroy
-     (Manager : Task_Manager_Access) is
+   procedure Destroy (Manager : Task_Manager_Access) is
    begin
       if Manager /= null and then Manager.Queues /= null then
          Manager.Interrupt_All_Tasks;
@@ -742,8 +731,7 @@ package body Task_Manager is
    -------------------
 
    procedure Pause_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String)
+     (Manager : not null access Task_Manager_Record; Id : String)
    is
       Task_Q : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
@@ -759,8 +747,7 @@ package body Task_Manager is
    --------------------
 
    procedure Resume_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String)
+     (Manager : not null access Task_Manager_Record; Id : String)
    is
       Task_Q : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
@@ -777,14 +764,13 @@ package body Task_Manager is
    ---------------------------
 
    procedure Interrupt_Latest_Task
-      (Manager : not null access Task_Manager_Record) is
+     (Manager : not null access Task_Manager_Record) is
    begin
       if Manager.Queues /= null then
          --  Suboptimal to get the ID from the queue and then look up this
          --  queue again, but this operation should be rare.
          Interrupt_Command
-           (Manager,
-            To_String (Manager.Queues (Manager.Queues'Last).Id));
+           (Manager, To_String (Manager.Queues (Manager.Queues'Last).Id));
       end if;
    end Interrupt_Latest_Task;
 
@@ -793,7 +779,7 @@ package body Task_Manager is
    -------------------------
 
    procedure Interrupt_All_Tasks
-      (Manager : not null access Task_Manager_Record)
+     (Manager : not null access Task_Manager_Record)
    is
       Commands : constant Command_Array := Get_Scheduled_Commands (Manager);
    begin
@@ -848,14 +834,13 @@ package body Task_Manager is
 
    function Scheduled_Command_From_Command
      (Manager : not null access Task_Manager_Record;
-      Command : access Root_Command'Class)
-      return Scheduled_Command_Access is
+      Command : access Root_Command'Class) return Scheduled_Command_Access is
    begin
       if Manager.Queues /= null and then Command /= null then
          for Q of Manager.Queues.all loop
             for C of Q.Queue loop
-               if Scheduled_Command_Access (C).Get_Command =
-                 Command_Access (Command)
+               if Scheduled_Command_Access (C).Get_Command
+                 = Command_Access (Command)
                then
                   return Scheduled_Command_Access (C);
                end if;

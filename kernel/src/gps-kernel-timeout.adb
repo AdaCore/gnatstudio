@@ -15,52 +15,55 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;               use Ada, Ada.Calendar;
+with Ada.Calendar;
+use Ada, Ada.Calendar;
 with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;                     use System;
+with System; use System;
 
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Glib.Object;                use Glib.Object;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Handlers; use Gtk.Handlers;
+with Gtk.Widget;   use Gtk.Widget;
 
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.MDI;     use Gtkada.MDI;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
 
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GUI_Utils;                  use GUI_Utils;
-with String_Utils;               use String_Utils;
-with Time_Utils;                 use Time_Utils;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GUI_Utils;               use GUI_Utils;
+with String_Utils;            use String_Utils;
+with Time_Utils;              use Time_Utils;
 
 package body GPS.Kernel.Timeout is
 
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.Timeout");
-   Me_Expect : constant Trace_Handle := Create
-     ("GPS.KERNEL.TIMEOUT_EXPECT", Off);
+   Me        : constant Trace_Handle := Create ("GPS.KERNEL.Timeout");
+   Me_Expect : constant Trace_Handle :=
+     Create ("GPS.KERNEL.TIMEOUT_EXPECT", Off);
 
-   package System_Callbacks is new Gtk.Handlers.User_Return_Callback
-     (Interactive_Console_Record, Boolean, System.Address);
+   package System_Callbacks is new
+     Gtk.Handlers.User_Return_Callback
+       (Interactive_Console_Record,
+        Boolean,
+        System.Address);
 
    Id : Natural := 0;
    function Get_New_Queue_Id (QId : String) return String;
    --  Returns a new unique queue id (or use Qid if specified)
 
-   procedure Run_On_Exit
-     (Self : not null access External_Process_Data'Class);
+   procedure Run_On_Exit (Self : not null access External_Process_Data'Class);
    --  Run the On_Exit callback if not done yet.
 
    function Delete_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Data    : System.Address) return Boolean;
+     (Console : access Interactive_Console_Record'Class; Data : System.Address)
+      return Boolean;
    --  Callback for the "delete_event" event
 
    function Data_Handler
@@ -70,41 +73,41 @@ package body GPS.Kernel.Timeout is
    --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
-      Name                 : Ada.Strings.Unbounded.Unbounded_String;
-      Label                : Ada.Strings.Unbounded.Unbounded_String;
-      CL                   : Arg_List;
-      Server               : Server_Type;
+      Name   : Ada.Strings.Unbounded.Unbounded_String;
+      Label  : Ada.Strings.Unbounded.Unbounded_String;
+      CL     : Arg_List;
+      Server : Server_Type;
 
-      Delete_Id            : Gtk.Handlers.Handler_Id;
+      Delete_Id : Gtk.Handlers.Handler_Id;
       --  Signals connecting the gtk widget to the underlying process
 
-      Use_Pipes            : Boolean;
-      Show_Command         : Boolean;
-      Show_Exit_Status     : Boolean;
-      Use_Ext_Terminal     : Boolean;
-      Directory            : Virtual_File;
+      Use_Pipes        : Boolean;
+      Show_Command     : Boolean;
+      Show_Exit_Status : Boolean;
+      Use_Ext_Terminal : Boolean;
+      Directory        : Virtual_File;
 
-      Expect_Regexp        : GNAT.Expect.Pattern_Matcher_Access;
+      Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
 
-      D                    : External_Process_Data_Access;
+      D : External_Process_Data_Access;
       --  The handling of the process. This data is owned by monitoring
       --  command, unless there is a console showing the result of
       --  the command; in this case, the console may overlive the monitoring
       --  command, so the ownership belongs to the console.
 
-      Interrupted          : Boolean := False;
+      Interrupted : Boolean := False;
       --  Whether the process was interrupted by the user
 
-      Started              : Boolean := False;
+      Started : Boolean := False;
       --  Whether the process has been started
 
-      Finished             : Boolean := False;
+      Finished : Boolean := False;
       --  Whether the process has been died and Exit_Callback called
 
-      Timeout              : Integer;
+      Timeout : Integer;
       --  How many time do we wait for first output
 
-      Start_Time           : Ada.Calendar.Time;
+      Start_Time : Ada.Calendar.Time;
       --  Start time of the process
 
    end record;
@@ -114,17 +117,22 @@ package body GPS.Kernel.Timeout is
    --  the output is done, since this is assumed to be done through the call
    --  to Launch_Process already. Closing the console terminates the process.
 
-   overriding procedure Interrupt (Command : in out Monitor_Command);
-   overriding procedure Primitive_Free (Self : in out Monitor_Command);
-   overriding procedure Give_Up_Ownership (Self : in out Monitor_Command);
-   overriding function Execute
+   overriding
+   procedure Interrupt (Command : in out Monitor_Command);
+   overriding
+   procedure Primitive_Free (Self : in out Monitor_Command);
+   overriding
+   procedure Give_Up_Ownership (Self : in out Monitor_Command);
+   overriding
+   function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
-   overriding function Name (Command : access Monitor_Command) return String
-     is (Ada.Strings.Unbounded.To_String (Command.Name));
-   overriding function Get_Label (Self : access Monitor_Command) return String;
-   overriding procedure Set_Label
-     (Self : in out Monitor_Command;
-      To   : String);
+   overriding
+   function Name (Command : access Monitor_Command) return String
+   is (Ada.Strings.Unbounded.To_String (Command.Name));
+   overriding
+   function Get_Label (Self : access Monitor_Command) return String;
+   overriding
+   procedure Set_Label (Self : in out Monitor_Command; To : String);
    --  See inherited documentation
 
    procedure Remove_Progress_Info
@@ -134,17 +142,22 @@ package body GPS.Kernel.Timeout is
    --  Parse and remove progress information from Input.
    --  Returns the remaining string in Output.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Expect.Process_Descriptor'Class,
-      GNAT.Expect.Process_Descriptor_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (External_Process_Data'Class, External_Process_Data_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Monitor_Command_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, External_Process_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Expect.Process_Descriptor'Class,
+        GNAT.Expect.Process_Descriptor_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Regpat.Pattern_Matcher,
+        GNAT.Expect.Pattern_Matcher_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (External_Process_Data'Class,
+        External_Process_Data_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Monitor_Command_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, External_Process_Data_Access);
 
    procedure Cleanup (Command : not null access Monitor_Command'Class);
    --  Close the process descriptor and mark the process as terminated in the
@@ -247,7 +260,8 @@ package body GPS.Kernel.Timeout is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Command : in out Monitor_Command) is
+   overriding
+   procedure Interrupt (Command : in out Monitor_Command) is
    begin
       if Command.D.Descriptor /= null then
          Command.D.On_Before_Kill (Command'Access);
@@ -261,7 +275,8 @@ package body GPS.Kernel.Timeout is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (Self : in out Monitor_Command) is
+   overriding
+   procedure Primitive_Free (Self : in out Monitor_Command) is
       PID : GNAT.Expect.Process_Id;
    begin
       if not Self.D.Process_Died and then Self.D.Descriptor /= null then
@@ -306,17 +321,17 @@ package body GPS.Kernel.Timeout is
       Dest : External_Process_Data_Access) is
    begin
       --  Copy all data in External_Process_Data
-      Dest.Kernel             := Src.Kernel;
-      Dest.Command            := Src.Command;
-      Dest.Descriptor         := Src.Descriptor;
-      Dest.Console            := Src.Console;
-      Dest.Progress           := Src.Progress;
-      Dest.On_Exit_Run        := Src.On_Exit_Run;
-      Dest.Process_Died       := Src.Process_Died;
-      Dest.Exit_Status        := Src.Exit_Status;
-      Dest.Exit_Output        := Src.Exit_Output;
-      Dest.Strip_CR           := Src.Strip_CR;
-      Dest.Show_Output        := Src.Show_Output;
+      Dest.Kernel := Src.Kernel;
+      Dest.Command := Src.Command;
+      Dest.Descriptor := Src.Descriptor;
+      Dest.Console := Src.Console;
+      Dest.Progress := Src.Progress;
+      Dest.On_Exit_Run := Src.On_Exit_Run;
+      Dest.Process_Died := Src.Process_Died;
+      Dest.Exit_Status := Src.Exit_Status;
+      Dest.Exit_Output := Src.Exit_Output;
+      Dest.Strip_CR := Src.Strip_CR;
+      Dest.Show_Output := Src.Show_Output;
       Dest.Monitoring_Stopped := Src.Monitoring_Stopped;
    end Copy;
 
@@ -339,8 +354,8 @@ package body GPS.Kernel.Timeout is
    -- Give_Up_Ownership --
    -----------------------
 
-   overriding procedure Give_Up_Ownership (Self : in out Monitor_Command)
-   is
+   overriding
+   procedure Give_Up_Ownership (Self : in out Monitor_Command) is
       Tmp  : External_Process_Data_Access := Self.D;
       Copy : constant External_Process_Data_Access :=
         Create_Ada_Deep_Copy (Tmp);
@@ -356,8 +371,8 @@ package body GPS.Kernel.Timeout is
    -- Run_On_Exit --
    -----------------
 
-   procedure Run_On_Exit
-     (Self : not null access External_Process_Data'Class) is
+   procedure Run_On_Exit (Self : not null access External_Process_Data'Class)
+   is
    begin
       if not Self.On_Exit_Run then
          Self.On_Exit_Run := True;
@@ -378,20 +393,22 @@ package body GPS.Kernel.Timeout is
    begin
       if not Monitor.Started then
          Trace
-           (Me, "Starting the program "
+           (Me,
+            "Starting the program "
             & Ada.Strings.Unbounded.To_String (Monitor.Name));
 
          if Self.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
             Set_Command_Handler
-              (Self.Console, Data_Handler'Access,
-               Monitor.all'Address);
+              (Self.Console, Data_Handler'Access, Monitor.all'Address);
 
             Self.Console.Set_Kernel (Self.Kernel);
-            Monitor.Delete_Id := System_Callbacks.Connect
-              (Self.Console, Gtk.Widget.Signal_Delete_Event,
-               System_Callbacks.To_Marshaller (Delete_Handler'Access),
-               Monitor.D.all'Address);
+            Monitor.Delete_Id :=
+              System_Callbacks.Connect
+                (Self.Console,
+                 Gtk.Widget.Signal_Delete_Event,
+                 System_Callbacks.To_Marshaller (Delete_Handler'Access),
+                 Monitor.D.all'Address);
          end if;
 
          Monitor.Start_Time := Ada.Calendar.Clock;
@@ -430,8 +447,10 @@ package body GPS.Kernel.Timeout is
          Monitor.Started := True;
 
          if not Success then
-            Trace (Me, "Failure when spawning the process "
-                   & To_Display_String (Monitor.CL));
+            Trace
+              (Me,
+               "Failure when spawning the process "
+               & To_Display_String (Monitor.CL));
 
             --  We could not launch the process: call the Exit_Cb nonetheless,
             --  as it may be used to keep count of executions, or to free
@@ -449,9 +468,7 @@ package body GPS.Kernel.Timeout is
    ------------------------
 
    procedure Suspend_Monitoring
-     (Self    : not null access External_Process_Data'Class;
-      Suspend : Boolean)
-   is
+     (Self : not null access External_Process_Data'Class; Suspend : Boolean) is
    begin
       Self.Monitoring_Stopped := Suspend;
    end Suspend_Monitoring;
@@ -460,9 +477,9 @@ package body GPS.Kernel.Timeout is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Monitor_Command) return Command_Return_Type
-   is
+   overriding
+   function Execute
+     (Command : access Monitor_Command) return Command_Return_Type is
    begin
       if Command.D.Monitoring_Stopped then
          return Execute_Again;
@@ -476,7 +493,7 @@ package body GPS.Kernel.Timeout is
          end if;
 
       elsif Command.Finished then
-         Trace (Me, "Process finished: "  & To_Display_String (Command.CL));
+         Trace (Me, "Process finished: " & To_Display_String (Command.CL));
          return Commands.Success;
 
       else
@@ -484,17 +501,20 @@ package body GPS.Kernel.Timeout is
             Str    : Unbounded_String;
             Status : Expect_Status;
          begin
-            Status := Command.D.Expect
-              (Regexp  => Command.Expect_Regexp.all,
-               Timeout => 1,
-               Output  => Str,
-               Stop_At_First_Match => False);
+            Status :=
+              Command.D.Expect
+                (Regexp              => Command.Expect_Regexp.all,
+                 Timeout             => 1,
+                 Output              => Str,
+                 Stop_At_First_Match => False);
 
             if Status = Died then
                Trace
                  (Me,
-                  "Process died: "  & To_Display_String (Command.CL)
-                  & " (exit status:" & Integer'Image (Command.D.Exit_Status)
+                  "Process died: "
+                  & To_Display_String (Command.CL)
+                  & " (exit status:"
+                  & Integer'Image (Command.D.Exit_Status)
                   & ")");
 
                return Commands.Success;
@@ -533,24 +553,31 @@ package body GPS.Kernel.Timeout is
       end if;
 
       declare
-         End_Time      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Time_Stamp    : constant String := Timestamp (End_Time);
+         End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Time_Stamp : constant String := Timestamp (End_Time);
       begin
          if Command.Interrupted then
-            Insert (Time_Stamp &
-                    (-"<^C> process interrupted (elapsed time: ")
-                    & Elapsed (Command.Start_Time, End_Time) & "s)");
-            --  ??? elsif Data.Show_Output or else Data.Show_Command then
+            Insert
+              (Time_Stamp
+               & (-"<^C> process interrupted (elapsed time: ")
+               & Elapsed (Command.Start_Time, End_Time)
+               & "s)");
+         --  ??? elsif Data.Show_Output or else Data.Show_Command then
          elsif Command.Show_Exit_Status then
             if Command.D.Exit_Status = 0 then
-               Insert (Time_Stamp &
-                       (-"process terminated successfully (elapsed time: ")
-                       & Elapsed (Command.Start_Time, End_Time) & "s)");
+               Insert
+                 (Time_Stamp
+                  & (-"process terminated successfully (elapsed time: ")
+                  & Elapsed (Command.Start_Time, End_Time)
+                  & "s)");
             else
-               Insert (Time_Stamp
-                       & (-"process exited with status ")
-                       & Image (Command.D.Exit_Status) & " (elapsed time: "
-                       & Elapsed (Command.Start_Time, End_Time) & "s)");
+               Insert
+                 (Time_Stamp
+                  & (-"process exited with status ")
+                  & Image (Command.D.Exit_Status)
+                  & " (elapsed time: "
+                  & Elapsed (Command.Start_Time, End_Time)
+                  & "s)");
             end if;
          end if;
       end;
@@ -568,7 +595,7 @@ package body GPS.Kernel.Timeout is
      (Self : not null access External_Process_Data'Class;
       Str  : out Unbounded_String)
    is
-      Child : MDI_Child;
+      Child   : MDI_Child;
       Monitor : constant Monitor_Command_Access :=
         Monitor_Command_Access (Self.Command);
    begin
@@ -582,15 +609,12 @@ package body GPS.Kernel.Timeout is
              else Expect_Out (Self.Descriptor.all)),
             Str);
 
-         if Self.Console /= null
-           and then Self.Show_Output
-         then
+         if Self.Console /= null and then Self.Show_Output then
             Insert (Self.Console, To_String (Str), Add_LF => False);
 
             --  ??? This might be costly, we could cache this MDI
             --  Child.
-            Child := Find_MDI_Child
-              (Get_MDI (Self.Kernel), Self.Console);
+            Child := Find_MDI_Child (Get_MDI (Self.Kernel), Self.Console);
 
             if Child /= null then
                Child.Highlight_Child;
@@ -606,25 +630,22 @@ package body GPS.Kernel.Timeout is
    ------------
 
    function Expect
-     (Self    : not null access External_Process_Data'Class;
-      Regexp  : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer;
-      Output  : out Ada.Strings.Unbounded.Unbounded_String;
-      Stop_At_First_Match : Boolean := True)
-      return Expect_Status
+     (Self                : not null access External_Process_Data'Class;
+      Regexp              : GNAT.Regpat.Pattern_Matcher;
+      Timeout             : Integer;
+      Output              : out Ada.Strings.Unbounded.Unbounded_String;
+      Stop_At_First_Match : Boolean := True) return Expect_Status
    is
-      Monitor  : constant Monitor_Command_Access :=
+      Monitor      : constant Monitor_Command_Access :=
         Monitor_Command_Access (Self.Command);
-      Result   : Expect_Match;
-      Str      : Unbounded_String;
-      Status   : Expect_Status := Timed_Out;
+      Result       : Expect_Match;
+      Str          : Unbounded_String;
+      Status       : Expect_Status := Timed_Out;
       Loop_Started : Time;
    begin
       Output := Null_Unbounded_String;
 
-      if Self.Command = null
-        or else Self.Process_Died
-      then
+      if Self.Command = null or else Self.Process_Died then
          return Died;
       end if;
 
@@ -647,7 +668,7 @@ package body GPS.Kernel.Timeout is
             Monitor.Timeout := -1;
             Get_And_Process_Output (Self, Str);
             Append (Output, Str);
-            Status  := Matched;
+            Status := Matched;
 
             exit when Stop_At_First_Match;
 
@@ -662,8 +683,9 @@ package body GPS.Kernel.Timeout is
             --  global timeout), we simply close the process and give up.
 
             if Monitor.Timeout /= -1
-              and then Clock - Monitor.Start_Time >
-                Duration (Monitor.Timeout) /  1000.0
+              and then
+                Clock - Monitor.Start_Time
+                > Duration (Monitor.Timeout) / 1000.0
             then
                --  Make sure the process is killed. Just interrupting it is
                --  sometimes not enough.
@@ -775,51 +797,62 @@ package body GPS.Kernel.Timeout is
       Start_Immediately    : Boolean := False;
       Active               : Boolean := False)
    is
-      Q_Id          : constant String := Get_New_Queue_Id (Queue_Id);
-      C             : Monitor_Command_Access;
-      Wrapper       : Scheduled_Command_Access;
+      Q_Id    : constant String := Get_New_Queue_Id (Queue_Id);
+      C       : Monitor_Command_Access;
+      Wrapper : Scheduled_Command_Access;
    begin
       if GNATCOLL.Traces.Active (Me) then
-         Trace (Me, "Launch_Process " & To_Display_String (CL)
-                & " synchronous=" & Synchronous'Img);
+         Trace
+           (Me,
+            "Launch_Process "
+            & To_Display_String (CL)
+            & " synchronous="
+            & Synchronous'Img);
       end if;
 
       if not Is_Local (Server) then
-         Synchronize (Kernel_Handle (Kernel), GPS_Server, Server,
-                      Blocking      => False,
-                      Print_Command => Show_Command,
-                      Print_Output  => False,
-                      Force         => False,
-                      Queue_Id      => Q_Id);
+         Synchronize
+           (Kernel_Handle (Kernel),
+            GPS_Server,
+            Server,
+            Blocking      => False,
+            Print_Command => Show_Command,
+            Print_Output  => False,
+            Force         => False,
+            Queue_Id      => Q_Id);
       end if;
 
-      C := new Monitor_Command'
-        (Root_Command with
-         Name                 => <>,
-         Label                => <>,
-         CL                   => CL,
-         Server               => Server,
-         Use_Ext_Terminal     => Use_Ext_Terminal,
-         Directory            => Directory,
-         Delete_Id            => (Id => Null_Handler_Id, Closure => null),
-         Show_Command         => Show_Command,
-         Show_Exit_Status     => Show_Exit_Status,
-         Use_Pipes            => Use_Pipes,
-         Expect_Regexp        =>
-           (if Line_By_Line
-            then new Pattern_Matcher'(Compile ("^.*?\n"))
-            else new Pattern_Matcher'(Compile (".*$", Single_Line))),
-         D                    => null,
-         Interrupted          => False,
-         Started              => False,
-         Finished             => False,
-         Start_Time           =>
-           Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
-         Timeout              => Timeout);
+      C :=
+        new Monitor_Command'
+          (Root_Command
+           with
+             Name             => <>,
+             Label            => <>,
+             CL               => CL,
+             Server           => Server,
+             Use_Ext_Terminal => Use_Ext_Terminal,
+             Directory        => Directory,
+             Delete_Id        => (Id => Null_Handler_Id, Closure => null),
+             Show_Command     => Show_Command,
+             Show_Exit_Status => Show_Exit_Status,
+             Use_Pipes        => Use_Pipes,
+             Expect_Regexp    =>
+               (if Line_By_Line
+                then new Pattern_Matcher'(Compile ("^.*?\n"))
+                else new Pattern_Matcher'(Compile (".*$", Single_Line))),
+             D                => null,
+             Interrupted      => False,
+             Started          => False,
+             Finished         => False,
+             Start_Time       =>
+               Time_Of
+                 (Year_Number'First, Month_Number'First, Day_Number'First),
+             Timeout          => Timeout);
 
       C.Name :=
         Ada.Strings.Unbounded.To_Unbounded_String
-          (if Name_In_Task_Manager /= "" then Name_In_Task_Manager
+          (if Name_In_Task_Manager /= ""
+           then Name_In_Task_Manager
            else Get_Command (CL));
 
       if Data = null then
@@ -828,11 +861,11 @@ package body GPS.Kernel.Timeout is
          C.D := External_Process_Data_Access (Data);
       end if;
 
-      C.D.Kernel      := Kernel;
-      C.D.Command     := Command_Access (C);
-      C.D.Console     := Console;
+      C.D.Kernel := Kernel;
+      C.D.Command := Command_Access (C);
+      C.D.Console := Console;
       C.D.Show_Output := Show_Output;
-      C.D.Strip_CR    := Strip_CR;
+      C.D.Strip_CR := Strip_CR;
 
       Wrapper := Create_Wrapper (Command => C);
 
@@ -842,23 +875,27 @@ package body GPS.Kernel.Timeout is
          Scheduled := null;
       else
          --   ??? A scheduled command that wraps a scheduled command
-         Scheduled := Launch_Background_Command
-           (Kernel,
-            Command_Access (Wrapper),
-            Active            => Active,
-            Start_Immediately => Start_Immediately,
-            Show_Bar          => Show_In_Task_Manager,
-            Queue_Id          => Q_Id,
-            Block_Exit        => Block_Exit);
+         Scheduled :=
+           Launch_Background_Command
+             (Kernel,
+              Command_Access (Wrapper),
+              Active            => Active,
+              Start_Immediately => Start_Immediately,
+              Show_Bar          => Show_In_Task_Manager,
+              Queue_Id          => Q_Id,
+              Block_Exit        => Block_Exit);
       end if;
 
       if not Is_Local (Server) then
-         Synchronize (Kernel_Handle (Kernel), Server, GPS_Server,
-                      Blocking      => False,
-                      Print_Command => Show_Command,
-                      Print_Output  => False,
-                      Force         => False,
-                      Queue_Id      => Q_Id);
+         Synchronize
+           (Kernel_Handle (Kernel),
+            Server,
+            GPS_Server,
+            Blocking      => False,
+            Print_Command => Show_Command,
+            Print_Output  => False,
+            Force         => False,
+            Queue_Id      => Q_Id);
       end if;
 
       Success := True;
@@ -875,8 +912,8 @@ package body GPS.Kernel.Timeout is
    --------------------
 
    function Delete_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Data    : System.Address) return Boolean
+     (Console : access Interactive_Console_Record'Class; Data : System.Address)
+      return Boolean
    is
       D      : constant External_Process_Data_Access := Convert (Data);
       Button : Message_Dialog_Buttons;
@@ -885,13 +922,15 @@ package body GPS.Kernel.Timeout is
          return False;
       end if;
 
-      Button := GPS_Message_Dialog
-        (-"The process attached to this window" & ASCII.LF
-          & (-"is still active, do you want to kill it ?"),
-         Confirmation,
-         Button_Yes or Button_No,
-         Button_Yes,
-         Parent => Console.Kernel.Get_Main_Window);
+      Button :=
+        GPS_Message_Dialog
+          (-"The process attached to this window"
+           & ASCII.LF
+           & (-"is still active, do you want to kill it ?"),
+           Confirmation,
+           Button_Yes or Button_No,
+           Button_Yes,
+           Parent => Console.Kernel.Get_Main_Window);
 
       if Button = Button_Yes then
          --  The console is about to be destroyed: avoid dangling pointer.
@@ -928,7 +967,7 @@ package body GPS.Kernel.Timeout is
          Self.Progress.Regexp :=
            new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
          Self.Progress.Current := Group_For_Current;
-         Self.Progress.Final   := Group_For_Total;
+         Self.Progress.Final := Group_For_Total;
       end if;
    end Set_Progress_Regexp;
 
@@ -941,8 +980,8 @@ package body GPS.Kernel.Timeout is
       Input  : String;
       Output : out Unbounded_String)
    is
-      Matches : Match_Array (0 .. Max_Paren_Count);
-      Index   : Natural := Input'First;
+      Matches        : Match_Array (0 .. Max_Paren_Count);
+      Index          : Natural := Input'First;
       Current, Final : Natural;
    begin
       if Self.D.Progress.Regexp = null then
@@ -966,19 +1005,21 @@ package body GPS.Kernel.Timeout is
 
          Append (Output, Input (Index .. Matches (0).First - 1));
 
-         Current := Safe_Value
-           (Input (Matches (Self.D.Progress.Current).First ..
-                   Matches (Self.D.Progress.Current).Last));
-         Final := Safe_Value
-           (Input (Matches (Self.D.Progress.Final).First ..
-                   Matches (Self.D.Progress.Final).Last));
+         Current :=
+           Safe_Value
+             (Input
+                (Matches (Self.D.Progress.Current).First
+                 .. Matches (Self.D.Progress.Current).Last));
+         Final :=
+           Safe_Value
+             (Input
+                (Matches (Self.D.Progress.Final).First
+                 .. Matches (Self.D.Progress.Final).Last));
 
          Set_Progress
            (Self,
             Progress_Record'
-              (Activity => Running,
-               Current  => Current,
-               Total    => Final));
+              (Activity => Running, Current => Current, Total => Final));
 
          --  Avoid infinite loop when matching empty strings
          Index := Natural'Max (Index + 1, Matches (0).Last + 1);
@@ -989,22 +1030,22 @@ package body GPS.Kernel.Timeout is
    -- Label --
    -----------
 
-   overriding function Get_Label
-     (Self : access Monitor_Command) return String is
+   overriding
+   function Get_Label (Self : access Monitor_Command) return String is
    begin
       return
         Ada.Strings.Unbounded.To_String
           (if Self.Label = Ada.Strings.Unbounded.Null_Unbounded_String
-           then Self.Name else Self.Label);
+           then Self.Name
+           else Self.Label);
    end Get_Label;
 
    ---------------
    -- Set_Label --
    ---------------
 
-   overriding procedure Set_Label
-     (Self : in out Monitor_Command;
-      To   : String) is
+   overriding
+   procedure Set_Label (Self : in out Monitor_Command; To : String) is
    begin
       Self.Label := Ada.Strings.Unbounded.To_Unbounded_String (To);
    end Set_Label;

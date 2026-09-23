@@ -18,27 +18,28 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 
-with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with Glib.Convert;            use Glib.Convert;
+with Glib.Convert; use Glib.Convert;
 
-with Case_Handling.IO;        use Case_Handling.IO;
-with Commands.Interactive;    use Commands, Commands.Interactive;
-with GPS.Editors;             use GPS.Editors;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Src_Editor_Module;       use Src_Editor_Module;
-with String_Utils;            use String_Utils;
-with UTF8_Utils;              use UTF8_Utils;
+with Case_Handling.IO;      use Case_Handling.IO;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with GPS.Editors;           use GPS.Editors;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
+with Src_Editor_Module;     use Src_Editor_Module;
+with String_Utils;          use String_Utils;
+with UTF8_Utils;            use UTF8_Utils;
 
 package body Casing_Exceptions is
    Case_Exceptions_Filename : constant Filesystem_String :=
-                                "case_exceptions.xml";
+     "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
       Casing_Exceptions_Table : Case_Handling.Casing_Exceptions;
@@ -58,50 +59,56 @@ package body Casing_Exceptions is
       Casing : Casing_Type;
    end record;
    type Contextual_Label is access all Contextual_Label_Record'Class;
-   overriding function Get_Label
-     (Creator : access Contextual_Label_Record;
-      Context : Selection_Context) return String;
+   overriding
+   function Get_Label
+     (Creator : access Contextual_Label_Record; Context : Selection_Context)
+      return String;
 
-   overriding function Get_Path
-     (Creator : access Contextual_Label_Record) return String;
+   overriding
+   function Get_Path (Creator : access Contextual_Label_Record) return String;
 
-   type Change_Case_Command (Casing : Casing_Type) is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Change_Case_Command (Casing : Casing_Type) is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Add_Exception_Command (Substring, Remove : Boolean) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Substring_Filter_Record is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Substring_Filter_Record;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Substring_Filter_Record; Context : Selection_Context)
+      return Boolean;
 
    type Empty_Filter_Record is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Empty_Filter_Record;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Empty_Filter_Record; Context : Selection_Context)
+      return Boolean;
 
    type RW_Filter_Record is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access RW_Filter_Record;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access RW_Filter_Record; Context : Selection_Context)
+      return Boolean;
 
    -----------------
    -- Subprograms --
    -----------------
 
-   overriding procedure Destroy (Id : in out Casing_Module_Record);
+   overriding
+   procedure Destroy (Id : in out Casing_Module_Record);
    --  Terminate the module and save the casing exceptions on file
 
-   procedure Set_Casing
-     (Context  : Selection_Context;
-      New_Name : String);
+   procedure Set_Casing (Context : Selection_Context; New_Name : String);
    --  Function used by the following callbacks to set the casing
 
    -------------------
@@ -157,23 +164,15 @@ package body Casing_Exceptions is
    -- Set_Casing --
    ----------------
 
-   procedure Set_Casing
-     (Context  : Selection_Context;
-      New_Name : String)
-   is
-      procedure Set_Casing
-        (File         : Virtual_File;
-         Line, Column : Integer);
+   procedure Set_Casing (Context : Selection_Context; New_Name : String) is
+      procedure Set_Casing (File : Virtual_File; Line, Column : Integer);
       --  Replace test starting at Line:Column with New_Name
 
       ----------------
       -- Set_Casing --
       ----------------
 
-      procedure Set_Casing
-        (File         : Virtual_File;
-         Line, Column : Integer)
-      is
+      procedure Set_Casing (File : Virtual_File; Line, Column : Integer) is
          CL : Arg_List;
       begin
          CL := Create ("Editor.replace_text");
@@ -250,9 +249,10 @@ package body Casing_Exceptions is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
-     (Creator : access Contextual_Label_Record;
-      Context : Selection_Context) return String
+   overriding
+   function Get_Label
+     (Creator : access Contextual_Label_Record; Context : Selection_Context)
+      return String
    is
       function Get_Label (Str : String) return String;
       --  Returns the label for the given string (Entity or Area)
@@ -271,18 +271,22 @@ package body Casing_Exceptions is
          end if;
 
          case Creator.Casing is
-            when Lower =>
-               return "Casing/Lower " &
-                 Escape_Text (Set_Case (No_Casing_Exception, Name, Lower));
-            when Upper =>
-               return "Casing/Upper " &
-                 Escape_Text (Set_Case (No_Casing_Exception, Name, Upper));
-            when Mixed =>
-               return "Casing/Mixed " &
-                 Escape_Text (Mixed_Case (Name, False));
+            when Lower       =>
+               return
+                 "Casing/Lower "
+                 & Escape_Text (Set_Case (No_Casing_Exception, Name, Lower));
+
+            when Upper       =>
+               return
+                 "Casing/Upper "
+                 & Escape_Text (Set_Case (No_Casing_Exception, Name, Upper));
+
+            when Mixed       =>
+               return "Casing/Mixed " & Escape_Text (Mixed_Case (Name, False));
+
             when Smart_Mixed =>
-               return "Casing/Smart Mixed " &
-                 Escape_Text (Mixed_Case (Name, True));
+               return
+                 "Casing/Smart Mixed " & Escape_Text (Mixed_Case (Name, True));
          end case;
       end Get_Label;
 
@@ -300,16 +304,20 @@ package body Casing_Exceptions is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
-     (Creator : access Contextual_Label_Record) return String is
+   overriding
+   function Get_Path (Creator : access Contextual_Label_Record) return String
+   is
    begin
       case Creator.Casing is
-         when Lower =>
+         when Lower       =>
             return "Casing/Lower";
-         when Upper =>
+
+         when Upper       =>
             return "Casing/Upper";
-         when Mixed =>
+
+         when Mixed       =>
             return "Casing/Mixed";
+
          when Smart_Mixed =>
             return "Casing/Smart Mixed";
       end case;
@@ -319,7 +327,8 @@ package body Casing_Exceptions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -335,10 +344,13 @@ package body Casing_Exceptions is
          case Command.Casing is
             when Upper       =>
                Set_Casing (Context.Context, To_Upper (Str));
+
             when Lower       =>
                Set_Casing (Context.Context, To_Lower (Str));
+
             when Mixed       =>
                Set_Casing (Context.Context, Mixed_Case (Str, False));
+
             when Smart_Mixed =>
                Set_Casing (Context.Context, Mixed_Case (Str, True));
          end case;
@@ -358,7 +370,8 @@ package body Casing_Exceptions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -382,9 +395,9 @@ package body Casing_Exceptions is
 
       Name     : constant String := Get_Name;
       Filename : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_Home_Dir (Get_Kernel (Context.Context)),
-                      Case_Exceptions_Filename);
+        Create_From_Dir
+          (Get_Home_Dir (Get_Kernel (Context.Context)),
+           Case_Exceptions_Filename);
       Success  : Boolean;
 
    begin
@@ -418,9 +431,10 @@ package body Casing_Exceptions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Substring_Filter_Record;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Substring_Filter_Record; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
@@ -431,27 +445,25 @@ package body Casing_Exceptions is
 
       elsif Has_Area_Information (Context) then
          declare
-            File      : constant Virtual_File :=
-                          File_Information (Context);
+            File      : constant Virtual_File := File_Information (Context);
             Area      : constant String := Text_Information (Context);
             W_Seps    : constant Character_Set :=
-                          To_Set (" ;.:=(),/'#*+-""><&" &
-                                  ASCII.HT & ASCII.CR & ASCII.LF);
+              To_Set (" ;.:=(),/'#*+-""><&" & ASCII.HT & ASCII.CR & ASCII.LF);
             Editor    : constant Editor_Buffer'Class :=
-                          Kernel.Get_Buffer_Factory.Get (File);
+              Kernel.Get_Buffer_Factory.Get (File);
             Loc_Start : constant Editor_Location'Class :=
-                          Editor.New_Location
-                            (Line_Information (Context),
-                             Column_Information (Context)).Forward_Char (-1);
+              Editor.New_Location
+                (Line_Information (Context), Column_Information (Context))
+                .Forward_Char (-1);
             Loc_End   : constant Editor_Location'Class :=
-                          Editor.New_Location
-                            (Line_Information (Context),
-                             Column_Information
-                               (Context)).Forward_Char (Area'Length);
+              Editor.New_Location
+                (Line_Information (Context), Column_Information (Context))
+                .Forward_Char (Area'Length);
             Text      : constant String :=
-                          Editor.Get_Chars_S (Loc_Start, Loc_End);
+              Editor.Get_Chars_S (Loc_Start, Loc_End);
          begin
-            return Text'Length <= 1
+            return
+              Text'Length <= 1
               or else not Is_In (Text (Text'First), W_Seps)
               or else not Is_In (Text (Text'Last), W_Seps);
          end;
@@ -459,9 +471,10 @@ package body Casing_Exceptions is
       return False;
    end Filter_Matches_Primitive;
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Empty_Filter_Record;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Empty_Filter_Record; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
    begin
@@ -477,19 +490,19 @@ package body Casing_Exceptions is
       end if;
    end Filter_Matches_Primitive;
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access RW_Filter_Record;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access RW_Filter_Record; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Has_File_Information (Context) then
          declare
-            File   : constant Virtual_File :=
-                       File_Information (Context);
+            File   : constant Virtual_File := File_Information (Context);
             Editor : constant Editor_Buffer'Class :=
-                       Kernel.Get_Buffer_Factory.Get (File);
+              Kernel.Get_Buffer_Factory.Get (File);
          begin
             return not Editor.Is_Read_Only;
          end;
@@ -536,7 +549,7 @@ package body Casing_Exceptions is
          Filter => Filter,
          Group  => Editing_Contextual_Group);
 
-      Label   := new Contextual_Label_Record;
+      Label := new Contextual_Label_Record;
       Label.Casing := Lower;
       Register_Action
         (Kernel,
@@ -544,14 +557,12 @@ package body Casing_Exceptions is
          Command     => new Change_Case_Command (Lower),
          Description =>
            "Change the casing of the selected entity to lower case",
-         Filter    => RW_Filter,
-         Category  => -"Editor");
+         Filter      => RW_Filter,
+         Category    => -"Editor");
       Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "lower case entity");
+        (Kernel, Label => Label, Action => "lower case entity");
 
-      Label   := new Contextual_Label_Record;
+      Label := new Contextual_Label_Record;
       Label.Casing := Upper;
       Register_Action
         (Kernel,
@@ -559,14 +570,12 @@ package body Casing_Exceptions is
          Command     => new Change_Case_Command (Upper),
          Description =>
            "Change the casing of the selected entity to upper case",
-         Filter    => RW_Filter,
-         Category  => -"Editor");
+         Filter      => RW_Filter,
+         Category    => -"Editor");
       Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "upper case entity");
+        (Kernel, Label => Label, Action => "upper case entity");
 
-      Label   := new Contextual_Label_Record;
+      Label := new Contextual_Label_Record;
       Label.Casing := Mixed;
       Register_Action
         (Kernel,
@@ -574,14 +583,12 @@ package body Casing_Exceptions is
          Command     => new Change_Case_Command (Mixed),
          Description =>
            "Change the casing of the selected entity to mixed case",
-         Filter    => RW_Filter,
-         Category  => -"Editor");
+         Filter      => RW_Filter,
+         Category    => -"Editor");
       Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "mixed case entity");
+        (Kernel, Label => Label, Action => "mixed case entity");
 
-      Label   := new Contextual_Label_Record;
+      Label := new Contextual_Label_Record;
       Label.Casing := Smart_Mixed;
       Register_Action
         (Kernel,
@@ -589,12 +596,10 @@ package body Casing_Exceptions is
          Command     => new Change_Case_Command (Smart_Mixed),
          Description =>
            "Change the casing of the selected entity to smart mixed case",
-         Filter    => RW_Filter,
-         Category  => -"Editor");
+         Filter      => RW_Filter,
+         Category    => -"Editor");
       Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "smart mixed case entity");
+        (Kernel, Label => Label, Action => "smart mixed case entity");
 
       F := Filter and Substring_Filter;
 
@@ -605,8 +610,8 @@ package body Casing_Exceptions is
          Description =>
            "Register a special case for the casing algoritm. All occurrences"
            & " of this substring will use the given casing from now on",
-         Filter    => F,
-         Category  => -"Editor");
+         Filter      => F,
+         Category    => -"Editor");
       Register_Contextual_Menu
         (Kernel,
          Label  => -"Casing/Add substring exception for %s",
@@ -619,8 +624,8 @@ package body Casing_Exceptions is
          Description =>
            "Remove a casing exception created via"
            & " 'add substring casing exception'",
-         Filter    => F,
-         Category  => -"Editor");
+         Filter      => F,
+         Category    => -"Editor");
       Register_Contextual_Menu
         (Kernel,
          Label  => -"Casing/Remove substring exception for %s",
@@ -634,9 +639,9 @@ package body Casing_Exceptions is
          Command     => new Add_Exception_Command (False, Remove => False),
          Description =>
            "Register a special case for the casing algoritm. All occurrences"
-         & " of this word will use the given casing from now on",
-         Filter    => F,
-         Category  => -"Editor");
+           & " of this word will use the given casing from now on",
+         Filter      => F,
+         Category    => -"Editor");
       Register_Contextual_Menu
         (Kernel,
          Label  => -"Casing/Add exception for %s",
@@ -648,8 +653,8 @@ package body Casing_Exceptions is
          Command     => new Add_Exception_Command (False, Remove => True),
          Description =>
            "Remove a casing exception created via 'add casing exception'",
-         Filter    => F,
-         Category  => -"Editor");
+         Filter      => F,
+         Category    => -"Editor");
       Register_Contextual_Menu
         (Kernel,
          Label  => -"Casing/Remove exception for %s",
@@ -660,7 +665,8 @@ package body Casing_Exceptions is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out Casing_Module_Record) is
+   overriding
+   procedure Destroy (Id : in out Casing_Module_Record) is
    begin
       Destroy (Id.Casing_Exceptions_Table);
    end Destroy;

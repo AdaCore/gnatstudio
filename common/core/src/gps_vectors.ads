@@ -25,7 +25,8 @@ generic
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free any dynamic memory associated with Data
 
-package GPS_Vectors is
+package GPS_Vectors
+is
 
    pragma Suppress (Container_Checks);
    package Std_Vectors is new Ada.Containers.Vectors (Positive, Data_Type);
@@ -33,25 +34,28 @@ package GPS_Vectors is
 
    type Vector is new Std_Vectors.Vector with null record;
 
-   overriding procedure Clear (Container : in out Vector);
+   overriding
+   procedure Clear (Container : in out Vector);
 
-   overriding procedure Delete
+   overriding
+   procedure Delete
      (Container : in out Vector;
       Index     : Extended_Index;
       Count     : Ada.Containers.Count_Type := 1);
 
-   overriding procedure Delete
+   overriding
+   procedure Delete
      (Container : in out Vector;
       Position  : in out Cursor;
       Count     : Ada.Containers.Count_Type := 1);
 
-   overriding procedure Delete_First
-     (Container : in out Vector;
-      Count     : Ada.Containers.Count_Type := 1);
+   overriding
+   procedure Delete_First
+     (Container : in out Vector; Count : Ada.Containers.Count_Type := 1);
 
-   overriding procedure Delete_Last
-     (Container : in out Vector;
-      Count     : Ada.Containers.Count_Type := 1);
+   overriding
+   procedure Delete_Last
+     (Container : in out Vector; Count : Ada.Containers.Count_Type := 1);
 
    Empty_Vector : constant Vector;
 

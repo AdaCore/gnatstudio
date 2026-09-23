@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;                   use System;
+with System;             use System;
 with Ada.Unchecked_Conversion;
-with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
 package body Toolchains_Old is
 
    type Toolchains_Property_Record is record
-      Active        : Boolean      := False;
+      Active        : Boolean := False;
       Tools_Path    : Virtual_File := No_File;
       Compiler_Path : Virtual_File := No_File;
    end record;
@@ -30,8 +30,8 @@ package body Toolchains_Old is
    Property : Toolchains_Property_Record;
 
    function Internal_Locate_Exec
-     (Exec_Name  : Filesystem_String;
-      Extra_Path : Virtual_File) return Virtual_File;
+     (Exec_Name : Filesystem_String; Extra_Path : Virtual_File)
+      return Virtual_File;
    --  Try to retrieve Exec_Name from Extra_Path. If not found, try to retrieve
    --  it from the regular path
 
@@ -46,7 +46,7 @@ package body Toolchains_Old is
    begin
       Property.Active := Active;
 
-      Property.Tools_Path    := Tool_Search_Path;
+      Property.Tools_Path := Tool_Search_Path;
       Property.Compiler_Path := Compiler_Search_Path;
    end Set_Toolchains_Properties;
 
@@ -90,11 +90,10 @@ package body Toolchains_Old is
    -----------------
 
    function Locate_Exec
-     (Exec_Name : Filesystem_String;
-      Path      : File_Array) return Virtual_File
+     (Exec_Name : Filesystem_String; Path : File_Array) return Virtual_File
    is
-      function Internal (C_Exec, C_Path : System.Address)
-                         return System.Address;
+      function Internal
+        (C_Exec, C_Path : System.Address) return System.Address;
       pragma Import (C, Internal, "__gnat_locate_exec");
 
       procedure Free (Ptr : System.Address);
@@ -123,13 +122,15 @@ package body Toolchains_Old is
       else
          declare
             subtype Path_String is String (1 .. C_Ret_Len);
-            type    Path_String_Access is access Path_String;
+            type Path_String_Access is access Path_String;
 
-            function Address_To_Access is new Ada.Unchecked_Conversion
-              (Source => Address, Target => Path_String_Access);
+            function Address_To_Access is new
+              Ada.Unchecked_Conversion
+                (Source => Address,
+                 Target => Path_String_Access);
 
             Path_Access : constant Path_String_Access :=
-                            Address_To_Access (C_Ret);
+              Address_To_Access (C_Ret);
          begin
             Result := new Filesystem_String (1 .. C_Ret_Len);
 
@@ -144,7 +145,7 @@ package body Toolchains_Old is
 
          declare
             Absolute_Path : constant Filesystem_String :=
-                              Normalize_Pathname (Result.all);
+              Normalize_Pathname (Result.all);
          begin
             Free (Result);
             return Create (Absolute_Path);
@@ -157,8 +158,8 @@ package body Toolchains_Old is
    --------------------------
 
    function Internal_Locate_Exec
-     (Exec_Name  : Filesystem_String;
-      Extra_Path : Virtual_File) return Virtual_File
+     (Exec_Name : Filesystem_String; Extra_Path : Virtual_File)
+      return Virtual_File
    is
       Ret : Virtual_File;
    begin
@@ -176,8 +177,7 @@ package body Toolchains_Old is
    ----------------------------
 
    function Locate_Tool_Executable
-     (Exec_Name : Filesystem_String) return Virtual_File
-   is
+     (Exec_Name : Filesystem_String) return Virtual_File is
    begin
       if not Property.Active or else Property.Tools_Path = No_File then
          return Locate_On_Path (Exec_Name);
@@ -191,8 +191,7 @@ package body Toolchains_Old is
    --------------------------------
 
    function Locate_Compiler_Executable
-     (Exec_Name : Filesystem_String) return Virtual_File
-   is
+     (Exec_Name : Filesystem_String) return Virtual_File is
    begin
       if not Property.Active or else Property.Compiler_Path = No_File then
          return Locate_On_Path (Exec_Name);

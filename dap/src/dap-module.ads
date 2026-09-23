@@ -18,7 +18,7 @@
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 with DAP.Clients;
 
@@ -45,8 +45,7 @@ package DAP.Module is
       Executable_Args : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Load_Executable : Boolean := False)
-      return DAP.Clients.DAP_Client_Access;
+      Load_Executable : Boolean := False) return DAP.Clients.DAP_Client_Access;
    --  Initialize a DAP debugging session.
    --  File and Project are used to refer to the executable we want to debug.
    --  When not specified, the debugger will start without any executable to
@@ -75,8 +74,7 @@ package DAP.Module is
    --  Set the current debugger.
 
    function Get_Debugger
-     (Id : Client_Id_Type)
-      return DAP.Clients.DAP_Client_Access;
+     (Id : Client_Id_Type) return DAP.Clients.DAP_Client_Access;
    --  Return the debugger associated with the given Id.
 
    function Count_Running_Debuggers return Natural;

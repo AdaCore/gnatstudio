@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
@@ -25,77 +25,78 @@ with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 
 with GNATCOLL.Python.State;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Basic_Types;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;          use GPS.Kernel.Project;
-with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
-with Gtkada.Handlers;             use Gtkada.Handlers;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
 package body VCS2.Engines is
    Me : constant Trace_Handle := Create ("GPS.VCS.ENGINES");
 
-   Default_Display_No_VCS : constant Status_Display :=
+   Default_Display_No_VCS                   : constant Status_Display :=
      (Label     => To_Unbounded_String ("No VCS"),
       Icon_Name => To_Unbounded_String (""));
-   Default_Display_Unmodified : constant Status_Display :=
+   Default_Display_Unmodified               : constant Status_Display :=
      (Label     => To_Unbounded_String ("Up to date"),
       Icon_Name => To_Unbounded_String ("vcs-up-to-date"));
-   Default_Display_Modified : constant Status_Display :=
+   Default_Display_Modified                 : constant Status_Display :=
      (Label     => To_Unbounded_String ("Modified"),
       Icon_Name => To_Unbounded_String ("vcs-modified"));
-   Default_Display_Deleted  : constant Status_Display :=
+   Default_Display_Deleted                  : constant Status_Display :=
      (Label     => To_Unbounded_String ("Removed"),
       Icon_Name => To_Unbounded_String ("vcs-removed"));
-   Default_Display_Deleted_Staged : constant Status_Display :=
+   Default_Display_Deleted_Staged           : constant Status_Display :=
      (Label     => To_Unbounded_String ("Deleted (staged)"),
       Icon_Name => To_Unbounded_String ("vcs-removed-staged"));
-   Default_Display_Ignored : constant Status_Display :=
+   Default_Display_Ignored                  : constant Status_Display :=
      (Label     => To_Unbounded_String ("Ignored"),
       Icon_Name => To_Unbounded_String ("vcs-ignored"));
-   Default_Display_Untracked : constant Status_Display :=
+   Default_Display_Untracked                : constant Status_Display :=
      (Label     => To_Unbounded_String ("Untracked"),
       Icon_Name => To_Unbounded_String ("vcs-untracked"));
-   Default_Display_Added : constant Status_Display :=
+   Default_Display_Added                    : constant Status_Display :=
      (Label     => To_Unbounded_String ("Added"),
       Icon_Name => To_Unbounded_String ("vcs-added"));
-   Default_Display_Modified_Staged : constant Status_Display :=
+   Default_Display_Modified_Staged          : constant Status_Display :=
      (Label     => To_Unbounded_String ("Modified (staged)"),
       Icon_Name => To_Unbounded_String ("vcs-modified-staged"));
    Default_Display_Modified_Staged_Unstaged : constant Status_Display :=
      (Label     => To_Unbounded_String ("Modified (staged and unstaged)"),
       Icon_Name => To_Unbounded_String ("vcs-modified-staged-unstaged"));
-   Default_Display_Conflict : constant Status_Display :=
+   Default_Display_Conflict                 : constant Status_Display :=
      (Label     => To_Unbounded_String ("Conflict"),
       Icon_Name => To_Unbounded_String ("vcs-has-conflicts"));
-   Default_Display_Needs_Update : constant Status_Display :=
+   Default_Display_Needs_Update             : constant Status_Display :=
      (Label     => To_Unbounded_String ("Needs update"),
       Icon_Name => To_Unbounded_String ("vcs-needs-update"));
-   Default_Display_Needs_Merge : constant Status_Display :=
+   Default_Display_Needs_Merge              : constant Status_Display :=
      (Label     => To_Unbounded_String ("Needs merge"),
       Icon_Name => To_Unbounded_String ("vcs-needs-merge"));
 
-   package Project_To_Engine is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => VCS_Engine_Access,
-      Hash            => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Keys => "=");
+   package Project_To_Engine is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Virtual_File,
+        Element_Type    => VCS_Engine_Access,
+        Hash            => GNATCOLL.VFS.Full_Name_Hash,
+        Equivalent_Keys => "=");
    use Project_To_Engine;
 
-   package Engine_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type    => VCS_Engine_Access);
+   package Engine_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Element_Type => VCS_Engine_Access);
 
-   package Name_To_Factory is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => VCS_Engine_Factory_Access,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Name_To_Factory is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => VCS_Engine_Factory_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
    use Name_To_Factory;
 
    function Get_VCS_Factory
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Name     : String)
+     (Kernel : not null access Kernel_Handle_Record'Class; Name : String)
       return access VCS_Engine_Factory'Class;
    --  Return an engine for the given system (or null)
 
@@ -104,47 +105,59 @@ package body VCS2.Engines is
       Location : Virtual_File;
       Engine   : not null VCS_Engine_Access);
    function Get_VCS
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Location : Virtual_File)
-      return not null VCS_Engine_Access;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Location : Virtual_File) return not null VCS_Engine_Access;
 
    type Dummy_VCS_Engine is new VCS_Engine with null record;
-   overriding function Name
-     (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
-   overriding function User_Name
-     (Self : not null access Dummy_VCS_Engine) return String is ("");
-   overriding procedure Ensure_Status_For_Files
-     (Self      : not null access Dummy_VCS_Engine;
-      Files     : File_Array;
-      Visitor   : Task_Visitor_Access := null) is null;
-   overriding procedure Ensure_Status_For_Project
-     (Self      : not null access Dummy_VCS_Engine;
-      Project   : Project_Type;
-      Visitor   : Task_Visitor_Access := null) is null;
-   overriding procedure Ensure_Status_For_All_Source_Files
+   overriding
+   function Name (Self : not null access Dummy_VCS_Engine) return String
+   is ("unknown");
+   overriding
+   function User_Name (Self : not null access Dummy_VCS_Engine) return String
+   is ("");
+   overriding
+   procedure Ensure_Status_For_Files
+     (Self    : not null access Dummy_VCS_Engine;
+      Files   : File_Array;
+      Visitor : Task_Visitor_Access := null)
+   is null;
+   overriding
+   procedure Ensure_Status_For_Project
+     (Self    : not null access Dummy_VCS_Engine;
+      Project : Project_Type;
+      Visitor : Task_Visitor_Access := null)
+   is null;
+   overriding
+   procedure Ensure_Status_For_All_Source_Files
      (Self      : not null access Dummy_VCS_Engine;
       Visitor   : Task_Visitor_Access := null;
-      From_User : Boolean) is null;
-   overriding function File_Properties_From_Cache
-     (Self       : not null access Dummy_VCS_Engine;
-      Dummy_File : Virtual_File) return VCS_File_Properties
-     is ((Status_No_VCS, Null_Unbounded_String, Null_Unbounded_String));
-   overriding procedure Stage_Or_Unstage_Files
-     (Self    : not null access Dummy_VCS_Engine;
-      Files   : GNATCOLL.VFS.File_Array;
-      Stage   : Boolean) is null;
-   overriding procedure Async_Commit_Staged_Files
+      From_User : Boolean)
+   is null;
+   overriding
+   function File_Properties_From_Cache
+     (Self : not null access Dummy_VCS_Engine; Dummy_File : Virtual_File)
+      return VCS_File_Properties
+   is ((Status_No_VCS, Null_Unbounded_String, Null_Unbounded_String));
+   overriding
+   procedure Stage_Or_Unstage_Files
+     (Self  : not null access Dummy_VCS_Engine;
+      Files : GNATCOLL.VFS.File_Array;
+      Stage : Boolean)
+   is null;
+   overriding
+   procedure Async_Commit_Staged_Files
      (Self    : not null access Dummy_VCS_Engine;
       Visitor : not null access Task_Visitor'Class;
-      Message : String) is null;
+      Message : String)
+   is null;
 
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
 
-   type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
-      record
-         Kernel : Kernel_Handle;
-      end record;
+   type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record
+   with record
+      Kernel : Kernel_Handle;
+   end record;
    type Kernel_Combo_Tool is access all Kernel_Combo_Tool_Record'Class;
 
    type Kernel_Data is record
@@ -154,7 +167,7 @@ package body VCS2.Engines is
       No_VCS_Engine : VCS_Engine_Access := new Dummy_VCS_Engine;
       VCS_Selector  : Kernel_Combo_Tool;
 
-      Active_VCS    : VCS_Engine_Access := null;
+      Active_VCS : VCS_Engine_Access := null;
       --  See the function Active_VCS
 
    end record;
@@ -162,16 +175,17 @@ package body VCS2.Engines is
    --  Data that will be stored in the kernel, once VCS2 is integrated.
    --  Not done yet to limit the amount of recompiling
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (VCS_Engine'Class, VCS_Engine_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (VCS_Engine_Factory'Class, VCS_Engine_Factory_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (VCS_Command'Class, VCS_Command_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (VCS_Engine'Class, VCS_Engine_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (VCS_Engine_Factory'Class,
+        VCS_Engine_Factory_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (VCS_Command'Class, VCS_Command_Access);
 
    function Need_Update_For_Files
-     (Self    : not null access VCS_Engine'Class;
-      Sources : File_Array)
+     (Self : not null access VCS_Engine'Class; Sources : File_Array)
       return Boolean;
    --  Return True if any of the files in Sources needs an update of its status
    --  in the cache.
@@ -179,40 +193,43 @@ package body VCS2.Engines is
    --  Ensure_Status_* do not result in multiple parallel computation of the
    --  status.
 
-   package Engine_Sources is new Glib.Main.Generic_Sources
-     (VCS_Engine_Access);
+   package Engine_Sources is new Glib.Main.Generic_Sources (VCS_Engine_Access);
    function On_Idle_Start_Queue (VCS : VCS_Engine_Access) return Boolean;
    --  Execute the next command in the queue after a short idle.
 
-   type Cmd_Ensure_Status_For_Files (Size : Natural) is
-      new VCS_Command with record
-         Files : File_Array (1 .. Size);
-      end record;
-   overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_Files;
-       VCS  : not null access VCS_Engine'Class);
+   type Cmd_Ensure_Status_For_Files (Size : Natural) is new VCS_Command
+   with record
+      Files : File_Array (1 .. Size);
+   end record;
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_Files;
+      VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_Files
 
    type Cmd_Ensure_Status_For_Project is new VCS_Command with record
       Project : Project_Type;
    end record;
-   overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_Project;
-       VCS  : not null access VCS_Engine'Class);
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_Project;
+      VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_Project
 
    type Cmd_Ensure_Status_For_All_Files is new VCS_Command with record
       From_User : Boolean;
    end record;
-   overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_All_Files;
-       VCS  : not null access VCS_Engine'Class);
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_All_Files;
+      VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_All_Source_Files
 
    type Cmd_Fetch_History is new VCS_Command with record
       Filter : History_Filter;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Fetch_History;
       VCS  : not null access VCS_Engine'Class);
    --  Implementation for Async_Fetch_History
@@ -220,69 +237,78 @@ package body VCS2.Engines is
    type Cmd_Commit is new VCS_Command with record
       Message : Unbounded_String;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Commit;
       VCS  : not null access VCS_Engine'Class);
    --  Implementation for Async_Commit_Staged_Files
 
    type Cmd_Fetch_Commit_Details is new VCS_Command with record
-      Ids  : String_List_Access;
+      Ids : String_List_Access;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Fetch_Commit_Details;
       VCS  : not null access VCS_Engine'Class);
-   overriding procedure Free
-     (Self : in out Cmd_Fetch_Commit_Details);
+   overriding
+   procedure Free (Self : in out Cmd_Fetch_Commit_Details);
 
    type Cmd_Diff is new VCS_Command with record
       Ref  : Unbounded_String;
       File : Virtual_File;
    end record;
-   overriding procedure Execute
-     (Self : not null access Cmd_Diff;
-      VCS  : not null access VCS_Engine'Class);
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Diff; VCS : not null access VCS_Engine'Class);
 
    type Cmd_View_File is new VCS_Command with record
       Ref  : Unbounded_String;
       File : Virtual_File;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_View_File;
       VCS  : not null access VCS_Engine'Class);
 
    type Cmd_Annotations is new VCS_Command with record
       File : Virtual_File;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Annotations;
       VCS  : not null access VCS_Engine'Class);
 
    type Cmd_Branches is new VCS_Command with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Branches;
       VCS  : not null access VCS_Engine'Class);
 
    type Cmd_Action_On_Branch is new VCS_Command with record
-      Action        : Branch_Action;
-      Category, Id  : Unbounded_String;
-      Text          : Unbounded_String;
+      Action       : Branch_Action;
+      Category, Id : Unbounded_String;
+      Text         : Unbounded_String;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Action_On_Branch;
       VCS  : not null access VCS_Engine'Class);
 
    type Cmd_Discard_Local_Changes is new VCS_Command with record
       Files : File_Array_Access;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Discard_Local_Changes;
       VCS  : not null access VCS_Engine'Class);
-   overriding procedure Free (Self : in out Cmd_Discard_Local_Changes);
+   overriding
+   procedure Free (Self : in out Cmd_Discard_Local_Changes);
 
    type Cmd_Queue_Checkout is new VCS_Command with record
       Commit : Unbounded_String;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Queue_Checkout;
       VCS  : not null access VCS_Engine'Class);
 
@@ -290,7 +316,8 @@ package body VCS2.Engines is
       Commit : Unbounded_String;
       File   : Virtual_File;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Queue_Checkout_File;
       VCS  : not null access VCS_Engine'Class);
 
@@ -300,10 +327,12 @@ package body VCS2.Engines is
    type Complete_After_Steps is new Task_Visitor with record
       Wrapped : Task_Visitor_Access;
    end record;
-   overriding procedure Free (Self : in out Complete_After_Steps);
-   overriding procedure On_Terminate
-     (Self  : not null access Complete_After_Steps;
-      VCS   : access VCS_Engine'Class);
+   overriding
+   procedure Free (Self : in out Complete_After_Steps);
+   overriding
+   procedure On_Terminate
+     (Self : not null access Complete_After_Steps;
+      VCS  : access VCS_Engine'Class);
    --  A wrapper for another visitor, which executes the On_Complete callback
    --  with a null parameter after it has itself completed Steps times.
 
@@ -315,7 +344,8 @@ package body VCS2.Engines is
    type On_Active_VCS_Changed is new Simple_Hooks_Function with record
       Combo : Kernel_Combo_Tool;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
@@ -334,7 +364,7 @@ package body VCS2.Engines is
    --  Free Command eventually.
 
    procedure Command_Terminated (Self : not null access VCS_Engine'Class)
-     with Pre => Self.Run_In_Background = 0;
+   with Pre => Self.Run_In_Background = 0;
    --  Called when the currently queue command terminates
 
    procedure Start_Queue (Self : not null access VCS_Engine'Class);
@@ -345,7 +375,8 @@ package body VCS2.Engines is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Complete_After_Steps) is
+   overriding
+   procedure Free (Self : in out Complete_After_Steps) is
    begin
       Self.Wrapped.On_Terminate (null);
       Unref (Self.Wrapped);
@@ -355,9 +386,10 @@ package body VCS2.Engines is
    -- On_Terminate --
    ------------------
 
-   overriding procedure On_Terminate
-     (Self  : not null access Complete_After_Steps;
-      VCS   : access VCS_Engine'Class) is
+   overriding
+   procedure On_Terminate
+     (Self : not null access Complete_After_Steps;
+      VCS  : access VCS_Engine'Class) is
    begin
       Self.Wrapped.On_Terminate (VCS);
    end On_Terminate;
@@ -367,8 +399,8 @@ package body VCS2.Engines is
    -----------
 
    procedure Unref (Self : in out Task_Visitor_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Task_Visitor'Class, Task_Visitor_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Task_Visitor'Class, Task_Visitor_Access);
    begin
       Self.Refcount := Self.Refcount - 1;
       if Self.Refcount = 0 then
@@ -416,8 +448,7 @@ package body VCS2.Engines is
    ---------------------
 
    function Get_VCS_Factory
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Name     : String)
+     (Kernel : not null access Kernel_Handle_Record'Class; Name : String)
       return access VCS_Engine_Factory'Class
    is
       pragma Unreferenced (Kernel);
@@ -435,21 +466,20 @@ package body VCS2.Engines is
    -- Get_VCS --
    -------------
 
-   overriding function Get_VCS
-     (Self     : not null access VCS_System;
-      Project  : Project_Type)
+   overriding
+   function Get_VCS
+     (Self : not null access VCS_System; Project : Project_Type)
       return not null Abstract_VCS_Engine_Access
-     is (Abstract_VCS_Engine_Access
-          (Get_VCS (Self.Kernel, Project.Project_Path)));
+   is (Abstract_VCS_Engine_Access
+         (Get_VCS (Self.Kernel, Project.Project_Path)));
 
    -------------
    -- Get_VCS --
    -------------
 
    function Get_VCS
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Location : Virtual_File)
-      return not null VCS_Engine_Access
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Location : Virtual_File) return not null VCS_Engine_Access
    is
       C : constant Project_To_Engine.Cursor :=
         Global_Data.VCS_Engines.Find (Location);
@@ -475,7 +505,8 @@ package body VCS2.Engines is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out VCS_Engine) is
+   overriding
+   procedure Free (Self : in out VCS_Engine) is
    begin
       if Self.Queue_Id /= No_Source_Id then
          Trace (Me, "Cancel queued tasks for an engine we are removing");
@@ -489,7 +520,7 @@ package body VCS2.Engines is
    -----------------------
 
    procedure Reset_VCS_Engines
-      (Kernel : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
    is
       E : VCS_Engine_Access;
    begin
@@ -509,14 +540,14 @@ package body VCS2.Engines is
    -------------------------
 
    procedure Compute_VCS_Engines
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Dummy : constant Block_Trace_Handle :=
         Create (Me, "Computing VCS repositories for each project");
 
       function Repo_From_Project
-        (F : not null access VCS_Engine_Factory'class;
-         P : Project_Type) return Virtual_File;
+        (F : not null access VCS_Engine_Factory'class; P : Project_Type)
+         return Virtual_File;
       --  Guess the repo for a given project.
 
       function Engine_From_Working_Dir
@@ -556,9 +587,8 @@ package body VCS2.Engines is
       -----------------------
 
       function Repo_From_Project
-        (F : not null access VCS_Engine_Factory'class;
-         P : Project_Type) return Virtual_File
-      is
+        (F : not null access VCS_Engine_Factory'class; P : Project_Type)
+         return Virtual_File is
       begin
          return F.Find_Working_Directory (Project_Path (P));
       end Repo_From_Project;
@@ -582,16 +612,16 @@ package body VCS2.Engines is
          Engine := Global_Data.No_VCS_Engine;
 
          declare
-            Kind          : constant String := To_Lower
-              (P.Attribute_Value
-                 (VCS_Kind_Attribute,
-                  Default      => (if P.Name /= Root_Name
-                                   then "none"
-                                   else "auto"),
-                  Use_Extended => True));
-            Repo          : constant String := P.Attribute_Value
-              (VCS_Repository_Root, Use_Extended => True);
-            F             : VCS_Engine_Factory_Access;
+            Kind : constant String :=
+              To_Lower
+                (P.Attribute_Value
+                   (VCS_Kind_Attribute,
+                    Default      =>
+                      (if P.Name /= Root_Name then "none" else "auto"),
+                    Use_Extended => True));
+            Repo : constant String :=
+              P.Attribute_Value (VCS_Repository_Root, Use_Extended => True);
+            F    : VCS_Engine_Factory_Access;
 
          begin
             if Kind = "auto" then
@@ -626,19 +656,29 @@ package body VCS2.Engines is
                end;
 
             elsif Kind /= "none" then
-               Trace (Me, "Using VCS attribute for " & P.Name
-                      & " => " & Kind & " " & Repo);
+               Trace
+                 (Me,
+                  "Using VCS attribute for "
+                  & P.Name
+                  & " => "
+                  & Kind
+                  & " "
+                  & Repo);
                F := Get_VCS_Factory (Kernel, Kind);
                if F = null then
-                  Insert (Kernel, P.Project_Path.Display_Full_Name
-                          & ": unknown VCS: " & Kind);
+                  Insert
+                    (Kernel,
+                     P.Project_Path.Display_Full_Name
+                     & ": unknown VCS: "
+                     & Kind);
                else
                   declare
                      R : constant Virtual_File :=
-                           (if Repo /= ""
-                            then Create_From_Base
-                              (+Repo, Dir (Project_Path (P)).Full_Name)
-                            else Repo_From_Project (F, P));
+                       (if Repo /= ""
+                        then
+                          Create_From_Base
+                            (+Repo, Dir (Project_Path (P)).Full_Name)
+                        else Repo_From_Project (F, P));
                   begin
                      Trace (Me, "Repo=" & R.Display_Full_Name);
                      Engine := Engine_From_Working_Dir (F, R);
@@ -700,15 +740,17 @@ package body VCS2.Engines is
       pragma Unreferenced (Kernel);
 
       Cb : constant Task_Visitor_Access :=
-             (if Visitor = null then null
-              else new Complete_After_Steps'
-                (Refcount => Integer (Global_Data.All_Engines.Length),
-                 Wrapped  => Visitor));
+        (if Visitor = null
+         then null
+         else
+           new Complete_After_Steps'
+             (Refcount => Integer (Global_Data.All_Engines.Length),
+              Wrapped  => Visitor));
 
    begin
       for E of Global_Data.All_Engines loop
          E.Ensure_Status_For_All_Source_Files
-            (Visitor => Cb, From_User => From_User);
+           (Visitor => Cb, From_User => From_User);
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
 
@@ -716,9 +758,8 @@ package body VCS2.Engines is
    -- Invalidate_All_Caches --
    ---------------------------
 
-   overriding procedure Invalidate_All_Caches
-     (Self    : not null access VCS_System)
-   is
+   overriding
+   procedure Invalidate_All_Caches (Self : not null access VCS_System) is
       pragma Unreferenced (Self);
    begin
       for E of Global_Data.All_Engines loop
@@ -731,9 +772,9 @@ package body VCS2.Engines is
    ------------------
 
    procedure For_Each_VCS
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Callback  : not null access procedure
-        (VCS : not null access VCS_Engine'Class))
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback :
+        not null access procedure (VCS : not null access VCS_Engine'Class))
    is
       pragma Unreferenced (Kernel);
    begin
@@ -747,8 +788,7 @@ package body VCS2.Engines is
    ---------------
 
    function VCS_Count
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-      return Natural
+     (Kernel : not null access Kernel_Handle_Record'Class) return Natural
    is
       pragma Unreferenced (Kernel);
    begin
@@ -759,9 +799,10 @@ package body VCS2.Engines is
    -- Guess_VCS_For_Directory --
    -----------------------------
 
-   overriding function Guess_VCS_For_Directory
-     (Self      : not null access VCS_System;
-      Directory : Virtual_File) return not null Abstract_VCS_Engine_Access
+   overriding
+   function Guess_VCS_For_Directory
+     (Self : not null access VCS_System; Directory : Virtual_File)
+      return not null Abstract_VCS_Engine_Access
    is
       VCS : VCS_Engine_Access;
       D   : Virtual_File;
@@ -820,16 +861,15 @@ package body VCS2.Engines is
    ---------------------------
 
    function Need_Update_For_Files
-     (Self    : not null access VCS_Engine'Class;
-      Sources : File_Array)
-     return Boolean
+     (Self : not null access VCS_Engine'Class; Sources : File_Array)
+      return Boolean
    is
-      C : VCS_File_Cache.Cursor;
+      C           : VCS_File_Cache.Cursor;
       Need_Update : Boolean := False;
-      Default : constant VCS_File_Properties :=
-         (Status       => Self.Default_File_Status,
-          Version      => Null_Unbounded_String,
-          Repo_Version => Null_Unbounded_String);
+      Default     : constant VCS_File_Properties :=
+        (Status       => Self.Default_File_Status,
+         Version      => Null_Unbounded_String,
+         Repo_Version => Null_Unbounded_String);
    begin
       --  Set temporary entry to prevent unneeded parallel computation.
       --  Do not call the hook though, this will be done by Async_Fetch
@@ -842,8 +882,10 @@ package body VCS2.Engines is
             Self.Cache.Include (F, (Need_Update => False, Props => Default));
             if not Need_Update and then Active (Me) then
                Trace
-                  (Me, "Will fetch status because " & F.Display_Full_Name
-                   & " not in cache");
+                 (Me,
+                  "Will fetch status because "
+                  & F.Display_Full_Name
+                  & " not in cache");
             end if;
             Need_Update := True;
 
@@ -852,8 +894,10 @@ package body VCS2.Engines is
               (F, (Need_Update => False, Props => Element (C).Props));
             if not Need_Update and then Active (Me) then
                Trace
-                  (Me, "Will fetch status because " & F.Display_Full_Name
-                   & " needs update");
+                 (Me,
+                  "Will fetch status because "
+                  & F.Display_Full_Name
+                  & " needs update");
             end if;
             Need_Update := True;
          end if;
@@ -871,16 +915,15 @@ package body VCS2.Engines is
       Files   : File_Array;
       Visitor : Task_Visitor_Access) is
    begin
-      Queue (Self,
-             new Cmd_Ensure_Status_For_Files'
-               (Size    => Files'Length,
-                Files   => Files,
-                Visitor => Visitor));
+      Queue
+        (Self,
+         new Cmd_Ensure_Status_For_Files'
+           (Size => Files'Length, Files => Files, Visitor => Visitor));
    end Ensure_Status_For_Files;
 
-   overriding procedure Ensure_Status_For_Files
-     (Self    : not null access VCS_Engine;
-      Files   : File_Array) is
+   overriding
+   procedure Ensure_Status_For_Files
+     (Self : not null access VCS_Engine; Files : File_Array) is
    begin
       Ensure_Status_For_Files (Self, Files, null);
    end Ensure_Status_For_Files;
@@ -889,9 +932,10 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_Files;
-       VCS  : not null access VCS_Engine'Class) is
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_Files;
+      VCS  : not null access VCS_Engine'Class) is
    begin
       if Need_Update_For_Files (VCS, Self.Files) then
          VCS.Async_Fetch_Status_For_Files (Self.Files);
@@ -907,14 +951,15 @@ package body VCS2.Engines is
       Project : Project_Type;
       Visitor : Task_Visitor_Access) is
    begin
-      Queue (Self,
-             new Cmd_Ensure_Status_For_Project'
-               (Project => Project, Visitor => Visitor));
+      Queue
+        (Self,
+         new Cmd_Ensure_Status_For_Project'
+           (Project => Project, Visitor => Visitor));
    end Ensure_Status_For_Project;
 
-   overriding procedure Ensure_Status_For_Project
-     (Self    : not null access VCS_Engine;
-      Project : Project_Type) is
+   overriding
+   procedure Ensure_Status_For_Project
+     (Self : not null access VCS_Engine; Project : Project_Type) is
    begin
       Ensure_Status_For_Project (Self, Project, null);
    end Ensure_Status_For_Project;
@@ -923,9 +968,10 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_Project;
-       VCS  : not null access VCS_Engine'Class)
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_Project;
+      VCS  : not null access VCS_Engine'Class)
    is
       S : File_Array_Access := Self.Project.Source_Files (Recursive => False);
       N : constant Boolean := Need_Update_For_Files (VCS, S.all);
@@ -946,18 +992,20 @@ package body VCS2.Engines is
       Visitor   : Task_Visitor_Access := null;
       From_User : Boolean) is
    begin
-      Queue (Self,
-             new Cmd_Ensure_Status_For_All_Files'
-               (Visitor => Visitor, From_User => From_User));
+      Queue
+        (Self,
+         new Cmd_Ensure_Status_For_All_Files'
+           (Visitor => Visitor, From_User => From_User));
    end Ensure_Status_For_All_Source_Files;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self      : not null access Cmd_Ensure_Status_For_All_Files;
-       VCS       : not null access VCS_Engine'Class)
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Ensure_Status_For_All_Files;
+      VCS  : not null access VCS_Engine'Class)
    is
       Iter : Project_Iterator :=
         Get_Project (VCS.Kernel).Start (Recursive => True);
@@ -988,14 +1036,12 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Fetch_History;
-      VCS  : not null access VCS_Engine'Class)
-   is
+      VCS  : not null access VCS_Engine'Class) is
    begin
-      VCS.Async_Fetch_History
-        (Visitor => Self.Visitor,
-         Filter  => Self.Filter);
+      VCS.Async_Fetch_History (Visitor => Self.Visitor, Filter => Self.Filter);
    end Execute;
 
    -------------------------
@@ -1023,19 +1069,20 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_Diff'(
-           Visitor => Visitor,
-           Ref     => To_Unbounded_String (Ref),
-           File    => File));
+         new Cmd_Diff'
+           (Visitor => Visitor,
+            Ref     => To_Unbounded_String (Ref),
+            File    => File));
    end Queue_Diff;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self : not null access Cmd_Diff;
-      VCS  : not null access VCS_Engine'Class) is
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Diff; VCS : not null access VCS_Engine'Class)
+   is
    begin
       VCS.Async_Diff (Self.Visitor, To_String (Self.Ref), Self.File);
    end Execute;
@@ -1055,10 +1102,10 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Branches;
-      VCS  : not null access VCS_Engine'Class)
-   is
+      VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Branches (Self.Visitor);
    end Execute;
@@ -1076,21 +1123,22 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_Action_On_Branch'(
-           Visitor  => Visitor,
-           Action   => Action,
-           Category => To_Unbounded_String (Category),
-           Id       => To_Unbounded_String (Id),
-           Text     => To_Unbounded_String (Text)));
+         new Cmd_Action_On_Branch'
+           (Visitor  => Visitor,
+            Action   => Action,
+            Category => To_Unbounded_String (Category),
+            Id       => To_Unbounded_String (Id),
+            Text     => To_Unbounded_String (Text)));
    end Queue_Action_On_Branch;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self    : not null access Cmd_Action_On_Branch;
-      VCS     : not null access VCS_Engine'Class) is
+   overriding
+   procedure Execute
+     (Self : not null access Cmd_Action_On_Branch;
+      VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Action_On_Branch
         (Self.Visitor,
@@ -1107,21 +1155,19 @@ package body VCS2.Engines is
    procedure Queue_Discard_Local_Changes
      (Self    : not null access VCS_Engine'Class;
       Visitor : Task_Visitor_Access;
-      Files   : GNATCOLL.VFS.File_Array_Access)
-   is
+      Files   : GNATCOLL.VFS.File_Array_Access) is
    begin
       Queue
         (Self,
-         new Cmd_Discard_Local_Changes'(
-           Visitor => Visitor,
-           Files   => Files));
+         new Cmd_Discard_Local_Changes'(Visitor => Visitor, Files => Files));
    end Queue_Discard_Local_Changes;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Discard_Local_Changes;
       VCS  : not null access VCS_Engine'Class) is
    begin
@@ -1132,7 +1178,8 @@ package body VCS2.Engines is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Cmd_Discard_Local_Changes) is
+   overriding
+   procedure Free (Self : in out Cmd_Discard_Local_Changes) is
    begin
       Unchecked_Free (Self.Files);
       Free (VCS_Command (Self));   --  inherited
@@ -1154,7 +1201,8 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Annotations;
       VCS  : not null access VCS_Engine'Class) is
    begin
@@ -1173,17 +1221,18 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_View_File'(
-           Visitor => Visitor,
-           Ref     => To_Unbounded_String (Ref),
-           File    => File));
+         new Cmd_View_File'
+           (Visitor => Visitor,
+            Ref     => To_Unbounded_String (Ref),
+            File    => File));
    end Queue_View_File;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_View_File;
       VCS  : not null access VCS_Engine'Class) is
    begin
@@ -1194,10 +1243,10 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Fetch_Commit_Details;
-      VCS  : not null access VCS_Engine'Class)
-   is
+      VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Fetch_Commit_Details (Self.Ids, Self.Visitor);
    end Execute;
@@ -1206,8 +1255,8 @@ package body VCS2.Engines is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self : in out Cmd_Fetch_Commit_Details) is
+   overriding
+   procedure Free (Self : in out Cmd_Fetch_Commit_Details) is
    begin
       Free (Self.Ids);
       Free (VCS_Command (Self));  --  inherited
@@ -1224,19 +1273,18 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_Commit'(
-           Visitor => Visitor,
-           Message => To_Unbounded_String (Message)));
+         new Cmd_Commit'
+           (Visitor => Visitor, Message => To_Unbounded_String (Message)));
    end Queue_Commit_Staged_Files;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Commit;
-      VCS  : not null access VCS_Engine'Class)
-   is
+      VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Commit_Staged_Files (Self.Visitor, To_String (Self.Message));
    end Execute;
@@ -1270,9 +1318,9 @@ package body VCS2.Engines is
    -- Start_Queue --
    -----------------
 
-   procedure Start_Queue (Self : not null access VCS_Engine'Class)
-   is
-      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+   procedure Start_Queue (Self : not null access VCS_Engine'Class) is
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
    begin
       if Self.Run_In_Background = 0
         and then not Self.Queue.Is_Empty
@@ -1328,8 +1376,9 @@ package body VCS2.Engines is
 
       --  In case there are more commands in the queue
       if Self.Queue_Id = No_Source_Id then
-         Self.Queue_Id := Engine_Sources.Idle_Add
-           (On_Idle_Start_Queue'Access, VCS_Engine_Access (Self));
+         Self.Queue_Id :=
+           Engine_Sources.Idle_Add
+             (On_Idle_Start_Queue'Access, VCS_Engine_Access (Self));
       end if;
    end Command_Terminated;
 
@@ -1349,8 +1398,7 @@ package body VCS2.Engines is
    ---------------------------
 
    procedure Set_Run_In_Background
-      (Self       : not null access VCS_Engine'Class;
-       Background : Boolean) is
+     (Self : not null access VCS_Engine'Class; Background : Boolean) is
    begin
       if Background then
          --  Called when the command is already running
@@ -1368,9 +1416,9 @@ package body VCS2.Engines is
    -- File_Properties_From_Cache --
    --------------------------------
 
-   overriding function File_Properties_From_Cache
-     (Self    : not null access VCS_Engine;
-      File    : Virtual_File)
+   overriding
+   function File_Properties_From_Cache
+     (Self : not null access VCS_Engine; File : Virtual_File)
       return VCS_File_Properties
    is
       C : constant VCS_File_Cache.Cursor := Self.Cache.Find (File);
@@ -1379,9 +1427,9 @@ package body VCS2.Engines is
          return Element (C).Props;
       else
          return
-            (Status       => VCS_Engine'Class (Self.all).Default_File_Status,
-             Version      => Null_Unbounded_String,
-             Repo_Version => Null_Unbounded_String);
+           (Status       => VCS_Engine'Class (Self.all).Default_File_Status,
+            Version      => Null_Unbounded_String,
+            Repo_Version => Null_Unbounded_String);
       end if;
    end File_Properties_From_Cache;
 
@@ -1390,8 +1438,7 @@ package body VCS2.Engines is
    ----------------------------------
 
    procedure Invalidate_File_Status_Cache
-     (Self    : not null access VCS_Engine'Class;
-      File    : Virtual_File := No_File)
+     (Self : not null access VCS_Engine'Class; File : Virtual_File := No_File)
    is
       C : VCS_File_Cache.Cursor;
    begin
@@ -1400,8 +1447,8 @@ package body VCS2.Engines is
             F.Need_Update := True;
          end loop;
 
-         --  ??? Would be nice to refresh, but we don't know what info
-         --  is needed.
+      --  ??? Would be nice to refresh, but we don't know what info
+      --  is needed.
 
       else
          C := Self.Cache.Find (File);
@@ -1419,22 +1466,23 @@ package body VCS2.Engines is
    -- Set_Files_Status_In_Cache --
    -------------------------------
 
-   overriding procedure Set_Files_Status_In_Cache
-     (Self         : not null access VCS_Engine;
-      Files        : GNATCOLL.VFS.File_Array;
-      Props        : VCS_File_Properties)
+   overriding
+   procedure Set_Files_Status_In_Cache
+     (Self  : not null access VCS_Engine;
+      Files : GNATCOLL.VFS.File_Array;
+      Props : VCS_File_Properties)
    is
       use type Ada.Containers.Count_Type;
-      C           : VCS_File_Cache.Cursor;
-      Need_Update : Boolean;
-      Need_Hook   : Boolean;
-      For_Hook    : Basic_Types.File_Sets.Set;
-      Default_Status : constant VCS_File_Status :=
-         VCS_Engine'Class (Self.all).Default_File_Status;
+      C                 : VCS_File_Cache.Cursor;
+      Need_Update       : Boolean;
+      Need_Hook         : Boolean;
+      For_Hook          : Basic_Types.File_Sets.Set;
+      Default_Status    : constant VCS_File_Status :=
+        VCS_Engine'Class (Self.all).Default_File_Status;
       Default_Need_Hook : constant Boolean :=
-         Props.Status /= Default_Status
-         or else Props.Version /= ""
-         or else Props.Repo_Version /= "";
+        Props.Status /= Default_Status
+        or else Props.Version /= ""
+        or else Props.Repo_Version /= "";
    begin
 
       --  When we initially fill the cache for a large repository
@@ -1448,8 +1496,8 @@ package body VCS2.Engines is
          C := Self.Cache.Find (F);
          if Has_Element (C) then
             Need_Hook := Props /= Self.Cache.Constant_Reference (C).Props;
-            Need_Update := Need_Hook
-               or else Self.Cache.Constant_Reference (C).Need_Update;
+            Need_Update :=
+              Need_Hook or else Self.Cache.Constant_Reference (C).Need_Update;
          else
             --  Always insert because we might need to know the list of files
             --  managed by a given VCS.
@@ -1458,10 +1506,7 @@ package body VCS2.Engines is
          end if;
 
          if Need_Update then
-            Self.Cache.Include
-              (F,
-               (Need_Update  => False,
-                Props        => Props));
+            Self.Cache.Include (F, (Need_Update => False, Props => Props));
 
             if Need_Hook then
                For_Hook.Include (F);
@@ -1471,10 +1516,7 @@ package body VCS2.Engines is
 
       if not For_Hook.Is_Empty then
          Vcs_File_Status_Changed_Hook.Run
-           (Self.Kernel,
-            Vcs    => Self,
-            Files  => For_Hook,
-            Props  => Props);
+           (Self.Kernel, Vcs => Self, Files => For_Hook, Props => Props);
       end if;
    end Set_Files_Status_In_Cache;
 
@@ -1482,11 +1524,13 @@ package body VCS2.Engines is
    -- Get_Display --
    -----------------
 
-   overriding function Get_Display
-     (Self   : not null access VCS_Engine;
-      Status : VCS_File_Status) return Status_Display
+   overriding
+   function Get_Display
+     (Self : not null access VCS_Engine; Status : VCS_File_Status)
+      return Status_Display
    is
-      C : constant VCS_Status_Displays.Cursor := Self.Displays.Find (Status);
+      C      : constant VCS_Status_Displays.Cursor :=
+        Self.Displays.Find (Status);
       Staged : Boolean;
    begin
       --  Has the VCS defined specific display for this combination of flags ?
@@ -1495,11 +1539,15 @@ package body VCS2.Engines is
       else
          --  Fallbacks by looking at a subset of the flags
 
-         Staged := (Status and (Status_Staged_Modified
-                                or Status_Staged_Renamed
-                                or Status_Staged_Added
-                                or Status_Staged_Deleted
-                                or Status_Staged_Copied)) /= 0;
+         Staged :=
+           (Status
+            and
+              (Status_Staged_Modified
+               or Status_Staged_Renamed
+               or Status_Staged_Added
+               or Status_Staged_Deleted
+               or Status_Staged_Copied))
+           /= 0;
 
          if (Status and Status_Modified) /= 0 then
             if Staged then
@@ -1554,7 +1602,7 @@ package body VCS2.Engines is
    --------------
 
    procedure Finalize (Kernel : not null access Kernel_Handle_Record'Class) is
-      F2     : VCS_Engine_Factory_Access;
+      F2 : VCS_Engine_Factory_Access;
    begin
       Reset_VCS_Engines (Kernel);
 
@@ -1573,9 +1621,10 @@ package body VCS2.Engines is
    -- Get_Tooltip_For_File --
    --------------------------
 
-   overriding function Get_Tooltip_For_File
-     (VCS     : not null access VCS_Engine;
-      File    : GNATCOLL.VFS.Virtual_File) return VSS.Strings.Virtual_String
+   overriding
+   function Get_Tooltip_For_File
+     (VCS : not null access VCS_Engine; File : GNATCOLL.VFS.Virtual_File)
+      return VSS.Strings.Virtual_String
    is
       use type VSS.Strings.Virtual_String;
 
@@ -1584,21 +1633,31 @@ package body VCS2.Engines is
 
       V     : constant VCS_Engine_Access := VCS_Engine_Access (VCS);
       Props : constant VCS_File_Properties :=
-         VCS.File_Properties_From_Cache (File);
+        VCS.File_Properties_From_Cache (File);
    begin
       if Props.Status /= Status_Untracked
         and then Props.Status /= Status_No_VCS
       then
-         return "<b>" & VSS.Strings.Conversions.To_Virtual_String (V.Name)
+         return
+           "<b>"
+           & VSS.Strings.Conversions.To_Virtual_String (V.Name)
            & " status</b>: "
            & VSS.Strings.Conversions.To_Virtual_String
                (V.Get_Display (Props.Status).Label)
            & (if Props.Version /= ""
-              then LF & "<b>" & V.Label_Version & "</b>: "
-                 & VSS.Strings.Conversions.To_Virtual_String (Props.Version)
+              then
+                LF
+                & "<b>"
+                & V.Label_Version
+                & "</b>: "
+                & VSS.Strings.Conversions.To_Virtual_String (Props.Version)
               else "")
            & (if Props.Repo_Version /= ""
-              then LF & "<b>" & V.Label_Repo_Version & "</b>: "
+              then
+                LF
+                & "<b>"
+                & V.Label_Repo_Version
+                & "</b>: "
                 & VSS.Strings.Conversions.To_Virtual_String
                     (Props.Repo_Version)
               else "");
@@ -1611,9 +1670,9 @@ package body VCS2.Engines is
    -- Get_VCS_File_Status --
    -------------------------
 
-   overriding function Get_VCS_File_Status
-     (VCS  : not null access VCS_Engine;
-      File : GNATCOLL.VFS.Virtual_File)
+   overriding
+   function Get_VCS_File_Status
+     (VCS : not null access VCS_Engine; File : GNATCOLL.VFS.Virtual_File)
       return VCS_File_Status
    is
       Props : constant VCS_File_Properties :=
@@ -1627,10 +1686,10 @@ package body VCS2.Engines is
    ----------------------------
 
    procedure For_Each_File_In_Cache
-     (Self     : not null access VCS_Engine'Class;
-      Callback : not null access procedure
-        (File  : GNATCOLL.VFS.Virtual_File;
-         Props : VCS_File_Properties);
+     (Self               : not null access VCS_Engine'Class;
+      Callback           :
+        not null access procedure
+          (File : GNATCOLL.VFS.Virtual_File; Props : VCS_File_Properties);
       Only_If_Up_To_Date : Boolean := False)
    is
       C : VCS_File_Cache.Cursor := Self.Cache.First;
@@ -1639,8 +1698,8 @@ package body VCS2.Engines is
          if not Only_If_Up_To_Date
            or else not VCS_File_Cache.Element (C).Need_Update
          then
-            Callback (VCS_File_Cache.Key (C),
-                      VCS_File_Cache.Element (C).Props);
+            Callback
+              (VCS_File_Cache.Key (C), VCS_File_Cache.Element (C).Props);
          end if;
 
          VCS_File_Cache.Next (C);
@@ -1652,9 +1711,7 @@ package body VCS2.Engines is
    ---------------------------
 
    procedure Set_Working_Directory
-     (Self        : not null access VCS_Engine'Class;
-      Working_Dir : Virtual_File)
-   is
+     (Self : not null access VCS_Engine'Class; Working_Dir : Virtual_File) is
    begin
       Self.Working_Dir := Working_Dir;
    end Set_Working_Directory;
@@ -1663,9 +1720,9 @@ package body VCS2.Engines is
    -- Get_Active_VCS --
    --------------------
 
-   overriding function Get_Active_VCS
-     (Self : not null access VCS_System)
-      return Abstract_VCS_Engine_Access
+   overriding
+   function Get_Active_VCS
+     (Self : not null access VCS_System) return Abstract_VCS_Engine_Access
    is
       pragma Unreferenced (Self);
    begin
@@ -1676,8 +1733,7 @@ package body VCS2.Engines is
    -- On_Active_VCS_Selected --
    ----------------------------
 
-   procedure On_Active_VCS_Selected
-     (Widget : access Gtk_Widget_Record'Class)
+   procedure On_Active_VCS_Selected (Widget : access Gtk_Widget_Record'Class)
    is
       Combo    : constant Kernel_Combo_Tool := Kernel_Combo_Tool (Widget);
       Selected : constant String := Combo.Get_Selected_Item;
@@ -1704,7 +1760,8 @@ package body VCS2.Engines is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1757,16 +1814,15 @@ package body VCS2.Engines is
    -- Get_VCS_Selector --
    ----------------------
 
-   overriding function Get_VCS_Selector
-     (Self : not null access VCS_System)
-      return Gtk_Widget is
+   overriding
+   function Get_VCS_Selector
+     (Self : not null access VCS_System) return Gtk_Widget is
    begin
       if Global_Data.VCS_Selector = null then
          Global_Data.VCS_Selector := new Kernel_Combo_Tool_Record;
          Global_Data.VCS_Selector.Kernel := Self.Kernel;
-         Initialize (Global_Data.VCS_Selector,
-                     Icon_Name     => "",
-                     Click_Pops_Up => True);
+         Initialize
+           (Global_Data.VCS_Selector, Icon_Name => "", Click_Pops_Up => True);
          Global_Data.VCS_Selector.Set_No_Show_All (True);
 
          Global_Data.VCS_Selector.Set_Tooltip_Text
@@ -1804,8 +1860,7 @@ package body VCS2.Engines is
 
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      VCS    : access VCS_Engine'Class)
-   is
+      VCS    : access VCS_Engine'Class) is
    begin
       if VCS /= Global_Data.Active_VCS then
          Global_Data.Active_VCS := VCS_Engine_Access (VCS);
@@ -1824,16 +1879,16 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_Queue_Checkout'(
-           Visitor => Visitor,
-           Commit  => To_Unbounded_String (Commit)));
+         new Cmd_Queue_Checkout'
+           (Visitor => Visitor, Commit => To_Unbounded_String (Commit)));
    end Queue_Checkout;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Queue_Checkout;
       VCS  : not null access VCS_Engine'Class) is
    begin
@@ -1852,17 +1907,18 @@ package body VCS2.Engines is
    begin
       Queue
         (Self,
-         new Cmd_Queue_Checkout_File'(
-           Visitor   => Visitor,
-           Commit    => To_Unbounded_String (Commit),
-           File      => File));
+         new Cmd_Queue_Checkout_File'
+           (Visitor => Visitor,
+            Commit  => To_Unbounded_String (Commit),
+            File    => File));
    end Queue_Checkout_File;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self : not null access Cmd_Queue_Checkout_File;
       VCS  : not null access VCS_Engine'Class) is
    begin
@@ -1875,8 +1931,8 @@ package body VCS2.Engines is
    ----------
 
    procedure Free (Self : in out Commit_Names_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (Commit_Names, Commit_Names_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Commit_Names, Commit_Names_Access);
 
    begin
       Unchecked_Free (Self);

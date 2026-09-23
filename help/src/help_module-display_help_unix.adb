@@ -25,8 +25,7 @@ with Spawn.Process_Listeners;
 
 separate (Help_Module)
 procedure Display_Help
-  (Kernel    : access Kernel_Handle_Record'Class;
-   URL       : String)
+  (Kernel : access Kernel_Handle_Record'Class; URL : String)
 is
 
    type Cst_String_Access is access constant String;
@@ -79,11 +78,12 @@ is
          raise Invalid_Substitution;
       end Substitute_Parameters;
 
-      Result : constant String := Substitute
-        (Str       => Browser,
-         Delimiter => '%',
-         Callback  => Substitute_Parameters'Unrestricted_Access);
-      Args : Argument_List_Access;
+      Result : constant String :=
+        Substitute
+          (Str       => Browser,
+           Delimiter => '%',
+           Callback  => Substitute_Parameters'Unrestricted_Access);
+      Args   : Argument_List_Access;
    begin
       if Found_URL then
          Args := Argument_String_To_List (Result);
@@ -110,14 +110,12 @@ is
    --------------------
 
    function Launch_Browser
-     (Browser : String;
-      Args    : Argument_List) return Boolean;
+     (Browser : String; Args : Argument_List) return Boolean;
    --  Launch the given browser.
    --  Return True in case of success, false otherwise.
 
    function Launch_Browser
-     (Browser : String;
-      Args    : Argument_List) return Boolean
+     (Browser : String; Args : Argument_List) return Boolean
    is
       Cmd      : GNAT.Strings.String_Access;
       Vector   : Spawn.String_Vectors.UTF_8_String_Vector;
@@ -140,7 +138,8 @@ is
            (Spawn.Process_Listeners.Process_Listener_Access (Listener));
 
          Insert
-           (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,
+           (Kernel,
+            (-"Launching ") & Browser & (-" to view ") & URL,
             Mode => Info);
 
          Trace (Me, "Launching external browser with " & Cmd.all & "--");
@@ -154,14 +153,14 @@ is
       end if;
    end Launch_Browser;
 
-   Args         : Argument_List_Access;
+   Args : Argument_List_Access;
 
 begin
    if HTML_Browser = "" then
       for J in Browsers'Range loop
          Args := Get_Command (Browsers (J).all);
          if Launch_Browser
-            (Args (Args'First).all, Args (Args'First + 1 .. Args'Last))
+              (Args (Args'First).all, Args (Args'First + 1 .. Args'Last))
          then
             Free (Args);
             return;
@@ -177,9 +176,9 @@ begin
    Args := Get_Command (HTML_Browser);
 
    if not Launch_Browser
-     (String_Utils.Unprotect
-        (String_Utils.Protect (Args (Args'First).all, False)),
-      Args (Args'First + 1 .. Args'Last))
+            (String_Utils.Unprotect
+               (String_Utils.Protect (Args (Args'First).all, False)),
+             Args (Args'First + 1 .. Args'Last))
    then
       Insert
         (Kernel,

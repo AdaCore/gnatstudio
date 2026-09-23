@@ -22,14 +22,12 @@ package String_Diff is
    type Diff_State is (Equal, Added, Removed);
    --  See description in package Diffing
 
-   type Diff_Callback is access procedure
-     (Old_Obj, New_Obj : Character; State : Diff_State);
+   type Diff_Callback is
+     access procedure (Old_Obj, New_Obj : Character; State : Diff_State);
    --  See description in package Diffing
 
    procedure Diff
-     (Old_String : String;
-      New_String : String;
-      Callback   : Diff_Callback);
+     (Old_String : String; New_String : String; Callback : Diff_Callback);
    --  Compute a diff between Old_String and New_String.
    --  See description in package Diffing.
 

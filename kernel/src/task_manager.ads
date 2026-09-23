@@ -25,19 +25,21 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Commands;             use Commands;
-with Glib.Main;            use Glib.Main;
-with GPS.Scripts.Commands; use GPS.Scripts.Commands;
+with Commands;              use Commands;
+with Glib.Main;             use Glib.Main;
+with GPS.Scripts.Commands;  use GPS.Scripts.Commands;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 
 limited with GPS.Kernel;
 
 package Task_Manager is
 
    type Task_Manager_Record
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is tagged private;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+     tagged private;
    type Task_Manager_Access is access all Task_Manager_Record'Class;
    No_Task_Manager : constant Task_Manager_Access;
 
@@ -65,41 +67,36 @@ package Task_Manager is
    --  Do nothing if there is no such queue.
 
    procedure Interrupt_Queue
-     (Manager  : not null access Task_Manager_Record;
-      Queue_Id : String);
+     (Manager : not null access Task_Manager_Record; Queue_Id : String);
    --  Interrupts the queue that has the given id, if any. If there is no
    --  such queue, do nothing.
 
    procedure Interrupt_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String);
+     (Manager : not null access Task_Manager_Record; Id : String);
    --  Interrupt command referenced by Id
 
    function Head
      (Manager : not null access Task_Manager_Record; Id : String)
-     return Scheduled_Command_Access;
+      return Scheduled_Command_Access;
    --  Return the Head command from the Queue of the given id, null if none
 
    procedure Interrupt_Latest_Task
-      (Manager : not null access Task_Manager_Record);
+     (Manager : not null access Task_Manager_Record);
    --  Interrupt the task that was started last
 
    procedure Interrupt_All_Tasks
-      (Manager : not null access Task_Manager_Record);
+     (Manager : not null access Task_Manager_Record);
    --  Interrupt all tasks
 
    procedure Pause_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String);
+     (Manager : not null access Task_Manager_Record; Id : String);
    --  Pause command referenced by Id
 
    procedure Resume_Command
-     (Manager : not null access Task_Manager_Record;
-      Id      : String);
+     (Manager : not null access Task_Manager_Record; Id : String);
    --  Resume paused command referenced by Id
 
-   procedure Destroy
-     (Manager : Task_Manager_Access);
+   procedure Destroy (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager
 
    type Command_Array is array (Integer range <>) of Scheduled_Command_Access;
@@ -110,8 +107,7 @@ package Task_Manager is
 
    function Scheduled_Command_From_Command
      (Manager : not null access Task_Manager_Record;
-      Command : access Root_Command'Class)
-      return Scheduled_Command_Access;
+      Command : access Root_Command'Class) return Scheduled_Command_Access;
    --  Return the scheduled command that wraps the given low-level command.
    --  The task manager can only deal with commands of type Scheduled_Command.
    --  In general, this is transparent for other subprograms, but it is
@@ -121,8 +117,8 @@ package Task_Manager is
    --  The result should not be unref-ed, and might be null.
 
    function Has_Queue
-     (Manager  : not null access Task_Manager_Record;
-      Queue_Id : String) return Boolean;
+     (Manager : not null access Task_Manager_Record; Queue_Id : String)
+      return Boolean;
    --  Return True if a queue identified by Queue_Id is currently running or
    --  paused in the task manager.
 
@@ -137,27 +133,27 @@ private
    --    iteration of the task manager.
 
    type Task_Queue_Record is record
-      Status   : Queue_Status := Running;
+      Status : Queue_Status := Running;
 
-      Queue         : Command_Lists.List;
+      Queue : Command_Lists.List;
       --  Each element is a Scheduled_Command
 
-      Total    : Integer := 0;
+      Total : Integer := 0;
       --  The total number of items inserted so far in Queue
 
-      Done     : Integer := 0;
+      Done : Integer := 0;
       --  The number of items done in queue
 
-      Id       : Unbounded_String := Null_Unbounded_String;
+      Id : Unbounded_String := Null_Unbounded_String;
       --  An unique ID that allows identifying this task queue in a stable
       --  manner. There should be no two queues with the same Id at the same
       --  time in the task manager.
 
       Current_Priority : Integer := 0;
 
-      Show_Bar     : Boolean := False;
+      Show_Bar : Boolean := False;
 
-      Block_Exit   : Boolean := True;
+      Block_Exit : Boolean := True;
 
       Inst : Class_Instance := No_Class_Instance;
       --  The scripting instance currently wrapping this task
@@ -169,21 +165,21 @@ private
    end record;
    type Task_Queue_Access is access Task_Queue_Record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Task_Queue_Record, Task_Queue_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Task_Queue_Record, Task_Queue_Access);
 
    type Task_Queue_Array is array (Natural range <>) of Task_Queue_Access;
    type Task_Queue_Array_Access is access Task_Queue_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Task_Queue_Array, Task_Queue_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Task_Queue_Array, Task_Queue_Array_Access);
 
    type Task_Manager_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is tagged record
-      Queues               : Task_Queue_Array_Access;
+      Queues : Task_Queue_Array_Access;
 
-      Passive_Index        : Integer := 0;
+      Passive_Index : Integer := 0;
       --  Index of the first passive queue in Queues
 
       Minimal_Active_Priority  : Integer := 0;
@@ -192,18 +188,18 @@ private
       Prevent_Active_Reentry : Boolean := False;
       --  Flag to prevent reentry
 
-      Active_Handler_Id        : Glib.Main.G_Source_Id := No_Source_Id;
+      Active_Handler_Id : Glib.Main.G_Source_Id := No_Source_Id;
       --  The id of the active idle callback.
 
-      Passive_Handler_Id       : Glib.Main.G_Source_Id := No_Source_Id;
+      Passive_Handler_Id : Glib.Main.G_Source_Id := No_Source_Id;
       --  The id of the passive timeout callback
    end record;
 
    No_Task_Manager : constant Task_Manager_Access := null;
 
    function Queue_From_Id
-     (Manager : not null access Task_Manager_Record;
-      Id      : String) return Task_Queue_Access;
+     (Manager : not null access Task_Manager_Record; Id : String)
+      return Task_Queue_Access;
    --  Return the queue currently running from the given Id, null if there
    --  isn't one.
 

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GVD.Types;                   use GVD.Types;
 with Language;                    use Language;
@@ -34,9 +34,7 @@ package body GVD.Variables.Items is
       if Self.Varname /= "" then
          return To_String (Self.Varname);
 
-      elsif Self.Cmd_Name /= ""
-        and then Self.Cmd_Name /= "<>"
-      then
+      elsif Self.Cmd_Name /= "" and then Self.Cmd_Name /= "<>" then
          return To_String (Self.Cmd_Name);
 
       else
@@ -49,8 +47,7 @@ package body GVD.Variables.Items is
    ---------------------------
 
    function Wrap_Debugger_Command
-     (Cmd         : String;
-      Split_Lines : Boolean := False) return Item_Info
+     (Cmd : String; Split_Lines : Boolean := False) return Item_Info
    is
       Result : Item_Info;
    begin
@@ -58,10 +55,10 @@ package body GVD.Variables.Items is
 
       if Cmd = Local_Variables_Name then
          Result.Cmd_Name := To_Unbounded_String (Local_Variables_Name);
-         Result.Entity   := Empty_GVD_Type_Holder;
+         Result.Entity := Empty_GVD_Type_Holder;
       else
-         Result.Cmd_Name    := To_Unbounded_String ("<>");
-         Result.Entity      := New_Debugger_Type (Cmd, Split_Lines);
+         Result.Cmd_Name := To_Unbounded_String ("<>");
+         Result.Entity := New_Debugger_Type (Cmd, Split_Lines);
          Result.Split_Lines := Split_Lines;
       end if;
 
@@ -73,14 +70,13 @@ package body GVD.Variables.Items is
    -------------------
 
    function Wrap_Variable
-     (Varname  : String;
-      Format   : Debugger.Value_Format := Default_Format)
+     (Varname : String; Format : Debugger.Value_Format := Default_Format)
       return Item_Info
    is
       Result : Item_Info;
    begin
       Result.Varname := To_Unbounded_String (Varname);
-      Result.Format  := Format;
+      Result.Format := Format;
       return Result;
    end Wrap_Variable;
 
@@ -102,11 +98,8 @@ package body GVD.Variables.Items is
          return;
       end if;
 
-      if Self.Varname /= ""
-        and then Self.Entity = Empty_GVD_Type_Holder
-      then
-         if Process.Debugger.Get_Type_Info
-           (To_String (Self.Varname), "") = ""
+      if Self.Varname /= "" and then Self.Entity = Empty_GVD_Type_Holder then
+         if Process.Debugger.Get_Type_Info (To_String (Self.Varname), "") = ""
          then
             --  Can't create variable, maybe the name is not a variable name
             return;
@@ -125,8 +118,8 @@ package body GVD.Variables.Items is
             Process.Debugger.Filter_Output
               (Visible,
                Process.Debugger.Send_And_Get_Clean_Output
-                 (GVD_Debugger_Output_Type_Access
-                      (Self.Entity.Get_Type).Refresh_Command,
+                 (GVD_Debugger_Output_Type_Access (Self.Entity.Get_Type)
+                    .Refresh_Command,
                   Mode => GVD.Types.Internal),
                Console_Output  => Console_Output,
                Log_Output      => Log_Output,
@@ -155,8 +148,9 @@ package body GVD.Variables.Items is
             exception
                when Language.Unexpected_Type | Constraint_Error =>
                   Trace
-                    (Me, "Update: Value not parsed for " &
-                       To_String (Self.Varname));
+                    (Me,
+                     "Update: Value not parsed for "
+                     & To_String (Self.Varname));
                   Self.Entity.Get_Type.Set_Valid (False);
             end;
 
@@ -167,7 +161,7 @@ package body GVD.Variables.Items is
       end if;
 
    exception
-         --  Could be a parse_type error
+      --  Could be a parse_type error
       when E : others =>
          Trace (Me, E);
    end Update;

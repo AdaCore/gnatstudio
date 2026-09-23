@@ -23,14 +23,10 @@ with GPS.Editors;
 package body DAP.Types.Breakpoints is
 
    function Is_Same_Location
-     (Data : Breakpoint_Data;
-      File : Virtual_File;
-      Line : Editable_Line_Type)
+     (Data : Breakpoint_Data; File : Virtual_File; Line : Editable_Line_Type)
       return Boolean;
    function Is_Same_Location
-     (Data   : Breakpoint_Data;
-      Marker : Location_Marker)
-      return Boolean;
+     (Data : Breakpoint_Data; Marker : Location_Marker) return Boolean;
    --  Return true if the breakpoint's location matches the given one.
 
    function Is_Duplicate (L, R : Breakpoint_Data) return Boolean;
@@ -43,8 +39,8 @@ package body DAP.Types.Breakpoints is
    --  otherwise.
 
    function Copy
-     (Data      : Breakpoint_Data;
-      Full_Copy : Boolean := False) return Breakpoint_Data;
+     (Data : Breakpoint_Data; Full_Copy : Boolean := False)
+      return Breakpoint_Data;
    --  Copy the given breakpoint. If Full_Copy is True, the fields set by the
    --  running debugger once the debuggee is known will also be copied (e.g:
    --  breakpoint's number, address of the breakpoint's SLOC...). Otherwise,
@@ -56,9 +52,7 @@ package body DAP.Types.Breakpoints is
    -------
 
    function "="
-     (Data : Breakpoint_Data;
-      Num  : Breakpoint_Identifier)
-      return Boolean is
+     (Data : Breakpoint_Data; Num : Breakpoint_Identifier) return Boolean is
    begin
       return Data.Num = Num;
    end "=";
@@ -68,13 +62,12 @@ package body DAP.Types.Breakpoints is
    ----------------------
 
    function Is_Same_Location
-     (Data : Breakpoint_Data;
-      File : Virtual_File;
-      Line : Editable_Line_Type)
+     (Data : Breakpoint_Data; File : Virtual_File; Line : Editable_Line_Type)
       return Boolean is
    begin
       if Data.Kind = On_Line then
-         return GPS.Editors.Get_Line (Data.Location.Marker) = Line
+         return
+           GPS.Editors.Get_Line (Data.Location.Marker) = Line
            and then GPS.Editors.Get_File (Data.Location.Marker) = File;
       else
          return False;
@@ -86,9 +79,7 @@ package body DAP.Types.Breakpoints is
    ----------------------
 
    function Is_Same_Location
-     (Data   : Breakpoint_Data;
-      Marker : Location_Marker)
-      return Boolean is
+     (Data : Breakpoint_Data; Marker : Location_Marker) return Boolean is
    begin
       if Similar (Data.Location.Marker, Marker) then
          return True;
@@ -108,16 +99,16 @@ package body DAP.Types.Breakpoints is
       end if;
 
       case L.Kind is
-         when On_Line =>
+         when On_Line        =>
             return Is_Same_Location (L, Get_Location (R));
 
-         when On_Subprogram =>
+         when On_Subprogram  =>
             return L.Subprogram = R.Subprogram;
 
          when On_Instruction =>
             return L.Location.Address = R.Location.Address;
 
-         when On_Exception =>
+         when On_Exception   =>
             return L.Exception_Name = R.Exception_Name;
       end case;
    end Is_Duplicate;
@@ -127,8 +118,8 @@ package body DAP.Types.Breakpoints is
    ----------
 
    function Copy
-     (Data      : Breakpoint_Data;
-      Full_Copy : Boolean := False) return Breakpoint_Data
+     (Data : Breakpoint_Data; Full_Copy : Boolean := False)
+      return Breakpoint_Data
    is
       Result : Breakpoint_Data := Data;
    begin
@@ -165,8 +156,7 @@ package body DAP.Types.Breakpoints is
    -- Get_Location_File --
    -----------------------
 
-   function Get_Location_File (Data : Breakpoint_Data) return Virtual_File
-   is
+   function Get_Location_File (Data : Breakpoint_Data) return Virtual_File is
       Loc : Location_Marker;
    begin
       case Data.Kind is
@@ -178,7 +168,7 @@ package body DAP.Types.Breakpoints is
                return GPS.Editors.Get_File (Loc);
             end if;
 
-         when others =>
+         when others  =>
             return No_File;
       end case;
    end Get_Location_File;
@@ -195,8 +185,9 @@ package body DAP.Types.Breakpoints is
          declare
             S : constant String := Data.Ignore'Img;
          begin
-            return VSS.Strings.Conversions.To_Virtual_String
-              (S (S'First + 1 .. S'Last));
+            return
+              VSS.Strings.Conversions.To_Virtual_String
+                (S (S'First + 1 .. S'Last));
          end;
       end if;
    end Get_Ignore;
@@ -208,27 +199,28 @@ package body DAP.Types.Breakpoints is
    function To_String (Data : Breakpoint_Data) return String is
    begin
       case Data.Kind is
-         when On_Line =>
+         when On_Line        =>
             if Data.Location.Marker /= No_Marker then
-               return Get_Location_File (Data).Display_Base_Name
+               return
+                 Get_Location_File (Data).Display_Base_Name
                  & ":"
                  & GNATCOLL.Utils.Image
-                 (Integer (GPS.Editors.Get_Line
-                  (Data.Location.Marker)),
-                  Min_Width => 0);
+                     (Integer (GPS.Editors.Get_Line (Data.Location.Marker)),
+                      Min_Width => 0);
             else
                return "(no location)";
             end if;
 
-         when On_Subprogram =>
+         when On_Subprogram  =>
             return VSS.Strings.Conversions.To_UTF_8_String (Data.Subprogram);
 
          when On_Instruction =>
             return Address_To_String (Data.Location.Address);
 
-         when On_Exception =>
-            return "exception " & VSS.Strings.Conversions.To_UTF_8_String
-              (Data.Exception_Name);
+         when On_Exception   =>
+            return
+              "exception "
+              & VSS.Strings.Conversions.To_UTF_8_String (Data.Exception_Name);
       end case;
    end To_String;
 
@@ -268,8 +260,7 @@ package body DAP.Types.Breakpoints is
    ---------------------
 
    function Get_Breakpoints
-     (Self    : Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List)
+     (Self : Breakpoint_Holder; Indexes : Breakpoint_Index_Lists.List)
       return Breakpoint_Vectors.Vector
    is
       Result : Breakpoint_Vectors.Vector;
@@ -286,8 +277,7 @@ package body DAP.Types.Breakpoints is
    -------------------------------
 
    function Get_Breakpoint_From_Index
-     (Self : Breakpoint_Holder;
-      Idx  : Positive) return Breakpoint_Data is
+     (Self : Breakpoint_Holder; Idx : Positive) return Breakpoint_Data is
    begin
       if Idx in Self.Vector.First_Index .. Self.Vector.Last_Index then
          return Self.Vector (Idx);
@@ -301,8 +291,8 @@ package body DAP.Types.Breakpoints is
    ----------------------------
 
    function Get_Breakpoint_From_Id
-     (Self : Breakpoint_Holder;
-      Id   : Breakpoint_Identifier) return Breakpoint_Data
+     (Self : Breakpoint_Holder; Id : Breakpoint_Identifier)
+      return Breakpoint_Data
    is
       Cursor : constant Breakpoint_Vectors.Cursor :=
         Self.Vector.Find (Breakpoint_Data'(Num => Id, others => <>));
@@ -318,9 +308,7 @@ package body DAP.Types.Breakpoints is
    -- Replace --
    -------------
 
-   procedure Replace
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data)
+   procedure Replace (Self : in out Breakpoint_Holder; Data : Breakpoint_Data)
    is
       use Breakpoint_Vectors;
       C : constant Breakpoint_Vectors.Cursor := Self.Vector.Find (Data);
@@ -335,9 +323,8 @@ package body DAP.Types.Breakpoints is
    -------------
 
    procedure Replace
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data;
-      Idx  : Positive) is
+     (Self : in out Breakpoint_Holder; Data : Breakpoint_Data; Idx : Positive)
+   is
    begin
       if Idx in Self.Vector.First_Index .. Self.Vector.Last_Index then
          Self.Vector.Replace_Element (Idx, Data);
@@ -367,14 +354,11 @@ package body DAP.Types.Breakpoints is
    --------------
 
    function Contains
-     (Self   : in out Breakpoint_Holder;
-      Marker : Location_Marker)
-      return Boolean is
+     (Self : in out Breakpoint_Holder; Marker : Location_Marker) return Boolean
+   is
    begin
       for Data of Self.Vector loop
-         if Data.Kind = On_Line
-           and then Is_Same_Location (Data, Marker)
-         then
+         if Data.Kind = On_Line and then Is_Same_Location (Data, Marker) then
             return True;
          end if;
       end loop;
@@ -435,8 +419,7 @@ package body DAP.Types.Breakpoints is
    -------------------
 
    function Get_For_Files
-     (Self         : Breakpoint_Holder;
-      Enabled_Only : Boolean := True)
+     (Self : Breakpoint_Holder; Enabled_Only : Boolean := True)
       return Breakpoint_Hash_Maps.Map
    is
       Result  : Breakpoint_Hash_Maps.Map;
@@ -474,8 +457,7 @@ package body DAP.Types.Breakpoints is
    function Get_For_File
      (Self         : Breakpoint_Holder;
       File         : Virtual_File;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Vectors.Vector
+      Enabled_Only : Boolean := True) return Breakpoint_Vectors.Vector
    is
       Result : Breakpoint_Vectors.Vector;
    begin
@@ -497,8 +479,7 @@ package body DAP.Types.Breakpoints is
    function Get_For_File
      (Self         : Breakpoint_Holder;
       File         : Virtual_File;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Index_Lists.List
+      Enabled_Only : Boolean := True) return Breakpoint_Index_Lists.List
    is
       Indexes : Breakpoint_Index_Lists.List;
       Data    : Breakpoint_Data;
@@ -523,8 +504,7 @@ package body DAP.Types.Breakpoints is
    function Get_For_Kind
      (Self         : Breakpoint_Holder;
       Kind         : Breakpoint_Kind;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Index_Lists.List
+      Enabled_Only : Boolean := True) return Breakpoint_Index_Lists.List
    is
       Indexes : Breakpoint_Index_Lists.List;
       Data    : Breakpoint_Data;
@@ -532,8 +512,7 @@ package body DAP.Types.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if (Data.Enabled or else not Enabled_Only)
-           and then Data.Kind = Kind
+         if (Data.Enabled or else not Enabled_Only) and then Data.Kind = Kind
          then
             Indexes.Append (Idx);
          end if;
@@ -546,9 +525,8 @@ package body DAP.Types.Breakpoints is
    -- Append --
    ------------
 
-   procedure Append
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data) is
+   procedure Append (Self : in out Breakpoint_Holder; Data : Breakpoint_Data)
+   is
    begin
       Self.Vector.Append (Data);
    end Append;
@@ -558,8 +536,7 @@ package body DAP.Types.Breakpoints is
    ------------
 
    procedure Delete
-     (Self : in out Breakpoint_Holder;
-      Id   : Breakpoint_Identifier)
+     (Self : in out Breakpoint_Holder; Id : Breakpoint_Identifier)
    is
       Cursor : Breakpoint_Vectors.Cursor :=
         Self.Vector.Find (Breakpoint_Data'(Num => Id, others => <>));
@@ -574,8 +551,8 @@ package body DAP.Types.Breakpoints is
    ------------
 
    procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List) is
+     (Self : in out Breakpoint_Holder; Indexes : Breakpoint_Index_Lists.List)
+   is
    begin
       for Idx of Indexes loop
          Self.Vector.Delete (Idx);
@@ -587,9 +564,9 @@ package body DAP.Types.Breakpoints is
    ------------
 
    procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Line    : Editable_Line_Type)
+     (Self : in out Breakpoint_Holder;
+      File : Virtual_File;
+      Line : Editable_Line_Type)
    is
       Indexes : Breakpoint_Index_Lists.List;
    begin
@@ -607,9 +584,9 @@ package body DAP.Types.Breakpoints is
    ----------------------
 
    procedure Set_Ignore_Count
-     (Self    : in out Breakpoint_Holder;
-      Id      : Breakpoint_Identifier;
-      Count   : Natural) is
+     (Self  : in out Breakpoint_Holder;
+      Id    : Breakpoint_Identifier;
+      Count : Natural) is
    begin
       for Data of Self.Vector loop
          if Data.Num = Id then

@@ -16,24 +16,25 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Case_Handling;              use Case_Handling;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with Language;                   use Language;
-with Language.C;                 use Language.C;
-with Language.Cpp;               use Language.Cpp;
-with Language_Handlers;          use Language_Handlers;
-with Projects;                   use Projects;
+with Case_Handling;      use Case_Handling;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with Language;           use Language;
+with Language.C;         use Language.C;
+with Language.Cpp;       use Language.Cpp;
+with Language_Handlers;  use Language_Handlers;
+with Projects;           use Projects;
 
 package body Cpp_Module is
    Me : constant Trace_Handle := Create ("GPS.CPP.MODULE");
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -45,7 +46,8 @@ package body Cpp_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -53,22 +55,22 @@ package body Cpp_Module is
       pragma Unreferenced (Self, Kernel, Pref);
       Style  : constant Indentation_Kind := C_Automatic_Indentation.Get_Pref;
       Params : constant Indent_Parameters :=
-                 (Indent_Level        => C_Indentation_Level.Get_Pref,
-                  Indent_Continue     => 0,
-                  Indent_Decl         => 0,
-                  Indent_Conditional  => 0,
-                  Indent_Record       => 0,
-                  Indent_Case_Extra   => Automatic,
-                  Casing_Policy       => Case_Handling.Disabled,
-                  Reserved_Casing     => Case_Handling.Unchanged,
-                  Identifier_Casing   => Case_Handling.Unchanged,
-                  Format_Operators    => False,
-                  Use_Tabs            => C_Use_Tabs.Get_Pref,
-                  Align_On_Colons     => C_Indent_Extra.Get_Pref,
-                  Align_On_Arrows     => False,
-                  Align_Decl_On_Colon => False,
-                  Indent_Comments     => C_Indent_Comments.Get_Pref,
-                  Stick_Comments      => False);
+        (Indent_Level        => C_Indentation_Level.Get_Pref,
+         Indent_Continue     => 0,
+         Indent_Decl         => 0,
+         Indent_Conditional  => 0,
+         Indent_Record       => 0,
+         Indent_Case_Extra   => Automatic,
+         Casing_Policy       => Case_Handling.Disabled,
+         Reserved_Casing     => Case_Handling.Unchanged,
+         Identifier_Casing   => Case_Handling.Unchanged,
+         Format_Operators    => False,
+         Use_Tabs            => C_Use_Tabs.Get_Pref,
+         Align_On_Colons     => C_Indent_Extra.Get_Pref,
+         Align_On_Arrows     => False,
+         Align_Decl_On_Colon => False,
+         Indent_Comments     => C_Indent_Comments.Get_Pref,
+         Stick_Comments      => False);
 
    begin
       Set_Indentation_Parameters (C_Lang, Params, Style);
@@ -118,59 +120,66 @@ package body Cpp_Module is
          Priority         => -2,
          Replace_If_Exist => True);
 
-      C_Automatic_Indentation := Indentation_Kind_Preferences.Create
-        (Manager,
-         Path    => -"Editor/C & C++:Indentation",
-         Name    => "C-Auto-Indentation",
-         Default => Extended,
-         Doc     => -"Enable auto-indentation for C and C++ sources.",
-         Label   => -"Auto indentation");
+      C_Automatic_Indentation :=
+        Indentation_Kind_Preferences.Create
+          (Manager,
+           Path    => -"Editor/C & C++:Indentation",
+           Name    => "C-Auto-Indentation",
+           Default => Extended,
+           Doc     => -"Enable auto-indentation for C and C++ sources.",
+           Label   => -"Auto indentation");
 
-      C_Indentation_Level := Manager.Create
-        (Path    => -"Editor/C & C++:Indentation",
-         Name    => "C-Indent-Level",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 2,
-         Doc     => -"Number of spaces for the default indentation.",
-         Label   => -"Default indentation");
+      C_Indentation_Level :=
+        Manager.Create
+          (Path    => -"Editor/C & C++:Indentation",
+           Name    => "C-Indent-Level",
+           Minimum => 1,
+           Maximum => 9,
+           Default => 2,
+           Doc     => -"Number of spaces for the default indentation.",
+           Label   => -"Default indentation");
 
-      C_Use_Tabs := Manager.Create
-        (Path    => -"Editor/C & C++:Indentation",
-         Name    => "C-Use-Tabs",
-         Default => False,
-         Doc     => -"Use tabulations when indenting.",
-         Label   => -"Use tabulations");
+      C_Use_Tabs :=
+        Manager.Create
+          (Path    => -"Editor/C & C++:Indentation",
+           Name    => "C-Use-Tabs",
+           Default => False,
+           Doc     => -"Use tabulations when indenting.",
+           Label   => -"Use tabulations");
 
-      C_Comment_Two_Slashes := Manager.Create
-        (Path    => -"Editor/C & C++:C Comments",
-         Name    => "C-Comment-Two-Slashes",
-         Default => False,
-         Doc     => -"Use // for C comments rather than /*  */",
-         Label   => -"Use // for C comments");
+      C_Comment_Two_Slashes :=
+        Manager.Create
+          (Path    => -"Editor/C & C++:C Comments",
+           Name    => "C-Comment-Two-Slashes",
+           Default => False,
+           Doc     => -"Use // for C comments rather than /*  */",
+           Label   => -"Use // for C comments");
 
-      C_Indent_Extra := Manager.Create
-        (Path    => -"Editor/C & C++:Indentation",
-         Name    => "C-Indent-Extra",
-         Default => True,
-         Doc     =>
-           -"Indent if/loop/switch constructs an extra level after '{'." &
-           " For non clangd cases.",
-         Label   => -"Extra indentation");
+      C_Indent_Extra :=
+        Manager.Create
+          (Path    => -"Editor/C & C++:Indentation",
+           Name    => "C-Indent-Extra",
+           Default => True,
+           Doc     =>
+             -"Indent if/loop/switch constructs an extra level after '{'."
+             & " For non clangd cases.",
+           Label   => -"Extra indentation");
 
-      C_Indent_Comments := Manager.Create
-        (Path    => -"Editor/C & C++:Indentation",
-         Name    => "C-Indent-Comments",
-         Default => True,
-         Doc     => -"Indent lines with only comments.",
-         Label   => -"Indent comments");
+      C_Indent_Comments :=
+        Manager.Create
+          (Path    => -"Editor/C & C++:Indentation",
+           Name    => "C-Indent-Comments",
+           Default => True,
+           Doc     => -"Indent lines with only comments.",
+           Label   => -"Indent comments");
 
       Hook := new On_Pref_Changed;
       Preferences_Changed_Hook.Add (Hook);
       Hook.Execute (Kernel, null);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Register_Module;
 
 end Cpp_Module;

@@ -30,7 +30,7 @@ package CodePeer.Module.Bridge is
    --  Module's variables.
 
    procedure Remove_Inspection_Cache_File
-      (Module : not null access CodePeer.Module.Module_Id_Record'Class);
+     (Module : not null access CodePeer.Module.Module_Id_Record'Class);
    --  Removes auxiliary inspection's information file, used as cache.
    --  Builder must be switched to 'codepeer' mode by caller.
 

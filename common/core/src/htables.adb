@@ -37,10 +37,7 @@ package body HTables is
       --  empty. Returns Iterator_Ptr if non null, or the next non null
       --  element in table if any.
 
-      procedure Remove
-        (T      : Instance;
-         Index  : Header_Num;
-         K      : Key);
+      procedure Remove (T : Instance; Index : Header_Num; K : Key);
       --  Low-level implementation for Remove
 
       ---------
@@ -48,7 +45,7 @@ package body HTables is
       ---------
 
       function Get (T : Instance; K : Key) return Elmt_Ptr is
-         Elmt  : Elmt_Ptr;
+         Elmt : Elmt_Ptr;
       begin
          if T = null then
             return Null_Ptr;
@@ -92,8 +89,8 @@ package body HTables is
             Iter.Iterator_Started := False;
          else
             Iter.Iterator_Started := True;
-            Iter.Iterator_Index   := T.Table'First;
-            Iter.Iterator_Ptr     := T.Table (Iter.Iterator_Index);
+            Iter.Iterator_Index := T.Table'First;
+            Iter.Iterator_Ptr := T.Table (Iter.Iterator_Index);
             Get_Non_Null (T, Iter);
          end if;
       end Get_First;
@@ -144,10 +141,9 @@ package body HTables is
       -- Remove_And_Get_Next --
       -------------------------
 
-      procedure Remove_And_Get_Next
-        (T : in out Instance; Iter : in out Cursor)
+      procedure Remove_And_Get_Next (T : in out Instance; Iter : in out Cursor)
       is
-         Tmp : Elmt_Ptr;
+         Tmp   : Elmt_Ptr;
          Index : Header_Num;
       begin
          if T = null or else not Iter.Iterator_Started then
@@ -156,7 +152,7 @@ package body HTables is
          end if;
 
          --  Save current setup
-         Tmp   := Iter.Iterator_Ptr;
+         Tmp := Iter.Iterator_Ptr;
          Index := Iter.Iterator_Index;
 
          --  Move to next element
@@ -176,14 +172,14 @@ package body HTables is
          if T = null then
             Iter.Iterator_Started := False;
          else
-            while Iter.Iterator_Ptr = Null_Ptr  loop
+            while Iter.Iterator_Ptr = Null_Ptr loop
                if Iter.Iterator_Index = T.Table'Last then
                   Iter.Iterator_Started := False;
                   return;
                end if;
 
                Iter.Iterator_Index := Iter.Iterator_Index + 1;
-               Iter.Iterator_Ptr   := T.Table (Iter.Iterator_Index);
+               Iter.Iterator_Ptr := T.Table (Iter.Iterator_Index);
             end loop;
          end if;
       end Get_Non_Null;
@@ -193,7 +189,7 @@ package body HTables is
       ------------
 
       procedure Remove (T : Instance; K : Key) is
-         Index     : constant Header_Num := Hash (K);
+         Index : constant Header_Num := Hash (K);
       begin
          Remove (T, Index, K);
       end Remove;
@@ -202,11 +198,7 @@ package body HTables is
       -- Remove --
       ------------
 
-      procedure Remove
-        (T     : Instance;
-         Index : Header_Num;
-         K     : Key)
-      is
+      procedure Remove (T : Instance; Index : Header_Num; K : Key) is
          Next_Elmt : Elmt_Ptr;
          Elmt      : Elmt_Ptr;
       begin
@@ -226,7 +218,7 @@ package body HTables is
 
          else
             loop
-               Next_Elmt :=  Next (Elmt);
+               Next_Elmt := Next (Elmt);
 
                if Next_Elmt = Null_Ptr then
                   return;
@@ -248,8 +240,8 @@ package body HTables is
       -----------
 
       procedure Reset (T : in out Instance) is
-         procedure Unchecked_Free is
-           new Ada.Unchecked_Deallocation (Instance_Data, Instance);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation (Instance_Data, Instance);
 
          Tmp : Elmt_Ptr;
       begin
@@ -383,8 +375,8 @@ package body HTables is
       -- Remove_And_Get_Next --
       -------------------------
 
-      procedure Remove_And_Get_Next
-        (T : in out Instance; Iter : in out Cursor) is
+      procedure Remove_And_Get_Next (T : in out Instance; Iter : in out Cursor)
+      is
       begin
          Remove_And_Get_Next (T.Table, Iter.Iter);
       end Remove_And_Get_Next;

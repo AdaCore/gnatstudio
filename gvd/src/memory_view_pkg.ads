@@ -15,31 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Spin_Button;     use Gtk.Spin_Button;
-with Gtk.Text_View;       use Gtk.Text_View;
-with Gtk.Viewport;        use Gtk.Viewport;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Check_Button;   use Gtk.Check_Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Spin_Button;    use Gtk.Spin_Button;
+with Gtk.Text_View;      use Gtk.Text_View;
+with Gtk.Viewport;       use Gtk.Viewport;
 
 package Memory_View_Pkg is
 
    type Memory_View_Record is new Gtk_Vbox_Record with record
-      Pgup           : Gtk_Button;
-      Pgdn           : Gtk_Button;
-      Viewport       : Gtk_Viewport;
-      View           : Gtk_Text_View;
-      Reset          : Gtk_Button;
-      Submit         : Gtk_Button;
-      Close          : Gtk_Button;
-      Address_View   : Gtk_Button;
-      Format         : Gtk_Combo_Box_Text;
-      Show_Ascii     : Gtk_Check_Button;
-      Size           : Gtk_Combo_Box_Text;
-      Address_Entry  : Gtk_Entry;
-      Lines_Spin     : Gtk_Spin_Button;
+      Pgup          : Gtk_Button;
+      Pgdn          : Gtk_Button;
+      Viewport      : Gtk_Viewport;
+      View          : Gtk_Text_View;
+      Reset         : Gtk_Button;
+      Submit        : Gtk_Button;
+      Close         : Gtk_Button;
+      Address_View  : Gtk_Button;
+      Format        : Gtk_Combo_Box_Text;
+      Show_Ascii    : Gtk_Check_Button;
+      Size          : Gtk_Combo_Box_Text;
+      Address_Entry : Gtk_Entry;
+      Lines_Spin    : Gtk_Spin_Button;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;
 

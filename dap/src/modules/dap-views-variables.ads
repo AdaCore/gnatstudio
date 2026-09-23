@@ -15,24 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Event;                   use Gdk.Event;
+with Gdk.Event; use Gdk.Event;
 
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Toolbar;            use Gtk.Toolbar;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.MDI;
-with Gtkada.Tree_View;            use Gtkada.Tree_View;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with VSS.Strings;                 use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 with VSS.Strings.Hash;
 
 with GPS.Kernel;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Search;                  use GPS.Search;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
+with GPS.Search;     use GPS.Search;
 
 with DAP.Clients.Variables;       use DAP.Clients.Variables;
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
@@ -75,25 +75,27 @@ private
    use DAP.Modules.Variables.Items.Item_Info_Vectors;
    use DAP.Types.Variables_References_Trees;
 
-   type Variables_Tree_View_Record is
-     new Gtkada.Tree_View.Tree_View_Record with
-      record
-         View         : View_Access;
-         Pattern      : Search_Pattern_Access;
-         Ids          : Item_ID := Unknown_Id; --  to compute
-         --  unique ids for items
-         Items        : Item_Info_Vectors.Vector;
-         Types_Column : Gtk_Tree_View_Column;
-         Text         : Gtk_Cell_Renderer_Text;
-      end record;
+   type Variables_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record
+   with record
+      View         : View_Access;
+      Pattern      : Search_Pattern_Access;
+      Ids          : Item_ID := Unknown_Id; --  to compute
+      --  unique ids for items
+      Items        : Item_Info_Vectors.Vector;
+      Types_Column : Gtk_Tree_View_Column;
+      Text         : Gtk_Cell_Renderer_Text;
+   end record;
    type Variables_Tree_View is access all Variables_Tree_View_Record'Class;
-   overriding function Is_Visible
-     (Self   : not null access Variables_Tree_View_Record;
-      Iter   : Gtk_Tree_Iter) return Boolean;
-   overriding procedure Add_Children
+   overriding
+   function Is_Visible
+     (Self : not null access Variables_Tree_View_Record; Iter : Gtk_Tree_Iter)
+      return Boolean;
+   overriding
+   procedure Add_Children
      (Self       : not null access Variables_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter);
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Variables_Tree_View_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
@@ -102,8 +104,12 @@ private
    function Get_Id
      (Self : not null access Variables_Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Virtual_String;
-   package Expansions is new Expansion_Support
-     (Variables_Tree_View_Record, Virtual_String, Get_Id, VSS.Strings.Hash);
+   package Expansions is new
+     Expansion_Support
+       (Variables_Tree_View_Record,
+        Virtual_String,
+        Get_Id,
+        VSS.Strings.Hash);
    --  An Id that uniquely identifies each row of the tree view
 
    procedure Add_Row
@@ -114,18 +120,15 @@ private
 
    function Item_From_Store_Iter
      (Self       : not null access Variables_Tree_View_Record'Class;
-      Store_Iter : Gtk_Tree_Iter)
-      return Item_Info'Class;
+      Store_Iter : Gtk_Tree_Iter) return Item_Info'Class;
    --  Return a row in the variables view converted into an item
 
    function Item_From_Filter_Iter
      (Self        : not null access Variables_Tree_View_Record'Class;
-      Filter_Iter : in out Gtk_Tree_Iter)
-      return Item_Info'Class;
+      Filter_Iter : in out Gtk_Tree_Iter) return Item_Info'Class;
 
    function Find_Info
-     (Self : not null access Variables_Tree_View_Record'Class;
-      Id   : Item_ID)
+     (Self : not null access Variables_Tree_View_Record'Class; Id : Item_ID)
       return Item_Info'Class;
 
    procedure Find_Best_Info
@@ -135,8 +138,7 @@ private
       Found  : out Boolean);
 
    function Get_Item_Info
-     (Self : not null access Variables_Tree_View_Record'Class;
-      Name : String)
+     (Self : not null access Variables_Tree_View_Record'Class; Name : String)
       return Item_Info'Class;
 
    procedure Set_Item_Full_Name
@@ -148,10 +150,10 @@ private
    --  DAP_Variables_View_Record --
 
    type DAP_Variables_View_Record is new View_Record with record
-      Tree       : Variables_Tree_View;
+      Tree : Variables_Tree_View;
       --  Represents variables in GUI
 
-      Expansion  : Expansions.Expansion_Status := Expansions.No_Expansion;
+      Expansion : Expansions.Expansion_Status := Expansions.No_Expansion;
       --  Used to restore expansion and selection
 
       Collapse_All_First : Boolean := False;
@@ -170,8 +172,7 @@ private
      (Self : access DAP_Variables_View_Record'Class) return Gtk_Widget;
 
    procedure Display
-     (Self : access DAP_Variables_View_Record'Class;
-      Name : String);
+     (Self : access DAP_Variables_View_Record'Class; Name : String);
    --  Displays the variable by Name
 
    procedure Display
@@ -180,22 +181,19 @@ private
    --  Displays the variable by Item
 
    procedure Undisplay
-     (Self : access DAP_Variables_View_Record'Class;
-      Name : Virtual_String);
+     (Self : access DAP_Variables_View_Record'Class; Name : Virtual_String);
    --  Removes the variable from the view by Name
 
    procedure Undisplay
-     (Self : access DAP_Variables_View_Record'Class;
-      Item : Item_Info'Class);
+     (Self : access DAP_Variables_View_Record'Class; Item : Item_Info'Class);
    --  Removes the variable from the view by Item
 
-   overriding procedure Update
-     (Self : not null access DAP_Variables_View_Record);
+   overriding
+   procedure Update (Self : not null access DAP_Variables_View_Record);
    --  Update all displayed variables
 
    procedure Update
-     (Self     : access DAP_Variables_View_Record'Class;
-      Position : Natural);
+     (Self : access DAP_Variables_View_Record'Class; Position : Natural);
    --  Update the next after Position variable.
 
    procedure Update
@@ -210,8 +208,7 @@ private
 
    function Is_Changed
      (Self   : access DAP_Variables_View_Record'Class;
-      Cursor : Variables_References_Trees.Cursor)
-      return Boolean;
+      Cursor : Variables_References_Trees.Cursor) return Boolean;
    --  Returns true if the new value of the item has been changed
 
    procedure Clear (Self : not null access DAP_Variables_View_Record'Class);
@@ -223,65 +220,74 @@ private
       Value     : String;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path);
 
-   overriding procedure Create_Menu
-     (View    : not null access DAP_Variables_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access DAP_Variables_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (Self    : not null access DAP_Variables_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (Self : not null access DAP_Variables_View_Record);
 
-   overriding procedure On_Status_Changed
-     (Self : not null access DAP_Variables_View_Record;
+   overriding
+   procedure On_Status_Changed
+     (Self   : not null access DAP_Variables_View_Record;
       Status : GPS.Debuggers.Debugger_State);
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access DAP_Variables_View_Record;
       Pattern : in out Search_Pattern_Access);
 
-   overriding procedure On_Location_Changed
+   overriding
+   procedure On_Location_Changed
      (Self : not null access DAP_Variables_View_Record);
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self   : not null access DAP_Variables_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self   : not null access DAP_Variables_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   procedure Restore_Expansion
-     (Self : access DAP_Variables_View_Record'Class);
+   procedure Restore_Expansion (Self : access DAP_Variables_View_Record'Class);
    --  Restores expansion if any is stored
 
-   type Variables_MDI_Child_Record is
-     new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   type Variables_MDI_Child_Record is new GPS_MDI_Child_Record
+   with null record;
+   overriding
+   function Build_Context
      (Self  : not null access Variables_MDI_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return GPS.Kernel.Selection_Context;
 
-   package Variables_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Debugger_Variables",
-      View_Name                       => "Variables",
-      Formal_View_Record              => DAP_Variables_View_Record,
-      Formal_MDI_Child                => Variables_MDI_Child_Record,
-      Reuse_If_Exist                  => True,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Local_Toolbar                   => True,
-      Local_Config                    => True,
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Position                        => Gtkada.MDI.Position_Right,
-      Initialize                      => Initialize);
+   package Variables_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Debugger_Variables",
+        View_Name                       => "Variables",
+        Formal_View_Record              => DAP_Variables_View_Record,
+        Formal_MDI_Child                => Variables_MDI_Child_Record,
+        Reuse_If_Exist                  => True,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Local_Toolbar                   => True,
+        Local_Config                    => True,
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Position                        => Gtkada.MDI.Position_Right,
+        Initialize                      => Initialize);
 
-   package Variables_Views is new DAP.Views.Simple_Views
-     (Formal_View_Record => DAP_Variables_View_Record,
-      Formal_MDI_Child   => Variables_MDI_Child_Record,
-      Formal_Views       => Variables_MDI_Views);
+   package Variables_Views is new
+     DAP.Views.Simple_Views
+       (Formal_View_Record => DAP_Variables_View_Record,
+        Formal_MDI_Child   => Variables_MDI_Child_Record,
+        Formal_Views       => Variables_MDI_Views);
    use type Variables_MDI_Views.View_Access;
    subtype DAP_Variables_View is Variables_MDI_Views.View_Access;
 

@@ -24,8 +24,7 @@ with GNATCOLL.Scripts;
 package Src_Editor_Module.Line_Highlighting is
 
    procedure Edit_Command_Handler
-     (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
-      Command : String);
+     (Data : in out GNATCOLL.Scripts.Callback_Data'Class; Command : String);
    --  Interactive command handler for the source editor module.
 
    --  The following functions are used to provide a cache-like capability

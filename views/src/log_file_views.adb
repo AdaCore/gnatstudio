@@ -20,53 +20,54 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Fixed;
 
-with Glib;                      use Glib;
+with Glib;         use Glib;
 with Glib.Values;
 with Gtk.Menu;
-with Pango.Layout;              use Pango.Layout;
+with Pango.Layout; use Pango.Layout;
 
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;       use Gtk.Tree_Model_Sort;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;    use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;      use Gtk.Tree_Model_Sort;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Widget;               use Gtk.Widget;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.MDI;           use Gtkada.MDI;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Terminal;
-with Gtkada.Types;              use Gtkada.Types;
+with Gtkada.Types;         use Gtkada.Types;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Search;                use GPS.Search;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Search;             use GPS.Search;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;  use Default_Preferences;
 with Default_Preferences.Enums;
-with Interactive_Consoles;      use Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 with Generic_Views;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-with GUI_Utils;                 use GUI_Utils;
-with Filter_Panels;             use Filter_Panels;
+with Glib_Values_Utils;    use Glib_Values_Utils;
+with GUI_Utils;            use GUI_Utils;
+with Filter_Panels;        use Filter_Panels;
 
 package body Log_File_Views is
 
@@ -79,13 +80,14 @@ package body Log_File_Views is
    procedure Register_Interceptor;
    --  Register an interceptor for GNATCOLL traces
 
-   overriding procedure After_Message
+   overriding
+   procedure After_Message
      (Self   : in out Interceptor_Type;
       Handle : not null Logger;
       Msg    : in out Msg_Strings.XString);
 
-   package Preferences_Map is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, Boolean_Preference);
+   package Preferences_Map is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, Boolean_Preference);
 
    type Log_View_Record is new Interactive_Console_Record with record
       Is_Filtering : Boolean := False;
@@ -94,9 +96,10 @@ package body Log_File_Views is
       --  Map of preferences which control filtration
    end record;
 
-   overriding procedure Create_Menu
-     (View    : not null access Log_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access Log_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize (View : access Log_View_Record'Class) return Gtk_Widget;
    --  Create a new log view
@@ -104,14 +107,10 @@ package body Log_File_Views is
    procedure Refresh (View : access Log_View_Record'Class);
    --  Refresh the contents of the log view
 
-   procedure Append
-     (View : access Log_View_Record'Class;
-      Str  : String);
+   procedure Append (View : access Log_View_Record'Class; Str : String);
 
    function Is_Allowed
-     (View : access Log_View_Record'Class;
-      Str  : String)
-      return Boolean;
+     (View : access Log_View_Record'Class; Str : String) return Boolean;
    --  Checks whether trace's output is allowed in local config menu
 
    procedure On_Preferences_Changed (View : access Log_View_Record'Class);
@@ -120,53 +119,54 @@ package body Log_File_Views is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   package Log_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Log_View",
-      View_Name          => "Log",
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Formal_View_Record => Log_View_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Consoles);
+   package Log_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Log_View",
+        View_Name          => "Log",
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Formal_View_Record => Log_View_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Group              => Group_Consoles);
    subtype Log_View_Access is Log_Views.View_Access;
    use Log_Views;
 
    package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
    procedure Register_Preferences
-     (Kernel : Kernel_Handle;
-      View   : access Log_View_Record'Class);
+     (Kernel : Kernel_Handle; View : access Log_View_Record'Class);
    --  Creates preference for each trace
 
    type Save_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Save_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Save_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Saves the contents of view in a file
 
    type Configure_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Configure_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Configure_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Sets configuration
 
    type Properties_Editor_Record is new Gtk_Dialog_Record with record
-      Kernel             : access Kernel_Handle_Record'Class;
-      View               : Gtk_Tree_View;
-      Model              : Gtk_Tree_Store;
-      Filter             : Gtk_Tree_Model_Filter;
-      Sort               : Gtk_Tree_Model_Sort;
-      Disable_Filtering  : Boolean := False;
-      Filter_Panel       : Filter_Panels.Filter_Panel;
-      Filter_Pattern     : Search_Pattern_Access;
-      Toggle             : Gtk_Check_Button;
+      Kernel            : access Kernel_Handle_Record'Class;
+      View              : Gtk_Tree_View;
+      Model             : Gtk_Tree_Store;
+      Filter            : Gtk_Tree_Model_Filter;
+      Sort              : Gtk_Tree_Model_Sort;
+      Disable_Filtering : Boolean := False;
+      Filter_Panel      : Filter_Panels.Filter_Panel;
+      Filter_Pattern    : Search_Pattern_Access;
+      Toggle            : Gtk_Check_Button;
    end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
-   procedure On_Filter_Changed
-     (Self : access Gtk_Widget_Record'Class);
+   procedure On_Filter_Changed (Self : access Gtk_Widget_Record'Class);
 
    procedure Initialize
      (Self   : not null access Properties_Editor_Record'Class;
@@ -178,38 +178,40 @@ package body Log_File_Views is
    package Properties_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Properties_Editor);
    function Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Properties_Editor) return Boolean;
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Data : Properties_Editor)
+      return Boolean;
    --  Selects whether a given row should be visible in the editor.
 
-   package Tree_View_Column_Callbacks is
-     new Gtk.Handlers.User_Callback
-       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record, Properties_Editor);
+   package Tree_View_Column_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
+        Properties_Editor);
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
       Self   : Properties_Editor);
    --  Called on click on the column header
 
-   package Cell_Renderer_Toggle_Callbacks is
-     new Gtk.Handlers.User_Callback
+   package Cell_Renderer_Toggle_Callbacks is new
+     Gtk.Handlers.User_Callback
        (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
         Properties_Editor);
 
-   package Cell_Renderer_Toggle_Callbacks_Marshallers is
-     new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-       (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
+   package Cell_Renderer_Toggle_Callbacks_Marshallers is new
+     Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
+       (Gtkada.Types.Chars_Ptr,
+        Glib.Values.Get_Chars);
 
    procedure On_Select_Trace_Toggled
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Properties_Editor);
    --  Called on click on the list's item
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
@@ -241,7 +243,8 @@ package body Log_File_Views is
    -- After_Message --
    -------------------
 
-   overriding procedure After_Message
+   overriding
+   procedure After_Message
      (Self   : in out Interceptor_Type;
       Handle : not null Logger;
       Msg    : in out Msg_Strings.XString)
@@ -265,9 +268,7 @@ package body Log_File_Views is
       --  Do nothing if GNAT Studio is exiting or if the Enable_Log_View
       --  preference is set to False.
 
-      if Kernel /= null
-        and then Kernel.Is_In_Destruction
-      then
+      if Kernel /= null and then Kernel.Is_In_Destruction then
          return;
       end if;
 
@@ -275,17 +276,16 @@ package body Log_File_Views is
          Log_Type := Log_View_Preference.Get_Pref;
 
          case Log_Type is
-            when Off =>
+            when Off              =>
                return;
 
             when Only_When_Opened =>
-               if Log_Views.Retrieve_View
-                 (Log_File_Views.Kernel, False) = null
+               if Log_Views.Retrieve_View (Log_File_Views.Kernel, False) = null
                then
                   return;
                end if;
 
-            when Always =>
+            when Always           =>
                null;
          end case;
       end if;
@@ -320,12 +320,14 @@ package body Log_File_Views is
          declare
             Dummy : Message_Dialog_Buttons;
          begin
-            Dummy := GPS_Message_Dialog
-              (Msg        => "An exception has been raised while "
-               & "collecting traces for the Log view. Traces won't be  "
-               & "available in the Log view during this GNAT Studio session.",
-               Title       => "Problem detected with Log view",
-               Dialog_Type => Error);
+            Dummy :=
+              GPS_Message_Dialog
+                (Msg         =>
+                   "An exception has been raised while "
+                   & "collecting traces for the Log view. Traces won't be  "
+                   & "available in the Log view during this GNAT Studio session.",
+                 Title       => "Problem detected with Log view",
+                 Dialog_Type => Error);
          end;
    end After_Message;
 
@@ -333,13 +335,9 @@ package body Log_File_Views is
    -- Append --
    ------------
 
-   procedure Append
-     (View : access Log_View_Record'Class;
-      Str  : String) is
+   procedure Append (View : access Log_View_Record'Class; Str : String) is
    begin
-      if not View.Is_Filtering
-        or else View.Is_Allowed (Str)
-      then
+      if not View.Is_Filtering or else View.Is_Allowed (Str) then
          View.Insert_UTF8 (Str, Show_Prompt => False);
       end if;
    end Append;
@@ -348,9 +346,10 @@ package body Log_File_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Save_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Save_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
@@ -364,12 +363,12 @@ package body Log_File_Views is
 
       declare
          File : constant Virtual_File :=
-                  Select_File
-                    (Title             => "Save log as",
-                     Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                     Kind              => Save_File,
-                     Parent            => Get_Current_Window (View.Kernel),
-                     History           => Get_History (View.Kernel));
+           Select_File
+             (Title             => "Save log as",
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Save_File,
+              Parent            => Get_Current_Window (View.Kernel),
+              History           => Get_History (View.Kernel));
       begin
          if File /= GNATCOLL.VFS.No_File then
             Dummy := View.Export (File);
@@ -382,13 +381,14 @@ package body Log_File_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Configure_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Configure_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
-      View     : constant Log_View_Access :=
+      View : constant Log_View_Access :=
         Log_Views.Retrieve_View (Get_Kernel (Context.Context));
 
       Props : Properties_Editor;
@@ -459,8 +459,8 @@ package body Log_File_Views is
       for Name of Set loop
          Append (Self.Model, Iter, Null_Iter);
 
-         Active := Boolean_Preference
-           (Manager.Get_Pref_From_Name (Name)).Get_Pref;
+         Active :=
+           Boolean_Preference (Manager.Get_Pref_From_Name (Name)).Get_Pref;
 
          if Active then
             Has_Active := True;
@@ -479,9 +479,7 @@ package body Log_File_Views is
       Self.Toggle.Set_Active (False);
       Self.Toggle.Set_Inconsistent (False);
 
-      if Has_Active
-        and then Has_Inactive
-      then
+      if Has_Active and then Has_Inactive then
          Self.Toggle.Set_Inconsistent (True);
 
       elsif Has_Active then
@@ -503,9 +501,7 @@ package body Log_File_Views is
    -- On_Filter_Changed --
    -----------------------
 
-   procedure On_Filter_Changed
-     (Self : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Filter_Changed (Self : access Gtk_Widget_Record'Class) is
       E : constant Properties_Editor := Properties_Editor (Self);
 
       Pattern : constant Search_Pattern_Access :=
@@ -520,9 +516,10 @@ package body Log_File_Views is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Log_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Log_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Auto_Scroll_Preference);
    end Create_Menu;
@@ -531,8 +528,8 @@ package body Log_File_Views is
    -- Initialize --
    ----------------
 
-   function Initialize
-     (View : access Log_View_Record'Class) return Gtk_Widget is
+   function Initialize (View : access Log_View_Record'Class) return Gtk_Widget
+   is
    begin
       Register_Preferences (View.Kernel, View);
 
@@ -553,9 +550,7 @@ package body Log_File_Views is
       View.Enable_Prompt_Display (False);
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
 
-      Preferences_Changed_Hook.Add
-        (Obj   => new On_Pref_Changed,
-         Watch => View);
+      Preferences_Changed_Hook.Add (Obj => new On_Pref_Changed, Watch => View);
       View.On_Preferences_Changed;
 
       if Log_View_Preference.Get_Pref /= Always then
@@ -596,8 +591,7 @@ package body Log_File_Views is
 
       Gtk_New
         (Self.Model,
-         (Name_Column   => GType_String,
-          Toggle_Column => GType_Boolean));
+         (Name_Column => GType_String, Toggle_Column => GType_Boolean));
 
       Gtk_New (Self.Filter, +Self.Model);
       Properties_Editor_Visible_Funcs.Set_Visible_Func
@@ -665,7 +659,8 @@ package body Log_File_Views is
       Gtk_New (Text_Render);
       Set_Property
         (Text_Render,
-         Gtk.Cell_Renderer_Text.Ellipsize_Property, Ellipsize_Middle);
+         Gtk.Cell_Renderer_Text.Ellipsize_Property,
+         Ellipsize_Middle);
       Pack_Start (Col, Text_Render, True);
       Add_Attribute (Col, Text_Render, "text", Name_Column);
       Set_Clickable (Col, True);
@@ -687,9 +682,7 @@ package body Log_File_Views is
    ----------------
 
    function Is_Allowed
-     (View : access Log_View_Record'Class;
-      Str  : String)
-      return Boolean
+     (View : access Log_View_Record'Class; Str : String) return Boolean
    is
       S, E : Natural;
       P    : Boolean_Preference;
@@ -718,9 +711,8 @@ package body Log_File_Views is
    ----------------
 
    function Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Properties_Editor) return Boolean
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Data : Properties_Editor)
+      return Boolean
    is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -733,8 +725,9 @@ package body Log_File_Views is
       --  children).
 
       if Data.Filter_Pattern /= null then
-         Row_Visible := Data.Filter_Pattern.Start
-           (Get_String (Model, Iter, Name_Column)) /= GPS.Search.No_Match;
+         Row_Visible :=
+           Data.Filter_Pattern.Start (Get_String (Model, Iter, Name_Column))
+           /= GPS.Search.No_Match;
       end if;
 
       --  If the row should be invisible, but any of its children is visible,
@@ -744,7 +737,8 @@ package body Log_File_Views is
          Child := Children (Model, Iter);
          while Child /= Null_Iter loop
             if Data.Filter_Pattern.Start
-              (Get_String (Model, Child, Name_Column)) /= GPS.Search.No_Match
+                 (Get_String (Model, Child, Name_Column))
+              /= GPS.Search.No_Match
             then
                return True;
             end if;
@@ -815,8 +809,8 @@ package body Log_File_Views is
    -----------------------------
 
    procedure On_Select_Trace_Toggled
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Properties_Editor)
    is
@@ -828,8 +822,7 @@ package body Log_File_Views is
 
       Sort_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
-          (Gtk.Tree_Model.To_Interface (Self.Sort),
-           Value (Path));
+          (Gtk.Tree_Model.To_Interface (Self.Sort), Value (Path));
 
       Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Model_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -838,12 +831,11 @@ package body Log_File_Views is
       Self.Sort.Convert_Iter_To_Child_Iter (Filter_Iter, Sort_Iter);
       Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Filter_Iter);
 
-      P := Manager.Get_Pref_From_Name
-        ("trace-log-" & Self.Model.Get_String (Model_Iter, Name_Column));
+      P :=
+        Manager.Get_Pref_From_Name
+          ("trace-log-" & Self.Model.Get_String (Model_Iter, Name_Column));
 
-      if P /= null
-        and then P.all in Boolean_Preference_Record'Class
-      then
+      if P /= null and then P.all in Boolean_Preference_Record'Class then
          Value := not Boolean_Preference (P).Get_Pref;
          Set_Pref (Boolean_Preference (P), Manager, Value);
          Set_And_Clear
@@ -871,34 +863,48 @@ package body Log_File_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
    is
       pragma Unreferenced (Self);
       View : constant Log_Views.View_Access :=
-               Log_Views.Retrieve_View (Kernel);
+        Log_Views.Retrieve_View (Kernel);
    begin
       if View = null then
          return;
       end if;
 
       if Pref = null
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Default_Style)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Numbers_Style)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Types_Style)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Strings_Style)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Keywords_Style)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Bookmark_Color)
-        or else Pref = Default_Preferences.Preference
-          (GPS.Kernel.Preferences.Comments_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Default_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Numbers_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference (GPS.Kernel.Preferences.Types_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Strings_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Keywords_Style)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Bookmark_Color)
+        or else
+          Pref
+          = Default_Preferences.Preference
+              (GPS.Kernel.Preferences.Comments_Style)
       then
          View.On_Preferences_Changed;
          return;
@@ -913,8 +919,7 @@ package body Log_File_Views is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
       pragma Unreferenced (View);
    begin
       if Log_View_Preference.Get_Pref /= Always then
@@ -979,28 +984,32 @@ package body Log_File_Views is
    begin
       Log_File_Views.Kernel := Kernel_Handle (Kernel);
 
-      Log_View_Preference := Log_View_Kind_Preferences.Create
-        (Get_Preferences (Kernel),
-         Path    => "Traces",
-         Name    => "Log-View-Type",
-         Label   => "Log collecting policy",
-         Doc     => "When the Log view collects messages",
-         Default => Only_When_Opened);
+      Log_View_Preference :=
+        Log_View_Kind_Preferences.Create
+          (Get_Preferences (Kernel),
+           Path    => "Traces",
+           Name    => "Log-View-Type",
+           Label   => "Log collecting policy",
+           Doc     => "When the Log view collects messages",
+           Default => Only_When_Opened);
 
-      Auto_Scroll_Preference := Get_Preferences (Kernel).Create_Invisible_Pref
-        (Name    => "Log-View-Auto-Scroll",
-         Default => False,
-         Label   => "Log view auto-scrolling",
-         Doc     => "Automatically scroll to new logs.");
+      Auto_Scroll_Preference :=
+        Get_Preferences (Kernel).Create_Invisible_Pref
+          (Name    => "Log-View-Auto-Scroll",
+           Default => False,
+           Label   => "Log view auto-scrolling",
+           Doc     => "Automatically scroll to new logs.");
 
       Register_Action
-        (Kernel, "log save",
+        (Kernel,
+         "log save",
          new Save_Command,
          "Save to file",
          Icon_Name => "gps-save-symbolic");
 
       Register_Action
-        (Kernel, "log configure",
+        (Kernel,
+         "log configure",
          new Configure_Command,
          "Configure log view",
          Icon_Name => "gps-settings-symbolic");
@@ -1015,8 +1024,7 @@ package body Log_File_Views is
    --------------------------
 
    procedure Register_Preferences
-     (Kernel : Kernel_Handle;
-      View   : access Log_View_Record'Class)
+     (Kernel : Kernel_Handle; View : access Log_View_Record'Class)
    is
       Set : Sets.Set;
 
@@ -1026,8 +1034,7 @@ package body Log_File_Views is
       -- Process --
       -------------
 
-      procedure Process (Handle : Trace_Handle)
-      is
+      procedure Process (Handle : Trace_Handle) is
          Name : constant String := Handle.Unit_Name;
       begin
          if (Starts_With (Name, "GPS.")
@@ -1055,8 +1062,9 @@ package body Log_File_Views is
       GNATCOLL.Traces.For_Each_Handle (Process'Unrestricted_Access);
 
       for Item of Set loop
-         Pref := Kernel.Get_Preferences.Create_Invisible_Pref
-           ("trace-log-" & Item, True, Label => Item);
+         Pref :=
+           Kernel.Get_Preferences.Create_Invisible_Pref
+             ("trace-log-" & Item, True, Label => Item);
 
          View.Preferences.Insert (Item, Pref);
 

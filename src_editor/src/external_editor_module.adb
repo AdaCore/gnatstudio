@@ -17,34 +17,36 @@
 
 with Unchecked_Deallocation;
 
-with GNAT.Expect;               use GNAT.Expect;
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Templates;        use GNATCOLL.Templates;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNAT.Expect;        use GNAT.Expect;
+with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNATCOLL.Templates; use GNATCOLL.Templates;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with Glib;                      use Glib;
-with Glib.Main;                 use Glib.Main;
+with Glib;      use Glib;
+with Glib.Main; use Glib.Main;
 
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences.Enums; use Default_Preferences;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel;                use GPS.Kernel;
-with Toolchains_Old;            use Toolchains_Old;
+with Basic_Types;         use Basic_Types;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences.Enums;
+use Default_Preferences;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Kernel;          use GPS.Kernel;
+with Toolchains_Old;      use Toolchains_Old;
 
 package body External_Editor_Module is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.SOURCE_EDITOR.EXTERNAL_EDITOR_MODULE");
+   Me : constant Trace_Handle :=
+     Create ("GPS.SOURCE_EDITOR.EXTERNAL_EDITOR_MODULE");
 
    Timeout : constant Guint := 500;
    --  Timeout in millisecond to check the external editor processes.
@@ -62,8 +64,8 @@ package body External_Editor_Module is
      Default_Preferences.Enums.Generics (Supported_Clients);
    --  The list of supported external editors.
 
-   Default_External_Editor    : Supported_Client_Preferences.Preference;
-   Custom_Editor              : String_Preference;
+   Default_External_Editor : Supported_Client_Preferences.Preference;
+   Custom_Editor           : String_Preference;
 
    type Constant_String_Access is access constant String;
 
@@ -72,7 +74,8 @@ package body External_Editor_Module is
    --------------
 
    type Edit_With_External_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_With_External_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -81,7 +84,7 @@ package body External_Editor_Module is
    -----------
 
    type External_Client is record
-      Command_Name      : Constant_String_Access;
+      Command_Name : Constant_String_Access;
       --  The command to load a file.
       --  The following substitutions are provided:
       --     %l = line to display
@@ -143,21 +146,21 @@ package body External_Editor_Module is
    --  that later with emacsclient. This means that the server needs to be
    --  restarted if the project file changes
 
-   Emacs_Command       : aliased constant String := "emacs +%l %f";
+   Emacs_Command : aliased constant String := "emacs +%l %f";
 
-   Vim_Command         : aliased constant String :=
+   Vim_Command : aliased constant String :=
      "xterm -geometry 80x50 -exec vim +%l %f";
-   Vim_Extra           : aliased constant String := "vim";
+   Vim_Extra   : aliased constant String := "vim";
 
-   Vi_Command          : aliased constant String :=
+   Vi_Command : aliased constant String :=
      "xterm -geometry 80x50 -exec vi +%l %f";
-   Vi_Extra            : aliased constant String := "vi";
+   Vi_Extra   : aliased constant String := "vi";
 
-   Custom_Command      : aliased constant String := "<custom>";
+   Custom_Command : aliased constant String := "<custom>";
 
    Clients : constant External_Clients :=
-     (Auto      => (null, null, null, null),
-      Gnuclient =>
+     (Auto        => (null, null, null, null),
+      Gnuclient   =>
         (Command_Name         => Gnuclient_Command'Access,
          Lisp_Command_Name    => Gnuclient_Lisp'Access,
          Server_Start_Command => Gnuclient_Server'Access,
@@ -169,41 +172,41 @@ package body External_Editor_Module is
          Server_Start_Command => Emacsclient_Server'Access,
          Extra_Test           => null),
 
-      Emacs =>
+      Emacs       =>
         (Command_Name         => Emacs_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
          Extra_Test           => null),
 
-      Vim =>
+      Vim         =>
         (Command_Name         => Vim_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
          Extra_Test           => Vim_Extra'Access),
 
-      Vi =>
+      Vi          =>
         (Command_Name         => Vi_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
          Extra_Test           => Vi_Extra'Access),
 
-      Custom =>
+      Custom      =>
         (Command_Name         => Custom_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
          Extra_Test           => null));
 
-   Glide_Command : aliased constant String := "glide -emacs --eval -emacs %e";
+   Glide_Command        : aliased constant String :=
+     "glide -emacs --eval -emacs %e";
    Emacs_Server_Command : aliased constant String := "emacs --eval %e";
 
    Servers : constant External_Servers :=
      (Glide => (Command_Name => Glide_Command'Access),
       Emacs => (Command_Name => Emacs_Server_Command'Access));
 
-   type Process_Descriptor_Array is array (Positive range <>)
-     of Process_Descriptor_Access;
-   type Process_Descriptor_Array_Access is access
-     Process_Descriptor_Array;
+   type Process_Descriptor_Array is
+     array (Positive range <>) of Process_Descriptor_Access;
+   type Process_Descriptor_Array_Access is access Process_Descriptor_Array;
 
    ------------------------
    -- Module description --
@@ -220,22 +223,23 @@ package body External_Editor_Module is
       --  The timeout loop that takes care of all the spawned external
       --  editors.
    end record;
-   type External_Editor_Module_Record_Id is access all
-     External_Editor_Module_Record'Class;
+   type External_Editor_Module_Record_Id is
+     access all External_Editor_Module_Record'Class;
 
-   External_Editor_Module_Id : External_Editor_Module_Record_Id;
+   External_Editor_Module_Id   : External_Editor_Module_Record_Id;
    External_Editor_Module_Name : constant String := "External_Editor";
 
    -----------------
    -- Subprograms --
    -----------------
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
-     (Process_Descriptor_Array, Process_Descriptor_Array_Access);
+   procedure Unchecked_Free is new
+     Unchecked_Deallocation
+       (Process_Descriptor_Array,
+        Process_Descriptor_Array_Access);
 
    procedure Spawn_Server
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Success : out Boolean);
+     (Kernel : access Kernel_Handle_Record'Class; Success : out Boolean);
    --  Start Emacs and the server, so that a client can connect to it.
    --  False is returned if the server could not be started.
 
@@ -253,7 +257,7 @@ package body External_Editor_Module is
    --  Lisp_Command_Name are found on the path.
 
    procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E, P  : String := "");
+     (Args : Argument_List_Access; F, C, L, E, P : String := "");
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
 
    procedure Spawn_New_Process
@@ -280,8 +284,8 @@ package body External_Editor_Module is
       Path           : Virtual_File;
       Args           : Argument_List_Access;
       Match          : Boolean;
-      Default_Client : constant Supported_Clients := Supported_Clients'Val
-        (Default_External_Editor.Get_Pref);
+      Default_Client : constant Supported_Clients :=
+        Supported_Clients'Val (Default_External_Editor.Get_Pref);
    begin
       --  If the user has specified a default client, use that one.
       if Default_Client /= Auto then
@@ -299,8 +303,7 @@ package body External_Editor_Module is
                Command : constant String := Clients (C).Command_Name.all;
             begin
                if Command = Custom_Command then
-                  Args := Argument_String_To_List
-                    (Get_Pref (Custom_Editor));
+                  Args := Argument_String_To_List (Get_Pref (Custom_Editor));
 
                else
                   Args := Argument_String_To_List (Command);
@@ -320,8 +323,8 @@ package body External_Editor_Module is
          end if;
 
          if Match and then Clients (C).Lisp_Command_Name /= null then
-            Args := Argument_String_To_List
-              (Clients (C).Lisp_Command_Name.all);
+            Args :=
+              Argument_String_To_List (Clients (C).Lisp_Command_Name.all);
 
             Path := Locate_Tool_Executable (+Args (Args'First).all);
             if Path = No_File then
@@ -346,8 +349,10 @@ package body External_Editor_Module is
       end loop;
 
       if External_Editor_Module_Id.Client /= Auto then
-         Trace (Me, "Current client is "
-                & Clients (External_Editor_Module_Id.Client).Command_Name.all);
+         Trace
+           (Me,
+            "Current client is "
+            & Clients (External_Editor_Module_Id.Client).Command_Name.all);
       else
          Trace (Me, "No available client");
       end if;
@@ -362,7 +367,7 @@ package body External_Editor_Module is
    ----------------
 
    procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E, P  : String := "")
+     (Args : Argument_List_Access; F, C, L, E, P : String := "")
    is
       Substrings : Substitution_Array :=
         (1 => (Name => new String'("f"), Value => new String'(F)),
@@ -374,11 +379,12 @@ package body External_Editor_Module is
    begin
       for A in Args'Range loop
          declare
-            S : constant String := Substitute
-              (Str               => Args (A).all,
-               Delimiter         => '%',
-               Substrings        => Substrings,
-               Recursive         => True);
+            S : constant String :=
+              Substitute
+                (Str        => Args (A).all,
+                 Delimiter  => '%',
+                 Substrings => Substrings,
+                 Recursive  => True);
          begin
             if S /= Args (A).all then
                Free (Args (A));
@@ -457,8 +463,8 @@ package body External_Editor_Module is
       Process : TTY_Process_Descriptor;
    begin
       if Active (Me) then
-         Trace (Me, "Spawn: " & (+Command) &
-                " " & Argument_List_To_String (Args));
+         Trace
+           (Me, "Spawn: " & (+Command) & " " & Argument_List_To_String (Args));
       end if;
 
       Non_Blocking_Spawn
@@ -473,8 +479,8 @@ package body External_Editor_Module is
            new Process_Descriptor_Array (1 .. 1);
       else
          Old := External_Editor_Module_Id.Processes;
-         External_Editor_Module_Id.Processes := new Process_Descriptor_Array
-           (1 .. Old'Length + 1);
+         External_Editor_Module_Id.Processes :=
+           new Process_Descriptor_Array (1 .. Old'Length + 1);
          External_Editor_Module_Id.Processes (1 .. Old'Length) := Old.all;
          Unchecked_Free (Old);
       end if;
@@ -486,9 +492,9 @@ package body External_Editor_Module is
       if External_Editor_Module_Id.Timeout_Id = 0 then
          --  ??? Should we just run through the task manager and use the
          --  timeout there instead ?
-         External_Editor_Module_Id.Timeout_Id := Glib.Main.Timeout_Add
-           (Interval => Timeout,
-            Func     => External_Timeout'Access);
+         External_Editor_Module_Id.Timeout_Id :=
+           Glib.Main.Timeout_Add
+             (Interval => Timeout, Func => External_Timeout'Access);
       end if;
 
       Result := True;
@@ -505,16 +511,14 @@ package body External_Editor_Module is
    ------------------
 
    procedure Spawn_Server
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Success : out Boolean)
+     (Kernel : access Kernel_Handle_Record'Class; Success : out Boolean)
    is
       Args : Argument_List_Access;
       Path : Virtual_File;
 
    begin
       Success := False;
-      if Clients (External_Editor_Module_Id.Client).Server_Start_Command
-        = null
+      if Clients (External_Editor_Module_Id.Client).Server_Start_Command = null
       then
          Trace (Me, "No server start command specified");
          return;
@@ -528,11 +532,11 @@ package body External_Editor_Module is
             Substitute
               (Args,
                P => Get_Project (Kernel).Name,
-               E => Clients
-                 (External_Editor_Module_Id.Client).Server_Start_Command.all);
+               E =>
+                 Clients (External_Editor_Module_Id.Client)
+                   .Server_Start_Command.all);
 
-            Spawn_New_Process
-              (Path.Full_Name, Args.all, Success);
+            Spawn_New_Process (Path.Full_Name, Args.all, Success);
             Free (Args.all);
             Unchecked_Free (Args);
             exit;
@@ -594,23 +598,24 @@ package body External_Editor_Module is
 
    begin
       if Extended_Lisp /= ""
-        and then Clients (External_Editor_Module_Id.Client).Lisp_Command_Name
-          /= null
+        and then
+          Clients (External_Editor_Module_Id.Client).Lisp_Command_Name /= null
       then
-         Args := Argument_String_To_List
-           (Clients (External_Editor_Module_Id.Client).Lisp_Command_Name.all);
+         Args :=
+           Argument_String_To_List
+             (Clients (External_Editor_Module_Id.Client)
+                .Lisp_Command_Name.all);
 
       elsif Extended_Lisp = ""
-        and then Clients
-          (External_Editor_Module_Id.Client).Command_Name /= null
+        and then
+          Clients (External_Editor_Module_Id.Client).Command_Name /= null
       then
          declare
             Command : constant String :=
               Clients (External_Editor_Module_Id.Client).Command_Name.all;
          begin
             if Command = Custom_Command then
-               Args := Argument_String_To_List
-                 (Get_Pref (Custom_Editor));
+               Args := Argument_String_To_List (Get_Pref (Custom_Editor));
             else
                Args := Argument_String_To_List (Command);
             end if;
@@ -632,15 +637,20 @@ package body External_Editor_Module is
       if Args'Length /= 0 then
          Path := Locate_Tool_Executable (+Args (Args'First).all);
       else
-         Insert (Kernel, """" & Get_Pref (Custom_Editor)
-                    & """ is not a valid external editor",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            """"
+            & Get_Pref (Custom_Editor)
+            & """ is not a valid external editor",
+            Mode => Error);
          return;
       end if;
 
       if Path = No_File then
-         Insert (Kernel, Args (Args'First).all & " not found on PATH",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            Args (Args'First).all & " not found on PATH",
+            Mode => Error);
          Free (Args.all);
          Unchecked_Free (Args);
          return;
@@ -649,8 +659,8 @@ package body External_Editor_Module is
       if Clients (External_Editor_Module_Id.Client).Server_Start_Command
         /= null
       then
-         Result := Blocking_Spawn
-           (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
+         Result :=
+           Blocking_Spawn (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
       else
          Spawn_New_Process
            (Path.Full_Name, Args (Args'First + 1 .. Args'Last), Success);
@@ -659,8 +669,9 @@ package body External_Editor_Module is
       --  If we couldn't send the command, it probably means that Emacs wasn't
       --  started, at least not with the server.
       if Result /= 0
-        and then Clients
-          (External_Editor_Module_Id.Client).Server_Start_Command /= null
+        and then
+          Clients (External_Editor_Module_Id.Client).Server_Start_Command
+          /= null
       then
          Spawn_Server (Kernel, Success);
 
@@ -670,8 +681,9 @@ package body External_Editor_Module is
             delay 1.0;
 
             for Try in 1 .. Max_Tries loop
-               Result := Blocking_Spawn
-                 (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
+               Result :=
+                 Blocking_Spawn
+                   (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
                exit when Result = 0;
                delay 0.5;
             end loop;
@@ -686,7 +698,8 @@ package body External_Editor_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_With_External_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -694,8 +707,10 @@ package body External_Editor_Module is
       Line   : Integer := 1;
       Column : Visible_Column_Type := 1;
    begin
-      Trace (Me, "Edit file with external editor "
-             & Display_Full_Name (File_Information (Context.Context)));
+      Trace
+        (Me,
+         "Edit file with external editor "
+         & Display_Full_Name (File_Information (Context.Context)));
 
       if Has_Entity_Column_Information (Context.Context) then
          Line := Line_Information (Context.Context);
@@ -729,34 +744,38 @@ package body External_Editor_Module is
 
       --  Create the preferences
 
-      Default_External_Editor := Supported_Client_Preferences.Create
-        (Manager  => Manager,
-         Path     => "Editor:External Editors",
-         Name     => "External-Editor-Default-Editor",
-         Label    => -"External editor",
-         Doc      => -"The default external editor to use",
-         Default  => Gnuclient);
+      Default_External_Editor :=
+        Supported_Client_Preferences.Create
+          (Manager => Manager,
+           Path    => "Editor:External Editors",
+           Name    => "External-Editor-Default-Editor",
+           Label   => -"External editor",
+           Doc     => -"The default external editor to use",
+           Default => Gnuclient);
 
-      Custom_Editor := Create
-        (Manager => Manager,
-         Path    => -"Editor:External Editors",
-         Name    => "External-Editor-Custom-Command",
-         Label   => -"Custom editor command",
-         Doc     => -"Command to use for launching a custom editor",
-         Default => "emacs +%l %f");
+      Custom_Editor :=
+        Create
+          (Manager => Manager,
+           Path    => -"Editor:External Editors",
+           Name    => "External-Editor-Custom-Command",
+           Label   => -"Custom editor command",
+           Doc     => -"Command to use for launching a custom editor",
+           Default => "emacs +%l %f");
 
       Register_Action
-        (Kernel, "edit with external editor", new Edit_With_External_Command,
+        (Kernel,
+         "edit with external editor",
+         new Edit_With_External_Command,
          Description =>
            -("Edit the file with an external editor, as configued in the"
-           & " preferences"),
+             & " preferences"),
          Filter      => Lookup_Filter (Kernel, "File"));
 
       Register_Module
-        (Module                  => Module_ID (External_Editor_Module_Id),
-         Kernel                  => Kernel,
-         Module_Name             => External_Editor_Module_Name,
-         Priority                => Default_Priority + 1);
+        (Module      => Module_ID (External_Editor_Module_Id),
+         Kernel      => Kernel,
+         Module_Name => External_Editor_Module_Name,
+         Priority    => Default_Priority + 1);
    end Register_Module;
 
 end External_Editor_Module;

@@ -23,11 +23,12 @@ package Src_Printing.Command_Printer is
 
    type Printer is new Abstract_Printer with private;
 
-   overriding procedure Print
-     (This       : Printer;
-      Editor     : Src_Editor_Box.Source_Editor_Box;
-      From       : Editable_Line_Type := 1;
-      To         : Editable_Line_Type := Editable_Line_Type'Last);
+   overriding
+   procedure Print
+     (This   : Printer;
+      Editor : Src_Editor_Box.Source_Editor_Box;
+      From   : Editable_Line_Type := 1;
+      To     : Editable_Line_Type := Editable_Line_Type'Last);
 
    function Create (Command : String) return Printer;
 

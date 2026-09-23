@@ -16,88 +16,98 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Glib;                       use Glib;
+with Glib;         use Glib;
 with Glib.Values;
-with Pango.Layout;               use Pango.Layout;
+with Pango.Layout; use Pango.Layout;
 
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;   use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Toolbar;                use Gtk.Toolbar;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;        use Gtk.Tree_Model_Sort;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;    use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;      use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
 
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.MDI; use Gtkada.MDI;
 
-with Default_Preferences;        use Default_Preferences;
-with Default_Preferences.GUI;    use Default_Preferences.GUI;
-with Dialog_Utils;               use Dialog_Utils;
-with Generic_Views;              use Generic_Views;
+with Default_Preferences;     use Default_Preferences;
+with Default_Preferences.GUI; use Default_Preferences.GUI;
+with Dialog_Utils;            use Dialog_Utils;
+with Generic_Views;           use Generic_Views;
 
 with GPS.Kernel.MDI;
-with GPS.Search;                 use GPS.Search;
+with GPS.Search; use GPS.Search;
 
-with Glib_Values_Utils;          use Glib_Values_Utils;
-with Gtkada.Types;               use Gtkada.Types;
-with Filter_Panels;              use Filter_Panels;
+with Glib_Values_Utils; use Glib_Values_Utils;
+with Gtkada.Types;      use Gtkada.Types;
+with Filter_Panels;     use Filter_Panels;
 
 package body GPS.Traces is
 
    Show_Trace_Names : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.SHOW_TRACES_NAMES",
-             GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.SHOW_TRACES_NAMES", GNATCOLL.Traces.On);
 
    Show_All_Products : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.CONFIG_ALL_PRODUCTS_TRACES",
-             GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.CONFIG_ALL_PRODUCTS_TRACES", GNATCOLL.Traces.Off);
    --  By default we show only GNAT Studio traces. If this trace is active we
    --  show all traces, belong to GNATCOLL for example.
 
-   Me : constant Trace_Handle := Create
-     ("GPS.OTHERS.TRACES_CONFIG_MODULE",
-      GNATCOLL.Traces.On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.OTHERS.TRACES_CONFIG_MODULE", GNATCOLL.Traces.On);
 
    Default_Traces_Cfg_Contents : constant String :=
-                                   ">log/log.$T.$$.txt:buffer_size=0"
-                                   & ASCII.LF &
-                                   "+" & ASCII.LF &
-                                   "*.EXCEPTIONS=yes" & ASCII.LF &
-                                   "MAIN_TRACE=no" & ASCII.LF &
-                                   "LIBADALANG.*=no" & ASCII.LF &
-                                   "LANGKIT.*=no" & ASCII.LF &
-                                   "LEXICAL_ENV=no" & ASCII.LF &
-                                   "DEBUG.COLORS=no" & ASCII.LF &
-                                   "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
-                                   "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
-                                   "DEBUG.STACK_TRACE=no" & ASCII.LF &
-                                   "DEBUG.LOCATION=no" & ASCII.LF &
-                                   "DEBUG.ENCLOSING_ENTITY=no" & ASCII.LF &
-                                   "SQL.SQLITE=no" & ASCII.LF &
-                                   "PRJ_NORMALIZE=no";
+     ">log/log.$T.$$.txt:buffer_size=0"
+     & ASCII.LF
+     & "+"
+     & ASCII.LF
+     & "*.EXCEPTIONS=yes"
+     & ASCII.LF
+     & "MAIN_TRACE=no"
+     & ASCII.LF
+     & "LIBADALANG.*=no"
+     & ASCII.LF
+     & "LANGKIT.*=no"
+     & ASCII.LF
+     & "LEXICAL_ENV=no"
+     & ASCII.LF
+     & "DEBUG.COLORS=no"
+     & ASCII.LF
+     & "DEBUG.ABSOLUTE_TIME=yes"
+     & ASCII.LF
+     & "DEBUG.ELAPSED_TIME=no"
+     & ASCII.LF
+     & "DEBUG.STACK_TRACE=no"
+     & ASCII.LF
+     & "DEBUG.LOCATION=no"
+     & ASCII.LF
+     & "DEBUG.ENCLOSING_ENTITY=no"
+     & ASCII.LF
+     & "SQL.SQLITE=no"
+     & ASCII.LF
+     & "PRJ_NORMALIZE=no";
    --  The default contents used for the user traces config file
 
    Traces_File : GNATCOLL.VFS.Virtual_File;
 
-   package Trace_Values_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
+   package Trace_Values_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
    Traces_Values       : Trace_Values_Maps.Map;
    --  Traces settings after startup
@@ -116,57 +126,61 @@ package body GPS.Traces is
      access all Root_Plugins_Preferences_Page_Record'Class;
    --  Type used to represent the root preferences page for all plugins.
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Root_Plugins_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
    type Traces_Editor_Record is new Generic_Views.View_Record with record
-      View               : Gtk_Tree_View;
-      Model              : Gtk_Tree_Store;
-      Filter             : Gtk_Tree_Model_Filter;
-      Sort               : Gtk_Tree_Model_Sort;
-      Disable_Filtering  : Boolean := False;
-      Filter_Pattern     : Search_Pattern_Access;
-      Toggle             : Gtk_Check_Button;
+      View              : Gtk_Tree_View;
+      Model             : Gtk_Tree_Store;
+      Filter            : Gtk_Tree_Model_Filter;
+      Sort              : Gtk_Tree_Model_Sort;
+      Disable_Filtering : Boolean := False;
+      Filter_Pattern    : Search_Pattern_Access;
+      Toggle            : Gtk_Check_Button;
    end record;
    type Traces_Editor is access all Traces_Editor_Record'Class;
 
    function Initialize
      (Editor : access Traces_Editor_Record'Class) return Gtk_Widget;
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Traces_Editor_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Traces_Editor_Record;
       Pattern : in out Search_Pattern_Access);
 
    procedure Fill_Editor (Editor : access Traces_Editor_Record'Class);
 
-   package Traces_Editor_Views is new Simple_Views
-     (Module_Name        => "Traces_editor",
-      View_Name          => "Traces editor",
-      Formal_View_Record => Traces_Editor_Record,
-      Formal_MDI_Child   => GPS.Kernel.MDI.GPS_MDI_Child_Record,
-      Local_Toolbar      => True,
-      Local_Config       => False,
-      Reuse_If_Exist     => True,
-      Group              => Group_Default,
-      Areas              => Gtkada.MDI.Both,
-      Default_Width      => 700,
-      Default_Height     => 700,
-      Commands_Category  => "Views",
-      Add_Close_Button_On_Float => True,
-      MDI_Flags          =>
-         All_Buttons or Float_To_Main or Always_Destroy_Float,
-      Position           => Position_Float,
-      Initialize         => Initialize);
+   package Traces_Editor_Views is new
+     Simple_Views
+       (Module_Name               => "Traces_editor",
+        View_Name                 => "Traces editor",
+        Formal_View_Record        => Traces_Editor_Record,
+        Formal_MDI_Child          => GPS.Kernel.MDI.GPS_MDI_Child_Record,
+        Local_Toolbar             => True,
+        Local_Config              => False,
+        Reuse_If_Exist            => True,
+        Group                     => Group_Default,
+        Areas                     => Gtkada.MDI.Both,
+        Default_Width             => 700,
+        Default_Height            => 700,
+        Commands_Category         => "Views",
+        Add_Close_Button_On_Float => True,
+        MDI_Flags                 =>
+          All_Buttons or Float_To_Main or Always_Destroy_Float,
+        Position                  => Position_Float,
+        Initialize                => Initialize);
    use Traces_Editor_Views;
    subtype Traces_Editor_View is Traces_Editor_Views.View_Access;
 
    type Traces_Editor_Preferences_Page_View_Record is
-     new Preferences_Page_View_Record with record
+     new Preferences_Page_View_Record
+   with record
       Editor : Traces_Editor_View;
    end record;
    type Traces_Editor_Preferences_Page_View is
@@ -179,23 +193,24 @@ package body GPS.Traces is
    package Traces_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Traces_Editor_View);
    function Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Traces_Editor_View) return Boolean;
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Data : Traces_Editor_View)
+      return Boolean;
    --  Selects whether a given row should be visible in the traces editor.
 
-   package Tree_View_Column_Callbacks is
-     new Gtk.Handlers.User_Callback
-       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record, Traces_Editor);
+   package Tree_View_Column_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
+        Traces_Editor);
 
-   package Cell_Renderer_Toggle_Callbacks is
-     new Gtk.Handlers.User_Callback
+   package Cell_Renderer_Toggle_Callbacks is new
+     Gtk.Handlers.User_Callback
        (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
         Traces_Editor);
 
-   package Cell_Renderer_Toggle_Callbacks_Marshallers is
-     new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-       (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
+   package Cell_Renderer_Toggle_Callbacks_Marshallers is new
+     Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
+       (Gtkada.Types.Chars_Ptr,
+        Glib.Values.Get_Chars);
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
@@ -203,60 +218,64 @@ package body GPS.Traces is
    --  Called on click on the column header
 
    procedure On_Select_Trace_Toggled
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Traces_Editor);
    --  Called on click on the list's item
 
    type Trace_Handle_Data is record
-      Instance  : Trace_Handle;
-      Default   : Boolean := False;
+      Instance : Trace_Handle;
+      Default  : Boolean := False;
    end record;
 
-   package Traces_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, Trace_Handle_Data);
+   package Traces_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, Trace_Handle_Data);
 
-   package Modules_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps
-       (String, Traces_Maps.Map, "=" => Traces_Maps."=");
+   package Modules_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String,
+        Traces_Maps.Map,
+        "=" => Traces_Maps."=");
 
-   package Products_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps
-       (String, Modules_Maps.Map, "=" => Modules_Maps."=");
+   package Products_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String,
+        Modules_Maps.Map,
+        "=" => Modules_Maps."=");
 
    Products : Products_Maps.Map;
    --  Reestr of traces
 
-   Name_Regexp : constant Pattern_Matcher := Compile
-     ("^([^.]+).([^.]+).(\S+)$", Single_Line);
+   Name_Regexp : constant Pattern_Matcher :=
+     Compile ("^([^.]+).([^.]+).(\S+)$", Single_Line);
 
    procedure Add_Trace (Trace : Trace_Handle);
    --  Add trace into reestr if it is valid.
 
    function External_Traces_To_Disable
-     return GNATCOLL.Utils.Unbounded_String_Array;
+      return GNATCOLL.Utils.Unbounded_String_Array;
    --  Return the list of external traces that we want to disable by default.
 
    ----------------
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Root_Plugins_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
    is
-      Page_View     : Traces_Editor_Preferences_Page_View;
-      Editor        : Traces_Editor;
-      Editor_View   : Gtk_Widget;
-      Focus_Widget  : Gtk_Widget;
-      Group_Widget  : Dialog_Group_Widget;
-      Doc_Label     : Gtk_Label;
+      Page_View    : Traces_Editor_Preferences_Page_View;
+      Editor       : Traces_Editor;
+      Editor_View  : Gtk_Widget;
+      Focus_Widget : Gtk_Widget;
+      Group_Widget : Dialog_Group_Widget;
+      Doc_Label    : Gtk_Label;
       pragma Unreferenced (Focus_Widget);
 
       Pref : constant Preference :=
-               Get_Pref_From_Name (Manager, "Log-View-Type", False);
+        Get_Pref_From_Name (Manager, "Log-View-Type", False);
 
    begin
       Page_View := new Traces_Editor_Preferences_Page_View_Record;
@@ -392,7 +411,8 @@ package body GPS.Traces is
       Gtk_New (Text_Render);
       Set_Property
         (Text_Render,
-         Gtk.Cell_Renderer_Text.Ellipsize_Property, Ellipsize_Middle);
+         Gtk.Cell_Renderer_Text.Ellipsize_Property,
+         Ellipsize_Middle);
       Pack_Start (Col, Text_Render, True);
       Add_Attribute (Col, Text_Render, "text", Name_Column);
       Set_Clickable (Col, True);
@@ -412,8 +432,7 @@ package body GPS.Traces is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class) is
       use Ada.Strings.Unbounded;
       use GNATCOLL.VFS;
 
@@ -481,14 +500,14 @@ package body GPS.Traces is
                begin
                   if Value = "" then
                      --  Writing the unmodified line as it was in the file
-                     Write (Traces_W_File,
-                            Trace_Values_Maps.Key (C) & ASCII.LF);
+                     Write
+                       (Traces_W_File, Trace_Values_Maps.Key (C) & ASCII.LF);
                   else
                      --  Restoring line where name and value delimited
                      --  by "=" and write it
-                     Write (Traces_W_File,
-                            Trace_Values_Maps.Key (C) & "=" &
-                              Value & ASCII.LF);
+                     Write
+                       (Traces_W_File,
+                        Trace_Values_Maps.Key (C) & "=" & Value & ASCII.LF);
                   end if;
 
                   Trace_Values_Maps.Next (C);
@@ -550,8 +569,8 @@ package body GPS.Traces is
    -----------------------------
 
    procedure On_Select_Trace_Toggled
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Traces_Editor)
    is
@@ -559,13 +578,10 @@ package body GPS.Traces is
 
       Sort_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
-          (Gtk.Tree_Model.To_Interface (Self.Sort),
-           Value (Path));
+          (Gtk.Tree_Model.To_Interface (Self.Sort), Value (Path));
 
-      Filter_Iter,
-      Iter,
-      Parent_Iter,
-      Parent_Parent_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Filter_Iter, Iter, Parent_Iter, Parent_Parent_Iter :
+        Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
       Self.Sort.Convert_Iter_To_Child_Iter (Filter_Iter, Sort_Iter);
       Self.Filter.Convert_Iter_To_Child_Iter (Iter, Filter_Iter);
@@ -680,16 +696,16 @@ package body GPS.Traces is
          else
             --  Trace
             declare
-               Trace_Name  : constant String :=
+               Trace_Name   : constant String :=
                  Self.Model.Get_String (Iter, Name_Column);
                Module_Name  : constant String :=
                  Self.Model.Get_String (Parent_Iter, Name_Column);
                Product_Name : constant String :=
                  Self.Model.Get_String (Parent_Parent_Iter, Name_Column);
 
-               P            : Products_Maps.Cursor;
-               M            : Modules_Maps.Cursor;
-               T            : Traces_Maps.Cursor;
+               P : Products_Maps.Cursor;
+               M : Modules_Maps.Cursor;
+               T : Traces_Maps.Cursor;
             begin
                P := Products.Find (Product_Name);
                if not Products_Maps.Has_Element (P) then
@@ -728,10 +744,10 @@ package body GPS.Traces is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Traces_Editor_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -739,8 +755,11 @@ package body GPS.Traces is
          Tooltip     => "Filter the contents of the traces list",
          Placeholder => "filter",
          Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy
-         or Has_Approximate);
+           Has_Regexp
+           or Has_Negate
+           or Has_Whole_Word
+           or Has_Fuzzy
+           or Has_Approximate);
    end Create_Toolbar;
 
    ---------------
@@ -753,14 +772,14 @@ package body GPS.Traces is
    begin
       Match (Name_Regexp, Trace.Unit_Name, Matched);
       if Matched (0) = GNAT.Regpat.No_Match
-        or else Trace.Unit_Name
-          (Matched (2).First .. Matched (2).Last) = "INTERNAL"
-        or else Trace.Unit_Name
-          (Matched (2).First .. Matched (2).Last) = "TESTSUITE"
+        or else
+          Trace.Unit_Name (Matched (2).First .. Matched (2).Last) = "INTERNAL"
+        or else
+          Trace.Unit_Name (Matched (2).First .. Matched (2).Last) = "TESTSUITE"
         or else
           (not Show_All_Products.Active
-           and then Trace.Unit_Name
-             (Matched (1).First .. Matched (1).Last) /= "GPS")
+           and then
+             Trace.Unit_Name (Matched (1).First .. Matched (1).Last) /= "GPS")
       then
          return;
       end if;
@@ -768,32 +787,29 @@ package body GPS.Traces is
       declare
          Product_Name : constant String :=
            Trace.Unit_Name (Matched (1).First .. Matched (1).Last);
-         Module_Name : constant String :=
+         Module_Name  : constant String :=
            Trace.Unit_Name (Matched (2).First .. Matched (2).Last);
-         Trace_Name : constant String :=
+         Trace_Name   : constant String :=
            Trace.Unit_Name (Matched (3).First .. Matched (3).Last);
 
          P : Products_Maps.Cursor := Products.Find (Product_Name);
       begin
          if not Products_Maps.Has_Element (P) then
-            Products.Insert
-              (Product_Name, Modules_Maps.Empty_Map, P, Dummy);
+            Products.Insert (Product_Name, Modules_Maps.Empty_Map, P, Dummy);
          end if;
 
          declare
-            Modules : Modules_Maps.Map    := Products_Maps.Element (P);
+            Modules : Modules_Maps.Map := Products_Maps.Element (P);
             M       : Modules_Maps.Cursor := Modules.Find (Module_Name);
          begin
             if not Modules_Maps.Has_Element (M) then
-               Modules.Insert
-                 (Module_Name, Traces_Maps.Empty_Map, M, Dummy);
+               Modules.Insert (Module_Name, Traces_Maps.Empty_Map, M, Dummy);
             end if;
 
             declare
                Traces : Traces_Maps.Map := Modules_Maps.Element (M);
             begin
-               if not Traces.Contains (Trace_Name)
-               then
+               if not Traces.Contains (Trace_Name) then
                   Traces.Insert (Trace_Name, (Trace, Trace.Is_Active));
                end if;
 
@@ -875,9 +891,9 @@ package body GPS.Traces is
             Append (Editor.Model, Product, Null_Iter);
          end if;
 
-         Product_Has_Active   := False;
+         Product_Has_Active := False;
          Product_Has_Inactive := False;
-         Product_Has_Both     := False;
+         Product_Has_Both := False;
 
          declare
             Modules : constant Modules_Maps.Map := Products_Maps.Element (P);
@@ -892,7 +908,7 @@ package body GPS.Traces is
                   Append (Editor.Model, Module, Product);
                end if;
 
-               Has_Active   := False;
+               Has_Active := False;
                Has_Inactive := False;
 
                declare
@@ -981,29 +997,35 @@ package body GPS.Traces is
                Product,
                (Name_Column, Toggle_Column, Inconsistent_Column),
                (1 => As_String (Products_Maps.Key (P)),
-                2 => As_Boolean
-                  (Product_Has_Active and then
-                     (not Product_Has_Inactive and not Product_Has_Both)),
-                3 => As_Boolean
-                  (Product_Has_Both or else
-                     (Product_Has_Active and then Product_Has_Inactive))));
+                2 =>
+                  As_Boolean
+                    (Product_Has_Active
+                     and then
+                       (not Product_Has_Inactive and not Product_Has_Both)),
+                3 =>
+                  As_Boolean
+                    (Product_Has_Both
+                     or else
+                       (Product_Has_Active and then Product_Has_Inactive))));
          else
             Set_And_Clear
               (Editor.Model,
                Product,
                (Toggle_Column, Inconsistent_Column),
-               (1 => As_Boolean
-                  (Product_Has_Active and then
-                     (not Product_Has_Inactive and not Product_Has_Both)),
-                2 => As_Boolean
-                  (Product_Has_Both or else
-                     (Product_Has_Active and then Product_Has_Inactive))));
+               (1 =>
+                  As_Boolean
+                    (Product_Has_Active
+                     and then
+                       (not Product_Has_Inactive and not Product_Has_Both)),
+                2 =>
+                  As_Boolean
+                    (Product_Has_Both
+                     or else
+                       (Product_Has_Active and then Product_Has_Inactive))));
          end if;
 
          if Product_Has_Both
-           or else
-             (Product_Has_Active
-              and then Product_Has_Inactive)
+           or else (Product_Has_Active and then Product_Has_Inactive)
          then
             Top_Has_Both := True;
 
@@ -1024,9 +1046,7 @@ package body GPS.Traces is
       Editor.Toggle.Set_Active (False);
       Editor.Toggle.Set_Inconsistent (False);
 
-      if Top_Has_Both
-        or else (Top_Has_Active and then Top_Has_Inactive)
-      then
+      if Top_Has_Both or else (Top_Has_Active and then Top_Has_Inactive) then
          Editor.Toggle.Set_Inconsistent (True);
 
       elsif Top_Has_Active then
@@ -1045,7 +1065,7 @@ package body GPS.Traces is
                if Editor.Model.Get_String (Iter, Name_Column) = "GPS" then
                   Editor.Filter.Convert_Child_Iter_To_Iter (Filter_Iter, Iter);
                   if Editor.Sort.Convert_Child_Iter_To_Iter
-                    (Sort_Iter'Access, Filter_Iter)
+                       (Sort_Iter'Access, Filter_Iter)
                   then
                      GPS_Path := Editor.Sort.Get_Path (Sort_Iter);
                      Editor.View.Expand_To_Path (GPS_Path);
@@ -1072,10 +1092,10 @@ package body GPS.Traces is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Traces_Editor_Record;
-      Pattern : in out Search_Pattern_Access)
-   is
+      Pattern : in out Search_Pattern_Access) is
    begin
       Free (Self.Filter_Pattern);
       Self.Filter_Pattern := Pattern;
@@ -1083,6 +1103,7 @@ package body GPS.Traces is
 
       if Pattern /= null then
          Self.View.Expand_All;  --  show all results more conveniently
+
       end if;
    end Filter_Changed;
 
@@ -1091,9 +1112,8 @@ package body GPS.Traces is
    ----------------
 
    function Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : Traces_Editor_View) return Boolean
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Data : Traces_Editor_View)
+      return Boolean
    is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -1106,8 +1126,9 @@ package body GPS.Traces is
       --  children).
 
       if Data.Filter_Pattern /= null then
-         Row_Visible := Data.Filter_Pattern.Start
-           (Get_String (Model, Iter, Name_Column)) /= GPS.Search.No_Match;
+         Row_Visible :=
+           Data.Filter_Pattern.Start (Get_String (Model, Iter, Name_Column))
+           /= GPS.Search.No_Match;
       end if;
 
       --  If the row should be invisible, but any of its children is visible,
@@ -1117,7 +1138,8 @@ package body GPS.Traces is
          Child := Children (Model, Iter);
          while Child /= Null_Iter loop
             if Data.Filter_Pattern.Start
-              (Get_String (Model, Child, Name_Column)) /= GPS.Search.No_Match
+                 (Get_String (Model, Child, Name_Column))
+              /= GPS.Search.No_Match
             then
                return True;
             end if;
@@ -1133,7 +1155,7 @@ package body GPS.Traces is
    --------------------------------------
 
    function External_Traces_To_Disable
-     return GNATCOLL.Utils.Unbounded_String_Array
+      return GNATCOLL.Utils.Unbounded_String_Array
    is
       Result : GNATCOLL.Utils.Unbounded_String_Array (1 .. 4);
    begin
@@ -1161,8 +1183,7 @@ package body GPS.Traces is
       --------------------
 
       procedure Write_Defaults;
-      procedure Write_Defaults
-      is
+      procedure Write_Defaults is
          Traces_W_File : GNATCOLL.VFS.Writable_File := Traces_File.Write_File;
       begin
          Write (Traces_W_File, GPS.Traces.Default_Traces_Cfg_Contents);
@@ -1170,8 +1191,8 @@ package body GPS.Traces is
       end Write_Defaults;
 
    begin
-      Traces.Traces_File := GNATCOLL.VFS.Create_From_Dir
-        (GNATStudio_Home_Dir, "traces.cfg");
+      Traces.Traces_File :=
+        GNATCOLL.VFS.Create_From_Dir (GNATStudio_Home_Dir, "traces.cfg");
 
       --  If a traces.cfg file already exists, make sure that the
       --  traces are not bufferized by adding the 'buffer_size=0'
@@ -1188,19 +1209,19 @@ package body GPS.Traces is
       else
          declare
             File_Contents : GNAT.Strings.String_Access :=
-                              Traces_File.Read_File;
+              Traces_File.Read_File;
          begin
             if File_Contents /= null then
                declare
                   Pattern      : constant String :=
-                                   ">log.$T.$$.txt:buffer_size=";
-                  New_Contents : Unbounded_String := To_Unbounded_String
-                    (File_Contents.all);
+                    ">log.$T.$$.txt:buffer_size=";
+                  New_Contents : Unbounded_String :=
+                    To_Unbounded_String (File_Contents.all);
 
-                  Modified     : Boolean := False;
+                  Modified : Boolean := False;
 
-                  Ext_Traces_To_Disable : constant
-                    GNATCOLL.Utils.Unbounded_String_Array :=
+                  Ext_Traces_To_Disable :
+                    constant GNATCOLL.Utils.Unbounded_String_Array :=
                       External_Traces_To_Disable;
                begin
 
@@ -1291,20 +1312,20 @@ package body GPS.Traces is
          --  Using default settings when the file can't be loaded
          --  by some reasons
          Lines   : GNAT.Strings.String_List_Access :=
-                     (if Content = null
-                      then GNATCOLL.Utils.Split
-                        (Default_Traces_Cfg_Contents, ASCII.LF, False)
-                      else GNATCOLL.Utils.Split
-                        (Content.all, ASCII.LF, False));
-         Idx : Integer;
+           (if Content = null
+            then
+              GNATCOLL.Utils.Split
+                (Default_Traces_Cfg_Contents, ASCII.LF, False)
+            else GNATCOLL.Utils.Split (Content.all, ASCII.LF, False));
+         Idx     : Integer;
       begin
          for I in Lines'Range loop
             Idx := Ada.Strings.Fixed.Index (Lines (I).all, "=");
             if Idx in Lines (I).all'Range then
                --  It may be a trace where name and value delimited by "="
                Traces_File_Content.Include
-                 (Lines (I)(Lines (I).all'First .. Idx - 1),
-                  Lines (I)(Idx + 1 .. Lines (I).all'Last));
+                 (Lines (I) (Lines (I).all'First .. Idx - 1),
+                  Lines (I) (Idx + 1 .. Lines (I).all'Last));
             else
                --  It is just some line
                Traces_File_Content.Include (Lines (I).all, "");

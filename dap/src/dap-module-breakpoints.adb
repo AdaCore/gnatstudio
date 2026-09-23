@@ -18,43 +18,43 @@
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;
 
-with GNATCOLL.JSON;                  use GNATCOLL.JSON;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.JSON;   use GNATCOLL.JSON;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with VSS.Strings.Conversions;
 
-with Commands;                       use Commands;
-with Commands.Interactive;           use Commands.Interactive;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
 with GPS.Default_Styles;
-with GPS.Debuggers;                  use GPS.Debuggers;
-with GPS.Editors;                    use GPS.Editors;
+with GPS.Debuggers;              use GPS.Debuggers;
+with GPS.Editors;                use GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.References;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
 with GPS.Kernel.Properties;
-with GPS.Markers;                    use GPS.Markers;
-with GPS.Properties;                 use GPS.Properties;
+with GPS.Markers;                use GPS.Markers;
+with GPS.Properties;             use GPS.Properties;
 
-with DAP.Clients;                    use DAP.Clients;
+with DAP.Clients;             use DAP.Clients;
 with DAP.Clients.Breakpoint_Managers;
-with DAP.Modules.Preferences;        use DAP.Modules.Preferences;
+with DAP.Modules.Preferences; use DAP.Modules.Preferences;
 with DAP.Views.Breakpoints;
-with DAP.Utils;                      use DAP.Utils;
+with DAP.Utils;               use DAP.Utils;
 
-with Xref;                           use Xref;
+with Xref; use Xref;
 with JSON_Utils;
 
 package body DAP.Module.Breakpoints is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.DAP.MODULES_PERSISTENT_BREAKPOINTS");
+   Me : constant Trace_Handle :=
+     Create ("GPS.DAP.MODULES_PERSISTENT_BREAKPOINTS");
 
    Persistent_Category : constant String := "dap_breakpoints";
    Persistent_Field    : constant String := "breakpoints";
@@ -62,9 +62,7 @@ package body DAP.Module.Breakpoints is
    Messages_Category_For_Breakpoints : constant VSS.Strings.Virtual_String :=
      "breakpoints";
    Breakpoints_Message_Flags         : constant Message_Flags :=
-     (Editor_Side => False,
-      Locations   => False,
-      Editor_Line => True);
+     (Editor_Side => False, Locations => False, Editor_Line => True);
 
    type Breakpoint_Command_Mode is (Set, Unset);
 
@@ -80,8 +78,10 @@ package body DAP.Module.Breakpoints is
    type Set_Breakpoint_Command_Kind is (On_Line, Continue_Till, Entity);
 
    type Set_Breakpoint_Command_Context (Kind : Set_Breakpoint_Command_Kind) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Set_Breakpoint_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Set a breakpoint at the line given in the context
@@ -90,46 +90,52 @@ package body DAP.Module.Breakpoints is
       Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : Breakpoint_Command_Mode;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type;
 
    type Remove_Breakpoint_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove a breakpoint from the line given in the context
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project changes. This is a good time to load the
    --  persistent breakpoints
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called before the project is changed. This is a good time to save the
    --  persistent breakpoints
 
-   type On_Breakpoints_Changed is new Debugger_Hooks_Function
-   with null record;
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class);
+   type On_Breakpoints_Changed is new Debugger_Hooks_Function with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
    --  Called when the breakpoints' have changed. Used to show the breakpoints
    --  in the editors.
 
-   type On_Breakpoint_Event (Event : Breakpoint_Event)
-   is new Debugger_Breakpoint_Hook_Function with null record;
-   overriding procedure Execute
-      (Self     : On_Breakpoint_Event;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class;
-       Id       : Integer);
+   type On_Breakpoint_Event (Event : Breakpoint_Event) is
+     new Debugger_Breakpoint_Hook_Function
+   with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoint_Event;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class;
+      Id       : Integer);
    --  Called when a specific breakpoint has been added/deleted/changed.
    --  Used to update the breakpoints shown in the editors.
 
@@ -138,7 +144,8 @@ package body DAP.Module.Breakpoints is
    type Find_Breakpoint_Filter is new Action_Filter_Record with record
       Found : Boolean := True;
    end record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Find_Breakpoint_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Return Found if breakpoint is set for current line
@@ -151,25 +158,27 @@ package body DAP.Module.Breakpoints is
       Kernel      : access Kernel_Handle_Record'Class;
       Breakpoints : Breakpoint_Vectors.Vector;
    end record;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Breakpoint_Property_Record;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
+   overriding
+   procedure Load
      (Property : in out Breakpoint_Property_Record;
       Value    : GNATCOLL.JSON.JSON_Value);
 
    function "<" (L, R : Location_Marker) return Boolean;
 
-   package Locations_Sets is new Ada.Containers.Ordered_Sets
-     (Location_Marker, "=" => GPS.Markers."=");
+   package Locations_Sets is new
+     Ada.Containers.Ordered_Sets (Location_Marker, "=" => GPS.Markers."=");
 
    ------------------------
    -- Editor Breakpoints --
    ------------------------
 
    procedure Show_Breakpoint
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      B       : Breakpoint_Data);
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      B      : Breakpoint_Data);
    --  Show the given breakpoint in the editor, using a different style
    --  according to the breakpoint's state.
 
@@ -214,12 +223,10 @@ package body DAP.Module.Breakpoints is
    procedure Clear_All_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access);
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access);
       --  Set a breakpoint in a specific instance of the debugger
 
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access) is
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
          Debugger.Get_Breakpoints_Manager.Remove_All_Breakpoints;
       end On_Debugger;
@@ -234,8 +241,11 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-              Remove_All_Breakpoints;
+            DAP
+              .Module
+              .Get_Current_Debugger
+              .Get_Breakpoints_Manager
+              .Remove_All_Breakpoints;
          end if;
       end if;
    end Clear_All_Breakpoints;
@@ -247,8 +257,7 @@ package body DAP.Module.Breakpoints is
    function Get_Breakpoint_From_Id
      (Id : Breakpoint_Identifier) return Breakpoint_Data
    is
-      Debugger : constant DAP_Client_Access :=
-        DAP.Module.Get_Current_Debugger;
+      Debugger : constant DAP_Client_Access := DAP.Module.Get_Current_Debugger;
    begin
       if Debugger = null then
          return Persistent_Breakpoints.Get_Breakpoint_From_Id (Id);
@@ -265,16 +274,17 @@ package body DAP.Module.Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : Breakpoint_Command_Mode) return Command_Access is
    begin
-      return new Set_Breakpoint_Command_At_Line'
-        (Root_Command with
-         Kernel => Kernel, Mode => Mode);
+      return
+        new Set_Breakpoint_Command_At_Line'
+          (Root_Command with Kernel => Kernel, Mode => Mode);
    end Create_Set_Breakpoint_Command;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Find_Breakpoint_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -290,10 +300,11 @@ package body DAP.Module.Breakpoints is
          return not Filter.Found;
       end if;
 
-      Loc := Kernel.Get_Buffer_Factory.Create_Marker
-        (File   => File_Information (Context),
-         Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
-         Column => 1);
+      Loc :=
+        Kernel.Get_Buffer_Factory.Create_Marker
+          (File   => File_Information (Context),
+           Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
+           Column => 1);
 
       if DAP.Module.Get_Current_Debugger = null then
          if Persistent_Breakpoints.Contains (Loc) then
@@ -303,10 +314,15 @@ package body DAP.Module.Breakpoints is
          end if;
 
       else
-         return DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager /= null
-           and then Filter.Found =
-             DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-               Has_Breakpoint (Loc);
+         return
+           DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager /= null
+           and then
+             Filter.Found
+             = DAP
+                 .Module
+                 .Get_Current_Debugger
+                 .Get_Breakpoints_Manager
+                 .Has_Breakpoint (Loc);
       end if;
    end Filter_Matches_Primitive;
 
@@ -314,7 +330,8 @@ package body DAP.Module.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Breakpoint_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -330,32 +347,38 @@ package body DAP.Module.Breakpoints is
             then
                declare
                   Location : constant Breakpoint_Location_Type :=
-                    (Marker =>
+                    (Marker  =>
                        Kernel.Get_Buffer_Factory.Create_Marker
                          (File   => File_Information (Context.Context),
-                          Line   => Editable_Line_Type
-                            ((if Has_File_Line_Information (Context.Context)
-                             then File_Line_Information (Context.Context)
-                             else Contexts.Line_Information
-                               (Context.Context))),
+                          Line   =>
+                            Editable_Line_Type
+                              ((if Has_File_Line_Information (Context.Context)
+                                then File_Line_Information (Context.Context)
+                                else
+                                  Contexts.Line_Information
+                                    (Context.Context))),
                           Column => 1),
                      Address => Invalid_Address);
                begin
-                  DAP.Module.Get_Current_Debugger.
-                    Get_Breakpoints_Manager.Continue_Until_Location (Location);
+                  DAP
+                    .Module
+                    .Get_Current_Debugger
+                    .Get_Breakpoints_Manager
+                    .Continue_Until_Location (Location);
                end;
             end if;
 
-         when On_Line =>
+         when On_Line       =>
             Break_Source
               (Kernel,
-               File  => File_Information (Context.Context),
-               Line  => Editable_Line_Type
-                 ((if Has_File_Line_Information (Context.Context)
-                  then File_Line_Information (Context.Context)
-                  else Contexts.Line_Information (Context.Context))));
+               File => File_Information (Context.Context),
+               Line =>
+                 Editable_Line_Type
+                   ((if Has_File_Line_Information (Context.Context)
+                     then File_Line_Information (Context.Context)
+                     else Contexts.Line_Information (Context.Context))));
 
-         when Entity =>
+         when Entity        =>
             declare
                Entity : constant Root_Entity'Class :=
                  Get_Entity (Context.Context);
@@ -377,26 +400,29 @@ package body DAP.Module.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type
    is
       Context : constant Selection_Context := Self.Kernel.Get_Current_Context;
 
    begin
       case Self.Mode is
-         when Set =>
+         when Set   =>
             Break_Source
               (Self.Kernel,
                File => GPS.Kernel.Contexts.File_Information (Context),
-               Line => Editable_Line_Type
-                 (GPS.Kernel.Contexts.Line_Information (Context)));
+               Line =>
+                 Editable_Line_Type
+                   (GPS.Kernel.Contexts.Line_Information (Context)));
 
          when Unset =>
             Unbreak_Source
               (Self.Kernel,
                File => GPS.Kernel.Contexts.File_Information (Context),
-               Line => Editable_Line_Type
-                 (GPS.Kernel.Contexts.Line_Information (Context)));
+               Line =>
+                 Editable_Line_Type
+                   (GPS.Kernel.Contexts.Line_Information (Context)));
       end case;
 
       return Success;
@@ -406,7 +432,8 @@ package body DAP.Module.Breakpoints is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -421,9 +448,10 @@ package body DAP.Module.Breakpoints is
 
       Unbreak_Source
         (Get_Kernel (Context.Context),
-         File  => File_Information (Context.Context),
-         Line  => Editable_Line_Type
-           (GPS.Kernel.Contexts.Line_Information (Context.Context)));
+         File => File_Information (Context.Context),
+         Line =>
+           Editable_Line_Type
+             (GPS.Kernel.Contexts.Line_Information (Context.Context)));
 
       return Commands.Success;
    end Execute;
@@ -432,7 +460,8 @@ package body DAP.Module.Breakpoints is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -446,15 +475,17 @@ package body DAP.Module.Breakpoints is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class)
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
       use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
       Client : constant DAP_Client_Access :=
-        (if Debugger = null then null
+        (if Debugger = null
+         then null
          else DAP_Visual_Debugger_Access (Debugger).Client);
    begin
       --  If there is a running debugger, show its breakpoints. Otherwise
@@ -462,41 +493,39 @@ package body DAP.Module.Breakpoints is
       Show_Breakpoints_In_All_Editors
         (Kernel      => Kernel,
          Breakpoints =>
-           (if Client /= null
-              and then Client.Get_Breakpoints_Manager /= null
-            then
-               Client.Get_Breakpoints_Manager.Get_Breakpoints
-            else
-               Persistent_Breakpoints.Get_Breakpoints));
+           (if Client /= null and then Client.Get_Breakpoints_Manager /= null
+            then Client.Get_Breakpoints_Manager.Get_Breakpoints
+            else Persistent_Breakpoints.Get_Breakpoints));
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self     : On_Breakpoint_Event;
-       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class;
-       Id       : Integer)
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoint_Event;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class;
+      Id       : Integer)
    is
-      Client     : constant DAP_Client_Access :=
+      Client : constant DAP_Client_Access :=
         DAP_Visual_Debugger_Access (Debugger).Client;
    begin
       Show_Breakpoints_In_All_Editors
         (Kernel      => Kernel,
          Breakpoints =>
-           (if Client /= null then
-                 Client.Get_Breakpoints_Manager.Get_Breakpoints
-            else
-               Persistent_Breakpoints.Get_Breakpoints));
+           (if Client /= null
+            then Client.Get_Breakpoints_Manager.Get_Breakpoints
+            else Persistent_Breakpoints.Get_Breakpoints));
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -506,8 +535,7 @@ package body DAP.Module.Breakpoints is
    begin
       Persistent_Breakpoints.Clear;
       Get_Messages_Container (Kernel).Remove_Category
-        (Messages_Category_For_Breakpoints,
-         Breakpoints_Message_Flags);
+        (Messages_Category_For_Breakpoints, Breakpoints_Message_Flags);
 
       if not Preserve_State_On_Exit.Get_Pref then
          Trace (Me, "Not loading persistent breakpoints");
@@ -552,7 +580,8 @@ package body DAP.Module.Breakpoints is
       if Persistent_Breakpoints.Get_Breakpoints.Is_Empty then
          Trace (Me, "No persistent breakpoint to save");
          GPS.Kernel.Properties.Remove_Property
-           (Kernel, GPS.Kernel.Project.Get_Project (Kernel),
+           (Kernel,
+            GPS.Kernel.Project.Get_Project (Kernel),
             Persistent_Category);
          return;
       end if;
@@ -564,9 +593,9 @@ package body DAP.Module.Breakpoints is
          Project    => GPS.Kernel.Project.Get_Project (Kernel),
          Name       => Persistent_Category,
          Property   =>
-            new Breakpoint_Property_Record'
-           (Kernel      => Kernel,
-            Breakpoints => Persistent_Breakpoints.Get_Breakpoints),
+           new Breakpoint_Property_Record'
+             (Kernel      => Kernel,
+              Breakpoints => Persistent_Breakpoints.Get_Breakpoints),
          --  Filter breakpoints that are created automatically by GNAT Studio
          --  as a result of preferences.
          Persistent => True);
@@ -580,7 +609,8 @@ package body DAP.Module.Breakpoints is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Breakpoint_Property_Record;
       Value    : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -593,8 +623,7 @@ package body DAP.Module.Breakpoints is
       ----------
 
       procedure Save (B : Breakpoint_Data);
-      procedure Save (B : Breakpoint_Data)
-      is
+      procedure Save (B : Breakpoint_Data) is
          Value : constant JSON_Value := Create_Object;
       begin
          Value.Set_Field ("kind", Breakpoint_Kind'Image (B.Kind));
@@ -609,27 +638,26 @@ package body DAP.Module.Breakpoints is
          end if;
 
          Value.Set_Field
-           ("disposition",
-            Breakpoint_Disposition'Image (B.Disposition));
+           ("disposition", Breakpoint_Disposition'Image (B.Disposition));
 
          case B.Kind is
-            when On_Line =>
+            when On_Line        =>
                if B.Location.Marker /= No_Marker then
                   Value.Set_Field
                     ("file", JSON_Utils.Save (Get_File (Get_Location (B))));
                   Value.Set_Field
-                    ("line", Editable_Line_Type'Image
-                       (Get_Line (Get_Location (B))));
+                    ("line",
+                     Editable_Line_Type'Image (Get_Line (Get_Location (B))));
                end if;
 
-            when On_Subprogram =>
+            when On_Subprogram  =>
                Value.Set_Field ("subprogram", To_UTF_8_String (B.Subprogram));
 
             when On_Instruction =>
                --  we do not store breakpoints for addresses
                null;
 
-            when On_Exception =>
+            when On_Exception   =>
                Value.Set_Field
                  ("exception", To_UTF_8_String (B.Exception_Name));
                Value.Set_Field ("unhandled-only", B.Unhandled_Only);
@@ -654,7 +682,8 @@ package body DAP.Module.Breakpoints is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding
+   procedure Load
      (Property : in out Breakpoint_Property_Record;
       Value    : GNATCOLL.JSON.JSON_Value)
    is
@@ -680,36 +709,40 @@ package body DAP.Module.Breakpoints is
 
             Kind : constant Breakpoint_Kind :=
               Breakpoint_Kind'Value (Item.Get ("kind"));
-            Loc  : Location_Marker     := No_Marker;
+            Loc  : Location_Marker := No_Marker;
 
             Condition : constant VSS.Strings.Virtual_String :=
               (if Item.Has_Field ("condition")
-               then VSS.Strings.Conversions.To_Virtual_String
-                 (String'(Item.Get ("condition")))
+               then
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (String'(Item.Get ("condition")))
                else VSS.Strings.Empty_Virtual_String);
 
             Commands : constant VSS.Strings.Virtual_String :=
               (if Item.Has_Field ("command")
-               then VSS.Strings.Conversions.To_Virtual_String
-                 (String'(Item.Get ("command")))
+               then
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (String'(Item.Get ("command")))
                else VSS.Strings.Empty_Virtual_String);
-            B    : Breakpoint_Data (Kind);
+            B        : Breakpoint_Data (Kind);
          begin
             case Kind is
-               when On_Line =>
-                  if Item.Has_Field ("line")
-                    and then Item.Has_Field ("file")
+               when On_Line        =>
+                  if Item.Has_Field ("line") and then Item.Has_Field ("file")
                   then
-                     Loc := Property.Kernel.Get_Buffer_Factory.Create_Marker
-                       (File   => JSON_Utils.Load (Item.Get ("file")),
-                        Line   => Editable_Line_Type'Value (Item.Get ("line")),
-                        Column => 1);
+                     Loc :=
+                       Property.Kernel.Get_Buffer_Factory.Create_Marker
+                         (File   => JSON_Utils.Load (Item.Get ("file")),
+                          Line   =>
+                            Editable_Line_Type'Value (Item.Get ("line")),
+                          Column => 1);
 
                      B :=
                        (Kind           => On_Line,
                         Num            => Id,
-                        Disposition    => Breakpoint_Disposition'Value
-                          (Item.Get ("disposition")),
+                        Disposition    =>
+                          Breakpoint_Disposition'Value
+                            (Item.Get ("disposition")),
                         Enabled        => True,
                         Location       => (Loc, Invalid_Address),
                         Ignore         => Item.Get ("ignore"),
@@ -719,38 +752,38 @@ package body DAP.Module.Breakpoints is
                         Verified       => True);
                   end if;
 
-               when On_Subprogram =>
+               when On_Subprogram  =>
                   B :=
-                    (Kind          => On_Subprogram,
-                     Num           => Id,
-                     Disposition   => Breakpoint_Disposition'Value
-                       (Item.Get ("disposition")),
-                     Enabled       => True,
-                     Subprogram    =>
-                        To_Virtual_String (Item.Get ("subprogram")),
-                     Ignore        => Item.Get ("ignore"),
-                     Condition     => Condition,
-                     Commands      => Commands,
-                     others        => <>);
+                    (Kind        => On_Subprogram,
+                     Num         => Id,
+                     Disposition =>
+                       Breakpoint_Disposition'Value (Item.Get ("disposition")),
+                     Enabled     => True,
+                     Subprogram  =>
+                       To_Virtual_String (Item.Get ("subprogram")),
+                     Ignore      => Item.Get ("ignore"),
+                     Condition   => Condition,
+                     Commands    => Commands,
+                     others      => <>);
 
                when On_Instruction =>
                   --  we do not store breakpoints for addresses
                   null;
 
-               when On_Exception =>
+               when On_Exception   =>
                   B :=
-                    (Kind            => On_Exception,
-                     Num             => Id,
-                     Disposition     => Breakpoint_Disposition'Value
-                       (Item.Get ("disposition")),
-                     Enabled         => True,
-                     Exception_Name  => To_Virtual_String
-                       (Item.Get ("exception")),
-                     Unhandled_Only  => Item.Get ("unhandled-only"),
-                     Ignore          => Item.Get ("ignore"),
-                     Condition       => Condition,
-                     Commands        => Commands,
-                     others          => <>);
+                    (Kind           => On_Exception,
+                     Num            => Id,
+                     Disposition    =>
+                       Breakpoint_Disposition'Value (Item.Get ("disposition")),
+                     Enabled        => True,
+                     Exception_Name =>
+                       To_Virtual_String (Item.Get ("exception")),
+                     Unhandled_Only => Item.Get ("unhandled-only"),
+                     Ignore         => Item.Get ("ignore"),
+                     Condition      => Condition,
+                     Commands       => Commands,
+                     others         => <>);
             end case;
 
             Property.Breakpoints.Append (B);
@@ -766,8 +799,7 @@ package body DAP.Module.Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Messages_Category_For_Breakpoints,
-         Breakpoints_Message_Flags);
+        (Messages_Category_For_Breakpoints, Breakpoints_Message_Flags);
       Shown_Breakpoint_Locations.Clear;
    end Hide_Breakpoints;
 
@@ -791,8 +823,7 @@ package body DAP.Module.Breakpoints is
    ---------------------
 
    procedure Show_Breakpoint
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      B       : Breakpoint_Data)
+     (Kernel : not null access Kernel_Handle_Record'Class; B : Breakpoint_Data)
    is
       Msg    : Simple_Message_Access;
       File   : Virtual_File;
@@ -801,9 +832,7 @@ package body DAP.Module.Breakpoints is
    begin
       --  We should only show breakpoints that have a unique location, so
       --  source or address breakpoints.
-      if B.Kind /= On_Line
-        and then B.Kind /= On_Instruction
-      then
+      if B.Kind /= On_Line and then B.Kind /= On_Instruction then
          return;
       end if;
 
@@ -813,35 +842,35 @@ package body DAP.Module.Breakpoints is
          File := Get_File (B.Location.Marker);
          Line := Get_Line (B.Location.Marker);
 
-         Msg := Create_Simple_Message
-           (Get_Messages_Container (Kernel),
-            Category                 => Messages_Category_For_Breakpoints,
-            File                     => File,
-            Line                     => Natural (Line),
-            Column                   => 0,
-            Text                     =>
-              VSS.Strings.Virtual_String'
-              (if B.Condition.Is_Empty
-               then "An active breakpoint has been set on this line"
-               else "A conditional breakpoint has been set on this line"),
-            Importance               => Unspecified,
-            Flags                    => Breakpoints_Message_Flags,
-            Allow_Auto_Jump_To_First => False);
+         Msg :=
+           Create_Simple_Message
+             (Get_Messages_Container (Kernel),
+              Category                 => Messages_Category_For_Breakpoints,
+              File                     => File,
+              Line                     => Natural (Line),
+              Column                   => 0,
+              Text                     =>
+                VSS.Strings.Virtual_String'
+                  (if B.Condition.Is_Empty
+                   then "An active breakpoint has been set on this line"
+                   else "A conditional breakpoint has been set on this line"),
+              Importance               => Unspecified,
+              Flags                    => Breakpoints_Message_Flags,
+              Allow_Auto_Jump_To_First => False);
 
-         Action := new GPS.Editors.Line_Information.Line_Information_Record'
-           (Text                     =>
-              Ada.Strings.Unbounded.Null_Unbounded_String,
-            Tooltip_Text             => Msg.Get_Text,
-            Image                    =>
-              Ada.Strings.Unbounded.Null_Unbounded_String,
-            Message                  =>
-              GPS.Kernel.Messages.References.Create
-                (Message_Access (Msg)),
-            Category                 => <>,
-            Display_Popup_When_Alone => False,
-            Associated_Command       => Create_Set_Breakpoint_Command
-              (Kernel,
-               Mode => Unset));
+         Action :=
+           new GPS.Editors.Line_Information.Line_Information_Record'
+             (Text                     =>
+                Ada.Strings.Unbounded.Null_Unbounded_String,
+              Tooltip_Text             => Msg.Get_Text,
+              Image                    =>
+                Ada.Strings.Unbounded.Null_Unbounded_String,
+              Message                  =>
+                GPS.Kernel.Messages.References.Create (Message_Access (Msg)),
+              Category                 => <>,
+              Display_Popup_When_Alone => False,
+              Associated_Command       =>
+                Create_Set_Breakpoint_Command (Kernel, Mode => Unset));
          Msg.Set_Action (Action);
 
          if not B.Enabled then
@@ -870,12 +899,10 @@ package body DAP.Module.Breakpoints is
    is
       use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access);
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access);
       --  Set a breakpoint in a specific instance of the debugger
 
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access) is
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
          Debugger.Get_Breakpoints_Manager.Break (Data);
       end On_Debugger;
@@ -911,20 +938,21 @@ package body DAP.Module.Breakpoints is
       Commands  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String)
    is
-      B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Line,
-         Num         => No_Breakpoint,
-         Location    => DAP.Types.Breakpoints.Breakpoint_Location_Type'
-           (Marker  => Kernel.Get_Buffer_Factory.Create_Marker
-              (File   => File,
-               Line   => Line,
-               Column => 1),
-            Address => Invalid_Address),
-         Disposition => (if Temporary then Delete else Keep),
-         Condition   => Condition,
-         Ignore      => Ignore,
-         Commands    => Commands,
-         others      => <>);
+      B : Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind        => On_Line,
+           Num         => No_Breakpoint,
+           Location    =>
+             DAP.Types.Breakpoints.Breakpoint_Location_Type'
+               (Marker  =>
+                  Kernel.Get_Buffer_Factory.Create_Marker
+                    (File => File, Line => Line, Column => 1),
+                Address => Invalid_Address),
+           Disposition => (if Temporary then Delete else Keep),
+           Condition   => Condition,
+           Ignore      => Ignore,
+           Commands    => Commands,
+           others      => <>);
 
    begin
       Break (Kernel, B);
@@ -977,24 +1005,25 @@ package body DAP.Module.Breakpoints is
    ----------------------
 
    procedure Break_Subprogram
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Subprogram    : VSS.Strings.Virtual_String;
-      Temporary     : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Subprogram : VSS.Strings.Virtual_String;
+      Temporary  : Boolean := False;
+      Condition  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String;
-      Ignore    : Natural := 0;
-      Commands  : VSS.Strings.Virtual_String :=
+      Ignore     : Natural := 0;
+      Commands   : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String)
    is
-      B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Subprogram,
-         Num         => No_Breakpoint,
-         Subprogram  => Subprogram,
-         Disposition => (if Temporary then Delete else Keep),
-         Condition   => Condition,
-         Ignore      => Ignore,
-         Commands    => Commands,
-         others      => <>);
+      B : Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind        => On_Subprogram,
+           Num         => No_Breakpoint,
+           Subprogram  => Subprogram,
+           Disposition => (if Temporary then Delete else Keep),
+           Condition   => Condition,
+           Ignore      => Ignore,
+           Commands    => Commands,
+           others      => <>);
 
    begin
       Break (Kernel, B);
@@ -1014,16 +1043,17 @@ package body DAP.Module.Breakpoints is
       Commands  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String)
    is
-      B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Instruction,
-         Num         => No_Breakpoint,
-         Location    => Breakpoint_Location_Type'
-           (Address => Address, others => <>),
-         Disposition => (if Temporary then Delete else Keep),
-         Condition   => Condition,
-         Ignore      => Ignore,
-         Commands    => Commands,
-         others      => <>);
+      B : Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind        => On_Instruction,
+           Num         => No_Breakpoint,
+           Location    =>
+             Breakpoint_Location_Type'(Address => Address, others => <>),
+           Disposition => (if Temporary then Delete else Keep),
+           Condition   => Condition,
+           Ignore      => Ignore,
+           Commands    => Commands,
+           others      => <>);
 
    begin
       Break (Kernel, B);
@@ -1034,16 +1064,14 @@ package body DAP.Module.Breakpoints is
    --------------------
 
    procedure Unbreak_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type)
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line   : Editable_Line_Type)
    is
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access);
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access);
       --  Remove a breakpoint in a specific instance of the debugger
 
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access) is
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
          Debugger.Get_Breakpoints_Manager.Remove_Breakpoint_At (File, Line);
       end On_Debugger;
@@ -1057,8 +1085,11 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-              Remove_Breakpoint_At (File, Line);
+            DAP
+              .Module
+              .Get_Current_Debugger
+              .Get_Breakpoints_Manager
+              .Remove_Breakpoint_At (File, Line);
          end if;
       end if;
    end Unbreak_Source;
@@ -1071,12 +1102,10 @@ package body DAP.Module.Breakpoints is
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Indexes : Breakpoint_Index_Lists.List)
    is
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access);
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access);
       --  Set a breakpoint in a specific instance of the debugger
 
-      procedure On_Debugger
-        (Debugger : DAP.Clients.DAP_Client_Access) is
+      procedure On_Debugger (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
          Debugger.Get_Breakpoints_Manager.Remove_Breakpoints (Indexes);
       end On_Debugger;
@@ -1088,15 +1117,17 @@ package body DAP.Module.Breakpoints is
 
       if DAP.Module.Get_Current_Debugger = null then
          Persistent_Breakpoints.Delete (Indexes);
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Kernel, null);
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
 
       else
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-              Remove_Breakpoints (Indexes);
+            DAP
+              .Module
+              .Get_Current_Debugger
+              .Get_Breakpoints_Manager
+              .Remove_Breakpoints (Indexes);
          end if;
       end if;
    end Delete_Multiple_Breakpoints;
@@ -1121,14 +1152,16 @@ package body DAP.Module.Breakpoints is
 
       if DAP.Module.Get_Current_Debugger = null then
          Persistent_Breakpoints.Set_Breakpoints_State (Indexes, State);
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Kernel, null);
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors
            (Kernel, Persistent_Breakpoints.Get_Breakpoints);
 
       else
-         DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-           Set_Breakpoints_State (Indexes, State);
+         DAP
+           .Module
+           .Get_Current_Debugger
+           .Get_Breakpoints_Manager
+           .Set_Breakpoints_State (Indexes, State);
       end if;
    end Set_Breakpoints_State;
 
@@ -1136,14 +1169,18 @@ package body DAP.Module.Breakpoints is
    -- Get_Breakpoint_From_Index --
    -------------------------------
 
-   function Get_Breakpoint_From_Index
-     (Index  : Positive) return Breakpoint_Data is
+   function Get_Breakpoint_From_Index (Index : Positive) return Breakpoint_Data
+   is
    begin
       if DAP.Module.Get_Current_Debugger = null then
          return Persistent_Breakpoints.Get_Breakpoint_From_Index (Index);
       else
-         return DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-           Get_Breakpoint_From_Index (Index);
+         return
+           DAP
+             .Module
+             .Get_Current_Debugger
+             .Get_Breakpoints_Manager
+             .Get_Breakpoint_From_Index (Index);
       end if;
    end Get_Breakpoint_From_Index;
 
@@ -1158,11 +1195,13 @@ package body DAP.Module.Breakpoints is
    begin
       if DAP.Module.Get_Current_Debugger = null then
          Persistent_Breakpoints.Replace (Data, Index);
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Kernel, null);
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
       else
-         DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-           Replace_Breakpoint_At_Index (Data, Index);
+         DAP
+           .Module
+           .Get_Current_Debugger
+           .Get_Breakpoints_Manager
+           .Replace_Breakpoint_At_Index (Data, Index);
       end if;
    end Set_Breakpoint_At_Index;
 
@@ -1171,8 +1210,7 @@ package body DAP.Module.Breakpoints is
    -------------------------
 
    procedure Store_As_Persistent
-     (Executable  : Virtual_File;
-      Breakpoints : Breakpoint_Vectors.Vector)
+     (Executable : Virtual_File; Breakpoints : Breakpoint_Vectors.Vector)
    is
       Count : Natural := 0;
 
@@ -1207,8 +1245,7 @@ package body DAP.Module.Breakpoints is
          end if;
 
          Persistent_Breakpoints.Replace
-           (Breakpoints => Breakpoints,
-            Full_Copy   => False);
+           (Breakpoints => Breakpoints, Full_Copy => False);
       end if;
    end Store_As_Persistent;
 
@@ -1246,38 +1283,38 @@ package body DAP.Module.Breakpoints is
       Project_Changed_Hook.Add (new On_Project_Changed);
 
       --  Connect to breakpoints' hooks
-      Debugger_Breakpoints_Changed_Hook.Add
-        (new On_Breakpoints_Changed);
-      Debugger_Breakpoint_Added_Hook.Add
-        (new On_Breakpoint_Event (Added));
-      Debugger_Breakpoint_Changed_Hook.Add
-        (new On_Breakpoint_Event (Changed));
-      Debugger_Breakpoint_Deleted_Hook.Add
-        (new On_Breakpoint_Event (Deleted));
+      Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
+      Debugger_Breakpoint_Added_Hook.Add (new On_Breakpoint_Event (Added));
+      Debugger_Breakpoint_Changed_Hook.Add (new On_Breakpoint_Event (Changed));
+      Debugger_Breakpoint_Deleted_Hook.Add (new On_Breakpoint_Event (Deleted));
 
       In_Source_Editor := Kernel.Lookup_Filter ("Source editor");
 
       --  Register all the breakpoint-related actions
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "debug set line breakpoint",
+        (Kernel,
+         "debug set line breakpoint",
          Command     => new Set_Breakpoint_Command_Context (On_Line),
          Description => "Set a breakpoint on line",
-         Filter      => In_Source_Editor and
-           Kernel.Lookup_Filter ("Debugger breakable source"),
+         Filter      =>
+           In_Source_Editor
+           and Kernel.Lookup_Filter ("Debugger breakable source"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,
          Label  => "Debug/Set breakpoint",
          Action => "debug set line breakpoint",
-         Filter => new Find_Breakpoint_Filter'
-           (Action_Filter_Record with Found => False));
+         Filter =>
+           new Find_Breakpoint_Filter'
+             (Action_Filter_Record with Found => False));
 
       Kernel.Set_Default_Line_Number_Click
         (Action     => "debug set line breakpoint",
          Click_Type => GPS.Kernel.Normal_Click);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "debug set subprogram breakpoint",
+        (Kernel,
+         "debug set subprogram breakpoint",
          Command     => new Set_Breakpoint_Command_Context (Entity),
          Description => "Set a breakpoint on subprogram",
          Filter      => Kernel.Lookup_Filter ("Debugger entity name"),
@@ -1288,7 +1325,8 @@ package body DAP.Module.Breakpoints is
          Action => "debug set subprogram breakpoint");
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "debug remove breakpoint",
+        (Kernel,
+         "debug remove breakpoint",
          Command     => new Remove_Breakpoint_Command,
          Description => "Remove breakpoint",
          Filter      => In_Source_Editor,
@@ -1297,15 +1335,17 @@ package body DAP.Module.Breakpoints is
         (Kernel => Kernel,
          Label  => "Debug/Remove breakpoint",
          Action => "debug remove breakpoint",
-         Filter => new Find_Breakpoint_Filter'
-           (Action_Filter_Record with Found => True));
+         Filter =>
+           new Find_Breakpoint_Filter'
+             (Action_Filter_Record with Found => True));
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "continue till line",
+        (Kernel,
+         "continue till line",
          Command     => new Set_Breakpoint_Command_Context (Continue_Till),
          Description => "Continue executing until the given line",
-         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
-             In_Source_Editor,
+         Filter      =>
+           Kernel.Lookup_Filter ("Debugger stopped") and In_Source_Editor,
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,

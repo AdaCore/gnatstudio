@@ -17,16 +17,16 @@
 
 --  This package handles build commands
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with VSS.Strings;
 
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Build_Command_Utils;       use Build_Command_Utils;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.Scripts;    use GNATCOLL.Scripts;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with Build_Command_Utils; use Build_Command_Utils;
 
 package Commands.Builder is
 
@@ -46,8 +46,8 @@ package Commands.Builder is
       Main            : Virtual_File;
       Main_Project    : Project_Type;
       Background      : Boolean;
-      Preserve_Output : Boolean         := False;
-      Directory       : Virtual_File    := No_File;
+      Preserve_Output : Boolean := False;
+      Directory       : Virtual_File := No_File;
       On_Exit         : Subprogram_Type := null);
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the mode Mode_Name will be

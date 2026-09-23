@@ -15,61 +15,61 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;                   use Ada.Exceptions;
+with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with Glib;                             use Glib;
-with Glib.Object;                      use Glib.Object;
-with Glib_Values_Utils;                use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Event;                        use Gdk.Event;
-with Gdk.Types;                        use Gdk.Types;
-with Gdk.Types.Keysyms;                use Gdk.Types.Keysyms;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
-with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
-with Gtk.Assistant;                    use Gtk.Assistant;
-with Gtk.Box;                          use Gtk.Box;
-with Gtk.Button;                       use Gtk.Button;
-with Gtk.Combo_Box_Text;               use Gtk.Combo_Box_Text;
-with Gtk.Enums;                        use Gtk.Enums;
-with Gtk.GEntry;                       use Gtk.GEntry;
-with Gtk.Label;                        use Gtk.Label;
+with Gtk.Assistant;      use Gtk.Assistant;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Label;          use Gtk.Label;
 with Gtk.Main;
-with Gtk.Paned;                        use Gtk.Paned;
-with Gtk.Widget;                       use Gtk.Widget;
+with Gtk.Paned;          use Gtk.Paned;
+with Gtk.Widget;         use Gtk.Widget;
 
-with Gtkada.File_Selector;             use Gtkada.File_Selector;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 
-with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;                   use Gtk.Tree_Model;
-with Gtk.Tree_View;                    use Gtk.Tree_View;
-with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
-with Gtk.Tree_Store;                   use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;             use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;           use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;         use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 
-with Gtkada.Handlers;                  use Gtkada.Handlers;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with Dialog_Utils;                     use Dialog_Utils;
+with Dialog_Utils; use Dialog_Utils;
 
 package body Project_Templates.GUI is
 
-   Name_Col        : constant := 0;
-   Icon_Name_Col   : constant := 1;
-   Num_Col         : constant := 2;
-   Desc_Col        : constant := 3;
+   Name_Col      : constant := 0;
+   Icon_Name_Col : constant := 1;
+   Num_Col       : constant := 2;
+   Desc_Col      : constant := 3;
 
    --  This constant is used to carry information about the project template
    --  in the tree view.
    --  Num_Col : Index to the pages array of the GtkAssistant
    Column_Types : constant GType_Array :=
-     (Name_Col         => GType_String,
-      Icon_Name_Col    => GType_String,
-      Num_Col          => GType_Int,
-      Desc_Col         => GType_String);
+     (Name_Col      => GType_String,
+      Icon_Name_Col => GType_String,
+      Num_Col       => GType_Int,
+      Desc_Col      => GType_String);
 
    type Variable_Widget_Record is record
       Name   : Unbounded_String;
@@ -77,16 +77,14 @@ package body Project_Templates.GUI is
    end record;
 
    function Get_Text (V : Variable_Widget_Record) return String
-   is
-     (if V.Widget = null then
-         ""
-      elsif V.Widget.all in Gtk_Combo_Box_Text_Record'Class then
-         Gtk_Combo_Box_Text (V.Widget).Get_Active_Text
-      else
-         Gtk_Entry (V.Widget).Get_Text);
+   is (if V.Widget = null
+       then ""
+       elsif V.Widget.all in Gtk_Combo_Box_Text_Record'Class
+       then Gtk_Combo_Box_Text (V.Widget).Get_Active_Text
+       else Gtk_Entry (V.Widget).Get_Text);
 
-   package Variable_Widgets is new Ada.Containers.Doubly_Linked_Lists
-     (Variable_Widget_Record);
+   package Variable_Widgets is new
+     Ada.Containers.Doubly_Linked_Lists (Variable_Widget_Record);
 
    type Next_Page_Data_Record is record
       Next_Page_Number : Gint := 0;
@@ -94,11 +92,11 @@ package body Project_Templates.GUI is
    end record;
    type Next_Page_Data_Access is access Next_Page_Data_Record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Next_Page_Data_Record, Next_Page_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Next_Page_Data_Record, Next_Page_Data_Access);
 
-   package Forwarder is new Set_Forward_Page_Func_User_Data
-     (Next_Page_Data_Access);
+   package Forwarder is new
+     Set_Forward_Page_Func_User_Data (Next_Page_Data_Access);
 
    function Next_Page
      (Current_Page : Gint; User_Data : Next_Page_Data_Access) return Gint;
@@ -166,17 +164,14 @@ package body Project_Templates.GUI is
       C            : Cursor;
       Group_Widget : Dialog_Group_Widget;
 
-      procedure Create_Var_Widget
-        (Var : Variable);
+      procedure Create_Var_Widget (Var : Variable);
       --  Create one widget to represent Var
 
       -----------------------
       -- Create_Var_Widget --
       -----------------------
 
-      procedure Create_Var_Widget
-        (Var : Variable)
-      is
+      procedure Create_Var_Widget (Var : Variable) is
          Var_Widget : Variable_Widget_Record;
 
          function M (From : Character) return Character;
@@ -233,10 +228,9 @@ package body Project_Templates.GUI is
 
          Group_Widget.Create_Child
            (Var_Widget.Widget,
-            Label     => To_String
-              (Translate (Var.Label, M'Unrestricted_Access)),
-            Doc       => To_String (Var.Description),
-            Expand    => False);
+            Label  => To_String (Translate (Var.Label, M'Unrestricted_Access)),
+            Doc    => To_String (Var.Description),
+            Expand => False);
       end Create_Var_Widget;
 
       function Get_Current_Dir return String;
@@ -245,8 +239,8 @@ package body Project_Templates.GUI is
       --  is started from the windows start menu.
 
       function Get_Current_Dir return String is
-         Env_WINDIR  : constant Virtual_File := Create
-           (+Kernel.Get_Original_Environment.Value ("WINDIR", ""));
+         Env_WINDIR  : constant Virtual_File :=
+           Create (+Kernel.Get_Original_Environment.Value ("WINDIR", ""));
          Current_Dir : constant Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
       begin
          if Is_Parent (Env_WINDIR, Current_Dir) then
@@ -276,23 +270,20 @@ package body Project_Templates.GUI is
 
       Gtk_New (Widget.Browse_Button, "Browse");
       Widget.Browse_Button.On_Clicked
-        (On_Browse_Clicked'Access,
-         Slot => Widget);
+        (On_Browse_Clicked'Access, Slot => Widget);
 
       Group_Widget.Create_Child
-        (Widget    => Widget.Location_Ent,
-         Label     => "Deploy project in",
-         Doc       => "The location of the project to create.",
-         Button    => Widget.Browse_Button,
-         Expand    => True,
-         Fill      => True);
+        (Widget => Widget.Location_Ent,
+         Label  => "Deploy project in",
+         Doc    => "The location of the project to create.",
+         Button => Widget.Browse_Button,
+         Expand => True,
+         Fill   => True);
 
       --  Create the 'Settings' group widget
       Group_Widget := new Dialog_Group_Widget_Record;
       Initialize
-        (Group_Widget,
-         Parent_View  => Widget,
-         Group_Name   => "Settings");
+        (Group_Widget, Parent_View => Widget, Group_Name => "Settings");
 
       --  Create the fields for variables.
       C := Template.Project.Variables.First;
@@ -330,8 +321,7 @@ package body Project_Templates.GUI is
    ---------------------
 
    function Get_Assignments
-     (Page : access Template_Page_Record'Class)
-      return Variable_Assignments.Map
+     (Page : access Template_Page_Record'Class) return Variable_Assignments.Map
    is
       use Variable_Widgets;
       C : Cursor;
@@ -354,15 +344,15 @@ package body Project_Templates.GUI is
    -- On_Browse_Clicked --
    -----------------------
 
-   procedure On_Browse_Clicked
-     (Self : access Glib.Object.GObject_Record'Class)
+   procedure On_Browse_Clicked (Self : access Glib.Object.GObject_Record'Class)
    is
       Page_Widget : constant Template_Page := Template_Page (Self);
-      Dir         : constant Virtual_File := Select_Directory
-        (Base_Directory    =>
-           Create_From_UTF8 (Page_Widget.Location_Ent.Get_Text),
-         Parent            => Gtk_Window (Get_Toplevel (Page_Widget)),
-         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+      Dir         : constant Virtual_File :=
+        Select_Directory
+          (Base_Directory    =>
+             Create_From_UTF8 (Page_Widget.Location_Ent.Get_Text),
+           Parent            => Gtk_Window (Get_Toplevel (Page_Widget)),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
    begin
       if Dir /= GNATCOLL.VFS.No_File then
          Page_Widget.Location_Ent.Set_Text (Dir.Display_Full_Name);
@@ -374,8 +364,7 @@ package body Project_Templates.GUI is
    ---------------
 
    function Next_Page
-     (Current_Page : Gint;
-      User_Data    : Next_Page_Data_Access) return Gint is
+     (Current_Page : Gint; User_Data : Next_Page_Data_Access) return Gint is
    begin
       if Current_Page = 0 and then User_Data.Next_Page_Number > 0 then
          --  We are on the initial page containing the tree view.
@@ -407,7 +396,7 @@ package body Project_Templates.GUI is
       Errors        : out Unbounded_String;
       Default_Label : String := "")
    is
-      Assistant    : Gtk_Assistant;
+      Assistant : Gtk_Assistant;
 
       Scroll       : Gtk_Scrolled_Window;
       Tree         : Gtk_Tree_View;
@@ -418,8 +407,8 @@ package body Project_Templates.GUI is
       Rend         : Gtk_Cell_Renderer_Text;
       Pix          : Gtk_Cell_Renderer_Pixbuf;
 
-      Col_Num      : Gint;
-      Page_Num     : Gint;
+      Col_Num  : Gint;
+      Page_Num : Gint;
       pragma Unreferenced (Col_Num, Page_Num);
       --  Those variables are used only to store the return value of C
       --  functions and are not actually used by the Ada code.
@@ -435,8 +424,7 @@ package body Project_Templates.GUI is
       use Templates_Script_Objects_List;
       C : Cursor;
 
-      procedure Add_Template
-        (Template : Template_Script_Object);
+      procedure Add_Template (Template : Template_Script_Object);
       --  Add one page to the wizard, and add the template to the tree model
 
       function Get_Or_Create_Category
@@ -450,8 +438,8 @@ package body Project_Templates.GUI is
       --  Press on the "Cancel" button
 
       function On_Key_Press
-        (Widget : access GObject_Record'Class;
-         Event  : Gdk_Event) return Boolean;
+        (Widget : access GObject_Record'Class; Event : Gdk_Event)
+         return Boolean;
       --  Callback on a key press
 
       procedure On_Apply_Assistant (Widget : access GObject_Record'Class);
@@ -471,8 +459,7 @@ package body Project_Templates.GUI is
            Split (To_String (Category), '/');
 
          function Find_Child
-           (Iter : Gtk_Tree_Iter;
-            Name : String) return Gtk_Tree_Iter;
+           (Iter : Gtk_Tree_Iter; Name : String) return Gtk_Tree_Iter;
          --  Find iter with Name in children of Iter. Create it if necessary.
 
          ----------------
@@ -480,8 +467,7 @@ package body Project_Templates.GUI is
          ----------------
 
          function Find_Child
-           (Iter : Gtk_Tree_Iter;
-            Name : String) return Gtk_Tree_Iter
+           (Iter : Gtk_Tree_Iter; Name : String) return Gtk_Tree_Iter
          is
             Child        : Gtk_Tree_Iter;
             Insert_After : Gtk_Tree_Iter := Null_Iter;
@@ -510,12 +496,13 @@ package body Project_Templates.GUI is
 
             --  Populate the iter that we have just added
             Set_All_And_Clear
-              (Model, Child,
-               (Name_Col        => As_String (Name),
-                Icon_Name_Col   =>
+              (Model,
+               Child,
+               (Name_Col      => As_String (Name),
+                Icon_Name_Col =>
                   As_String (String'("gps-emblem-directory-symbolic")),
-                Num_Col         => As_Int    (-1),
-                Desc_Col        => As_String (String'(""))));
+                Num_Col       => As_Int (-1),
+                Desc_Col      => As_String (String'(""))));
 
             return Child;
          end Find_Child;
@@ -548,8 +535,7 @@ package body Project_Templates.GUI is
       -- Add_Template --
       ------------------
 
-      procedure Add_Template
-        (Template : Template_Script_Object) is
+      procedure Add_Template (Template : Template_Script_Object) is
 
          Cat            : Gtk_Tree_Iter;
          Iter           : Gtk_Tree_Iter;
@@ -572,9 +558,9 @@ package body Project_Templates.GUI is
 
          if Template.Project.Python_Script /= No_File then
             declare
-               Object : Script_Object := Template.Object;
-               Nb_Added_Custom_Pages : constant Gint
-                  := Object.Add_Pages (Assistant);
+               Object                : Script_Object := Template.Object;
+               Nb_Added_Custom_Pages : constant Gint :=
+                 Object.Add_Pages (Assistant);
             begin
                Nb_Added_Pages := Nb_Added_Pages + Nb_Added_Custom_Pages;
 
@@ -596,7 +582,8 @@ package body Project_Templates.GUI is
 
             while Has_Element (C) loop
                Object_Callback.Object_Connect
-                 (Element (C).Widget, "changed",
+                 (Element (C).Widget,
+                  "changed",
                   Check_Completeness'Unrestricted_Access,
                   Slot_Object => Page);
                Next (C);
@@ -612,8 +599,9 @@ package body Project_Templates.GUI is
          Child := Model.Children (Cat);
 
          while Child /= Null_Iter
-           and then Get_String (Model, Child, Name_Col)
-           < To_String (Template.Project.Label)
+           and then
+             Get_String (Model, Child, Name_Col)
+             < To_String (Template.Project.Label)
          loop
             Model.Next (Child);
          end loop;
@@ -625,13 +613,13 @@ package body Project_Templates.GUI is
          end if;
 
          Set_All_And_Clear
-           (Model, Iter,
-            (Name_Col         => As_String (To_String
-                                             (Template.Project.Label)),
-             Icon_Name_Col    => As_String (String'("gps-run-symbolic")),
-             Num_Col          => As_Int    (Page_Num),
-             Desc_Col         => As_String
-                                 (To_String (Template.Project.Description))));
+           (Model,
+            Iter,
+            (Name_Col      => As_String (To_String (Template.Project.Label)),
+             Icon_Name_Col => As_String (String'("gps-run-symbolic")),
+             Num_Col       => As_Int (Page_Num),
+             Desc_Col      =>
+               As_String (To_String (Template.Project.Description))));
       end Add_Template;
 
       -----------------------
@@ -684,14 +672,14 @@ package body Project_Templates.GUI is
       ------------------
 
       function On_Key_Press
-        (Widget : access GObject_Record'Class;
-         Event  : Gdk_Event) return Boolean
+        (Widget : access GObject_Record'Class; Event : Gdk_Event)
+         return Boolean
       is
          Current_Page : Gint;
 
       begin
          case Get_Key_Val (Event) is
-            when GDK_Escape =>
+            when GDK_Escape                =>
                Cancelled (Widget);
                return True;
 
@@ -699,7 +687,7 @@ package body Project_Templates.GUI is
                Current_Page := Assistant.Get_Current_Page;
 
                if Assistant.Get_Page_Complete
-                 (Assistant.Get_Nth_Page (Current_Page))
+                    (Assistant.Get_Nth_Page (Current_Page))
                then
                   if Current_Page <= 0 then
                      Assistant.Set_Current_Page
@@ -711,7 +699,7 @@ package body Project_Templates.GUI is
 
                return True;
 
-            when others =>
+            when others                    =>
                null;
          end case;
 
@@ -732,10 +720,10 @@ package body Project_Templates.GUI is
          Page : Template_Page;
       begin
          --  We are pressing "Apply" here: install the template
-         Page := Template_Page
-            (Assistant.Get_Nth_Page (Assistant.Get_Current_Page));
+         Page :=
+           Template_Page (Assistant.Get_Nth_Page (Assistant.Get_Current_Page));
 
-         Dir  := Create (+Page.Location_Ent.Get_Text);
+         Dir := Create (+Page.Location_Ent.Get_Text);
 
          Instantiate_Template
            (Template    => Page.Template.Project,
@@ -756,8 +744,8 @@ package body Project_Templates.GUI is
       end On_Apply_Assistant;
 
    begin
-      Chosen := (Project => Null_Project_Template,
-                 Object  => Null_Script_Object);
+      Chosen :=
+        (Project => Null_Project_Template, Object => Null_Script_Object);
       Installed := False;
 
       Gtk_New (Assistant);
@@ -839,7 +827,9 @@ package body Project_Templates.GUI is
         (Assistant, "cancel", Cancelled'Unrestricted_Access);
 
       Object_Return_Callback.Connect
-        (Assistant, "key_press_event", Object_Return_Callback.To_Marshaller
+        (Assistant,
+         "key_press_event",
+         Object_Return_Callback.To_Marshaller
            (On_Key_Press'Unrestricted_Access));
 
       Object_Callback.Connect
@@ -868,7 +858,7 @@ package body Project_Templates.GUI is
          end loop;
 
          if Iter /= Null_Iter then
-               Get_Selection (Tree).Select_Iter (Iter);
+            Get_Selection (Tree).Select_Iter (Iter);
          end if;
       end if;
 

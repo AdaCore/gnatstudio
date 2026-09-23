@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;                 use GPS.Kernel;
-with DAP.Clients;                use DAP.Clients;
-with Interactive_Consoles;       use Interactive_Consoles;
+with GPS.Kernel;           use GPS.Kernel;
+with DAP.Clients;          use DAP.Clients;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package DAP.Views.Consoles is
 

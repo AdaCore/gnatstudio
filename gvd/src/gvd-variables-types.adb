@@ -25,26 +25,30 @@ package body GVD.Variables.Types is
    --  initialized for this.
 
    function GVD_Type_Holder_Boxed_Copy
-     (Boxed : System.Address)
-      return System.Address;
+     (Boxed : System.Address) return System.Address;
    pragma Convention (C, GVD_Type_Holder_Boxed_Copy);
    procedure GVD_Type_Holder_Boxed_Free (Boxed : System.Address);
    pragma Convention (C, GVD_Type_Holder_Boxed_Free);
-   function To_GVD_Type_Holder_Data_Access is new Ada.Unchecked_Conversion
-     (System.Address, GVD_Type_Holder_Data_Access);
+   function To_GVD_Type_Holder_Data_Access is new
+     Ada.Unchecked_Conversion (System.Address, GVD_Type_Holder_Data_Access);
    --  Subprograms required for the support of GValue
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (GVD_Type_Holder_Data, GVD_Type_Holder_Data_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (GVD_Type_Holder_Data,
+        GVD_Type_Holder_Data_Access);
 
-   procedure Internal_Free is new Ada.Unchecked_Deallocation
-     (GVD_Generic_Type'Class, GVD_Generic_Type_Access);
+   procedure Internal_Free is new
+     Ada.Unchecked_Deallocation
+       (GVD_Generic_Type'Class,
+        GVD_Generic_Type_Access);
 
    ------------
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (Self : in out GVD_Type_Holder) is
+   overriding
+   procedure Adjust (Self : in out GVD_Type_Holder) is
    begin
       if Self.Data /= null then
          Self.Data.Count := Self.Data.Count + 1;
@@ -56,12 +60,11 @@ package body GVD.Variables.Types is
    ------------------------
 
    function As_GVD_Type_Holder
-     (Self : GVD_Type_Holder)
-      return Glib.Values.GValue is
+     (Self : GVD_Type_Holder) return Glib.Values.GValue is
    begin
       return Result : Glib.Values.GValue do
          Glib.Values.Init (Result, Get_GVD_Type_Holder_GType);
-         Set_Value        (Result, Self);
+         Set_Value (Result, Self);
       end return;
    end As_GVD_Type_Holder;
 
@@ -71,15 +74,13 @@ package body GVD.Variables.Types is
 
    function Clone (Self : GVD_Type_Holder) return GVD_Type_Holder is
    begin
-      if Self.Data /= null
-        and then Self.Data.Instance /= null
-      then
+      if Self.Data /= null and then Self.Data.Instance /= null then
          declare
             Data : constant GVD_Type_Holder_Data_Access :=
               new GVD_Type_Holder_Data'
                 (Count    => 1,
-                 Instance => new GVD_Generic_Type'Class'
-                   (Self.Data.Instance.all));
+                 Instance =>
+                   new GVD_Generic_Type'Class'(Self.Data.Instance.all));
          begin
             Data.Instance.Clone (Self.Data.Instance);
             return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
@@ -115,7 +116,8 @@ package body GVD.Variables.Types is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out GVD_Type_Holder) is
+   overriding
+   procedure Finalize (Self : in out GVD_Type_Holder) is
    begin
       if Self.Data /= null then
          if Self.Data.Count = 1 then
@@ -127,7 +129,7 @@ package body GVD.Variables.Types is
 
          else
             Self.Data.Count := Self.Data.Count - 1;
-            Self.Data       := null;
+            Self.Data := null;
          end if;
       end if;
    end Finalize;
@@ -149,10 +151,11 @@ package body GVD.Variables.Types is
       use Glib;
    begin
       if GVD_Type_Holder_GType = Glib.GType_None then
-         GVD_Type_Holder_GType := Glib.Boxed_Type_Register_Static
-           ("GVD_Variable_Type",
-            GVD_Type_Holder_Boxed_Copy'Access,
-            GVD_Type_Holder_Boxed_Free'Access);
+         GVD_Type_Holder_GType :=
+           Glib.Boxed_Type_Register_Static
+             ("GVD_Variable_Type",
+              GVD_Type_Holder_Boxed_Copy'Access,
+              GVD_Type_Holder_Boxed_Free'Access);
       end if;
 
       return GVD_Type_Holder_GType;
@@ -162,8 +165,7 @@ package body GVD.Variables.Types is
    -- Get_Type --
    --------------
 
-   function Get_Type
-     (Self : GVD_Type_Holder) return GVD_Generic_Type_Access is
+   function Get_Type (Self : GVD_Type_Holder) return GVD_Generic_Type_Access is
    begin
       if Self.Data /= null then
          return Self.Data.Instance;
@@ -177,8 +179,7 @@ package body GVD.Variables.Types is
    -------------------
 
    function Get_Type_Name
-     (Self    : not null access GVD_Generic_Type)
-      return String is
+     (Self : not null access GVD_Generic_Type) return String is
    begin
       return To_String (Self.Type_Name);
    end Get_Type_Name;
@@ -187,10 +188,7 @@ package body GVD.Variables.Types is
    -- Get_Value --
    ---------------
 
-   function Get_Value
-     (Value : Glib.Values.GValue)
-      return GVD_Type_Holder
-   is
+   function Get_Value (Value : Glib.Values.GValue) return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         To_GVD_Type_Holder_Data_Access (Glib.Values.Get_Boxed (Value));
    begin
@@ -257,8 +255,7 @@ package body GVD.Variables.Types is
    --------
 
    function Id
-     (Self : GVD_Type_Holder)
-      return System.Storage_Elements.Integer_Address is
+     (Self : GVD_Type_Holder) return System.Storage_Elements.Integer_Address is
    begin
       if Self.Data = null then
          return System.Storage_Elements.To_Integer (System.Null_Address);
@@ -271,8 +268,7 @@ package body GVD.Variables.Types is
    -- Is_Changed --
    ----------------
 
-   function Is_Changed
-     (Self : not null access GVD_Generic_Type) return Boolean
+   function Is_Changed (Self : not null access GVD_Generic_Type) return Boolean
    is
       Iter : Generic_Iterator'Class := GVD_Generic_Type'Class (Self.all).Start;
    begin
@@ -291,8 +287,8 @@ package body GVD.Variables.Types is
    -- Is_Valid --
    --------------
 
-   function Is_Valid
-     (Self : not null access GVD_Generic_Type) return Boolean is
+   function Is_Valid (Self : not null access GVD_Generic_Type) return Boolean
+   is
    begin
       return Self.Valid;
    end Is_Valid;
@@ -302,8 +298,7 @@ package body GVD.Variables.Types is
    ---------------------
 
    procedure Reset_Recursive (Self : not null access GVD_Generic_Type) is
-      Iter : Generic_Iterator'Class :=
-        GVD_Generic_Type'Class (Self.all).Start;
+      Iter : Generic_Iterator'Class := GVD_Generic_Type'Class (Self.all).Start;
    begin
       while not Iter.At_End loop
          if GVD_Type_Holder (Iter.Data) /= Empty_GVD_Type_Holder then
@@ -318,8 +313,7 @@ package body GVD.Variables.Types is
    -------------------
 
    procedure Set_Type_Name
-     (Self : not null access GVD_Generic_Type;
-      Name : String) is
+     (Self : not null access GVD_Generic_Type; Name : String) is
    begin
       Self.Type_Name := To_Unbounded_String (Name);
    end Set_Type_Name;
@@ -329,7 +323,7 @@ package body GVD.Variables.Types is
    ---------------
 
    procedure Set_Valid
-     (Self  : not null access GVD_Generic_Type; Valid : Boolean := True) is
+     (Self : not null access GVD_Generic_Type; Valid : Boolean := True) is
    begin
       Self.Valid := Valid;
    end Set_Valid;
@@ -339,8 +333,7 @@ package body GVD.Variables.Types is
    ---------------
 
    procedure Set_Value
-     (Value : in out Glib.Values.GValue;
-      Holder : GVD_Type_Holder) is
+     (Value : in out Glib.Values.GValue; Holder : GVD_Type_Holder) is
    begin
       if Holder.Data = null then
          Glib.Values.Set_Boxed (Value, System.Null_Address);

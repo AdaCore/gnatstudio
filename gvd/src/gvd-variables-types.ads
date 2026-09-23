@@ -18,11 +18,11 @@
 --  Generic items used to display debugger variables in the views.
 
 with Ada.Finalization;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System.Storage_Elements;
 
 with Glib.Values;
-with Language;                    use Language;
+with Language; use Language;
 
 package GVD.Variables.Types is
 
@@ -57,8 +57,7 @@ package GVD.Variables.Types is
    type GVD_Type_Holder is new Ada.Finalization.Controlled with private;
 
    function Id
-     (Self : GVD_Type_Holder)
-      return System.Storage_Elements.Integer_Address;
+     (Self : GVD_Type_Holder) return System.Storage_Elements.Integer_Address;
    --  Returns unique ID of the holdes's data
 
    function Get_Type (Self : GVD_Type_Holder) return GVD_Generic_Type_Access;
@@ -74,16 +73,12 @@ package GVD.Variables.Types is
    function Get_GVD_Type_Holder_GType return Glib.GType;
 
    function As_GVD_Type_Holder
-     (Self : GVD_Type_Holder)
-      return Glib.Values.GValue;
+     (Self : GVD_Type_Holder) return Glib.Values.GValue;
 
    procedure Set_Value
-     (Value  : in out Glib.Values.GValue;
-      Holder : GVD_Type_Holder);
+     (Value : in out Glib.Values.GValue; Holder : GVD_Type_Holder);
 
-   function Get_Value
-     (Value : Glib.Values.GValue)
-      return GVD_Type_Holder;
+   function Get_Value (Value : Glib.Values.GValue) return GVD_Type_Holder;
 
    --------------------------------
    -- Manipulating the structure --
@@ -111,8 +106,7 @@ package GVD.Variables.Types is
    --  Start iterator has changed
 
    procedure Set_Valid
-     (Self  : not null access GVD_Generic_Type;
-      Valid : Boolean := True);
+     (Self : not null access GVD_Generic_Type; Valid : Boolean := True);
    function Is_Valid (Self : not null access GVD_Generic_Type) return Boolean;
    --  Indicate whether the value given in Item is valid (ie there was no
    --  error when getting the value from the debugger, ...)
@@ -121,7 +115,7 @@ package GVD.Variables.Types is
      (Parent       : not null access GVD_Generic_Type;
       Current      : GVD_Type_Holder'Class;
       Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class
-      is abstract;
+   is abstract;
    --  Substitute a field/value/element in Parent.
    --  The field that is currently equal to Current is replaced with
    --  Replace_With. Current is then Freed completly.
@@ -135,23 +129,21 @@ package GVD.Variables.Types is
    --  last update. All the children of Item are reset as well.
 
    procedure Set_Type_Name
-     (Self : not null access GVD_Generic_Type;
-      Name : String);
+     (Self : not null access GVD_Generic_Type; Name : String);
    function Get_Type_Name
-     (Self : not null access GVD_Generic_Type)
-      return String;
+     (Self : not null access GVD_Generic_Type) return String;
    --  Return the type of Item.
    --  If the type has not been evaluated yet (lazy evaluation), this is done
    --  at this point.
 
    function Get_Type_Descr
-     (Self : not null access GVD_Generic_Type)
-      return String is abstract;
+     (Self : not null access GVD_Generic_Type) return String
+   is abstract;
    --  A debug function to display the type of an item.
 
    function Get_Simple_Value
-     (Self : not null access GVD_Generic_Type)
-      return String is ("");
+     (Self : not null access GVD_Generic_Type) return String
+   is ("");
    --  Return the value for Self, when a simple type.
    --  For instance, it would return a string for a numeric, string or access
    --  value, but for a record and class it would return the empty string.
@@ -160,7 +152,8 @@ package GVD.Variables.Types is
 
    function Structurally_Equivalent
      (Self : not null access GVD_Generic_Type; Item : GVD_Type_Holder'Class)
-     return Boolean is abstract;
+      return Boolean
+   is abstract;
    --  Return True if Item1 and Item2 are structurally equivalent.
    --  Any access type is structurally equivalent to any other access type,
    --  whereas two records are structurally equivalent only if their fields are
@@ -178,12 +171,13 @@ package GVD.Variables.Types is
    -- Iterators --
    ---------------
 
-   type Generic_Iterator is
-     abstract new Ada.Finalization.Controlled with null record;
+   type Generic_Iterator is abstract new Ada.Finalization.Controlled
+   with null record;
    --  Iterator used to traverse all the children of an item. For a record
    --  type, this would point to each of the fields.
 
-   function At_End (Iter : Generic_Iterator) return Boolean is (True);
+   function At_End (Iter : Generic_Iterator) return Boolean
+   is (True);
    --  Return True if the iterator points after the last child of the item, ie
    --  if there is no more child
 
@@ -193,13 +187,14 @@ package GVD.Variables.Types is
    function Field_Name
      (Self : Generic_Iterator;
       Lang : not null access Language_Root'Class;
-      Base : String := "") return String is abstract;
+      Base : String := "") return String
+   is abstract;
    --  Return the name of the current field.
    --  Base is the name of the parent item, or the empty string to display
    --  short names only.
 
    function Data (Iter : Generic_Iterator) return GVD_Type_Holder'Class
-      is (Empty_GVD_Type_Holder);
+   is (Empty_GVD_Type_Holder);
    --  Return the value pointed to by the iterator
 
    ---------------
@@ -222,11 +217,11 @@ package GVD.Variables.Types is
 private
 
    type GVD_Generic_Type is abstract tagged record
-      Visible   : Boolean := True;
+      Visible : Boolean := True;
       --  Whether the item's contents is shown or hidden. Note that some
       --  types (Simple_Type'Class) can not be hidden.
 
-      Valid     : Boolean := False;
+      Valid : Boolean := False;
       --  Whether the value stored is valid, ie there was no error from the
       --  debugger when we got it.
 
@@ -262,8 +257,10 @@ private
       Data : GVD_Type_Holder_Data_Access := null;
    end record;
 
-   overriding procedure Adjust   (Self : in out GVD_Type_Holder);
-   overriding procedure Finalize (Self : in out GVD_Type_Holder);
+   overriding
+   procedure Adjust (Self : in out GVD_Type_Holder);
+   overriding
+   procedure Finalize (Self : in out GVD_Type_Holder);
 
    Empty_GVD_Type_Holder : constant GVD_Type_Holder :=
      (Ada.Finalization.Controlled with null);
@@ -273,10 +270,12 @@ private
    --------------------
 
    type Empty_Iterator is new Generic_Iterator with null record;
-   overriding function Field_Name
+   overriding
+   function Field_Name
      (Self       : Empty_Iterator;
       Dummy_Lang : not null access Language_Root'Class;
-      Dummy_Base : String := "") return String is ("");
+      Dummy_Base : String := "") return String
+   is ("");
 
    function Create_Empty_Iterator return Generic_Iterator'Class;
    --  Return an iterator that will return no element

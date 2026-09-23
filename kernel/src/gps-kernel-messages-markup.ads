@@ -26,14 +26,14 @@ package GPS.Kernel.Messages.Markup is
    type Markup_Message_Access is access all Markup_Message'Class;
 
    function Create_Markup_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Markup_Message_Access;
    --  Creates new instance of Markup_Message.
@@ -47,11 +47,13 @@ private
       Text : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Markup_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Markup_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 

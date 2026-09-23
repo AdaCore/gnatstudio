@@ -25,7 +25,7 @@ with GNATCOLL.VFS;
 
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
 package Code_Coverage.GNATcov is
 
@@ -40,29 +40,29 @@ package Code_Coverage.GNATcov is
       Exempted_Not_Violated,
       Covered_No_Branch);
 
-   subtype GNATcov_Partially_Covered is GNATcov_Line_Coverage_Status
-     range Partially_Covered .. Branch_Fallthrough;
+   subtype GNATcov_Partially_Covered is
+     GNATcov_Line_Coverage_Status
+       range Partially_Covered .. Branch_Fallthrough;
 
-   subtype GNATcov_Exempted_Line is GNATcov_Line_Coverage_Status
-     range Exempted_Violated .. Exempted_Not_Violated;
+   subtype GNATcov_Exempted_Line is
+     GNATcov_Line_Coverage_Status
+       range Exempted_Violated .. Exempted_Not_Violated;
 
-   subtype GNATcov_Fully_Covered is GNATcov_Line_Coverage_Status
-     range Covered_No_Branch .. Covered_No_Branch;
+   subtype GNATcov_Fully_Covered is
+     GNATcov_Line_Coverage_Status range Covered_No_Branch .. Covered_No_Branch;
 
    type GNATcov_Message_Style_Categories is
      array (GNATcov_Line_Coverage_Status) of Message_Importance_Type;
 
    GNATcov_Msg_Importances : constant GNATcov_Message_Style_Categories :=
-                                (Not_Covered                     =>
-                                    High,
-                                 GNATcov_Partially_Covered'Range =>
-                                    Medium,
-                                 others                          =>
-                                    Low);
+     (Not_Covered                     => High,
+      GNATcov_Partially_Covered'Range => Medium,
+      others                          => Low);
 
-   package Secondary_Message_Vectors is new Ada.Containers.Indefinite_Vectors
-     (Index_Type   => Positive,
-      Element_Type => String);
+   package Secondary_Message_Vectors is new
+     Ada.Containers.Indefinite_Vectors
+       (Index_Type   => Positive,
+        Element_Type => String);
 
    type GNATcov_Item_Coverage is record
       Column             : Basic_Types.Visible_Column_Type;
@@ -73,80 +73,84 @@ package Code_Coverage.GNATcov is
    --  One line can contain multiple coverage items, and each coverage item can
    --  have independant coverage issues.
 
-   package Item_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Natural,
-      Element_Type => GNATcov_Item_Coverage);
+   package Item_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Natural,
+        Element_Type => GNATcov_Item_Coverage);
 
    type GNATcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Positive;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line : Positive;
       --  Coordinates of the corresponding line
 
       Status : GNATcov_Line_Coverage_Status := Undetermined;
       --  Simple coverage status
 
-      Items  : Item_Vectors.Vector;
+      Items : Item_Vectors.Vector;
       --  Detailed description about what/why not covered for each not fully
       --  covered item.
    end record;
 
-   overriding function Is_Exempted
-     (Self : GNATcov_Line_Coverage) return Boolean
-   is
-     (Self.Status in GNATcov_Exempted_Line);
+   overriding
+   function Is_Exempted (Self : GNATcov_Line_Coverage) return Boolean
+   is (Self.Status in GNATcov_Exempted_Line);
 
    type GNATcov_Line_Coverage_Access is access all GNATcov_Line_Coverage'Class;
 
-   overriding function Is_Valid (Self : GNATcov_Line_Coverage) return Boolean;
-   overriding function Print_Status
-     (Self : GNATcov_Line_Coverage) return String;
+   overriding
+   function Is_Valid (Self : GNATcov_Line_Coverage) return Boolean;
+   overriding
+   function Print_Status (Self : GNATcov_Line_Coverage) return String;
 
-   overriding function Line_Coverage_Info
+   overriding
+   function Line_Coverage_Info
      (Coverage : access GNATcov_Line_Coverage;
       Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record;
 
-   overriding procedure Add_Location_If_Uncovered
-     (Coverage    : GNATcov_Line_Coverage;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Line_Number : Positive;
-      Line_Text   : String_Access;
-      Added       : in out Boolean;
+   overriding
+   procedure Add_Location_If_Uncovered
+     (Coverage                 : GNATcov_Line_Coverage;
+      Kernel                   : GPS.Kernel.Kernel_Handle;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line_Number              : Positive;
+      Line_Text                : String_Access;
+      Added                    : in out Boolean;
       Allow_Auto_Jump_To_First : Boolean);
    --  Adds location of the uncovered line to the location window. Set Added to
    --  True if line has been added; otherwise preserve Added value.
 
    procedure Add_File_Info
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access);
+     (File_Node : Code_Analysis.File_Access; File_Contents : String_Access);
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
 
    function "=" (Left, Right : GPS.Editors.Editor_Mark'Class) return Boolean;
    --  Dummy equality operator for marks. Always return False.
 
-   package Mark_Vectors is new Ada.Containers.Indefinite_Vectors
-     (Index_Type   => Positive,
-      Element_Type => GPS.Editors.Editor_Mark'Class,
-      "="          => "=");
+   package Mark_Vectors is new
+     Ada.Containers.Indefinite_Vectors
+       (Index_Type   => Positive,
+        Element_Type => GPS.Editors.Editor_Mark'Class,
+        "="          => "=");
 
    type Detail_Messages_Command is new Commands.Root_Command with record
-      Line   : GNATcov_Line_Coverage_Access;
+      Line : GNATcov_Line_Coverage_Access;
       --  Corresponding coverage line
 
       Kernel : GPS.Kernel.Kernel_Handle;
       --  Kernel this command applies to
 
-      Added  : Boolean;
+      Added : Boolean;
       --  Whether the special lines have been added
 
-      Marks  : Mark_Vectors.Vector;
+      Marks : Mark_Vectors.Vector;
       --  When Added is True, contain markers to remove detailed messages
    end record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Detail_Messages_Command)
       return Commands.Command_Return_Type;
 
@@ -154,7 +158,7 @@ package Code_Coverage.GNATcov is
      (Self : in out Detail_Messages_Command);
    --  Remove all detailed messages associated to this command
 
-   overriding procedure Primitive_Free
-     (Self : in out Detail_Messages_Command);
+   overriding
+   procedure Primitive_Free (Self : in out Detail_Messages_Command);
 
 end Code_Coverage.GNATcov;

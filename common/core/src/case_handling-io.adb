@@ -32,11 +32,11 @@
 
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with XML_Utils;        use XML_Utils;
+with XML_Utils; use XML_Utils;
 with XML_Parsers;
 
 package body Case_Handling.IO is
@@ -79,8 +79,8 @@ package body Case_Handling.IO is
                elsif Child.Tag.all = "substring" then
                   Add_Substring_Exception (C, Child.Value.all, Read_Only);
                else
-                  Trace (Me,
-                         "Unknown casing exceptions node " & Child.Tag.all);
+                  Trace
+                    (Me, "Unknown casing exceptions node " & Child.Tag.all);
                end if;
                Child := Child.Next;
             end loop;
@@ -90,7 +90,8 @@ package body Case_Handling.IO is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Load_Exceptions;
 
    ---------------------
@@ -98,9 +99,7 @@ package body Case_Handling.IO is
    ---------------------
 
    procedure Save_Exceptions
-     (C        : Casing_Exceptions;
-      Filename : Virtual_File;
-      Success  : out Boolean)
+     (C : Casing_Exceptions; Filename : Virtual_File; Success : out Boolean)
    is
       File, Ada_Child : Node_Ptr;
       Child           : Node_Ptr;
@@ -113,10 +112,10 @@ package body Case_Handling.IO is
          return;
       end if;
 
-      File     := new Node;
+      File := new Node;
       File.Tag := new String'("custom_section");
 
-      Ada_Child     := new Node;
+      Ada_Child := new Node;
       Ada_Child.Tag := new String'("case_exceptions");
       Add_Child (File, Ada_Child);
 
@@ -131,8 +130,8 @@ package body Case_Handling.IO is
                N : constant W_Node := Element (Iter);
             begin
                if not N.Read_Only then
-                  Child       := new Node;
-                  Child.Tag   := new String'("word");
+                  Child := new Node;
+                  Child.Tag := new String'("word");
                   Child.Value := new String'(Encode (N.Word));
                   Add_Child (Ada_Child, Child);
                end if;
@@ -153,8 +152,8 @@ package body Case_Handling.IO is
                N : constant W_Node := Element (Iter);
             begin
                if not N.Read_Only then
-                  Child       := new Node;
-                  Child.Tag   := new String'("substring");
+                  Child := new Node;
+                  Child.Tag := new String'("substring");
                   Child.Value := new String'(Encode (N.Word));
                   Add_Child (Ada_Child, Child);
                end if;

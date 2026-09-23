@@ -32,8 +32,7 @@ package body LAL.Core_Module is
    Module : LAL_Module_Id;
 
    procedure Get_Analysis_Unit_Shell
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Execute 'get_analysis_unit' script command
 
    -----------------------------
@@ -41,12 +40,12 @@ package body LAL.Core_Module is
    -----------------------------
 
    procedure Get_Analysis_Unit_Shell
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
 
-      Lock   : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
 
       Kernel : constant GPS.Core_Kernels.Core_Kernel :=
         GPS.Scripts.Get_Kernel (Data);
@@ -69,11 +68,12 @@ package body LAL.Core_Module is
       Value  : GNATCOLL.Python.PyObject;
       Args   : Callback_Data'Class := Python.Create (1);
    begin
-      Unit := Libadalang.Analysis.Get_From_Buffer
-        (Context     => Module.Context,
-         Filename    => Buffer.File.Display_Full_Name,
-         Buffer      => Buffer.Get_Chars_U,
-         Charset     => "UTF-8");
+      Unit :=
+        Libadalang.Analysis.Get_From_Buffer
+          (Context  => Module.Context,
+           Filename => Buffer.File.Display_Full_Name,
+           Buffer   => Buffer.Get_Chars_U,
+           Charset  => "UTF-8");
 
       Unit_C := Libadalang.C.C_Unit (Unit);
       Int := System.Storage_Elements.To_Integer (Unit_C);
@@ -98,8 +98,8 @@ package body LAL.Core_Module is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
    begin
-      Module         := new LAL_Module_Id_Record;
-      Module.Kernel  := GPS.Core_Kernels.Core_Kernel (Kernel);
+      Module := new LAL_Module_Id_Record;
+      Module.Kernel := GPS.Core_Kernels.Core_Kernel (Kernel);
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
 
       Module.Reset_Context (Charset);
@@ -111,9 +111,7 @@ package body LAL.Core_Module is
 
       Kernel.Register_Tree_Provider
         (Language.Ada.Ada_Lang,
-         new Provider'(Nested => (Module.Kernel,
-                                  Module.Context,
-                                  Formater)));
+         new Provider'(Nested => (Module.Kernel, Module.Context, Formater)));
 
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
       Result := Module;
@@ -123,15 +121,17 @@ package body LAL.Core_Module is
    -- Reset_Context --
    -------------------
 
-   not overriding procedure Reset_Context
-     (Self    : in out LAL_Module_Id_Record;
-      Charset : String) is
+   not overriding
+   procedure Reset_Context
+     (Self : in out LAL_Module_Id_Record; Charset : String) is
    begin
-      Self.Context := Libadalang.Analysis.Create_Context
-        (Unit_Provider => Libadalang.Analysis.Create_Unit_Provider_Reference
-          (Self.Unit_Provider),
-         With_Trivia   => True,
-         Charset       => Charset);
+      Self.Context :=
+        Libadalang.Analysis.Create_Context
+          (Unit_Provider =>
+             Libadalang.Analysis.Create_Unit_Provider_Reference
+               (Self.Unit_Provider),
+           With_Trivia   => True,
+           Charset       => Charset);
    end Reset_Context;
 
    ----------------------------------

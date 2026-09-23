@@ -17,11 +17,11 @@
 
 with Gdk.Rectangle;
 
-with Gtk.Adjustment;                  use Gtk.Adjustment;
-with Gtk.Enums;                       use Gtk.Enums;
-with Gtk.Scrolled_Window;             use Gtk.Scrolled_Window;
-with Gtk.Text_Iter;                   use Gtk.Text_Iter;
-with Gtkada.MDI;                      use Gtkada.MDI;
+with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Gtkada.MDI;          use Gtkada.MDI;
 
 with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
@@ -52,9 +52,7 @@ package body Src_Editor_View.Commands is
       Horiz_Offset : Gint := -1);
    --  Move the iterator according to Kind. Kind should be different from page
 
-   procedure Skip_Whitespace
-     (Iter    : in out Gtk_Text_Iter;
-      Forward : Boolean);
+   procedure Skip_Whitespace (Iter : in out Gtk_Text_Iter; Forward : Boolean);
    --  Skip whitespaces (space and tabs). Stops at the first non-whitespace or
    --  newline character. Does nothing if the iterator is already next to the
    --  first non-whitespace.
@@ -63,9 +61,7 @@ package body Src_Editor_View.Commands is
    -- Skip_Whitespace --
    ---------------------
 
-   procedure Skip_Whitespace
-     (Iter    : in out Gtk_Text_Iter;
-      Forward : Boolean)
+   procedure Skip_Whitespace (Iter : in out Gtk_Text_Iter; Forward : Boolean)
    is
       Success : Boolean;
       G       : Gunichar;
@@ -73,8 +69,8 @@ package body Src_Editor_View.Commands is
       if Forward then
          loop
             G := Get_Char (Iter);
-            exit when G /= Character'Pos (' ')
-              and then G /= Character'Pos (ASCII.HT);
+            exit when
+              G /= Character'Pos (' ') and then G /= Character'Pos (ASCII.HT);
 
             Forward_Char (Iter, Success);
             exit when not Success;
@@ -86,8 +82,8 @@ package body Src_Editor_View.Commands is
             exit when not Success;
 
             G := Get_Char (Iter);
-            exit when G /= Character'Pos (' ')
-              and then G /= Character'Pos (ASCII.HT);
+            exit when
+              G /= Character'Pos (' ') and then G /= Character'Pos (ASCII.HT);
          end loop;
 
          if Success then
@@ -110,7 +106,7 @@ package body Src_Editor_View.Commands is
       Offset           : Gint;
    begin
       case Kind is
-         when Word =>
+         when Word      =>
             if Step > 0 then
                Forward_Visible_Word_Ends (Iter, Gint (Step), Ignored);
             else
@@ -119,8 +115,7 @@ package body Src_Editor_View.Commands is
 
          when Paragraph =>
             if Step > 0 then
-               Move_Paragraph_Forward :
-               for J in 1 .. Step loop
+               Move_Paragraph_Forward : for J in 1 .. Step loop
                   loop
                      --  to start of next line
                      Forward_Visible_Line (Iter, Success);
@@ -135,8 +130,7 @@ package body Src_Editor_View.Commands is
                end loop Move_Paragraph_Forward;
 
             else
-               Move_Paragraph_Backward :
-               for J in 1 .. abs Step loop
+               Move_Paragraph_Backward : for J in 1 .. abs Step loop
                   loop
                      Set_Line_Index (Iter, 0);
                      Backward_Char (Iter, Success); --  to end of previous line
@@ -149,20 +143,21 @@ package body Src_Editor_View.Commands is
                end loop Move_Paragraph_Backward;
             end if;
 
-         when Char =>
+         when Char      =>
             if Step > 0 then
                Forward_Visible_Cursor_Positions (Iter, Gint (Step), Ignored);
             else
                Backward_Visible_Cursor_Positions (Iter, -Gint (Step), Ignored);
             end if;
 
-         when Line =>
+         when Line      =>
             Offset := Horiz_Offset;
             if Step > 0 then
                Forward_Visible_Lines (Iter, Gint (Step), Ignored);
                Forward_Visible_Cursor_Positions
-                 (Iter, Gint'Min
-                    (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
+                 (Iter,
+                  Gint'Min (Offset, Get_Chars_In_Line (Iter) - 1),
+                  Ignored);
             else
                if Get_Line (Iter) = 0 then
                   Set_Line_Offset (Iter, 0);
@@ -170,11 +165,12 @@ package body Src_Editor_View.Commands is
                end if;
                Backward_Visible_Lines (Iter, -Gint (Step), Ignored);
                Forward_Cursor_Positions
-                 (Iter, Gint'Min
-                    (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
+                 (Iter,
+                  Gint'Min (Offset, Get_Chars_In_Line (Iter) - 1),
+                  Ignored);
             end if;
 
-         when Page =>
+         when Page      =>
             --  The page case is never handled by move iter
             raise Program_Error with "Should not be here";
       end case;
@@ -184,25 +180,26 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Move_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Move_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
-      Kernel        : constant Kernel_Handle :=
-                       Get_Kernel (Src_Editor_Module_Id.all);
-      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box    : constant Source_Editor_Box :=
-                       Get_Source_Box_From_MDI (Editor);
-      View          : constant Source_View := Source_Box.Get_View;
-      Buffer        : constant Source_Buffer := Get_Buffer (Source_Box);
-      Iter          : Gtk_Text_Iter;
-      Saved_Mark    : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
-      Scrolled      : Gtk_Scrolled_Window;
-      Adj           : Gtk_Adjustment;
-      Moved         : Boolean;
-      C             : constant Src_Editor_Buffer.Cursors.Cursor
-        := Get_Main_Cursor (Buffer);
-      Column        : constant Gint :=
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+      View       : constant Source_View := Source_Box.Get_View;
+      Buffer     : constant Source_Buffer := Get_Buffer (Source_Box);
+      Iter       : Gtk_Text_Iter;
+      Saved_Mark : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Scrolled   : Gtk_Scrolled_Window;
+      Adj        : Gtk_Adjustment;
+      Moved      : Boolean;
+      C          : constant Src_Editor_Buffer.Cursors.Cursor :=
+        Get_Main_Cursor (Buffer);
+      Column     : constant Gint :=
         Get_Column_Memory (Get_Main_Cursor (Buffer));
 
       Extend_Selection : constant Boolean :=
@@ -220,14 +217,15 @@ package body Src_Editor_View.Commands is
 
       if Command.Kind = Page then
          Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
-         Adj      := Get_Vadjustment (Scrolled);
+         Adj := Get_Vadjustment (Scrolled);
          Adj.Set_Value
            (Adj.Get_Value + Gdouble (Command.Step) * Adj.Get_Page_Increment);
 
          if Extend_Selection then
             Moved := Move_Mark_Onscreen (View, Buffer.Get_Insert);
          else
-            Moved := Place_Cursor_Onscreen (View)
+            Moved :=
+              Place_Cursor_Onscreen (View)
               or Move_Mark_Onscreen (View, Saved_Mark);
          end if;
 
@@ -243,8 +241,11 @@ package body Src_Editor_View.Commands is
             begin
                Buffer.Get_Iter_At_Mark (Iter, Cursor_Mark);
                Old_Iter := Iter;
-               Move_Iter (Iter, Command.Kind, Command.Step,
-                          Get_Column_Memory (Cursor));
+               Move_Iter
+                 (Iter,
+                  Command.Kind,
+                  Command.Step,
+                  Get_Column_Memory (Cursor));
                Iter_Line := Buffer_Line_Type (Get_Line (Iter));
 
                if Command.Kind /= Line
@@ -337,9 +338,7 @@ package body Src_Editor_View.Commands is
       end if;
 
       Grab_Toplevel_Focus
-        (MDI     => Get_MDI (Kernel),
-         Widget  => Editor,
-         Present => True);
+        (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
       return Success;
    end Execute;
@@ -348,20 +347,20 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Scroll_Command;
-      Context : Interactive_Command_Context)
+   overriding
+   function Execute
+     (Command : access Scroll_Command; Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Command, Context);
-      Kernel       : constant Kernel_Handle :=
-                       Get_Kernel (Src_Editor_Module_Id.all);
-      Editor       : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box   : constant Source_Editor_Box :=
-                       Get_Source_Box_From_MDI (Editor);
-      View         : constant Source_View := Source_Box.Get_View;
-      Adj          : constant Gtk_Adjustment := View.Get_Hadjustment;
-      Val          : constant Gdouble := Adj.Get_Value;
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+      View       : constant Source_View := Source_Box.Get_View;
+      Adj        : constant Gtk_Adjustment := View.Get_Hadjustment;
+      Val        : constant Gdouble := Adj.Get_Value;
    begin
       Remove_Completion;
       --  First center the mark onscreen
@@ -377,9 +376,7 @@ package body Src_Editor_View.Commands is
       Adj.Set_Value (Val);
 
       Grab_Toplevel_Focus
-        (MDI     => Get_MDI (Kernel),
-         Widget  => Editor,
-         Present => True);
+        (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
       return Success;
    end Execute;
@@ -388,19 +385,20 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Delete_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Delete_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Context);
 
-      Kernel      : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
-      Editor      : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box  : constant Source_Editor_Box :=
-                       Get_Source_Box_From_MDI (Editor);
-      View        : constant Source_View := Source_Box.Get_View;
-      Buffer      : constant Source_Buffer :=
+      Kernel          : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box      : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+      View            : constant Source_View := Source_Box.Get_View;
+      Buffer          : constant Source_Buffer :=
         Source_Buffer (Get_Buffer (View));
       Iter, Start, To : Gtk_Text_Iter;
 
@@ -443,9 +441,7 @@ package body Src_Editor_View.Commands is
 
             else
                Move_Iter
-                 (Iter => Iter,
-                  Kind => Command.Kind,
-                  Step => Command.Count);
+                 (Iter => Iter, Kind => Command.Kind, Step => Command.Count);
             end if;
 
             Delete (Buffer, Iter, Start);
@@ -455,9 +451,7 @@ package body Src_Editor_View.Commands is
       Set_Cursors_Auto_Sync (Buffer);
 
       Grab_Toplevel_Focus
-        (MDI     => Get_MDI (Kernel),
-         Widget  => Editor,
-         Present => True);
+        (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
       return Success;
    end Execute;
@@ -466,7 +460,8 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Formatting_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -474,7 +469,7 @@ package body Src_Editor_View.Commands is
       Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       Editor : constant MDI_Child := Find_Current_Editor (Kernel);
       Box    : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
-      View   : constant Source_View   := Get_View (Box);
+      View   : constant Source_View := Get_View (Box);
       Buffer : constant Source_Buffer := Get_Buffer (Box);
       Result : Boolean;
 
@@ -487,9 +482,7 @@ package body Src_Editor_View.Commands is
 
       if Result then
          Grab_Toplevel_Focus
-           (MDI     => Get_MDI (Kernel),
-            Widget  => Editor,
-            Present => True);
+           (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
          return Success;
       else
@@ -501,19 +494,19 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Control_Command;
-      Context : Interactive_Command_Context)
+   overriding
+   function Execute
+     (Command : access Control_Command; Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      View   : constant Source_View   := Get_View (Box);
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      View   : constant Source_View := Get_View (Box);
    begin
       case Command.Mode is
-         when As_Is =>
+         when As_Is        =>
             View.As_Is_Mode := Enabled;
 
          when Sticky_As_Is =>
@@ -530,7 +523,8 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tab_As_Space_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -539,18 +533,18 @@ package body Src_Editor_View.Commands is
 
       use type Basic_Types.Character_Index;
 
-      Kernel     : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
       Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
       Source_Box : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Editor);
+        Get_Source_Box_From_MDI (Editor);
       View       : constant Source_View := Source_Box.Get_View;
       Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
       Tab_Width  : Natural;
 
-      Line       : Editable_Line_Type;
-      Column     : Character_Index;
-      Num        : Natural;
+      Line   : Editable_Line_Type;
+      Column : Character_Index;
+      Num    : Natural;
    begin
       if View = null then
          return Failure;
@@ -570,14 +564,11 @@ package body Src_Editor_View.Commands is
          Text : constant String (1 .. Num) := (others => ' ');
       begin
          Replace_Slice
-           (Buffer, Text, Line, As_Optional (Column),
-            Before => 0, After => 0);
+           (Buffer, Text, Line, As_Optional (Column), Before => 0, After => 0);
       end;
 
       Grab_Toplevel_Focus
-        (MDI     => Get_MDI (Kernel),
-         Widget  => Editor,
-         Present => True);
+        (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
       return Success;
    end Execute;
@@ -586,17 +577,18 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Delete_Tab_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
-      Kernel     : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
       Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
       Source_Box : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Editor);
+        Get_Source_Box_From_MDI (Editor);
       Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
    begin
       Buffer.Delete_Tab_Backward;
@@ -607,17 +599,18 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_String_Comment_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
-      Kernel          : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
+      Kernel          : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
       Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
       Source_Box      : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Editor);
+        Get_Source_Box_From_MDI (Editor);
       View            : constant Source_View := Source_Box.Get_View;
       Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
       Line            : Editable_Line_Type;
@@ -626,7 +619,7 @@ package body Src_Editor_View.Commands is
       Cursor_Position : Character_Index := 4;
       --  Set cursor after the `& "` pattern on the new line
 
-      Dummy           : Boolean;
+      Dummy : Boolean;
 
    begin
       if View = null then
@@ -644,8 +637,7 @@ package body Src_Editor_View.Commands is
          --------------
 
          function Get_Text return String;
-         function Get_Text return String
-         is
+         function Get_Text return String is
             Result : Boolean;
          begin
             if Buffer.Is_In_Comment (Iter) then
@@ -689,8 +681,7 @@ package body Src_Editor_View.Commands is
 
          --  Insert the string prepared text
          Replace_Slice
-           (Buffer, Text, Line, As_Optional (Column),
-            Before => 0, After => 0);
+           (Buffer, Text, Line, As_Optional (Column), Before => 0, After => 0);
       end;
 
       --  Set cursor after the inserted text
@@ -698,15 +689,11 @@ package body Src_Editor_View.Commands is
         (Line => Line + 1, Column => Cursor_Position, Internal => True);
 
       --  Indent added text
-      Dummy := On_Indent_Action
-        (Buffer,
-         Current_Line_Only => True,
-         Force             => True);
+      Dummy :=
+        On_Indent_Action (Buffer, Current_Line_Only => True, Force => True);
 
       Grab_Toplevel_Focus
-        (MDI     => Get_MDI (Kernel),
-         Widget  => Editor,
-         Present => True);
+        (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
 
       return Success;
    end Execute;
@@ -715,7 +702,8 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Split_String_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -724,17 +712,17 @@ package body Src_Editor_View.Commands is
 
       use type Basic_Types.Character_Index;
 
-      Kernel          : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
-      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box      : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Editor);
-      View            : constant Source_View := Source_Box.Get_View;
-      Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
-      Line            : Editable_Line_Type;
-      Column          : Character_Index;
-      Iter            : Gtk_Text_Iter;
-      Dummy           : Boolean;
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+      View       : constant Source_View := Source_Box.Get_View;
+      Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
+      Line       : Editable_Line_Type;
+      Column     : Character_Index;
+      Iter       : Gtk_Text_Iter;
+      Dummy      : Boolean;
 
    begin
       if View = null then
@@ -747,17 +735,19 @@ package body Src_Editor_View.Commands is
 
       if Buffer.Is_In_String (Iter) then
          Replace_Slice
-           (Buffer, """ &  & """, Line, As_Optional (Column),
-            Before => 0, After => 0);
+           (Buffer,
+            """ &  & """,
+            Line,
+            As_Optional (Column),
+            Before => 0,
+            After  => 0);
 
          --  Set cursor inside the inserted text
          Buffer.Set_Cursor_Position
            (Line => Line, Column => Column + 4, Internal => True);
 
          Grab_Toplevel_Focus
-           (MDI     => Get_MDI (Kernel),
-            Widget  => Editor,
-            Present => True);
+           (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
       else
          Buffer.Insert (Line => Line, Column => Column, Text => " ");
       end if;
@@ -769,7 +759,8 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Paste_Into_String_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -778,20 +769,19 @@ package body Src_Editor_View.Commands is
 
       use type Basic_Types.Character_Index;
 
-      Kernel          : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
-      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box      : constant Source_Editor_Box :=
-                        Get_Source_Box_From_MDI (Editor);
-      View            : constant Source_View := Source_Box.Get_View;
-      Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
-      Line            : Editable_Line_Type;
-      Column          : Character_Index;
-      Iter            : Gtk_Text_Iter;
-      Dummy           : Boolean;
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Editor);
+      View       : constant Source_View := Source_Box.Get_View;
+      Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
+      Line       : Editable_Line_Type;
+      Column     : Character_Index;
+      Iter       : Gtk_Text_Iter;
+      Dummy      : Boolean;
 
-      List            : constant Selection_List :=
-        Get_Clipboard (Kernel).Get_Content;
+      List : constant Selection_List := Get_Clipboard (Kernel).Get_Content;
    begin
       if View = null then
          return Failure;
@@ -801,27 +791,25 @@ package body Src_Editor_View.Commands is
       Buffer.Get_Cursor_Position (Iter);
       Buffer.Get_Iter_Position (Iter, Line, Column);
 
-      if List'Length > 0
-        and then Buffer.Is_In_String (Iter)
-      then
+      if List'Length > 0 and then Buffer.Is_In_String (Iter) then
          declare
             Txt : constant String := """ & " & List (List'First).all & " & """;
          begin
             Replace_Slice
-              (Buffer, Txt, Line, As_Optional (Column),
-               Before => 0, After => 0);
+              (Buffer,
+               Txt,
+               Line,
+               As_Optional (Column),
+               Before => 0,
+               After  => 0);
 
             --  Set cursor after the inserted text
             Buffer.Set_Cursor_Position
-              (Line     => Line,
-               Column   => Column + Txt'Length,
-               Internal => True);
+              (Line => Line, Column => Column + Txt'Length, Internal => True);
          end;
 
          Grab_Toplevel_Focus
-           (MDI     => Get_MDI (Kernel),
-            Widget  => Editor,
-            Present => True);
+           (MDI => Get_MDI (Kernel), Widget => Editor, Present => True);
       end if;
 
       return Success;
@@ -831,15 +819,16 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Lock_Or_Unlock_Commmand;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel
-        (Src_Editor_Module_Id.all);
-      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box    : constant Source_Editor_Box :=
+      Kernel     : constant Kernel_Handle :=
+        Get_Kernel (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (Editor);
    begin
       Source_Box.Set_Is_Locked (not Source_Box.Is_Locked);
@@ -858,7 +847,8 @@ package body Src_Editor_View.Commands is
          Split
            (Get_MDI (Kernel),
             Orientation_Horizontal,
-            Editor, Mode => Before_Reuse);
+            Editor,
+            Mode => Before_Reuse);
       end if;
 
       return Success;

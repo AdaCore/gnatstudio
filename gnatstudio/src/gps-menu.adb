@@ -15,39 +15,41 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 with VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;
 with VSS.String_Vectors;
 
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Tribooleans;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.VFS.VSS_Utils;
 
-with Glib.Object;            use Glib.Object;
-with Glib.Types;             use Glib.Types;
-with Glib;                   use Glib;
+with Glib.Object; use Glib.Object;
+with Glib.Types;  use Glib.Types;
+with Glib;        use Glib;
 
-with Gtk.Editable;           use Gtk.Editable;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Text_View;          use Gtk.Text_View;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Window;             use Gtk.Window;
+with Gtk.Editable;  use Gtk.Editable;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Text_View; use Gtk.Text_View;
+with Gtk.Widget;    use Gtk.Widget;
+with Gtk.Window;    use Gtk.Window;
 
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with GPS.Intl;               use GPS.Intl;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with GPS.Intl; use GPS.Intl;
 
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules, GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules.UI;
+use GPS.Kernel.Modules, GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
@@ -81,7 +83,8 @@ package body GPS.Menu is
    --  ??? Should be registered as standard module
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
@@ -220,7 +223,8 @@ package body GPS.Menu is
       Tooltip_Focus_Widget : constant Gtk_Widget :=
         Get_Tooltip_Clipboard_Widget;
       Widget               : constant Gtk_Widget :=
-        (if Tooltip_Focus_Widget /= null then Tooltip_Focus_Widget
+        (if Tooltip_Focus_Widget /= null
+         then Tooltip_Focus_Widget
          else Get_Current_Focus_Widget (Kernel));
 
       package Implements_Editable is new
@@ -255,10 +259,10 @@ package body GPS.Menu is
                Has_Selection => Has_Selection);
 
             case Self.Kind is
-               when Copy =>
+               when Copy   =>
                   return Has_Selection;
 
-               when Cut =>
+               when Cut    =>
                   return Has_Selection and then Get_Editable (Edit_Obj);
 
                when others =>
@@ -280,10 +284,10 @@ package body GPS.Menu is
             Text_View : constant Gtk_Text_View := Gtk_Text_View (Widget);
          begin
             case Self.Kind is
-               when Copy =>
+               when Copy   =>
                   return Text_View.Get_Buffer.Get_Has_Selection;
 
-               when Cut =>
+               when Cut    =>
                   return
                     Text_View.Get_Buffer.Get_Has_Selection
                     and then Text_View.Get_Editable;
@@ -305,7 +309,7 @@ package body GPS.Menu is
                Has_Selection => Has_Selection);
 
             case Self.Kind is
-               when Copy =>
+               when Copy   =>
                   return Has_Selection;
 
                when others =>
@@ -420,13 +424,13 @@ package body GPS.Menu is
 
       if Widget /= null then
          case Command.Kind is
-            when Cut =>
+            when Cut            =>
                Cut_Clipboard (Clipboard, Widget);
 
-            when Copy =>
+            when Copy           =>
                Copy_Clipboard (Clipboard, Widget);
 
-            when Paste =>
+            when Paste          =>
                Paste_Clipboard (Clipboard);
 
             when Paste_Previous =>
@@ -452,9 +456,9 @@ package body GPS.Menu is
       return Standard.Commands.Success;
    end Execute;
 
-      -------------
-      -- Execute --
-      -------------
+   -------------
+   -- Execute --
+   -------------
 
    overriding
    procedure Execute
@@ -633,7 +637,7 @@ package body GPS.Menu is
          Is_Full := Name_List.Length = Max_Length;
 
          if Menu_Module.Recent_Project_Actions.Contains
-           (Action_Name (Project_Path))
+              (Action_Name (Project_Path))
          then
             --  The action already exist: do nothing
             return Success;
@@ -642,8 +646,7 @@ package body GPS.Menu is
          --  If necessary pop the oldest item to make place
          if Is_Full then
             declare
-               Name : constant String :=
-                 Action_Name (Name_List.Last_Element);
+               Name : constant String := Action_Name (Name_List.Last_Element);
                C    : Action_Lists.Cursor :=
                  Menu_Module.Recent_Project_Actions.Find (Name);
             begin
@@ -726,7 +729,7 @@ package body GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
+      Command          : Interactive_Command_Access;
       Has_Alire_Filter : Action_Filter;
    begin
       Register_Action

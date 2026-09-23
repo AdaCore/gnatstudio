@@ -15,24 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Ada;                    use Language.Ada;
-with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Units;         use Ada_Semantic_Tree.Units;
-with Ada_Semantic_Tree.Cache;         use Ada_Semantic_Tree.Cache;
+with Language.Ada;                   use Language.Ada;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Cache;        use Ada_Semantic_Tree.Cache;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
-with GNATCOLL.Utils;                  use GNATCOLL.Utils;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 
 package body Ada_Semantic_Tree.Generics is
 
-   procedure Append_Context
-     (Info  : Instance_Info;
-      Added : Instance_Info);
+   procedure Append_Context (Info : Instance_Info; Added : Instance_Info);
 
-   procedure Prepend_Context
-     (Info  : Instance_Info;
-      Added : Instance_Info);
+   procedure Prepend_Context (Info : Instance_Info; Added : Instance_Info);
 
    function Make_Generic_Instance (E : Entity_Access) return Instance_Info;
 
@@ -41,7 +37,8 @@ package body Ada_Semantic_Tree.Generics is
       Generic_Context : Persistent_Instance_Info;
    end record;
 
-   overriding procedure Free (This : in out Instanciated_Package);
+   overriding
+   procedure Free (This : in out Instanciated_Package);
 
    ------------------------
    -- Register_Assistant --
@@ -56,13 +53,10 @@ package body Ada_Semantic_Tree.Generics is
    -- "&" --
    ---------
 
-   function "&" (Left, Right : Instance_Info) return Instance_Info
-   is
+   function "&" (Left, Right : Instance_Info) return Instance_Info is
       Result : Instance_Info;
    begin
-      if Left = Null_Instance_Info
-        and then Right = Null_Instance_Info
-      then
+      if Left = Null_Instance_Info and then Right = Null_Instance_Info then
          return Null_Instance_Info;
       end if;
 
@@ -100,8 +94,8 @@ package body Ada_Semantic_Tree.Generics is
    procedure Unref (This : in out Instance_Info) is
       use Generic_Info_List;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Instance_Info_Record, Instance_Info);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Instance_Info_Record, Instance_Info);
 
    begin
       if This /= null then
@@ -127,7 +121,7 @@ package body Ada_Semantic_Tree.Generics is
    ---------------------------
 
    function Make_Generic_Instance (E : Entity_Access) return Instance_Info is
-      View : Entity_View;
+      View            : Entity_View;
       Generic_Package : Entity_Access;
       Result          : Instance_Info := null;
    begin
@@ -139,27 +133,24 @@ package body Ada_Semantic_Tree.Generics is
          declare
             Profile : constant List_Profile :=
               Get_List_Profile
-                (Generic_Package,
-                 Null_Visibility_Context,
-                 Generic_Profile);
+                (Generic_Package, Null_Visibility_Context, Generic_Profile);
             Success : Boolean;
          begin
             Result := new Instance_Info_Record;
 
             Result.Instance_Package := E;
             Result.Generic_Package := Generic_Package;
-            Result.Resolver := new Actual_Parameter_Resolver'
-              (Get_Actual_Parameter_Resolver (Profile));
+            Result.Resolver :=
+              new Actual_Parameter_Resolver'
+                (Get_Actual_Parameter_Resolver (Profile));
 
             if View.all in Declaration_View_Record'Class then
-               if Declaration_View_Record
-                 (View.all).Generic_Context
+               if Declaration_View_Record (View.all).Generic_Context
                  /= Null_Instance_Info
                then
                   Prepend_Context
                     (Result,
-                     Declaration_View_Record
-                       (View.all).Generic_Context);
+                     Declaration_View_Record (View.all).Generic_Context);
                end if;
             end if;
 
@@ -193,8 +184,7 @@ package body Ada_Semantic_Tree.Generics is
    --------------------------------------
 
    function Get_Generic_Instance_Information
-     (Entity : Entity_Access) return Instance_Info
-   is
+     (Entity : Entity_Access) return Instance_Info is
    begin
       if Is_Generic_Instance (Entity) then
          return Make_Generic_Instance (Entity);
@@ -220,10 +210,9 @@ package body Ada_Semantic_Tree.Generics is
    -----------------------
 
    function Is_Generic_Entity (Entity : Entity_Access) return Boolean is
-      It : Construct_Tree_Iterator :=
+      It               : Construct_Tree_Iterator :=
         Get_Parent_Scope
-          (Get_Tree (Get_File (Entity)),
-           To_Construct_Tree_Iterator (Entity));
+          (Get_Tree (Get_File (Entity)), To_Construct_Tree_Iterator (Entity));
       Enclosing_Entity : Entity_Access;
    begin
       --  ??? This may be a bit of a slow computation - should we cache the
@@ -238,15 +227,15 @@ package body Ada_Semantic_Tree.Generics is
            Get_First_Occurence
              (To_Entity_Access (Get_File (Enclosing_Entity), It));
 
-         if Get_Construct (Enclosing_Entity).Attributes
-           (Ada_Generic_Attribute)
+         if Get_Construct (Enclosing_Entity).Attributes (Ada_Generic_Attribute)
          then
             return True;
          end if;
 
-         It := Get_Parent_Scope
-           (Get_Tree (Get_File (Enclosing_Entity)),
-            To_Construct_Tree_Iterator (Enclosing_Entity));
+         It :=
+           Get_Parent_Scope
+             (Get_Tree (Get_File (Enclosing_Entity)),
+              To_Construct_Tree_Iterator (Enclosing_Entity));
       end loop;
 
       return False;
@@ -257,7 +246,7 @@ package body Ada_Semantic_Tree.Generics is
    ----------------------------------
 
    function Get_Actual_For_Generic_Param
-     (Info   : Instance_Info; Formal : Entity_Access) return Entity_Access
+     (Info : Instance_Info; Formal : Entity_Access) return Entity_Access
    is
       use Generic_Info_List;
 
@@ -289,26 +278,26 @@ package body Ada_Semantic_Tree.Generics is
                      if Actual_Expression /= Null_Parsed_Expression then
                         Actual_Resolution :=
                           Find_Declarations
-                            (Context           =>
-                                 (From_File,
-                                  Null_Instance_Info,
+                            (Context         =>
+                               (From_File,
+                                Null_Instance_Info,
+                                Get_File (Info.Instance_Package),
+                                String_Index_Type
+                                  (Get_Construct (Info.Instance_Package)
+                                     .Sloc_Start
+                                     .Index)),
+                             From_Visibility =>
+                               (File                      =>
                                   Get_File (Info.Instance_Package),
+                                Offset                    =>
                                   String_Index_Type
-                                    (Get_Construct
-                                       (Info.Instance_Package).
-                                       Sloc_Start.Index)),
-                             From_Visibility   =>
-                               (File                 =>
-                                  Get_File (Info.Instance_Package),
-                                Offset               =>
-                                  String_Index_Type
-                                    (Get_Construct
-                                         (Info.Instance_Package).
-                                         Sloc_Start.Index),
+                                    (Get_Construct (Info.Instance_Package)
+                                       .Sloc_Start
+                                       .Index),
                                 Filter                    => Everything,
                                 Min_Visibility_Confidence => Use_Visible),
-                             Expression        => Actual_Expression,
-                             Filter            => Filter_Types);
+                             Expression      => Actual_Expression,
+                             Filter          => Filter_Types);
                      end if;
 
                      Actual_It := First (Actual_Resolution);
@@ -346,8 +335,7 @@ package body Ada_Semantic_Tree.Generics is
    -- Get_Generic_Entity --
    ------------------------
 
-   function Get_Generic_Entity (Info : Instance_Info) return Entity_Access
-   is
+   function Get_Generic_Entity (Info : Instance_Info) return Entity_Access is
    begin
       if Info /= null then
          return Info.Generic_Package;
@@ -367,10 +355,10 @@ package body Ada_Semantic_Tree.Generics is
       if Cached /= null then
          Result := new Declaration_View_Record;
          Declaration_View_Record (Result.all).Generic_Context :=
-              To_Active
-                (Instanciated_Package (Cached.all).Generic_Context);
-         Result.Entity := To_Entity_Access
-           (Instanciated_Package (Cached.all).Generic_Package);
+           To_Active (Instanciated_Package (Cached.all).Generic_Context);
+         Result.Entity :=
+           To_Entity_Access
+             (Instanciated_Package (Cached.all).Generic_Package);
 
          Ref (Declaration_View_Record (Result.all).Generic_Context);
 
@@ -378,31 +366,33 @@ package body Ada_Semantic_Tree.Generics is
       end if;
 
       declare
-         Id : constant Cst_String_Access := Get (Get_Identifier
-           (Get_Referenced_Identifiers
-              (To_Construct_Tree_Iterator (Info))),
-            Empty_If_Null => True);
-         Expression : Parsed_Expression :=
-           Parse_Expression_Backward
-             (Id, String_Index_Type (Id'Last));
+         Id                 : constant Cst_String_Access :=
+           Get
+             (Get_Identifier
+                (Get_Referenced_Identifiers
+                   (To_Construct_Tree_Iterator (Info))),
+              Empty_If_Null => True);
+         Expression         : Parsed_Expression :=
+           Parse_Expression_Backward (Id, String_Index_Type (Id'Last));
          Generic_Resolution : Entity_List;
          It                 : Entity_Iterator;
       begin
-         Generic_Resolution := Find_Declarations
-           (Context           =>
-              (From_File,
-               Null_Instance_Info,
-               Get_File (Info),
-               String_Index_Type (Get_Construct (Info).Sloc_Start.Index)),
-            From_Visibility   =>
-              (File                      => Get_File (Info),
-               Offset                    =>
-                 String_Index_Type (Get_Construct (Info).Sloc_Start.Index),
-               Filter                    => Everything,
-               Min_Visibility_Confidence => Use_Visible),
-            Expression        => Expression,
-            Filter            => Create
-              ((1 => Get_Construct (Info).Category)));
+         Generic_Resolution :=
+           Find_Declarations
+             (Context         =>
+                (From_File,
+                 Null_Instance_Info,
+                 Get_File (Info),
+                 String_Index_Type (Get_Construct (Info).Sloc_Start.Index)),
+              From_Visibility =>
+                (File                      => Get_File (Info),
+                 Offset                    =>
+                   String_Index_Type (Get_Construct (Info).Sloc_Start.Index),
+                 Filter                    => Everything,
+                 Min_Visibility_Confidence => Use_Visible),
+              Expression      => Expression,
+              Filter          =>
+                Create ((1 => Get_Construct (Info).Category)));
 
          It := First (Generic_Resolution);
          Excluded_Entities.Append (It.Excluded_List.Entities, Info);
@@ -421,11 +411,13 @@ package body Ada_Semantic_Tree.Generics is
          Free (Expression);
 
          if Result /= null then
-            Cached := new Instanciated_Package'
-              (Cached_Information with
-               Generic_Package => To_Entity_Persistent_Access
-                 (Result.Get_Entity),
-               Generic_Context => Null_Persistent_Instance_Info);
+            Cached :=
+              new Instanciated_Package'
+                (Cached_Information
+                 with
+                   Generic_Package =>
+                     To_Entity_Persistent_Access (Result.Get_Entity),
+                   Generic_Context => Null_Persistent_Instance_Info);
 
             if Result.all in Declaration_View_Record'Class then
                Instanciated_Package (Cached.all).Generic_Context :=
@@ -435,10 +427,12 @@ package body Ada_Semantic_Tree.Generics is
          else
             --  If the result is null, we still cache it, so we don't have
             --  to redo the potentially expensive calculations above.
-            Cached := new Instanciated_Package'
-              (Cached_Information with
-               Generic_Package => Null_Entity_Persistent_Access,
-               Generic_Context => Null_Persistent_Instance_Info);
+            Cached :=
+              new Instanciated_Package'
+                (Cached_Information
+                 with
+                   Generic_Package => Null_Entity_Persistent_Access,
+                   Generic_Context => Null_Persistent_Instance_Info);
          end if;
          Set_Cache (Info, Cached);
 
@@ -450,8 +444,7 @@ package body Ada_Semantic_Tree.Generics is
    -- Append_Context --
    --------------------
 
-   procedure Append_Context (Info  : Instance_Info; Added : Instance_Info)
-   is
+   procedure Append_Context (Info : Instance_Info; Added : Instance_Info) is
    begin
       if Added /= Null_Instance_Info then
          Info.Post_Contexts.Append (Added);
@@ -463,7 +456,7 @@ package body Ada_Semantic_Tree.Generics is
    -- Prepend_Context --
    ---------------------
 
-   procedure Prepend_Context (Info  : Instance_Info; Added : Instance_Info) is
+   procedure Prepend_Context (Info : Instance_Info; Added : Instance_Info) is
    begin
       if Added /= Null_Instance_Info then
          Info.Pre_Contexts.Prepend (Added);
@@ -481,18 +474,19 @@ package body Ada_Semantic_Tree.Generics is
       use Generic_Info_List;
 
       Result : Persistent_Instance_Info;
-      Cur : Generic_Info_List.Cursor;
+      Cur    : Generic_Info_List.Cursor;
    begin
       if Instance = Null_Instance_Info then
          return null;
       end if;
 
-      Result := new Persistent_Instance_Info_Record'
-        (Instance_Package =>
-           To_Entity_Persistent_Access (Instance.Instance_Package),
-         Generic_Package  =>
-           To_Entity_Persistent_Access (Instance.Generic_Package),
-         others => <>);
+      Result :=
+        new Persistent_Instance_Info_Record'
+          (Instance_Package =>
+             To_Entity_Persistent_Access (Instance.Instance_Package),
+           Generic_Package  =>
+             To_Entity_Persistent_Access (Instance.Generic_Package),
+           others           => <>);
 
       Cur := Instance.Pre_Contexts.First;
 
@@ -527,19 +521,19 @@ package body Ada_Semantic_Tree.Generics is
          return Null_Instance_Info;
       end if;
 
-      Result := new Instance_Info_Record'
-        (Instance_Package =>
-           To_Entity_Access (Instance.Instance_Package),
-         Generic_Package  =>
-           To_Entity_Access (Instance.Generic_Package),
-         others => <>);
+      Result :=
+        new Instance_Info_Record'
+          (Instance_Package => To_Entity_Access (Instance.Instance_Package),
+           Generic_Package  => To_Entity_Access (Instance.Generic_Package),
+           others           => <>);
 
-      Result.Resolver := new Actual_Parameter_Resolver'
-        (Get_Actual_Parameter_Resolver
-           (Get_List_Profile
-              (Result.Generic_Package,
-               Null_Visibility_Context,
-               Generic_Profile)));
+      Result.Resolver :=
+        new Actual_Parameter_Resolver'
+          (Get_Actual_Parameter_Resolver
+             (Get_List_Profile
+                (Result.Generic_Package,
+                 Null_Visibility_Context,
+                 Generic_Profile)));
 
       if Result.Instance_Package /= Null_Entity_Access then
          Append_Actuals
@@ -565,9 +559,7 @@ package body Ada_Semantic_Tree.Generics is
    -- Is_Up_To_Date --
    -------------------
 
-   function Is_Up_To_Date
-     (This : Persistent_Instance_Info) return Boolean
-   is
+   function Is_Up_To_Date (This : Persistent_Instance_Info) return Boolean is
       use Persistent_Generic_Info_List;
    begin
       if not Exists (This.Instance_Package)
@@ -598,9 +590,10 @@ package body Ada_Semantic_Tree.Generics is
    procedure Free (This : in out Persistent_Instance_Info) is
       use Persistent_Generic_Info_List;
 
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Persistent_Instance_Info_Record,
-         Persistent_Instance_Info);
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation
+          (Persistent_Instance_Info_Record,
+           Persistent_Instance_Info);
    begin
       if This = null then
          return;
@@ -624,7 +617,8 @@ package body Ada_Semantic_Tree.Generics is
    -- Free --
    ----------
 
-   overriding procedure Free (This : in out Instanciated_Package) is
+   overriding
+   procedure Free (This : in out Instanciated_Package) is
    begin
       Free (This.Generic_Context);
       Unref (This.Generic_Package);

@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Widget;     use Gtk.Widget;
 
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Legacy;
-with GPS.Location_View;         use GPS.Location_View;
+with GPS.Location_View;   use GPS.Location_View;
 
 package body GPS.Kernel.Locations is
 
@@ -34,7 +34,7 @@ package body GPS.Kernel.Locations is
       Same_Weight : Boolean := False)
    is
       View : constant GPS.Location_View.Location_View_Access :=
-               GPS.Location_View.Get_Or_Create_Location_View (Kernel);
+        GPS.Location_View.Get_Or_Create_Location_View (Kernel);
    begin
       if View /= null then
          GPS.Location_View.Next_Item (View, Backwards, Same_Weight);
@@ -56,7 +56,8 @@ package body GPS.Kernel.Locations is
 
    begin
       GPS.Kernel.Messages.Legacy.Get_Message_At
-        (Get_Messages_Container (Kernel), Category, File, Line, 0).Remove;
+        (Get_Messages_Container (Kernel), Category, File, Line, 0)
+        .Remove;
    end Remove_Location_Category;
 
 end GPS.Kernel.Locations;

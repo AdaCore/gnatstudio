@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;         use GNAT.Strings;
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNAT.Strings;    use GNAT.Strings;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Gdk;                  use Gdk;
 with Gdk.Device;           use Gdk.Device;
@@ -74,8 +74,10 @@ package body Tooltips is
    procedure Destroy_Cb (Data : Tooltip_Handler_Access);
    --  Called when the tooltip is being destroyed
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Tooltip_Handler'Class, Tooltip_Handler_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Tooltip_Handler'Class,
+        Tooltip_Handler_Access);
 
    function On_Tooltip_Delay return Boolean;
    --  Called when the mouse has been motionless for a while
@@ -83,68 +85,66 @@ package body Tooltips is
    function On_Disable_Browse_Mode return Boolean;
    --  Called to disable browse mode
 
-   procedure Show_Tooltip (Widget  : not null access Gtk_Widget_Record'Class);
+   procedure Show_Tooltip (Widget : not null access Gtk_Widget_Record'Class);
    --  Hide or show the tooltip
 
-   function Is_In_Area (Widget  : Gtk_Widget; X, Y : Gint) return Boolean;
+   function Is_In_Area (Widget : Gtk_Widget; X, Y : Gint) return Boolean;
    --  Return True if the global tooltip is present, mapped, and the pointer
    --  location given by X,Y is within the tip area or within the tooltip
    --  itself.
 
    function Tooltip_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for all events that will disable the tooltip
    --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
    function Scroll_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for scrolling events
    --  Used to hide tooltips on scrolling.
 
    function Tooltip_Leave_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Called when the pointer goes out of a tooltip.
    --  We should hide the tooltip in that case if the pointer is not in the tip
    --  area.
 
-   package Tooltip_User_Data is new Glib.Object.User_Data
-     (Tooltip_Handler_Access);
+   package Tooltip_User_Data is new
+     Glib.Object.User_Data (Tooltip_Handler_Access);
 
    function Can_Have_Tooltip
-     (Widget : not null access Gtk_Widget_Record'Class)
-      return Boolean
-     is (Widget.Get_Has_Window
-         or else Widget.all in Gtk_Menu_Item_Record'Class);
+     (Widget : not null access Gtk_Widget_Record'Class) return Boolean
+   is (Widget.Get_Has_Window or else Widget.all in Gtk_Menu_Item_Record'Class);
    --  Whether this widget is compatible with our tooltips.
    --  ??? Our tooltips do not work on widgets that do not have their own
    --  Gdk_Window (except for menu items). For static tooltips, users should
    --  fallback on using gtk+ tooltips.
 
    type Tooltip_Object_Record is new Gtk.Window.Gtk_Window_Record with record
-      Timeout_Id               : G_Source_Id := 0;
-      Browse_Mode_Timeout_Id   : G_Source_Id := 0;
+      Timeout_Id             : G_Source_Id := 0;
+      Browse_Mode_Timeout_Id : G_Source_Id := 0;
 
-      Browse_Mode_Enabled      : Boolean := False;
+      Browse_Mode_Enabled : Boolean := False;
 
-      On_Widget                : Gtk_Widget;
+      On_Widget : Gtk_Widget;
 
-      Cursor_X, Cursor_Y       : Glib.Gint;
+      Cursor_X, Cursor_Y : Glib.Gint;
       --  Coordinates of the cursor when the tooltip was created
 
-      Is_Aligned               : Boolean := False;
+      Is_Aligned : Boolean := False;
       --  True if the tooltip is aligned with the tip area.
       --  This value is set when showing the tooltip.
 
-      Area_Is_Set              : Boolean := False;
+      Area_Is_Set : Boolean := False;
 
-      Area                     : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
+      Area : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
       --  While the mouse remains on the same widget and same area, we keep
       --  displaying the same contents.
 
-      Tooltip_Widget           : Gtk_Widget;
+      Tooltip_Widget : Gtk_Widget;
       --  The widget displayed in the global tooltip.
 
       Tooltip_Clipboard_Widget : Gtk_Widget;
@@ -184,7 +184,8 @@ package body Tooltips is
    -------------------------------
 
    procedure On_Tooltip_Widget_Destroy
-     (Widget : access Gtk_Widget_Record'Class) is
+     (Widget : access Gtk_Widget_Record'Class)
+   is
       pragma Unreferenced (Widget);
    begin
       Global_Tooltip.Tooltip_Widget := null;
@@ -195,7 +196,8 @@ package body Tooltips is
    -----------------------------------------
 
    procedure On_Tooltip_Clipboard_Widget_Destroy
-     (Widget : access Gtk_Widget_Record'Class) is
+     (Widget : access Gtk_Widget_Record'Class)
+   is
       pragma Unreferenced (Widget);
    begin
       Global_Tooltip.Tooltip_Clipboard_Widget := null;
@@ -207,7 +209,7 @@ package body Tooltips is
 
    procedure Set_Tooltip_Clipboard_Widget (Widget : not null Gtk_Widget) is
    begin
-      if Global_Tooltip /= null  then
+      if Global_Tooltip /= null then
          Global_Tooltip.Tooltip_Clipboard_Widget := Widget;
          Global_Tooltip.Tooltip_Clipboard_Widget.On_Destroy
            (On_Tooltip_Clipboard_Widget_Destroy'Access);
@@ -235,8 +237,10 @@ package body Tooltips is
       Text       : GNAT.Strings.String_Access;
       Use_Markup : Boolean;
    end record;
-   overriding procedure Destroy (Self : access Static_Tooltip_Handler_Type);
-   overriding function Create_Contents
+   overriding
+   procedure Destroy (Self : access Static_Tooltip_Handler_Type);
+   overriding
+   function Create_Contents
      (Self   : not null access Static_Tooltip_Handler_Type;
       Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
@@ -266,8 +270,13 @@ package body Tooltips is
       if Global_Tooltip /= null then
          Global_Tooltip.Area_Is_Set := True;
          Global_Tooltip.Area := Area;
-         Trace (Me, "Set_Tip_Area"
-                & Area.X'Img & Area.Y'Img & Area.Width'Img & Area.Height'Img);
+         Trace
+           (Me,
+            "Set_Tip_Area"
+            & Area.X'Img
+            & Area.Y'Img
+            & Area.Width'Img
+            & Area.Height'Img);
       end if;
    end Set_Tip_Area;
 
@@ -308,10 +317,11 @@ package body Tooltips is
 
       Tip := Tooltip_User_Data.Get (Global_Tooltip.On_Widget, "gps-tooltip");
 
-      Global_Tooltip.Tooltip_Widget := Tip.Create_Contents
-        (Global_Tooltip.On_Widget,
-         Global_Tooltip.Cursor_X,
-         Global_Tooltip.Cursor_Y);
+      Global_Tooltip.Tooltip_Widget :=
+        Tip.Create_Contents
+          (Global_Tooltip.On_Widget,
+           Global_Tooltip.Cursor_X,
+           Global_Tooltip.Cursor_Y);
 
       if Global_Tooltip.Tooltip_Widget /= null then
 
@@ -387,9 +397,10 @@ package body Tooltips is
                  (Self => Global_Tooltip.On_Widget.Get_Window,
                   X    => On_Widget_X,
                   Y    => On_Widget_Y);
-               Y := (Global_Tooltip.Area.Y
-                     + Global_Tooltip.Area.Height
-                     + On_Widget_Y);
+               Y :=
+                 (Global_Tooltip.Area.Y
+                  + Global_Tooltip.Area.Height
+                  + On_Widget_Y);
                X := Global_Tooltip.Area.X + On_Widget_X;
                Global_Tooltip.Is_Aligned := True;
             else
@@ -397,8 +408,10 @@ package body Tooltips is
                --  These X, Y coordinates are global to all physical monitors
                Gdk.Window.Get_Root_Coords
                  (Global_Tooltip.On_Widget.Get_Window,
-                  Global_Tooltip.Cursor_X, Global_Tooltip.Cursor_Y,
-                  X, Y);
+                  Global_Tooltip.Cursor_X,
+                  Global_Tooltip.Cursor_Y,
+                  X,
+                  Y);
 
                X := X + Default_Tooltip_Pos_Offset;
                Y := Y + Default_Tooltip_Pos_Offset;
@@ -414,7 +427,7 @@ package body Tooltips is
          begin
             Screen.Get_Monitor_Geometry (Monitor, Geom);
 
-            Win_Width  := Geom.Width;
+            Win_Width := Geom.Width;
             Win_Height := Geom.Height;
 
             --  Set X, Y into the physical monitor area, this is needed to
@@ -441,11 +454,9 @@ package body Tooltips is
                Gdk.Window.Get_Events (Global_Tooltip.Get_Window)
                or Leave_Notify_Mask);
             Global_Tooltip.Tooltip_Widget.Get_Preferred_Width
-              (Minimum_Width => Dummy,
-               Natural_Width => W);
+              (Minimum_Width => Dummy, Natural_Width => W);
             Global_Tooltip.Tooltip_Widget.Get_Preferred_Height
-              (Minimum_Height => Dummy,
-               Natural_Height => H);
+              (Minimum_Height => Dummy, Natural_Height => H);
          end;
 
          --  If the contents height is too big, embed a scrolled window and
@@ -467,11 +478,9 @@ package body Tooltips is
                Scrolled.Realize;
                Scrolled.Show_All;
                Scrolled.Get_Preferred_Width
-                 (Minimum_Width => Dummy,
-                  Natural_Width => W);
+                 (Minimum_Width => Dummy, Natural_Width => W);
                Scrolled.Get_Preferred_Height
-                 (Minimum_Height => Dummy,
-                  Natural_Height => H);
+                 (Minimum_Height => Dummy, Natural_Height => H);
             end;
          end if;
 
@@ -515,21 +524,20 @@ package body Tooltips is
    -- Is_In_Area --
    ----------------
 
-   function Is_In_Area (Widget  : Gtk_Widget; X, Y : Gint) return Boolean
-   is
-      Widget_X, Widget_Y            : Gint;
-      Tooltip_X, Tooltip_Y          : Gint;
-      In_Tip_Area                   : Boolean;
+   function Is_In_Area (Widget : Gtk_Widget; X, Y : Gint) return Boolean is
+      Widget_X, Widget_Y   : Gint;
+      Tooltip_X, Tooltip_Y : Gint;
+      In_Tip_Area          : Boolean;
 
       --------------------
       -- Within_Tooltip --
       --------------------
 
       function Within_Tooltip return Boolean
-      is
-        (Y in Tooltip_Y .. Tooltip_Y + Global_Tooltip.Get_Allocated_Height
-         and then
-         X in Tooltip_X .. Tooltip_X + Tooltip_X + Global_Tooltip.Area.Width);
+      is (Y in Tooltip_Y .. Tooltip_Y + Global_Tooltip.Get_Allocated_Height
+          and then
+            X
+            in Tooltip_X .. Tooltip_X + Tooltip_X + Global_Tooltip.Area.Width);
       --  Return True if (X, Y) is located in the tooltip itself.
 
    begin
@@ -546,33 +554,35 @@ package body Tooltips is
       In_Tip_Area :=
         not (X < Global_Tooltip.Area.X
              or else X > Global_Tooltip.Area.X + Global_Tooltip.Area.Width
-             or else  Y < Global_Tooltip.Area.Y
+             or else Y < Global_Tooltip.Area.Y
              or else Y > Global_Tooltip.Area.Y + Global_Tooltip.Area.Height);
 
       --  Retrieve the top-left corner of the tooltip
-      Get_Origin (Global_Tooltip.Get_Window,
-                  Tooltip_X,
-                  Tooltip_Y);
-      Get_Origin (Global_Tooltip.On_Widget.Get_Window,
-                  Widget_X,
-                  Widget_Y);
+      Get_Origin (Global_Tooltip.Get_Window, Tooltip_X, Tooltip_Y);
+      Get_Origin (Global_Tooltip.On_Widget.Get_Window, Widget_X, Widget_Y);
       Tooltip_X := Tooltip_X - Widget_X;
       Tooltip_Y := Tooltip_Y - Widget_Y;
 
       Trace (Advanced_Me, "Cursor pos: " & X'Img & Y'Img);
-      Trace (Advanced_Me, "Cursor initial pos: "
-             & Global_Tooltip.Cursor_X'Img
-             & Global_Tooltip.Cursor_Y'Img);
-      Trace (Advanced_Me, "Tooltip pos: "
-             & Tooltip_X'Img
-             & Tooltip_Y'Img
-             & Global_Tooltip.Get_Allocated_Width'Img
-             & Global_Tooltip.Get_Allocated_Height'Img);
-      Trace (Advanced_Me, "Tip area pos: "
-             & Global_Tooltip.Area.X'Img
-             & Global_Tooltip.Area.Y'Img
-             & Global_Tooltip.Area.Width'Img
-             & Global_Tooltip.Area.Height'Img);
+      Trace
+        (Advanced_Me,
+         "Cursor initial pos: "
+         & Global_Tooltip.Cursor_X'Img
+         & Global_Tooltip.Cursor_Y'Img);
+      Trace
+        (Advanced_Me,
+         "Tooltip pos: "
+         & Tooltip_X'Img
+         & Tooltip_Y'Img
+         & Global_Tooltip.Get_Allocated_Width'Img
+         & Global_Tooltip.Get_Allocated_Height'Img);
+      Trace
+        (Advanced_Me,
+         "Tip area pos: "
+         & Global_Tooltip.Area.X'Img
+         & Global_Tooltip.Area.Y'Img
+         & Global_Tooltip.Area.Width'Img
+         & Global_Tooltip.Area.Height'Img);
 
       if In_Tip_Area then
          --  If the tooltip Y coordinate is in the tip area, return True.
@@ -584,9 +594,10 @@ package body Tooltips is
       else
          --  The cursor is not in the tip area: check if it's within the
          --  tooltip itself.
-         Trace (Advanced_Me,
-                "Not exactly in area, checking if cursor is within "
-                & "tooltip now...");
+         Trace
+           (Advanced_Me,
+            "Not exactly in area, checking if cursor is within "
+            & "tooltip now...");
          return Within_Tooltip;
       end if;
    end Is_In_Area;
@@ -595,8 +606,7 @@ package body Tooltips is
    -- Show_Tooltip --
    ------------------
 
-   procedure Show_Tooltip (Widget  : not null access Gtk_Widget_Record'Class)
-   is
+   procedure Show_Tooltip (Widget : not null access Gtk_Widget_Record'Class) is
       X, Y            : Gint;
       Window, Ignored : Gdk_Window;
       Mask            : Gdk.Types.Gdk_Modifier_Type;
@@ -605,9 +615,9 @@ package body Tooltips is
          Global_Tooltip := new Tooltip_Object_Record;
          Gtk.Window.Initialize (Global_Tooltip, Window_Popup);
          Return_Callback.Connect
-           (Global_Tooltip, Signal_Leave_Notify_Event,
-            Return_Callback.To_Marshaller
-              (Tooltip_Leave_Event_Cb'Access));
+           (Global_Tooltip,
+            Signal_Leave_Notify_Event,
+            Return_Callback.To_Marshaller (Tooltip_Leave_Event_Cb'Access));
 
          Global_Tooltip.Set_Decorated (False);
          Global_Tooltip.Set_Resizable (False);
@@ -647,11 +657,12 @@ package body Tooltips is
             Global_Tooltip.Cursor_Y := Y;
             Global_Tooltip.Area_Is_Set := False;
 
-            Global_Tooltip.Timeout_Id := Glib.Main.Timeout_Add
-              ((if Global_Tooltip.Browse_Mode_Enabled
-               then Browse_Timeout
-               else Hover_Timeout),
-               On_Tooltip_Delay'Access);
+            Global_Tooltip.Timeout_Id :=
+              Glib.Main.Timeout_Add
+                ((if Global_Tooltip.Browse_Mode_Enabled
+                  then Browse_Timeout
+                  else Hover_Timeout),
+                 On_Tooltip_Delay'Access);
          end if;
       end;
    end Show_Tooltip;
@@ -693,8 +704,8 @@ package body Tooltips is
    ----------------------
 
    function Tooltip_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
    is
       T : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
@@ -703,7 +714,8 @@ package body Tooltips is
       --  mapped: the cursor may now be in the tooltip itself, to scroll it
       --  for instance.
 
-      if (T = Motion_Notify or else
+      if (T = Motion_Notify
+          or else
             (Global_Tooltip /= null
              and then Global_Tooltip.Get_Mapped
              and then T = Leave_Notify))
@@ -713,8 +725,9 @@ package body Tooltips is
         and then
           (Widget.all in Gtk_Menu_Item_Record'Class
            or else Widget.all in Tooltip_Object_Record'Class
-           or else Get_Property
-             (Gtk_Window (Widget.Get_Toplevel), Has_Toplevel_Focus_Property))
+           or else
+             Get_Property
+               (Gtk_Window (Widget.Get_Toplevel), Has_Toplevel_Focus_Property))
       then
          Show_Tooltip (Widget);
       elsif T /= Key_Press or else Get_Key_Val (Event) = GDK_Escape then
@@ -729,8 +742,9 @@ package body Tooltips is
    ---------------------
 
    function Scroll_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean is
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
       pragma Unreferenced (Widget, Event);
    begin
       Hide_Tooltip;
@@ -743,8 +757,8 @@ package body Tooltips is
    ----------------------------
 
    function Tooltip_Leave_Event_Cb
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
    is
       pragma Unreferenced (Widget, Event);
       X, Y            : Gint;
@@ -791,14 +805,13 @@ package body Tooltips is
    is
    begin
       Assert
-        (Me, Can_Have_Tooltip (Widget),
+        (Me,
+         Can_Have_Tooltip (Widget),
          "Widgets must have their own Gdk_Window to use tooltips.adb",
          Raise_Exception => False);
 
       --  from gtk_widget_real_set_has_tooltip
-      if Widget.Get_Realized
-        and then not Widget.Get_Has_Window
-      then
+      if Widget.Get_Realized and then not Widget.Get_Has_Window then
          Gdk.Window.Set_Events
            (Widget.Get_Window,
             Gdk.Window.Get_Events (Widget.Get_Window)
@@ -816,38 +829,45 @@ package body Tooltips is
       --  leave_notify event, which we are already monitoring
 
       Return_Callback.Connect
-        (Widget, Signal_Button_Press_Event,
+        (Widget,
+         Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (Widget, Signal_Key_Press_Event,
+        (Widget,
+         Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (Widget, Signal_Motion_Notify_Event,
+        (Widget,
+         Signal_Motion_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (Widget, Signal_Leave_Notify_Event,
+        (Widget,
+         Signal_Leave_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
-        (Widget, Signal_Focus_Out_Event,
+        (Widget,
+         Signal_Focus_Out_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
 
       --  Connect to the scroll-event signal to hide tooltips when scrolling.
 
       if Scroll_Event_Widget /= null then
          Return_Callback.Connect
-           (Scroll_Event_Widget, Signal_Scroll_Event,
-            Return_Callback.To_Marshaller
-              (Scroll_Event_Cb'Access));
+           (Scroll_Event_Widget,
+            Signal_Scroll_Event,
+            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
       else
          Return_Callback.Connect
-           (Widget, Signal_Scroll_Event,
-            Return_Callback.To_Marshaller
-              (Scroll_Event_Cb'Access));
+           (Widget,
+            Signal_Scroll_Event,
+            Return_Callback.To_Marshaller (Scroll_Event_Cb'Access));
       end if;
 
       Tooltip_User_Data.Set
-        (Widget, Tooltip_Handler_Access (Tooltip),
-         "gps-tooltip", Destroy_Cb'Access);
+        (Widget,
+         Tooltip_Handler_Access (Tooltip),
+         "gps-tooltip",
+         Destroy_Cb'Access);
    end Associate_To_Widget;
 
    ----------------
@@ -895,7 +915,8 @@ package body Tooltips is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : access Static_Tooltip_Handler_Type) is
+   overriding
+   procedure Destroy (Self : access Static_Tooltip_Handler_Type) is
    begin
       Free (Self.Text);
    end Destroy;
@@ -904,7 +925,8 @@ package body Tooltips is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Self   : not null access Static_Tooltip_Handler_Type;
       Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget
@@ -918,10 +940,11 @@ package body Tooltips is
       Label.Set_Max_Width_Chars (70);  --  Match standard gtk+ tooltips
       Label.Set_Use_Markup (Self.Use_Markup);
       Widget.Get_Allocation (Alloc);
-      Self.Set_Tip_Area ((X      => Alloc.X,
-                          Y      => Alloc.Y,
-                          Width  => Alloc.Width,
-                          Height => Alloc.Height));
+      Self.Set_Tip_Area
+        ((X      => Alloc.X,
+          Y      => Alloc.Y,
+          Width  => Alloc.Width,
+          Height => Alloc.Height));
 
       return Gtk_Widget (Label);
    end Create_Contents;
@@ -946,10 +969,10 @@ package body Tooltips is
          return;
       end if;
 
-      Tip := new Static_Tooltip_Handler_Type'
-        (Tooltip_Handler with
-         Text       => new String'(Text),
-         Use_Markup => Use_Markup);
+      Tip :=
+        new Static_Tooltip_Handler_Type'
+          (Tooltip_Handler
+           with Text => new String'(Text), Use_Markup => Use_Markup);
       Tip.Associate_To_Widget (Widget);
    end Set_Static_Tooltip;
 
@@ -958,9 +981,7 @@ package body Tooltips is
    --------------------------
 
    procedure Create_Tooltip_Label
-     (Label      : out Gtk_Label;
-      Text       : String;
-      Use_Markup : Boolean := True) is
+     (Label : out Gtk_Label; Text : String; Use_Markup : Boolean := True) is
    begin
       Gtk_New (Label);
       Label.Set_Line_Wrap (True);

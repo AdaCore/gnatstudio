@@ -41,8 +41,7 @@ package GPS.Search.Replaces is
      (Pattern      : Replacement_Pattern;
       Result       : GPS.Search.Search_Context;
       Matched_Text : String;
-      Keywords     : GNAT.Expect.Pattern_Matcher_Access)
-      return String;
+      Keywords     : GNAT.Expect.Pattern_Matcher_Access) return String;
    --  Return replacement text based on replacement pattern
 
    procedure Reset (Self : in out Replacement_Pattern);
@@ -57,8 +56,7 @@ private
    type Casing_Type is (Lower, Upper, Smart_Mixed, Unchanged);
 
    function Guess_Casing
-     (S        : String;
-      Keywords : GNAT.Expect.Pattern_Matcher_Access)
+     (S : String; Keywords : GNAT.Expect.Pattern_Matcher_Access)
       return Casing_Type;
    --  Guess the casing which is used in S, keywords are not takken in account.
    --  S is encoded in UTF-8.
@@ -66,8 +64,7 @@ private
    function To_Casing
      (S        : String;
       Casing   : Casing_Type;
-      Keywords : GNAT.Expect.Pattern_Matcher_Access)
-      return String;
+      Keywords : GNAT.Expect.Pattern_Matcher_Access) return String;
    --  Return S transformed to match Casing.
    --  If S is not all lower-case, return S unchanged.
    --  S is encoded in UTF-8, and so is the result.
@@ -83,7 +80,8 @@ private
    function Replace
      (Self    : access Subexpression;
       Context : GPS.Search.Search_Context;
-      Matched : String) return String is abstract;
+      Matched : String) return String
+   is abstract;
    --  Provide text of given replace subexpression
 
    procedure Reset (Self : access Subexpression) is null;

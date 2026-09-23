@@ -18,8 +18,7 @@
 with VSS.Strings; use VSS.Strings;
 with DAP.Tools;   use DAP.Tools;
 
-with DAP.Views.Registers.Variables;
-use DAP.Views.Registers.Variables;
+with DAP.Views.Registers.Variables; use DAP.Views.Registers.Variables;
 
 package body DAP.Views.Registers.Scopes is
 
@@ -27,7 +26,8 @@ package body DAP.Views.Registers.Scopes is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Scopes_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
@@ -36,9 +36,7 @@ package body DAP.Views.Registers.Scopes is
       use Registers_MDI_Views;
 
       View : constant DAP_Registers_View :=
-        Registers_MDI_Views.Retrieve_View
-          (Self.Kernel,
-           Visible_Only => False);
+        Registers_MDI_Views.Retrieve_View (Self.Kernel, Visible_Only => False);
 
    begin
       if View = null then

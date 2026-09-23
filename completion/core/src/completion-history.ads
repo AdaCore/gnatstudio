@@ -52,20 +52,21 @@ package Completion.History is
    type Stored_Proposal_Access is access all Stored_Proposal'Class;
 
    function To_Stored_Proposal
-     (Proposal : Storable_Proposal) return Stored_Proposal_Access is abstract;
+     (Proposal : Storable_Proposal) return Stored_Proposal_Access
+   is abstract;
    --  Extract the stored proposal from a storable proposal.
 
    function Equal
-     (Left : Stored_Proposal; Right : Stored_Proposal'Class)
-      return Boolean is abstract;
+     (Left : Stored_Proposal; Right : Stored_Proposal'Class) return Boolean
+   is abstract;
    --  Return true if the two proposals are equals - the completion history
    --  will only store unique proposals.
 
    function From_Stored_Proposal
      (Stored  : Stored_Proposal;
       Manager : Completion_Manager_Access;
-      Context : Completion_Context)
-      return Completion_Proposal_Access is abstract;
+      Context : Completion_Context) return Completion_Proposal_Access
+   is abstract;
    --  Recreates a completion proposal out of a stored proposal. If the
    --  proposal cannot be retreived anymore, the implementer may return a null
    --  value.
@@ -80,10 +81,10 @@ package Completion.History is
 
    overriding
    procedure Get_Completion_Root
-     (Resolver   : access Completion_History;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List);
+     (Resolver : access Completion_History;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    overriding
@@ -99,7 +100,7 @@ package Completion.History is
       Proposal : Completion_Proposal'Class
       --  This proposal has to implement the interface Storable_Proposal in
       --  order to be stored. If not, the proposal won't be stored.
-     );
+      );
    --  This function has to be called each time a completion is applied by
    --  the user. The proposal will be added in the front of the history list.
    --  If the proposal given in parameter is already in the list, then it will

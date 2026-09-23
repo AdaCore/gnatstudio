@@ -27,17 +27,15 @@ with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
 package body Case_Handling is
 
    procedure Add_Exception
-     (HTable    : Exceptions_Table;
-      Str       : String;
-      Read_Only : Boolean);
+     (HTable : Exceptions_Table; Str : String; Read_Only : Boolean);
    --  Add Str exception in HTable
 
    procedure Remove_Exception (HTable : Exceptions_Table; Str : String);
    --  Remove str exception from the HTable
 
    function Mixed_Case
-     (Image : Wide_Wide_String;
-      Smart : Boolean := False) return Wide_Wide_String;
+     (Image : Wide_Wide_String; Smart : Boolean := False)
+      return Wide_Wide_String;
    --  The same as one in package specification, but on Wide_Wide_String.
 
    ----------------
@@ -45,14 +43,14 @@ package body Case_Handling is
    ----------------
 
    function Mixed_Case
-     (Image : Wide_Wide_String;
-      Smart : Boolean := False) return Wide_Wide_String
+     (Image : Wide_Wide_String; Smart : Boolean := False)
+      return Wide_Wide_String
    is
       package Latin_1 renames Ada.Characters.Wide_Wide_Latin_1;
 
       Do_Upper : Boolean;
       C        : Wide_Wide_Character;
-      Result : Unbounded_Wide_Wide_String;
+      Result   : Unbounded_Wide_Wide_String;
    begin
       if Image'Length = 0 then
          return Image;
@@ -104,7 +102,7 @@ package body Case_Handling is
    function Mixed_Case
      (S : UTF8_String; Smart : Boolean := False) return UTF8_String
    is
-      Image  : constant Wide_Wide_String := Decode (S);
+      Image : constant Wide_Wide_String := Decode (S);
    begin
       return Encode (Mixed_Case (Image, Smart));
    end Mixed_Case;
@@ -114,9 +112,8 @@ package body Case_Handling is
    --------------
 
    function Set_Case
-     (C      : Casing_Exceptions;
-      Word   : UTF8_String;
-      Casing : Casing_Type) return UTF8_String
+     (C : Casing_Exceptions; Word : UTF8_String; Casing : Casing_Type)
+      return UTF8_String
    is
       function Set_Substring_Exception
         (Word : Wide_Wide_String) return UTF8_String;
@@ -141,7 +138,7 @@ package body Case_Handling is
 
          procedure Apply (Substring : Wide_Wide_String) is
             --  Set L_Str with the key for Str in the exception hash table
-            L_Word  : constant Wide_Wide_String := To_Lower (Substring);
+            L_Word : constant Wide_Wide_String := To_Lower (Substring);
 
             Pos : Cursor;
          begin
@@ -177,9 +174,9 @@ package body Case_Handling is
          return Encode (To_Wide_Wide_String (Result));
       end Set_Substring_Exception;
 
-      Image  : constant Wide_Wide_String := Decode (Word);
-      L_Str  : constant Wide_Wide_String := To_Lower (Image);
-      N      : Cursor;
+      Image : constant Wide_Wide_String := Decode (Word);
+      L_Str : constant Wide_Wide_String := To_Lower (Image);
+      N     : Cursor;
    begin
       if Casing = Unchanged then
          --  Nothing to do in this case
@@ -198,20 +195,20 @@ package body Case_Handling is
          --  No case exception for this word, apply standard rules
 
          case Casing is
-            when Upper =>
+            when Upper       =>
                return Set_Substring_Exception (To_Upper (Image));
 
-            when Lower =>
+            when Lower       =>
                return Set_Substring_Exception (L_Str);
 
-            when Mixed =>
+            when Mixed       =>
                return Set_Substring_Exception (Mixed_Case (Image));
 
             when Smart_Mixed =>
-               return Set_Substring_Exception
-                 (Mixed_Case (Image, Smart => True));
+               return
+                 Set_Substring_Exception (Mixed_Case (Image, Smart => True));
 
-            when Unchanged =>
+            when Unchanged   =>
                --  Already returned so cannot reach here
                pragma Assert (False);
                return Word;
@@ -228,9 +225,7 @@ package body Case_Handling is
    -------------------
 
    procedure Add_Exception
-     (HTable    : Exceptions_Table;
-      Str       : String;
-      Read_Only : Boolean)
+     (HTable : Exceptions_Table; Str : String; Read_Only : Boolean)
    is
       Image : constant Wide_Wide_String := Decode (Str);
    begin
@@ -238,9 +233,7 @@ package body Case_Handling is
    end Add_Exception;
 
    procedure Add_Exception
-     (C         : in out Casing_Exceptions;
-      Word      : String;
-      Read_Only : Boolean) is
+     (C : in out Casing_Exceptions; Word : String; Read_Only : Boolean) is
    begin
       Add_Exception (C.E, Word, Read_Only);
    end Add_Exception;
@@ -250,9 +243,7 @@ package body Case_Handling is
    -----------------------------
 
    procedure Add_Substring_Exception
-     (C         : in out Casing_Exceptions;
-      Substring : String;
-      Read_Only : Boolean) is
+     (C : in out Casing_Exceptions; Substring : String; Read_Only : Boolean) is
    begin
       Add_Exception (C.S, Substring, Read_Only);
    end Add_Substring_Exception;
@@ -261,10 +252,7 @@ package body Case_Handling is
    -- Remove_Exception --
    ----------------------
 
-   procedure Remove_Exception
-     (HTable : Exceptions_Table;
-      Str    : String)
-   is
+   procedure Remove_Exception (HTable : Exceptions_Table; Str : String) is
       Image : constant Wide_Wide_String := Decode (Str);
       L_Str : constant Wide_Wide_String := To_Lower (Image);
       Pos   : Cursor := HTable.Find (L_Str);
@@ -284,8 +272,7 @@ package body Case_Handling is
    --------------------------------
 
    procedure Remove_Substring_Exception
-     (C         : in out Casing_Exceptions;
-      Substring : String) is
+     (C : in out Casing_Exceptions; Substring : String) is
    begin
       Remove_Exception (C.S, Substring);
    end Remove_Substring_Exception;
@@ -295,8 +282,8 @@ package body Case_Handling is
    -------------
 
    procedure Destroy (C : in out Casing_Exceptions) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Map, Exceptions_Table);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Map, Exceptions_Table);
    begin
       --  Word exceptions
 

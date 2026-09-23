@@ -21,8 +21,8 @@
 
 with GNAT.Strings;
 
-with Ada.Strings.Unbounded;                use Ada.Strings.Unbounded;
-with GNATCOLL.Tribooleans;                 use GNATCOLL.Tribooleans;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Tribooleans;  use GNATCOLL.Tribooleans;
 
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Ordered_Maps;
@@ -46,12 +46,11 @@ package Command_Lines is
 
    type Command_Line_Configuration is tagged private;
 
-   function "=" (Left, Right : Command_Line_Configuration'Class)
-     return Boolean;
+   function "="
+     (Left, Right : Command_Line_Configuration'Class) return Boolean;
 
    procedure Define_Section
-     (Config  : in out Command_Line_Configuration;
-      Section : String);
+     (Config : in out Command_Line_Configuration; Section : String);
    --  Indicates a new switch section. All switches belonging to the same
    --  section are ordered together, preceded by the section. They are placed
    --  at the end of the command line (as in "gnatmake somefile.adb -cargs -g")
@@ -70,8 +69,7 @@ package Command_Lines is
    --  have been defined first through a call to [Define_Section].
 
    procedure Define_Prefix
-     (Config : in out Command_Line_Configuration;
-      Prefix : String);
+     (Config : in out Command_Line_Configuration; Prefix : String);
    --  Indicates that all switches starting with the given prefix should be
    --  grouped. For instance, for the GNAT compiler we would define "-gnatw" as
    --  a prefix, so that "-gnatwu -gnatwv" can be grouped into "-gnatwuv" It is
@@ -85,9 +83,9 @@ package Command_Lines is
    --  "-gnatya -gnatyL12 -gnatyb".
 
    procedure Define_Switch
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "");
+     (Config  : in out Command_Line_Configuration;
+      Switch  : String;
+      Section : String := "");
    --  Indicates a new switch.
    --
    --  Switch should also start with the leading '-' (or any other characters).
@@ -101,18 +99,18 @@ package Command_Lines is
    --  first define the section through a call to Define_Section).
 
    procedure Define_Switch_With_Parameter
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "";
-      Optional    : Boolean := False);
+     (Config   : in out Command_Line_Configuration;
+      Switch   : String;
+      Section  : String := "";
+      Optional : Boolean := False);
    --  Indicates a new switch with a parameter.
 
    procedure Define_Switch_With_Parameter
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "";
-      Separator   : String;
-      Optional    : Boolean := False);
+     (Config    : in out Command_Line_Configuration;
+      Switch    : String;
+      Section   : String := "";
+      Separator : String;
+      Optional  : Boolean := False);
    --  Indicates a new switch with a parameter and separator between them.
 
    procedure Free (Config : in out Command_Line_Configuration);
@@ -157,38 +155,34 @@ package Command_Lines is
    function "=" (Left, Right : Command_Line'Class) return Boolean;
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line'Class;
-      Config : Command_Line_Configuration);
+     (Cmd : in out Command_Line'Class; Config : Command_Line_Configuration);
    function Get_Configuration
      (Cmd : Command_Line'Class) return Command_Line_Configuration;
    --  Set or retrieve the configuration used for that command line. The Config
    --  must have been initialized first, by calling one of the Define_Switches
    --  subprograms.
 
-   procedure Set_Command_Line
-     (Cmd      : in out Command_Line;
-      Switches : String);
+   procedure Set_Command_Line (Cmd : in out Command_Line; Switches : String);
    --  Set the new content of the command line, by replacing the current
    --  version with Switches.
 
    procedure Append_Switches
-     (Cmd  : in out Command_Line;
-      List : GNAT.Strings.String_List);
+     (Cmd : in out Command_Line; List : GNAT.Strings.String_List);
    --  Append given switches to command line
 
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String  := "";
-      Separator  : String  := "";
-      Section    : String  := "";
+      Parameter  : String := "";
+      Separator  : String := "";
+      Section    : String := "";
       Add_Before : Boolean := False);
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String  := "";
-      Separator  : String  := "";
-      Section    : String  := "";
+      Parameter  : String := "";
+      Separator  : String := "";
+      Section    : String := "";
       Add_Before : Boolean := False;
       Success    : out Boolean);
    --  Add a new switch to the command line, and combine/group it with existing
@@ -223,15 +217,13 @@ package Command_Lines is
    --  Add_Before allows insertion of the switch at the beginning of the
    --  command line.
 
-   procedure Append
-     (Cmd   : in out Command_Line;
-      Value : Command_Line'Class);
+   procedure Append (Cmd : in out Command_Line; Value : Command_Line'Class);
    --  Append switches of Value to given command line. Configuration of Cmd
    --  will be updated to include section definitions from Value configuration
 
    function Append
-     (Cmd   : Command_Line'Class;
-      Value : Command_Line'Class) return Command_Line;
+     (Cmd : Command_Line'Class; Value : Command_Line'Class)
+      return Command_Line;
    --  Append switches of Value to given command line and return the result.
    --  The function keeps both arguments unchanged.
 
@@ -239,12 +231,12 @@ package Command_Lines is
      (Cmd           : in out Command_Line;
       Switch        : String;
       Has_Parameter : Triboolean := False;
-      Section       : String     := "");
+      Section       : String := "");
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
       Has_Parameter : Triboolean := False;
-      Section       : String     := "";
+      Section       : String := "";
       Success       : out Boolean);
    --  Remove Switch from the command line, and ungroup existing switches if
    --  necessary.
@@ -264,14 +256,13 @@ package Command_Lines is
    --  Check if there is some switch on given command line
 
    function Has_Switch
-     (Cmd     : Command_Line;
-      Switch  : String;
-      Section : String  := "") return Boolean;
+     (Cmd : Command_Line; Switch : String; Section : String := "")
+      return Boolean;
    --  Check if there is the Switch in given Section
 
    function To_String_List
-     (Cmd      : Command_Line;
-      Expanded : Boolean) return GNAT.Strings.String_List_Access;
+     (Cmd : Command_Line; Expanded : Boolean)
+      return GNAT.Strings.String_List_Access;
    --  Return the arguments of the command line. Expanded indicates whether
    --  the expanded command line, or the shortest command line, is returned.
    --  Result should be freed by caller after use.
@@ -281,6 +272,7 @@ package Command_Lines is
       case Is_Set is
          when True =>
             Value : Ada.Strings.Unbounded.Unbounded_String;
+
          when False =>
             null;
       end case;
@@ -293,35 +285,34 @@ package Command_Lines is
          when True =>
             Separator : Command_Lines.Separator;
             Value     : Ada.Strings.Unbounded.Unbounded_String;
+
          when False =>
             null;
       end case;
    end record;
 
    function Get_Parameter
-     (Cmd     : Command_Line;
-      Switch  : String;
-      Section : String  := "") return Argument;
+     (Cmd : Command_Line; Switch : String; Section : String := "")
+      return Argument;
    --  Return parameter of given Switch in given Section
 
    function Map
      (Cmd    : Command_Line;
-      Update : access procedure
-        (Switch    : in out Unbounded_String;
-         Section   : in out Unbounded_String;
-         Parameter : in out Argument))
-      return Command_Line;
+      Update :
+        access procedure
+          (Switch    : in out Unbounded_String;
+           Section   : in out Unbounded_String;
+           Parameter : in out Argument)) return Command_Line;
    --  This function creates a copy of given command line where some switches
    --  are modified by the given Update procedure
 
    function Filter
      (Cmd    : Command_Line;
-      Delete : access function
-        (Switch    : String;
-         Section   : String;
-         Parameter : Argument) return Boolean)
-      return Command_Line;
-   --  This function creates a copy of given command line where some switсhes
+      Delete :
+        access function
+          (Switch : String; Section : String; Parameter : Argument)
+           return Boolean) return Command_Line;
+   --  This function creates a copy of given command line where some switÑhes
    --  are deleted according to Delete result.
 
    Invalid_Section : exception;
@@ -346,9 +337,9 @@ package Command_Lines is
    --  The iterator becomes invalid if the command line is changed through a
    --  call to Add_Switch, Remove_Switch or Set_Command_Line.
 
-   function Current_Switch    (Iter : Command_Line_Iterator) return String;
-   function Is_New_Section    (Iter : Command_Line_Iterator) return Boolean;
-   function Current_Section   (Iter : Command_Line_Iterator) return String;
+   function Current_Switch (Iter : Command_Line_Iterator) return String;
+   function Is_New_Section (Iter : Command_Line_Iterator) return Boolean;
+   function Current_Section (Iter : Command_Line_Iterator) return String;
    function Current_Separator (Iter : Command_Line_Iterator) return String;
    function Current_Parameter (Iter : Command_Line_Iterator) return String;
    --  Return the current switch and its parameter (or the empty string if
@@ -367,35 +358,39 @@ package Command_Lines is
 
 private
 
-   package String_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Unbounded_String);
+   package String_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Unbounded_String);
 
    type Parameter_Configuration (Is_Set : Boolean := False) is record
       case Is_Set is
          when True =>
             Optional  : Boolean := False;
             Separator : Command_Lines.Separator;
+
          when False =>
             null;
       end case;
    end record;
 
    type Switch_Configuration is record
-      Switch       : Unbounded_String;
-      Parameter    : Parameter_Configuration;
+      Switch    : Unbounded_String;
+      Parameter : Parameter_Configuration;
    end record;
 
-   package Switch_Configuration_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Switch_Configuration,
-      "<"          => "<");
+   package Switch_Configuration_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,
+        Element_Type => Switch_Configuration,
+        "<"          => "<");
 
-   package Unbounded_String_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,  --  Alias (short switch)
-      Element_Type => Unbounded_String,  --  Extended switch
-      "<"          => "<",
-      "="          => "=");
+   package Unbounded_String_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,  --  Alias (short switch)
+        Element_Type => Unbounded_String,  --  Extended switch
+        "<"          => "<",
+        "="          => "=");
 
    type Section_Configuration is record
       Name     : Unbounded_String;
@@ -404,40 +399,42 @@ private
       Switches : Switch_Configuration_Maps.Map;
    end record;
 
-   package Section_Configuration_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Section_Configuration,
-      "<"          => "<");
+   package Section_Configuration_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,
+        Element_Type => Section_Configuration,
+        "<"          => "<");
 
    type Configuration is record
       Prefixes : String_Vectors.Vector;
       Sections : Section_Configuration_Maps.Map;
    end record;
 
-   package Configuration_References is new GNATCOLL.Refcount.Shared_Pointers
-     (Configuration);
+   package Configuration_References is new
+     GNATCOLL.Refcount.Shared_Pointers (Configuration);
 
    type Command_Line_Configuration is new Configuration_References.Ref
-     with null record;
+   with null record;
 
    type Switch is record
-      Switch       : Unbounded_String;
-      Parameter    : Argument;
+      Switch    : Unbounded_String;
+      Parameter : Argument;
    end record;
 
-   package Switch_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Switch);
+   package Switch_Vectors is new
+     Ada.Containers.Vectors (Index_Type => Positive, Element_Type => Switch);
 
-   package Argument_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Element_Type => Argument,
-      "="          => "=");
+   package Argument_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (Element_Type => Argument,
+        "="          => "=");
 
-   package Prefixed_Switch_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,  --  Prefix
-      Element_Type => Argument_Lists.List,
-      "<"          => "<",
-      "="          => Argument_Lists."=");
+   package Prefixed_Switch_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,  --  Prefix
+        Element_Type => Argument_Lists.List,
+        "<"          => "<",
+        "="          => Argument_Lists."=");
    --  Switches with common prefix stored together ordered alphabetically
    --  together with their arguments.
 
@@ -460,14 +457,15 @@ private
    --  These functions are used to emulate a hash_map behavior for the
    --  insertion and deletion.
 
-   package Section_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,  --  Prefix
-      Element_Type => Section,
-      "<"          => "<",
-      "="          => "=");
+   package Section_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,  --  Prefix
+        Element_Type => Section,
+        "<"          => "<",
+        "="          => "=");
 
-   package Section_Map_References is new GNATCOLL.Refcount.Shared_Pointers
-     (Section_Maps.Map);
+   package Section_Map_References is new
+     GNATCOLL.Refcount.Shared_Pointers (Section_Maps.Map);
 
    type Command_Line is tagged record
       Configuration : Command_Line_Configuration;
@@ -492,6 +490,7 @@ private
          when True =>
             Argument : Argument_Lists.Cursor;
             --  if Prefixed is not null then iterate over prefixed switches
+
          when False =>
             null;
       end case;

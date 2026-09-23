@@ -15,23 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with GPS.Kernel.Messages;    use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Location_View.Listener;
-with GPS.Search;                  use GPS.Search;
+with GPS.Search;             use GPS.Search;
 with GNATCOLL.Utils;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-with Glib;                        use Glib;
-with Glib.Values;                 use Glib.Values;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;       use Gtk.Tree_Model_Filter;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
+with Glib;                   use Glib;
+with Glib.Values;            use Glib.Values;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;  use Gtk.Tree_Model_Filter;
 
 package body GPS.Location_View_Filter is
 
-   package Set_Visible_Funcs is new Set_Visible_Func_User_Data
-     (User_Data_Type => Location_View_Filter_Model);
+   package Set_Visible_Funcs is new
+     Set_Visible_Func_User_Data (User_Data_Type => Location_View_Filter_Model);
 
    function Is_Visible
      (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -85,10 +85,7 @@ package body GPS.Location_View_Filter is
             declare
                Text        : constant String := Glib.Values.Get_String (Value);
                Total       : constant Gint :=
-                 Get_Int
-                   (Child_Model,
-                    Child_Iter,
-                    -Number_Of_Children_Column);
+                 Get_Int (Child_Model, Child_Iter, -Number_Of_Children_Column);
                Total_Image : constant String :=
                  GNATCOLL.Utils.Image (Natural (Total), 1);
                Visible     : Natural;
@@ -120,8 +117,8 @@ package body GPS.Location_View_Filter is
                begin
                   if Gtk.Tree_Model.Get_Depth (Proxy_Path) = 1 then
                      Num_Files := Self.N_Children (Iter);
-                     Num_Files_Str := " in" & To_Unbounded_String
-                       (Num_Files'Img);
+                     Num_Files_Str :=
+                       " in" & To_Unbounded_String (Num_Files'Img);
 
                      if Num_Files = 1 then
                         Num_Files_Str := Num_Files_Str & " file";
@@ -133,14 +130,23 @@ package body GPS.Location_View_Filter is
                   if Total = 1 then
                      Glib.Values.Set_String
                        (Value,
-                        Text & " (" & Total_Image & " item"
-                        & To_String (Num_Files_Str) & ")");
+                        Text
+                        & " ("
+                        & Total_Image
+                        & " item"
+                        & To_String (Num_Files_Str)
+                        & ")");
 
                   else
                      if Visible = Natural (Total) then
                         Glib.Values.Set_String
-                          (Value, Text & " (" & Total_Image & " items"
-                           & To_String (Num_Files_Str) & ")");
+                          (Value,
+                           Text
+                           & " ("
+                           & Total_Image
+                           & " items"
+                           & To_String (Num_Files_Str)
+                           & ")");
 
                      else
                         Glib.Values.Set_String
@@ -151,7 +157,8 @@ package body GPS.Location_View_Filter is
                            & " of "
                            & Total_Image
                            & " items"
-                           & To_String (Num_Files_Str) & ")");
+                           & To_String (Num_Files_Str)
+                           & ")");
                      end if;
                   end if;
                end;
@@ -170,7 +177,7 @@ package body GPS.Location_View_Filter is
      (Model       : out Location_View_Filter_Model;
       Child_Model : Gtk.Tree_Model.Gtk_Tree_Model)
    is
-      Cols : constant Guint := Guint (Get_N_Columns (Child_Model));
+      Cols  : constant Guint := Guint (Get_N_Columns (Child_Model));
       Types : GType_Array (0 .. Cols - 1);
    begin
       Model := new Location_View_Filter_Model_Record;
@@ -226,14 +233,12 @@ package body GPS.Location_View_Filter is
          --  or when the file name itself matches
 
          declare
-            Text  : constant String := Get_String
-              (Child_Model, Iter, -Text_Column);
+            Text : constant String :=
+              Get_String (Child_Model, Iter, -Text_Column);
          begin
             --  when the filter is negated, ignore file names, since otherwise
             --  we cannot easily filter "warning"
-            if Self.Pattern /= null
-              and then not Self.Pattern.Get_Negate
-            then
+            if Self.Pattern /= null and then not Self.Pattern.Get_Negate then
                Found := Self.Pattern.Start (Text) /= No_Match;
                if Found then
                   return Found;
@@ -260,11 +265,10 @@ package body GPS.Location_View_Filter is
          --  location does), or when they have visible secondary messages.
 
          declare
-            Text  : constant String := Get_String
-              (Child_Model, Iter, -Text_Column);
-            File : constant Virtual_File :=
-              Get_File
-                (Child_Model, Iter, -File_Column);
+            Text  : constant String :=
+              Get_String (Child_Model, Iter, -Text_Column);
+            File  : constant Virtual_File :=
+              Get_File (Child_Model, Iter, -File_Column);
             Found : Boolean;
          begin
             if Self.Pattern = null then
@@ -272,9 +276,10 @@ package body GPS.Location_View_Filter is
             elsif Self.Pattern.Get_Negate then
                Found := Self.Pattern.Start (Text) /= No_Match;
             else
-               Found := Self.Pattern.Start (Text) /= No_Match
-                 or else Self.Pattern.Start (File.Display_Base_Name) /=
-                    No_Match;
+               Found :=
+                 Self.Pattern.Start (Text) /= No_Match
+                 or else
+                   Self.Pattern.Start (File.Display_Base_Name) /= No_Match;
             end if;
 
             if Found then
@@ -300,9 +305,8 @@ package body GPS.Location_View_Filter is
    -----------------
 
    procedure Set_Pattern
-     (Self         : not null access Location_View_Filter_Model_Record;
-      Pattern      : Search_Pattern_Access)
-   is
+     (Self    : not null access Location_View_Filter_Model_Record;
+      Pattern : Search_Pattern_Access) is
    begin
       Free (Self.Pattern);
       Self.Pattern := Pattern;

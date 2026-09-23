@@ -35,12 +35,13 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
       Messages        : access CodePeer.Message_Maps.Map)
       return not null Inspection_Reader_Access is
    begin
-      return Result : constant not null Inspection_Reader_Access :=
-        new Inspection_Reader_V6 (Kernel)
+      return
+         Result : constant not null Inspection_Reader_Access :=
+           new Inspection_Reader_V6 (Kernel)
       do
          declare
-            Self : Inspection_Reader_V6'Class
-              renames Inspection_Reader_V6'Class (Result.all);
+            Self : Inspection_Reader_V6'Class renames
+              Inspection_Reader_V6'Class (Result.all);
 
          begin
             Base.Initialize (Self, Base_Directory, Root_Inspection, Messages);
@@ -52,16 +53,19 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- End_Document --
    ------------------
 
-   overriding procedure End_Document (Self : in out Inspection_Reader_V6) is
+   overriding
+   procedure End_Document (Self : in out Inspection_Reader_V6) is
    begin
       for Pair of Self.Postponed loop
          declare
             Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
               Self.Subprogram_Map (Pair.Subprogram);
             Subprogram      : constant CodePeer.Subprogram_Data_Access :=
-              (if Subprogram_Node = null then null
-               else CodePeer.Subprogram_Data_Access
-                 (Subprogram_Node.Analysis_Data.CodePeer_Data));
+              (if Subprogram_Node = null
+               then null
+               else
+                 CodePeer.Subprogram_Data_Access
+                   (Subprogram_Node.Analysis_Data.CodePeer_Data));
 
          begin
             if Subprogram = null then
@@ -89,9 +93,8 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
-     (Self  : in out Inspection_Reader_V6;
-      Name  : String) is
+   overriding
+   procedure End_Element (Self : in out Inspection_Reader_V6; Name : String) is
    begin
       if Self.Ignore_Element then
          Base.Base_Inspection_Reader (Self).End_Element (Name);
@@ -108,7 +111,8 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- End_Message --
    -----------------
 
-   overriding procedure End_Message (Self : in out Inspection_Reader_V6) is
+   overriding
+   procedure End_Message (Self : in out Inspection_Reader_V6) is
    begin
       Base.Base_Inspection_Reader (Self).End_Message;
       Self.Subprogram_Node := null;
@@ -128,7 +132,8 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Inspection_Reader_V6;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class) is
@@ -156,15 +161,14 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
             Text      : constant String := Attrs.Get_Value ("text");
             New_Text  : constant String :=
               Text
-               & " at "
-               & File_Name.Display_Base_Name
-               & ":"
-               & Ada.Strings.Fixed.Trim
-                 (Integer'Image (Line), Ada.Strings.Both)
-               & ":"
-               & Ada.Strings.Fixed.Trim
-                 (Basic_Types.Visible_Column_Type'Image (Column),
-                  Ada.Strings.Both);
+              & " at "
+              & File_Name.Display_Base_Name
+              & ":"
+              & Ada.Strings.Fixed.Trim (Integer'Image (Line), Ada.Strings.Both)
+              & ":"
+              & Ada.Strings.Fixed.Trim
+                  (Basic_Types.Visible_Column_Type'Image (Column),
+                   Ada.Strings.Both);
          begin
             GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
               (Parent => GPS.Kernel.Messages.Message_Access (Self.Message),
@@ -187,7 +191,8 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- Start_Message --
    -------------------
 
-   overriding procedure Start_Message
+   overriding
+   procedure Start_Message
      (Self  : in out Inspection_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class)
    is
@@ -198,8 +203,7 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
 
    begin
       if Positive_Subprogram_Maps.Has_Element (Position) then
-         Self.Subprogram_Node :=
-           Positive_Subprogram_Maps.Element (Position);
+         Self.Subprogram_Node := Positive_Subprogram_Maps.Element (Position);
       end if;
 
       Base.Base_Inspection_Reader (Self).Start_Message (Attrs);
@@ -220,7 +224,8 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- Start_Subprogram --
    ----------------------
 
-   overriding procedure Start_Subprogram
+   overriding
+   procedure Start_Subprogram
      (Self  : in out Inspection_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class)
    is
@@ -228,14 +233,10 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
 
    begin
       Subprogram_Node :=
-        Code_Analysis.Get_Or_Create
-          (Self.File_Node, Attrs.Get_Value ("name"));
-      Subprogram_Node.Name :=
-        new String'(Attrs.Get_Value ("name"));
-      Subprogram_Node.Line :=
-        Positive'Value (Attrs.Get_Value ("line"));
-      Subprogram_Node.Column :=
-        Positive'Value (Attrs.Get_Value ("column"));
+        Code_Analysis.Get_Or_Create (Self.File_Node, Attrs.Get_Value ("name"));
+      Subprogram_Node.Name := new String'(Attrs.Get_Value ("name"));
+      Subprogram_Node.Line := Positive'Value (Attrs.Get_Value ("line"));
+      Subprogram_Node.Column := Positive'Value (Attrs.Get_Value ("column"));
       Subprogram_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.Subprogram_Data'
           (Lifeage       => Reader_Utilities.Get_Lifeage (Attrs),
@@ -251,9 +252,9 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    -- Subprogram_Node --
    ---------------------
 
-   overriding function Subprogram_Node
-     (Self : Inspection_Reader_V6)
-      return Code_Analysis.Subprogram_Access is
+   overriding
+   function Subprogram_Node
+     (Self : Inspection_Reader_V6) return Code_Analysis.Subprogram_Access is
    begin
       return Self.Subprogram_Node;
    end Subprogram_Node;

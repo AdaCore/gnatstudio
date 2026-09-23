@@ -82,7 +82,7 @@ package GPS.Stock_Icons is
 
 private
 
-   Icon_Size_Local_Toolbar       : Gtk.Enums.Gtk_Icon_Size;
+   Icon_Size_Local_Toolbar : Gtk.Enums.Gtk_Icon_Size;
    --  The size for local toolbars in the MDI panels.
 
    Icon_Size_Local_Toolbar_Large : Gtk.Enums.Gtk_Icon_Size;

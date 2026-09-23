@@ -32,14 +32,14 @@ package body GPS.VCS is
 
    function Create_VCS_Instance
      (Script : access Scripting_Language_Record'Class;
-      VCS    : not null access Abstract_VCS_Engine'Class)
-      return Class_Instance
+      VCS    : not null access Abstract_VCS_Engine'Class) return Class_Instance
    is
    begin
-      return Engine_Proxies.Get_Or_Create_Instance
-        (VCS.Instances,
-         Obj    => Abstract_VCS_Engine_Access (VCS),
-         Script => Script);
+      return
+        Engine_Proxies.Get_Or_Create_Instance
+          (VCS.Instances,
+           Obj    => Abstract_VCS_Engine_Access (VCS),
+           Script => Script);
    end Create_VCS_Instance;
 
    -------------
@@ -47,8 +47,8 @@ package body GPS.VCS is
    -------------
 
    function Get_VCS
-     (Inst   : Class_Instance)
-      return not null access Abstract_VCS_Engine'Class is
+     (Inst : Class_Instance) return not null access Abstract_VCS_Engine'Class
+   is
    begin
       return Engine_Proxies.From_Instance (Inst);
    end Get_VCS;
@@ -57,7 +57,7 @@ package body GPS.VCS is
    -- Has_VCS --
    -------------
 
-   function Has_VCS (Inst   : Class_Instance) return Boolean is
+   function Has_VCS (Inst : Class_Instance) return Boolean is
    begin
       return Engine_Proxies.Has_Element (Inst);
    end Has_VCS;
@@ -67,14 +67,11 @@ package body GPS.VCS is
    ----------------------
 
    procedure Set_VCS_Instance
-     (VCS    : not null access Abstract_VCS_Engine'Class;
-      Inst   : Class_Instance)
+     (VCS : not null access Abstract_VCS_Engine'Class; Inst : Class_Instance)
    is
    begin
       Engine_Proxies.Store_In_Instance
-        (VCS.Instances,
-         Inst => Inst,
-         Obj  => Abstract_VCS_Engine_Access (VCS));
+        (VCS.Instances, Inst => Inst, Obj => Abstract_VCS_Engine_Access (VCS));
    end Set_VCS_Instance;
 
    ------------------------
@@ -82,9 +79,9 @@ package body GPS.VCS is
    ------------------------
 
    procedure Make_File_Writable
-     (Self       : not null access Abstract_VCS_Engine;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Writable   : Boolean)
+     (Self     : not null access Abstract_VCS_Engine;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Writable : Boolean)
    is
       pragma Unreferenced (Self);
    begin

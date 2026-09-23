@@ -17,36 +17,37 @@
 
 --  Declare parser to complete each target build.
 
-with Commands;                         use Commands;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with Commands;         use Commands;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 package Build_Command_Manager.End_Of_Build is
 
    type Parser is new Tools_Output_Parser with private;
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Parser;
       Status  : Integer;
       Command : access Root_Command'Class);
 
-   overriding procedure Destroy (Self : not null access Parser);
+   overriding
+   procedure Destroy (Self : not null access Parser);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context);
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context);
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
       Builder : Builder_Context;
    end record;
 

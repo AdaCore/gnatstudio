@@ -46,8 +46,7 @@ package Histories is
    No_Key : constant History_Key := "";
 
    procedure Load
-     (Hist      : in out History_Record;
-      File_Name : GNATCOLL.VFS.Virtual_File);
+     (Hist : in out History_Record; File_Name : GNATCOLL.VFS.Virtual_File);
    --  Load Hist from file File_Name
 
    procedure Save
@@ -73,8 +72,7 @@ package Histories is
    Invalid_Key_Type : exception;
 
    function Get_Type
-     (Hist : access History_Record;
-      Key  : History_Key) return History_Key_Type;
+     (Hist : access History_Record; Key : History_Key) return History_Key_Type;
    --  Report the kind of values expected for this key.
    --  Invalid_Key_Type is raised if the key is not registered
 
@@ -112,9 +110,7 @@ package Histories is
    --  boxes).
 
    procedure Set_Persistent
-     (Hist  : in out History_Record;
-      Key   : History_Key;
-      Value : Boolean);
+     (Hist : in out History_Record; Key : History_Key; Value : Boolean);
    --  Mark Key as persistent or not-persistent. Only persistent keys are saved
    --  to file. By default a key is persistent.
 
@@ -133,8 +129,9 @@ package Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Glib.Gint := 0;
-      Filter      : access
-        function (Item : VSS.Strings.Virtual_String) return Boolean := null);
+      Filter      :
+        access function (Item : VSS.Strings.Virtual_String) return Boolean :=
+          null);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
    --  If Clear_Combo is False, then the previous contents of the combo is kept
@@ -184,31 +181,29 @@ package Histories is
    --  In that case, the default_value is assigned to it
 
    procedure Set_History
-     (Hist  : in out History_Record;
-      Key   : History_Key;
-      Value : Boolean);
+     (Hist : in out History_Record; Key : History_Key; Value : Boolean);
    --  Set the value of the history key
 
    function Get_History
-     (Hist : History_Record;
-      Key  : History_Key) return Boolean;
+     (Hist : History_Record; Key : History_Key) return Boolean;
    --  Return the current value of Key
 
    procedure Associate
-     (Hist   : in out History_Record;
-      Key    : History_Key;
-      Button : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class;
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Button  : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class;
       Default : Boolean := True);
    procedure Associate
-     (Hist   : in out History_Record;
-      Key    : History_Key;
-      Button : not null access
-        Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Button  :
+        not null access
+          Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
       Default : Boolean := True);
    procedure Associate
-     (Hist : in out History_Record;
-      Key  : History_Key;
-      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
+     (Hist    : in out History_Record;
+      Key     : History_Key;
+      Item    : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
       Default : Boolean := True);
    --  Associate a widget with Key.
    --  The status of the button is set to the value of Key.
@@ -228,7 +223,8 @@ private
    procedure On_Changed
      (Notifier : access Changed_Notifier_Record;
       Hist     : in out History_Record;
-      Key      : History_Key) is abstract;
+      Key      : History_Key)
+   is abstract;
    procedure Free (Notifier : in out Changed_Notifier_Record) is null;
 
    type History_Key_Record (Typ : History_Key_Type := Strings) is record
@@ -237,8 +233,8 @@ private
 
       case Typ is
          when Strings =>
-            List             : GNAT.Strings.String_List_Access;
-            Max_Length       : Integer := -1;
+            List       : GNAT.Strings.String_List_Access;
+            Max_Length : Integer := -1;
             --  -1 means unspecified, use the default one for the whole
             --  History_Record
 
@@ -255,18 +251,19 @@ private
 
    Null_History : constant History_Key_Access := null;
 
-   package History_Hash is new String_Hash
-     (Data_Type    => History_Key_Access,
-      Free_Data    => No_Free,
-      Null_Ptr     => Null_History);
+   package History_Hash is new
+     String_Hash
+       (Data_Type => History_Key_Access,
+        Free_Data => No_Free,
+        Null_Ptr  => Null_History);
    type HTable_Access is access History_Hash.String_Hash_Table.Instance;
 
    type History_Record is record
       Max_Length : Positive := Positive'Last;
-      Table     : HTable_Access := new History_Hash.String_Hash_Table.Instance;
+      Table      : HTable_Access :=
+        new History_Hash.String_Hash_Table.Instance;
    end record;
 
-   No_History : constant History_Record :=
-     (Positive'Last, null);
+   No_History : constant History_Record := (Positive'Last, null);
 
 end Histories;

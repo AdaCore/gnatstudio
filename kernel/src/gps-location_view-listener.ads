@@ -24,7 +24,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Gtk.Tree_Store;
 with GNATCOLL.VFS;
 
-with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
 with Glib;
 private with Glib.Main;
@@ -36,9 +36,7 @@ package GPS.Location_View.Listener is
 
    type Messages_Sort_Order is (By_Location, By_Weight);
 
-   type File_Sort_Order is
-     (Category_Default_Sort,
-      Alphabetical);
+   type File_Sort_Order is (Category_Default_Sort, Alphabetical);
    --  The sort order of files. Each category defines its own default order
    --  (which is set in the model itself), but users can override it if needed.
 
@@ -56,18 +54,15 @@ package GPS.Location_View.Listener is
    type Locations_Listener is new Abstract_Listener with private;
    type Locations_Listener_Access is access all Locations_Listener'Class;
 
-   function Register
-     (Kernel : Kernel_Handle) return Locations_Listener_Access;
+   function Register (Kernel : Kernel_Handle) return Locations_Listener_Access;
    --  Create a message listener, register it and return it.
 
    procedure Unregister
-     (Kernel : Kernel_Handle;
-      Self   : in out Locations_Listener_Access);
+     (Kernel : Kernel_Handle; Self : in out Locations_Listener_Access);
    --  Unregister the listener and free memory associated to it
 
    function Get_Model
-     (L : Locations_Listener_Access)
-      return Gtk.Tree_Model.Gtk_Tree_Model;
+     (L : Locations_Listener_Access) return Gtk.Tree_Model.Gtk_Tree_Model;
    --  Return the model associated with the listener
 
    type Listener_Columns is
@@ -118,35 +113,35 @@ package GPS.Location_View.Listener is
       --  Message's background color
      );
 
-   function Pos (Column : Listener_Columns) return Glib.Gint with Inline;
+   function Pos (Column : Listener_Columns) return Glib.Gint
+   with Inline;
    function "-" (Column : Listener_Columns) return Glib.Gint renames Pos;
    --  Return position of column
 
    function Get_Message
-     (Model  : Gtk_Tree_Model;
-      Iter   : Gtk_Tree_Iter;
-      Column : Glib.Gint) return Message_Access;
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Column : Glib.Gint)
+      return Message_Access;
    --  Returns message at specified position
 
 private
 
-   package Row_Reference_Vectors is
-     new Ada.Containers.Vectors
+   package Row_Reference_Vectors is new
+     Ada.Containers.Vectors
        (Positive,
         Gtk.Tree_Row_Reference.Gtk_Tree_Row_Reference,
         Gtk.Tree_Row_Reference."=");
 
-   type Classic_Tree_Model_Record is
-     new Gtk.Tree_Store.Gtk_Tree_Store_Record with record
-      Kernel         : Kernel_Handle;
+   type Classic_Tree_Model_Record is new Gtk.Tree_Store.Gtk_Tree_Store_Record
+   with record
+      Kernel : Kernel_Handle;
 
       Messages_Order : Messages_Sort_Order := By_Location;
       --  Sort order for locations within a file.
 
-      File_Order     : File_Sort_Order := Category_Default_Sort;
+      File_Order : File_Sort_Order := Category_Default_Sort;
       --  Sort order for files within a category
 
-      Idle_Handler   : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Idle_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  Idle handle to enable sorting
 
       Category_Messages_Count  : Glib.Gint := 0;
@@ -154,29 +149,28 @@ private
       Previouse_Messages_Count : Glib.Gint := 0;
       --  Count of messages on previouse Idle hook
 
-      Sort_Column    : Glib.Gint;
+      Sort_Column : Glib.Gint;
       --  Column returned by freeze function to thaw sorting
 
-      Removed_Rows   : Row_Reference_Vectors.Vector;
+      Removed_Rows : Row_Reference_Vectors.Vector;
       --  List of message rows was requested to be removed. It is used to don't
       --  emit 'row_removed' signal for individual messages when file row is
       --  removed too.
 
-      Need_Refresh   : Boolean := True;
+      Need_Refresh : Boolean := True;
       --  Does the tree need to refresh its background colors
    end record;
 
-   procedure Initialize (Self   : access Classic_Tree_Model_Record'Class;
-                         Kernel : Kernel_Handle);
-   procedure Gtk_New (Object : out Classic_Tree_Model;
-                      Kernel : Kernel_Handle);
+   procedure Initialize
+     (Self : access Classic_Tree_Model_Record'Class; Kernel : Kernel_Handle);
+   procedure Gtk_New (Object : out Classic_Tree_Model; Kernel : Kernel_Handle);
 
-   type Locations_Listener is
-     new GPS.Kernel.Messages.Abstract_Listener with record
-      Kernel          : Kernel_Handle;
-      Model           : Classic_Tree_Model;
+   type Locations_Listener is new GPS.Kernel.Messages.Abstract_Listener
+   with record
+      Kernel : Kernel_Handle;
+      Model  : Classic_Tree_Model;
 
-      Non_Leaf_Color  : Gdk.RGBA.Gdk_RGBA;
+      Non_Leaf_Color : Gdk.RGBA.Gdk_RGBA;
       --  Foreground color for category and file nodes.
 
       Category : Gtk_Tree_Path := Null_Gtk_Tree_Path;
@@ -184,35 +178,42 @@ private
       --  Paths to the last called category/file nodes (i.e. cache)
    end record;
 
-   overriding procedure Message_Property_Changed
+   overriding
+   procedure Message_Property_Changed
      (Self     : not null access Locations_Listener;
       Message  : not null access Abstract_Message'Class;
       Property : Message_Property_Type);
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Locations_Listener;
       Message : not null access Abstract_Message'Class);
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Locations_Listener;
       Message : not null access Abstract_Message'Class);
 
-   overriding procedure File_Added
+   overriding
+   procedure File_Added
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
-   overriding procedure File_Removed
+   overriding
+   procedure File_Removed
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
-   overriding procedure Category_Added
-     (Self     : not null access Locations_Listener;
-      Category : VSS.Strings.Virtual_String;
+   overriding
+   procedure Category_Added
+     (Self                     : not null access Locations_Listener;
+      Category                 : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean);
 
-   overriding procedure Category_Removed
+   overriding
+   procedure Category_Removed
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String);
 

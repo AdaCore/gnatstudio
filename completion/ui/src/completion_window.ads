@@ -26,31 +26,31 @@
 --  text, which will be displayed in a secondary window when the line is
 --  selected.
 
-with Glib;           use Glib;
-with Glib.Main;      use Glib.Main;
-with GNAT.Strings;   use GNAT.Strings;
-with Gtk.Box;        use Gtk.Box;
-with Gtk.Bin;        use Gtk.Bin;
+with Glib;         use Glib;
+with Glib.Main;    use Glib.Main;
+with GNAT.Strings; use GNAT.Strings;
+with Gtk.Box;      use Gtk.Box;
+with Gtk.Bin;      use Gtk.Bin;
 
-with Gtk.Window;     use Gtk.Window;
+with Gtk.Window; use Gtk.Window;
 
-with Gtk.Tree_View;  use Gtk.Tree_View;
-with Gtk.List_Store; use Gtk.List_Store;
+with Gtk.Tree_View;         use Gtk.Tree_View;
+with Gtk.List_Store;        use Gtk.List_Store;
 with Gtk.Tree_Model_Filter; use Gtk.Tree_Model_Filter;
 
-with Gtk.Text_View;          use Gtk.Text_View;
-with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
-with Gtk.Text_Iter;          use Gtk.Text_Iter;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Gtk.Text_Mark;          use Gtk.Text_Mark;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Text_View;       use Gtk.Text_View;
+with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
+with Gtk.Text_Mark;       use Gtk.Text_Mark;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
-with Pango.Font;             use Pango.Font;
+with Pango.Font; use Pango.Font;
 
-with Completion;    use Completion;
-with GPS.Kernel;    use GPS.Kernel;
-with Basic_Types;   use Basic_Types;
-with Language;      use Language;
+with Completion;  use Completion;
+with GPS.Kernel;  use GPS.Kernel;
+with Basic_Types; use Basic_Types;
+with Language;    use Language;
 
 with Completion.History; use Completion.History;
 
@@ -87,10 +87,12 @@ package Completion_Window is
    --    allowed).
 
    type Completion_Window_Record is
-     new Gtk_Window_Record and Completion_Display_Interface with private;
+     new Gtk_Window_Record
+     and Completion_Display_Interface with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;
 
-   overriding procedure Move
+   overriding
+   procedure Move
      (Window : not null access Completion_Window_Record;
       X      : Glib.Gint;
       Y      : Glib.Gint);
@@ -99,34 +101,34 @@ package Completion_Window is
    --  window.
 
    type Completion_Explorer_Record is new Gtk_Hbox_Record with private;
-   type Completion_Explorer_Access is access all
-     Completion_Explorer_Record'Class;
+   type Completion_Explorer_Access is
+     access all Completion_Explorer_Record'Class;
 
    type Completion_Notes_Window_Record is new Gtk_Window_Record with private;
-   type Completion_Notes_Window is access all
-     Completion_Notes_Window_Record'Class;
+   type Completion_Notes_Window is
+     access all Completion_Notes_Window_Record'Class;
    --  Type representing the completion notes window that appears when
    --  navigating among the completion proposals.
 
    procedure Gtk_New
-     (Window : out Completion_Window_Access;
-      Kernel : Kernel_Handle);
+     (Window : out Completion_Window_Access; Kernel : Kernel_Handle);
    --  Create a new Completion_Window
 
    procedure Initialize
-     (Window : access Completion_Window_Record'Class;
-      Kernel : Kernel_Handle);
+     (Window : access Completion_Window_Record'Class; Kernel : Kernel_Handle);
    --  Internal initialization procedure
 
-   overriding procedure Display_Proposals
+   overriding
+   procedure Display_Proposals
      (Self          : access Completion_Window_Record;
       List          : Completion_List;
       Is_Incomplete : Boolean := False);
 
-   overriding procedure Display_Documentation
-     (Self : access Completion_Window_Record);
+   overriding
+   procedure Display_Documentation (Self : access Completion_Window_Record);
 
-   overriding function Has_Incomplete_Completion
+   overriding
+   function Has_Incomplete_Completion
      (Self : access Completion_Window_Record) return Boolean;
 
    procedure Start_Completion
@@ -141,8 +143,8 @@ package Completion_Window is
       Mode        : Smart_Completion_Type;
       Insert_Mode : Completion_Insert_Mode_Type;
       Search_Mode : Completion_Filter_Mode_Type;
-      Editor      : GPS.Editors.Editor_Buffer'Class
-      := GPS.Editors.Nil_Editor_Buffer);
+      Editor      : GPS.Editors.Editor_Buffer'Class :=
+        GPS.Editors.Nil_Editor_Buffer);
    --  Start the completion, without showing the window.
    --  This sould be used while waiting for the completion results to be
    --  computed: once they are ready, call Display_Proposals to show them.
@@ -161,11 +163,9 @@ package Completion_Window is
    --  the biggest common prefix.
 
    procedure Set_Iterator
-     (Window : Completion_Window_Access;
-      Iter   : Root_Iterator_Access);
+     (Window : Completion_Window_Access; Iter : Root_Iterator_Access);
    procedure Set_Iterator
-     (Explorer : Completion_Explorer_Access;
-      Iter     : Root_Iterator_Access);
+     (Explorer : Completion_Explorer_Access; Iter : Root_Iterator_Access);
    --  Sets the iterator for the window.
    --  Caller should not free Iter.
 
@@ -214,22 +214,22 @@ private
    type Information_Array is array (Positive range <>) of Information_Record;
    type Information_Array_Access is access Information_Array;
 
-   package Completion_Explorer_Idle is new Glib.Main.Generic_Sources
-     (Completion_Explorer_Access);
+   package Completion_Explorer_Idle is new
+     Glib.Main.Generic_Sources (Completion_Explorer_Access);
 
    type Completion_Explorer_Record is new Gtk_Hbox_Record with record
 
       Kernel : Kernel_Handle;
 
-      View  : Gtk_Tree_View;
-      Model : Gtk_List_Store;
+      View         : Gtk_Tree_View;
+      Model        : Gtk_List_Store;
       Model_Filter : Gtk_Tree_Model_Filter;
 
       Tree_Scroll : Gtk_Scrolled_Window;
       --  The scrolled window that contains the tree view.
 
-      Info   : Information_Array_Access;
-      Index  : Natural;
+      Info  : Information_Array_Access;
+      Index : Natural;
       --  Index to the first free position in Info.
 
       Shown : Natural := 0;
@@ -240,15 +240,15 @@ private
       Notes_Container : Gtk_Bin;
       --  The container which actually contains the notes.
 
-      Notes_Info      : Notes_Window_Info;
+      Notes_Info : Notes_Window_Info;
       --  Necessary information to idly complete the notes window
 
       Notes_Need_Completion : Boolean := False;
 
-      Computing_Iter  : Gtk_Tree_Iter := Null_Iter;
+      Computing_Iter : Gtk_Tree_Iter := Null_Iter;
       --  Indicates the iter which says ("more...");
 
-      Iter           : Root_Iterator_Access;
+      Iter : Root_Iterator_Access;
       --  The iter corresponding to the current completion engine, if any.
 
       Pattern : String_Access;
@@ -271,12 +271,15 @@ private
       --  access to the parent completion window
    end record;
 
-   package Editors_Holders is
-     new Ada.Containers.Indefinite_Holders
-       (GPS.Editors.Editor_Buffer'Class, GPS.Editors."=");
+   package Editors_Holders is new
+     Ada.Containers.Indefinite_Holders
+       (GPS.Editors.Editor_Buffer'Class,
+        GPS.Editors."=");
 
    type Completion_Window_Record is
-     new Gtk_Window_Record and Completion_Display_Interface with record
+     new Gtk_Window_Record
+     and Completion_Display_Interface
+   with record
       Explorer : Completion_Explorer_Access;
 
       Editor     : Editors_Holders.Holder := Editors_Holders.Empty_Holder;
@@ -292,7 +295,7 @@ private
       Initial_Line   : Gint;
       --  Offset of cursor position when the window is first shown.
 
-      In_Deletion    : Boolean := False;
+      In_Deletion : Boolean := False;
       --  Set to True when we are deleting text.
 
       In_Destruction : Boolean := False;

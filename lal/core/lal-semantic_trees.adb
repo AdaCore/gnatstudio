@@ -21,7 +21,7 @@ with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNATCOLL.Symbols;
-with GNATCOLL.Xref;              use GNATCOLL.Xref;
+with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Language.Tree;
 with Langkit_Support.Iterators;
@@ -45,12 +45,11 @@ package body LAL.Semantic_Trees is
    function Is_Local (Element : Ada_Node) return Boolean;
    --  Return True if given Element is nested in a subprogram/task body.
 
-   type Ada_Node_Kind_Array is array
-     (Positive range <>, Positive range <>) of Ada_Node_Kind_Type;
+   type Ada_Node_Kind_Array is
+     array (Positive range <>, Positive range <>) of Ada_Node_Kind_Type;
 
    function In_Context
-     (Element  : Ada_Node;
-      Contexts : Ada_Node_Kind_Array) return Boolean;
+     (Element : Ada_Node; Contexts : Ada_Node_Kind_Array) return Boolean;
    --  Check if Element.Parent.Kind = Context(Cntext'Last) then go to the
    --  parent and continue recursively
 
@@ -92,25 +91,31 @@ package body LAL.Semantic_Trees is
          Provider : access constant LAL.Semantic_Trees.Provider;
       end record;
 
-      overriding function Root_Iterator
-        (Self : Tree) return Semantic_Tree_Iterator'Class;
+      overriding
+      function Root_Iterator (Self : Tree) return Semantic_Tree_Iterator'Class;
 
-      overriding function Root_Nodes
-        (Self : Tree) return Semantic_Node_Array'Class;
+      overriding
+      function Root_Nodes (Self : Tree) return Semantic_Node_Array'Class;
 
-      overriding function Node_At
+      overriding
+      function Node_At
         (Self            : Tree;
          Sloc            : Language.Sloc_T;
          Category_Filter : Language.Tree.Category_Array :=
            Language.Tree.Null_Category_Array) return Semantic_Node'Class;
 
-      overriding function File (Self : Tree) return GNATCOLL.VFS.Virtual_File;
+      overriding
+      function File (Self : Tree) return GNATCOLL.VFS.Virtual_File;
 
-      overriding procedure Update (Self : in out Tree);
+      overriding
+      procedure Update (Self : in out Tree);
 
-      overriding procedure Update_Async (Self : in out Tree);
+      overriding
+      procedure Update_Async (Self : in out Tree);
 
-      overriding function Is_Ready (Self : Tree) return Boolean is (True);
+      overriding
+      function Is_Ready (Self : Tree) return Boolean
+      is (True);
 
    end Trees;
 
@@ -122,47 +127,58 @@ package body LAL.Semantic_Trees is
          Ada_Node : Libadalang.Analysis.Ada_Node;
       end record;
 
-      overriding function Is_Valid (Self : Node) return Boolean;
+      overriding
+      function Is_Valid (Self : Node) return Boolean;
 
-      overriding function Category
-        (Self : Node) return Language.Language_Category;
+      overriding
+      function Category (Self : Node) return Language.Language_Category;
 
-      overriding function Is_Declaration (Self : Node) return Boolean;
+      overriding
+      function Is_Declaration (Self : Node) return Boolean;
 
-      overriding function Children
-        (Self : Node) return Semantic_Node_Array'Class;
+      overriding
+      function Children (Self : Node) return Semantic_Node_Array'Class;
 
-      overriding function First_Child (Self : Node) return Semantic_Node'Class;
+      overriding
+      function First_Child (Self : Node) return Semantic_Node'Class;
 
-      overriding function Parent (Self : Node) return Semantic_Node'Class;
+      overriding
+      function Parent (Self : Node) return Semantic_Node'Class;
 
-      overriding function Name (Self : Node) return GNATCOLL.Symbols.Symbol;
+      overriding
+      function Name (Self : Node) return GNATCOLL.Symbols.Symbol;
 
-      overriding function Sloc_Start (Self : Node) return Language.Sloc_T;
+      overriding
+      function Sloc_Start (Self : Node) return Language.Sloc_T;
 
-      overriding function Sloc_Def (Self : Node) return Language.Sloc_T;
+      overriding
+      function Sloc_Def (Self : Node) return Language.Sloc_T;
 
-      overriding function Sloc_End (Self : Node) return Language.Sloc_T;
+      overriding
+      function Sloc_End (Self : Node) return Language.Sloc_T;
 
-      overriding function Profile
-        (Self             : Node;
-         Show_Param_Names : Boolean := True)
+      overriding
+      function Profile
+        (Self : Node; Show_Param_Names : Boolean := True)
          return GNATCOLL.Symbols.Symbol;
 
-      overriding function Definition (Self : Node) return Semantic_Node'Class;
+      overriding
+      function Definition (Self : Node) return Semantic_Node'Class;
 
-      overriding function Get_Hash
-        (Self : Node) return Ada.Containers.Hash_Type;
+      overriding
+      function Get_Hash (Self : Node) return Ada.Containers.Hash_Type;
 
-      overriding function File (Self : Node) return GNATCOLL.VFS.Virtual_File;
+      overriding
+      function File (Self : Node) return GNATCOLL.VFS.Virtual_File;
 
-      overriding function Unique_Id
-        (Self : Node) return GNATCOLL.Symbols.Symbol;
+      overriding
+      function Unique_Id (Self : Node) return GNATCOLL.Symbols.Symbol;
 
-      overriding function Visibility
-        (Self : Node) return Language.Construct_Visibility;
+      overriding
+      function Visibility (Self : Node) return Language.Construct_Visibility;
 
-      overriding function Documentation_Header (Self : Node) return String;
+      overriding
+      function Documentation_Header (Self : Node) return String;
    end Nodes;
 
    package Node_Arrays is
@@ -174,52 +190,61 @@ package body LAL.Semantic_Trees is
          Data : Nodes_Array (1 .. Length);
       end record;
 
-      overriding procedure Sort
+      overriding
+      procedure Sort
         (Self      : in out Node_Array;
-         Less_Than : access
-           function (L, R : Semantic_Node'Class) return Boolean);
+         Less_Than :
+           access function (L, R : Semantic_Node'Class) return Boolean);
 
-      overriding function Get
+      overriding
+      function Get
         (Self : Node_Array; Index : Positive) return Semantic_Node'Class;
 
-      overriding function Length (Self : Node_Array) return Natural;
+      overriding
+      function Length (Self : Node_Array) return Natural;
 
    end Node_Arrays;
 
    package Iterators is
       --  Implementation of Semantic_Tree_Iterator
 
-      package Holders is new Ada.Containers.Indefinite_Holders
-        (Element_Type => Libadalang.Iterators.Traverse_Iterator'Class,
-         "="          => Libadalang.Iterators."=");
+      package Holders is new
+        Ada.Containers.Indefinite_Holders
+          (Element_Type => Libadalang.Iterators.Traverse_Iterator'Class,
+           "="          => Libadalang.Iterators."=");
 
       type Iterator is limited new Semantic_Tree_Iterator with record
-         Done    : Boolean := True;
-         Node    : Nodes.Node;
-         Cursor  : Holders.Holder;
+         Done   : Boolean := True;
+         Node   : Nodes.Node;
+         Cursor : Holders.Holder;
       end record;
 
-      overriding procedure Next (Self : in out Iterator);
+      overriding
+      procedure Next (Self : in out Iterator);
 
-      overriding function Element (Self : Iterator) return Semantic_Node'Class;
+      overriding
+      function Element (Self : Iterator) return Semantic_Node'Class;
 
-      overriding function Has_Element (Self : Iterator) return Boolean;
+      overriding
+      function Has_Element (Self : Iterator) return Boolean;
    end Iterators;
 
    package body Iterators is
 
-      overriding procedure Next (Self : in out Iterator) is
+      overriding
+      procedure Next (Self : in out Iterator) is
       begin
          Self.Done := not Self.Cursor.Reference.Next (Self.Node.Ada_Node);
       end Next;
 
-      overriding function Element
-        (Self : Iterator) return Semantic_Node'Class is
+      overriding
+      function Element (Self : Iterator) return Semantic_Node'Class is
       begin
          return Self.Node;
       end Element;
 
-      overriding function Has_Element (Self : Iterator) return Boolean is
+      overriding
+      function Has_Element (Self : Iterator) return Boolean is
       begin
          return not Self.Done;
       end Has_Element;
@@ -232,8 +257,7 @@ package body LAL.Semantic_Trees is
       --  Immediate children of root are traversed, even if root exposed.
 
       type Immediate_Iterator is
-        new Libadalang.Iterators.Ada_Node_Iterators.Iterator
-      with private;
+        new Libadalang.Iterators.Ada_Node_Iterators.Iterator with private;
       --  This iterator provides access to nodes immediate reacheble
       --  from given root over unexposed nodes.
 
@@ -252,17 +276,17 @@ package body LAL.Semantic_Trees is
 
       function Get_Child (N : Node_Wrapper; J : Natural) return Node_Wrapper;
       function Get_Parent (N : Node_Wrapper) return Node_Wrapper;
-      function First (N : Node_Wrapper) return Natural is
-        (N.Node.First_Child_Index);
+      function First (N : Node_Wrapper) return Natural
+      is (N.Node.First_Child_Index);
       function Last (N : Node_Wrapper) return Natural;
 
       type Node_Wrapper_Array is array (Positive range <>) of Node_Wrapper;
 
-      package Wrapper_Iterators is new Langkit_Support.Iterators
-        (Node_Wrapper, Node_Wrapper_Array);
+      package Wrapper_Iterators is new
+        Langkit_Support.Iterators (Node_Wrapper, Node_Wrapper_Array);
 
-      package Iterators is
-        new Langkit_Support.Tree_Traversal_Iterator
+      package Iterators is new
+        Langkit_Support.Tree_Traversal_Iterator
           (Node_Type         => Node_Wrapper,
            Node_Array        => Node_Wrapper_Array,
            No_Node           => No_Node_Wrapper,
@@ -278,9 +302,10 @@ package body LAL.Semantic_Trees is
          Plain : Iterators.Traverse_Iterator;
       end record;
 
-      overriding function Next
-        (Self    : in out Immediate_Iterator;
-         Element : out Ada_Node) return Boolean;
+      overriding
+      function Next
+        (Self : in out Immediate_Iterator; Element : out Ada_Node)
+         return Boolean;
 
    end Immediate_Iterators;
 
@@ -289,21 +314,23 @@ package body LAL.Semantic_Trees is
       --  It filters unexposed nodes out and provides only exposed nodes.
 
       type Exposed_Iterator
-       (Parent : access Libadalang.Iterators.Ada_Node_Iterators.Iterator'Class)
-         is new Libadalang.Iterators.Ada_Node_Iterators.Iterator
-           with null record;
+        (Parent :
+           access Libadalang.Iterators.Ada_Node_Iterators.Iterator'Class)
+      is new Libadalang.Iterators.Ada_Node_Iterators.Iterator with null record;
 
-      overriding function Next
-        (Self    : in out Exposed_Iterator;
-         Element : out Ada_Node) return Boolean;
+      overriding
+      function Next
+        (Self : in out Exposed_Iterator; Element : out Ada_Node)
+         return Boolean;
 
    end Exposed_Iterators;
 
    package body Exposed_Iterators is
 
-      overriding function Next
-        (Self    : in out Exposed_Iterator;
-         Element : out Ada_Node) return Boolean is
+      overriding
+      function Next
+        (Self : in out Exposed_Iterator; Element : out Ada_Node) return Boolean
+      is
       begin
          while Self.Parent.Next (Element) loop
             if Is_Exposed (Element) then
@@ -376,9 +403,10 @@ package body LAL.Semantic_Trees is
       -- Next --
       ----------
 
-      overriding function Next
-        (Self    : in out Immediate_Iterator;
-         Element : out Ada_Node) return Boolean
+      overriding
+      function Next
+        (Self : in out Immediate_Iterator; Element : out Ada_Node)
+         return Boolean
       is
          Wrapper : Node_Wrapper;
       begin
@@ -395,10 +423,11 @@ package body LAL.Semantic_Trees is
       -- Sort --
       ----------
 
-      overriding procedure Sort
+      overriding
+      procedure Sort
         (Self      : in out Node_Array;
-         Less_Than : access
-           function (L, R : Semantic_Node'Class) return Boolean)
+         Less_Than :
+           access function (L, R : Semantic_Node'Class) return Boolean)
       is
          function Less (L, R : Nodes.Node) return Boolean;
 
@@ -411,11 +440,12 @@ package body LAL.Semantic_Trees is
             return Less_Than (L, R);
          end Less;
 
-         procedure Do_Sort is new Ada.Containers.Generic_Array_Sort
-           (Index_Type   => Positive,
-            Element_Type => Nodes.Node,
-            Array_Type   => Nodes_Array,
-            "<"          => Less);
+         procedure Do_Sort is new
+           Ada.Containers.Generic_Array_Sort
+             (Index_Type   => Positive,
+              Element_Type => Nodes.Node,
+              Array_Type   => Nodes_Array,
+              "<"          => Less);
       begin
          Do_Sort (Self.Data);
       end Sort;
@@ -424,7 +454,8 @@ package body LAL.Semantic_Trees is
       -- Get --
       ---------
 
-      overriding function Get
+      overriding
+      function Get
         (Self : Node_Array; Index : Positive) return Semantic_Node'Class is
       begin
          return Self.Data (Index);
@@ -434,7 +465,8 @@ package body LAL.Semantic_Trees is
       -- Length --
       ------------
 
-      overriding function Length (Self : Node_Array) return Natural is
+      overriding
+      function Length (Self : Node_Array) return Natural is
       begin
          return Self.Length;
       end Length;
@@ -445,16 +477,17 @@ package body LAL.Semantic_Trees is
 
       function Line
         (Token : Libadalang.Common.Token_Reference)
-         return Langkit_Support.Slocs.Line_Number is
-           (Langkit_Support.Slocs.Start_Sloc
-              (Libadalang.Common.Sloc_Range
-                   (Libadalang.Common.Data (Token))).Line);
+         return Langkit_Support.Slocs.Line_Number
+      is (Langkit_Support.Slocs.Start_Sloc
+            (Libadalang.Common.Sloc_Range (Libadalang.Common.Data (Token)))
+            .Line);
 
       --------------
       -- Is_Valid --
       --------------
 
-      overriding function Is_Valid (Self : Node) return Boolean is
+      overriding
+      function Is_Valid (Self : Node) return Boolean is
       begin
          return Self.Ada_Node /= No_Ada_Node;
       end Is_Valid;
@@ -463,11 +496,11 @@ package body LAL.Semantic_Trees is
       -- Category --
       --------------
 
-      overriding function Category
-        (Self : Node) return Language.Language_Category is
+      overriding
+      function Category (Self : Node) return Language.Language_Category is
       begin
          case Self.Ada_Node.Kind is
-            when Ada_Dotted_Name | Ada_Identifier =>
+            when Ada_Dotted_Name | Ada_Identifier                          =>
                if In_Context (Self.Ada_Node, With_Context) then
                   return Language.Cat_With;
                elsif In_Context (Self.Ada_Node, Use_Context) then
@@ -485,15 +518,16 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Variable;
                   end if;
                end if;
-            when Ada_Generic_Package_Decl |
-                 Ada_Generic_Package_Instantiation |
-                 Ada_Generic_Package_Renaming_Decl |
-                 Ada_Package_Body |
-                 Ada_Package_Decl |
-                 Ada_Package_Renaming_Decl =>
+
+            when Ada_Generic_Package_Decl
+               | Ada_Generic_Package_Instantiation
+               | Ada_Generic_Package_Renaming_Decl
+               | Ada_Package_Body
+               | Ada_Package_Decl
+               | Ada_Package_Renaming_Decl                                 =>
                return Language.Cat_Package;
-            when Ada_Subp_Body |
-                 Ada_Subp_Renaming_Decl =>
+
+            when Ada_Subp_Body | Ada_Subp_Renaming_Decl                    =>
                declare
                   Node : constant Base_Subp_Body :=
                     Self.Ada_Node.As_Base_Subp_Body;
@@ -504,7 +538,8 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Function;
                   end if;
                end;
-            when Ada_Classic_Subp_Decl =>
+
+            when Ada_Classic_Subp_Decl                                     =>
                declare
                   Node : constant Classic_Subp_Decl :=
                     Self.Ada_Node.As_Classic_Subp_Decl;
@@ -515,7 +550,8 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Function;
                   end if;
                end;
-            when Ada_Subp_Body_Stub =>
+
+            when Ada_Subp_Body_Stub                                        =>
                declare
                   Node : constant Subp_Body_Stub :=
                     Self.Ada_Node.As_Subp_Body_Stub;
@@ -526,55 +562,64 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Function;
                   end if;
                end;
-            when Ada_Generic_Subp_Instantiation =>
-               if Self.Ada_Node.As_Generic_Subp_Instantiation.F_Kind in
-                 Ada_Subp_Kind_Procedure
+
+            when Ada_Generic_Subp_Instantiation                            =>
+               if Self.Ada_Node.As_Generic_Subp_Instantiation.F_Kind
+                  in Ada_Subp_Kind_Procedure
                then
                   return Language.Cat_Procedure;
                else
                   return Language.Cat_Function;
                end if;
-            when Ada_Generic_Subp_Renaming_Decl =>
-               if Self.Ada_Node.As_Generic_Subp_Renaming_Decl.F_Kind in
-                 Ada_Subp_Kind_Procedure
+
+            when Ada_Generic_Subp_Renaming_Decl                            =>
+               if Self.Ada_Node.As_Generic_Subp_Renaming_Decl.F_Kind
+                  in Ada_Subp_Kind_Procedure
                then
                   return Language.Cat_Procedure;
                else
                   return Language.Cat_Function;
                end if;
-            when Ada_Generic_Subp_Decl =>
+
+            when Ada_Generic_Subp_Decl                                     =>
                declare
                   Node : constant Generic_Subp_Decl :=
                     Self.Ada_Node.As_Generic_Subp_Decl;
                begin
-                  if Node.F_Subp_Decl.F_Subp_Spec.F_Subp_Returns
-                       = No_Ada_Node
+                  if Node.F_Subp_Decl.F_Subp_Spec.F_Subp_Returns = No_Ada_Node
                   then
                      return Language.Cat_Procedure;
                   else
                      return Language.Cat_Function;
                   end if;
                end;
-            when Ada_Null_Subp_Decl =>
+
+            when Ada_Null_Subp_Decl                                        =>
                return Language.Cat_Procedure;
-            when Ada_Expr_Function =>
+
+            when Ada_Expr_Function                                         =>
                return Language.Cat_Function;
-            when Ada_Enum_Literal_Decl =>
+
+            when Ada_Enum_Literal_Decl                                     =>
                return Language.Cat_Literal;
-            when Ada_Protected_Body |
-                 Ada_Protected_Type_Decl |
-                 Ada_Single_Protected_Decl =>
+
+            when Ada_Protected_Body
+               | Ada_Protected_Type_Decl
+               | Ada_Single_Protected_Decl                                 =>
                return Language.Cat_Protected;
-            when Ada_Entry_Decl =>
+
+            when Ada_Entry_Decl                                            =>
                return Language.Cat_Entry;
-            when Ada_Entry_Body =>
+
+            when Ada_Entry_Body                                            =>
                return Language.Cat_Entry;
-            when Ada_Type_Decl =>
+
+            when Ada_Type_Decl                                             =>
                declare
                   Node : constant Type_Decl := Self.Ada_Node.As_Type_Decl;
                begin
                   if Node.F_Type_Def /= No_Ada_Node
-                     and then Node.F_Type_Def.Kind = Ada_Record_Type_Def
+                    and then Node.F_Type_Def.Kind = Ada_Record_Type_Def
                   then
                      if Node.F_Type_Def.As_Record_Type_Def.F_Has_Tagged then
                         return Language.Cat_Class;
@@ -585,35 +630,50 @@ package body LAL.Semantic_Trees is
                      return Language.Cat_Type;
                   end if;
                end;
-            when Ada_Subtype_Decl =>
+
+            when Ada_Subtype_Decl                                          =>
                return Language.Cat_Subtype;
-            when Ada_If_Stmt =>
+
+            when Ada_If_Stmt                                               =>
                return Language.Cat_If_Statement;
-            when Ada_Loop_Stmt | Ada_For_Loop_Stmt =>
+
+            when Ada_Loop_Stmt | Ada_For_Loop_Stmt                         =>
                return Language.Cat_Loop_Statement;
-            when Ada_Case_Stmt =>
+
+            when Ada_Case_Stmt                                             =>
                return Language.Cat_Case_Statement;
-            when Ada_Begin_Block =>
+
+            when Ada_Begin_Block                                           =>
                return Language.Cat_Simple_Block;
-            when Ada_Decl_Block =>
+
+            when Ada_Decl_Block                                            =>
                return Language.Cat_Declare_Block;
-            when Ada_Pragma_Node =>
+
+            when Ada_Pragma_Node                                           =>
                return Language.Cat_Pragma;
-            when Ada_Extended_Return_Stmt =>
+
+            when Ada_Extended_Return_Stmt                                  =>
                return Language.Cat_Return_Block;
-            when Ada_For_Loop_Spec =>
+
+            when Ada_For_Loop_Spec                                         =>
                return Language.Cat_Local_Variable;
-            when Ada_Exception_Handler =>
+
+            when Ada_Exception_Handler                                     =>
                return Language.Cat_Exception_Handler;
-            when Ada_Attribute_Def_Clause =>
+
+            when Ada_Attribute_Def_Clause                                  =>
                return Language.Cat_Representation_Clause;
-            when Ada_Aspect_Spec | Ada_Aspect_Assoc =>
+
+            when Ada_Aspect_Spec | Ada_Aspect_Assoc                        =>
                return Language.Cat_Aspect;
-            when Ada_Variant_Part =>
+
+            when Ada_Variant_Part                                          =>
                return Language.Cat_Case_Inside_Record;
+
             when Ada_Single_Task_Decl | Ada_Task_Body | Ada_Task_Type_Decl =>
                return Language.Cat_Task;
-            when others =>
+
+            when others                                                    =>
                null;
          end case;
 
@@ -624,31 +684,33 @@ package body LAL.Semantic_Trees is
       -- Is_Declaration --
       --------------------
 
-      overriding function Is_Declaration (Self : Node) return Boolean is
+      overriding
+      function Is_Declaration (Self : Node) return Boolean is
       begin
          case Self.Ada_Node.Kind is
-            when Ada_Generic_Package_Decl |
-                 Ada_Generic_Package_Instantiation |
-                 Ada_Generic_Package_Renaming_Decl |
-                 Ada_Package_Decl |
-                 Ada_Package_Renaming_Decl |
-                 Ada_Abstract_Subp_Decl |
-                 Ada_Formal_Subp_Decl |
-                 Ada_Subp_Decl |
-                 Ada_Subp_Renaming_Decl |
-                 Ada_Generic_Subp_Instantiation |
-                 Ada_Generic_Subp_Renaming_Decl |
-                 Ada_Generic_Subp_Decl |
-                 Ada_Null_Subp_Decl |
-                 Ada_Expr_Function |
-                 Ada_Protected_Type_Decl |
-                 Ada_Single_Protected_Decl |
-                 Ada_Entry_Decl |
-                 Ada_Type_Decl |
-                 Ada_Single_Task_Decl |
-                 Ada_Task_Type_Decl =>
+            when Ada_Generic_Package_Decl
+               | Ada_Generic_Package_Instantiation
+               | Ada_Generic_Package_Renaming_Decl
+               | Ada_Package_Decl
+               | Ada_Package_Renaming_Decl
+               | Ada_Abstract_Subp_Decl
+               | Ada_Formal_Subp_Decl
+               | Ada_Subp_Decl
+               | Ada_Subp_Renaming_Decl
+               | Ada_Generic_Subp_Instantiation
+               | Ada_Generic_Subp_Renaming_Decl
+               | Ada_Generic_Subp_Decl
+               | Ada_Null_Subp_Decl
+               | Ada_Expr_Function
+               | Ada_Protected_Type_Decl
+               | Ada_Single_Protected_Decl
+               | Ada_Entry_Decl
+               | Ada_Type_Decl
+               | Ada_Single_Task_Decl
+               | Ada_Task_Type_Decl =>
                return True;
-            when others =>
+
+            when others             =>
                return False;
          end case;
       end Is_Declaration;
@@ -657,19 +719,18 @@ package body LAL.Semantic_Trees is
       -- Children --
       --------------
 
-      overriding function Children
-        (Self : Node) return Semantic_Node_Array'Class
-      is
+      overriding
+      function Children (Self : Node) return Semantic_Node_Array'Class is
          Immediate : aliased Immediate_Iterators.Immediate_Iterator :=
            Immediate_Iterators.Children (Self.Ada_Node);
          Exposed   : Exposed_Iterators.Exposed_Iterator (Immediate'Access);
-         Vector : constant Libadalang.Analysis.Ada_Node_Array :=
+         Vector    : constant Libadalang.Analysis.Ada_Node_Array :=
            Exposed.Consume;
       begin
          return Result : Node_Arrays.Node_Array (Vector'Length) do
             for J in Vector'Range loop
-               Result.Data (J) := (Provider => Self.Provider,
-                                   Ada_Node => Vector (J));
+               Result.Data (J) :=
+                 (Provider => Self.Provider, Ada_Node => Vector (J));
             end loop;
          end return;
       end Children;
@@ -678,9 +739,8 @@ package body LAL.Semantic_Trees is
       -- First_Child --
       -----------------
 
-      overriding function First_Child
-        (Self : Node) return Semantic_Node'Class
-      is
+      overriding
+      function First_Child (Self : Node) return Semantic_Node'Class is
          Immediate : aliased Immediate_Iterators.Immediate_Iterator :=
            Immediate_Iterators.Children (Self.Ada_Node);
          Exposed   : Exposed_Iterators.Exposed_Iterator (Immediate'Access);
@@ -697,7 +757,8 @@ package body LAL.Semantic_Trees is
       -- Parent --
       ------------
 
-      overriding function Parent (Self : Node) return Semantic_Node'Class is
+      overriding
+      function Parent (Self : Node) return Semantic_Node'Class is
          Result : Libadalang.Analysis.Ada_Node := Self.Ada_Node.Parent;
       begin
          while Result /= No_Ada_Node and then not Is_Exposed (Result) loop
@@ -715,7 +776,8 @@ package body LAL.Semantic_Trees is
       -- Name --
       ----------
 
-      overriding function Name (Self : Node) return GNATCOLL.Symbols.Symbol is
+      overriding
+      function Name (Self : Node) return GNATCOLL.Symbols.Symbol is
 
          function To_Symbol
            (Node : Libadalang.Analysis.Ada_Node'Class)
@@ -741,12 +803,13 @@ package body LAL.Semantic_Trees is
                   declare
                      Token : constant Token_Reference := Node.Token_Start;
                   begin
-                     return Self.Provider.Kernel.Symbols.Find
-                       (Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode
-                          (Text (Token)));
+                     return
+                       Self.Provider.Kernel.Symbols.Find
+                         (Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode
+                            (Text (Token)));
                   end;
 
-               when Ada_Dotted_Name =>
+               when Ada_Dotted_Name                                        =>
                   declare
                      use Ada.Strings.Unbounded;
                      Image : Unbounded_String;
@@ -760,14 +823,14 @@ package body LAL.Semantic_Trees is
                         end if;
                      end loop;
 
-                     return Self.Provider.Kernel.Symbols.Find
-                       (To_String (Image));
+                     return
+                       Self.Provider.Kernel.Symbols.Find (To_String (Image));
                   end;
 
-               when Ada_Defining_Name =>
+               when Ada_Defining_Name                                      =>
                   return To_Symbol (Node.As_Defining_Name.F_Name);
 
-               when others =>
+               when others                                                 =>
                   raise Constraint_Error;
             end case;
          end To_Symbol;
@@ -778,57 +841,57 @@ package body LAL.Semantic_Trees is
             when Ada_Identifier | Ada_Dotted_Name =>
                Result := To_Symbol (Self.Ada_Node);
 
-            when Ada_Abstract_Subp_Decl |
-                 Ada_Entry_Decl |
-                 Ada_Entry_Body |
-                 Ada_Enum_Literal_Decl |
-                 Ada_Expr_Function |
-                 Ada_Formal_Subp_Decl |
-                 Ada_Generic_Package_Decl |
-                 Ada_Generic_Package_Instantiation |
-                 Ada_Generic_Package_Renaming_Decl |
-                 Ada_Generic_Subp_Decl |
-                 Ada_Generic_Subp_Instantiation |
-                 Ada_Generic_Subp_Renaming_Decl |
-                 Ada_Null_Subp_Decl |
-                 Ada_Package_Body |
-                 Ada_Package_Decl |
-                 Ada_Package_Renaming_Decl |
-                 Ada_Protected_Body |
-                 Ada_Protected_Type_Decl |
-                 Ada_Single_Protected_Decl |
-                 Ada_Single_Task_Decl |
-                 Ada_Subp_Body |
-                 Ada_Subp_Decl |
-                 Ada_Subp_Renaming_Decl |
-                 Ada_Subtype_Decl |
-                 Ada_Task_Body |
-                 Ada_Task_Type_Decl |
-                 Ada_Type_Decl =>
+            when Ada_Abstract_Subp_Decl
+               | Ada_Entry_Decl
+               | Ada_Entry_Body
+               | Ada_Enum_Literal_Decl
+               | Ada_Expr_Function
+               | Ada_Formal_Subp_Decl
+               | Ada_Generic_Package_Decl
+               | Ada_Generic_Package_Instantiation
+               | Ada_Generic_Package_Renaming_Decl
+               | Ada_Generic_Subp_Decl
+               | Ada_Generic_Subp_Instantiation
+               | Ada_Generic_Subp_Renaming_Decl
+               | Ada_Null_Subp_Decl
+               | Ada_Package_Body
+               | Ada_Package_Decl
+               | Ada_Package_Renaming_Decl
+               | Ada_Protected_Body
+               | Ada_Protected_Type_Decl
+               | Ada_Single_Protected_Decl
+               | Ada_Single_Task_Decl
+               | Ada_Subp_Body
+               | Ada_Subp_Decl
+               | Ada_Subp_Renaming_Decl
+               | Ada_Subtype_Decl
+               | Ada_Task_Body
+               | Ada_Task_Type_Decl
+               | Ada_Type_Decl                    =>
 
-               Result := To_Symbol
-                 (Self.Ada_Node.As_Basic_Decl.P_Defining_Name);
+               Result :=
+                 To_Symbol (Self.Ada_Node.As_Basic_Decl.P_Defining_Name);
 
-            when Ada_Pragma_Node =>
+            when Ada_Pragma_Node                  =>
                Result := To_Symbol (Self.Ada_Node.As_Pragma_Node.F_Id);
 
-            when Ada_For_Loop_Spec =>
-               Result := To_Symbol
-                 (Self.Ada_Node.As_For_Loop_Spec.F_Var_Decl.F_Id);
+            when Ada_For_Loop_Spec                =>
+               Result :=
+                 To_Symbol (Self.Ada_Node.As_For_Loop_Spec.F_Var_Decl.F_Id);
 
-            when Ada_Aspect_Spec |
-                 Ada_Attribute_Def_Clause |
-                 Ada_Block_Stmt |
-                 Ada_Case_Stmt |
-                 Ada_Exception_Handler |
-                 Ada_Extended_Return_Stmt |
-                 Ada_If_Stmt |
-                 Ada_Loop_Stmt |
-                 Ada_For_Loop_Stmt |
-                 Ada_Variant_Part =>
+            when Ada_Aspect_Spec
+               | Ada_Attribute_Def_Clause
+               | Ada_Block_Stmt
+               | Ada_Case_Stmt
+               | Ada_Exception_Handler
+               | Ada_Extended_Return_Stmt
+               | Ada_If_Stmt
+               | Ada_Loop_Stmt
+               | Ada_For_Loop_Stmt
+               | Ada_Variant_Part                 =>
                null;
 
-            when others =>
+            when others                           =>
                null;
          end case;
 
@@ -839,7 +902,8 @@ package body LAL.Semantic_Trees is
       -- Sloc_Start --
       ----------------
 
-      overriding function Sloc_Start (Self : Node) return Language.Sloc_T is
+      overriding
+      function Sloc_Start (Self : Node) return Language.Sloc_T is
          use type Langkit_Support.Slocs.Line_Number;
 
          S : constant Langkit_Support.Slocs.Source_Location_Range :=
@@ -865,7 +929,8 @@ package body LAL.Semantic_Trees is
       -- Sloc_Def --
       --------------
 
-      overriding function Sloc_Def (Self : Node) return Language.Sloc_T is
+      overriding
+      function Sloc_Def (Self : Node) return Language.Sloc_T is
          Result : Language.Sloc_T := (0, 0, 0);
 
          function Find_Name (Node : Ada_Node'Class) return Visit_Status;
@@ -881,15 +946,16 @@ package body LAL.Semantic_Trees is
          begin
             if Node /= No_Ada_Node then
                declare
-                  Sloc : constant
-                    Langkit_Support.Slocs.Source_Location_Range :=
+                  Sloc :
+                    constant Langkit_Support.Slocs.Source_Location_Range :=
                       Node.Sloc_Range;
                begin
                   --  Set the Index at 1 to trick the Outline:
                   --  Otherwise the Outline will use Sloc_Start
-                  return (Line   => Natural (Sloc.Start_Line),
-                          Column => Visible_Column (Sloc.Start_Column),
-                          Index  => 1);
+                  return
+                    (Line   => Natural (Sloc.Start_Line),
+                     Column => Visible_Column (Sloc.Start_Column),
+                     Index  => 1);
                end;
             else
                return (0, 0, 0);
@@ -906,10 +972,12 @@ package body LAL.Semantic_Trees is
                when Ada_Basic_Decl =>
                   Result := Get_Sloc (Node.As_Basic_Decl.P_Defining_Name);
                   return Stop;
+
                when Ada_Identifier =>
                   Result := Get_Sloc (Node.As_Identifier);
                   return Stop;
-               when others =>
+
+               when others         =>
                   return Into;
             end case;
          end Find_Name;
@@ -922,7 +990,8 @@ package body LAL.Semantic_Trees is
       -- Sloc_End --
       --------------
 
-      overriding function Sloc_End (Self : Node) return Language.Sloc_T is
+      overriding
+      function Sloc_End (Self : Node) return Language.Sloc_T is
          use type Langkit_Support.Slocs.Line_Number;
 
          function Last_Column_In_Line
@@ -931,13 +1000,14 @@ package body LAL.Semantic_Trees is
          function Last_Column_In_Line
            (Token : Libadalang.Common.Token_Reference) return Visible_Column
          is
-            Next  : Token_Reference := Token;
+            Next : Token_Reference := Token;
          begin
             while Next /= Libadalang.Common.No_Token loop
                declare
                   Value : constant Token_Data_Type := Data (Next);
-                  Span  : constant Langkit_Support.Slocs.Source_Location_Range
-                    := Sloc_Range (Value);
+                  Span  :
+                    constant Langkit_Support.Slocs.Source_Location_Range :=
+                      Sloc_Range (Value);
                begin
                   if Kind (Value) in Libadalang.Common.Ada_Whitespace
                     and then Span.Start_Line /= Span.End_Line
@@ -975,9 +1045,9 @@ package body LAL.Semantic_Trees is
       -- Profile --
       -------------
 
-      overriding function Profile
-        (Self             : Node;
-         Show_Param_Names : Boolean := True)
+      overriding
+      function Profile
+        (Self : Node; Show_Param_Names : Boolean := True)
          return GNATCOLL.Symbols.Symbol
       is
 
@@ -1006,12 +1076,14 @@ package body LAL.Semantic_Trees is
                         Mode : constant Ada_Mode := Param.F_Mode;
                      begin
                         case Mode is
-                        when Ada_Mode_Default | Ada_Mode_In =>
-                           Append (Item, " in ");
-                        when Ada_Mode_In_Out =>
-                           Append (Item, " in out ");
-                        when Ada_Mode_Out =>
-                           Append (Item, " out ");
+                           when Ada_Mode_Default | Ada_Mode_In =>
+                              Append (Item, " in ");
+
+                           when Ada_Mode_In_Out                =>
+                              Append (Item, " in out ");
+
+                           when Ada_Mode_Out                   =>
+                              Append (Item, " out ");
                         end case;
                      end;
                   end if;
@@ -1023,8 +1095,7 @@ package body LAL.Semantic_Trees is
                      Append (Item, To_Text (Init));
                   end if;
 
-                  for J in
-                    Names.First_Child_Index .. Names.Last_Child_Index
+                  for J in Names.First_Child_Index .. Names.Last_Child_Index
                   loop
                      if Length (Result) /= 1 then
                         Append (Result, "; ");
@@ -1055,19 +1126,27 @@ package body LAL.Semantic_Trees is
       begin
          case Self.Ada_Node.Kind is
             when Ada_Classic_Subp_Decl =>
-               return Self.Provider.Kernel.Symbols.Find
-                 (To_Profile
-                    (Self.Ada_Node.As_Classic_Subp_Decl.F_Subp_Spec));
-            when Ada_Base_Subp_Body =>
-               return Self.Provider.Kernel.Symbols.Find
-                 (To_Profile
-                    (Self.Ada_Node.As_Base_Subp_Body.F_Subp_Spec));
-            when Ada_Generic_Subp_Decl  =>
-               return Self.Provider.Kernel.Symbols.Find
-                 (To_Profile
-                    (Self.Ada_Node.As_Generic_Subp_Decl.
-                         F_Subp_Decl.F_Subp_Spec));
-            when others =>
+               return
+                 Self.Provider.Kernel.Symbols.Find
+                   (To_Profile
+                      (Self.Ada_Node.As_Classic_Subp_Decl.F_Subp_Spec));
+
+            when Ada_Base_Subp_Body    =>
+               return
+                 Self.Provider.Kernel.Symbols.Find
+                   (To_Profile (Self.Ada_Node.As_Base_Subp_Body.F_Subp_Spec));
+
+            when Ada_Generic_Subp_Decl =>
+               return
+                 Self.Provider.Kernel.Symbols.Find
+                   (To_Profile
+                      (Self
+                         .Ada_Node
+                         .As_Generic_Subp_Decl
+                         .F_Subp_Decl
+                         .F_Subp_Spec));
+
+            when others                =>
                return GNATCOLL.Symbols.No_Symbol;
          end case;
 
@@ -1077,9 +1156,8 @@ package body LAL.Semantic_Trees is
       -- Definition --
       ----------------
 
-      overriding function Definition
-        (Self : Node) return Semantic_Node'Class
-      is
+      overriding
+      function Definition (Self : Node) return Semantic_Node'Class is
          pragma Unreferenced (Self);
       begin
          --  TODO: implement Definition
@@ -1090,11 +1168,10 @@ package body LAL.Semantic_Trees is
       -- Get_Hash --
       --------------
 
-      overriding function Get_Hash
-        (Self : Node) return Ada.Containers.Hash_Type
-      is
+      overriding
+      function Get_Hash (Self : Node) return Ada.Containers.Hash_Type is
          use Ada.Containers;
-         S : constant Langkit_Support.Slocs.Source_Location_Range :=
+         S    : constant Langkit_Support.Slocs.Source_Location_Range :=
            Self.Ada_Node.Sloc_Range;
          From : constant Hash_Type :=
            Hash_Type (S.Start_Column) * 2017 + Hash_Type (S.Start_Line);
@@ -1108,25 +1185,23 @@ package body LAL.Semantic_Trees is
       -- File --
       ----------
 
-      overriding function File
-        (Self : Node) return GNATCOLL.VFS.Virtual_File
-      is
+      overriding
+      function File (Self : Node) return GNATCOLL.VFS.Virtual_File is
          Unit      : constant Libadalang.Analysis.Analysis_Unit :=
            Libadalang.Analysis.Unit (Self.Ada_Node);
          File_Name : constant String :=
            Libadalang.Analysis.Get_Filename (Unit);
       begin
-         return GNATCOLL.VFS.Create
-           (GNATCOLL.VFS.Filesystem_String (File_Name));
+         return
+           GNATCOLL.VFS.Create (GNATCOLL.VFS.Filesystem_String (File_Name));
       end File;
 
       ---------------
       -- Unique_Id --
       ---------------
 
-      overriding function Unique_Id
-        (Self : Node) return GNATCOLL.Symbols.Symbol
-      is
+      overriding
+      function Unique_Id (Self : Node) return GNATCOLL.Symbols.Symbol is
          Image : String := Ada.Containers.Hash_Type'Image (Self.Get_Hash);
       begin
          Image (Image'First) := 'U';
@@ -1138,8 +1213,8 @@ package body LAL.Semantic_Trees is
       -- Visibility --
       ----------------
 
-      overriding function Visibility
-        (Self : Node) return Language.Construct_Visibility is
+      overriding
+      function Visibility (Self : Node) return Language.Construct_Visibility is
       begin
          for Node of Self.Ada_Node.Parents loop
             if Node.Kind = Ada_Private_Part then
@@ -1155,7 +1230,8 @@ package body LAL.Semantic_Trees is
       -- Documentation_Header --
       --------------------------
 
-      overriding function Documentation_Header (Self : Node) return String is
+      overriding
+      function Documentation_Header (Self : Node) return String is
       begin
          return "<b>" & GNATCOLL.Symbols.Get (Self.Name).all & "</b>";
       end Documentation_Header;
@@ -1168,8 +1244,8 @@ package body LAL.Semantic_Trees is
       -- Root_Iterator --
       -------------------
 
-      overriding function Root_Iterator
-        (Self : Tree) return Semantic_Tree_Iterator'Class
+      overriding
+      function Root_Iterator (Self : Tree) return Semantic_Tree_Iterator'Class
       is
          Root : constant Ada_Node := Self.Unit.Root;
 
@@ -1178,14 +1254,16 @@ package body LAL.Semantic_Trees is
             return No_Semantic_Tree.Root_Iterator;
          end if;
 
-         return Result : Iterators.Iterator :=
-           (Cursor => Iterators.Holders.To_Holder
-              (Libadalang.Iterators.Traverse_Iterator
-                   (Libadalang.Iterators.Find (Root, Is_Exposed'Access))),
-            others => <>)
+         return
+            Result : Iterators.Iterator :=
+              (Cursor =>
+                 Iterators.Holders.To_Holder
+                   (Libadalang.Iterators.Traverse_Iterator
+                      (Libadalang.Iterators.Find (Root, Is_Exposed'Access))),
+               others => <>)
          do
-            Result.Done := not Result.Cursor.Reference.Next
-              (Result.Node.Ada_Node);
+            Result.Done :=
+              not Result.Cursor.Reference.Next (Result.Node.Ada_Node);
             Result.Node.Provider := Self.Provider;
          end return;
       end Root_Iterator;
@@ -1194,9 +1272,8 @@ package body LAL.Semantic_Trees is
       -- Root_Nodes --
       ----------------
 
-      overriding function Root_Nodes
-        (Self : Tree) return Semantic_Node_Array'Class
-      is
+      overriding
+      function Root_Nodes (Self : Tree) return Semantic_Node_Array'Class is
          Root : constant Ada_Node := Self.Unit.Root;
 
       begin
@@ -1208,13 +1285,13 @@ package body LAL.Semantic_Trees is
             Immediate : aliased Immediate_Iterators.Immediate_Iterator :=
               Immediate_Iterators.Children (Root);
             Exposed   : Exposed_Iterators.Exposed_Iterator (Immediate'Access);
-            Vector : constant Libadalang.Analysis.Ada_Node_Array :=
+            Vector    : constant Libadalang.Analysis.Ada_Node_Array :=
               Exposed.Consume;
          begin
             return Result : Node_Arrays.Node_Array (Vector'Length) do
                for J in Vector'Range loop
-                  Result.Data (J) := (Provider => Self.Provider,
-                                      Ada_Node => Vector (J));
+                  Result.Data (J) :=
+                    (Provider => Self.Provider, Ada_Node => Vector (J));
                end loop;
             end return;
          end;
@@ -1224,7 +1301,8 @@ package body LAL.Semantic_Trees is
       -- Node_At --
       -------------
 
-      overriding function Node_At
+      overriding
+      function Node_At
         (Self            : Tree;
          Sloc            : Language.Sloc_T;
          Category_Filter : Language.Tree.Category_Array :=
@@ -1262,20 +1340,23 @@ package body LAL.Semantic_Trees is
             Step := Libadalang.Common.Next (Token, Exclude_Trivia => True);
 
             if Step /= Libadalang.Common.No_Token then
-               Result := Start_Sloc (Libadalang.Common.Sloc_Range
-                                       (Libadalang.Common.Data (Step)));
+               Result :=
+                 Start_Sloc
+                   (Libadalang.Common.Sloc_Range
+                      (Libadalang.Common.Data (Step)));
 
                if Result.Line = Loc.Line then
                   return Result;
                end if;
             end if;
 
-            Step := Libadalang.Common.Previous
-              (Token, Exclude_Trivia => True);
+            Step := Libadalang.Common.Previous (Token, Exclude_Trivia => True);
 
             if Step /= Libadalang.Common.No_Token then
-               Result := Start_Sloc (Libadalang.Common.Sloc_Range
-                                       (Libadalang.Common.Data (Step)));
+               Result :=
+                 Start_Sloc
+                   (Libadalang.Common.Sloc_Range
+                      (Libadalang.Common.Data (Step)));
 
                if Result.Line = Loc.Line then
                   return Result;
@@ -1299,14 +1380,16 @@ package body LAL.Semantic_Trees is
          while Node /= No_Ada_Node loop
             if Is_Exposed (Node) then
                declare
-                  Result : constant Nodes.Node :=
+                  Result   : constant Nodes.Node :=
                     (Provider => Self.Provider, Ada_Node => Node);
                   Category : constant Language.Language_Category :=
                     Result.Category;
                begin
                   --  Apply Category_Filter if present
-                  if Category_Filter'Length = 0 or else
-                    (for some Element of Category_Filter => Element = Category)
+                  if Category_Filter'Length = 0
+                    or else
+                      (for some Element of Category_Filter =>
+                         Element = Category)
                   then
                      return Result;
                   end if;
@@ -1323,8 +1406,8 @@ package body LAL.Semantic_Trees is
       -- File --
       ----------
 
-      overriding function File
-        (Self : Tree) return GNATCOLL.VFS.Virtual_File is
+      overriding
+      function File (Self : Tree) return GNATCOLL.VFS.Virtual_File is
       begin
          return Self.File;
       end File;
@@ -1333,11 +1416,11 @@ package body LAL.Semantic_Trees is
       -- Update --
       ------------
 
-      overriding procedure Update (Self : in out Tree) is
+      overriding
+      procedure Update (Self : in out Tree) is
          use type GPS.Editors.Editor_Buffer'Class;
 
-         Name   : constant GNATCOLL.VFS.Filesystem_String :=
-           Self.File.Full_Name;
+         Name : constant GNATCOLL.VFS.Filesystem_String := Self.File.Full_Name;
 
          Buffer : constant GPS.Editors.Editor_Buffer'Class :=
            Self.Kernel.Get_Buffer_Factory.Get
@@ -1346,16 +1429,16 @@ package body LAL.Semantic_Trees is
          if Buffer = GPS.Editors.Nil_Editor_Buffer then
             Self.Unit :=
               Libadalang.Analysis.Get_From_File
-                (Context     => Self.Context,
-                 Filename    => String (Name),
-                 Reparse     => True);
+                (Context  => Self.Context,
+                 Filename => String (Name),
+                 Reparse  => True);
          else
             Self.Unit :=
               Libadalang.Analysis.Get_From_Buffer
-                (Context     => Self.Context,
-                 Filename    => String (Name),
-                 Buffer      => Buffer.Get_Chars_U,
-                 Charset     => "UTF-8");
+                (Context  => Self.Context,
+                 Filename => String (Name),
+                 Buffer   => Buffer.Get_Chars_U,
+                 Charset  => "UTF-8");
          end if;
       end Update;
 
@@ -1363,7 +1446,8 @@ package body LAL.Semantic_Trees is
       -- Update_Async --
       ------------------
 
-      overriding procedure Update_Async (Self : in out Tree) is
+      overriding
+      procedure Update_Async (Self : in out Tree) is
       begin
          Self.Update;
          Self.Kernel.Semantic_Tree_Updated (Self.File);
@@ -1375,21 +1459,23 @@ package body LAL.Semantic_Trees is
    -- Get_Tree_For_File --
    -----------------------
 
-   overriding function Get_Tree_For_File
+   overriding
+   function Get_Tree_For_File
      (Self    : in out Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
       pragma Unreferenced (Context);
 
-      Name   : constant GNATCOLL.VFS.Filesystem_String := File.Full_Name;
+      Name : constant GNATCOLL.VFS.Filesystem_String := File.Full_Name;
 
       Result : Trees.Tree :=
-        Trees.Tree'(Kernel   => Self.Kernel,
-                    Context  => Self.Context,
-                    File     => File,
-                    Unit     => <>,
-                    Provider => Self'Unchecked_Access);  --  We have only
+        Trees.Tree'
+          (Kernel   => Self.Kernel,
+           Context  => Self.Context,
+           File     => File,
+           Unit     => <>,
+           Provider => Self'Unchecked_Access);  --  We have only
       --  one Provider and its lifespan is the same as GNAT Studio instance,
       --  so it's save to get access to it.
 
@@ -1397,8 +1483,7 @@ package body LAL.Semantic_Trees is
       if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then
          Result.Unit :=
            Libadalang.Analysis.Get_From_File
-             (Context     => Self.Context,
-              Filename    => String (Name));
+             (Context => Self.Context, Filename => String (Name));
 
       else
          Result.Update;
@@ -1412,14 +1497,13 @@ package body LAL.Semantic_Trees is
    ----------------
 
    function In_Context
-     (Element  : Ada_Node;
-      Contexts : Ada_Node_Kind_Array) return Boolean
+     (Element : Ada_Node; Contexts : Ada_Node_Kind_Array) return Boolean
    is
       Node  : Ada_Node;
       Index : Natural;
    begin
       for J in Contexts'Range (1) loop
-         Node  := Element.Parent;
+         Node := Element.Parent;
          Index := Contexts'Last (2);
 
          while Node /= No_Ada_Node
@@ -1452,8 +1536,9 @@ package body LAL.Semantic_Trees is
          return Langkit_Support.Text.To_UTF8 (Element.Text);
       else
          --  Unparsing the LAL node generates a pretty-print single line string
-         return Langkit_Support.Text.Encode
-                  (Element.Text, Element.Unit.Get_Charset);
+         return
+           Langkit_Support.Text.Encode
+             (Element.Text, Element.Unit.Get_Charset);
       end if;
    end To_Text;
 
@@ -1465,56 +1550,57 @@ package body LAL.Semantic_Trees is
    begin
       case Element.Kind is
          when Ada_Dotted_Name | Ada_Identifier =>
-            return In_Context (Element, With_Context)
+            return
+              In_Context (Element, With_Context)
               or else In_Context (Element, Use_Context)
               or else In_Context (Element, Param_Context)
               or else In_Context (Element, Field_Context)
               or else In_Context (Element, Object_Context)
               or else In_Context (Element, Discriminant_Context);
 
-         when Ada_Abstract_Subp_Decl |
-              Ada_Aspect_Spec |
-              Ada_Aspect_Assoc |
-              Ada_Attribute_Def_Clause |
-              Ada_Block_Stmt |
-              Ada_Case_Stmt |
-              Ada_Entry_Decl |
-              Ada_Entry_Body |
-              Ada_Enum_Literal_Decl |
-              Ada_Exception_Handler |
-              Ada_Expr_Function |
-              Ada_Extended_Return_Stmt |
-              Ada_For_Loop_Spec |
-              Ada_Formal_Subp_Decl |
-              Ada_Generic_Package_Decl |
-              Ada_Generic_Package_Instantiation |
-              Ada_Generic_Package_Renaming_Decl |
-              Ada_Generic_Subp_Decl |
-              Ada_Generic_Subp_Instantiation |
-              Ada_Generic_Subp_Renaming_Decl |
-              Ada_If_Stmt |
-              Ada_Loop_Stmt |
-              Ada_For_Loop_Stmt |
-              Ada_Null_Subp_Decl |
-              Ada_Package_Body |
-              Ada_Package_Decl |
-              Ada_Package_Renaming_Decl |
-              Ada_Pragma_Node |
-              Ada_Protected_Body |
-              Ada_Protected_Type_Decl |
-              Ada_Single_Protected_Decl |
-              Ada_Single_Task_Decl |
-              Ada_Subp_Body |
-              Ada_Subp_Decl |
-              Ada_Subp_Renaming_Decl |
-              Ada_Subtype_Decl |
-              Ada_Task_Body |
-              Ada_Task_Type_Decl |
-              Ada_Type_Decl |
-              Ada_Variant_Part =>
+         when Ada_Abstract_Subp_Decl
+            | Ada_Aspect_Spec
+            | Ada_Aspect_Assoc
+            | Ada_Attribute_Def_Clause
+            | Ada_Block_Stmt
+            | Ada_Case_Stmt
+            | Ada_Entry_Decl
+            | Ada_Entry_Body
+            | Ada_Enum_Literal_Decl
+            | Ada_Exception_Handler
+            | Ada_Expr_Function
+            | Ada_Extended_Return_Stmt
+            | Ada_For_Loop_Spec
+            | Ada_Formal_Subp_Decl
+            | Ada_Generic_Package_Decl
+            | Ada_Generic_Package_Instantiation
+            | Ada_Generic_Package_Renaming_Decl
+            | Ada_Generic_Subp_Decl
+            | Ada_Generic_Subp_Instantiation
+            | Ada_Generic_Subp_Renaming_Decl
+            | Ada_If_Stmt
+            | Ada_Loop_Stmt
+            | Ada_For_Loop_Stmt
+            | Ada_Null_Subp_Decl
+            | Ada_Package_Body
+            | Ada_Package_Decl
+            | Ada_Package_Renaming_Decl
+            | Ada_Pragma_Node
+            | Ada_Protected_Body
+            | Ada_Protected_Type_Decl
+            | Ada_Single_Protected_Decl
+            | Ada_Single_Task_Decl
+            | Ada_Subp_Body
+            | Ada_Subp_Decl
+            | Ada_Subp_Renaming_Decl
+            | Ada_Subtype_Decl
+            | Ada_Task_Body
+            | Ada_Task_Type_Decl
+            | Ada_Type_Decl
+            | Ada_Variant_Part                 =>
             return True;
 
-         when others =>
+         when others                           =>
             return False;
       end case;
    end Is_Exposed;
@@ -1530,7 +1616,8 @@ package body LAL.Semantic_Trees is
          case Next.Kind is
             when Ada_Subp_Body | Ada_Task_Body | Ada_Entry_Body =>
                return True;
-            when others =>
+
+            when others                                         =>
                null;
          end case;
 

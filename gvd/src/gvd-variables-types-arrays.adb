@@ -25,20 +25,21 @@ package body GVD.Variables.Types.Arrays is
       Item  : GVD_Array_Type_Access;
       Child : Natural;
    end record;
-   overriding procedure Next (Iter : in out Array_Iterator);
-   overriding function At_End (Iter : Array_Iterator) return Boolean;
-   overriding function Data
-     (Iter : Array_Iterator)
-      return GVD_Type_Holder'Class;
-   overriding function Field_Name
+   overriding
+   procedure Next (Iter : in out Array_Iterator);
+   overriding
+   function At_End (Iter : Array_Iterator) return Boolean;
+   overriding
+   function Data (Iter : Array_Iterator) return GVD_Type_Holder'Class;
+   overriding
+   function Field_Name
      (Iter : Array_Iterator;
       Lang : not null access Language_Root'Class;
       Base : String := "") return String;
 
    function Index_String
-     (Item    : GVD_Array_Type'Class;
-      Index   : Long_Integer;
-      Dim_Num : Positive) return String;
+     (Item : GVD_Array_Type'Class; Index : Long_Integer; Dim_Num : Positive)
+      return String;
    --  Return the string indicating the coordinates in the array, for the
    --  element at Index.
 
@@ -46,9 +47,11 @@ package body GVD.Variables.Types.Arrays is
    -- At_End --
    ------------
 
-   overriding function At_End (Iter : Array_Iterator) return Boolean is
+   overriding
+   function At_End (Iter : Array_Iterator) return Boolean is
    begin
-      return Iter.Item.Values.Is_Empty
+      return
+        Iter.Item.Values.Is_Empty
         or else Iter.Child > Positive (Iter.Item.Values.Length);
    end At_End;
 
@@ -56,8 +59,8 @@ package body GVD.Variables.Types.Arrays is
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self : not null access GVD_Array_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_Array_Type) is
    begin
       if not Self.Values.Is_Empty then
          --  Free the whole memory for the items, since the type is in fact
@@ -72,7 +75,8 @@ package body GVD.Variables.Types.Arrays is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Array_Type;
       Item : not null GVD_Generic_Type_Access)
    is
@@ -81,7 +85,7 @@ package body GVD.Variables.Types.Arrays is
       GVD_Generic_Type (Self.all).Clone (Item);
 
       --  ??? Should duplicate the values as well....
-      Self.Values    := Array_Item_Vectors.Empty_Vector;
+      Self.Values := Array_Item_Vectors.Empty_Vector;
       Self.Item_Type := Src.Item_Type.Clone;
    end Clone;
 
@@ -89,8 +93,8 @@ package body GVD.Variables.Types.Arrays is
    -- Data --
    ----------
 
-   overriding function Data
-     (Iter : Array_Iterator) return GVD_Type_Holder'Class is
+   overriding
+   function Data (Iter : Array_Iterator) return GVD_Type_Holder'Class is
    begin
       return Iter.Item.Values (Iter.Child).Value;
    end Data;
@@ -99,25 +103,27 @@ package body GVD.Variables.Types.Arrays is
    -- Field_Name --
    ----------------
 
-   overriding function Field_Name
+   overriding
+   function Field_Name
      (Iter : Array_Iterator;
       Lang : not null access Language_Root'Class;
       Base : String := "") return String
    is
-      Idx : constant String := Index_String
-        (Iter.Item.all,
-         Iter.Item.Values (Iter.Child).Index,
-         Iter.Item.Num_Dimensions);
+      Idx : constant String :=
+        Index_String
+          (Iter.Item.all,
+           Iter.Item.Values (Iter.Child).Index,
+           Iter.Item.Num_Dimensions);
    begin
-      return Lang.Array_Item_Name (Name  => Base, Index => Idx);
+      return Lang.Array_Item_Name (Name => Base, Index => Idx);
    end Field_Name;
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self : not null access GVD_Array_Type) is
+   overriding
+   procedure Free (Self : not null access GVD_Array_Type) is
    begin
       if not Self.Values.Is_Empty then
          --  Free the whole memory for the items, since the type is in fact
@@ -134,9 +140,8 @@ package body GVD.Variables.Types.Arrays is
    --------------------
 
    function Get_Dimensions
-     (Self : not null access GVD_Array_Type;
-      Dim  : Positive)
-      return Dimension is
+     (Self : not null access GVD_Array_Type; Dim : Positive) return Dimension
+   is
    begin
       return Self.Dimensions (Dim);
    end Get_Dimensions;
@@ -155,7 +160,8 @@ package body GVD.Variables.Types.Arrays is
    -- Get_Type_Descr --
    --------------------
 
-   overriding function Get_Type_Descr
+   overriding
+   function Get_Type_Descr
      (Self : not null access GVD_Array_Type) return String
    is
       Result : Unbounded_String := To_Unbounded_String ("Array (");
@@ -163,7 +169,8 @@ package body GVD.Variables.Types.Arrays is
       for J in 1 .. Self.Num_Dimensions loop
          Append
            (Result,
-            Self.Dimensions (J).First'Img & " .. "
+            Self.Dimensions (J).First'Img
+            & " .. "
             & Self.Dimensions (J).Last'Img);
          if J /= Self.Num_Dimensions then
             Append (Result, ", ");
@@ -179,8 +186,8 @@ package body GVD.Variables.Types.Arrays is
    ---------------
 
    function Get_Value
-     (Self       : not null access GVD_Array_Type;
-      Elem_Index : Long_Integer) return GVD_Type_Holder
+     (Self : not null access GVD_Array_Type; Elem_Index : Long_Integer)
+      return GVD_Type_Holder
    is
       Return_Type : GVD_Type_Holder;
    begin
@@ -192,13 +199,17 @@ package body GVD.Variables.Types.Arrays is
          if Self.Values (J).Value.Data /= null
            and then Self.Values (J).Value.Get_Type'Tag = GVD_Repeat_Type'Tag
            and then Self.Values (J).Index <= Elem_Index
-           and then Self.Values (J).Index
-           + Long_Integer
-           (GVD_Repeat_Type_Access
-              (Self.Values (J).Value.Get_Type).Get_Repeat_Num) > Elem_Index
+           and then
+             Self.Values (J).Index
+             + Long_Integer
+                 (GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                    .Get_Repeat_Num)
+             > Elem_Index
          then
-            return GVD_Repeat_Type_Access
-              (Self.Values (J).Value.Get_Type).Get_Value.Clone;
+            return
+              GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                .Get_Value
+                .Clone;
 
          elsif Self.Values (J).Index = Elem_Index then
             declare
@@ -220,18 +231,18 @@ package body GVD.Variables.Types.Arrays is
    ------------------
 
    function Index_String
-     (Item    : GVD_Array_Type'Class;
-      Index   : Long_Integer;
-      Dim_Num : Positive) return String
+     (Item : GVD_Array_Type'Class; Index : Long_Integer; Dim_Num : Positive)
+      return String
    is
       Length : constant Long_Integer :=
-        (if Item.Dimensions (Dim_Num).Last = Long_Integer'First or
-             Item.Dimensions (Dim_Num).First = Long_Integer'Last
-         then
-            0 --  if we found special values for dynamic bounds
+        (if Item.Dimensions (Dim_Num).Last = Long_Integer'First
+           or Item.Dimensions (Dim_Num).First = Long_Integer'Last
+         then 0
+         --  if we found special values for dynamic bounds
          else
-            Item.Dimensions (Dim_Num).Last -
-             Item.Dimensions (Dim_Num).First + 1);
+           Item.Dimensions (Dim_Num).Last
+           - Item.Dimensions (Dim_Num).First
+           + 1);
    begin
       --  Do we have an array with no element ?
 
@@ -249,16 +260,21 @@ package body GVD.Variables.Types.Arrays is
 
       else
          declare
-            Dim : constant String := Long_Integer'Image
-              (Index mod Length + Item.Dimensions (Dim_Num).First);
+            Dim : constant String :=
+              Long_Integer'Image
+                (Index mod Length + Item.Dimensions (Dim_Num).First);
          begin
             if Dim_Num /= 1 then
                if Dim (Dim'First) = '-' then
-                  return Index_String (Item, Index / Length, Dim_Num - 1)
-                    & "," & Dim (Dim'First .. Dim'Last);
+                  return
+                    Index_String (Item, Index / Length, Dim_Num - 1)
+                    & ","
+                    & Dim (Dim'First .. Dim'Last);
                else
-                  return Index_String (Item, Index / Length, Dim_Num - 1)
-                    & "," & Dim (Dim'First + 1 .. Dim'Last);
+                  return
+                    Index_String (Item, Index / Length, Dim_Num - 1)
+                    & ","
+                    & Dim (Dim'First + 1 .. Dim'Last);
                end if;
             else
                if Dim (Dim'First) = '-' then
@@ -275,9 +291,7 @@ package body GVD.Variables.Types.Arrays is
    -- New_Array_Type --
    --------------------
 
-   function New_Array_Type
-     (Num_Dimensions : Positive)
-      return GVD_Type_Holder
+   function New_Array_Type (Num_Dimensions : Positive) return GVD_Type_Holder
    is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
@@ -291,7 +305,8 @@ package body GVD.Variables.Types.Arrays is
    -- Next --
    ----------
 
-   overriding procedure Next (Iter : in out Array_Iterator) is
+   overriding
+   procedure Next (Iter : in out Array_Iterator) is
    begin
       Iter.Child := Iter.Child + 1;
    end Next;
@@ -310,11 +325,11 @@ package body GVD.Variables.Types.Arrays is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Array_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class is
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class is
    begin
       --  Since all values should be replaced, do nothing if there is any
       --  value defined.
@@ -338,9 +353,8 @@ package body GVD.Variables.Types.Arrays is
    --------------------
 
    procedure Set_Dimensions
-     (Self : not null access GVD_Array_Type;
-      Dim  : Positive;
-      Size : Dimension) is
+     (Self : not null access GVD_Array_Type; Dim : Positive; Size : Dimension)
+   is
    begin
       Self.Dimensions (Dim) := Size;
    end Set_Dimensions;
@@ -350,8 +364,7 @@ package body GVD.Variables.Types.Arrays is
    -------------------
 
    procedure Set_Item_Type
-     (Self     : not null access GVD_Array_Type;
-      The_Type : GVD_Type_Holder) is
+     (Self : not null access GVD_Array_Type; The_Type : GVD_Type_Holder) is
    begin
       Self.Item_Type := The_Type;
    end Set_Item_Type;
@@ -398,14 +411,14 @@ package body GVD.Variables.Types.Arrays is
         and then Elem_Index <= Self.Values (Self.Last_Value).Index
       then
          declare
-            Min   : constant Long_Integer := Elem_Index;
-            Max   : constant Long_Integer :=
+            Min        : constant Long_Integer := Elem_Index;
+            Max        : constant Long_Integer :=
               Long_Integer (Repeat_Num) + Min - 1;
             Min2, Max2 : Long_Integer;
             --  Since the range can be split into two parts, keep enough space.
-            Tmp      : Vector := To_Vector (Self.Values.Length * 2);
-            Save     : Vector := Self.Values;
-            Index    : Positive := 1;
+            Tmp        : Vector := To_Vector (Self.Values.Length * 2);
+            Save       : Vector := Self.Values;
+            Index      : Positive := 1;
 
          begin
             for J in 1 .. Self.Last_Value loop
@@ -413,13 +426,17 @@ package body GVD.Variables.Types.Arrays is
                --  If we have an old repeat type, we might have to split it.
 
                if Self.Values (J).Value.Data /= null
-                 and then Self.Values (J).Value.Get_Type.all in
-                 GVD_Repeat_Type'Class
+                 and then
+                   Self.Values (J).Value.Get_Type.all in GVD_Repeat_Type'Class
                then
                   Min2 := Self.Values (J).Index;
-                  Max2 := Min2 - 1 + Long_Integer
-                    (GVD_Repeat_Type_Access
-                       (Self.Values (J).Value.Get_Type).Get_Repeat_Num);
+                  Max2 :=
+                    Min2
+                    - 1
+                    + Long_Integer
+                        (GVD_Repeat_Type_Access
+                           (Self.Values (J).Value.Get_Type)
+                           .Get_Repeat_Num);
 
                   --  Old one completly inside the new one => delete it
                   --      |---- new ---------|
@@ -439,13 +456,15 @@ package body GVD.Variables.Types.Arrays is
                         I.Value := Self.Values (J).Value.Clone;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Tmp (Index).Value.Get_Type).Set_Repeat_Num
-                            (Integer (Min - Min2));
+                        GVD_Repeat_Type_Access (Tmp (Index).Value.Get_Type)
+                          .Set_Repeat_Num (Integer (Min - Min2));
                      else
                         I := Tmp (Index);
-                        I.Value := GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Get_Value.Clone;
+                        I.Value :=
+                          GVD_Repeat_Type_Access
+                            (Self.Values (J).Value.Get_Type)
+                            .Get_Value
+                            .Clone;
                         Tmp (Index) := I;
                      end if;
                      Index := Index + 1;
@@ -456,18 +475,18 @@ package body GVD.Variables.Types.Arrays is
                         I.Value := Self.Values (J).Value;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Tmp (Index).Value.Get_Type).Set_Repeat_Num
-                            (Integer (Max2 - Max - 1));
+                        GVD_Repeat_Type_Access (Tmp (Index).Value.Get_Type)
+                          .Set_Repeat_Num (Integer (Max2 - Max - 1));
                      else
                         I := Tmp (Index);
-                        I.Value := GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Get_Value;
+                        I.Value :=
+                          GVD_Repeat_Type_Access
+                            (Self.Values (J).Value.Get_Type)
+                            .Get_Value;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Set_Value
-                            (Empty_GVD_Type_Holder);
+                        GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                          .Set_Value (Empty_GVD_Type_Holder);
 
                         I := Self.Values (J);
                         I.Value := Empty_GVD_Type_Holder;
@@ -486,18 +505,18 @@ package body GVD.Variables.Types.Arrays is
                         I.Value := Self.Values (J).Value;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Tmp (Index).Value.Get_Type).Set_Repeat_Num
-                            (Integer (Min - Min2));
+                        GVD_Repeat_Type_Access (Tmp (Index).Value.Get_Type)
+                          .Set_Repeat_Num (Integer (Min - Min2));
                      else
                         I := Tmp (Index);
-                        I.Value := GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Get_Value;
+                        I.Value :=
+                          GVD_Repeat_Type_Access
+                            (Self.Values (J).Value.Get_Type)
+                            .Get_Value;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Set_Value
-                            (Empty_GVD_Type_Holder);
+                        GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                          .Set_Value (Empty_GVD_Type_Holder);
 
                         I := Self.Values (J);
                         I.Value := Empty_GVD_Type_Holder;
@@ -515,18 +534,18 @@ package body GVD.Variables.Types.Arrays is
                         I := Tmp (Index);
                         I.Value := Self.Values (J).Value;
                         Tmp (Index) := I;
-                        GVD_Repeat_Type_Access
-                          (Tmp (Index).Value.Get_Type).Set_Repeat_Num
-                            (Integer (Max2 - Max - 1));
+                        GVD_Repeat_Type_Access (Tmp (Index).Value.Get_Type)
+                          .Set_Repeat_Num (Integer (Max2 - Max - 1));
                      else
                         I := Tmp (Index);
-                        I.Value := GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Get_Value;
+                        I.Value :=
+                          GVD_Repeat_Type_Access
+                            (Self.Values (J).Value.Get_Type)
+                            .Get_Value;
                         Tmp (Index) := I;
 
-                        GVD_Repeat_Type_Access
-                          (Self.Values (J).Value.Get_Type).Set_Value
-                            (Empty_GVD_Type_Holder);
+                        GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                          .Set_Value (Empty_GVD_Type_Holder);
 
                         I := Self.Values (J);
                         I.Value := Empty_GVD_Type_Holder;
@@ -579,49 +598,50 @@ package body GVD.Variables.Types.Arrays is
 
             if Self.Values (J).Index <= Elem_Index
               and then Self.Values (J).Value.Data /= null
-              and then Self.Values (J).Value.Data.Instance.all in
-              GVD_Repeat_Type'Class
-              and then Elem_Index < Self.Values (J).Index
-              + Long_Integer
-              (GVD_Repeat_Type_Access
-                 (Self.Values (J).Value.Get_Type).Get_Repeat_Num)
+              and then
+                Self.Values (J).Value.Data.Instance.all
+                in GVD_Repeat_Type'Class
+              and then
+                Elem_Index
+                < Self.Values (J).Index
+                  + Long_Integer
+                      (GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                         .Get_Repeat_Num)
             then
                declare
-                  Repeat_Num      : constant Integer := GVD_Repeat_Type_Access
-                    (Self.Values (J).Value.Get_Type).Get_Repeat_Num;
-                  Range_Index     : constant Long_Integer :=
-                    Self.Values (J).Index;
-                  Tmp             : GVD_Type_Holder;
+                  Repeat_Num  : constant Integer :=
+                    GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                      .Get_Repeat_Num;
+                  Range_Index : constant Long_Integer := Self.Values (J).Index;
+                  Tmp         : GVD_Type_Holder;
 
                begin
-                  Tmp := GVD_Repeat_Type_Access
-                    (Self.Values (J).Value.Get_Type).Get_Value;
+                  Tmp :=
+                    GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                      .Get_Value;
                   if Elem_Index - Range_Index >= 1 then
-                     GVD_Repeat_Type_Access
-                       (Self.Values (J).Value.Get_Type).Set_Repeat_Num
-                         (Positive (Elem_Index - Range_Index));
+                     GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                       .Set_Repeat_Num (Positive (Elem_Index - Range_Index));
                      Self.Set_Value
                        (Elem_Value => Elem_Value,
                         Elem_Index => Elem_Index,
-                           Repeat_Num => 1);
+                        Repeat_Num => 1);
 
                   else
-                     GVD_Repeat_Type_Access
-                       (Self.Values (J).Value.Get_Type).Set_Value
-                         (Empty_GVD_Type_Holder);
+                     GVD_Repeat_Type_Access (Self.Values (J).Value.Get_Type)
+                       .Set_Value (Empty_GVD_Type_Holder);
                      I := Self.Values (J);
                      I.Value := Elem_Value;
                      Self.Values (J) := I;
                   end if;
 
-                  if Integer (Range_Index - Elem_Index) +
-                    Repeat_Num - 1 > 0
+                  if Integer (Range_Index - Elem_Index) + Repeat_Num - 1 > 0
                   then
                      Self.Set_Value
                        (Elem_Value => Tmp.Clone,
                         Elem_Index => Elem_Index + 1,
-                        Repeat_Num => Integer (Range_Index - Elem_Index)
-                        + Repeat_Num - 1);
+                        Repeat_Num =>
+                          Integer (Range_Index - Elem_Index) + Repeat_Num - 1);
                   end if;
                end;
 
@@ -694,8 +714,9 @@ package body GVD.Variables.Types.Arrays is
       Tmp : Array_Item_Vectors.Vector;
    begin
       Tmp := Self.Values;
-      Self.Values := Array_Item_Vectors.To_Vector
-        (Ada.Containers.Count_Type (Self.Last_Value));
+      Self.Values :=
+        Array_Item_Vectors.To_Vector
+          (Ada.Containers.Count_Type (Self.Last_Value));
 
       if Self.Last_Value > 0 then
          for J in 1 .. Self.Last_Value loop
@@ -709,7 +730,8 @@ package body GVD.Variables.Types.Arrays is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Array_Type) return Generic_Iterator'Class
    is
       Iter : Array_Iterator;
@@ -727,18 +749,20 @@ package body GVD.Variables.Types.Arrays is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Array_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Array_Type; Item : GVD_Type_Holder'Class)
       return Boolean is
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Get_Type.all in GVD_Array_Type'Class
-        and then Self.Dimensions = GVD_Array_Type_Access
-          (Item.Get_Type).Dimensions
-        and then Self.Item_Type.Get_Type.Structurally_Equivalent
-          (GVD_Array_Type_Access (Item.Get_Type).Item_Type);
+        and then
+          Self.Dimensions = GVD_Array_Type_Access (Item.Get_Type).Dimensions
+        and then
+          Self.Item_Type.Get_Type.Structurally_Equivalent
+            (GVD_Array_Type_Access (Item.Get_Type).Item_Type);
    end Structurally_Equivalent;
 
 end GVD.Variables.Types.Arrays;

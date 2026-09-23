@@ -37,9 +37,9 @@ package body GNATTest_Module.Tree_Models is
    -- Children --
    --------------
 
-   overriding function Children
-     (Self   : access Tree_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
+   overriding
+   function Children
+     (Self : access Tree_Model_Record; Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Row    : Row_Index;
@@ -65,9 +65,9 @@ package body GNATTest_Module.Tree_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Tree_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Tree_Model_Record; Index : Glib.Gint) return Glib.GType
    is
       pragma Unreferenced (Self);
       use type Glib.Gint;
@@ -83,9 +83,9 @@ package body GNATTest_Module.Tree_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
-     (Self : access Tree_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
+   overriding
+   function Get_Iter
+     (Self : access Tree_Model_Record; Path : Gtk.Tree_Model.Gtk_Tree_Path)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       use type Glib.Gint;
@@ -99,7 +99,7 @@ package body GNATTest_Module.Tree_Models is
       Result : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
    begin
       case Indices'Length is
-         when 1 =>
+         when 1      =>
 
             if Self.Index.Is_Empty then
                return Result;
@@ -111,11 +111,11 @@ package body GNATTest_Module.Tree_Models is
                Result := To_Iter (Natural (Indices (Index_1)));
             end if;
 
-         when 2 =>
+         when 2      =>
 
             if Indices (Index_1) >= 0 and Indices (Index_2) >= 0 then
-               Row := (Natural (Indices (Index_1)),
-                       Natural (Indices (Index_2)));
+               Row :=
+                 (Natural (Indices (Index_1)), Natural (Indices (Index_2)));
 
                if Self.Index.Contains (Row) then
                   Result := To_Iter (Row);
@@ -134,10 +134,8 @@ package body GNATTest_Module.Tree_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
-     (Self : access Tree_Model_Record)
-      return Glib.Gint
-   is
+   overriding
+   function Get_N_Columns (Self : access Tree_Model_Record) return Glib.Gint is
       pragma Unreferenced (Self);
    begin
       return 4;
@@ -147,9 +145,9 @@ package body GNATTest_Module.Tree_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
-     (Self : access Tree_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   overriding
+   function Get_Path
+     (Self : access Tree_Model_Record; Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Path
    is
       pragma Unreferenced (Self);
@@ -175,9 +173,9 @@ package body GNATTest_Module.Tree_Models is
    -- Get_Source_Entity --
    -----------------------
 
-   not overriding function Get_Source_Entity
-     (Self : access Tree_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   not overriding
+   function Get_Source_Entity
+     (Self : access Tree_Model_Record; Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Source_Entity
    is
       Row    : Row_Index;
@@ -196,7 +194,8 @@ package body GNATTest_Module.Tree_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Tree_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
@@ -215,20 +214,17 @@ package body GNATTest_Module.Tree_Models is
          if Length = 1 then
             --  Draw setup icon on file's level
             Glib.Values.Init_Set_String
-              (Value,
-               "gps-emblem-entity-package-spec");
+              (Value, "gps-emblem-entity-package-spec");
          else
             --  Draw source icon on test's level
             Glib.Values.Init_Set_String
-              (Value,
-               "gps-emblem-entity-subprogram-spec");
+              (Value, "gps-emblem-entity-subprogram-spec");
          end if;
 
          return;
       elsif Column = Second_Icon_Column then
          --  Draw teardown icon on file's level
-         Glib.Values.Init_Set_String
-           (Value, "gps-emblem-entity-package");
+         Glib.Values.Init_Set_String (Value, "gps-emblem-entity-package");
          return;
       elsif Column = File_Level_Column then
          Glib.Values.Init_Set_Boolean (Value, Length = 1);
@@ -240,13 +236,13 @@ package body GNATTest_Module.Tree_Models is
 
       if Length = 1 then
          Glib.Values.Init_Set_String
-           (Value,
-            Src.Source_File.Display_Base_Name);
+           (Value, Src.Source_File.Display_Base_Name);
       elsif Length = 2 then
          Glib.Values.Init_Set_String
            (Value,
             To_String (Src.Subprogram_Name)
-              & ":" & To_String (Src.Test_Case_Name));
+            & ":"
+            & To_String (Src.Test_Case_Name));
       else
          Glib.Values.Init_Set_String (Value, "");
       end if;
@@ -256,9 +252,7 @@ package body GNATTest_Module.Tree_Models is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Model : out Tree_Model;
-      Data  : Source_Entity_Maps.Map) is
+   procedure Gtk_New (Model : out Tree_Model; Data : Source_Entity_Maps.Map) is
    begin
       Model := new Tree_Model_Record;
       Initialize (Model, Data);
@@ -268,9 +262,10 @@ package body GNATTest_Module.Tree_Models is
    -- Has_Child --
    ---------------
 
-   overriding function Has_Child
-     (Self : access Tree_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   overriding
+   function Has_Child
+     (Self : access Tree_Model_Record; Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Boolean
    is
       Row    : Row_Index;
       Length : Natural;
@@ -285,8 +280,7 @@ package body GNATTest_Module.Tree_Models is
    ----------------
 
    procedure Initialize
-     (Self : access Tree_Model_Record'Class;
-      Data : Source_Entity_Maps.Map)
+     (Self : access Tree_Model_Record'Class; Data : Source_Entity_Maps.Map)
    is
       Row    : Row_Index := (0, 0);
       Cursor : Source_Entity_Maps.Cursor := Data.First;
@@ -327,7 +321,8 @@ package body GNATTest_Module.Tree_Models is
 
    function Less (Left, Right : Row_Index) return Boolean is
    begin
-      return (Left (1) = Right (1) and Left (2) < Right (2))
+      return
+        (Left (1) = Right (1) and Left (2) < Right (2))
         or Left (1) < Right (1);
    end Less;
 
@@ -335,7 +330,8 @@ package body GNATTest_Module.Tree_Models is
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Tree_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint
@@ -362,7 +358,8 @@ package body GNATTest_Module.Tree_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Tree_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
@@ -392,7 +389,8 @@ package body GNATTest_Module.Tree_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Tree_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
@@ -423,9 +421,9 @@ package body GNATTest_Module.Tree_Models is
    -- Parent --
    ------------
 
-   overriding function Parent
-     (Self  : access Tree_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
+   overriding
+   function Parent
+     (Self : access Tree_Model_Record; Child : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       pragma Unreferenced (Self);
@@ -450,11 +448,11 @@ package body GNATTest_Module.Tree_Models is
 
    function To_Iter (Value : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter is
    begin
-      return Gtk.Tree_Model.Utils.Init_Tree_Iter
-              (Stamp       => 1,
-               User_Data_1 => To_Address
-                                (Integer_Address (Value)),
-               User_Data_2 => To_Address (Integer_Address'Last));
+      return
+        Gtk.Tree_Model.Utils.Init_Tree_Iter
+          (Stamp       => 1,
+           User_Data_1 => To_Address (Integer_Address (Value)),
+           User_Data_2 => To_Address (Integer_Address'Last));
    end To_Iter;
 
    -------------
@@ -463,12 +461,11 @@ package body GNATTest_Module.Tree_Models is
 
    function To_Iter (Value : Row_Index) return Gtk.Tree_Model.Gtk_Tree_Iter is
    begin
-      return Gtk.Tree_Model.Utils.Init_Tree_Iter
-              (Stamp       => 2,
-               User_Data_1 => To_Address
-                                (Integer_Address (Value (1))),
-               User_Data_2 => To_Address
-                                (Integer_Address (Value (2))));
+      return
+        Gtk.Tree_Model.Utils.Init_Tree_Iter
+          (Stamp       => 2,
+           User_Data_1 => To_Address (Integer_Address (Value (1))),
+           User_Data_2 => To_Address (Integer_Address (Value (2))));
    end To_Iter;
 
    ------------------
@@ -480,11 +477,11 @@ package body GNATTest_Module.Tree_Models is
       Row    : out Row_Index;
       Length : out Natural)
    is
-      Data_1 : constant Integer_Address := To_Integer
-        (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter));
+      Data_1 : constant Integer_Address :=
+        To_Integer (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter));
 
-      Data_2 : constant Integer_Address := To_Integer
-        (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter));
+      Data_2 : constant Integer_Address :=
+        To_Integer (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter));
    begin
       if Iter /= Gtk.Tree_Model.Null_Iter then
          Row (1) := Natural (Data_1);

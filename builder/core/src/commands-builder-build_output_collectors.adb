@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Build_Configurations;             use Build_Configurations;
+with Build_Configurations; use Build_Configurations;
 
 package body Commands.Builder.Build_Output_Collectors is
 
@@ -23,27 +23,29 @@ package body Commands.Builder.Build_Output_Collectors is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access is
    begin
-      return new Build_Output_Collector'
-        (Child      => Child,
-         Builder    => Self.Builder,
-         Build      => Self.Builder.Get_Last_Build);
+      return
+        new Build_Output_Collector'
+          (Child   => Child,
+           Builder => Self.Builder,
+           Build   => Self.Builder.Get_Last_Build);
    end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Build_Output_Collector;
       Item    : String;
       Command : access Root_Command'Class)
    is
-      Last     : Natural := Item'Last;
+      Last : Natural := Item'Last;
    begin
       --  Strip trailing new line character
       if Last >= Item'First and then Item (Last) = ASCII.LF then
@@ -64,8 +66,7 @@ package body Commands.Builder.Build_Output_Collectors is
    ---------
 
    procedure Set
-     (Self       : access Output_Parser_Fabric;
-      Builder    : Builder_Context) is
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context) is
    begin
       Self.Builder := Builder;
    end Set;
@@ -74,8 +75,8 @@ package body Commands.Builder.Build_Output_Collectors is
    --  Destroy --
    --------------
 
-   overriding procedure Destroy
-     (Self : not null access Build_Output_Collector) is
+   overriding
+   procedure Destroy (Self : not null access Build_Output_Collector) is
    begin
       if Self.Build.On_Exit /= null then
          Free (Self.Build.On_Exit);

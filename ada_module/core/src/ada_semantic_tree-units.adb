@@ -44,8 +44,8 @@ package body Ada_Semantic_Tree.Units is
    overriding
    procedure Free (Assistant : in out Ada_Unit_Assistant);
 
-   type Unit_List_Annotation is new
-     Tree_Annotations_Pckg.General_Annotation_Record
+   type Unit_List_Annotation is
+     new Tree_Annotations_Pckg.General_Annotation_Record
    with record
       List : Persistent_Entity_List.Set;
    end record;
@@ -58,8 +58,8 @@ package body Ada_Semantic_Tree.Units is
       Kind      : Update_Kind);
 
    function Get_Unit_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Unit_Access;
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Unit_Access;
 
    procedure Initialize_Local_Trie (Unit : Unit_Access);
    --  Initialize the local construct trie container.
@@ -79,7 +79,8 @@ package body Ada_Semantic_Tree.Units is
    -- Free --
    ----------
 
-   overriding procedure Free (Assistant : in out Ada_Unit_Assistant) is
+   overriding
+   procedure Free (Assistant : in out Ada_Unit_Assistant) is
    begin
       Clear (Assistant.Units_Db);
       Clear (Assistant.Waiting_For_Parent);
@@ -90,8 +91,8 @@ package body Ada_Semantic_Tree.Units is
    -------------------
 
    function Get_Unit_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Unit_Access
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Unit_Access
    is
       use Construct_Annotations_Pckg;
 
@@ -101,7 +102,9 @@ package body Ada_Semantic_Tree.Units is
          Get_Annotation
            (Get_Annotation_Container
               (Get_Tree (Get_File (Entity)),
-               To_Construct_Tree_Iterator (Entity)).all, Key, Obj);
+               To_Construct_Tree_Iterator (Entity)).all,
+            Key,
+            Obj);
 
          if Obj /= Construct_Annotations_Pckg.Null_Annotation then
             return Unit_Access (Obj.Other_Val);
@@ -119,26 +122,26 @@ package body Ada_Semantic_Tree.Units is
       use Construct_Annotations_Pckg;
       use Tree_Annotations_Pckg;
 
-      Unit_Key : Construct_Annotations_Pckg.Annotation_Key;
+      Unit_Key      : Construct_Annotations_Pckg.Annotation_Key;
       Tree_Unit_Key : Tree_Annotations_Pckg.Annotation_Key;
    begin
       Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Unit_Key);
+        (Get_Construct_Annotation_Key_Registry (Db).all, Unit_Key);
 
       Get_Annotation_Key
-        (Get_Tree_Annotation_Key_Registry (Db).all,
-         Tree_Unit_Key);
+        (Get_Tree_Annotation_Key_Registry (Db).all, Tree_Unit_Key);
 
       Register_Assistant
         (Db,
          Ada_Unit_Assistant_Id,
          new Ada_Unit_Assistant'
-           (Database_Assistant with
-            Unit_Key           => Unit_Key,
-            Unit_List_Key      => Tree_Unit_Key,
-            Units_Db           => Construct_Unit_Tries.Empty_Construct_Trie,
-            Waiting_For_Parent => Construct_Unit_Tries.Empty_Construct_Trie));
+           (Database_Assistant
+            with
+              Unit_Key           => Unit_Key,
+              Unit_List_Key      => Tree_Unit_Key,
+              Units_Db           => Construct_Unit_Tries.Empty_Construct_Trie,
+              Waiting_For_Parent =>
+                Construct_Unit_Tries.Empty_Construct_Trie));
    end Register_Assistant;
 
    ---------------
@@ -146,19 +149,19 @@ package body Ada_Semantic_Tree.Units is
    ---------------
 
    function Get_Units
-     (Db         : Construct_Database_Access;
-      Name       : String;
-      Is_Partial : Boolean) return Unit_Iterator
+     (Db : Construct_Database_Access; Name : String; Is_Partial : Boolean)
+      return Unit_Iterator
    is
       It           : Unit_Iterator;
       Db_Assistant : Database_Assistant_Access;
    begin
       Db_Assistant := Get_Assistant (Db, Ada_Unit_Assistant_Id);
 
-      It.Db_Iterator := Start
-        (Ada_Unit_Assistant (Db_Assistant.all).Units_Db'Access,
-         Name,
-         Is_Partial);
+      It.Db_Iterator :=
+        Start
+          (Ada_Unit_Assistant (Db_Assistant.all).Units_Db'Access,
+           Name,
+           Is_Partial);
 
       It.Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
       It.Unit_List_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_List_Key;
@@ -185,7 +188,7 @@ package body Ada_Semantic_Tree.Units is
       function Get_Child
         (Parent : Unit_Access; Index : Integer) return Unit_Access
       is
-         Cur : Persistent_Entity_List.Cursor;
+         Cur     : Persistent_Entity_List.Cursor;
          Child_U : Unit_Access;
       begin
          if Index > Length (Id) then
@@ -239,16 +242,14 @@ package body Ada_Semantic_Tree.Units is
    -- Get_Units --
    ---------------
 
-   function Get_Units
-     (File : Structured_File_Access) return Unit_Iterator
-   is
+   function Get_Units (File : Structured_File_Access) return Unit_Iterator is
       Tree            : Construct_Tree;
       It              : Unit_Iterator;
       Db_Assistant    : Database_Assistant_Access;
       Annotation_List : Tree_Annotations_Pckg.Annotation;
    begin
-      Db_Assistant := Get_Assistant
-        (Get_Database (File), Ada_Unit_Assistant_Id);
+      Db_Assistant :=
+        Get_Assistant (Get_Database (File), Ada_Unit_Assistant_Id);
       Tree := Get_Tree (File);
 
       Tree_Annotations_Pckg.Get_Annotation
@@ -256,8 +257,8 @@ package body Ada_Semantic_Tree.Units is
          Ada_Unit_Assistant (Db_Assistant.all).Unit_List_Key,
          Annotation_List);
 
-      It.Unit_Cursor := First
-        (Unit_List_Annotation (Annotation_List.Other_Val.all).List);
+      It.Unit_Cursor :=
+        First (Unit_List_Annotation (Annotation_List.Other_Val.all).List);
 
       It.Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
       It.Unit_List_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_List_Key;
@@ -296,8 +297,7 @@ package body Ada_Semantic_Tree.Units is
       if It.Unit_Cursor /= Persistent_Entity_List.No_Element then
          return To_Entity_Access (Element (It.Unit_Cursor));
       else
-         return To_Entity_Access
-           (Get_Additional_Data (It.Db_Iterator).Entity);
+         return To_Entity_Access (Get_Additional_Data (It.Db_Iterator).Entity);
       end if;
    end Get;
 
@@ -308,8 +308,9 @@ package body Ada_Semantic_Tree.Units is
    function Get (It : Unit_Iterator) return Unit_Access is
    begin
       if It.Unit_Cursor /= Persistent_Entity_List.No_Element then
-         return Get_Unit_Info
-           (It.Unit_Key, To_Entity_Access (Element (It.Unit_Cursor)));
+         return
+           Get_Unit_Info
+             (It.Unit_Key, To_Entity_Access (Element (It.Unit_Cursor)));
       else
          return Get_Additional_Data (It.Db_Iterator);
       end if;
@@ -351,7 +352,8 @@ package body Ada_Semantic_Tree.Units is
 
    function At_End (It : Unit_Iterator) return Boolean is
    begin
-      return It.Unit_Cursor = Persistent_Entity_List.No_Element
+      return
+        It.Unit_Cursor = Persistent_Entity_List.No_Element
         and then At_End (It.Db_Iterator);
    end At_End;
 
@@ -367,13 +369,13 @@ package body Ada_Semantic_Tree.Units is
       Spec_Entity  : Entity_Access;
    begin
       if Unit /= Null_Unit_Access then
-         Db_Assistant := Get_Assistant
-           (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
+         Db_Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
 
          Unit_Entity := To_Entity_Access (Unit.Entity);
 
-         It.Unit_Key :=
-           Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
+         It.Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
          It.Unit_List_Key :=
            Ada_Unit_Assistant (Db_Assistant.all).Unit_List_Key;
 
@@ -410,7 +412,8 @@ package body Ada_Semantic_Tree.Units is
    -- File_Updated --
    ------------------
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Ada_Unit_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -420,7 +423,7 @@ package body Ada_Semantic_Tree.Units is
 
       pragma Unreferenced (Old_Tree);
 
-      Tree : constant Construct_Tree := Get_Tree (File);
+      Tree            : constant Construct_Tree := Get_Tree (File);
       Unit_List_Annot : Tree_Annotations_Pckg.Annotation;
 
       procedure Analyze_Units (Start_It : Construct_Tree_Iterator);
@@ -455,10 +458,11 @@ package body Ada_Semantic_Tree.Units is
            Null_Entity_Persistent_Access;
       begin
          declare
-            Unit_It : Persistent_Entity_List.Cursor := First
-              (Unit_List_Annotation (Unit_List_Annot.Other_Val.all).List);
-            Tmp_It : Persistent_Entity_List.Cursor;
-            Unit     : Unit_Access;
+            Unit_It     : Persistent_Entity_List.Cursor :=
+              First
+                (Unit_List_Annotation (Unit_List_Annot.Other_Val.all).List);
+            Tmp_It      : Persistent_Entity_List.Cursor;
+            Unit        : Unit_Access;
             Unit_Entity : Entity_Access;
          begin
             --  Clear all the unit of the file
@@ -466,14 +470,15 @@ package body Ada_Semantic_Tree.Units is
             while Unit_It /= Persistent_Entity_List.No_Element loop
                Tmp_It := Next (Unit_It);
 
-               Unit := Get_Unit_Info
-                 (Assistant.Unit_Key, To_Entity_Access (Element (Unit_It)));
+               Unit :=
+                 Get_Unit_Info
+                   (Assistant.Unit_Key, To_Entity_Access (Element (Unit_It)));
 
                if Exists (Unit.Entity) then
                   Unit_Entity := To_Entity_Access (Unit.Entity);
 
                   if Is_Compilation_Unit
-                    (To_Construct_Tree_Iterator (Unit_Entity))
+                       (To_Construct_Tree_Iterator (Unit_Entity))
                   then
                      --  If this entity is still a compilation unit, we'll
                      --  update it in the next step, so we'll just unlink it
@@ -507,8 +512,9 @@ package body Ada_Semantic_Tree.Units is
               and then Construct /= null
               and then Construct.Name /= No_Symbol
             then
-               Info := Get_Unit_Info
-                 (Assistant.Unit_Key, To_Entity_Access (File, It));
+               Info :=
+                 Get_Unit_Info
+                   (Assistant.Unit_Key, To_Entity_Access (File, It));
 
                if Info /= null then
                   --  If the info is already here, we just increment its
@@ -520,10 +526,11 @@ package body Ada_Semantic_Tree.Units is
 
                   Info := new Unit_Access_Record;
 
-                  Info.Entity := To_Entity_Persistent_Access
-                    (To_Entity_Access (File, It));
-                  Info.Name := new Composite_Identifier'
-                    (To_Composite_Identifier (Get (Construct.Name).all));
+                  Info.Entity :=
+                    To_Entity_Persistent_Access (To_Entity_Access (File, It));
+                  Info.Name :=
+                    new Composite_Identifier'
+                      (To_Composite_Identifier (Get (Construct.Name).all));
                   Info.Unit_Key := Assistant.Unit_Key;
                   Construct_Annotations_Pckg.Set_Annotation
                     (Get_Annotation_Container (Tree, It).all,
@@ -565,9 +572,9 @@ package body Ada_Semantic_Tree.Units is
                   Ref (Info.Start_Entity);
                end if;
 
-               Info.End_Entity := To_Entity_Persistent_Access
-                 (To_Entity_Access
-                    (File, Next (Tree, It, Jump_Over)));
+               Info.End_Entity :=
+                 To_Entity_Persistent_Access
+                   (To_Entity_Access (File, Next (Tree, It, Jump_Over)));
 
                Last_End_Entity := Info.End_Entity;
 
@@ -582,11 +589,11 @@ package body Ada_Semantic_Tree.Units is
       -- Is_Waiting_For_Parent --
       ---------------------------
 
-      function Is_Waiting_For_Parent
-        (Unit : Unit_Access_Record) return Boolean
+      function Is_Waiting_For_Parent (Unit : Unit_Access_Record) return Boolean
       is
       begin
-         return not Exists (Unit.Parent)
+         return
+           not Exists (Unit.Parent)
            or else
              (not Get_Construct (Unit.Entity).Is_Declaration
               and then not Unit.Parent_Is_Spec);
@@ -603,7 +610,7 @@ package body Ada_Semantic_Tree.Units is
          It_Unit      : Unit_Access;
          It_Entity    : Entity_Access;
 
-         Unit_Entity : Entity_Access;
+         Unit_Entity    : Entity_Access;
          Unit_Construct : access Simple_Construct_Information;
 
          Children_It  : Construct_Unit_Tries.Construct_Trie_Iterator;
@@ -622,10 +629,11 @@ package body Ada_Semantic_Tree.Units is
             --  for a parent of this  name, and link them if this is indeed
             --  their  parent.
 
-            Children_It := Start
-              (Assistant.Waiting_For_Parent'Access,
-               Get_Item (Unit.Name.all, Length (Unit.Name.all)),
-               False);
+            Children_It :=
+              Start
+                (Assistant.Waiting_For_Parent'Access,
+                 Get_Item (Unit.Name.all, Length (Unit.Name.all)),
+                 False);
 
             while not At_End (Children_It) loop
                Child_Unit := Get_Additional_Data (Children_It);
@@ -634,8 +642,9 @@ package body Ada_Semantic_Tree.Units is
                --  we found a child
 
                if Is_Prefix_Of (Unit.Name.all, Child_Unit.Name.all, False)
-                 and then Get_Project (Get_File (Unit.Entity))
-                 = Get_Project (Get_File (Child_Unit.Entity))
+                 and then
+                   Get_Project (Get_File (Unit.Entity))
+                   = Get_Project (Get_File (Child_Unit.Entity))
                then
                   Unlink_Parent (Child_Unit.all);
 
@@ -660,10 +669,11 @@ package body Ada_Semantic_Tree.Units is
 
             --  Then, look for its body
 
-            It := Get_Units
-              (Get_Database (File),
-               Get_Item (Unit.Name.all, Length (Unit.Name.all)),
-               False);
+            It :=
+              Get_Units
+                (Get_Database (File),
+                 Get_Item (Unit.Name.all, Length (Unit.Name.all)),
+                 False);
 
             while not At_End (It) loop
                It_Unit := Get (It);
@@ -671,8 +681,9 @@ package body Ada_Semantic_Tree.Units is
 
                if not Get_Construct (It_Entity).Is_Declaration
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
-                 and then Get_Project (Get_File (It_Unit.Entity))
-                 = Get_Project (Get_File (Unit.Entity))
+                 and then
+                   Get_Project (Get_File (It_Unit.Entity))
+                   = Get_Project (Get_File (Unit.Entity))
                  and then not Come_After (Unit_Entity, It_Entity)
                then
                   Unlink_Parent (It_Unit.all);
@@ -685,8 +696,7 @@ package body Ada_Semantic_Tree.Units is
                      Unref (Unit.Body_Unit);
                   end if;
 
-                  It_Unit.Parent :=
-                    To_Entity_Persistent_Access (Unit_Entity);
+                  It_Unit.Parent := To_Entity_Persistent_Access (Unit_Entity);
                   It_Unit.Parent_Is_Spec := True;
 
                   It_Unit.Spec_Unit := Unit.Entity;
@@ -706,18 +716,19 @@ package body Ada_Semantic_Tree.Units is
             --  Finally, look for its parent, if it has one
 
             if Length (Unit.Name.all) > 1 then
-               It := Get_Units
-                 (Get_Database (File),
-                  Get_Item (Unit.Name.all, Length (Unit.Name.all) - 1),
-                  False);
+               It :=
+                 Get_Units
+                   (Get_Database (File),
+                    Get_Item (Unit.Name.all, Length (Unit.Name.all) - 1),
+                    False);
 
                while not At_End (It) loop
                   It_Unit := Get (It);
                   It_Entity := Get_Entity (It_Unit);
 
                   if Get_Construct (It_Entity).Is_Declaration
-                  and then Is_Prefix_Of
-                      (It_Unit.Name.all, Unit.Name.all, False)
+                    and then
+                      Is_Prefix_Of (It_Unit.Name.all, Unit.Name.all, False)
                   then
                      Unlink_Parent (Unit.all);
 
@@ -737,10 +748,11 @@ package body Ada_Semantic_Tree.Units is
                   Construct_Unit_Tries.Insert
                     (Trie         => Assistant.Waiting_For_Parent'Access,
                      Symbols      => Get_Database (File).Symbols,
-                     Construct_It => To_Construct_Tree_Iterator
-                       (To_Entity_Access (Unit.Entity)),
-                     Name         => Get_Item
-                       (Unit.Name.all, Length (Unit.Name.all) - 1),
+                     Construct_It =>
+                       To_Construct_Tree_Iterator
+                         (To_Entity_Access (Unit.Entity)),
+                     Name         =>
+                       Get_Item (Unit.Name.all, Length (Unit.Name.all) - 1),
                      Data         => Unit,
                      Lang         => Ada_Tree_Lang,
                      Index        => Unit.Waiting_For_Parent_Index);
@@ -751,10 +763,11 @@ package body Ada_Semantic_Tree.Units is
          else
             --  If this is a body, we'll only look for its spec.
 
-            It := Get_Units
-              (Get_Database (File),
-               Get_Item (Unit.Name.all, Length (Unit.Name.all)),
-               False);
+            It :=
+              Get_Units
+                (Get_Database (File),
+                 Get_Item (Unit.Name.all, Length (Unit.Name.all)),
+                 False);
 
             while not At_End (It) loop
                It_Unit := Get (It);
@@ -762,8 +775,9 @@ package body Ada_Semantic_Tree.Units is
 
                if Get_Construct (It_Entity).Is_Declaration
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
-                 and then Get_Project (Get_File (It_Unit.Entity))
-                 = Get_Project (Get_File (Unit.Entity))
+                 and then
+                   Get_Project (Get_File (It_Unit.Entity))
+                   = Get_Project (Get_File (Unit.Entity))
                  and then not Come_After (It_Entity, Unit_Entity)
                then
                   Unlink_Parent (Unit.all);
@@ -800,14 +814,14 @@ package body Ada_Semantic_Tree.Units is
       ---------------------------------
 
       procedure Invalidate_Local_Constructs is
-         Unit_It : Persistent_Entity_List.Cursor := First
-           (Unit_List_Annotation (Unit_List_Annot.Other_Val.all).List);
+         Unit_It : Persistent_Entity_List.Cursor :=
+           First (Unit_List_Annotation (Unit_List_Annot.Other_Val.all).List);
       begin
          while Unit_It /= Persistent_Entity_List.No_Element loop
             Get_Unit_Info
-              (Assistant.Unit_Key,
-               To_Entity_Access (Element (Unit_It)))
-              .Local_Constructs_Up_To_Date := False;
+              (Assistant.Unit_Key, To_Entity_Access (Element (Unit_It)))
+              .Local_Constructs_Up_To_Date :=
+              False;
 
             Unit_It := Next (Unit_It);
          end loop;
@@ -823,8 +837,7 @@ package body Ada_Semantic_Tree.Units is
 
       if Unit_List_Annot = Null_Annotation then
          Unit_List_Annot :=
-           (Kind      => Other_Kind,
-            Other_Val => new Unit_List_Annotation);
+           (Kind => Other_Kind, Other_Val => new Unit_List_Annotation);
 
          Set_Annotation
            (Get_Annotation_Container (Tree).all,
@@ -849,8 +862,8 @@ package body Ada_Semantic_Tree.Units is
 
       declare
          New_Unit_It : Construct_Tree_Iterator := First (Tree);
-         New_Entity : Entity_Access;
-         New_Unit : Unit_Access;
+         New_Entity  : Entity_Access;
+         New_Unit    : Unit_Access;
       begin
          while New_Unit_It /= Null_Construct_Tree_Iterator loop
             if Is_Compilation_Unit (New_Unit_It) then
@@ -875,25 +888,25 @@ package body Ada_Semantic_Tree.Units is
      (File : Structured_File_Access; Offset : String_Index_Type)
       return Unit_Access
    is
-      Tree  : constant Construct_Tree := Get_Tree (File);
-      Unit  : Construct_Tree_Iterator := First (Tree);
+      Tree : constant Construct_Tree := Get_Tree (File);
+      Unit : Construct_Tree_Iterator := First (Tree);
 
       Start_Unit_It : Construct_Tree_Iterator;
-      End_Unit_It : Construct_Tree_Iterator;
+      End_Unit_It   : Construct_Tree_Iterator;
 
-      Unit_Info : Unit_Access;
+      Unit_Info    : Unit_Access;
       Db_Assistant : Database_Assistant_Access;
       Unit_Key     : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      Db_Assistant := Get_Assistant
-        (Get_Database (File), Ada_Unit_Assistant_Id);
+      Db_Assistant :=
+        Get_Assistant (Get_Database (File), Ada_Unit_Assistant_Id);
 
       Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
       while Unit /= Null_Construct_Tree_Iterator loop
          if Is_Compilation_Unit (Unit) then
-            Unit_Info := Get_Unit_Info
-              (Unit_Key, To_Entity_Access (File, Unit));
+            Unit_Info :=
+              Get_Unit_Info (Unit_Key, To_Entity_Access (File, Unit));
 
             if Unit_Info = null then
                return null;
@@ -904,12 +917,13 @@ package body Ada_Semantic_Tree.Units is
             End_Unit_It :=
               To_Construct_Tree_Iterator (Get_End_Entity (Unit_Info));
 
-            if Natural (Offset) >=
-              Get_Construct (Start_Unit_It).Sloc_Start.Index
+            if Natural (Offset)
+              >= Get_Construct (Start_Unit_It).Sloc_Start.Index
               and then
                 (End_Unit_It = Null_Construct_Tree_Iterator
-                 or else Natural (Offset) <
-                   Get_Construct (End_Unit_It).Sloc_Start.Index)
+                 or else
+                   Natural (Offset)
+                   < Get_Construct (End_Unit_It).Sloc_Start.Index)
             then
                return Unit_Info;
             end if;
@@ -923,9 +937,10 @@ package body Ada_Semantic_Tree.Units is
 
    function Get_Owning_Unit (Entity : Entity_Access) return Unit_Access is
    begin
-      return Get_Owning_Unit
-        (Get_File (Entity),
-         String_Index_Type (Get_Construct (Entity).Sloc_Start.Index));
+      return
+        Get_Owning_Unit
+          (Get_File (Entity),
+           String_Index_Type (Get_Construct (Entity).Sloc_Start.Index));
    end Get_Owning_Unit;
 
    ----------------------
@@ -955,8 +970,9 @@ package body Ada_Semantic_Tree.Units is
       Unit_Key     : Construct_Annotations_Pckg.Annotation_Key;
    begin
       if Unit /= Null_Entity_Access then
-         Db_Assistant := Get_Assistant
-           (Get_Database (Get_File (Unit)), Ada_Unit_Assistant_Id);
+         Db_Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Unit)), Ada_Unit_Assistant_Id);
 
          Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
@@ -980,8 +996,9 @@ package body Ada_Semantic_Tree.Units is
       elsif not Exists (Unit.Body_Unit) then
          return Null_Unit_Access;
       else
-         Db_Assistant := Get_Assistant
-           (Get_Database (Get_File (Unit.Body_Unit)), Ada_Unit_Assistant_Id);
+         Db_Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Unit.Body_Unit)), Ada_Unit_Assistant_Id);
 
          Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
@@ -1003,8 +1020,9 @@ package body Ada_Semantic_Tree.Units is
       elsif not Exists (Unit.Spec_Unit) then
          return Null_Unit_Access;
       else
-         Db_Assistant := Get_Assistant
-           (Get_Database (Get_File (Unit.Spec_Unit)), Ada_Unit_Assistant_Id);
+         Db_Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Unit.Spec_Unit)), Ada_Unit_Assistant_Id);
 
          Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
@@ -1025,7 +1043,8 @@ package body Ada_Semantic_Tree.Units is
    -- Free --
    ----------
 
-   overriding procedure Free (Unit : in out Unit_Access_Record) is
+   overriding
+   procedure Free (Unit : in out Unit_Access_Record) is
    begin
       Reset_Unit_Links (Unit);
 
@@ -1041,15 +1060,17 @@ package body Ada_Semantic_Tree.Units is
      (Parent : Unit_Access; Child : Unit_Access) return Boolean
    is
       Indirect_Parent : Unit_Access := Child;
-      Db_Assistant : Database_Assistant_Access;
-      Unit_Key     : Construct_Annotations_Pckg.Annotation_Key;
+      Db_Assistant    : Database_Assistant_Access;
+      Unit_Key        : Construct_Annotations_Pckg.Annotation_Key;
    begin
       if Child = null or else Parent = null then
          return False;
       end if;
 
-      Db_Assistant := Get_Assistant
-        (Get_Database (Get_File (Child.Start_Entity)), Ada_Unit_Assistant_Id);
+      Db_Assistant :=
+        Get_Assistant
+          (Get_Database (Get_File (Child.Start_Entity)),
+           Ada_Unit_Assistant_Id);
 
       Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
@@ -1058,8 +1079,8 @@ package body Ada_Semantic_Tree.Units is
             return True;
          end if;
 
-         Indirect_Parent := Get_Unit_Info
-           (Unit_Key, To_Entity_Access (Indirect_Parent.Parent));
+         Indirect_Parent :=
+           Get_Unit_Info (Unit_Key, To_Entity_Access (Indirect_Parent.Parent));
       end loop;
 
       return False;
@@ -1078,8 +1099,7 @@ package body Ada_Semantic_Tree.Units is
    -- Set_Dependency_Timestamp --
    ------------------------------
 
-   procedure Set_Dependency_Timestamp
-     (Unit : Unit_Access; Timestamp : Integer)
+   procedure Set_Dependency_Timestamp (Unit : Unit_Access; Timestamp : Integer)
    is
    begin
       Unit.Dep_Timestamp := Timestamp;
@@ -1124,8 +1144,8 @@ package body Ada_Semantic_Tree.Units is
         Unit_Hierarchy_Timestamp (It_Unit.This_Timestamp);
    begin
       while It_Unit.Parent /= Null_Entity_Persistent_Access loop
-         It_Unit := Get_Unit_Info
-           (It_Unit.Unit_Key, To_Entity_Access (It_Unit.Parent));
+         It_Unit :=
+           Get_Unit_Info (It_Unit.Unit_Key, To_Entity_Access (It_Unit.Parent));
 
          Result := Result + Unit_Hierarchy_Timestamp (It_Unit.This_Timestamp);
       end loop;
@@ -1171,14 +1191,14 @@ package body Ada_Semantic_Tree.Units is
    ---------------------------
 
    procedure Initialize_Local_Trie (Unit : Unit_Access) is
-      It : Construct_Tree_Iterator :=
+      It        : Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (To_Entity_Access (Unit.Start_Entity));
-      End_It : constant Construct_Tree_Iterator :=
+      End_It    : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (To_Entity_Access (Unit.End_Entity));
       Construct : access Simple_Construct_Information;
-      File : constant Structured_File_Access :=
+      File      : constant Structured_File_Access :=
         Get_File (To_Entity_Access (Unit.Start_Entity));
-      Tree : constant Construct_Tree := Get_Tree (File);
+      Tree      : constant Construct_Tree := Get_Tree (File);
 
       Dummy_Index : Local_Construct_Trie.Construct_Trie_Index;
    begin
@@ -1217,8 +1237,7 @@ package body Ada_Semantic_Tree.Units is
 
    function First
      (Unit : Unit_Access; Name : String; Is_Partial : Boolean)
-      return Local_Construct_Iterator
-   is
+      return Local_Construct_Iterator is
    begin
       Initialize_Local_Trie (Unit);
 
@@ -1268,15 +1287,14 @@ package body Ada_Semantic_Tree.Units is
    -------------------
 
    procedure Unlink_Parent (Unit : in out Unit_Access_Record) is
-      Parent_Unit : Unit_Access;
+      Parent_Unit   : Unit_Access;
       Parent_Entity : Entity_Access;
    begin
       if Unit.Parent /= Null_Entity_Persistent_Access then
          Parent_Entity := To_Entity_Access (Unit.Parent);
 
          if Parent_Entity /= Null_Entity_Access then
-            Parent_Unit :=
-              Get_Unit_Info (Unit.Unit_Key, Parent_Entity);
+            Parent_Unit := Get_Unit_Info (Unit.Unit_Key, Parent_Entity);
 
             if Contains (Parent_Unit.Children_Units, Unit.Entity) then
                Delete (Parent_Unit.Children_Units, Unit.Entity);
@@ -1304,8 +1322,9 @@ package body Ada_Semantic_Tree.Units is
 
       Other_Part : Entity_Persistent_Access;
    begin
-      Assistant := Get_Assistant
-        (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
+      Assistant :=
+        Get_Assistant
+          (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
 
       --  Disconnect children
 
@@ -1313,18 +1332,18 @@ package body Ada_Semantic_Tree.Units is
 
       while Child_It /= Persistent_Entity_List.No_Element loop
          if Exists (Element (Child_It)) then
-            Child := Get_Unit_Info
-              (Unit.Unit_Key,
-               To_Entity_Access (Element (Child_It)));
+            Child :=
+              Get_Unit_Info
+                (Unit.Unit_Key, To_Entity_Access (Element (Child_It)));
 
             Construct_Unit_Tries.Insert
               (Trie         =>
                  Ada_Unit_Assistant (Assistant.all).Waiting_For_Parent'Access,
-               Symbols       => Get_Database (File).Symbols,
-               Construct_It => To_Construct_Tree_Iterator
-                 (To_Entity_Access (Child.Entity)),
-               Name         => Get_Item
-                 (Child.Name.all, Length (Child.Name.all) - 1),
+               Symbols      => Get_Database (File).Symbols,
+               Construct_It =>
+                 To_Construct_Tree_Iterator (To_Entity_Access (Child.Entity)),
+               Name         =>
+                 Get_Item (Child.Name.all, Length (Child.Name.all) - 1),
                Data         => Child,
                Lang         => Ada_Tree_Lang,
                Index        => Child.Waiting_For_Parent_Index);
@@ -1363,8 +1382,7 @@ package body Ada_Semantic_Tree.Units is
 
       --  Free remaining data
 
-      Delete
-        (Ada_Unit_Assistant (Assistant.all).Units_Db, Unit.Db_Index);
+      Delete (Ada_Unit_Assistant (Assistant.all).Units_Db, Unit.Db_Index);
 
       Tree_Annotations_Pckg.Get_Annotation
         (Get_Annotation_Container (Get_Tree (File)).all,
@@ -1372,8 +1390,7 @@ package body Ada_Semantic_Tree.Units is
          List_Annot);
 
       Delete
-        (Unit_List_Annotation (List_Annot.Other_Val.all).List,
-         Unit.Entity);
+        (Unit_List_Annotation (List_Annot.Other_Val.all).List, Unit.Entity);
 
       if Unit.Waiting_For_Parent_Index
         /= Construct_Unit_Tries.Null_Construct_Trie_Index

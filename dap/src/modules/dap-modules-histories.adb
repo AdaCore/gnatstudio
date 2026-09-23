@@ -23,10 +23,7 @@ package body DAP.Modules.Histories is
    -- Append --
    ------------
 
-   procedure Append
-     (History : History_List_Access;
-      Data    : Data_Type)
-   is
+   procedure Append (History : History_List_Access; Data : Data_Type) is
       Element : Hlist_Access;
    begin
       if not Is_Empty (History.Data)
@@ -36,14 +33,11 @@ package body DAP.Modules.Histories is
          Element.Num_Repeats := Element.Num_Repeats + 1;
 
       else
-         Element :=
-           new Hlist'
-             (Data        => new Data_Type'(Data),
-              Num_Repeats => 1);
+         Element := new Hlist'(Data => new Data_Type'(Data), Num_Repeats => 1);
          Append (History.Data, Element);
       end if;
 
-      History.Current  := Last_Element (History.Data);
+      History.Current := Last_Element (History.Data);
       History.Position := Length (History.Data) + 1;
    end Append;
 
@@ -114,8 +108,8 @@ package body DAP.Modules.Histories is
 
          else
             History.Position := History.Position - 1;
-            History.Current := Element
-              (History.Data, Integer (History.Position));
+            History.Current :=
+              Element (History.Data, Integer (History.Position));
          end if;
 
       else
@@ -140,8 +134,8 @@ package body DAP.Modules.Histories is
 
          History.Position := History.Position + 1;
          if History.Position <= Length (History.Data) then
-            History.Current  := Element
-              (History.Data, Integer (History.Position));
+            History.Current :=
+              Element (History.Data, Integer (History.Position));
          end if;
 
       else
@@ -157,10 +151,10 @@ package body DAP.Modules.Histories is
    begin
       if not Is_Empty (History.Data) then
          if D = Backward then
-            History.Current  := First_Element (History.Data);
+            History.Current := First_Element (History.Data);
             History.Position := 1;
          else
-            History.Current  := Last_Element (History.Data);
+            History.Current := Last_Element (History.Data);
             History.Position := Length (History.Data) + 1;
          end if;
       end if;
@@ -195,7 +189,7 @@ package body DAP.Modules.Histories is
          end loop;
 
          History.Data.Clear;
-         History.Current  := null;
+         History.Current := null;
          History.Position := 1;
       end if;
    end Free;

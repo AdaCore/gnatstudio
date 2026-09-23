@@ -41,28 +41,24 @@ package Process_Proxies is
    --  callback should not do anything.
 
    procedure Set_Command_In_Process
-     (Proxy      : access Process_Proxy;
-      In_Process : Boolean := True);
+     (Proxy : access Process_Proxy; In_Process : Boolean := True);
    --  Set the corresponding Flag in Proxy.
    --  See Command_In_Process for more details.
 
-   function Get_Command_Mode (Proxy : access Process_Proxy)
-      return GVD.Types.Command_Type;
+   function Get_Command_Mode
+     (Proxy : access Process_Proxy) return GVD.Types.Command_Type;
    --  Return the type of the command currently processed.
 
    procedure Set_Command_Mode
-     (Proxy : access Process_Proxy;
-      Mode  : GVD.Types.Command_Type);
+     (Proxy : access Process_Proxy; Mode : GVD.Types.Command_Type);
    --  Save the type of the command currently processed.
 
    procedure Set_Parse_File_Name
-     (Proxy : access Process_Proxy;
-      Parse : Boolean);
+     (Proxy : access Process_Proxy; Parse : Boolean);
    --  Indicate whether we should parse file names/line pattern in the output
    --  of the debugger.
 
-   function Get_Parse_File_Name
-     (Proxy : access Process_Proxy) return Boolean;
+   function Get_Parse_File_Name (Proxy : access Process_Proxy) return Boolean;
    --  Indicate whether we should parse file names/line pattern in the output
    --  of the debugger.
 
@@ -84,13 +80,11 @@ package Process_Proxies is
    --  underlying process is made.
 
    procedure Set_Interrupted
-     (Proxy       : access Process_Proxy;
-      Interrupted : Boolean := True);
+     (Proxy : access Process_Proxy; Interrupted : Boolean := True);
    --  Set the Interrupted flag.
 
    procedure Empty_Buffer
-     (Proxy        : access Process_Proxy;
-      At_Least_One : Boolean := False);
+     (Proxy : access Process_Proxy; At_Least_One : Boolean := False);
    --  Empty the current output buffer for the external process, as well as
    --  any waiting input.
    --  If At_Least_One is True, then wait until at least one character is
@@ -125,8 +119,8 @@ package Process_Proxies is
    --  Same, but the regular expression is given a string.
 
    procedure Send
-     (Proxy : access Process_Proxy;
-      Cmd   : String;
+     (Proxy        : access Process_Proxy;
+      Cmd          : String;
       Empty_Buffer : Boolean := False);
    --  Send a command to the underlying process.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
@@ -137,7 +131,8 @@ package Process_Proxies is
 
    type Gui_Process_Proxy is new Process_Proxy with private;
 
-   overriding procedure Wait
+   overriding
+   procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -149,7 +144,8 @@ package Process_Proxies is
    --  The recommended way is to use a (non GUI) Process_Proxy and call Wait
    --  with small timeouts inside Gtk+ timeout handlers.
 
-   overriding procedure Wait
+   overriding
+   procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -158,8 +154,8 @@ package Process_Proxies is
    --  In GUI mode, this processes the graphic events between each iteration.
    --  See comments above.
 
-   type Parse_File_Switch
-     (Proxy : Process_Proxy_Access) is tagged limited private;
+   type Parse_File_Switch (Proxy : Process_Proxy_Access) is
+     tagged limited private;
    --  This type disables file parsing while its instance exists
    --  Usage:
    --     declare
@@ -175,33 +171,32 @@ private
    type Boolean_Access is access Boolean;
 
    type Process_Proxy is tagged record
-      Descriptor         : GNAT.Expect.Process_Descriptor_Access;
+      Descriptor : GNAT.Expect.Process_Descriptor_Access;
 
       Command_In_Process : Boolean_Access := new Boolean'(False);
       --  This is implemented as an access type so that Process_Proxy does
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Mode      : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Internal_Mode : GVD.Types.Command_Type := GVD.Types.Hidden;
       --  Indicates whether the current output from the debugger should be
       --  displayed in the output window
 
-      Parse_File_Name    : Boolean := True;
+      Parse_File_Name : Boolean := True;
       --  True if file name/lines patterns should be recognized in the output
       --  of the debugger. If set to False, the text displayed in the code
       --  editor will not be changed.
 
-      Interrupted        : Boolean := False;
+      Interrupted : Boolean := False;
       --  Whether the process has been interrupted
 
-      Waiting            : Boolean := False;
+      Waiting : Boolean := False;
       --  Whether we are already polling the output of the process.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
 
-   type Parse_File_Switch
-     (Proxy : Process_Proxy_Access) is
+   type Parse_File_Switch (Proxy : Process_Proxy_Access) is
      new Ada.Finalization.Limited_Controlled
    with record
       Work : Boolean := False;
@@ -210,7 +205,9 @@ private
       --  it is False.
    end record;
 
-   overriding procedure Initialize (Self : in out Parse_File_Switch);
-   overriding procedure Finalize   (Self : in out Parse_File_Switch);
+   overriding
+   procedure Initialize (Self : in out Parse_File_Switch);
+   overriding
+   procedure Finalize (Self : in out Parse_File_Switch);
 
 end Process_Proxies;

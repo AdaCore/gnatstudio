@@ -18,7 +18,7 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with GNAT.Strings;    use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
@@ -34,7 +34,7 @@ package Vdiff2_Module.Utils is
    --  Show a result of a Merge
 
    function Process_Differences
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access) return Diff_Head_Access;
    --  Verify that Item is not in Diff_List then show differences and append
@@ -69,13 +69,13 @@ package Vdiff2_Module.Utils is
      (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
       File1    : Virtual_File;
       File2    : Virtual_File;
-      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      File3    : Virtual_File := GNATCOLL.VFS.No_File;
       Ref_File : T_VFile_Index := 2);
    function Visual_Diff
      (Mode     : GPS.Kernel.Preferences.Vdiff_Modes;
       File1    : Virtual_File;
       File2    : Virtual_File;
-      File3    : Virtual_File  := GNATCOLL.VFS.No_File;
+      File3    : Virtual_File := GNATCOLL.VFS.No_File;
       Ref_File : T_VFile_Index := 2) return Diff_Head_Access;
    --  Create a new visual diff between the files.
    --  Ref_File indicates which file should be used as the reference when
@@ -103,14 +103,12 @@ package Vdiff2_Module.Utils is
    --  Display the result in the editor
 
    function Get_Diff_Node
-     (Selected_File : GNATCOLL.VFS.Virtual_File;
-      List          : Diff_Head_List.Vector)
+     (Selected_File : GNATCOLL.VFS.Virtual_File; List : Diff_Head_List.Vector)
       return Diff_Head_List.Std_Vectors.Cursor;
    --  Return the first Diff that contains Selected_File.
 
    function Is_In_3Diff_List
-     (Selected_File : GNATCOLL.VFS.Virtual_File;
-      List          : Diff_Head_List.Vector)
+     (Selected_File : GNATCOLL.VFS.Virtual_File; List : Diff_Head_List.Vector)
       return Boolean;
    --  Return true if Selected_File is used in a 3 files visual diff.
    --  Return False otherwise.
@@ -139,13 +137,13 @@ package Vdiff2_Module.Utils is
 
 private
 
-   Me                   : constant Trace_Handle := Create ("GPS.VDIFF.Utils");
-   Default_Style        : constant String       := "default_diff";
-   Old_Style            : constant String       := "old_diff";
-   Append_Style         : constant String       := "append_diff";
-   Remove_Style         : constant String       := "remove_diff";
-   Change_Style         : constant String       := "change_diff";
-   Fine_Change_Style    : constant String       := "fine_change_diff";
-   Id_Col_Vdiff         : constant String       := "vdiff2_col_merge";
+   Me                : constant Trace_Handle := Create ("GPS.VDIFF.Utils");
+   Default_Style     : constant String := "default_diff";
+   Old_Style         : constant String := "old_diff";
+   Append_Style      : constant String := "append_diff";
+   Remove_Style      : constant String := "remove_diff";
+   Change_Style      : constant String := "change_diff";
+   Fine_Change_Style : constant String := "fine_change_diff";
+   Id_Col_Vdiff      : constant String := "vdiff2_col_merge";
 
 end Vdiff2_Module.Utils;

@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;
 
@@ -27,9 +27,7 @@ package body CodePeer.Shell_Commands is
    ------------------
 
    function Build_Target
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Name   : String)
-      return String
+     (Kernel : GPS.Kernel.Kernel_Handle; Name : String) return String
    is
       CL : Arg_List;
 
@@ -46,13 +44,13 @@ package body CodePeer.Shell_Commands is
    procedure Build_Target_Execute
      (Kernel          : GPS.Kernel.Kernel_Handle;
       Target_ID       : String;
-      Main_Name       : String       := "";
+      Main_Name       : String := "";
       File            : Virtual_File := GNATCOLL.VFS.No_File;
-      Force           : Boolean      := False;
-      Extra_Args      : String       := "";
-      Build_Mode      : String       := "";
-      Synchronous     : Boolean      := True;
-      Preserve_Output : Boolean      := False;
+      Force           : Boolean := False;
+      Extra_Args      : String := "";
+      Build_Mode      : String := "";
+      Synchronous     : Boolean := True;
+      Preserve_Output : Boolean := False;
       Dir             : Virtual_File := GNATCOLL.VFS.No_File)
    is
       CL : Arg_List := Create ("BuildTarget.execute");

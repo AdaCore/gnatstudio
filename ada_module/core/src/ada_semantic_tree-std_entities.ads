@@ -27,11 +27,7 @@ package Ada_Semantic_Tree.Std_Entities is
    --  Describes an attribute or a pragma
 
    type Context_Of_Use is
-     (C_Unknown,
-      C_Object,
-      C_Object_Array,
-      C_Type,
-      C_Type_Array);
+     (C_Unknown, C_Object, C_Object_Array, C_Type, C_Type_Array);
 
    type Context_Of_Use_Array is array (Context_Of_Use) of Boolean;
    pragma Pack (Context_Of_Use_Array);
@@ -81,8 +77,7 @@ package Ada_Semantic_Tree.Std_Entities is
 
 private
 
-   type Origin_Kind is
-     (Default, Ada_Standard, GNAT_Specific);
+   type Origin_Kind is (Default, Ada_Standard, GNAT_Specific);
 
    type Std_Description_Record is record
       Name          : String_Access;

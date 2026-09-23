@@ -98,7 +98,7 @@
 --  nothing if the tree is not ready than to freeze the UI to compute the
 --  tree.
 
-with Language.Tree; use Language.Tree;
+with Language.Tree;  use Language.Tree;
 with Ada.Containers; use Ada.Containers;
 
 package Language.Abstract_Language_Tree is
@@ -116,17 +116,18 @@ package Language.Abstract_Language_Tree is
       --  Offset in the line, starting at 1
    end record;
 
-   function "<" (Left, Right : Sloc_T) return Boolean is
-     (if Left.Index /= 0 and then Right.Index /= 0
-      then Left.Index < Right.Index
-      else
-        (Left.Line < Right.Line
-         or else (Left.Line = Right.Line
-                  and then Integer (Left.Column) < Integer (Right.Column))));
+   function "<" (Left, Right : Sloc_T) return Boolean
+   is (if Left.Index /= 0 and then Right.Index /= 0
+       then Left.Index < Right.Index
+       else
+         (Left.Line < Right.Line
+          or else
+            (Left.Line = Right.Line
+             and then Integer (Left.Column) < Integer (Right.Column))));
 
    type Semantic_Tree_Provider is interface;
-   type Semantic_Tree_Provider_Access
-   is access all Semantic_Tree_Provider'Class;
+   type Semantic_Tree_Provider_Access is
+     access all Semantic_Tree_Provider'Class;
    --  This type represents a tree factory that will provide you with the right
    --  tree for a given file. It is the point of dispatch of the API, since
    --  different providers will provide you with different trees, adapted to
@@ -155,20 +156,18 @@ package Language.Abstract_Language_Tree is
    ----------------------------------------
 
    procedure Sort
-     (Self : in out Semantic_Node_Array;
+     (Self      : in out Semantic_Node_Array;
       Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
    is abstract;
    --  Sort the node array using Less_Than as an order function
 
    function Get
      (Self : Semantic_Node_Array; Index : Positive) return Semantic_Node'Class
-      is abstract;
+   is abstract;
    --  Returns the element at index Index in the node array, with the starting
    --  index being 1
 
-   function Length
-     (Self : Semantic_Node_Array) return Natural
-      is abstract;
+   function Length (Self : Semantic_Node_Array) return Natural is abstract;
    --  Returns the total length of the array
 
    -------------------------------------------
@@ -179,7 +178,7 @@ package Language.Abstract_Language_Tree is
      (Self    : in out Semantic_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
-      is abstract;
+   is abstract;
    --  Get the tree for the given file. This function should not be called
    --  outside of GNAT Studio kernel. Context lets the provider know how the
    --  tree will be used. We use it for step by step migration to libadalang
@@ -191,24 +190,26 @@ package Language.Abstract_Language_Tree is
    ----------------------------------
 
    function Root_Iterator
-     (Self : Semantic_Tree) return Semantic_Tree_Iterator'Class is abstract;
+     (Self : Semantic_Tree) return Semantic_Tree_Iterator'Class
+   is abstract;
 
-   function Root_Nodes
-     (Self : Semantic_Tree) return Semantic_Node_Array'Class
-      is abstract;
+   function Root_Nodes (Self : Semantic_Tree) return Semantic_Node_Array'Class
+   is abstract;
    --  Returns the forest of nodes at the root of this tree. For example,
    --  in Ada this will be with/use statements, and a package/subprogram/..
    --  declaration
 
    function Node_At
-     (Self : Semantic_Tree; Sloc : Sloc_T;
+     (Self            : Semantic_Tree;
+      Sloc            : Sloc_T;
       Category_Filter : Category_Array := Null_Category_Array)
-      return Semantic_Node'Class is abstract;
+      return Semantic_Node'Class
+   is abstract;
    --  Returns the most precise enclosing node at location which satisfies
    --  filter
 
-   function File
-     (Self : Semantic_Tree) return GNATCOLL.VFS.Virtual_File is abstract;
+   function File (Self : Semantic_Tree) return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Returns the file for this semantic tree
 
    procedure Update (Self : in out Semantic_Tree) is abstract;
@@ -235,108 +236,95 @@ package Language.Abstract_Language_Tree is
    -- Primitives for Semantic_Node --
    ----------------------------------
 
-   function Is_Valid
-     (SN : Semantic_Node) return Boolean is abstract;
+   function Is_Valid (SN : Semantic_Node) return Boolean is abstract;
    --  Predicate to indicate wether this node is valid. This is used to
    --  guarantee that clients will not generate invalid results on other
    --  primitives of nodes
 
-   function Category
-     (Self : Semantic_Node) return Language_Category is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Category (Self : Semantic_Node) return Language_Category
+   is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Gets the category of node
 
-   function Is_Declaration
-     (Self : Semantic_Node) return Boolean
-   is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Is_Declaration (Self : Semantic_Node) return Boolean is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Wether the node is a declaration or not
 
-   function Children
-     (Self      : Semantic_Node) return Semantic_Node_Array'Class
-      is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Children (Self : Semantic_Node) return Semantic_Node_Array'Class
+   is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Return a collection of children of node
 
-   function First_Child
-     (Self : Semantic_Node) return Semantic_Node'Class is abstract;
+   function First_Child (Self : Semantic_Node) return Semantic_Node'Class
+   is abstract;
 
-   function Parent
-     (Self : Semantic_Node) return Semantic_Node'Class is abstract;
+   function Parent (Self : Semantic_Node) return Semantic_Node'Class
+   is abstract;
    --  Return the parent of node
 
-   function Name
-     (Self : Semantic_Node) return GNATCOLL.Symbols.Symbol is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Name (Self : Semantic_Node) return GNATCOLL.Symbols.Symbol
+   is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Return the name of node, if applicable
 
-   function Name
-     (Self : Semantic_Node'Class) return String
-   is
-     (if Self.Is_Valid
-      then Get (Self.Name).all
-      else "");
+   function Name (Self : Semantic_Node'Class) return String
+   is (if Self.Is_Valid then Get (Self.Name).all else "");
    --  Return the name of node, if applicable
 
-   function Sloc_Start
-     (Self : Semantic_Node) return Sloc_T is abstract;
+   function Sloc_Start (Self : Semantic_Node) return Sloc_T is abstract;
    --  Return the starting source location of node
 
-   function Sloc_Def
-     (Self : Semantic_Node) return Sloc_T is abstract;
+   function Sloc_Def (Self : Semantic_Node) return Sloc_T is abstract;
    --  Return the source location of the defining identifier for node, if
    --  applicable
 
-   function Sloc_End
-     (Self : Semantic_Node) return Sloc_T is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Sloc_End (Self : Semantic_Node) return Sloc_T is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Return the ending source location for node.
 
    function Profile
-     (Self             : Semantic_Node;
-      Show_Param_Names : Boolean := True)
-      return GNATCOLL.Symbols.Symbol is abstract
-     with Pre'Class => (Self.Is_Valid);
+     (Self : Semantic_Node; Show_Param_Names : Boolean := True)
+      return GNATCOLL.Symbols.Symbol
+   is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Return the profile for node, if applicable (typically if node is a
    --  subprogram node)
 
-   function Definition
-     (Self : Semantic_Node) return Semantic_Node'Class is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Definition (Self : Semantic_Node) return Semantic_Node'Class
+   is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Returns the counterpart of node. If node is an ada type definition with
    --  a private view, it will return the private view, and vice versa. If node
    --  is a subprogram declaration with a body, it will return the body.
 
-   function Get_Hash
-     (Self : Semantic_Node) return Hash_Type is abstract
-     with Pre'Class => (Self.Is_Valid);
+   function Get_Hash (Self : Semantic_Node) return Hash_Type is abstract
+   with Pre'Class => (Self.Is_Valid);
    --  Returns a hash for the node
 
-   function File
-     (Self : Semantic_Node) return GNATCOLL.VFS.Virtual_File is abstract;
+   function File (Self : Semantic_Node) return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Return the file corresponding to node
 
-   function Unique_Id
-     (SN : Semantic_Node) return GNATCOLL.Symbols.Symbol is abstract;
+   function Unique_Id (SN : Semantic_Node) return GNATCOLL.Symbols.Symbol
+   is abstract;
    --  Return the unique id for this node
 
-   function Visibility
-     (SN : Semantic_Node) return Construct_Visibility is abstract;
+   function Visibility (SN : Semantic_Node) return Construct_Visibility
+   is abstract;
    --  Return the visibility of this node
 
    function Info
-     (Self             : Semantic_Node'Class;
-      Show_Param_Names : Boolean := True) return Semantic_Node_Info;
+     (Self : Semantic_Node'Class; Show_Param_Names : Boolean := True)
+      return Semantic_Node_Info;
    --  Return a static information record for this node.
    --  See the Profile function for a definition of Show_Param_Names.
 
-   function Hash
-     (SN : Semantic_Node'Class) return Hash_Type is
-     (SN.Get_Hash);
+   function Hash (SN : Semantic_Node'Class) return Hash_Type
+   is (SN.Get_Hash);
    --  Static non dispatching hash function for nodes
 
-   function Documentation_Header
-     (SN : Semantic_Node) return String is abstract;
+   function Documentation_Header (SN : Semantic_Node) return String
+   is abstract;
    --  Returns the documentation's header for this node, if applicable
 
    -------------------------------------------
@@ -345,14 +333,14 @@ package Language.Abstract_Language_Tree is
 
    procedure Next (It : in out Semantic_Tree_Iterator) is abstract;
 
-   function Element
-     (It : Semantic_Tree_Iterator) return Semantic_Node'Class is abstract;
+   function Element (It : Semantic_Tree_Iterator) return Semantic_Node'Class
+   is abstract;
 
-   function Has_Element
-     (It : Semantic_Tree_Iterator) return Boolean is abstract;
+   function Has_Element (It : Semantic_Tree_Iterator) return Boolean
+   is abstract;
 
-   No_Semantic_Node : constant Semantic_Node'Class;
-   No_Semantic_Tree : constant Semantic_Tree'Class;
+   No_Semantic_Node       : constant Semantic_Node'Class;
+   No_Semantic_Tree       : constant Semantic_Tree'Class;
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
    function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
 
@@ -364,16 +352,18 @@ private
 
    type Dummy_Semantic_Node_Array is new Semantic_Node_Array with null record;
 
-   overriding function Get
-     (Self        : Dummy_Semantic_Node_Array;
-      Dummy_Index : Positive) return Semantic_Node'Class;
+   overriding
+   function Get
+     (Self : Dummy_Semantic_Node_Array; Dummy_Index : Positive)
+      return Semantic_Node'Class;
 
-   overriding function Length
-     (Self : Dummy_Semantic_Node_Array) return Natural
+   overriding
+   function Length (Self : Dummy_Semantic_Node_Array) return Natural
    is (0);
 
-   overriding procedure Sort
-     (Self : in out Dummy_Semantic_Node_Array;
+   overriding
+   procedure Sort
+     (Self      : in out Dummy_Semantic_Node_Array;
       Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
    is null;
 
@@ -383,80 +373,92 @@ private
 
    type Dummy_Semantic_Node is new Semantic_Node with null record;
 
-   overriding function First_Child
+   overriding
+   function First_Child
      (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
-   overriding function Sloc_Def
-     (Self : Dummy_Semantic_Node) return Sloc_T is (0, 0, 0);
+   overriding
+   function Sloc_Def (Self : Dummy_Semantic_Node) return Sloc_T
+   is (0, 0, 0);
 
-   overriding function Documentation_Header
-     (SN : Dummy_Semantic_Node) return String is ("");
+   overriding
+   function Documentation_Header (SN : Dummy_Semantic_Node) return String
+   is ("");
 
-   overriding function Visibility
-     (Self : Dummy_Semantic_Node) return Construct_Visibility
-     is (Visibility_Public);
+   overriding
+   function Visibility (Self : Dummy_Semantic_Node) return Construct_Visibility
+   is (Visibility_Public);
 
-   overriding function Is_Valid
-     (SN : Dummy_Semantic_Node) return Boolean is (False);
+   overriding
+   function Is_Valid (SN : Dummy_Semantic_Node) return Boolean
+   is (False);
 
-   overriding function Category
-     (Self : Dummy_Semantic_Node) return Language_Category is (Cat_Unknown);
+   overriding
+   function Category (Self : Dummy_Semantic_Node) return Language_Category
+   is (Cat_Unknown);
 
-   overriding function Is_Declaration
-     (Self : Dummy_Semantic_Node) return Boolean is (False);
+   overriding
+   function Is_Declaration (Self : Dummy_Semantic_Node) return Boolean
+   is (False);
 
-   overriding function Children
+   overriding
+   function Children
      (Self : Dummy_Semantic_Node) return Semantic_Node_Array'Class;
 
-   overriding function Parent
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
+   overriding
+   function Parent (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
-   overriding function Name
-     (Self : Dummy_Semantic_Node) return GNATCOLL.Symbols.Symbol
+   overriding
+   function Name (Self : Dummy_Semantic_Node) return GNATCOLL.Symbols.Symbol
    is (No_Symbol);
 
-   overriding function Sloc_Start
-     (Self : Dummy_Semantic_Node) return Sloc_T
+   overriding
+   function Sloc_Start (Self : Dummy_Semantic_Node) return Sloc_T
    is (Sloc_T'(others => <>));
 
-   overriding function Sloc_End
-     (Self : Dummy_Semantic_Node) return Sloc_T
+   overriding
+   function Sloc_End (Self : Dummy_Semantic_Node) return Sloc_T
    is (Sloc_T'(others => <>));
 
-   overriding function Profile
-     (Self                   : Dummy_Semantic_Node;
-      Dummy_Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
-     is (GNATCOLL.Symbols.Empty_String);
+   overriding
+   function Profile
+     (Self : Dummy_Semantic_Node; Dummy_Show_Param_Names : Boolean := True)
+      return GNATCOLL.Symbols.Symbol
+   is (GNATCOLL.Symbols.Empty_String);
 
-   overriding function Definition
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
+   overriding
+   function Definition (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
-   overriding function Get_Hash
-     (Self : Dummy_Semantic_Node) return Hash_Type is (0);
+   overriding
+   function Get_Hash (Self : Dummy_Semantic_Node) return Hash_Type
+   is (0);
 
-   overriding function File
-     (Self : Dummy_Semantic_Node) return GNATCOLL.VFS.Virtual_File
+   overriding
+   function File (Self : Dummy_Semantic_Node) return GNATCOLL.VFS.Virtual_File
    is (GNATCOLL.VFS.No_File);
 
-   overriding function Unique_Id
+   overriding
+   function Unique_Id
      (Self : Dummy_Semantic_Node) return GNATCOLL.Symbols.Symbol
-     is (GNATCOLL.Symbols.Empty_String);
+   is (GNATCOLL.Symbols.Empty_String);
 
    ----------------------------------
    -- Dummy_Semantic_Tree_Iterator --
    ----------------------------------
 
-   type Dummy_Semantic_Tree_Iterator
-   is new Semantic_Tree_Iterator with null record;
+   type Dummy_Semantic_Tree_Iterator is new Semantic_Tree_Iterator
+   with null record;
 
-   overriding procedure Next
-     (It : in out Dummy_Semantic_Tree_Iterator) is null;
+   overriding
+   procedure Next (It : in out Dummy_Semantic_Tree_Iterator) is null;
 
-   overriding function Element
+   overriding
+   function Element
      (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class;
 
-   overriding function Has_Element
-     (It : Dummy_Semantic_Tree_Iterator) return Boolean is (False);
+   overriding
+   function Has_Element (It : Dummy_Semantic_Tree_Iterator) return Boolean
+   is (False);
 
    -------------------------
    -- Dummy_Semantic_Tree --
@@ -464,30 +466,35 @@ private
 
    type Dummy_Semantic_Tree is new Semantic_Tree with null record;
 
-   overriding function Root_Iterator
-     (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator'Class is
-      (No_Semantic_Tree_Iterator);
+   overriding
+   function Root_Iterator
+     (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator'Class
+   is (No_Semantic_Tree_Iterator);
 
-   overriding function Root_Nodes
+   overriding
+   function Root_Nodes
      (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class;
 
-   overriding function Node_At
+   overriding
+   function Node_At
      (Self                  : Dummy_Semantic_Tree;
       Dummy_Sloc            : Sloc_T;
       Dummy_Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class;
 
-   overriding function File
-     (Self : Dummy_Semantic_Tree) return GNATCOLL.VFS.Virtual_File is
-     (GNATCOLL.VFS.No_File);
+   overriding
+   function File (Self : Dummy_Semantic_Tree) return GNATCOLL.VFS.Virtual_File
+   is (GNATCOLL.VFS.No_File);
 
-   overriding procedure Update (Self : in out Dummy_Semantic_Tree) is null;
+   overriding
+   procedure Update (Self : in out Dummy_Semantic_Tree) is null;
 
-   overriding procedure Update_Async
-     (Self : in out Dummy_Semantic_Tree) is null;
+   overriding
+   procedure Update_Async (Self : in out Dummy_Semantic_Tree) is null;
 
-   overriding function Is_Ready
-     (Self : Dummy_Semantic_Tree) return Boolean is (False);
+   overriding
+   function Is_Ready (Self : Dummy_Semantic_Tree) return Boolean
+   is (False);
 
    --------------------
    -- Null constants --
@@ -496,32 +503,36 @@ private
    No_Semantic_Node : constant Semantic_Node'Class :=
      Dummy_Semantic_Node'(null record);
 
-   overriding function Get
-     (Self        : Dummy_Semantic_Node_Array;
-      Dummy_Index : Positive) return Semantic_Node'Class
+   overriding
+   function Get
+     (Self : Dummy_Semantic_Node_Array; Dummy_Index : Positive)
+      return Semantic_Node'Class
    is (No_Semantic_Node);
 
-   overriding function First_Child
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   overriding
+   function First_Child (Self : Dummy_Semantic_Node) return Semantic_Node'Class
    is (No_Semantic_Node);
 
-   overriding function Parent
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   overriding
+   function Parent (Self : Dummy_Semantic_Node) return Semantic_Node'Class
    is (No_Semantic_Node);
 
-   overriding function Definition
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class is
-      (No_Semantic_Node);
+   overriding
+   function Definition (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   is (No_Semantic_Node);
 
-   overriding function Element
+   overriding
+   function Element
      (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class
    is (No_Semantic_Node);
 
-   overriding function Node_At
-      (Self                  : Dummy_Semantic_Tree;
-       Dummy_Sloc            : Sloc_T;
-       Dummy_Category_Filter : Category_Array := Null_Category_Array)
-      return Semantic_Node'Class is (No_Semantic_Node);
+   overriding
+   function Node_At
+     (Self                  : Dummy_Semantic_Tree;
+      Dummy_Sloc            : Sloc_T;
+      Dummy_Category_Filter : Category_Array := Null_Category_Array)
+      return Semantic_Node'Class
+   is (No_Semantic_Node);
 
    No_Semantic_Tree : constant Semantic_Tree'Class :=
      Dummy_Semantic_Tree'(null record);
@@ -529,12 +540,14 @@ private
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
      Dummy_Semantic_Node_Array'(null record);
 
-   overriding function Children
+   overriding
+   function Children
      (Self : Dummy_Semantic_Node) return Semantic_Node_Array'Class
    is (No_Semantic_Node_Array);
 
-   overriding function Root_Nodes
+   overriding
+   function Root_Nodes
      (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class
-      is (No_Semantic_Node_Array);
+   is (No_Semantic_Node_Array);
 
 end Language.Abstract_Language_Tree;

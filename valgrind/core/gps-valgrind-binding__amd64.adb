@@ -27,19 +27,25 @@ package body GPS.Valgrind.Binding is
       use Ada.Characters.Latin_1;
 
       Default : constant Word := 0;
-      Args : array (0 .. 5) of Word := (Map (Kind), others => 0);
-      Result : Word;
+      Args    : array (0 .. 5) of Word := (Map (Kind), others => 0);
+      Result  : Word;
    begin
       System.Machine_Code.Asm
-        (Template => "rolq $3,{%%}rdi; rolq $13,{%%}rdi;" & LF &
-           HT & "rolq $61,{%%}rdi; rolq $51,{%%}rdi;" & LF &
+        (Template =>
+           "rolq $3,{%%}rdi; rolq $13,{%%}rdi;"
+           & LF
+           & HT
+           & "rolq $61,{%%}rdi; rolq $51,{%%}rdi;"
+           & LF
+           &
            --  %RDX = client_request ( %RAX )
-           HT & "xchgq {%%}rbx, {%%}rbx",
-         Outputs => Word'Asm_Output ("=d", Result),
-         Inputs  =>
+                                              HT
+           & "xchgq {%%}rbx, {%%}rbx",
+         Outputs  => Word'Asm_Output ("=d", Result),
+         Inputs   =>
            (System.Address'Asm_Input ("a", Args'Address),
             Word'Asm_Input ("0", Default)),
-         Clobber => "memory");
+         Clobber  => "memory");
    end Do_Client_Request;
 
 end GPS.Valgrind.Binding;

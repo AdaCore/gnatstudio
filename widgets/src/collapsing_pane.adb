@@ -17,19 +17,19 @@
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-with Glib.Object;          use Glib.Object;
+with Glib.Object; use Glib.Object;
 
-with Gdk.Event;            use Gdk.Event;
+with Gdk.Event; use Gdk.Event;
 
-with Gtk.Arrow;            use Gtk.Arrow;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Event_Box;        use Gtk.Event_Box;
-with Gtk.Frame;            use Gtk.Frame;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Arrow;     use Gtk.Arrow;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Event_Box; use Gtk.Event_Box;
+with Gtk.Frame;     use Gtk.Frame;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Widget;    use Gtk.Widget;
 
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtk.Enums;            use Gtk.Enums;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtk.Enums;       use Gtk.Enums;
 
 package body Collapsing_Pane is
 
@@ -38,11 +38,11 @@ package body Collapsing_Pane is
    --------------------
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
    --  A pointer to the 'class record'
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-               (1 => New_String (String (Signal_Toggled)));
+     (1 => New_String (String (Signal_Toggled)));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -57,8 +57,7 @@ package body Collapsing_Pane is
      (Object : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user clicks on the label or the collapse icon
 
-   procedure On_Destroy
-     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Destroy (Object : access Gtk_Widget_Record'Class);
    --  Called when the collapsing pane is destroyed
 
    -------------
@@ -106,7 +105,9 @@ package body Collapsing_Pane is
 
       Return_Callback.Object_Connect
         (Pane.Label_Box,
-         Signal_Button_Release_Event, On_Change_State'Access, Pane);
+         Signal_Button_Release_Event,
+         On_Change_State'Access,
+         Pane);
 
       Gtk_New_Vbox (Pane.Main_Box, Homogeneous => False);
       Add (Frame, Pane.Main_Box);
@@ -114,8 +115,7 @@ package body Collapsing_Pane is
 
       Set_State (Pane, Collapsed);
 
-      Widget_Callback.Connect
-        (Pane, Signal_Destroy, On_Destroy'Access);
+      Widget_Callback.Connect (Pane, Signal_Destroy, On_Destroy'Access);
    end Initialize;
 
    -------------------------
@@ -124,8 +124,7 @@ package body Collapsing_Pane is
 
    procedure Set_Expanded_Widget
      (Pane   : access Collapsing_Pane_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       if Pane.Expanded_Box /= null then
          Pane.Expanded_Box.Unref;
@@ -143,8 +142,7 @@ package body Collapsing_Pane is
 
    procedure Set_Collapsed_Widget
      (Pane   : access Collapsing_Pane_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       if Pane.Collapsed_Box /= null then
          Pane.Collapsed_Box.Unref;
@@ -196,12 +194,10 @@ package body Collapsing_Pane is
 
       if State = Expanded then
          Set_Child_Widget (Pane, Pane.Expanded_Box);
-         Pane.Arrow.Set
-           (Arrow_Down, Shadow_None);
+         Pane.Arrow.Set (Arrow_Down, Shadow_None);
       else
          Set_Child_Widget (Pane, Pane.Collapsed_Box);
-         Pane.Arrow.Set
-           (Arrow_Right, Shadow_None);
+         Pane.Arrow.Set (Arrow_Right, Shadow_None);
       end if;
 
       Widget_Callback.Emit_By_Name (Pane, Signal_Toggled);
@@ -239,9 +235,7 @@ package body Collapsing_Pane is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Destroy (Object : access Gtk_Widget_Record'Class) is
       Pane : constant Collapsing_Pane := Collapsing_Pane (Object);
    begin
       if Pane.Expanded_Box /= null then

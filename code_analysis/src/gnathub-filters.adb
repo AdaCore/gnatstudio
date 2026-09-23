@@ -27,7 +27,8 @@ package body GNAThub.Filters is
    -- Apply --
    -----------
 
-   overriding function Apply
+   overriding
+   function Apply
      (Self    : in out Message_Filter_Record;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
       return GPS.Kernel.Messages.Filter_Result is
@@ -37,8 +38,7 @@ package body GNAThub.Filters is
       end if;
 
       declare
-         M : GNAThub_Message'Class
-           renames GNAThub_Message'Class (Message);
+         M : GNAThub_Message'Class renames GNAThub_Message'Class (Message);
 
       begin
          if Self.Tools.Contains (M.Get_Tool)
@@ -53,8 +53,9 @@ package body GNAThub.Filters is
                   Editor_Side => True));
 
          else
-            return (Non_Applicable => False,
-                    Flags          => GPS.Kernel.Messages.Empty_Message_Flags);
+            return
+              (Non_Applicable => False,
+               Flags          => GPS.Kernel.Messages.Empty_Message_Flags);
          end if;
       end;
    end Apply;
@@ -74,9 +75,8 @@ package body GNAThub.Filters is
    -- Add_Tool --
    --------------
 
-   procedure Add_Tool
-     (Self : in out Message_Filter_Record;
-      Tool : Tool_Access) is
+   procedure Add_Tool (Self : in out Message_Filter_Record; Tool : Tool_Access)
+   is
    begin
       Self.Tools.Include (Tool);
    end Add_Tool;
@@ -86,8 +86,7 @@ package body GNAThub.Filters is
    ------------------
 
    procedure Add_Severity
-     (Self     : in out Message_Filter_Record;
-      Severity : Severity_Access) is
+     (Self : in out Message_Filter_Record; Severity : Severity_Access) is
    begin
       Self.Severities.Include (Severity);
    end Add_Severity;
@@ -96,9 +95,8 @@ package body GNAThub.Filters is
    -- Add_Rule --
    --------------
 
-   procedure Add_Rule
-     (Self : in out Message_Filter_Record;
-      Rule : Rule_Access) is
+   procedure Add_Rule (Self : in out Message_Filter_Record; Rule : Rule_Access)
+   is
    begin
       Self.Rules.Include (Rule);
    end Add_Rule;
@@ -113,9 +111,9 @@ package body GNAThub.Filters is
       Severities : Severities_Ordered_Sets.Set;
       Rules      : Rule_Sets.Set) is
    begin
-      Self.Tools      := Tools;
+      Self.Tools := Tools;
       Self.Severities := Severities;
-      Self.Rules      := Rules;
+      Self.Rules := Rules;
 
       --  Trace the filters being applied
 
@@ -148,9 +146,7 @@ package body GNAThub.Filters is
    -- Fill --
    ----------
 
-   procedure Fill
-     (Self    : in out Metric_Filter;
-      Metrics : Rule_Sets.Set) is
+   procedure Fill (Self : in out Metric_Filter; Metrics : Rule_Sets.Set) is
    begin
       Self.Metrics := Metrics;
 

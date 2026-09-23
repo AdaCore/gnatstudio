@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;             use Ada.Calendar;
+with Ada.Calendar;          use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.Expect;              use GNAT.Expect;
+with GNAT.Expect; use GNAT.Expect;
 
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel.Hooks;
 with Gtk.Main;
@@ -31,8 +31,8 @@ with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;
 
-with Remote;                   use Remote;
-with Toolchains;               use Toolchains;
+with Remote;     use Remote;
+with Toolchains; use Toolchains;
 with Toolchains.Known;
 with XML_Utils;
 
@@ -44,19 +44,21 @@ package body Toolchains_Editor is
    Toolchains_Module_ID   : Toolchains_Module;
    Toolchains_Module_Name : constant String := "Toolchains_Editor";
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Toolchains_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See doc for inherited subprogram
 
-   type GPS_Toolchain_Manager_Record is
-     new Toolchains.Toolchain_Manager_Record with record
+   type GPS_Toolchain_Manager_Record is new Toolchains.Toolchain_Manager_Record
+   with record
       Kernel : Kernel_Handle;
    end record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (This              : GPS_Toolchain_Manager_Record;
       Command           : String;
       Timeout_MS        : Integer;
@@ -65,7 +67,8 @@ package body Toolchains_Editor is
 
    type On_Server_Changed is new GPS.Kernel.Hooks.Server_Hooks_Function
    with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Server_Changed;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Server   : Distant_Server_Type;
@@ -76,22 +79,24 @@ package body Toolchains_Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (This              : GPS_Toolchain_Manager_Record;
       Command           : String;
       Timeout_MS        : Integer;
       Handle_GUI_Events : Boolean := False) return String
    is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (GNAT.Expect.Process_Descriptor'Class,
-         GNAT.Expect.Process_Descriptor_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (GNAT.Expect.Process_Descriptor'Class,
+           GNAT.Expect.Process_Descriptor_Access);
 
       Status  : Boolean;
       Pd      : GNAT.Expect.Process_Descriptor_Access;
       Match   : Expect_Match := 0;
       Ret     : Unbounded_String;
       Args    : constant Arg_List :=
-                  GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
+        GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
       Start   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Timeout : constant Duration := Duration (Timeout_MS) / 1000.0;
       Ignore  : Boolean;
@@ -99,15 +104,18 @@ package body Toolchains_Editor is
 
    begin
       --  If no such command exist, no need to try to spawn it
-      if Locate_On_Path (+Get_Command (Args), Get_Nickname (Build_Server)) =
-        No_File
+      if Locate_On_Path (+Get_Command (Args), Get_Nickname (Build_Server))
+        = No_File
       then
          raise Process_Died;
       end if;
 
       GPS.Kernel.Remote.Spawn
-        (This.Kernel, GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args),
-         Remote.Build_Server, Pd, Status);
+        (This.Kernel,
+         GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args),
+         Remote.Build_Server,
+         Pd,
+         Status);
 
       if not Status then
          raise Process_Died;
@@ -146,7 +154,8 @@ package body Toolchains_Editor is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Server_Changed;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Server   : Distant_Server_Type;
@@ -186,7 +195,8 @@ package body Toolchains_Editor is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Toolchains_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;

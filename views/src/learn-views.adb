@@ -15,24 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 with Glib.Values;
 
-with Gdk.Event;              use Gdk.Event;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Flow_Box_Child;     use Gtk.Flow_Box_Child;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Paned;              use Gtk.Paned;
-with Gtk.Style_Context;      use Gtk.Style_Context;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
+with Gdk.Event;          use Gdk.Event;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Flow_Box_Child; use Gtk.Flow_Box_Child;
+with Gtk.Handlers;       use Gtk.Handlers;
+with Gtk.Label;          use Gtk.Label;
+with Gtk.Menu;           use Gtk.Menu;
+with Gtk.Paned;          use Gtk.Paned;
+with Gtk.Style_Context;  use Gtk.Style_Context;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Handlers;    use Gtkada.Handlers;
+with Gtkada.MDI;         use Gtkada.MDI;
 
 with Dialog_Utils;           use Dialog_Utils;
 with GUI_Utils;              use GUI_Utils;
@@ -48,7 +48,7 @@ package body Learn.Views is
 
    Learn_View_Module : Learn_View_Module_Access;
 
-   Default_Sep_Pos   : constant Float := 75.0;
+   Default_Sep_Pos : constant Float := 75.0;
 
    type Learn_Item_Row_Record is new Gtk_Flow_Box_Child_Record with record
       Item : Learn_Item;
@@ -56,12 +56,13 @@ package body Learn.Views is
    type Learn_Item_Row is access all Learn_Item_Row_Record'Class;
    --  Type representing Gtk_Flow_Box rows for learn items
 
-   package Group_Widget_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Dialog_Group_Widget,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Group_Widget_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Dialog_Group_Widget,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Learn_Provider_Widgets_Type is record
       Provider_Label : Gtk_Label;
@@ -76,9 +77,10 @@ package body Learn.Views is
         Equivalent_Keys => "=",
         "="             => "=");
 
-   type Learn_View_Record is new Generic_Views.View_Record
-     and Learn_Listener_Type with
-   record
+   type Learn_View_Record is
+     new Generic_Views.View_Record
+     and Learn_Listener_Type
+   with record
       Main_View             : Dialog_View;
       Provider_Widgets_Map  : Learn_Provider_Widgets_Maps.Map;
       Paned_View            : Gtk_Paned;
@@ -87,41 +89,47 @@ package body Learn.Views is
       Selected_Row          : Learn_Item_Row;
       On_Realize_Handler_ID : Handler_Id;
       Previous_Context      : Selection_Context := No_Context;
-      Number_Of_Items       :  Natural := 0;
+      Number_Of_Items       : Natural := 0;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
 
    function Initialize
      (View : access Learn_View_Record'Class) return Gtk.Widget.Gtk_Widget;
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (View : access Learn_View_Record; XML : in out XML_Utils.Node_Ptr);
-   overriding procedure Load_From_XML
+   overriding
+   procedure Load_From_XML
      (View : in out Learn_View_Record; XML : XML_Utils.Node_Ptr);
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (View : not null access Learn_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure On_Destroy
-     (View : not null access Learn_View_Record);
+   overriding
+   procedure On_Destroy (View : not null access Learn_View_Record);
 
-   overriding procedure On_Item_Added
+   overriding
+   procedure On_Item_Added
      (Self     : not null access Learn_View_Record;
       Provider : not null access Learn_Provider_Type'Class;
       Item     : not null access Learn_Item_Type'Class);
 
-   overriding procedure On_Item_Deleted
+   overriding
+   procedure On_Item_Deleted
      (Self     : not null access Learn_View_Record;
       Provider : not null access Learn_Provider_Type'Class;
       Item     : not null access Learn_Item_Type'Class);
 
-   package Generic_Learn_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Learn_View",
-      View_Name          => "Learn",
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Formal_View_Record => Learn_View_Record);
+   package Generic_Learn_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Learn_View",
+        View_Name          => "Learn",
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Formal_View_Record => Learn_View_Record);
 
    procedure Register_Preferences
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -133,14 +141,16 @@ package body Learn.Views is
    ---------------
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences have changed.
 
    type On_Context_Changed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context);
@@ -169,8 +179,7 @@ package body Learn.Views is
    --  Called when the user clicks on a learn item
 
    procedure On_Realize
-     (Self   : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+     (Self : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues);
    --  Used to restore the paned view's separator position when modified by the
    --  user.
 
@@ -184,7 +193,8 @@ package body Learn.Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -205,7 +215,7 @@ package body Learn.Views is
 
          declare
             Cursor : Boolean_Preference_Maps.Cursor :=
-                       Learn_View_Module.Show_Providers_Preferences.First;
+              Learn_View_Module.Show_Providers_Preferences.First;
          begin
             while Cursor /= No_Element loop
                if Preference (Element (Cursor)) = Pref then
@@ -221,10 +231,9 @@ package body Learn.Views is
             if Cursor /= No_Element then
                declare
                   Provider_Name    : constant String :=
-                                       Boolean_Preference_Maps.Key (Cursor);
+                    Boolean_Preference_Maps.Key (Cursor);
                   Provider_Widgets : constant Learn_Provider_Widgets_Type :=
-                                       View.Provider_Widgets_Map
-                                         (Provider_Name);
+                    View.Provider_Widgets_Map (Provider_Name);
                begin
                   if Boolean_Preference (Pref).Get_Pref then
                      Provider_Widgets.Provider_Label.Set_No_Show_All (False);
@@ -252,7 +261,8 @@ package body Learn.Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context)
@@ -260,9 +270,8 @@ package body Learn.Views is
       pragma Unreferenced (Self);
       use Generic_Learn_Views;
 
-      View  : constant Generic_Learn_Views.View_Access :=
-                Generic_Learn_Views.Retrieve_View
-                  (Kernel, Visible_Only => True);
+      View : constant Generic_Learn_Views.View_Access :=
+        Generic_Learn_Views.Retrieve_View (Kernel, Visible_Only => True);
    begin
       if View /= null then
          View.Filter_Learn_Items (Context);
@@ -278,7 +287,7 @@ package body Learn.Views is
    is
       Item   : constant Learn_Item := Learn_Item_Row (Child).Item;
       Kernel : constant Kernel_Handle :=
-                 Generic_Learn_Views.Get_Module.Get_Kernel;
+        Generic_Learn_Views.Get_Module.Get_Kernel;
    begin
       return Item.Is_Visible (Kernel.Get_Current_Context, Filter_Text => "");
    end Filter_Learn_Item;
@@ -317,9 +326,9 @@ package body Learn.Views is
    procedure Change_Pane_Orientation (Self : access Gtk_Widget_Record'Class) is
       View         : constant Learn_View := Learn_View (Self);
       Child        : constant MDI_Child :=
-                       Generic_Learn_Views.Child_From_View (View);
+        Generic_Learn_Views.Child_From_View (View);
       Tab_Orient   : constant Tab_Orientation_Type :=
-                       Child.Get_Tab_Orientation;
+        Child.Get_Tab_Orientation;
       Current_Type : constant GType := View.Paned_View.Get_Type;
    begin
       --  Do nothing if the paned view is already well oriented
@@ -359,8 +368,7 @@ package body Learn.Views is
         and then View.Selected_Row.Get_Name /= Row.Get_Name
       then
          View.Main_View.Set_Child_Highlighted
-           (Child_Key => View.Selected_Row.Get_Name,
-            Highlight => False);
+           (Child_Key => View.Selected_Row.Get_Name, Highlight => False);
       end if;
 
       View.Help_Label.Set_Markup (Row.Item.Get_Help);
@@ -376,7 +384,7 @@ package body Learn.Views is
       Event : Gdk.Event.Gdk_Event_Button) return Boolean
    is
       Group_Widget : constant Dialog_Group_Widget :=
-                       Dialog_Group_Widget (Self);
+        Dialog_Group_Widget (Self);
    begin
       if Event.The_Type = Gdk_2button_Press then
          declare
@@ -404,8 +412,7 @@ package body Learn.Views is
    ----------------
 
    procedure On_Realize
-     (Self   : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+     (Self : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
       View : constant Learn_View := Learn_View (Self);
@@ -434,21 +441,22 @@ package body Learn.Views is
       --  Connect to the On_Context_Changed hook to filter the learn items
 
       Context_Changed_Hook.Add_Debounce
-        (new On_Context_Changed,
-         Watch => View);
+        (new On_Context_Changed, Watch => View);
 
       --  Connect to the Signal_Child_Reorganized to change the paned view's
       --  orientation depending on the Learn view's orientation.
 
       Widget_Callback.Object_Connect
-        (Get_MDI (View.Kernel), Signal_Children_Reorganized,
-         Change_Pane_Orientation'Access, View);
+        (Get_MDI (View.Kernel),
+         Signal_Children_Reorganized,
+         Change_Pane_Orientation'Access,
+         View);
 
       --  Restore the paned view's separator position when realizing the view
       --  for the first time.
 
-      View.On_Realize_Handler_ID := Widget_Callback.Connect
-        (View, Signal_Realize, On_Realize'Access);
+      View.On_Realize_Handler_ID :=
+        Widget_Callback.Connect (View, Signal_Realize, On_Realize'Access);
 
       --  Create the main view
 
@@ -458,10 +466,7 @@ package body Learn.Views is
 
       for Provider of Providers loop
          for Item of Provider.Items loop
-            On_Item_Added
-              (Self     => View,
-               Provider => Provider,
-               Item     => Item);
+            On_Item_Added (Self => View, Provider => Provider, Item => Item);
          end loop;
       end loop;
 
@@ -503,7 +508,8 @@ package body Learn.Views is
    -- Save_To_XML --
    -----------------
 
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (View : access Learn_View_Record; XML : in out XML_Utils.Node_Ptr)
    is
       Root : Node_Ptr;
@@ -512,7 +518,8 @@ package body Learn.Views is
       XML.Child := Root;
       Root.Tag := new String'("learn");
       Set_Attribute_S
-        (Root, "position",
+        (Root,
+         "position",
          Float'Image (Get_Position_Percent (View.Paned_View)) & "%");
    end Save_To_XML;
 
@@ -520,7 +527,8 @@ package body Learn.Views is
    -- Load_From_XML --
    -------------------
 
-   overriding procedure Load_From_XML
+   overriding
+   procedure Load_From_XML
      (View : in out Learn_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Learn_Node : constant Node_Ptr := XML.Child;
@@ -533,8 +541,8 @@ package body Learn.Views is
          Pos_Str : constant String := Get_Attribute_S (Learn_Node, "position");
       begin
          if Pos_Str /= "" then
-            View.Stored_Pos := Float'Value
-              (Pos_Str (Pos_Str'First .. Pos_Str'Last - 1));
+            View.Stored_Pos :=
+              Float'Value (Pos_Str (Pos_Str'First .. Pos_Str'Last - 1));
          end if;
       end;
    end Load_From_XML;
@@ -543,17 +551,15 @@ package body Learn.Views is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Learn_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   overriding
+   procedure Create_Menu
+     (View : not null access Learn_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Kernel : constant Kernel_Handle := View.Kernel;
    begin
       for Pref of Learn_View_Module.Show_Providers_Preferences loop
-         Append_Menu
-           (Menu   => Menu,
-            Kernel => Kernel,
-            Pref   => Pref);
+         Append_Menu (Menu => Menu, Kernel => Kernel, Pref => Pref);
       end loop;
    end Create_Menu;
 
@@ -561,8 +567,8 @@ package body Learn.Views is
    -- On_Destroy --
    ----------------
 
-   overriding procedure On_Destroy
-     (View : not null access Learn_View_Record) is
+   overriding
+   procedure On_Destroy (View : not null access Learn_View_Record) is
    begin
       Learn.Unregister_Listener (View);
    end On_Destroy;
@@ -571,7 +577,8 @@ package body Learn.Views is
    -- On_Item_Added --
    -------------------
 
-   overriding procedure On_Item_Added
+   overriding
+   procedure On_Item_Added
      (Self     : not null access Learn_View_Record;
       Provider : not null access Learn_Provider_Type'Class;
       Item     : not null access Learn_Item_Type'Class)
@@ -582,8 +589,7 @@ package body Learn.Views is
       Provider_Name           : constant String := Provider.Get_Name;
       Group_Name              : constant String := Item.Get_Group_Name;
       Show_Pref               : constant Boolean_Preference :=
-        Learn_View_Module.Show_Providers_Preferences
-          (Provider_Name);
+        Learn_View_Module.Show_Providers_Preferences (Provider_Name);
       Provider_Widgets_Cursor : Learn_Provider_Widgets_Maps.Cursor;
       Group_Widget_Cursor     : Group_Widget_Maps.Cursor;
       Group_Widget            : Dialog_Group_Widget;
@@ -602,16 +608,17 @@ package body Learn.Views is
 
       --  Create the row for the learn intem
 
-      Row := new Learn_Item_Row_Record'
-        (GObject_Record with Item => Learn_Item (Item));
+      Row :=
+        new Learn_Item_Row_Record'
+          (GObject_Record with Item => Learn_Item (Item));
       Gtk.Flow_Box_Child.Initialize (Row);
       Row.Add (Item_Widget);
       Get_Style_Context (Row).Add_Class ("learn-items");
 
       --  Search for the provider's widget and create one if not found
 
-      Provider_Widgets_Cursor := Self.Provider_Widgets_Map.Find
-        (Provider_Name);
+      Provider_Widgets_Cursor :=
+        Self.Provider_Widgets_Map.Find (Provider_Name);
 
       if not Has_Element (Provider_Widgets_Cursor) then
          declare
@@ -623,8 +630,7 @@ package body Learn.Views is
             Provider_Widgets.Provider_Label.Set_No_Show_All
               (not Show_Pref.Get_Pref);
             Self.Main_View.Append
-              (Provider_Widgets.Provider_Label,
-               Expand => False);
+              (Provider_Widgets.Provider_Label, Expand => False);
 
             Self.Provider_Widgets_Map.Insert
               (Provider_Name,
@@ -637,17 +643,20 @@ package body Learn.Views is
       --  Search for a group widget with the same group name and create one
       --  if not found.
 
-      Group_Widget_Cursor := Self.Provider_Widgets_Map.Reference
-        (Provider_Widgets_Cursor).Group_Widgets.Find (Group_Name);
+      Group_Widget_Cursor :=
+        Self.Provider_Widgets_Map.Reference (Provider_Widgets_Cursor)
+          .Group_Widgets
+          .Find (Group_Name);
 
       if not Has_Element (Group_Widget_Cursor) then
          Group_Widget := new Dialog_Group_Widget_Record;
-         Self.Provider_Widgets_Map.Reference
-           (Provider_Widgets_Cursor).Group_Widgets.Insert
-           (Group_Name,
-            Group_Widget,
-            Position => Group_Widget_Cursor,
-            Inserted => Dummy);
+         Self.Provider_Widgets_Map.Reference (Provider_Widgets_Cursor)
+           .Group_Widgets
+           .Insert
+              (Group_Name,
+               Group_Widget,
+               Position => Group_Widget_Cursor,
+               Inserted => Dummy);
 
          Initialize
            (Self                => Group_Widget,
@@ -658,8 +667,7 @@ package body Learn.Views is
             Filtering_Function  => Filter_Learn_Item'Access);
 
          Group_Widget.On_Child_Selected
-           (Call => On_Learn_Item_Selected'Access,
-            Slot => Self);
+           (Call => On_Learn_Item_Selected'Access, Slot => Self);
 
          Group_Widget.Set_Column_Spacing (10);
          Group_Widget.Set_Row_Spacing (3);
@@ -677,9 +685,10 @@ package body Learn.Views is
 
          Group_Widget.Set_No_Show_All (not Show_Pref.Get_Pref);
       else
-         Group_Widget := Self.Provider_Widgets_Map.Reference
-           (Provider_Widgets_Cursor).Group_Widgets.Reference
-           (Group_Widget_Cursor);
+         Group_Widget :=
+           Self.Provider_Widgets_Map.Reference (Provider_Widgets_Cursor)
+             .Group_Widgets
+             .Reference (Group_Widget_Cursor);
       end if;
 
       Row.Set_Name (Item.Get_ID);
@@ -698,7 +707,8 @@ package body Learn.Views is
    -- On_Item_Deleted --
    ---------------------
 
-   overriding procedure On_Item_Deleted
+   overriding
+   procedure On_Item_Deleted
      (Self     : not null access Learn_View_Record;
       Provider : not null access Learn_Provider_Type'Class;
       Item     : not null access Learn_Item_Type'Class)
@@ -716,9 +726,9 @@ package body Learn.Views is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Prefs_Manager      : constant Preferences_Manager :=
-                             Kernel.Get_Preferences;
+        Kernel.Get_Preferences;
       Providers          : constant Learn_Provider_Maps.Map :=
-                             Get_Registered_Providers;
+        Get_Registered_Providers;
       Show_Provider_Pref : Boolean_Preference;
    begin
       for Provider of Providers loop
@@ -726,16 +736,16 @@ package body Learn.Views is
             Provider_Name : constant String := Provider.Get_Name;
             Pref_Label    : constant String := "Show " & Provider_Name;
          begin
-            Show_Provider_Pref := Create
-              (Manager  => Prefs_Manager,
-               Path     => ":Learn View",
-               Name     => "learn-view-show-" & Provider_Name,
-               Label    => Pref_Label,
-               Doc      => Pref_Label & " in Learn view",
-               Default  => True);
+            Show_Provider_Pref :=
+              Create
+                (Manager => Prefs_Manager,
+                 Path    => ":Learn View",
+                 Name    => "learn-view-show-" & Provider_Name,
+                 Label   => Pref_Label,
+                 Doc     => Pref_Label & " in Learn view",
+                 Default => True);
             Learn_View_Module.Show_Providers_Preferences.Insert
-              (Key      => Provider_Name,
-               New_Item => Show_Provider_Pref);
+              (Key => Provider_Name, New_Item => Show_Provider_Pref);
          end;
       end loop;
    end Register_Preferences;
@@ -751,8 +761,7 @@ package body Learn.Views is
 
       --  Register the Learn view's module
       Generic_Learn_Views.Register_Module
-        (Kernel,
-         ID => Module_ID (Learn_View_Module));
+        (Kernel, ID => Module_ID (Learn_View_Module));
 
       --  Register its associated preferences
       Register_Preferences (Kernel);

@@ -33,7 +33,7 @@ with Language;     use Language;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Xref;
 
 private with GPS_Vectors;
@@ -93,8 +93,7 @@ package Completion is
    procedure Free (Context : in out Completion_Context);
    --  Free data associated to the context given in parameter.
 
-   function Get_Buffer
-     (Context : Completion_Context) return String_Access;
+   function Get_Buffer (Context : Completion_Context) return String_Access;
    --  Return the buffer associated to this context.
 
    function Get_Completion_Start_Offset
@@ -113,16 +112,13 @@ package Completion is
      (Context : Completion_Context) return Completion_Trigger_Kind;
    --  Return the trigger kind asoociated with this context
 
-   function Is_In_Comment
-     (Context : Completion_Context) return Boolean;
+   function Is_In_Comment (Context : Completion_Context) return Boolean;
    --  Return True if the completion was trigerred within a comment.
 
-   function Is_In_String
-     (Context : Completion_Context) return Boolean;
+   function Is_In_String (Context : Completion_Context) return Boolean;
    --  Return True if the completion was trigerred within a string.
 
-   function Deep_Copy
-     (Context : Completion_Context) return Completion_Context;
+   function Deep_Copy (Context : Completion_Context) return Completion_Context;
    --  Make a deep copy of Context. Result should be freed by the caller.
 
    -------------------
@@ -134,10 +130,10 @@ package Completion is
       --  This id identifies in an unique way a resolver. Users are responsible
       --  of avoiding name clashes.
 
-      Id          : String (1 .. Id_Length);
-      File        : Virtual_File := No_File;
-      Line        : Natural := 0;
-      Column      : Natural := 0;
+      Id     : String (1 .. Id_Length);
+      File   : Virtual_File := No_File;
+      Line   : Natural := 0;
+      Column : Natural := 0;
    end record;
    --  This type is used to store a completion proposal in an long time basis -
    --  while the Completion_Proposal lifecycle is bound to its resolver one. A
@@ -147,7 +143,8 @@ package Completion is
    function "<" (Left, Right : Completion_Id) return Boolean;
    --  Arbitrary comparison between two completion ids.
 
-   overriding function "=" (Left, Right : Completion_Id) return Boolean;
+   overriding
+   function "=" (Left, Right : Completion_Id) return Boolean;
    --  Return true if the two ids are equals.
 
    -------------------------
@@ -167,7 +164,8 @@ package Completion is
    --  Frees a completion resolver access. This will also call the internal
    --  free procedure
 
-   function Next (Resolver : access Completion_Resolver'Class)
+   function Next
+     (Resolver : access Completion_Resolver'Class)
       return Completion_Resolver_Access;
    --  Return the next completion resolver in the parent Completion_Manager,
    --  null if none.
@@ -176,7 +174,8 @@ package Completion is
      (Resolver : access Completion_Resolver;
       Offset   : String_Index_Type;
       Context  : Completion_Context;
-      Result   : in out Completion_List) is abstract;
+      Result   : in out Completion_List)
+   is abstract;
    --  Starts a completion, looking from the offset given in parameter.
    --  Offset should be the offset of the place from where we try to find the
    --  corresponding identifier, in bytes, and visiblity will be calculated
@@ -204,7 +203,8 @@ package Completion is
    procedure Display_Proposals
      (Self          : access Completion_Display_Interface;
       List          : Completion_List;
-      Is_Incomplete : Boolean := False) is abstract;
+      Is_Incomplete : Boolean := False)
+   is abstract;
    --  Display the given completion proposals.
    --  This should be called once the completion list is ready.
    --  This can be done through a dedicated widget (e.g: the completion window)
@@ -213,14 +213,15 @@ package Completion is
    --  all the results for the prefix that triggered completion. This means
    --  that completion should be retrigerred after typing a new character.
 
-   procedure Display_Documentation
-     (Self : access Completion_Display_Interface) is abstract;
+   procedure Display_Documentation (Self : access Completion_Display_Interface)
+   is abstract;
    --  Display documentation for the currently selected completion proposal.
    --  This is needed when documentation is computed asynchronously, and thus,
    --  may not be immediately available when selecting a given proposal.
 
    function Has_Incomplete_Completion
-     (Self : access Completion_Display_Interface) return Boolean is abstract;
+     (Self : access Completion_Display_Interface) return Boolean
+   is abstract;
    --  Return True if the display shows an incomplete completion list, False
    --  otherwise.
 
@@ -261,8 +262,8 @@ package Completion is
    --  end offsets and the buffer given in parameter.
 
    function Get_Resolver
-     (Manager : access Completion_Manager;
-      Name    : String) return Completion_Resolver_Access;
+     (Manager : access Completion_Manager; Name : String)
+      return Completion_Resolver_Access;
    --  Return the resolver registered in the manager of the given name.
 
    function Get_Resolvers
@@ -271,9 +272,9 @@ package Completion is
    --  Return all the resolvers currently registered for the given manager.
 
    function Get_Initial_Completion_List
-     (Manager : access Completion_Manager;
-      Context : Completion_Context)
-      return Completion_List is abstract;
+     (Manager : access Completion_Manager; Context : Completion_Context)
+      return Completion_List
+   is abstract;
    --  Generates an initial completion list, for the cursor pointing at the
    --  given offset. This function should only return completion items that
    --  can be computed synchronously and in a fast way: if some items should
@@ -282,29 +283,28 @@ package Completion is
 
    function Accept_Comments
      (Manager : not null access Completion_Manager) return Boolean
-   is
-     (False);
+   is (False);
    --  Whether the given completion manager accepts completion within comments.
    --  Override it to True if you want completion queries to be performed
    --  within comments.
 
    function Accept_Strings
      (Manager : not null access Completion_Manager) return Boolean
-   is
-     (False);
+   is (False);
    --  Whether the given completion manager accepts completion within strings.
    --  Override it to True if you want completion queries to be performed
    --  within strings.
 
-   type Asynchronous_Completion_Manager is
-     abstract new Completion_Manager with private;
+   type Asynchronous_Completion_Manager is abstract
+     new Completion_Manager with private;
    type Asynchronous_Completion_Manager_Access is
      access all Asynchronous_Completion_Manager'Class;
 
    procedure Query_Completion_List
      (Manager      : access Asynchronous_Completion_Manager;
       Context      : Completion_Context;
-      Initial_List : in out Completion_List) is abstract;
+      Initial_List : in out Completion_List)
+   is abstract;
    --  Query a completion list for the given context, in an asynchronous way,
    --  putting the future completion items in the given Initial_List completion
    --  list. Initial_List can be empty or not depending on what's returned by
@@ -337,7 +337,8 @@ package Completion is
    function Get_Completion
      (Proposal : Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
-      return UTF8_String is abstract;
+      return UTF8_String
+   is abstract;
    --  Return the text that has to be used for the completion, may be different
    --  from the label.
 
@@ -364,15 +365,13 @@ package Completion is
    --  will return the completion proposal's label.
    --  The filter text should be a substring of the label.
 
-   function Is_Accessible
-     (Proposal : Completion_Proposal)
-      return Boolean
+   function Is_Accessible (Proposal : Completion_Proposal) return Boolean
    is (True);
    --  Returns True if the completion is accessible in the current unit.
 
    function Get_Id
      (Proposal : Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
    --  Return the identifier of the entity referenced in the proposal. This
    --  identifier can be different from the completion propsed and the label.
@@ -394,48 +393,46 @@ package Completion is
    --  if none. By default, return Null_Location.
 
    function Get_Category
-     (Proposal : Completion_Proposal) return Language_Category is abstract;
+     (Proposal : Completion_Proposal) return Language_Category
+   is abstract;
    --  Return the category of the object proposed for the completion
 
    function Get_Visibility
-     (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
+     (Proposal : Completion_Proposal) return Construct_Visibility
+   is abstract;
    --  Return the visibility of the object proposed for completion
 
    function Should_Delete_Range_On_Selected
      (Proposal    : Completion_Proposal;
       Kernel      : Kernel_Handle;
       Range_Start : out File_Location;
-      Range_End   : out File_Location)
-      return Boolean;
+      Range_End   : out File_Location) return Boolean;
    --  When True, delete between Range_Start and Range_End before inserting
    --  the selected completion result.
    --  It overrides the Insert_Mode behavior (both insert and replace)
 
    function Insert_Text_On_Selected
      (Proposal : Completion_Proposal) return Boolean
-   is
-     (True);
+   is (True);
    --  Used to prevent the auto-insertion of the proposal's text when False.
 
    procedure On_Selected
-     (Proposal : Completion_Proposal;
-      Kernel   : not null Kernel_Handle) is null;
+     (Proposal : Completion_Proposal; Kernel : not null Kernel_Handle)
+   is null;
    --  Called when the given completion proposal is selected by the user
    --  (i.e: when pressing ENTER on the proposal).
    --  This can be used to perform additional operations or to replace the
    --  default behavior (which is to insert the proposal's text) if
    --  Insert_Text_On_Selected returns False.
 
-   function Get_Custom_Icon_Name
-     (Proposal : Completion_Proposal)
-      return String is ("");
+   function Get_Custom_Icon_Name (Proposal : Completion_Proposal) return String
+   is ("");
    --  If the completion needs to display a custom icon, this will
    --  return its name
 
    function On_Documentation_Query
      (Proposal : Completion_Proposal) return Boolean
-   is
-      (False);
+   is (False);
    --  Called when documentation for the given completion proposal is
    --  requested (i.e: when the proposal gets selected in the completion
    --  window).
@@ -444,8 +441,8 @@ package Completion is
    --  is not ready yet (computed asynchronously) and should be displayed later
    --  via a call to Completion_Display_Interface.Display_Documentation.
 
-   function Get_Documentation
-     (Proposal : Completion_Proposal) return String is abstract;
+   function Get_Documentation (Proposal : Completion_Proposal) return String
+   is abstract;
    --  Return custom documentation associated with this proposal.
 
    function Is_Valid (Proposal : Completion_Proposal) return Boolean;
@@ -458,14 +455,16 @@ package Completion is
    --  on the iterator will make the completion valid again.
 
    function Match
-     (Proposal   : Completion_Proposal;
-      Context    : Completion_Context;
-      Offset     : String_Index_Type) return Boolean is abstract;
+     (Proposal : Completion_Proposal;
+      Context  : Completion_Context;
+      Offset   : String_Index_Type) return Boolean
+   is abstract;
    --  Return true if the proposal given in parameter matches the completion
    --  search parameters given, false otherwise.
 
    function To_Completion_Id
-     (Proposal : Completion_Proposal) return Completion_Id is abstract;
+     (Proposal : Completion_Proposal) return Completion_Id
+   is abstract;
    --  Creates a completion id able to retrieve this completion proposal later
    --  on.
    --  WARNING : This completion Id is used to check a proposal's identity
@@ -476,8 +475,8 @@ package Completion is
    --  Free the memory associated to the proposal.
 
    function Deep_Copy
-     (Proposal : Completion_Proposal)
-      return Completion_Proposal'Class is abstract;
+     (Proposal : Completion_Proposal) return Completion_Proposal'Class
+   is abstract;
    --  Make a deep copy of Proposal. Result should be freed by the caller.
 
    -------------------------
@@ -488,13 +487,10 @@ package Completion is
    --  This type is used to iterate over the various possibilities of a
    --  completion.
 
-   function First
-     (This : Completion_List)
-      return Completion_Iterator;
+   function First (This : Completion_List) return Completion_Iterator;
    --  Return the first proposal of the completion list.
 
-   procedure Next
-     (This : in out Completion_Iterator);
+   procedure Next (This : in out Completion_Iterator);
    --  Gets the next proposal of the completion list.
 
    function Get_Proposal
@@ -519,8 +515,8 @@ package Completion is
    Null_Completion_Iterator : constant Completion_Iterator;
    --  Default value for an empty iterator.
 
-   package Completion_List_Pckg is new Virtual_Lists
-     (Completion_Proposal'Class);
+   package Completion_List_Pckg is new
+     Virtual_Lists (Completion_Proposal'Class);
    --  Used for completion ietrators.
    --  Override the First, Next and At_End subprograms to implement your
    --  own completion iterators.
@@ -533,30 +529,30 @@ package Completion is
 private
 
    type Completion_Context_Record is tagged record
-      Buffer       : String_Access;
+      Buffer : String_Access;
       --  Buffer.all should be encoded in UTF8.
 
       Start_Offset : String_Index_Type;
       --  The completion start offset. This corresponds to the beginning of
       --  the word being completed (e.g in "Ad^" => offset of 'A').
 
-      End_Offset   : String_Index_Type;
+      End_Offset : String_Index_Type;
       --  The completion end offset. This corresponds to the offset just
       --  before the cursor (e.g in "Ad^" => offset of 'd').
 
-      Lang         : Language_Access;
+      Lang : Language_Access;
       --  The language for which completion has been required.
 
-      File         : GNATCOLL.VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       --  The file where the completion has been triggered.
 
       Trigger_Kind : Completion_Trigger_Kind;
       --  The event that triggered completion.
 
-      In_Comment   : Boolean;
+      In_Comment : Boolean;
       --  True if the completion was trigerred within a comment.
 
-      In_String   : Boolean;
+      In_String : Boolean;
       --  True if the completion was trigerred within a string.
    end record;
 
@@ -570,7 +566,8 @@ private
 
    package Completion_Resolver_Map_Pckg is new
      Ada.Containers.Indefinite_Ordered_Maps
-       (String, Completion_Resolver_Access);
+       (String,
+        Completion_Resolver_Access);
 
    use Completion_Resolver_Map_Pckg;
    use Completion_Resolver_Lists;
@@ -627,43 +624,51 @@ private
    --------------------------------
 
    type Simple_Completion_Proposal is new Completion_Proposal with record
-      Name          : String_Access;
-      Category      : Language_Category := Cat_Unknown;
+      Name     : String_Access;
+      Category : Language_Category := Cat_Unknown;
    end record;
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Simple_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return UTF8_String;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return UTF8_String;
    --  See inherited documentation
 
-   overriding function Get_Category
+   overriding
+   function Get_Category
      (Proposal : Simple_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
-   overriding function Get_Visibility
+   overriding
+   function Get_Visibility
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
-   overriding function Get_Documentation
+   overriding
+   function Get_Documentation
      (Proposal : Simple_Completion_Proposal) return String
    is ("");
 
-   overriding function Match
+   overriding
+   function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
       Offset   : String_Index_Type) return Boolean;
    --  See inherited documentation
 
-   overriding function To_Completion_Id
+   overriding
+   function To_Completion_Id
      (Proposal : Simple_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
-   overriding procedure Free (Proposal : in out Simple_Completion_Proposal);
+   overriding
+   procedure Free (Proposal : in out Simple_Completion_Proposal);
    --  See inherited documentation
 
-   overriding function Deep_Copy
-     (Proposal : Simple_Completion_Proposal)
-      return Completion_Proposal'Class;
+   overriding
+   function Deep_Copy
+     (Proposal : Simple_Completion_Proposal) return Completion_Proposal'Class;
    --  See inherited documentation
 
    function Match
@@ -673,9 +678,7 @@ private
    --  otherwise
 
    Null_Completion_Proposal : constant Completion_Proposal'Class :=
-                                Simple_Completion_Proposal'
-                                  (Resolver => null,
-                                   Name     => null,
-                                   Category => Cat_Unknown);
+     Simple_Completion_Proposal'
+       (Resolver => null, Name => null, Category => Cat_Unknown);
 
 end Completion;

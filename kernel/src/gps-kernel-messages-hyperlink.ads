@@ -44,16 +44,18 @@ private
    type Hyperlink_Message is new Abstract_Message (Secondary) with record
       Text  : Ada.Strings.Unbounded.Unbounded_String;
       First : Positive := 1;
-      Last  : Natural  := 0;
+      Last  : Natural := 0;
       --  Range of the slice of the secondary location information to be
       --  highlighted.
    end record;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Hyperlink_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Hyperlink_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 

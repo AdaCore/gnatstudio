@@ -16,20 +16,22 @@
 ------------------------------------------------------------------------------
 
 --  Declare parser to round output by line bounds.
-with Commands; use Commands;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with Commands;              use Commands;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GPS.Tools_Output;      use GPS.Tools_Output;
 
 package Builder_Facility_Module.Output_Choppers is
 
    type Output_Chopper is new Tools_Output_Parser with private;
    --  This parser rounds output by line bounds
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Output_Chopper;
       Item    : String;
       Command : access Root_Command'Class);
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
       Status  : Integer;
       Command : access Root_Command'Class);
@@ -37,16 +39,16 @@ package Builder_Facility_Module.Output_Choppers is
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to round output by line bounds.
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with null record;
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with null record;
 
    type Output_Chopper is new Tools_Output_Parser with record
       Buffer : Unbounded_String; --  Part of the line not containing LF

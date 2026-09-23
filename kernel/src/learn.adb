@@ -32,8 +32,7 @@ package body Learn is
    ----------------
 
    procedure Initialize
-     (Item       : not null access Learn_Item_Type;
-      Group_Name : String) is
+     (Item : not null access Learn_Item_Type; Group_Name : String) is
    begin
       Item.Group_Name := To_Unbounded_String (Group_Name);
    end Initialize;
@@ -60,8 +59,7 @@ package body Learn is
       Provider.Items.Include (ID, Learn_Item (Item));
 
       Notify_Listeners_About_Learn_Item_Added
-        (Provider => Provider,
-         Item     => Item);
+        (Provider => Provider, Item => Item);
    end Add_Item;
 
    -----------------
@@ -69,15 +67,13 @@ package body Learn is
    -----------------
 
    procedure Delete_Item
-     (Provider : not null access Learn_Provider_Type'Class;
-      ID       : String)
+     (Provider : not null access Learn_Provider_Type'Class; ID : String)
    is
       Position : Learn_Item_Maps.Cursor := Provider.Items.Find (ID);
    begin
       if Learn_Item_Maps.Has_Element (Position) then
          Notify_Listeners_About_Learn_Item_Deleted
-           (Provider => Provider,
-            Item     => Learn_Item_Maps.Element (Position));
+           (Provider => Provider, Item => Learn_Item_Maps.Element (Position));
 
          Provider.Items.Delete (Position);
       end if;
@@ -91,8 +87,7 @@ package body Learn is
      (Provider : not null access Learn_Provider_Type'Class) is
    begin
       Learn_Module.Providers.Insert
-        (Key      => Provider.Get_Name,
-         New_Item => Learn_Provider (Provider));
+        (Key => Provider.Get_Name, New_Item => Learn_Provider (Provider));
    end Register_Provider;
 
    -----------------------
@@ -113,7 +108,7 @@ package body Learn is
      (Listener : not null access Learn_Listener_Type'Class)
    is
       Position : Learn_Listener_Vectors.Cursor :=
-                   Learn_Module.Listeners.Find (Learn_Listener (Listener));
+        Learn_Module.Listeners.Find (Learn_Listener (Listener));
    begin
       if Learn_Listener_Vectors.Has_Element (Position) then
          Learn_Module.Listeners.Delete (Position);
@@ -129,9 +124,7 @@ package body Learn is
       Item     : not null access Learn_Item_Type'Class) is
    begin
       for Listener of Learn_Module.Listeners loop
-         Listener.On_Item_Added
-           (Provider => Provider,
-            Item     => Item);
+         Listener.On_Item_Added (Provider => Provider, Item => Item);
       end loop;
    end Notify_Listeners_About_Learn_Item_Added;
 
@@ -144,9 +137,7 @@ package body Learn is
       Item     : not null access Learn_Item_Type'Class) is
    begin
       for Listener of Learn_Module.Listeners loop
-         Listener.On_Item_Deleted
-           (Provider => Provider,
-            Item     => Item);
+         Listener.On_Item_Deleted (Provider => Provider, Item => Item);
       end loop;
    end Notify_Listeners_About_Learn_Item_Deleted;
 

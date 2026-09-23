@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat; use GNAT.Regpat;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Commands.Builder.Progress_Parsers is
 
@@ -24,51 +24,50 @@ package body Commands.Builder.Progress_Parsers is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access
-   is
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access is
    begin
-      return new Progress_Parser'
-        (Child            => Child,
-         Phase_Matcher    => Self.Phase_Matcher,
-         Progress_Matcher => Self.Progress_Matcher);
+      return
+        new Progress_Parser'
+          (Child            => Child,
+           Phase_Matcher    => Self.Phase_Matcher,
+           Progress_Matcher => Self.Progress_Matcher);
    end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Progress_Parser;
       Item    : String;
       Command : access Root_Command'Class)
    is
-      Start             : Integer := Item'First;
-      Phase_Matched     : Match_Array (0 .. 1);
-      Progress_Matched  : Match_Array (0 .. 3);
-      Buffer            : Unbounded_String;
-      Progress          : Commands.Progress_Record;
+      Start            : Integer := Item'First;
+      Phase_Matched    : Match_Array (0 .. 1);
+      Progress_Matched : Match_Array (0 .. 3);
+      Buffer           : Unbounded_String;
+      Progress         : Commands.Progress_Record;
 
    begin
       while Start <= Item'Last loop
          Match
-           (Self.Phase_Matcher.all,
-            Item (Start .. Item'Last),
-            Phase_Matched);
+           (Self.Phase_Matcher.all, Item (Start .. Item'Last), Phase_Matched);
          Match
            (Self.Progress_Matcher.all,
             Item (Start .. Item'Last),
             Progress_Matched);
 
-         exit when Phase_Matched (0) = No_Match
-           and Progress_Matched (0) = No_Match;
+         exit when
+           Phase_Matched (0) = No_Match and Progress_Matched (0) = No_Match;
 
          if Progress_Matched (0) = No_Match
-           or else (Phase_Matched (0) /= No_Match
-                      and then Phase_Matched (0).First
-                                 < Progress_Matched (0).First)
+           or else
+             (Phase_Matched (0) /= No_Match
+              and then Phase_Matched (0).First < Progress_Matched (0).First)
          then
             if Command /= null then
                Command.Set_Label
@@ -80,12 +79,16 @@ package body Commands.Builder.Progress_Parsers is
 
          else
             if Command /= null then
-               Progress.Current := Natural'Value
-                 (Item
-                    (Progress_Matched (1).First .. Progress_Matched (1).Last));
-               Progress.Total := Natural'Value
-                 (Item
-                    (Progress_Matched (2).First .. Progress_Matched (2).Last));
+               Progress.Current :=
+                 Natural'Value
+                   (Item
+                      (Progress_Matched (1).First
+                       .. Progress_Matched (1).Last));
+               Progress.Total :=
+                 Natural'Value
+                   (Item
+                      (Progress_Matched (2).First
+                       .. Progress_Matched (2).Last));
                Command.Set_Progress (Progress);
             end if;
 
@@ -106,8 +109,7 @@ package body Commands.Builder.Progress_Parsers is
    -----------------------
 
    procedure Set_Phase_Pattern
-     (Self    : access Output_Parser_Fabric;
-      Pattern : String) is
+     (Self : access Output_Parser_Fabric; Pattern : String) is
    begin
       Self.Phase_Matcher :=
         new Pattern_Matcher'(Compile (Pattern, Single_Line));
@@ -118,8 +120,7 @@ package body Commands.Builder.Progress_Parsers is
    --------------------------
 
    procedure Set_Progress_Pattern
-     (Self    : access Output_Parser_Fabric;
-      Pattern : String) is
+     (Self : access Output_Parser_Fabric; Pattern : String) is
    begin
       Self.Progress_Matcher :=
         new Pattern_Matcher'(Compile (Pattern, Single_Line));

@@ -28,8 +28,10 @@ with VSS.Strings;
 with VSS.String_Vectors;
 
 package DAP.Tools is
-   package JSON_Event_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (VSS.JSON.Streams.JSON_Stream_Element, VSS.JSON.Streams."=");
+   package JSON_Event_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (VSS.JSON.Streams.JSON_Stream_Element,
+        VSS.JSON.Streams."=");
 
    type Any_Value is new JSON_Event_Lists.List with null record;
    type Any_Object is new Any_Value with null record;
@@ -38,6 +40,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Integer;
+
          when False =>
             null;
       end case;
@@ -47,6 +50,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Float;
+
          when False =>
             null;
       end case;
@@ -56,6 +60,7 @@ package DAP.Tools is
       case Is_String is
          when False =>
             Integer : Standard.Integer;
+
          when True =>
             String : VSS.Strings.Virtual_String;
       end case;
@@ -65,122 +70,151 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Integer_Or_String;
+
          when False =>
             null;
       end case;
    end record;
 
-   type Thread_Vector is tagged private with
+   type Thread_Vector is tagged private
+   with
      Variable_Indexing => Get_Thread_Variable_Reference,
      Constant_Indexing => Get_Thread_Constant_Reference;
 
-   type Checksum_Vector is tagged private with
+   type Checksum_Vector is tagged private
+   with
      Variable_Indexing => Get_Checksum_Variable_Reference,
      Constant_Indexing => Get_Checksum_Constant_Reference;
 
-   type Breakpoint_Vector is tagged private with
+   type Breakpoint_Vector is tagged private
+   with
      Variable_Indexing => Get_Breakpoint_Variable_Reference,
      Constant_Indexing => Get_Breakpoint_Constant_Reference;
 
-   type StepInTarget_Vector is tagged private with
+   type StepInTarget_Vector is tagged private
+   with
      Variable_Indexing => Get_StepInTarget_Variable_Reference,
      Constant_Indexing => Get_StepInTarget_Constant_Reference;
 
-   type FunctionBreakpoint_Vector is tagged private with
+   type FunctionBreakpoint_Vector is tagged private
+   with
      Variable_Indexing => Get_FunctionBreakpoint_Variable_Reference,
      Constant_Indexing => Get_FunctionBreakpoint_Constant_Reference;
 
-   type DataBreakpoint_Vector is tagged private with
+   type DataBreakpoint_Vector is tagged private
+   with
      Variable_Indexing => Get_DataBreakpoint_Variable_Reference,
      Constant_Indexing => Get_DataBreakpoint_Constant_Reference;
 
-   type ExceptionOptions_Vector is tagged private with
+   type ExceptionOptions_Vector is tagged private
+   with
      Variable_Indexing => Get_ExceptionOptions_Variable_Reference,
      Constant_Indexing => Get_ExceptionOptions_Constant_Reference;
 
-   type Integer_Vector is tagged private with
+   type Integer_Vector is tagged private
+   with
      Variable_Indexing => Get_Integer_Variable_Reference,
      Constant_Indexing => Get_Integer_Constant_Reference;
 
-   type GotoTarget_Vector is tagged private with
+   type GotoTarget_Vector is tagged private
+   with
      Variable_Indexing => Get_GotoTarget_Variable_Reference,
      Constant_Indexing => Get_GotoTarget_Constant_Reference;
 
-   type InvalidatedAreas_Vector is tagged private with
+   type InvalidatedAreas_Vector is tagged private
+   with
      Variable_Indexing => Get_InvalidatedAreas_Variable_Reference,
      Constant_Indexing => Get_InvalidatedAreas_Constant_Reference;
 
-   type BreakpointLocation_Vector is tagged private with
+   type BreakpointLocation_Vector is tagged private
+   with
      Variable_Indexing => Get_BreakpointLocation_Variable_Reference,
      Constant_Indexing => Get_BreakpointLocation_Constant_Reference;
 
-   type InstructionBreakpoint_Vector is tagged private with
+   type InstructionBreakpoint_Vector is tagged private
+   with
      Variable_Indexing => Get_InstructionBreakpoint_Variable_Reference,
      Constant_Indexing => Get_InstructionBreakpoint_Constant_Reference;
 
-   type StackFrame_Vector is tagged private with
+   type StackFrame_Vector is tagged private
+   with
      Variable_Indexing => Get_StackFrame_Variable_Reference,
      Constant_Indexing => Get_StackFrame_Constant_Reference;
 
-   type Scope_Vector is tagged private with
+   type Scope_Vector is tagged private
+   with
      Variable_Indexing => Get_Scope_Variable_Reference,
      Constant_Indexing => Get_Scope_Constant_Reference;
 
-   type Variable_Vector is tagged private with
+   type Variable_Vector is tagged private
+   with
      Variable_Indexing => Get_Variable_Variable_Reference,
      Constant_Indexing => Get_Variable_Constant_Reference;
 
-   type Source_Vector is tagged private with
+   type Source_Vector is tagged private
+   with
      Variable_Indexing => Get_Source_Variable_Reference,
      Constant_Indexing => Get_Source_Constant_Reference;
 
-   type VariablePresentationHint_attributes_Vector is tagged private with
+   type VariablePresentationHint_attributes_Vector is tagged private
+   with
      Variable_Indexing =>
-      Get_VariablePresentationHint_attributes_Variable_Reference,
+       Get_VariablePresentationHint_attributes_Variable_Reference,
      Constant_Indexing =>
-      Get_VariablePresentationHint_attributes_Constant_Reference;
+       Get_VariablePresentationHint_attributes_Constant_Reference;
 
-   type SourceBreakpoint_Vector is tagged private with
+   type SourceBreakpoint_Vector is tagged private
+   with
      Variable_Indexing => Get_SourceBreakpoint_Variable_Reference,
      Constant_Indexing => Get_SourceBreakpoint_Constant_Reference;
 
-   type ChecksumAlgorithm_Vector is tagged private with
+   type ChecksumAlgorithm_Vector is tagged private
+   with
      Variable_Indexing => Get_ChecksumAlgorithm_Variable_Reference,
      Constant_Indexing => Get_ChecksumAlgorithm_Constant_Reference;
 
-   type ExceptionBreakpointsFilter_Vector is tagged private with
+   type ExceptionBreakpointsFilter_Vector is tagged private
+   with
      Variable_Indexing => Get_ExceptionBreakpointsFilter_Variable_Reference,
      Constant_Indexing => Get_ExceptionBreakpointsFilter_Constant_Reference;
 
-   type CompletionItem_Vector is tagged private with
+   type CompletionItem_Vector is tagged private
+   with
      Variable_Indexing => Get_CompletionItem_Variable_Reference,
      Constant_Indexing => Get_CompletionItem_Constant_Reference;
 
-   type ExceptionPathSegment_Vector is tagged private with
+   type ExceptionPathSegment_Vector is tagged private
+   with
      Variable_Indexing => Get_ExceptionPathSegment_Variable_Reference,
      Constant_Indexing => Get_ExceptionPathSegment_Constant_Reference;
 
-   type DataBreakpointAccessType_Vector is tagged private with
+   type DataBreakpointAccessType_Vector is tagged private
+   with
      Variable_Indexing => Get_DataBreakpointAccessType_Variable_Reference,
      Constant_Indexing => Get_DataBreakpointAccessType_Constant_Reference;
 
-   type DisassembledInstruction_Vector is tagged private with
+   type DisassembledInstruction_Vector is tagged private
+   with
      Variable_Indexing => Get_DisassembledInstruction_Variable_Reference,
      Constant_Indexing => Get_DisassembledInstruction_Constant_Reference;
 
-   type Module_Vector is tagged private with
+   type Module_Vector is tagged private
+   with
      Variable_Indexing => Get_Module_Variable_Reference,
      Constant_Indexing => Get_Module_Constant_Reference;
 
-   type ExceptionFilterOptions_Vector is tagged private with
+   type ExceptionFilterOptions_Vector is tagged private
+   with
      Variable_Indexing => Get_ExceptionFilterOptions_Variable_Reference,
      Constant_Indexing => Get_ExceptionFilterOptions_Constant_Reference;
 
-   type ColumnDescriptor_Vector is tagged private with
+   type ColumnDescriptor_Vector is tagged private
+   with
      Variable_Indexing => Get_ColumnDescriptor_Variable_Reference,
      Constant_Indexing => Get_ColumnDescriptor_Constant_Reference;
 
-   type ExceptionDetails_Vector is tagged private with
+   type ExceptionDetails_Vector is tagged private
+   with
      Variable_Indexing => Get_ExceptionDetails_Variable_Reference,
      Constant_Indexing => Get_ExceptionDetails_Constant_Reference;
 
@@ -195,6 +229,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : ColumnDescriptor_type;
+
             when False =>
                null;
          end case;
@@ -207,6 +242,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : StackFrame_presentationHint;
+
             when False =>
                null;
          end case;
@@ -215,44 +251,58 @@ package DAP.Tools is
       type ExceptionBreakMode is (never, always, unhandled, userUnhandled);
 
       type StoppedEvent_reason_Value is
-        (step, breakpoint, a_exception, pause, a_entry, a_goto,
-         function_breakpoint, data_breakpoint, instruction_breakpoint,
+        (step,
+         breakpoint,
+         a_exception,
+         pause,
+         a_entry,
+         a_goto,
+         function_breakpoint,
+         data_breakpoint,
+         instruction_breakpoint,
          Custom_Value);
 
       subtype StoppedEvent_reason_Predefined is
         StoppedEvent_reason_Value range step .. instruction_breakpoint;
 
       type StoppedEvent_reason
-        (Kind : StoppedEvent_reason_Value := Custom_Value) is
-      record
+        (Kind : StoppedEvent_reason_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when StoppedEvent_reason_Predefined =>
                null;
          end case;
       end record;
 
-      function step return StoppedEvent_reason is (Kind => step);
+      function step return StoppedEvent_reason
+      is (Kind => step);
 
-      function breakpoint return StoppedEvent_reason is (Kind => breakpoint);
+      function breakpoint return StoppedEvent_reason
+      is (Kind => breakpoint);
 
-      function a_exception return StoppedEvent_reason is (Kind => a_exception);
+      function a_exception return StoppedEvent_reason
+      is (Kind => a_exception);
 
-      function pause return StoppedEvent_reason is (Kind => pause);
+      function pause return StoppedEvent_reason
+      is (Kind => pause);
 
-      function a_entry return StoppedEvent_reason is (Kind => a_entry);
+      function a_entry return StoppedEvent_reason
+      is (Kind => a_entry);
 
-      function a_goto return StoppedEvent_reason is (Kind => a_goto);
+      function a_goto return StoppedEvent_reason
+      is (Kind => a_goto);
 
-      function function_breakpoint return StoppedEvent_reason is
-        (Kind => function_breakpoint);
+      function function_breakpoint return StoppedEvent_reason
+      is (Kind => function_breakpoint);
 
-      function data_breakpoint return StoppedEvent_reason is
-        (Kind => data_breakpoint);
+      function data_breakpoint return StoppedEvent_reason
+      is (Kind => data_breakpoint);
 
-      function instruction_breakpoint return StoppedEvent_reason is
-        (Kind => instruction_breakpoint);
+      function instruction_breakpoint return StoppedEvent_reason
+      is (Kind => instruction_breakpoint);
 
       type StartDebuggingRequestArguments_request is (launch, attach);
 
@@ -263,22 +313,25 @@ package DAP.Tools is
         OutputEvent_category_Value range console .. telemetry;
 
       type OutputEvent_category
-        (Kind : OutputEvent_category_Value := Custom_Value) is
-      record
+        (Kind : OutputEvent_category_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when OutputEvent_category_Predefined =>
                null;
          end case;
       end record;
 
-      function console return OutputEvent_category is (Kind => console);
+      function console return OutputEvent_category
+      is (Kind => console);
       --  Show the output in the client's default message UI, e.g. a 'debug
       --  console'. This category should only be used for informational output
       --  from the debugger (as opposed to the debuggee).
 
-      function important return OutputEvent_category is (Kind => important);
+      function important return OutputEvent_category
+      is (Kind => important);
       --  A hint for the client to show the output in the client's UI
       --  for important and highly visible information, e.g. as a popup
       --  notification. This category should only be used for important
@@ -286,19 +339,23 @@ package DAP.Tools is
       --  category value is a hint, clients might ignore the hint and assume
       --  the `console` category.
 
-      function stdout return OutputEvent_category is (Kind => stdout);
+      function stdout return OutputEvent_category
+      is (Kind => stdout);
       --  Show the output as normal program output from the debuggee.
 
-      function stderr return OutputEvent_category is (Kind => stderr);
+      function stderr return OutputEvent_category
+      is (Kind => stderr);
       --  Show the output as error program output from the debuggee.
 
-      function telemetry return OutputEvent_category is (Kind => telemetry);
+      function telemetry return OutputEvent_category
+      is (Kind => telemetry);
       --  Send the output to telemetry instead of showing it to the user.
 
       type Optional_OutputEvent_category (Is_Set : Boolean := False) is record
          case Is_Set is
             when True =>
                Value : OutputEvent_category;
+
             when False =>
                null;
          end case;
@@ -310,6 +367,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : OutputEvent_group;
+
             when False =>
                null;
          end case;
@@ -325,6 +383,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : ProcessEvent_startMethod;
+
             when False =>
                null;
          end case;
@@ -337,23 +396,27 @@ package DAP.Tools is
         Scope_presentationHint_Value range arguments .. registers;
 
       type Scope_presentationHint
-        (Kind : Scope_presentationHint_Value := Custom_Value) is
-      record
+        (Kind : Scope_presentationHint_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when Scope_presentationHint_Predefined =>
                null;
          end case;
       end record;
 
-      function arguments return Scope_presentationHint is (Kind => arguments);
+      function arguments return Scope_presentationHint
+      is (Kind => arguments);
       --  Scope contains method arguments.
 
-      function locals return Scope_presentationHint is (Kind => locals);
+      function locals return Scope_presentationHint
+      is (Kind => locals);
       --  Scope contains local variables.
 
-      function registers return Scope_presentationHint is (Kind => registers);
+      function registers return Scope_presentationHint
+      is (Kind => registers);
       --  Scope contains registers. Only a single `registers` scope should be
       --  returned from a `scopes` request.
 
@@ -362,6 +425,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : Scope_presentationHint;
+
             when False =>
                null;
          end case;
@@ -377,35 +441,56 @@ package DAP.Tools is
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when Response_message_Predefined =>
                null;
          end case;
       end record;
 
-      function cancelled return Response_message is (Kind => cancelled);
+      function cancelled return Response_message
+      is (Kind => cancelled);
       --  the request was cancelled.
 
-      function notStopped return Response_message is (Kind => notStopped);
+      function notStopped return Response_message
+      is (Kind => notStopped);
       --  the request may be retried once the adapter is in a 'stopped' state.
 
       type Optional_Response_message (Is_Set : Boolean := False) is record
          case Is_Set is
             when True =>
                Value : Response_message;
+
             when False =>
                null;
          end case;
       end record;
 
       type CompletionItemType is
-        (method, a_function, constructor, field, variable, class, an_interface,
-         module, property, unit, value, enum, keyword, snippet, text, color,
-         file, reference, customcolor);
+        (method,
+         a_function,
+         constructor,
+         field,
+         variable,
+         class,
+         an_interface,
+         module,
+         property,
+         unit,
+         value,
+         enum,
+         keyword,
+         snippet,
+         text,
+         color,
+         file,
+         reference,
+         customcolor);
 
       type Optional_CompletionItemType (Is_Set : Boolean := False) is record
          case Is_Set is
             when True =>
                Value : CompletionItemType;
+
             when False =>
                null;
          end case;
@@ -422,24 +507,29 @@ package DAP.Tools is
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when InvalidatedAreas_Predefined =>
                null;
          end case;
       end record;
 
-      function an_all return InvalidatedAreas is (Kind => an_all);
+      function an_all return InvalidatedAreas
+      is (Kind => an_all);
       --  All previously fetched data has become invalid and needs to be
       --  refetched.
 
-      function stacks return InvalidatedAreas is (Kind => stacks);
+      function stacks return InvalidatedAreas
+      is (Kind => stacks);
       --  Previously fetched stack related data has become invalid and needs to
       --  be refetched.
 
-      function threads return InvalidatedAreas is (Kind => threads);
+      function threads return InvalidatedAreas
+      is (Kind => threads);
       --  Previously fetched thread related data has become invalid and needs
       --  to be refetched.
 
-      function variables return InvalidatedAreas is (Kind => variables);
+      function variables return InvalidatedAreas
+      is (Kind => variables);
       --  Previously fetched variable data has become invalid and needs to be
       --  refetched.
 
@@ -450,6 +540,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : Source_presentationHint;
+
             when False =>
                null;
          end case;
@@ -464,30 +555,35 @@ package DAP.Tools is
         ProtocolMessage_type_Value range request .. event;
 
       type ProtocolMessage_type
-        (Kind : ProtocolMessage_type_Value := Custom_Value) is
-      record
+        (Kind : ProtocolMessage_type_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when ProtocolMessage_type_Predefined =>
                null;
          end case;
       end record;
 
-      function request return ProtocolMessage_type is (Kind => request);
+      function request return ProtocolMessage_type
+      is (Kind => request);
 
-      function response return ProtocolMessage_type is (Kind => response);
+      function response return ProtocolMessage_type
+      is (Kind => response);
 
-      function event return ProtocolMessage_type is (Kind => event);
+      function event return ProtocolMessage_type
+      is (Kind => event);
 
       type RunInTerminalRequestArguments_kind is (integrated, external);
 
       type Optional_RunInTerminalRequestArguments_kind
-        (Is_Set : Boolean := False) is
-      record
+        (Is_Set : Boolean := False)
+      is record
          case Is_Set is
             when True =>
                Value : RunInTerminalRequestArguments_kind;
+
             when False =>
                null;
          end case;
@@ -500,134 +596,158 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : VariablesArguments_filter;
+
             when False =>
                null;
          end case;
       end record;
 
       type VariablePresentationHint_kind_Value is
-        (property, method, class, data, event, baseClass, innerClass,
-         an_interface, mostDerivedClass, virtual, dataBreakpoint,
+        (property,
+         method,
+         class,
+         data,
+         event,
+         baseClass,
+         innerClass,
+         an_interface,
+         mostDerivedClass,
+         virtual,
+         dataBreakpoint,
          Custom_Value);
 
       subtype VariablePresentationHint_kind_Predefined is
         VariablePresentationHint_kind_Value range property .. dataBreakpoint;
 
       type VariablePresentationHint_kind
-        (Kind : VariablePresentationHint_kind_Value := Custom_Value) is
-      record
+        (Kind : VariablePresentationHint_kind_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when VariablePresentationHint_kind_Predefined =>
                null;
          end case;
       end record;
 
-      function property return VariablePresentationHint_kind is
-        (Kind => property);
+      function property return VariablePresentationHint_kind
+      is (Kind => property);
       --  Indicates that the object is a property.
 
-      function method return VariablePresentationHint_kind is (Kind => method);
+      function method return VariablePresentationHint_kind
+      is (Kind => method);
       --  Indicates that the object is a method.
 
-      function class return VariablePresentationHint_kind is (Kind => class);
+      function class return VariablePresentationHint_kind
+      is (Kind => class);
       --  Indicates that the object is a class.
 
-      function data return VariablePresentationHint_kind is (Kind => data);
+      function data return VariablePresentationHint_kind
+      is (Kind => data);
       --  Indicates that the object is data.
 
-      function event return VariablePresentationHint_kind is (Kind => event);
+      function event return VariablePresentationHint_kind
+      is (Kind => event);
       --  Indicates that the object is an event.
 
-      function baseClass return VariablePresentationHint_kind is
-        (Kind => baseClass);
+      function baseClass return VariablePresentationHint_kind
+      is (Kind => baseClass);
       --  Indicates that the object is a base class.
 
-      function innerClass return VariablePresentationHint_kind is
-        (Kind => innerClass);
+      function innerClass return VariablePresentationHint_kind
+      is (Kind => innerClass);
       --  Indicates that the object is an inner class.
 
-      function an_interface return VariablePresentationHint_kind is
-        (Kind => an_interface);
+      function an_interface return VariablePresentationHint_kind
+      is (Kind => an_interface);
       --  Indicates that the object is an interface.
 
-      function mostDerivedClass return VariablePresentationHint_kind is
-        (Kind => mostDerivedClass);
+      function mostDerivedClass return VariablePresentationHint_kind
+      is (Kind => mostDerivedClass);
       --  Indicates that the object is the most derived class.
 
-      function virtual return VariablePresentationHint_kind is
-        (Kind => virtual);
+      function virtual return VariablePresentationHint_kind
+      is (Kind => virtual);
       --  Indicates that the object is virtual, that means it is a synthetic
       --  object introduced by the adapter for rendering purposes, e.g. an
       --  index range for large arrays.
 
-      function dataBreakpoint return VariablePresentationHint_kind is
-        (Kind => dataBreakpoint);
+      function dataBreakpoint return VariablePresentationHint_kind
+      is (Kind => dataBreakpoint);
       --  Deprecated: Indicates that a data breakpoint is registered for the
       --  object. The `hasDataBreakpoint` attribute should generally be used
       --  instead.
 
-      type Optional_VariablePresentationHint_kind (Is_Set : Boolean := False)
-      is
-      record
+      type Optional_VariablePresentationHint_kind
+        (Is_Set : Boolean := False)
+      is record
          case Is_Set is
             when True =>
                Value : VariablePresentationHint_kind;
+
             when False =>
                null;
          end case;
       end record;
 
       type VariablePresentationHint_attributes_Value is
-        (static, a_constant, readOnly, rawString, hasObjectId, canHaveObjectId,
-         hasSideEffects, hasDataBreakpoint, Custom_Value);
+        (static,
+         a_constant,
+         readOnly,
+         rawString,
+         hasObjectId,
+         canHaveObjectId,
+         hasSideEffects,
+         hasDataBreakpoint,
+         Custom_Value);
 
       subtype VariablePresentationHint_attributes_Predefined is
-        VariablePresentationHint_attributes_Value range static ..
-            hasDataBreakpoint;
+        VariablePresentationHint_attributes_Value
+          range static .. hasDataBreakpoint;
 
       type VariablePresentationHint_attributes
-        (Kind : VariablePresentationHint_attributes_Value := Custom_Value) is
-      record
+        (Kind : VariablePresentationHint_attributes_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when VariablePresentationHint_attributes_Predefined =>
                null;
          end case;
       end record;
 
-      function static return VariablePresentationHint_attributes is
-        (Kind => static);
+      function static return VariablePresentationHint_attributes
+      is (Kind => static);
       --  Indicates that the object is static.
 
-      function a_constant return VariablePresentationHint_attributes is
-        (Kind => a_constant);
+      function a_constant return VariablePresentationHint_attributes
+      is (Kind => a_constant);
       --  Indicates that the object is a constant.
 
-      function readOnly return VariablePresentationHint_attributes is
-        (Kind => readOnly);
+      function readOnly return VariablePresentationHint_attributes
+      is (Kind => readOnly);
       --  Indicates that the object is read only.
 
-      function rawString return VariablePresentationHint_attributes is
-        (Kind => rawString);
+      function rawString return VariablePresentationHint_attributes
+      is (Kind => rawString);
       --  Indicates that the object is a raw string.
 
-      function hasObjectId return VariablePresentationHint_attributes is
-        (Kind => hasObjectId);
+      function hasObjectId return VariablePresentationHint_attributes
+      is (Kind => hasObjectId);
       --  Indicates that the object can have an Object ID created for it.
 
-      function canHaveObjectId return VariablePresentationHint_attributes is
-        (Kind => canHaveObjectId);
+      function canHaveObjectId return VariablePresentationHint_attributes
+      is (Kind => canHaveObjectId);
       --  Indicates that the object has an Object ID associated with it.
 
-      function hasSideEffects return VariablePresentationHint_attributes is
-        (Kind => hasSideEffects);
+      function hasSideEffects return VariablePresentationHint_attributes
+      is (Kind => hasSideEffects);
       --  Indicates that the evaluation had side effects.
 
-      function hasDataBreakpoint return VariablePresentationHint_attributes is
-        (Kind => hasDataBreakpoint);
+      function hasDataBreakpoint return VariablePresentationHint_attributes
+      is (Kind => hasDataBreakpoint);
       --  Indicates that the object has its value tracked by a data breakpoint.
 
       type VariablePresentationHint_visibility_Value is
@@ -637,37 +757,39 @@ package DAP.Tools is
         VariablePresentationHint_visibility_Value range public .. final;
 
       type VariablePresentationHint_visibility
-        (Kind : VariablePresentationHint_visibility_Value := Custom_Value) is
-      record
+        (Kind : VariablePresentationHint_visibility_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when VariablePresentationHint_visibility_Predefined =>
                null;
          end case;
       end record;
 
-      function public return VariablePresentationHint_visibility is
-        (Kind => public);
+      function public return VariablePresentationHint_visibility
+      is (Kind => public);
 
-      function a_private return VariablePresentationHint_visibility is
-        (Kind => a_private);
+      function a_private return VariablePresentationHint_visibility
+      is (Kind => a_private);
 
-      function a_protected return VariablePresentationHint_visibility is
-        (Kind => a_protected);
+      function a_protected return VariablePresentationHint_visibility
+      is (Kind => a_protected);
 
-      function internal return VariablePresentationHint_visibility is
-        (Kind => internal);
+      function internal return VariablePresentationHint_visibility
+      is (Kind => internal);
 
-      function final return VariablePresentationHint_visibility is
-        (Kind => final);
+      function final return VariablePresentationHint_visibility
+      is (Kind => final);
 
       type Optional_VariablePresentationHint_visibility
-        (Is_Set : Boolean := False) is
-      record
+        (Is_Set : Boolean := False)
+      is record
          case Is_Set is
             when True =>
                Value : VariablePresentationHint_visibility;
+
             when False =>
                null;
          end case;
@@ -680,28 +802,30 @@ package DAP.Tools is
         InitializeRequestArguments_pathFormat_Value range path .. uri;
 
       type InitializeRequestArguments_pathFormat
-        (Kind : InitializeRequestArguments_pathFormat_Value := Custom_Value) is
-      record
+        (Kind : InitializeRequestArguments_pathFormat_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when InitializeRequestArguments_pathFormat_Predefined =>
                null;
          end case;
       end record;
 
-      function path return InitializeRequestArguments_pathFormat is
-        (Kind => path);
+      function path return InitializeRequestArguments_pathFormat
+      is (Kind => path);
 
-      function uri return InitializeRequestArguments_pathFormat is
-        (Kind => uri);
+      function uri return InitializeRequestArguments_pathFormat
+      is (Kind => uri);
 
       type Optional_InitializeRequestArguments_pathFormat
-        (Is_Set : Boolean := False) is
-      record
+        (Is_Set : Boolean := False)
+      is record
          case Is_Set is
             when True =>
                Value : InitializeRequestArguments_pathFormat;
+
             when False =>
                null;
          end case;
@@ -712,20 +836,23 @@ package DAP.Tools is
       subtype ThreadEvent_reason_Predefined is
         ThreadEvent_reason_Value range started .. exited;
 
-      type ThreadEvent_reason (Kind : ThreadEvent_reason_Value := Custom_Value)
-      is
-      record
+      type ThreadEvent_reason
+        (Kind : ThreadEvent_reason_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when ThreadEvent_reason_Predefined =>
                null;
          end case;
       end record;
 
-      function started return ThreadEvent_reason is (Kind => started);
+      function started return ThreadEvent_reason
+      is (Kind => started);
 
-      function exited return ThreadEvent_reason is (Kind => exited);
+      function exited return ThreadEvent_reason
+      is (Kind => exited);
 
       type DataBreakpointAccessType is (read, write, readWrite);
 
@@ -734,6 +861,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : DataBreakpointAccessType;
+
             when False =>
                null;
          end case;
@@ -746,21 +874,25 @@ package DAP.Tools is
         BreakpointEvent_reason_Value range changed .. removed;
 
       type BreakpointEvent_reason
-        (Kind : BreakpointEvent_reason_Value := Custom_Value) is
-      record
+        (Kind : BreakpointEvent_reason_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when BreakpointEvent_reason_Predefined =>
                null;
          end case;
       end record;
 
-      function changed return BreakpointEvent_reason is (Kind => changed);
+      function changed return BreakpointEvent_reason
+      is (Kind => changed);
 
-      function a_new return BreakpointEvent_reason is (Kind => a_new);
+      function a_new return BreakpointEvent_reason
+      is (Kind => a_new);
 
-      function removed return BreakpointEvent_reason is (Kind => removed);
+      function removed return BreakpointEvent_reason
+      is (Kind => removed);
 
       type EvaluateArguments_context_Value is
         (watch, repl, hover, clipboard, variables, Custom_Value);
@@ -769,35 +901,39 @@ package DAP.Tools is
         EvaluateArguments_context_Value range watch .. variables;
 
       type EvaluateArguments_context
-        (Kind : EvaluateArguments_context_Value := Custom_Value) is
-      record
+        (Kind : EvaluateArguments_context_Value := Custom_Value)
+      is record
          case Kind is
             when Custom_Value =>
                Custom_Value : VSS.Strings.Virtual_String;
+
             when EvaluateArguments_context_Predefined =>
                null;
          end case;
       end record;
 
-      function watch return EvaluateArguments_context is (Kind => watch);
+      function watch return EvaluateArguments_context
+      is (Kind => watch);
       --  evaluate is called from a watch view context.
 
-      function repl return EvaluateArguments_context is (Kind => repl);
+      function repl return EvaluateArguments_context
+      is (Kind => repl);
       --  evaluate is called from a REPL context.
 
-      function hover return EvaluateArguments_context is (Kind => hover);
+      function hover return EvaluateArguments_context
+      is (Kind => hover);
       --  evaluate is called to generate the debug hover contents. This
       --  value should only be used if the corresponding capability
       --  `supportsEvaluateForHovers` is true.
 
-      function clipboard return EvaluateArguments_context is
-        (Kind => clipboard);
+      function clipboard return EvaluateArguments_context
+      is (Kind => clipboard);
       --  evaluate is called to generate clipboard contents. This
       --  value should only be used if the corresponding capability
       --  `supportsClipboardContext` is true.
 
-      function variables return EvaluateArguments_context is
-        (Kind => variables);
+      function variables return EvaluateArguments_context
+      is (Kind => variables);
       --  evaluate is called from a variables view context.
 
       type Optional_EvaluateArguments_context (Is_Set : Boolean := False) is
@@ -805,6 +941,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : EvaluateArguments_context;
+
             when False =>
                null;
          end case;
@@ -816,6 +953,7 @@ package DAP.Tools is
          case Is_Set is
             when True =>
                Value : SteppingGranularity;
+
             when False =>
                null;
          end case;
@@ -912,6 +1050,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ExceptionDetails;
+
          when False =>
             null;
       end case;
@@ -960,6 +1099,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ModulesResponse_body;
+
          when False =>
             null;
       end case;
@@ -1102,6 +1242,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Source;
+
          when False =>
             null;
       end case;
@@ -1175,6 +1316,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ModuleEvent_body;
+
          when False =>
             null;
       end case;
@@ -1204,6 +1346,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ContinuedEvent_body;
+
          when False =>
             null;
       end case;
@@ -1242,6 +1385,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : AttachRequestArguments;
+
          when False =>
             null;
       end case;
@@ -1256,6 +1400,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : RestartArguments;
+
          when False =>
             null;
       end case;
@@ -1270,6 +1415,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ValueFormat;
+
          when False =>
             null;
       end case;
@@ -1323,6 +1469,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : BreakpointLocationsArguments;
+
          when False =>
             null;
       end case;
@@ -1372,7 +1519,8 @@ package DAP.Tools is
       supportsEvaluateForHovers             : Boolean := Boolean'First;
       --  The debug adapter supports a (side effect free) `evaluate` request
       --  for data hovers.
-      exceptionBreakpointFilters : ExceptionBreakpointsFilter_Vector;
+      exceptionBreakpointFilters            :
+        ExceptionBreakpointsFilter_Vector;
       --  Available exception filter options for the `setExceptionBreakpoints`
       --  request.
       supportsStepBack                      : Boolean := Boolean'First;
@@ -1388,7 +1536,8 @@ package DAP.Tools is
       --  The debug adapter supports the `stepInTargets` request.
       supportsCompletionsRequest            : Boolean := Boolean'First;
       --  The debug adapter supports the `completions` request.
-      completionTriggerCharacters : VSS.String_Vectors.Virtual_String_Vector;
+      completionTriggerCharacters           :
+        VSS.String_Vectors.Virtual_String_Vector;
       --  The set of characters that should trigger completion in a REPL. If
       --  not specified, the UI should assume the `.` character.
       supportsModulesRequest                : Boolean := Boolean'First;
@@ -1465,6 +1614,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Capabilities;
+
          when False =>
             null;
       end case;
@@ -1488,6 +1638,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : StackTraceResponse_body;
+
          when False =>
             null;
       end case;
@@ -1524,6 +1675,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : LoadedSourcesArguments;
+
          when False =>
             null;
       end case;
@@ -1535,6 +1687,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ConfigurationDoneArguments;
+
          when False =>
             null;
       end case;
@@ -1562,6 +1715,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : StepInTargetsResponse_body;
+
          when False =>
             null;
       end case;
@@ -1738,6 +1892,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : MemoryEvent_body;
+
          when False =>
             null;
       end case;
@@ -1788,7 +1943,8 @@ package DAP.Tools is
       program                         : VSS.Strings.Virtual_String;
       --  Extension. If provided, this is a string that specifies the program
       --  to use. This corresponds to the file command. See Files.
-      args : VSS.String_Vectors.Virtual_String_Vector;
+      args                            :
+        VSS.String_Vectors.Virtual_String_Vector;
       --  Extension. If provided, this should be an array of strings. These
       --  strings are provided as command-line arguments to the inferior, as
       --  if by set args.
@@ -1800,7 +1956,7 @@ package DAP.Tools is
       --  the program parameter is processed. This will affect the result
       --  if program is a relative filename.
       stopAtBeginningOfMainSubprogram : Boolean := Boolean'First;
-      --  Extension. If provided, this must be a boolean. When ‘True’,
+      --  Extension. If provided, this must be a boolean. When âTrueâ,
       --  gdb will set a temporary breakpoint at the program's main procedure,
       --  using the same approach as the start command. See Starting.
    end record;
@@ -1814,6 +1970,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ExitedEvent_body;
+
          when False =>
             null;
       end case;
@@ -1896,6 +2053,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : VariablePresentationHint;
+
          when False =>
             null;
       end case;
@@ -1978,6 +2136,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : StoppedEvent_body;
+
          when False =>
             null;
       end case;
@@ -2024,6 +2183,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ScopesResponse_body;
+
          when False =>
             null;
       end case;
@@ -2121,6 +2281,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ProgressUpdateEvent_body;
+
          when False =>
             null;
       end case;
@@ -2154,6 +2315,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ExceptionInfoResponse_body;
+
          when False =>
             null;
       end case;
@@ -2230,6 +2392,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : SetExpressionResponse_body;
+
          when False =>
             null;
       end case;
@@ -2341,6 +2504,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : OutputEvent_body;
+
          when False =>
             null;
       end case;
@@ -2394,6 +2558,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : StackFrameFormat;
+
          when False =>
             null;
       end case;
@@ -2516,6 +2681,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ProcessEvent_body;
+
          when False =>
             null;
       end case;
@@ -2626,6 +2792,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : CapabilitiesEvent_body;
+
          when False =>
             null;
       end case;
@@ -2740,6 +2907,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : DataBreakpointInfoResponse_body;
+
          when False =>
             null;
       end case;
@@ -2849,7 +3017,8 @@ package DAP.Tools is
    end record;
 
    type RunInTerminalRequestArguments is record
-      kind : Enum.Optional_RunInTerminalRequestArguments_kind;
+      kind                        :
+        Enum.Optional_RunInTerminalRequestArguments_kind;
       --  What kind of terminal to launch. Defaults to `integrated` if not
       --  specified.
       title                       : VSS.Strings.Virtual_String;
@@ -2898,6 +3067,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : WriteMemoryResponse_body;
+
          when False =>
             null;
       end case;
@@ -2954,6 +3124,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : RunInTerminalResponse_body;
+
          when False =>
             null;
       end case;
@@ -3006,6 +3177,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : DisconnectArguments;
+
          when False =>
             null;
       end case;
@@ -3043,6 +3215,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ThreadsResponse_body;
+
          when False =>
             null;
       end case;
@@ -3085,6 +3258,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : SetDataBreakpointsResponse_body;
+
          when False =>
             null;
       end case;
@@ -3168,6 +3342,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : Message;
+
          when False =>
             null;
       end case;
@@ -3184,6 +3359,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : SourceResponse_body;
+
          when False =>
             null;
       end case;
@@ -3226,6 +3402,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ContinueResponse_body;
+
          when False =>
             null;
       end case;
@@ -3364,6 +3541,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : TerminateArguments;
+
          when False =>
             null;
       end case;
@@ -3472,6 +3650,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : CancelArguments;
+
          when False =>
             null;
       end case;
@@ -3486,6 +3665,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : CompletionsResponse_body;
+
          when False =>
             null;
       end case;
@@ -3593,6 +3773,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : LoadedSourceEvent_body;
+
          when False =>
             null;
       end case;
@@ -3642,6 +3823,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ReadMemoryResponse_body;
+
          when False =>
             null;
       end case;
@@ -3707,6 +3889,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : VariablesResponse_body;
+
          when False =>
             null;
       end case;
@@ -3785,7 +3968,8 @@ package DAP.Tools is
       --  If true all line numbers are 1-based (default).
       columnsStartAt1                     : Boolean := Boolean'First;
       --  If true all column numbers are 1-based (default).
-      pathFormat : Enum.Optional_InitializeRequestArguments_pathFormat;
+      pathFormat                          :
+        Enum.Optional_InitializeRequestArguments_pathFormat;
       --  Determines in what format paths are specified. The default is `path`,
       --  which is the native format.
       supportsVariableType                : Boolean := Boolean'First;
@@ -3826,12 +4010,13 @@ package DAP.Tools is
       --  Sorted set of possible breakpoint locations.
    end record;
 
-   type Optional_BreakpointLocationsResponse_body (Is_Set : Boolean := False)
-   is
-   record
+   type Optional_BreakpointLocationsResponse_body
+     (Is_Set : Boolean := False)
+   is record
       case Is_Set is
          when True =>
             Value : BreakpointLocationsResponse_body;
+
          when False =>
             null;
       end case;
@@ -3930,11 +4115,12 @@ package DAP.Tools is
    end record;
 
    type Optional_SetInstructionBreakpointsResponse_body
-     (Is_Set : Boolean := False) is
-   record
+     (Is_Set : Boolean := False)
+   is record
       case Is_Set is
          when True =>
             Value : SetInstructionBreakpointsResponse_body;
+
          when False =>
             null;
       end case;
@@ -3990,6 +4176,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ProgressEndEvent_body;
+
          when False =>
             null;
       end case;
@@ -4041,6 +4228,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : TerminatedEvent_body;
+
          when False =>
             null;
       end case;
@@ -4081,6 +4269,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ThreadEvent_body;
+
          when False =>
             null;
       end case;
@@ -4107,6 +4296,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : GotoTargetsResponse_body;
+
          when False =>
             null;
       end case;
@@ -4195,6 +4385,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ErrorResponse_body;
+
          when False =>
             null;
       end case;
@@ -4245,6 +4436,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : BreakpointEvent_body;
+
          when False =>
             null;
       end case;
@@ -4344,6 +4536,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : ProgressStartEvent_body;
+
          when False =>
             null;
       end case;
@@ -4388,6 +4581,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : SetVariableResponse_body;
+
          when False =>
             null;
       end case;
@@ -4560,11 +4754,12 @@ package DAP.Tools is
    end record;
 
    type Optional_SetFunctionBreakpointsResponse_body
-     (Is_Set : Boolean := False) is
-   record
+     (Is_Set : Boolean := False)
+   is record
       case Is_Set is
          when True =>
             Value : SetFunctionBreakpointsResponse_body;
+
          when False =>
             null;
       end case;
@@ -4645,6 +4840,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : EvaluateResponse_body;
+
          when False =>
             null;
       end case;
@@ -4712,6 +4908,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : SetBreakpointsResponse_body;
+
          when False =>
             null;
       end case;
@@ -4824,11 +5021,12 @@ package DAP.Tools is
    end record;
 
    type Optional_SetExceptionBreakpointsResponse_body
-     (Is_Set : Boolean := False) is
-   record
+     (Is_Set : Boolean := False)
+   is record
       case Is_Set is
          when True =>
             Value : SetExceptionBreakpointsResponse_body;
+
          when False =>
             null;
       end case;
@@ -4897,6 +5095,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : DisassembleResponse_body;
+
          when False =>
             null;
       end case;
@@ -4947,6 +5146,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : InvalidatedEvent_body;
+
          when False =>
             null;
       end case;
@@ -4998,6 +5198,7 @@ package DAP.Tools is
       case Is_Set is
          when True =>
             Value : LoadedSourcesResponse_body;
+
          when False =>
             null;
       end case;
@@ -5064,25 +5265,25 @@ package DAP.Tools is
    procedure Append (Self : in out Thread_Vector; Value : Thread);
 
    type Thread_Variable_Reference (Element : not null access Thread) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Thread_Variable_Reference
-     (Self  : aliased in out Thread_Vector;
-      Index : Positive)
-      return Thread_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Thread_Variable_Reference
+     (Self : aliased in out Thread_Vector; Index : Positive)
+      return Thread_Variable_Reference
+   with Inline;
 
-   type Thread_Constant_Reference (Element : not null access constant Thread)
-   is
-   null record with
-     Implicit_Dereference => Element;
+   type Thread_Constant_Reference
+     (Element : not null access constant Thread)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Thread_Constant_Reference
-     (Self  : aliased Thread_Vector;
-      Index : Positive)
-      return Thread_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Thread_Constant_Reference
+     (Self : aliased Thread_Vector; Index : Positive)
+      return Thread_Constant_Reference
+   with Inline;
 
    function Length (Self : Checksum_Vector) return Natural;
 
@@ -5091,25 +5292,25 @@ package DAP.Tools is
    procedure Append (Self : in out Checksum_Vector; Value : Checksum);
 
    type Checksum_Variable_Reference (Element : not null access Checksum) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Checksum_Variable_Reference
-     (Self  : aliased in out Checksum_Vector;
-      Index : Positive)
-      return Checksum_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Checksum_Variable_Reference
+     (Self : aliased in out Checksum_Vector; Index : Positive)
+      return Checksum_Variable_Reference
+   with Inline;
 
    type Checksum_Constant_Reference
-     (Element : not null access constant Checksum) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Checksum)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Checksum_Constant_Reference
-     (Self  : aliased Checksum_Vector;
-      Index : Positive)
-      return Checksum_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Checksum_Constant_Reference
+     (Self : aliased Checksum_Vector; Index : Positive)
+      return Checksum_Constant_Reference
+   with Inline;
 
    function Length (Self : Breakpoint_Vector) return Natural;
 
@@ -5118,25 +5319,25 @@ package DAP.Tools is
    procedure Append (Self : in out Breakpoint_Vector; Value : Breakpoint);
 
    type Breakpoint_Variable_Reference (Element : not null access Breakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Breakpoint_Variable_Reference
-     (Self  : aliased in out Breakpoint_Vector;
-      Index : Positive)
-      return Breakpoint_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Breakpoint_Variable_Reference
+     (Self : aliased in out Breakpoint_Vector; Index : Positive)
+      return Breakpoint_Variable_Reference
+   with Inline;
 
    type Breakpoint_Constant_Reference
-     (Element : not null access constant Breakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Breakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Breakpoint_Constant_Reference
-     (Self  : aliased Breakpoint_Vector;
-      Index : Positive)
-      return Breakpoint_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Breakpoint_Constant_Reference
+     (Self : aliased Breakpoint_Vector; Index : Positive)
+      return Breakpoint_Constant_Reference
+   with Inline;
 
    function Length (Self : StepInTarget_Vector) return Natural;
 
@@ -5145,26 +5346,26 @@ package DAP.Tools is
    procedure Append (Self : in out StepInTarget_Vector; Value : StepInTarget);
 
    type StepInTarget_Variable_Reference
-     (Element : not null access StepInTarget) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access StepInTarget)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_StepInTarget_Variable_Reference
-     (Self  : aliased in out StepInTarget_Vector;
-      Index : Positive)
-      return StepInTarget_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_StepInTarget_Variable_Reference
+     (Self : aliased in out StepInTarget_Vector; Index : Positive)
+      return StepInTarget_Variable_Reference
+   with Inline;
 
    type StepInTarget_Constant_Reference
-     (Element : not null access constant StepInTarget) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant StepInTarget)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_StepInTarget_Constant_Reference
-     (Self  : aliased StepInTarget_Vector;
-      Index : Positive)
-      return StepInTarget_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_StepInTarget_Constant_Reference
+     (Self : aliased StepInTarget_Vector; Index : Positive)
+      return StepInTarget_Constant_Reference
+   with Inline;
 
    function Length (Self : FunctionBreakpoint_Vector) return Natural;
 
@@ -5174,26 +5375,26 @@ package DAP.Tools is
      (Self : in out FunctionBreakpoint_Vector; Value : FunctionBreakpoint);
 
    type FunctionBreakpoint_Variable_Reference
-     (Element : not null access FunctionBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access FunctionBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_FunctionBreakpoint_Variable_Reference
-     (Self  : aliased in out FunctionBreakpoint_Vector;
-      Index : Positive)
-      return FunctionBreakpoint_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_FunctionBreakpoint_Variable_Reference
+     (Self : aliased in out FunctionBreakpoint_Vector; Index : Positive)
+      return FunctionBreakpoint_Variable_Reference
+   with Inline;
 
    type FunctionBreakpoint_Constant_Reference
-     (Element : not null access constant FunctionBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant FunctionBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_FunctionBreakpoint_Constant_Reference
-     (Self  : aliased FunctionBreakpoint_Vector;
-      Index : Positive)
-      return FunctionBreakpoint_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_FunctionBreakpoint_Constant_Reference
+     (Self : aliased FunctionBreakpoint_Vector; Index : Positive)
+      return FunctionBreakpoint_Constant_Reference
+   with Inline;
 
    function Length (Self : DataBreakpoint_Vector) return Natural;
 
@@ -5203,26 +5404,26 @@ package DAP.Tools is
      (Self : in out DataBreakpoint_Vector; Value : DataBreakpoint);
 
    type DataBreakpoint_Variable_Reference
-     (Element : not null access DataBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access DataBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DataBreakpoint_Variable_Reference
-     (Self  : aliased in out DataBreakpoint_Vector;
-      Index : Positive)
-      return DataBreakpoint_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_DataBreakpoint_Variable_Reference
+     (Self : aliased in out DataBreakpoint_Vector; Index : Positive)
+      return DataBreakpoint_Variable_Reference
+   with Inline;
 
    type DataBreakpoint_Constant_Reference
-     (Element : not null access constant DataBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant DataBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DataBreakpoint_Constant_Reference
-     (Self  : aliased DataBreakpoint_Vector;
-      Index : Positive)
-      return DataBreakpoint_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_DataBreakpoint_Constant_Reference
+     (Self : aliased DataBreakpoint_Vector; Index : Positive)
+      return DataBreakpoint_Constant_Reference
+   with Inline;
 
    function Length (Self : ExceptionOptions_Vector) return Natural;
 
@@ -5232,26 +5433,26 @@ package DAP.Tools is
      (Self : in out ExceptionOptions_Vector; Value : ExceptionOptions);
 
    type ExceptionOptions_Variable_Reference
-     (Element : not null access ExceptionOptions) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ExceptionOptions)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionOptions_Variable_Reference
-     (Self  : aliased in out ExceptionOptions_Vector;
-      Index : Positive)
-      return ExceptionOptions_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionOptions_Variable_Reference
+     (Self : aliased in out ExceptionOptions_Vector; Index : Positive)
+      return ExceptionOptions_Variable_Reference
+   with Inline;
 
    type ExceptionOptions_Constant_Reference
-     (Element : not null access constant ExceptionOptions) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ExceptionOptions)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionOptions_Constant_Reference
-     (Self  : aliased ExceptionOptions_Vector;
-      Index : Positive)
-      return ExceptionOptions_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionOptions_Constant_Reference
+     (Self : aliased ExceptionOptions_Vector; Index : Positive)
+      return ExceptionOptions_Constant_Reference
+   with Inline;
 
    function Length (Self : Integer_Vector) return Natural;
 
@@ -5260,25 +5461,25 @@ package DAP.Tools is
    procedure Append (Self : in out Integer_Vector; Value : Integer);
 
    type Integer_Variable_Reference (Element : not null access Integer) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Integer_Variable_Reference
-     (Self  : aliased in out Integer_Vector;
-      Index : Positive)
-      return Integer_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Integer_Variable_Reference
+     (Self : aliased in out Integer_Vector; Index : Positive)
+      return Integer_Variable_Reference
+   with Inline;
 
-   type Integer_Constant_Reference (Element : not null access constant Integer)
-   is
-   null record with
-     Implicit_Dereference => Element;
+   type Integer_Constant_Reference
+     (Element : not null access constant Integer)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Integer_Constant_Reference
-     (Self  : aliased Integer_Vector;
-      Index : Positive)
-      return Integer_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Integer_Constant_Reference
+     (Self : aliased Integer_Vector; Index : Positive)
+      return Integer_Constant_Reference
+   with Inline;
 
    function Length (Self : GotoTarget_Vector) return Natural;
 
@@ -5287,25 +5488,25 @@ package DAP.Tools is
    procedure Append (Self : in out GotoTarget_Vector; Value : GotoTarget);
 
    type GotoTarget_Variable_Reference (Element : not null access GotoTarget) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_GotoTarget_Variable_Reference
-     (Self  : aliased in out GotoTarget_Vector;
-      Index : Positive)
-      return GotoTarget_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_GotoTarget_Variable_Reference
+     (Self : aliased in out GotoTarget_Vector; Index : Positive)
+      return GotoTarget_Variable_Reference
+   with Inline;
 
    type GotoTarget_Constant_Reference
-     (Element : not null access constant GotoTarget) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant GotoTarget)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_GotoTarget_Constant_Reference
-     (Self  : aliased GotoTarget_Vector;
-      Index : Positive)
-      return GotoTarget_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_GotoTarget_Constant_Reference
+     (Self : aliased GotoTarget_Vector; Index : Positive)
+      return GotoTarget_Constant_Reference
+   with Inline;
 
    function Length (Self : InvalidatedAreas_Vector) return Natural;
 
@@ -5315,26 +5516,26 @@ package DAP.Tools is
      (Self : in out InvalidatedAreas_Vector; Value : Enum.InvalidatedAreas);
 
    type InvalidatedAreas_Variable_Reference
-     (Element : not null access Enum.InvalidatedAreas) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access Enum.InvalidatedAreas)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_InvalidatedAreas_Variable_Reference
-     (Self  : aliased in out InvalidatedAreas_Vector;
-      Index : Positive)
-      return InvalidatedAreas_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_InvalidatedAreas_Variable_Reference
+     (Self : aliased in out InvalidatedAreas_Vector; Index : Positive)
+      return InvalidatedAreas_Variable_Reference
+   with Inline;
 
    type InvalidatedAreas_Constant_Reference
-     (Element : not null access constant Enum.InvalidatedAreas) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Enum.InvalidatedAreas)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_InvalidatedAreas_Constant_Reference
-     (Self  : aliased InvalidatedAreas_Vector;
-      Index : Positive)
-      return InvalidatedAreas_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_InvalidatedAreas_Constant_Reference
+     (Self : aliased InvalidatedAreas_Vector; Index : Positive)
+      return InvalidatedAreas_Constant_Reference
+   with Inline;
 
    function Length (Self : BreakpointLocation_Vector) return Natural;
 
@@ -5344,26 +5545,26 @@ package DAP.Tools is
      (Self : in out BreakpointLocation_Vector; Value : BreakpointLocation);
 
    type BreakpointLocation_Variable_Reference
-     (Element : not null access BreakpointLocation) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access BreakpointLocation)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_BreakpointLocation_Variable_Reference
-     (Self  : aliased in out BreakpointLocation_Vector;
-      Index : Positive)
-      return BreakpointLocation_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_BreakpointLocation_Variable_Reference
+     (Self : aliased in out BreakpointLocation_Vector; Index : Positive)
+      return BreakpointLocation_Variable_Reference
+   with Inline;
 
    type BreakpointLocation_Constant_Reference
-     (Element : not null access constant BreakpointLocation) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant BreakpointLocation)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_BreakpointLocation_Constant_Reference
-     (Self  : aliased BreakpointLocation_Vector;
-      Index : Positive)
-      return BreakpointLocation_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_BreakpointLocation_Constant_Reference
+     (Self : aliased BreakpointLocation_Vector; Index : Positive)
+      return BreakpointLocation_Constant_Reference
+   with Inline;
 
    function Length (Self : InstructionBreakpoint_Vector) return Natural;
 
@@ -5374,26 +5575,26 @@ package DAP.Tools is
       Value : InstructionBreakpoint);
 
    type InstructionBreakpoint_Variable_Reference
-     (Element : not null access InstructionBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access InstructionBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_InstructionBreakpoint_Variable_Reference
-     (Self  : aliased in out InstructionBreakpoint_Vector;
-      Index : Positive)
-      return InstructionBreakpoint_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_InstructionBreakpoint_Variable_Reference
+     (Self : aliased in out InstructionBreakpoint_Vector; Index : Positive)
+      return InstructionBreakpoint_Variable_Reference
+   with Inline;
 
    type InstructionBreakpoint_Constant_Reference
-     (Element : not null access constant InstructionBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant InstructionBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_InstructionBreakpoint_Constant_Reference
-     (Self  : aliased InstructionBreakpoint_Vector;
-      Index : Positive)
-      return InstructionBreakpoint_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_InstructionBreakpoint_Constant_Reference
+     (Self : aliased InstructionBreakpoint_Vector; Index : Positive)
+      return InstructionBreakpoint_Constant_Reference
+   with Inline;
 
    function Length (Self : StackFrame_Vector) return Natural;
 
@@ -5402,25 +5603,25 @@ package DAP.Tools is
    procedure Append (Self : in out StackFrame_Vector; Value : StackFrame);
 
    type StackFrame_Variable_Reference (Element : not null access StackFrame) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_StackFrame_Variable_Reference
-     (Self  : aliased in out StackFrame_Vector;
-      Index : Positive)
-      return StackFrame_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_StackFrame_Variable_Reference
+     (Self : aliased in out StackFrame_Vector; Index : Positive)
+      return StackFrame_Variable_Reference
+   with Inline;
 
    type StackFrame_Constant_Reference
-     (Element : not null access constant StackFrame) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant StackFrame)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_StackFrame_Constant_Reference
-     (Self  : aliased StackFrame_Vector;
-      Index : Positive)
-      return StackFrame_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_StackFrame_Constant_Reference
+     (Self : aliased StackFrame_Vector; Index : Positive)
+      return StackFrame_Constant_Reference
+   with Inline;
 
    function Length (Self : Scope_Vector) return Natural;
 
@@ -5429,24 +5630,24 @@ package DAP.Tools is
    procedure Append (Self : in out Scope_Vector; Value : Scope);
 
    type Scope_Variable_Reference (Element : not null access Scope) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Scope_Variable_Reference
-     (Self  : aliased in out Scope_Vector;
-      Index : Positive)
-      return Scope_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Scope_Variable_Reference
+     (Self : aliased in out Scope_Vector; Index : Positive)
+      return Scope_Variable_Reference
+   with Inline;
 
    type Scope_Constant_Reference (Element : not null access constant Scope) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Scope_Constant_Reference
-     (Self  : aliased Scope_Vector;
-      Index : Positive)
-      return Scope_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Scope_Constant_Reference
+     (Self : aliased Scope_Vector; Index : Positive)
+      return Scope_Constant_Reference
+   with Inline;
 
    function Length (Self : Variable_Vector) return Natural;
 
@@ -5455,25 +5656,25 @@ package DAP.Tools is
    procedure Append (Self : in out Variable_Vector; Value : Variable);
 
    type Variable_Variable_Reference (Element : not null access Variable) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Variable_Variable_Reference
-     (Self  : aliased in out Variable_Vector;
-      Index : Positive)
-      return Variable_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Variable_Variable_Reference
+     (Self : aliased in out Variable_Vector; Index : Positive)
+      return Variable_Variable_Reference
+   with Inline;
 
    type Variable_Constant_Reference
-     (Element : not null access constant Variable) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Variable)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Variable_Constant_Reference
-     (Self  : aliased Variable_Vector;
-      Index : Positive)
-      return Variable_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Variable_Constant_Reference
+     (Self : aliased Variable_Vector; Index : Positive)
+      return Variable_Constant_Reference
+   with Inline;
 
    function Length (Self : Source_Vector) return Natural;
 
@@ -5482,25 +5683,25 @@ package DAP.Tools is
    procedure Append (Self : in out Source_Vector; Value : Source);
 
    type Source_Variable_Reference (Element : not null access Source) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Source_Variable_Reference
-     (Self  : aliased in out Source_Vector;
-      Index : Positive)
-      return Source_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Source_Variable_Reference
+     (Self : aliased in out Source_Vector; Index : Positive)
+      return Source_Variable_Reference
+   with Inline;
 
-   type Source_Constant_Reference (Element : not null access constant Source)
-   is
-   null record with
-     Implicit_Dereference => Element;
+   type Source_Constant_Reference
+     (Element : not null access constant Source)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Source_Constant_Reference
-     (Self  : aliased Source_Vector;
-      Index : Positive)
-      return Source_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Source_Constant_Reference
+     (Self : aliased Source_Vector; Index : Positive)
+      return Source_Constant_Reference
+   with Inline;
 
    function Length
      (Self : VariablePresentationHint_attributes_Vector) return Natural;
@@ -5512,28 +5713,29 @@ package DAP.Tools is
       Value : Enum.VariablePresentationHint_attributes);
 
    type VariablePresentationHint_attributes_Variable_Reference
-     (Element : not null access Enum.VariablePresentationHint_attributes) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access Enum.VariablePresentationHint_attributes)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_VariablePresentationHint_attributes_Variable_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Variable_Reference
      (Self  : aliased in out VariablePresentationHint_attributes_Vector;
       Index : Positive)
-      return VariablePresentationHint_attributes_Variable_Reference with
-     Inline;
+      return VariablePresentationHint_attributes_Variable_Reference
+   with Inline;
 
    type VariablePresentationHint_attributes_Constant_Reference
-     (Element : not null access constant Enum
-        .VariablePresentationHint_attributes)
-   is
-   null record with
-     Implicit_Dereference => Element;
+     (Element :
+        not null access constant Enum.VariablePresentationHint_attributes)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_VariablePresentationHint_attributes_Constant_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Constant_Reference
      (Self  : aliased VariablePresentationHint_attributes_Vector;
       Index : Positive)
-      return VariablePresentationHint_attributes_Constant_Reference with
-     Inline;
+      return VariablePresentationHint_attributes_Constant_Reference
+   with Inline;
 
    function Length (Self : SourceBreakpoint_Vector) return Natural;
 
@@ -5543,26 +5745,26 @@ package DAP.Tools is
      (Self : in out SourceBreakpoint_Vector; Value : SourceBreakpoint);
 
    type SourceBreakpoint_Variable_Reference
-     (Element : not null access SourceBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access SourceBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_SourceBreakpoint_Variable_Reference
-     (Self  : aliased in out SourceBreakpoint_Vector;
-      Index : Positive)
-      return SourceBreakpoint_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_SourceBreakpoint_Variable_Reference
+     (Self : aliased in out SourceBreakpoint_Vector; Index : Positive)
+      return SourceBreakpoint_Variable_Reference
+   with Inline;
 
    type SourceBreakpoint_Constant_Reference
-     (Element : not null access constant SourceBreakpoint) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant SourceBreakpoint)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_SourceBreakpoint_Constant_Reference
-     (Self  : aliased SourceBreakpoint_Vector;
-      Index : Positive)
-      return SourceBreakpoint_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_SourceBreakpoint_Constant_Reference
+     (Self : aliased SourceBreakpoint_Vector; Index : Positive)
+      return SourceBreakpoint_Constant_Reference
+   with Inline;
 
    function Length (Self : ChecksumAlgorithm_Vector) return Natural;
 
@@ -5572,26 +5774,26 @@ package DAP.Tools is
      (Self : in out ChecksumAlgorithm_Vector; Value : Enum.ChecksumAlgorithm);
 
    type ChecksumAlgorithm_Variable_Reference
-     (Element : not null access Enum.ChecksumAlgorithm) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access Enum.ChecksumAlgorithm)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ChecksumAlgorithm_Variable_Reference
-     (Self  : aliased in out ChecksumAlgorithm_Vector;
-      Index : Positive)
-      return ChecksumAlgorithm_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ChecksumAlgorithm_Variable_Reference
+     (Self : aliased in out ChecksumAlgorithm_Vector; Index : Positive)
+      return ChecksumAlgorithm_Variable_Reference
+   with Inline;
 
    type ChecksumAlgorithm_Constant_Reference
-     (Element : not null access constant Enum.ChecksumAlgorithm) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Enum.ChecksumAlgorithm)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ChecksumAlgorithm_Constant_Reference
-     (Self  : aliased ChecksumAlgorithm_Vector;
-      Index : Positive)
-      return ChecksumAlgorithm_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ChecksumAlgorithm_Constant_Reference
+     (Self : aliased ChecksumAlgorithm_Vector; Index : Positive)
+      return ChecksumAlgorithm_Constant_Reference
+   with Inline;
 
    function Length (Self : ExceptionBreakpointsFilter_Vector) return Natural;
 
@@ -5602,26 +5804,26 @@ package DAP.Tools is
       Value : ExceptionBreakpointsFilter);
 
    type ExceptionBreakpointsFilter_Variable_Reference
-     (Element : not null access ExceptionBreakpointsFilter) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ExceptionBreakpointsFilter)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionBreakpointsFilter_Variable_Reference
+   not overriding
+   function Get_ExceptionBreakpointsFilter_Variable_Reference
      (Self  : aliased in out ExceptionBreakpointsFilter_Vector;
-      Index : Positive)
-      return ExceptionBreakpointsFilter_Variable_Reference with
-     Inline;
+      Index : Positive) return ExceptionBreakpointsFilter_Variable_Reference
+   with Inline;
 
    type ExceptionBreakpointsFilter_Constant_Reference
-     (Element : not null access constant ExceptionBreakpointsFilter) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ExceptionBreakpointsFilter)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionBreakpointsFilter_Constant_Reference
-     (Self  : aliased ExceptionBreakpointsFilter_Vector;
-      Index : Positive)
-      return ExceptionBreakpointsFilter_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionBreakpointsFilter_Constant_Reference
+     (Self : aliased ExceptionBreakpointsFilter_Vector; Index : Positive)
+      return ExceptionBreakpointsFilter_Constant_Reference
+   with Inline;
 
    function Length (Self : CompletionItem_Vector) return Natural;
 
@@ -5631,26 +5833,26 @@ package DAP.Tools is
      (Self : in out CompletionItem_Vector; Value : CompletionItem);
 
    type CompletionItem_Variable_Reference
-     (Element : not null access CompletionItem) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access CompletionItem)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_CompletionItem_Variable_Reference
-     (Self  : aliased in out CompletionItem_Vector;
-      Index : Positive)
-      return CompletionItem_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_CompletionItem_Variable_Reference
+     (Self : aliased in out CompletionItem_Vector; Index : Positive)
+      return CompletionItem_Variable_Reference
+   with Inline;
 
    type CompletionItem_Constant_Reference
-     (Element : not null access constant CompletionItem) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant CompletionItem)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_CompletionItem_Constant_Reference
-     (Self  : aliased CompletionItem_Vector;
-      Index : Positive)
-      return CompletionItem_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_CompletionItem_Constant_Reference
+     (Self : aliased CompletionItem_Vector; Index : Positive)
+      return CompletionItem_Constant_Reference
+   with Inline;
 
    function Length (Self : ExceptionPathSegment_Vector) return Natural;
 
@@ -5660,26 +5862,26 @@ package DAP.Tools is
      (Self : in out ExceptionPathSegment_Vector; Value : ExceptionPathSegment);
 
    type ExceptionPathSegment_Variable_Reference
-     (Element : not null access ExceptionPathSegment) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ExceptionPathSegment)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionPathSegment_Variable_Reference
-     (Self  : aliased in out ExceptionPathSegment_Vector;
-      Index : Positive)
-      return ExceptionPathSegment_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionPathSegment_Variable_Reference
+     (Self : aliased in out ExceptionPathSegment_Vector; Index : Positive)
+      return ExceptionPathSegment_Variable_Reference
+   with Inline;
 
    type ExceptionPathSegment_Constant_Reference
-     (Element : not null access constant ExceptionPathSegment) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ExceptionPathSegment)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionPathSegment_Constant_Reference
-     (Self  : aliased ExceptionPathSegment_Vector;
-      Index : Positive)
-      return ExceptionPathSegment_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionPathSegment_Constant_Reference
+     (Self : aliased ExceptionPathSegment_Vector; Index : Positive)
+      return ExceptionPathSegment_Constant_Reference
+   with Inline;
 
    function Length (Self : DataBreakpointAccessType_Vector) return Natural;
 
@@ -5690,26 +5892,26 @@ package DAP.Tools is
       Value : Enum.DataBreakpointAccessType);
 
    type DataBreakpointAccessType_Variable_Reference
-     (Element : not null access Enum.DataBreakpointAccessType) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access Enum.DataBreakpointAccessType)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DataBreakpointAccessType_Variable_Reference
-     (Self  : aliased in out DataBreakpointAccessType_Vector;
-      Index : Positive)
-      return DataBreakpointAccessType_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_DataBreakpointAccessType_Variable_Reference
+     (Self : aliased in out DataBreakpointAccessType_Vector; Index : Positive)
+      return DataBreakpointAccessType_Variable_Reference
+   with Inline;
 
    type DataBreakpointAccessType_Constant_Reference
-     (Element : not null access constant Enum.DataBreakpointAccessType) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant Enum.DataBreakpointAccessType)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DataBreakpointAccessType_Constant_Reference
-     (Self  : aliased DataBreakpointAccessType_Vector;
-      Index : Positive)
-      return DataBreakpointAccessType_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_DataBreakpointAccessType_Constant_Reference
+     (Self : aliased DataBreakpointAccessType_Vector; Index : Positive)
+      return DataBreakpointAccessType_Constant_Reference
+   with Inline;
 
    function Length (Self : DisassembledInstruction_Vector) return Natural;
 
@@ -5720,26 +5922,26 @@ package DAP.Tools is
       Value : DisassembledInstruction);
 
    type DisassembledInstruction_Variable_Reference
-     (Element : not null access DisassembledInstruction) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access DisassembledInstruction)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DisassembledInstruction_Variable_Reference
-     (Self  : aliased in out DisassembledInstruction_Vector;
-      Index : Positive)
-      return DisassembledInstruction_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_DisassembledInstruction_Variable_Reference
+     (Self : aliased in out DisassembledInstruction_Vector; Index : Positive)
+      return DisassembledInstruction_Variable_Reference
+   with Inline;
 
    type DisassembledInstruction_Constant_Reference
-     (Element : not null access constant DisassembledInstruction) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant DisassembledInstruction)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_DisassembledInstruction_Constant_Reference
-     (Self  : aliased DisassembledInstruction_Vector;
-      Index : Positive)
-      return DisassembledInstruction_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_DisassembledInstruction_Constant_Reference
+     (Self : aliased DisassembledInstruction_Vector; Index : Positive)
+      return DisassembledInstruction_Constant_Reference
+   with Inline;
 
    function Length (Self : Module_Vector) return Natural;
 
@@ -5748,25 +5950,25 @@ package DAP.Tools is
    procedure Append (Self : in out Module_Vector; Value : Module);
 
    type Module_Variable_Reference (Element : not null access Module) is
-   null record with
-     Implicit_Dereference => Element;
+   null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Module_Variable_Reference
-     (Self  : aliased in out Module_Vector;
-      Index : Positive)
-      return Module_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_Module_Variable_Reference
+     (Self : aliased in out Module_Vector; Index : Positive)
+      return Module_Variable_Reference
+   with Inline;
 
-   type Module_Constant_Reference (Element : not null access constant Module)
-   is
-   null record with
-     Implicit_Dereference => Element;
+   type Module_Constant_Reference
+     (Element : not null access constant Module)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_Module_Constant_Reference
-     (Self  : aliased Module_Vector;
-      Index : Positive)
-      return Module_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_Module_Constant_Reference
+     (Self : aliased Module_Vector; Index : Positive)
+      return Module_Constant_Reference
+   with Inline;
 
    function Length (Self : ExceptionFilterOptions_Vector) return Natural;
 
@@ -5777,26 +5979,26 @@ package DAP.Tools is
       Value : ExceptionFilterOptions);
 
    type ExceptionFilterOptions_Variable_Reference
-     (Element : not null access ExceptionFilterOptions) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ExceptionFilterOptions)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionFilterOptions_Variable_Reference
-     (Self  : aliased in out ExceptionFilterOptions_Vector;
-      Index : Positive)
-      return ExceptionFilterOptions_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionFilterOptions_Variable_Reference
+     (Self : aliased in out ExceptionFilterOptions_Vector; Index : Positive)
+      return ExceptionFilterOptions_Variable_Reference
+   with Inline;
 
    type ExceptionFilterOptions_Constant_Reference
-     (Element : not null access constant ExceptionFilterOptions) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ExceptionFilterOptions)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionFilterOptions_Constant_Reference
-     (Self  : aliased ExceptionFilterOptions_Vector;
-      Index : Positive)
-      return ExceptionFilterOptions_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionFilterOptions_Constant_Reference
+     (Self : aliased ExceptionFilterOptions_Vector; Index : Positive)
+      return ExceptionFilterOptions_Constant_Reference
+   with Inline;
 
    function Length (Self : ColumnDescriptor_Vector) return Natural;
 
@@ -5806,26 +6008,26 @@ package DAP.Tools is
      (Self : in out ColumnDescriptor_Vector; Value : ColumnDescriptor);
 
    type ColumnDescriptor_Variable_Reference
-     (Element : not null access ColumnDescriptor) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ColumnDescriptor)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ColumnDescriptor_Variable_Reference
-     (Self  : aliased in out ColumnDescriptor_Vector;
-      Index : Positive)
-      return ColumnDescriptor_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ColumnDescriptor_Variable_Reference
+     (Self : aliased in out ColumnDescriptor_Vector; Index : Positive)
+      return ColumnDescriptor_Variable_Reference
+   with Inline;
 
    type ColumnDescriptor_Constant_Reference
-     (Element : not null access constant ColumnDescriptor) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ColumnDescriptor)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ColumnDescriptor_Constant_Reference
-     (Self  : aliased ColumnDescriptor_Vector;
-      Index : Positive)
-      return ColumnDescriptor_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ColumnDescriptor_Constant_Reference
+     (Self : aliased ColumnDescriptor_Vector; Index : Positive)
+      return ColumnDescriptor_Constant_Reference
+   with Inline;
 
    function Length (Self : ExceptionDetails_Vector) return Natural;
 
@@ -5835,26 +6037,26 @@ package DAP.Tools is
      (Self : in out ExceptionDetails_Vector; Value : ExceptionDetails);
 
    type ExceptionDetails_Variable_Reference
-     (Element : not null access ExceptionDetails) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access ExceptionDetails)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionDetails_Variable_Reference
-     (Self  : aliased in out ExceptionDetails_Vector;
-      Index : Positive)
-      return ExceptionDetails_Variable_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionDetails_Variable_Reference
+     (Self : aliased in out ExceptionDetails_Vector; Index : Positive)
+      return ExceptionDetails_Variable_Reference
+   with Inline;
 
    type ExceptionDetails_Constant_Reference
-     (Element : not null access constant ExceptionDetails) is
-   null record with
-     Implicit_Dereference => Element;
+     (Element : not null access constant ExceptionDetails)
+   is null record
+   with Implicit_Dereference => Element;
 
-   not overriding function Get_ExceptionDetails_Constant_Reference
-     (Self  : aliased ExceptionDetails_Vector;
-      Index : Positive)
-      return ExceptionDetails_Constant_Reference with
-     Inline;
+   not overriding
+   function Get_ExceptionDetails_Constant_Reference
+     (Self : aliased ExceptionDetails_Vector; Index : Positive)
+      return ExceptionDetails_Constant_Reference
+   with Inline;
 
 private
    type Thread_Array is array (Positive range <>) of aliased Thread;
@@ -5864,9 +6066,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Thread_Vector);
+   overriding
+   procedure Adjust (Self : in out Thread_Vector);
 
-   overriding procedure Finalize (Self : in out Thread_Vector);
+   overriding
+   procedure Finalize (Self : in out Thread_Vector);
 
    type Checksum_Array is array (Positive range <>) of aliased Checksum;
    type Checksum_Array_Access is access Checksum_Array;
@@ -5875,9 +6079,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Checksum_Vector);
+   overriding
+   procedure Adjust (Self : in out Checksum_Vector);
 
-   overriding procedure Finalize (Self : in out Checksum_Vector);
+   overriding
+   procedure Finalize (Self : in out Checksum_Vector);
 
    type Breakpoint_Array is array (Positive range <>) of aliased Breakpoint;
    type Breakpoint_Array_Access is access Breakpoint_Array;
@@ -5886,9 +6092,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Breakpoint_Vector);
+   overriding
+   procedure Adjust (Self : in out Breakpoint_Vector);
 
-   overriding procedure Finalize (Self : in out Breakpoint_Vector);
+   overriding
+   procedure Finalize (Self : in out Breakpoint_Vector);
 
    type StepInTarget_Array is
      array (Positive range <>) of aliased StepInTarget;
@@ -5898,22 +6106,26 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out StepInTarget_Vector);
+   overriding
+   procedure Adjust (Self : in out StepInTarget_Vector);
 
-   overriding procedure Finalize (Self : in out StepInTarget_Vector);
+   overriding
+   procedure Finalize (Self : in out StepInTarget_Vector);
 
    type FunctionBreakpoint_Array is
      array (Positive range <>) of aliased FunctionBreakpoint;
    type FunctionBreakpoint_Array_Access is access FunctionBreakpoint_Array;
-   type FunctionBreakpoint_Vector is
-   new Ada.Finalization.Controlled with record
+   type FunctionBreakpoint_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : FunctionBreakpoint_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out FunctionBreakpoint_Vector);
+   overriding
+   procedure Adjust (Self : in out FunctionBreakpoint_Vector);
 
-   overriding procedure Finalize (Self : in out FunctionBreakpoint_Vector);
+   overriding
+   procedure Finalize (Self : in out FunctionBreakpoint_Vector);
 
    type DataBreakpoint_Array is
      array (Positive range <>) of aliased DataBreakpoint;
@@ -5923,9 +6135,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out DataBreakpoint_Vector);
+   overriding
+   procedure Adjust (Self : in out DataBreakpoint_Vector);
 
-   overriding procedure Finalize (Self : in out DataBreakpoint_Vector);
+   overriding
+   procedure Finalize (Self : in out DataBreakpoint_Vector);
 
    type ExceptionOptions_Array is
      array (Positive range <>) of aliased ExceptionOptions;
@@ -5935,9 +6149,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ExceptionOptions_Vector);
+   overriding
+   procedure Adjust (Self : in out ExceptionOptions_Vector);
 
-   overriding procedure Finalize (Self : in out ExceptionOptions_Vector);
+   overriding
+   procedure Finalize (Self : in out ExceptionOptions_Vector);
 
    type Integer_Array is array (Positive range <>) of aliased Integer;
    type Integer_Array_Access is access Integer_Array;
@@ -5946,9 +6162,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Integer_Vector);
+   overriding
+   procedure Adjust (Self : in out Integer_Vector);
 
-   overriding procedure Finalize (Self : in out Integer_Vector);
+   overriding
+   procedure Finalize (Self : in out Integer_Vector);
 
    type GotoTarget_Array is array (Positive range <>) of aliased GotoTarget;
    type GotoTarget_Array_Access is access GotoTarget_Array;
@@ -5957,9 +6175,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out GotoTarget_Vector);
+   overriding
+   procedure Adjust (Self : in out GotoTarget_Vector);
 
-   overriding procedure Finalize (Self : in out GotoTarget_Vector);
+   overriding
+   procedure Finalize (Self : in out GotoTarget_Vector);
 
    type InvalidatedAreas_Array is
      array (Positive range <>) of aliased Enum.InvalidatedAreas;
@@ -5969,36 +6189,42 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out InvalidatedAreas_Vector);
+   overriding
+   procedure Adjust (Self : in out InvalidatedAreas_Vector);
 
-   overriding procedure Finalize (Self : in out InvalidatedAreas_Vector);
+   overriding
+   procedure Finalize (Self : in out InvalidatedAreas_Vector);
 
    type BreakpointLocation_Array is
      array (Positive range <>) of aliased BreakpointLocation;
    type BreakpointLocation_Array_Access is access BreakpointLocation_Array;
-   type BreakpointLocation_Vector is
-   new Ada.Finalization.Controlled with record
+   type BreakpointLocation_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : BreakpointLocation_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out BreakpointLocation_Vector);
+   overriding
+   procedure Adjust (Self : in out BreakpointLocation_Vector);
 
-   overriding procedure Finalize (Self : in out BreakpointLocation_Vector);
+   overriding
+   procedure Finalize (Self : in out BreakpointLocation_Vector);
 
    type InstructionBreakpoint_Array is
      array (Positive range <>) of aliased InstructionBreakpoint;
    type InstructionBreakpoint_Array_Access is
      access InstructionBreakpoint_Array;
-   type InstructionBreakpoint_Vector is
-   new Ada.Finalization.Controlled with record
+   type InstructionBreakpoint_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : InstructionBreakpoint_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out InstructionBreakpoint_Vector);
+   overriding
+   procedure Adjust (Self : in out InstructionBreakpoint_Vector);
 
-   overriding procedure Finalize (Self : in out InstructionBreakpoint_Vector);
+   overriding
+   procedure Finalize (Self : in out InstructionBreakpoint_Vector);
 
    type StackFrame_Array is array (Positive range <>) of aliased StackFrame;
    type StackFrame_Array_Access is access StackFrame_Array;
@@ -6007,9 +6233,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out StackFrame_Vector);
+   overriding
+   procedure Adjust (Self : in out StackFrame_Vector);
 
-   overriding procedure Finalize (Self : in out StackFrame_Vector);
+   overriding
+   procedure Finalize (Self : in out StackFrame_Vector);
 
    type Scope_Array is array (Positive range <>) of aliased Scope;
    type Scope_Array_Access is access Scope_Array;
@@ -6018,9 +6246,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Scope_Vector);
+   overriding
+   procedure Adjust (Self : in out Scope_Vector);
 
-   overriding procedure Finalize (Self : in out Scope_Vector);
+   overriding
+   procedure Finalize (Self : in out Scope_Vector);
 
    type Variable_Array is array (Positive range <>) of aliased Variable;
    type Variable_Array_Access is access Variable_Array;
@@ -6029,9 +6259,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Variable_Vector);
+   overriding
+   procedure Adjust (Self : in out Variable_Vector);
 
-   overriding procedure Finalize (Self : in out Variable_Vector);
+   overriding
+   procedure Finalize (Self : in out Variable_Vector);
 
    type Source_Array is array (Positive range <>) of aliased Source;
    type Source_Array_Access is access Source_Array;
@@ -6040,25 +6272,29 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Source_Vector);
+   overriding
+   procedure Adjust (Self : in out Source_Vector);
 
-   overriding procedure Finalize (Self : in out Source_Vector);
+   overriding
+   procedure Finalize (Self : in out Source_Vector);
 
    type VariablePresentationHint_attributes_Array is
-     array
-       (Positive range <>) of aliased Enum.VariablePresentationHint_attributes;
+     array (Positive range <>)
+     of aliased Enum.VariablePresentationHint_attributes;
    type VariablePresentationHint_attributes_Array_Access is
      access VariablePresentationHint_attributes_Array;
    type VariablePresentationHint_attributes_Vector is
-   new Ada.Finalization.Controlled with record
+     new Ada.Finalization.Controlled
+   with record
       Data   : VariablePresentationHint_attributes_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust
-     (Self : in out VariablePresentationHint_attributes_Vector);
+   overriding
+   procedure Adjust (Self : in out VariablePresentationHint_attributes_Vector);
 
-   overriding procedure Finalize
+   overriding
+   procedure Finalize
      (Self : in out VariablePresentationHint_attributes_Vector);
 
    type SourceBreakpoint_Array is
@@ -6069,9 +6305,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out SourceBreakpoint_Vector);
+   overriding
+   procedure Adjust (Self : in out SourceBreakpoint_Vector);
 
-   overriding procedure Finalize (Self : in out SourceBreakpoint_Vector);
+   overriding
+   procedure Finalize (Self : in out SourceBreakpoint_Vector);
 
    type ChecksumAlgorithm_Array is
      array (Positive range <>) of aliased Enum.ChecksumAlgorithm;
@@ -6081,25 +6319,27 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ChecksumAlgorithm_Vector);
+   overriding
+   procedure Adjust (Self : in out ChecksumAlgorithm_Vector);
 
-   overriding procedure Finalize (Self : in out ChecksumAlgorithm_Vector);
+   overriding
+   procedure Finalize (Self : in out ChecksumAlgorithm_Vector);
 
    type ExceptionBreakpointsFilter_Array is
      array (Positive range <>) of aliased ExceptionBreakpointsFilter;
    type ExceptionBreakpointsFilter_Array_Access is
      access ExceptionBreakpointsFilter_Array;
-   type ExceptionBreakpointsFilter_Vector is
-   new Ada.Finalization.Controlled with record
+   type ExceptionBreakpointsFilter_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : ExceptionBreakpointsFilter_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust
-     (Self : in out ExceptionBreakpointsFilter_Vector);
+   overriding
+   procedure Adjust (Self : in out ExceptionBreakpointsFilter_Vector);
 
-   overriding procedure Finalize
-     (Self : in out ExceptionBreakpointsFilter_Vector);
+   overriding
+   procedure Finalize (Self : in out ExceptionBreakpointsFilter_Vector);
 
    type CompletionItem_Array is
      array (Positive range <>) of aliased CompletionItem;
@@ -6109,52 +6349,58 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out CompletionItem_Vector);
+   overriding
+   procedure Adjust (Self : in out CompletionItem_Vector);
 
-   overriding procedure Finalize (Self : in out CompletionItem_Vector);
+   overriding
+   procedure Finalize (Self : in out CompletionItem_Vector);
 
    type ExceptionPathSegment_Array is
      array (Positive range <>) of aliased ExceptionPathSegment;
    type ExceptionPathSegment_Array_Access is access ExceptionPathSegment_Array;
-   type ExceptionPathSegment_Vector is
-   new Ada.Finalization.Controlled with record
+   type ExceptionPathSegment_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : ExceptionPathSegment_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ExceptionPathSegment_Vector);
+   overriding
+   procedure Adjust (Self : in out ExceptionPathSegment_Vector);
 
-   overriding procedure Finalize (Self : in out ExceptionPathSegment_Vector);
+   overriding
+   procedure Finalize (Self : in out ExceptionPathSegment_Vector);
 
    type DataBreakpointAccessType_Array is
      array (Positive range <>) of aliased Enum.DataBreakpointAccessType;
    type DataBreakpointAccessType_Array_Access is
      access DataBreakpointAccessType_Array;
-   type DataBreakpointAccessType_Vector is
-   new Ada.Finalization.Controlled with record
+   type DataBreakpointAccessType_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : DataBreakpointAccessType_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out DataBreakpointAccessType_Vector);
+   overriding
+   procedure Adjust (Self : in out DataBreakpointAccessType_Vector);
 
-   overriding procedure Finalize
-     (Self : in out DataBreakpointAccessType_Vector);
+   overriding
+   procedure Finalize (Self : in out DataBreakpointAccessType_Vector);
 
    type DisassembledInstruction_Array is
      array (Positive range <>) of aliased DisassembledInstruction;
    type DisassembledInstruction_Array_Access is
      access DisassembledInstruction_Array;
-   type DisassembledInstruction_Vector is
-   new Ada.Finalization.Controlled with record
+   type DisassembledInstruction_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : DisassembledInstruction_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out DisassembledInstruction_Vector);
+   overriding
+   procedure Adjust (Self : in out DisassembledInstruction_Vector);
 
-   overriding procedure Finalize
-     (Self : in out DisassembledInstruction_Vector);
+   overriding
+   procedure Finalize (Self : in out DisassembledInstruction_Vector);
 
    type Module_Array is array (Positive range <>) of aliased Module;
    type Module_Array_Access is access Module_Array;
@@ -6163,23 +6409,27 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out Module_Vector);
+   overriding
+   procedure Adjust (Self : in out Module_Vector);
 
-   overriding procedure Finalize (Self : in out Module_Vector);
+   overriding
+   procedure Finalize (Self : in out Module_Vector);
 
    type ExceptionFilterOptions_Array is
      array (Positive range <>) of aliased ExceptionFilterOptions;
    type ExceptionFilterOptions_Array_Access is
      access ExceptionFilterOptions_Array;
-   type ExceptionFilterOptions_Vector is
-   new Ada.Finalization.Controlled with record
+   type ExceptionFilterOptions_Vector is new Ada.Finalization.Controlled
+   with record
       Data   : ExceptionFilterOptions_Array_Access;
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ExceptionFilterOptions_Vector);
+   overriding
+   procedure Adjust (Self : in out ExceptionFilterOptions_Vector);
 
-   overriding procedure Finalize (Self : in out ExceptionFilterOptions_Vector);
+   overriding
+   procedure Finalize (Self : in out ExceptionFilterOptions_Vector);
 
    type ColumnDescriptor_Array is
      array (Positive range <>) of aliased ColumnDescriptor;
@@ -6189,9 +6439,11 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ColumnDescriptor_Vector);
+   overriding
+   procedure Adjust (Self : in out ColumnDescriptor_Vector);
 
-   overriding procedure Finalize (Self : in out ColumnDescriptor_Vector);
+   overriding
+   procedure Finalize (Self : in out ColumnDescriptor_Vector);
 
    type ExceptionDetails_Array is
      array (Positive range <>) of aliased ExceptionDetails;
@@ -6201,8 +6453,10 @@ private
       Length : Natural := 0;
    end record;
 
-   overriding procedure Adjust (Self : in out ExceptionDetails_Vector);
+   overriding
+   procedure Adjust (Self : in out ExceptionDetails_Vector);
 
-   overriding procedure Finalize (Self : in out ExceptionDetails_Vector);
+   overriding
+   procedure Finalize (Self : in out ExceptionDetails_Vector);
 
 end DAP.Tools;

@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
+with Ada.Characters.Latin_1;  use Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with VSS.Strings.Conversions;
 
 with Switches_Parser;
-with String_Utils;             use String_Utils;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNAT.Regpat;              use GNAT.Regpat;
+with String_Utils;    use String_Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.Strings;
 
 package body Build_Configurations is
@@ -60,19 +60,16 @@ package body Build_Configurations is
    ------------------------
 
    procedure Add_Target
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access);
+     (Registry : Build_Config_Registry_Access; Target : Target_Access);
    --  Add Target to Registry
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function
 
    function Command_Line_To_XML
-     (Cmd : Command_Line;
-      Tag : String) return Node_Ptr;
+     (Cmd : Command_Line; Tag : String) return Node_Ptr;
    function XML_To_Command_Line
-     (N      : Node_Ptr;
-      Config : Switches_Editor_Config) return Command_Line;
+     (N : Node_Ptr; Config : Switches_Editor_Config) return Command_Line;
    --  Convert between a command line to/from the following XML representation
    --          <command-line>
    --             <arg>COMMAND</arg>
@@ -81,8 +78,7 @@ package body Build_Configurations is
    --             <arg>ARGN</arg>
    --          </command-line>
 
-   function XML_To_Configure_Command_Line
-     (N : Node_Ptr) return Command_Line;
+   function XML_To_Configure_Command_Line (N : Node_Ptr) return Command_Line;
    --  Read command line from XML taking sections into account
 
    function Create_Build_Config_Registry
@@ -113,12 +109,13 @@ package body Build_Configurations is
 
    function Copy (T : Target_Access) return Target_Access is
    begin
-      return new Target_Type'
-        (Name                  => T.Name,
-         Model                 => T.Model,
-         Command_Line          => T.Command_Line,
-         Default_Command_Line  => T.Default_Command_Line,
-         Properties            => T.Properties);
+      return
+        new Target_Type'
+          (Name                 => T.Name,
+           Model                => T.Model,
+           Command_Line         => T.Command_Line,
+           Default_Command_Line => T.Default_Command_Line,
+           Properties           => T.Properties);
    end Copy;
 
    ------------
@@ -127,8 +124,8 @@ package body Build_Configurations is
 
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean is
    begin
-      if        T1.Name       /= T2.Name
-        or else T1.Model      /= T2.Model
+      if T1.Name /= T2.Name
+        or else T1.Model /= T2.Model
         or else T1.Properties /= T2.Properties
         or else T1.Command_Line /= T2.Command_Line
         or else T1.Default_Command_Line /= T2.Default_Command_Line
@@ -171,8 +168,8 @@ package body Build_Configurations is
    -- Get_Description --
    ---------------------
 
-   function Get_Description (Target_Model : Target_Model_Access)
-      return String is
+   function Get_Description (Target_Model : Target_Model_Access) return String
+   is
    begin
       return To_String (Target_Model.Description);
    end Get_Description;
@@ -199,8 +196,8 @@ package body Build_Configurations is
    -- Get_Switches --
    ------------------
 
-   function Get_Switches (Target_Model : Target_Model_Access)
-      return Switches_Editor_Config is
+   function Get_Switches
+     (Target_Model : Target_Model_Access) return Switches_Editor_Config is
    begin
       return Target_Model.Switches;
    end Get_Switches;
@@ -209,11 +206,12 @@ package body Build_Configurations is
    -- Get_Default_Command_Line --
    ------------------------------
 
-   function Get_Default_Command_Line (Target_Model : Target_Model_Access)
-     return GNAT.OS_Lib.Argument_List_Access is
+   function Get_Default_Command_Line
+     (Target_Model : Target_Model_Access)
+      return GNAT.OS_Lib.Argument_List_Access is
    begin
-      return Target_Model.Default_Command_Line.To_String_List
-        (Expanded => False);
+      return
+        Target_Model.Default_Command_Line.To_String_List (Expanded => False);
    end Get_Default_Command_Line;
 
    -----------------
@@ -230,8 +228,8 @@ package body Build_Configurations is
    -- Get_Server --
    ----------------
 
-   function Get_Server
-     (Target_Model : Target_Model_Access) return Server_Type is
+   function Get_Server (Target_Model : Target_Model_Access) return Server_Type
+   is
    begin
       return Target_Model.Server;
    end Get_Server;
@@ -273,8 +271,7 @@ package body Build_Configurations is
    ---------------------------
 
    procedure Create_Model_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr)
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr)
    is
       Model : Target_Model_Type;
 
@@ -297,8 +294,8 @@ package body Build_Configurations is
          if Name = "" then
             Log
               (Registry,
-               -("target-model nodes must have non-empty" &
-                 " ""name"" attribute"));
+               -("target-model nodes must have non-empty"
+                 & " ""name"" attribute"));
             return;
          end if;
 
@@ -314,8 +311,7 @@ package body Build_Configurations is
 
             elsif Child.Tag.all = "description" then
                if Child.Value /= null then
-                  Model.Description :=
-                    To_Unbounded_String (Child.Value.all);
+                  Model.Description := To_Unbounded_String (Child.Value.all);
                end if;
 
             elsif Child.Tag.all = "command-line" then
@@ -408,9 +404,11 @@ package body Build_Configurations is
       --  Detect whether the model exists
 
       if Registry.Models.Contains (Model.Name) then
-         Log (Registry,
-              (-"Error: a model is already registered with the name '")
-              & To_String (Model.Name) & "'");
+         Log
+           (Registry,
+            (-"Error: a model is already registered with the name '")
+            & To_String (Model.Name)
+            & "'");
          return;
       end if;
 
@@ -438,7 +436,8 @@ package body Build_Configurations is
       if not Registry.Models.Contains (To_Unbounded_String (Model)) then
          Log
            (Registry,
-            Name & (-": cannot create target: no model registered with name ")
+            Name
+            & (-": cannot create target: no model registered with name ")
             & Model);
          return;
       end if;
@@ -470,8 +469,7 @@ package body Build_Configurations is
       --  ??? Should inherit list of output parsers from the model (if the
       --  models could have parsers...)
       Set_Parsers_For_Target
-        (Target,
-         To_String (Target.Properties.Parser_List));
+        (Target, To_String (Target.Properties.Parser_List));
    end Create_Target;
 
    ------------------
@@ -479,9 +477,7 @@ package body Build_Configurations is
    ------------------
 
    procedure Change_Model
-     (Registry : Build_Config_Registry_Access;
-      Target   : String;
-      Model    : String)
+     (Registry : Build_Config_Registry_Access; Target : String; Model : String)
    is
       The_Target : Target_Access;
       The_Model  : Target_Model_Access;
@@ -551,14 +547,16 @@ package body Build_Configurations is
       Src := Get_Target_From_Name (Registry, Src_Name);
 
       if Src = null then
-         Log (Registry, -("Cannot duplicate: source target not found: ")
-              & Src_Name);
+         Log
+           (Registry,
+            -("Cannot duplicate: source target not found: ") & Src_Name);
          return;
       end if;
 
       if Get_Target_From_Name (Registry, New_Name) /= null then
-         Log (Registry, -("Cannot duplicate: target already exists: ")
-              & New_Name);
+         Log
+           (Registry,
+            -("Cannot duplicate: target already exists: ") & New_Name);
          return;
       end if;
 
@@ -566,11 +564,12 @@ package body Build_Configurations is
          CL : GNAT.Strings.String_List_Access :=
            Src.Command_Line.To_String_List (Expanded => False);
       begin
-         Create_Target (Registry     => Registry,
-                        Name         => New_Name,
-                        Category     => New_Category,
-                        Model        => To_String (Src.Model.Name),
-                        Command_Line => CL.all);
+         Create_Target
+           (Registry     => Registry,
+            Name         => New_Name,
+            Category     => New_Category,
+            Model        => To_String (Src.Model.Name),
+            Command_Line => CL.all);
 
          GNAT.Strings.Free (CL);
       end;
@@ -586,7 +585,7 @@ package body Build_Configurations is
       Dest.Properties := Src.Properties;
       Dest.Properties.Parent_Menu_Name := To_Unbounded_String (Build_Menu);
       Dest.Properties.Menu_Name := To_Unbounded_String (New_Name);
-      Dest.Properties.Category  := To_Unbounded_String (New_Category);
+      Dest.Properties.Category := To_Unbounded_String (New_Category);
 
       --  If we have duplicated a target using this subprogram, this means the
       --  target is user-created.
@@ -601,7 +600,8 @@ package body Build_Configurations is
    --------------------------------------
 
    function Get_Builder_Mode_Chooser_Tooltip
-     (Registry : Build_Config_Registry_Access) return String is
+     (Registry : Build_Config_Registry_Access) return String
+   is
       Tooltip : Unbounded_String;
       C       : Mode_Map.Cursor;
       use Mode_Map;
@@ -616,9 +616,9 @@ package body Build_Configurations is
          Mode := Element (C);
 
          if not Mode.Shadow then
-            Append (Tooltip, ASCII.LF
-                    & "    " & Mode.Name  & ": "
-                    & Mode.Description & "  ");
+            Append
+              (Tooltip,
+               ASCII.LF & "    " & Mode.Name & ": " & Mode.Description & "  ");
 
             if not Mode.Args.Is_Empty then
                declare
@@ -626,8 +626,8 @@ package body Build_Configurations is
                begin
                   Mode.Args.Start (Iter, Expanded => False);
 
-                  Append (Tooltip, ASCII.LF & "        ("
-                          & Current_Switch (Iter));
+                  Append
+                    (Tooltip, ASCII.LF & "        (" & Current_Switch (Iter));
                   Len := Current_Switch (Iter)'Length;
 
                   while Has_More (Iter) loop
@@ -659,8 +659,8 @@ package body Build_Configurations is
    ------------------
 
    function Element_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Mode_Record
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Mode_Record
    is
       C : constant Mode_Map.Cursor := Registry.Modes.Find (Name);
    begin
@@ -686,8 +686,8 @@ package body Build_Configurations is
    -------------------
 
    function Contains_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Boolean is
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Boolean is
    begin
       return Registry.Modes.Contains (Name);
    end Contains_Mode;
@@ -712,8 +712,9 @@ package body Build_Configurations is
       Mode     : Mode_Record) is
    begin
       if Registry.Modes.Contains (Name) then
-         Log (Registry,
-              -("Mode with this name already exists: ") & To_String (Name));
+         Log
+           (Registry,
+            -("Mode with this name already exists: ") & To_String (Name));
       else
          Registry.Modes.Insert (Name, Mode);
       end if;
@@ -754,8 +755,7 @@ package body Build_Configurations is
    ----------------------
 
    procedure Set_Command_Line
-     (Target       : Target_Access;
-      Command_Line : GNAT.OS_Lib.Argument_List) is
+     (Target : Target_Access; Command_Line : GNAT.OS_Lib.Argument_List) is
    begin
       Target.Command_Line.Clear;
       Target.Command_Line.Append_Switches (Command_Line);
@@ -788,12 +788,13 @@ package body Build_Configurations is
    ----------------
 
    procedure Add_Target
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access) is
+     (Registry : Build_Config_Registry_Access; Target : Target_Access) is
    begin
       if Contains (Registry.Targets, Target.Name) then
-         Log (Registry, -("Target with this name already exists: ")
-              & To_String (Target.Name));
+         Log
+           (Registry,
+            -("Target with this name already exists: ")
+            & To_String (Target.Name));
          return;
       end if;
 
@@ -805,8 +806,7 @@ package body Build_Configurations is
    -------------------
 
    procedure Remove_Target
-     (Registry    : Build_Config_Registry_Access;
-      Target_Name : String)
+     (Registry : Build_Config_Registry_Access; Target_Name : String)
    is
       C : Cursor;
       T : Target_Access;
@@ -834,7 +834,7 @@ package body Build_Configurations is
       Name          : String;
       Resolve_Alias : Boolean := True) return Target_Access
    is
-      C : Cursor;
+      C      : Cursor;
       Target : Target_Access;
    begin
       C := Registry.Targets.First;
@@ -852,11 +852,12 @@ package body Build_Configurations is
             then
                return Target;
             else
-               return Get_Target_From_Name
-                 (Registry      => Registry,
-                  Name          =>
-                    To_String (Target.Properties.Aliased_Target_Name),
-                  Resolve_Alias => False);
+               return
+                 Get_Target_From_Name
+                   (Registry      => Registry,
+                    Name          =>
+                      To_String (Target.Properties.Aliased_Target_Name),
+                    Resolve_Alias => False);
             end if;
          end if;
 
@@ -875,9 +876,7 @@ package body Build_Configurations is
    is
       Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
-      if Target = null
-        or else Target.Command_Line.Is_Empty
-      then
+      if Target = null or else Target.Command_Line.Is_Empty then
          --  A target command line should at least contain the command to
          --  launch; if none can be found, return.
          return Empty;
@@ -895,16 +894,14 @@ package body Build_Configurations is
    is
       Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
-      if Target = null
-        or else Target.Default_Command_Line.Is_Empty
-      then
+      if Target = null or else Target.Default_Command_Line.Is_Empty then
          --  A target command line should at least contain the command to
          --  launch; if none can be found, return.
          return Empty;
       end if;
 
-      return Target.Default_Command_Line.To_String_List
-        (Expanded => False).all;
+      return
+        Target.Default_Command_Line.To_String_List (Expanded => False).all;
    end Get_Default_Command_Line_Unexpanded;
 
    ----------------------------------
@@ -926,8 +923,7 @@ package body Build_Configurations is
    -- Create --
    ------------
 
-   function Create
-     (Logger : Logger_Type) return Build_Config_Registry_Access
+   function Create (Logger : Logger_Type) return Build_Config_Registry_Access
    is
    begin
       return Create_Build_Config_Registry (Logger);
@@ -940,10 +936,12 @@ package body Build_Configurations is
    procedure Log (M : String; Mode : Message_Mode) is
    begin
       case Mode is
-         when Info =>
+         when Info  =>
             Trace (Me, "Info-" & M);
+
          when Error =>
             Trace (Me, "Error-" & M);
+
          when Trace =>
             Trace (Me, "Trace-" & M);
       end case;
@@ -953,8 +951,7 @@ package body Build_Configurations is
    -- Create --
    ------------
 
-   function Create return Build_Config_Registry_Access
-   is
+   function Create return Build_Config_Registry_Access is
    begin
       return Create_Build_Config_Registry (Log'Access);
    end Create;
@@ -964,8 +961,8 @@ package body Build_Configurations is
    -----------------------
 
    function Get_Model_By_Name
-     (Registry : Build_Config_Registry_Access;
-      Model_Name : String) return Target_Model_Access is
+     (Registry : Build_Config_Registry_Access; Model_Name : String)
+      return Target_Model_Access is
    begin
       --  Lookup the model
 
@@ -986,10 +983,9 @@ package body Build_Configurations is
    -------------------------
 
    function Command_Line_To_XML
-     (Cmd  : Command_Line;
-      Tag  : String) return Node_Ptr
+     (Cmd : Command_Line; Tag : String) return Node_Ptr
    is
-      CL : GNAT.Strings.String_List_Access :=
+      CL     : GNAT.Strings.String_List_Access :=
         Cmd.To_String_List (Expanded => False);
       N, Arg : Node_Ptr;
    begin
@@ -1004,7 +1000,7 @@ package body Build_Configurations is
       Arg := N.Child;
 
       for J in CL'Range loop
-         Arg.Tag   := new String'("arg");
+         Arg.Tag := new String'("arg");
          Arg.Value := new String'(CL (J).all);
 
          if J /= CL'Last then
@@ -1023,8 +1019,7 @@ package body Build_Configurations is
    -------------------------
 
    function XML_To_Command_Line
-     (N      : Node_Ptr;
-      Config : Switches_Editor_Config) return Command_Line
+     (N : Node_Ptr; Config : Switches_Editor_Config) return Command_Line
    is
       Count : Natural := 0;
       Arg   : Node_Ptr;
@@ -1071,13 +1066,11 @@ package body Build_Configurations is
    -- XML_To_Configure_Command_Line --
    -----------------------------------
 
-   function XML_To_Configure_Command_Line
-     (N : Node_Ptr) return Command_Line
-   is
+   function XML_To_Configure_Command_Line (N : Node_Ptr) return Command_Line is
       Config   : Command_Line_Configuration;
-      Sections : Argument_List_Access := Argument_String_To_List
-        (Get_Attribute_S (N, "sections", ""));
-      Arg    : Node_Ptr := N.Child;
+      Sections : Argument_List_Access :=
+        Argument_String_To_List (Get_Attribute_S (N, "sections", ""));
+      Arg      : Node_Ptr := N.Child;
    begin
       for Section of Sections.all loop
          Config.Define_Section (Section.all);
@@ -1105,8 +1098,8 @@ package body Build_Configurations is
    ------------------------
 
    function Save_Target_To_XML
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access) return Node_Ptr
+     (Registry : Build_Config_Registry_Access; Target : Target_Access)
+      return Node_Ptr
    is
       pragma Unreferenced (Registry);
       N : Node_Ptr;
@@ -1118,33 +1111,35 @@ package body Build_Configurations is
       --  Main node
 
       if Target.Properties.Messages_Category = Null_Unbounded_String then
-         N.Attributes := new String'
-           ("model="""
-            & XML_Utils.Protect (To_String (Target.Model.Name))
-            & """ category="""
-            & XML_Utils.Protect (To_String (Target.Properties.Category))
-            & """ menu="""
-            & XML_Utils.Protect
-              (To_String (Target.Properties.Parent_Menu_Name))
-            & """ name="""
-            & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
-            & '"');
+         N.Attributes :=
+           new String'
+             ("model="""
+              & XML_Utils.Protect (To_String (Target.Model.Name))
+              & """ category="""
+              & XML_Utils.Protect (To_String (Target.Properties.Category))
+              & """ menu="""
+              & XML_Utils.Protect
+                  (To_String (Target.Properties.Parent_Menu_Name))
+              & """ name="""
+              & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
+              & '"');
 
       else
-         N.Attributes := new String'
-           ("model="""
-            & XML_Utils.Protect (To_String (Target.Model.Name))
-            & """ category="""
-            & XML_Utils.Protect (To_String (Target.Properties.Category))
-            & """ menu="""
-            & XML_Utils.Protect
-              (To_String (Target.Properties.Parent_Menu_Name))
-            & """ name="""
-            & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
-            & """ messages_category="""
-            & XML_Utils.Protect
-              (To_String (Target.Properties.Messages_Category))
-            & '"');
+         N.Attributes :=
+           new String'
+             ("model="""
+              & XML_Utils.Protect (To_String (Target.Model.Name))
+              & """ category="""
+              & XML_Utils.Protect (To_String (Target.Properties.Category))
+              & """ menu="""
+              & XML_Utils.Protect
+                  (To_String (Target.Properties.Parent_Menu_Name))
+              & """ name="""
+              & XML_Utils.Protect (To_String (Target.Properties.Menu_Name))
+              & """ messages_category="""
+              & XML_Utils.Protect
+                  (To_String (Target.Properties.Messages_Category))
+              & '"');
       end if;
 
       --  Insert a <icon> node if needed
@@ -1174,14 +1169,14 @@ package body Build_Configurations is
       C.Next := new Node;
       C := C.Next;
       C.Tag := new String'("in-contextual-menus-for-projects");
-      C.Value := new String'
-        (Target.Properties.In_Contextual_Menu_For_Projects'Img);
+      C.Value :=
+        new String'(Target.Properties.In_Contextual_Menu_For_Projects'Img);
 
       C.Next := new Node;
       C := C.Next;
       C.Tag := new String'("in-contextual-menus-for-files");
-      C.Value := new String'
-        (Target.Properties.In_Contextual_Menu_For_Files'Img);
+      C.Value :=
+        new String'(Target.Properties.In_Contextual_Menu_For_Files'Img);
 
       C.Next := new Node;
       C := C.Next;
@@ -1196,8 +1191,8 @@ package body Build_Configurations is
       C.Next := new Node;
       C := C.Next;
       C.Tag := new String'("target-type");
-      C.Value := new String'(To_Lower
-                             (To_String (Target.Properties.Target_Type)));
+      C.Value :=
+        new String'(To_Lower (To_String (Target.Properties.Target_Type)));
 
       C.Next := new Node;
       C := C.Next;
@@ -1233,9 +1228,7 @@ package body Build_Configurations is
 
       Output_Parsers : String_Ptr;
    begin
-      if XML = null
-        or else XML.Tag = null
-      then
+      if XML = null or else XML.Tag = null then
          Log (Registry, -"Error: empty XML passed to target builder");
          return null;
       end if;
@@ -1248,7 +1241,7 @@ package body Build_Configurations is
       --  Main node
 
       declare
-         Parent_Menu      : constant String :=
+         Parent_Menu       : constant String :=
            Get_Attribute_S (XML, "menu", Build_Menu);
          Menu_Name         : constant String :=
            Get_Attribute_S (XML, "name", "");
@@ -1263,18 +1256,21 @@ package body Build_Configurations is
 
       begin
          if Menu_Name = "" then
-            Log (Registry,
-                 -"Error: <target> node should have a ""name"" attribute");
+            Log
+              (Registry,
+               -"Error: <target> node should have a ""name"" attribute");
             return null;
          end if;
          if Category = "" then
-            Log (Registry,
-                 -"Error: <target> node should have a ""category"" attribute");
+            Log
+              (Registry,
+               -"Error: <target> node should have a ""category"" attribute");
             return null;
          end if;
          if Model = "" then
-            Log (Registry,
-                 -"Error: <target> node should have a ""model"" attribute");
+            Log
+              (Registry,
+               -"Error: <target> node should have a ""model"" attribute");
             return null;
          end if;
 
@@ -1296,15 +1292,15 @@ package body Build_Configurations is
 
          else
             Target := new Target_Type;
-            Target.Name  := To_Unbounded_String (Target_Name);
+            Target.Name := To_Unbounded_String (Target_Name);
             Target.Properties.Parent_Menu_Name :=
               To_Unbounded_String (Parent_Menu);
             Target.Properties.Menu_Name := To_Unbounded_String (Menu_Name);
             Target.Properties.Category := To_Unbounded_String (Category);
             Target.Properties.Messages_Category :=
               To_Unbounded_String (Messages_Category);
-            Target.Model := Registry.Models.Element
-              (To_Unbounded_String (Model));
+            Target.Model :=
+              Registry.Models.Element (To_Unbounded_String (Model));
 
             Add_Target (Registry, Target);
          end if;
@@ -1332,12 +1328,12 @@ package body Build_Configurations is
             Target.Properties.Help := To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "launch-mode" then
-            Target.Properties.Launch_Mode := Launch_Mode_Type'Value
-              (Child.Value.all);
+            Target.Properties.Launch_Mode :=
+              Launch_Mode_Type'Value (Child.Value.all);
 
          elsif Child.Tag.all = "iconname" then
             Target.Properties.Icon_Name :=
-               To_Unbounded_String (Child.Value.all);
+              To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "icon" then
             --  obsolete: used to be for stock_id. Replaced with iconname,
@@ -1385,8 +1381,9 @@ package body Build_Configurations is
             Output_Parsers := Child.Value;
 
          else
-            Log (Registry, (-"Warning: invalid child to <target> node: ")
-                 & Child.Tag.all);
+            Log
+              (Registry,
+               (-"Warning: invalid child to <target> node: ") & Child.Tag.all);
          end if;
 
          Child := Child.Next;
@@ -1413,7 +1410,7 @@ package body Build_Configurations is
    -----------------------------
 
    function Save_All_Targets_To_XML
-     (Registry : Build_Config_Registry_Access;
+     (Registry                        : Build_Config_Registry_Access;
       Save_Even_If_Equals_To_Original : Boolean := False) return Node_Ptr
    is
       N                  : Node_Ptr;
@@ -1479,16 +1476,13 @@ package body Build_Configurations is
    -------------------------------
 
    procedure Load_All_Targets_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr)
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr)
    is
-      N       : Node_Ptr;
+      N      : Node_Ptr;
       Ignore : Target_Access;
       pragma Unreferenced (Ignore);
    begin
-      if XML = null
-        or else XML.Tag = null
-        or else XML.Tag.all /= "targets"
+      if XML = null or else XML.Tag = null or else XML.Tag.all /= "targets"
       then
          Log (Registry, "Invalid XML found when loading multiple targets");
          return;
@@ -1497,8 +1491,9 @@ package body Build_Configurations is
       N := XML.Child;
 
       while N /= null loop
-         Ignore := Load_Target_From_XML
-           (Registry => Registry, XML => N, From_User => True);
+         Ignore :=
+           Load_Target_From_XML
+             (Registry => Registry, XML => N, From_User => True);
          N := N.Next;
       end loop;
    end Load_All_Targets_From_XML;
@@ -1508,10 +1503,11 @@ package body Build_Configurations is
    -----------------------
 
    function Load_Mode_From_XML
-      (Registry  : Build_Config_Registry_Access;
-       XML : Node_Ptr) return Mode_Record is
-      C                    : Node_Ptr;
-      Mode                 : Mode_Record;
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr)
+      return Mode_Record
+   is
+      C    : Node_Ptr;
+      Mode : Mode_Record;
 
       procedure Parse_Node (N : Node_Ptr);
       --  Parse children of <builder-mode> nodes
@@ -1554,12 +1550,12 @@ package body Build_Configurations is
                Count := 0;
                while C /= null loop
                   Count := Count + 1;
-                  Srcs  (Count) := new String'(Get_Attribute_S (C, "src"));
+                  Srcs (Count) := new String'(Get_Attribute_S (C, "src"));
                   Dests (Count) := new String'(Get_Attribute_S (C, "dest"));
                   C := C.Next;
                end loop;
 
-               Mode.Subst_Src  := new Argument_List'(Srcs);
+               Mode.Subst_Src := new Argument_List'(Srcs);
                Mode.Subst_Dest := new Argument_List'(Dests);
             end;
 
@@ -1598,17 +1594,17 @@ package body Build_Configurations is
    -- Load_Build_Config_Registry_From_File --
    ------------------------------------------
 
-   procedure Load_Build_Config_Registry_From_File (
-      Registry : Build_Config_Registry_Access;
-      File : GNATCOLL.VFS.Virtual_File;
+   procedure Load_Build_Config_Registry_From_File
+     (Registry           : Build_Config_Registry_Access;
+      File               : GNATCOLL.VFS.Virtual_File;
       Load_Builder_Modes : Boolean := True;
       Load_Target_Models : Boolean := True;
-      Load_Targets : Boolean := True;
-      From_User : Boolean := True)
+      Load_Targets       : Boolean := True;
+      From_User          : Boolean := True)
    is
-      N : Node_Ptr;
-      C : Node_Ptr;
-      M : Mode_Record;
+      N      : Node_Ptr;
+      C      : Node_Ptr;
+      M      : Mode_Record;
       pragma Unreferenced (M);
       Ignore : Target_Access;
       pragma Unreferenced (Ignore);
@@ -1682,9 +1678,8 @@ package body Build_Configurations is
    -- Set_Target_Type --
    ---------------------
 
-   procedure Set_Target_Type
-     (Target          : Target_Access;
-      New_Target_Type : String) is
+   procedure Set_Target_Type (Target : Target_Access; New_Target_Type : String)
+   is
    begin
       Target.Properties.Target_Type := To_Unbounded_String (New_Target_Type);
    end Set_Target_Type;
@@ -1694,8 +1689,7 @@ package body Build_Configurations is
    --------------------------
 
    procedure Set_Project_Switches
-     (Target           : Target_Access;
-      Project_Switches : String) is
+     (Target : Target_Access; Project_Switches : String) is
    begin
       Target.Properties.Project_Switches :=
         To_Unbounded_String (Project_Switches);
@@ -1728,7 +1722,8 @@ package body Build_Configurations is
    -- Next --
    ----------
 
-   overriding procedure Next (Cursor : in out Target_Cursor) is
+   overriding
+   procedure Next (Cursor : in out Target_Cursor) is
    begin
       Target_List.Next (Target_List.Cursor (Cursor));
    end Next;
@@ -1821,8 +1816,8 @@ package body Build_Configurations is
    -------------------------
 
    function Is_Registered_Model
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Boolean is
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Boolean is
    begin
       return Registry.Models.Contains (Name);
    end Is_Registered_Model;
@@ -1832,8 +1827,7 @@ package body Build_Configurations is
    -------------------
 
    procedure Revert_Target
-     (Registry : Build_Config_Registry_Access;
-      Target   : String)
+     (Registry : Build_Config_Registry_Access; Target : String)
    is
       O, C : Cursor;
       T    : Target_Access;
@@ -1880,9 +1874,7 @@ package body Build_Configurations is
    -- Set_Model --
    ---------------
 
-   procedure Set_Model
-     (Target   : Target_Access;
-      Model    : Target_Model_Access) is
+   procedure Set_Model (Target : Target_Access; Model : Target_Model_Access) is
    begin
       Target.Model := Model;
       Target.Command_Line := Model.Default_Command_Line;
@@ -1977,7 +1969,7 @@ package body Build_Configurations is
    ---------------------
 
    procedure Set_Launch_Mode
-   (Target : Target_Access; Launch_Mode : Launch_Mode_Type) is
+     (Target : Target_Access; Launch_Mode : Launch_Mode_Type) is
    begin
       Target.Properties.Launch_Mode := Launch_Mode;
    end Set_Launch_Mode;
@@ -1987,8 +1979,8 @@ package body Build_Configurations is
    ------------------
 
    procedure Set_As_Alias
-     (Target         : not null Target_Access;
-      Aliased_Target : Target_Access := null) is
+     (Target : not null Target_Access; Aliased_Target : Target_Access := null)
+   is
    begin
       if Aliased_Target /= null then
          Target.Properties.Aliased_Target_Name := Aliased_Target.Name;
@@ -2003,8 +1995,8 @@ package body Build_Configurations is
    ----------
 
    procedure Free (Target : in out Target_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Target_Type'Class, Target_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Target_Type'Class, Target_Access);
    begin
       if Target /= null then
          Unchecked_Free (Target);
@@ -2029,8 +2021,10 @@ package body Build_Configurations is
    ----------
 
    procedure Free (Models : in out Model_Map.Map) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Target_Model_Type'Class, Target_Model_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Target_Model_Type'Class,
+           Target_Model_Access);
       use Model_Map;
 
       C : Model_Map.Cursor := First (Models);
@@ -2072,8 +2066,10 @@ package body Build_Configurations is
    ----------
 
    procedure Free (Registry : in out Build_Config_Registry_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Build_Config_Registry'Class, Build_Config_Registry_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Build_Config_Registry'Class,
+           Build_Config_Registry_Access);
    begin
       if Registry /= null then
          Free (Registry.Models);
@@ -2089,18 +2085,15 @@ package body Build_Configurations is
    -- Set_Parsers_For_Target --
    ----------------------------
 
-   procedure Set_Parsers_For_Target
-     (Target : Target_Access;
-      Value  : String)
-   is
+   procedure Set_Parsers_For_Target (Target : Target_Access; Value : String) is
       function Has_Parser
-        (Parsers       : String_List_Utils.String_List.Vector;
-         Parser_Name   : String) return Boolean;
+        (Parsers : String_List_Utils.String_List.Vector; Parser_Name : String)
+         return Boolean;
       --  Check if Parser_Name belongs to Parsers list
 
       function To_Parser_List
-        (Parser_List : String;
-         Default     : String) return String_List_Utils.String_List.Vector;
+        (Parser_List : String; Default : String)
+         return String_List_Utils.String_List.Vector;
       --  Convert string with parser_names to list of parser.
       --  Substitute [default] macro with Default text if found
 
@@ -2109,8 +2102,8 @@ package body Build_Configurations is
       ----------------
 
       function Has_Parser
-        (Parsers       : String_List_Utils.String_List.Vector;
-         Parser_Name   : String) return Boolean is
+        (Parsers : String_List_Utils.String_List.Vector; Parser_Name : String)
+         return Boolean is
       begin
          return Parsers.Contains (Parser_Name);
       end Has_Parser;
@@ -2120,8 +2113,8 @@ package body Build_Configurations is
       --------------------
 
       function To_Parser_List
-        (Parser_List : String;
-         Default     : String) return String_List_Utils.String_List.Vector
+        (Parser_List : String; Default : String)
+         return String_List_Utils.String_List.Vector
       is
          use Ada.Strings;
          use Ada.Strings.Fixed;
@@ -2133,13 +2126,14 @@ package body Build_Configurations is
          Result : String_List_Utils.String_List.Vector;
       begin
          if Macro > 0 then
-            return To_Parser_List
-              (Replace_Slice
-                 (Parser_List,
-                  Low  => Macro,
-                  High => Macro + Default_Macro'Length - 1,
-                  By   => Default),
-               Default);
+            return
+              To_Parser_List
+                (Replace_Slice
+                   (Parser_List,
+                    Low  => Macro,
+                    High => Macro + Default_Macro'Length - 1,
+                    By   => Default),
+                 Default);
          end if;
 
          loop
@@ -2174,22 +2168,30 @@ package body Build_Configurations is
    function Default_Parser_Names (Is_Run_Target : Boolean) return String is
    begin
       if Is_Run_Target then
-         return
-           "console_writer"        & " " &
-           "end_of_build";
+         return "console_writer" & " " & "end_of_build";
       else
          return
-           "output_chopper"        & " " &
-           "utf_converter"         & " " &
-           "progress_parser"       & " " &
-           "console_writer"        & " " &
-           "location_parser"       & " " &
-           "text_splitter"         & " " &
-           "output_collector"      & " " &
-           "elaboration_cycles"    & " " &
-           "elaboration_cycles_20" & " " &
-           "linker_parser"         & " " &
-           "end_of_build";
+           "output_chopper"
+           & " "
+           & "utf_converter"
+           & " "
+           & "progress_parser"
+           & " "
+           & "console_writer"
+           & " "
+           & "location_parser"
+           & " "
+           & "text_splitter"
+           & " "
+           & "output_collector"
+           & " "
+           & "elaboration_cycles"
+           & " "
+           & "elaboration_cycles_20"
+           & " "
+           & "linker_parser"
+           & " "
+           & "end_of_build";
       end if;
    end Default_Parser_Names;
 
@@ -2202,7 +2204,7 @@ package body Build_Configurations is
    is
       use String_List_Utils.String_List;
 
-      Result  : Unbounded_String;
+      Result : Unbounded_String;
    begin
       for Item of List loop
          if Result /= "" then
@@ -2222,8 +2224,7 @@ package body Build_Configurations is
    function Apply_Mode_Args
      (Target   : access Target_Type;
       Mode     : String;
-      Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return Command_Line
+      Cmd_Line : GNAT.OS_Lib.Argument_List) return Command_Line
    is
       use Model_List;
       Model     : constant Target_Model_Access := Target.Model;
@@ -2243,14 +2244,14 @@ package body Build_Configurations is
       if Mode = "" then
          Supported := False;
       else
-         M := Element_Mode
-           (Model.Registry, To_Unbounded_String (Mode));
+         M := Element_Mode (Model.Registry, To_Unbounded_String (Mode));
 
          Supported := False;
 
          if not M.Models.Is_Empty
-           and then (not M.Args.Is_Empty
-             or else (M.Subst_Src /= null and then M.Subst_Src'Length /= 0))
+           and then
+             (not M.Args.Is_Empty
+              or else (M.Subst_Src /= null and then M.Subst_Src'Length /= 0))
          then
             C := M.Models.First;
 

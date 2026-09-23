@@ -22,30 +22,30 @@ package DAP.Modules.Variables.Items.Variables is
       Full_Name : Virtual_String;
    end record;
 
-   overriding function Get_Name
-     (Self : Variable_Item_Info) return Virtual_String;
+   overriding
+   function Get_Name (Self : Variable_Item_Info) return Virtual_String;
 
-   overriding function Get_Full_Name
-     (Self : Variable_Item_Info) return Virtual_String;
+   overriding
+   function Get_Full_Name (Self : Variable_Item_Info) return Virtual_String;
 
-   overriding procedure Set_Full_Name
-     (Self  : in out Variable_Item_Info;
-      Value : Virtual_String);
+   overriding
+   procedure Set_Full_Name
+     (Self : in out Variable_Item_Info; Value : Virtual_String);
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Variable_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean);
 
-   overriding procedure Store
-     (Info  : Variable_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Store
+     (Info : Variable_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value);
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
 
    function Create
-     (Variable : VSS.Strings.Virtual_String;
-      Format   : DAP.Tools.ValueFormat)
+     (Variable : VSS.Strings.Virtual_String; Format : DAP.Tools.ValueFormat)
       return Item_Info'Class;
 
 end DAP.Modules.Variables.Items.Variables;

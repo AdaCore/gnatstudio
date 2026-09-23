@@ -47,18 +47,19 @@ package CodePeer is
    Current_Analyzer : Analyzer_Exe := Codepeer_Exe;
    SAM_File         : Unbounded_String;
 
-   function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
-   function Module_Name return VSS.Strings.Virtual_String is
-     (if Is_GNATSAS then "GNATSAS" else "CodePeer");
-   function Package_Name return String is
-     (if Is_GNATSAS then "gnatsas" else "codepeer");
-   function GPR_Name return String is
-     (if Is_GNATSAS then "Analyzer" else "CodePeer");
-   function Build_Mode return String is
-     (if Is_GNATSAS then "" else "codepeer");
+   function Is_GNATSAS return Boolean
+   is (Current_Analyzer = GNATSAS_Exe);
+   function Module_Name return VSS.Strings.Virtual_String
+   is (if Is_GNATSAS then "GNATSAS" else "CodePeer");
+   function Package_Name return String
+   is (if Is_GNATSAS then "gnatsas" else "codepeer");
+   function GPR_Name return String
+   is (if Is_GNATSAS then "Analyzer" else "CodePeer");
+   function Build_Mode return String
+   is (if Is_GNATSAS then "" else "codepeer");
 
-   package Annot_File_Sets is
-     new Ada.Containers.Ordered_Sets (Unbounded_String);
+   package Annot_File_Sets is new
+     Ada.Containers.Ordered_Sets (Unbounded_String);
    Annot_Files : Annot_File_Sets.Set;
    --  annotation files displayed, if any (for CPL use).
 
@@ -73,16 +74,16 @@ package CodePeer is
 
    function Get_Name (Self : Lifeage_Kinds) return String;
 
-   function Get_Tooltip (Dummy_Self : Lifeage_Kinds) return String is ("");
+   function Get_Tooltip (Dummy_Self : Lifeage_Kinds) return String
+   is ("");
    --  Returns tooltip's text to be displayed for given lifeage category.
 
-   function Less
-     (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean;
+   function Less (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean;
 
    type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
 
-   package Lifeage_Kinds_Sets is new Ada.Containers.Ordered_Sets
-     (Lifeage_Kind_Access, Less, "=");
+   package Lifeage_Kinds_Sets is new
+     Ada.Containers.Ordered_Sets (Lifeage_Kind_Access, Less, "=");
 
    function To_Lifeage_Kinds_Flags
      (Set : Lifeage_Kinds_Sets.Set) return Lifeage_Kinds_Flags;
@@ -102,14 +103,14 @@ package CodePeer is
    subtype Ranking_Kinds is Message_Ranking_Level range Info .. High;
    type Ranking_Kind_Access is access all Ranking_Kinds;
 
-   function Get_Tooltip (Dummy_Self : Ranking_Kinds) return String is ("");
+   function Get_Tooltip (Dummy_Self : Ranking_Kinds) return String
+   is ("");
    --  Returns tooltip's text to be displayed for given ranking category.
 
-   function Less
-     (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean;
+   function Less (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean;
 
-   package Ranking_Kinds_Sets is new Ada.Containers.Ordered_Sets
-     (Ranking_Kind_Access, Less, "=");
+   package Ranking_Kinds_Sets is new
+     Ada.Containers.Ordered_Sets (Ranking_Kind_Access, Less, "=");
 
    -- Audit_Status_Category --
 
@@ -126,15 +127,14 @@ package CodePeer is
 
    function Image (Status : Audit_Status_Kinds) return String;
 
-   function Get_Tooltip (Dummy_Self : Audit_Status_Kinds)
-                         return String is ("");
+   function Get_Tooltip (Dummy_Self : Audit_Status_Kinds) return String
+   is ("");
    --  Returns tooltip's text to be displayed for given audit category.
 
-   function Less
-     (Left, Right : CodePeer.Audit_Status_Access) return Boolean;
+   function Less (Left, Right : CodePeer.Audit_Status_Access) return Boolean;
 
-   package Audit_Status_Sets is
-     new Ada.Containers.Ordered_Sets (Audit_Status_Access, Less, "=");
+   package Audit_Status_Sets is new
+     Ada.Containers.Ordered_Sets (Audit_Status_Access, Less, "=");
 
    Audit_Statuses : Audit_Status_Sets.Set;
    --  The list of registered audit statuses
@@ -160,8 +160,9 @@ package CodePeer is
    --  Return the Audit_Status_Kinds in Audit_Statuses with the given name.
    --  Add it with a Not_A_Bug category if not found.
 
-   function Get_Status (Name : String; Category : Audit_Status_Category)
-                       return Audit_Status_Kinds;
+   function Get_Status
+     (Name : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds;
    --  Return the Audit_Status_Kinds in Audit_Statuses with the given name.
    --  Add it with 'Category' as category if not found.
 
@@ -186,8 +187,8 @@ package CodePeer is
    function Less
      (Left : CWE_Category_Access; Right : CWE_Category_Access) return Boolean;
 
-   package CWE_Category_Sets is new Ada.Containers.Ordered_Sets
-     (CWE_Category_Access, Less);
+   package CWE_Category_Sets is new
+     Ada.Containers.Ordered_Sets (CWE_Category_Access, Less);
 
    type Message_Category is record
       Name : Ada.Strings.Unbounded.Unbounded_String;
@@ -196,7 +197,8 @@ package CodePeer is
 
    function Get_Name (Self : Message_Category) return String;
 
-   function Get_Tooltip (Dummy_Self : Message_Category) return String is ("");
+   function Get_Tooltip (Dummy_Self : Message_Category) return String
+   is ("");
    --  Returns tooltip's text to be displayed for given message category.
 
    type Message_Category_Access is access all Message_Category;
@@ -204,8 +206,8 @@ package CodePeer is
    function Less
      (Left, Right : CodePeer.Message_Category_Access) return Boolean;
 
-   package Message_Category_Sets is new Ada.Containers.Ordered_Sets
-     (Message_Category_Access, Less, "=");
+   package Message_Category_Sets is new
+     Ada.Containers.Ordered_Sets (Message_Category_Access, Less, "=");
 
    type Audit_Record is record
       Timestamp   : Unbounded_String;
@@ -216,11 +218,10 @@ package CodePeer is
 
    type Audit_Record_Access is access all Audit_Record;
 
-   package Audit_Vectors is
-     new Ada.Containers.Vectors (Positive, Audit_Record_Access);
+   package Audit_Vectors is new
+     Ada.Containers.Vectors (Positive, Audit_Record_Access);
 
-   package Natural_Sets is
-     new Ada.Containers.Ordered_Sets (Natural);
+   package Natural_Sets is new Ada.Containers.Ordered_Sets (Natural);
 
    type GNATSAS_Id_Type is record
       Prj     : Ada.Strings.Unbounded.Unbounded_String;
@@ -263,25 +264,29 @@ package CodePeer is
    end record;
    type Message_Access is access all Message;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding function Get_Tooltip_Markup
+   overriding
+   function Get_Tooltip_Markup
      (Self : not null access Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
-   overriding procedure Finalize (Self : not null access Message);
+   overriding
+   procedure Finalize (Self : not null access Message);
 
-   package Message_Vectors is
-     new Ada.Containers.Vectors (Positive, Message_Access);
+   package Message_Vectors is new
+     Ada.Containers.Vectors (Positive, Message_Access);
 
-   package Message_Maps is
-     new Ada.Containers.Ordered_Maps (Positive, Message_Access);
+   package Message_Maps is new
+     Ada.Containers.Ordered_Maps (Positive, Message_Access);
 
    -------------------
    --  Annotations  --
@@ -296,8 +301,8 @@ package CodePeer is
    type Annotation_Category_Access is access all Annotation_Category;
 
    function Less
-     (Left  : Annotation_Category_Access;
-      Right : Annotation_Category_Access) return Boolean;
+     (Left : Annotation_Category_Access; Right : Annotation_Category_Access)
+      return Boolean;
    --  Compare annotation categories to sort them in the following order:
    --  * (Pre)
    --  * (Presumption)
@@ -312,16 +317,19 @@ package CodePeer is
 
    type Annotation_Access is access all Annotation;
 
-   package Annotation_Vectors is new Ada.Containers.Vectors
-     (Positive, Annotation_Access);
+   package Annotation_Vectors is new
+     Ada.Containers.Vectors (Positive, Annotation_Access);
 
    type Annotation_Vector_Access is access all Annotation_Vectors.Vector;
 
-   package Annotation_Maps is new Ada.Containers.Ordered_Maps
-     (Annotation_Category_Access, Annotation_Vector_Access, Less);
+   package Annotation_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Annotation_Category_Access,
+        Annotation_Vector_Access,
+        Less);
 
-   package Annotation_Category_Sets is new Ada.Containers.Ordered_Sets
-     (Annotation_Category_Access, Less);
+   package Annotation_Category_Sets is new
+     Ada.Containers.Ordered_Sets (Annotation_Category_Access, Less);
 
    -----------------------
    --  Race conditions  --
@@ -337,8 +345,8 @@ package CodePeer is
       Message : GPS.Kernel.Messages.Message_Access;
    end record;
 
-   package Object_Access_Vectors is
-     new Ada.Containers.Vectors (Positive, Object_Access_Information);
+   package Object_Access_Vectors is new
+     Ada.Containers.Vectors (Positive, Object_Access_Information);
 
    type Entry_Point_Information is record
       Name   : Ada.Strings.Unbounded.Unbounded_String;
@@ -352,18 +360,16 @@ package CodePeer is
    function Hash
      (Item : Entry_Point_Information_Access) return Ada.Containers.Hash_Type;
 
-   package Entry_Point_Information_Sets is
-     new Ada.Containers.Hashed_Sets
-       (Entry_Point_Information_Access, Hash, "=");
+   package Entry_Point_Information_Sets is new
+     Ada.Containers.Hashed_Sets (Entry_Point_Information_Access, Hash, "=");
 
    type Entry_Point_Object_Access_Information is record
       Entry_Point     : Entry_Point_Information_Access;
       Object_Accesses : Object_Access_Vectors.Vector;
    end record;
 
-   package Entry_Point_Object_Access_Vectors is
-     new Ada.Containers.Vectors
-       (Positive, Entry_Point_Object_Access_Information);
+   package Entry_Point_Object_Access_Vectors is new
+     Ada.Containers.Vectors (Positive, Entry_Point_Object_Access_Information);
 
    type Object_Race_Information is record
       Name         : VSS.Strings.Virtual_String;
@@ -374,15 +380,15 @@ package CodePeer is
       Message      : GPS.Kernel.Messages.Message_Access;
    end record;
 
-   package Object_Race_Vectors is
-     new Ada.Containers.Vectors (Positive, Object_Race_Information);
+   package Object_Race_Vectors is new
+     Ada.Containers.Vectors (Positive, Object_Race_Information);
 
    type Inspection_Information is record
-      Inspection    : Ada.Strings.Unbounded.Unbounded_String;
-      Timestamp     : Ada.Calendar.Time;
-      Main          : Ada.Strings.Unbounded.Unbounded_String;
-      Switches      : Ada.Strings.Unbounded.Unbounded_String;
-      Library_File  : Ada.Strings.Unbounded.Unbounded_String;
+      Inspection   : Ada.Strings.Unbounded.Unbounded_String;
+      Timestamp    : Ada.Calendar.Time;
+      Main         : Ada.Strings.Unbounded.Unbounded_String;
+      Switches     : Ada.Strings.Unbounded.Unbounded_String;
+      Library_File : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    type Project_Data is new Code_Analysis.CodePeer_Data_Root with record
@@ -399,19 +405,20 @@ package CodePeer is
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
 
-      Entry_Points          : Entry_Point_Information_Sets.Set;
-      Object_Races          : Object_Race_Vectors.Vector;
+      Entry_Points : Entry_Point_Information_Sets.Set;
+      Object_Races : Object_Race_Vectors.Vector;
    end record;
    --  This record has only one instance and associated with the node
    --  of the root project. It is an owner of the message categories and
    --  annotation categories stored in the Message_Categories and
    --  Annotation_Categories members.
 
-   overriding procedure Finalize (Self : access Project_Data);
+   overriding
+   procedure Finalize (Self : access Project_Data);
 
    type File_Data is new Code_Analysis.CodePeer_Data_Root with record
-      Lifeage            : Lifeage_Kinds;
-      Total_Checks       : Natural := 0;
+      Lifeage      : Lifeage_Kinds;
+      Total_Checks : Natural := 0;
 
       Annotations_File   : GNATCOLL.VFS.Virtual_File;
       Annotations_Loaded : Boolean;
@@ -429,15 +436,19 @@ package CodePeer is
 
    type Subprogram_Data_Access is access all Subprogram_Data'Class;
 
-   overriding procedure Finalize (Self : access Subprogram_Data);
+   overriding
+   procedure Finalize (Self : access Subprogram_Data);
 
    --  Message filter criteria
 
    function Hash
      (Item : Code_Analysis.File_Access) return Ada.Containers.Hash_Type;
 
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Code_Analysis.File_Access, Hash, Code_Analysis."=");
+   package File_Sets is new
+     Ada.Containers.Hashed_Sets
+       (Code_Analysis.File_Access,
+        Hash,
+        Code_Analysis."=");
 
    type Review_Status_Kinds_Flags is array (1 .. 256) of Boolean;
    --  Use a hard coded max size "large enough" for convenience
@@ -452,7 +463,7 @@ package CodePeer is
       Statuses   : Review_Status_Kinds_Flags := (others => False);
    end record;
 
-   package Count_Type_Formatters is
-     new VSS.Strings.Formatters.Generic_Integers (Ada.Containers.Count_Type);
+   package Count_Type_Formatters is new
+     VSS.Strings.Formatters.Generic_Integers (Ada.Containers.Count_Type);
 
 end CodePeer;

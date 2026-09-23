@@ -15,20 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.SQL.Sessions;
 with GNATCOLL.SQL.Sqlite;
 private with GNATCOLL.Projects;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
 with Basic_Types;
 
-with GPS.Kernel.Project;              use GPS.Kernel.Project;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 
-with GNAThub.Metrics;                 use GNAThub.Metrics;
+with GNAThub.Metrics; use GNAThub.Metrics;
 with Database.Orm;
 
 package body GNAThub.Loader.Databases is
@@ -42,12 +42,12 @@ package body GNAThub.Loader.Databases is
    procedure Load_Resources (Self : in out Database_Loader_Type'Class);
    --  Loads list of resources.
 
-   procedure Free_Resource is
-        new Ada.Unchecked_Deallocation (Resource_Record, Resource_Access);
+   procedure Free_Resource is new
+     Ada.Unchecked_Deallocation (Resource_Record, Resource_Access);
 
    function Get_Database
      (Self : Database_Loader_Type'Class) return GNATCOLL.VFS.Virtual_File
-     with Inline;
+   with Inline;
    --  Return the GNAThub database.
 
    ------------------
@@ -57,17 +57,23 @@ package body GNAThub.Loader.Databases is
    function Get_Database
      (Self : Database_Loader_Type'Class) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.Module.Get_Kernel.Get_Project_Tree.
-        Root_Project.Object_Dir.Create_From_Dir ("gnathub").Create_From_Dir
-        ("gnathub.db");
+      return
+        Self
+          .Module
+          .Get_Kernel
+          .Get_Project_Tree
+          .Root_Project
+          .Object_Dir
+          .Create_From_Dir ("gnathub")
+          .Create_From_Dir ("gnathub.db");
    end Get_Database;
 
    ---------------------
    -- Prepare_Loading --
    ---------------------
 
-   overriding procedure Prepare_Loading (Self : in out Database_Loader_Type)
-   is
+   overriding
+   procedure Prepare_Loading (Self : in out Database_Loader_Type) is
       Database : constant GNATCOLL.VFS.Virtual_File := Self.Get_Database;
    begin
       if Database.Is_Regular_File then
@@ -86,8 +92,8 @@ package body GNAThub.Loader.Databases is
    -- Has_Data_To_Load --
    ----------------------
 
-   overriding function Has_Data_To_Load
-     (Self : Database_Loader_Type) return Boolean is
+   overriding
+   function Has_Data_To_Load (Self : Database_Loader_Type) return Boolean is
    begin
       return not Self.Resources.Is_Empty;
    end Has_Data_To_Load;
@@ -96,7 +102,8 @@ package body GNAThub.Loader.Databases is
    -- Cleanup --
    -------------
 
-   overriding procedure Cleanup (Self : in out Database_Loader_Type) is
+   overriding
+   procedure Cleanup (Self : in out Database_Loader_Type) is
 
       Resource : Resource_Access;
    begin
@@ -118,28 +125,26 @@ package body GNAThub.Loader.Databases is
    -- Load_Data --
    ---------------
 
-   overriding procedure Load_Data
-     (Self : in out Database_Loader_Type)
-   is
-      Resource        : Resource_Access := Self.Resources.First_Element;
-      Resource_Id     : constant Natural := Self.Resources.First_Key;
-      Resource_Name   : constant String := To_String (Resource.Name);
-      Resource_File   : constant GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.Create_From_Base
-          (GNATCOLL.VFS."+" (Resource_Name));
-      Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                         GNATCOLL.SQL.Sessions.Get_New_Session;
-      List            : Database.Orm.Resource_Message_List :=
-                         Database.Orm.Filter
-                          (Database.Orm.All_Resources_Messages,
-                           Resource_Id => Resource_Id).Get (Session);
-      R               : Database.Orm.Resource_Message;
-      M               : Database.Orm.Message;
-      Ranking         : Integer;
-      Message         : GNAThub_Message_Access;
-      Metric          : Metric_Access;
-      Rule            : GNAThub.Rule_Access;
-      Severity        : GNAThub.Severity_Access;
+   overriding
+   procedure Load_Data (Self : in out Database_Loader_Type) is
+      Resource      : Resource_Access := Self.Resources.First_Element;
+      Resource_Id   : constant Natural := Self.Resources.First_Key;
+      Resource_Name : constant String := To_String (Resource.Name);
+      Resource_File : constant GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Create_From_Base (GNATCOLL.VFS."+" (Resource_Name));
+      Session       : constant GNATCOLL.SQL.Sessions.Session_Type :=
+        GNATCOLL.SQL.Sessions.Get_New_Session;
+      List          : Database.Orm.Resource_Message_List :=
+        Database.Orm.Filter
+          (Database.Orm.All_Resources_Messages, Resource_Id => Resource_Id)
+          .Get (Session);
+      R             : Database.Orm.Resource_Message;
+      M             : Database.Orm.Message;
+      Ranking       : Integer;
+      Message       : GNAThub_Message_Access;
+      Metric        : Metric_Access;
+      Rule          : GNAThub.Rule_Access;
+      Severity      : GNAThub.Severity_Access;
 
       function Get_Importance_From_Ranking return Message_Importance_Type;
 
@@ -170,13 +175,12 @@ package body GNAThub.Loader.Databases is
       -- Load_Entities --
       -------------------
 
-      procedure Load_Entities
-      is
+      procedure Load_Entities is
          Messages         : Database.Orm.Message_List;
          Entities         : Database.Orm.Entity_List :=
-                             Database.Orm.Filter
-                              (Database.Orm.All_Entities,
-                               Resource_Id => Resource_Id).Get (Session);
+           Database.Orm.Filter
+             (Database.Orm.All_Entities, Resource_Id => Resource_Id)
+             .Get (Session);
          Entity           : Database.Orm.Entity;
          Sub_Message      : Database.Orm.Entity_Message;
          Sub_Message_List : Database.Orm.Entity_Message_List;
@@ -184,28 +188,34 @@ package body GNAThub.Loader.Databases is
          --  The entities of the file
          while Entities.Has_Row loop
             Entity := Entities.Element;
-            Sub_Message_List := Database.Orm.Filter
-              (Database.Orm.All_Entities_Messages, Entity_Id => Entity.Id)
-              .Get (Session);
+            Sub_Message_List :=
+              Database.Orm.Filter
+                (Database.Orm.All_Entities_Messages, Entity_Id => Entity.Id)
+                .Get (Session);
 
             --  The messages/metrics of the current entity
             while Sub_Message_List.Has_Row loop
                Sub_Message := Sub_Message_List.Element;
-               Messages := Database.Orm.Filter
-                 (Database.Orm.All_Messages, Id => Sub_Message.Message_Id)
-                 .Get (Session);
+               Messages :=
+                 Database.Orm.Filter
+                   (Database.Orm.All_Messages, Id => Sub_Message.Message_Id)
+                   .Get (Session);
 
                while Messages.Has_Row loop
                   M := Messages.Element;
                   if Self.Rules.Contains (M.Rule_Id) then
                      if Sub_Message.Line > 0 then
                         Load_Message
-                          (Resource.Kind, Sub_Message.Line,
-                           Sub_Message.Col_Begin, Entity);
+                          (Resource.Kind,
+                           Sub_Message.Line,
+                           Sub_Message.Col_Begin,
+                           Entity);
                      else
                         Load_Message
-                          (Resource.Kind, Entity.Line,
-                           Entity.Col_Begin, Entity);
+                          (Resource.Kind,
+                           Entity.Line,
+                           Entity.Col_Begin,
+                           Entity);
                      end if;
                   elsif Self.Metrics.Contains (M.Rule_Id) then
                      Load_Metric (Resource.Kind, Entity);
@@ -241,20 +251,22 @@ package body GNAThub.Loader.Databases is
                  Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
                    (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
-            when others =>
+
+            when others       =>
                File := Resource_File;
          end case;
 
-         Ranking  := M.Ranking;
+         Ranking := M.Ranking;
          Severity := Self.Module.Get_Severity (Get_Importance_From_Ranking);
-         Rule     := Self.Rules (M.Rule_Id);
+         Rule := Self.Rules (M.Rule_Id);
 
          if not Entity.Is_Null then
-            Entity_D := Entity_Data'
-              (Name   => To_Unbounded_String (Entity.Name),
-               Line   => Entity.Line,
-               Column => Natural (Entity.Col_Begin),
-               Info   => No_Node_Info);
+            Entity_D :=
+              Entity_Data'
+                (Name   => To_Unbounded_String (Entity.Name),
+                 Line   => Entity.Line,
+                 Column => Natural (Entity.Col_Begin),
+                 Info   => No_Node_Info);
          else
             Entity_D := No_Entity_Data;
          end if;
@@ -262,8 +274,7 @@ package body GNAThub.Loader.Databases is
          Message := new GNAThub_Message;
          GNAThub.Messages.Initialize
            (Self      => Message,
-            Container =>
-              Self.Module.Get_Kernel.Get_Messages_Container,
+            Container => Self.Module.Get_Kernel.Get_Messages_Container,
             Severity  => Severity,
             Rule      => Rule,
             Text      => To_Unbounded_String (Database.Orm.Data (M)),
@@ -274,9 +285,7 @@ package body GNAThub.Loader.Databases is
 
          --  Insert the message in the module's tree
 
-         Insert_Message
-           (Self    => Self,
-            Message => Message);
+         Insert_Message (Self => Self, Message => Message);
       end Load_Message;
 
       -----------------
@@ -299,7 +308,8 @@ package body GNAThub.Loader.Databases is
                  Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
                    (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
-            when others =>
+
+            when others       =>
                Project :=
                  GPS.Kernel.Project.Get_Project (Self.Module.Get_Kernel);
                File := Resource_File;
@@ -311,11 +321,12 @@ package body GNAThub.Loader.Databases is
          if Entity.Is_Null then
             Entity_D := No_Entity_Data;
          else
-            Entity_D := Entity_Data'
-              (Name   => To_Unbounded_String (Entity.Name),
-               Line   => Entity.Line,
-               Column => Entity.Col_Begin,
-               Info   => No_Node_Info);
+            Entity_D :=
+              Entity_Data'
+                (Name   => To_Unbounded_String (Entity.Name),
+                 Line   => Entity.Line,
+                 Column => Entity.Col_Begin,
+                 Info   => No_Node_Info);
             Entity_D :=
               Real_Entity
                 (Kernel => Self.Module.Get_Kernel,
@@ -327,22 +338,21 @@ package body GNAThub.Loader.Databases is
 
          if Database.Orm.Data (M) /= "nyi" then
             Metric.Initialize
-              (Severity     => Severity,
-               Rule         => Rule,
-               Value        =>
-                 Float'Value
-                   (Database.Orm.Data (M)),
-               File         => File,
-               Entity       => Entity_D);
+              (Severity => Severity,
+               Rule     => Rule,
+               Value    => Float'Value (Database.Orm.Data (M)),
+               File     => File,
+               Entity   => Entity_D);
          end if;
       end Load_Metric;
 
    begin
       while List.Has_Row loop
          R := List.Element;
-         M := Database.Orm.Filter
-           (Database.Orm.All_Messages, Id => R.Message_Id)
-           .Get (Session).Element;
+         M :=
+           Database.Orm.Filter (Database.Orm.All_Messages, Id => R.Message_Id)
+             .Get (Session)
+             .Element;
 
          --  Project level message/metric
          if Self.Rules.Contains (M.Rule_Id) then
@@ -378,8 +388,8 @@ package body GNAThub.Loader.Databases is
    --------------------
 
    procedure Load_Resources (Self : in out Database_Loader_Type'Class) is
-      Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                   GNATCOLL.SQL.Sessions.Get_New_Session;
+      Session : constant GNATCOLL.SQL.Sessions.Session_Type :=
+        GNATCOLL.SQL.Sessions.Get_New_Session;
 
       procedure Retrieve_Kind (Kind : Resource_Kind_Type);
 
@@ -387,19 +397,20 @@ package body GNAThub.Loader.Databases is
       -- Retrieve_Kind --
       -------------------
 
-      procedure Retrieve_Kind (Kind : Resource_Kind_Type)
-      is
-         List     : Database.Orm.Resource_List := Database.Orm.Filter
-           (Database.Orm.All_Resources,
-            Kind => Resource_Kind_Type'Pos (Kind)).Get (Session);
+      procedure Retrieve_Kind (Kind : Resource_Kind_Type) is
+         List     : Database.Orm.Resource_List :=
+           Database.Orm.Filter
+             (Database.Orm.All_Resources,
+              Kind => Resource_Kind_Type'Pos (Kind))
+             .Get (Session);
          R        : Database.Orm.Resource;
          Resource : Resource_Access;
       begin
          while List.Has_Row loop
             R := List.Element;
-            Resource := new Resource_Record'
-              (Name => To_Unbounded_String (R.Name),
-               Kind => Kind);
+            Resource :=
+              new Resource_Record'
+                (Name => To_Unbounded_String (R.Name), Kind => Kind);
             Self.Resources.Insert (R.Id, Resource);
             List.Next;
          end loop;
@@ -419,7 +430,7 @@ package body GNAThub.Loader.Databases is
      (Self : in out Database_Loader_Type'Class)
    is
       Session : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                  GNATCOLL.SQL.Sessions.Get_New_Session;
+        GNATCOLL.SQL.Sessions.Get_New_Session;
       TL      : Database.Orm.Tool_List := Database.Orm.All_Tools.Get (Session);
       T       : Database.Orm.Tool;
       Tool    : Tool_Access;
@@ -433,8 +444,7 @@ package body GNAThub.Loader.Databases is
       -- Retieve_Kind --
       ------------------
 
-      procedure Retrieve_Kind (M : in out Rule_Maps.Map; Kind : Integer)
-      is
+      procedure Retrieve_Kind (M : in out Rule_Maps.Map; Kind : Integer) is
          RL   : Database.Orm.Rule_List;
          R    : Database.Orm.Rule;
          Rule : Rule_Access;
@@ -465,7 +475,7 @@ package body GNAThub.Loader.Databases is
 
    begin
       while TL.Has_Row loop
-         T    := TL.Element;
+         T := TL.Element;
          Tool := Self.Module.Get_Or_Create_Tool (To_Unbounded_String (T.Name));
 
          Retrieve_Kind (Self.Rules, Kind => 0);
@@ -483,8 +493,7 @@ package body GNAThub.Loader.Databases is
      (Self : in out Database_Loader_Type; Force : Boolean := False)
    is
       pragma Unreferenced (Force);
-      Database : constant GNATCOLL.VFS.Virtual_File :=
-        Self.Get_Database;
+      Database : constant GNATCOLL.VFS.Virtual_File := Self.Get_Database;
       Success  : Boolean;
    begin
       if Database.Is_Regular_File then
@@ -492,12 +501,14 @@ package body GNAThub.Loader.Databases is
 
          if not Success then
             Trace
-              (Me, "Could not remove GNAThub database present at: "
+              (Me,
+               "Could not remove GNAThub database present at: "
                & Database.Display_Full_Name);
          end if;
       else
          Trace
-           (Me, "This GNAThub database is not present on disk at: "
+           (Me,
+            "This GNAThub database is not present on disk at: "
             & Database.Display_Full_Name);
       end if;
    end Remove_Database;

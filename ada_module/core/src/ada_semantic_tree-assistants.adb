@@ -33,8 +33,7 @@ package body Ada_Semantic_Tree.Assistants is
    -----------------------------
 
    procedure Register_Ada_Assistants
-     (Db                 : Construct_Database_Access;
-      Std_Entities_Files : Virtual_File) is
+     (Db : Construct_Database_Access; Std_Entities_Files : Virtual_File) is
    begin
       --  Since the assistants are registring annotations keys, the order in
       --  which they are registered influences a lot the memory lost by the

@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors;            use GPS.Editors;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Editors;        use GPS.Editors;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -35,9 +35,7 @@ package body Src_Editor_Module.Line_Highlighting is
       3 => Speedbar_Cst'Access);
 
    Highlight_Parameters : constant Cst_Argument_List :=
-     (1 => File_Cst'Access,
-      2 => Category_Cst'Access,
-      3 => Line_Cst'Access);
+     (1 => File_Cst'Access, 2 => Category_Cst'Access, 3 => Line_Cst'Access);
 
    Highlight_Range_Parameters : constant Cst_Argument_List :=
      (1 => File_Cst'Access,
@@ -54,8 +52,7 @@ package body Src_Editor_Module.Line_Highlighting is
    --------------------------
 
    procedure Edit_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
@@ -63,22 +60,23 @@ package body Src_Editor_Module.Line_Highlighting is
       if Command = "highlight" or else Command = "unhighlight" then
          Name_Parameters (Data, Highlight_Parameters);
          declare
-            File     : constant Virtual_File  :=
-                         Create (Nth_Arg (Data, 1), Kernel);
-            Style_ID : constant String  := Nth_Arg (Data, 2);
+            File     : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Style_ID : constant String := Nth_Arg (Data, 2);
             Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Buffer   : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (Kernel).Get (File, Open_View => False);
          begin
             if Buffer /= Nil_Editor_Buffer then
                if Command = "highlight" then
-                  Buffer.Apply_Style (Style => Style_ID, Line  => Line);
+                  Buffer.Apply_Style (Style => Style_ID, Line => Line);
                else
                   Buffer.Remove_Style (Style => Style_ID, Line => Line);
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file "
+                 (Data,
+                  -"File editor not found for file "
                   & Display_Full_Name (File));
             end if;
          end;
@@ -100,14 +98,13 @@ package body Src_Editor_Module.Line_Highlighting is
             Add_Category (Style);
          end;
 
-      elsif Command = "highlight_range"
-        or else Command = "unhighlight_range"
+      elsif Command = "highlight_range" or else Command = "unhighlight_range"
       then
          Name_Parameters (Data, Highlight_Range_Parameters);
          declare
-            File      : constant Virtual_File  :=
+            File      : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Style_ID  : constant String  := Nth_Arg (Data, 2);
+            Style_ID  : constant String := Nth_Arg (Data, 2);
             Line      : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Start_Col : constant Visible_Column_Type :=
               Visible_Column_Type (Nth_Arg (Data, 4, Default => 0));
@@ -132,7 +129,8 @@ package body Src_Editor_Module.Line_Highlighting is
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file "
+                 (Data,
+                  -"File editor not found for file "
                   & Display_Full_Name (File));
             end if;
          end;
@@ -145,18 +143,19 @@ package body Src_Editor_Module.Line_Highlighting is
 
    procedure Create_Category (Style : Style_Access) is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       A         : Highlighting_Category_Array_Access;
 
    begin
       if Module_Id.Categories = null then
          Module_Id.Categories := new Highlighting_Category_Array (1 .. 1);
-         Module_Id.Categories (1) := new Highlighting_Category_Record'
-           (Style => Style);
+         Module_Id.Categories (1) :=
+           new Highlighting_Category_Record'(Style => Style);
 
       else
-         A := new Highlighting_Category_Array
-           (1 .. Module_Id.Categories'Last + 1);
+         A :=
+           new Highlighting_Category_Array
+                 (1 .. Module_Id.Categories'Last + 1);
 
          A (1 .. A'Last - 1) := Module_Id.Categories.all;
 
@@ -174,7 +173,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    procedure Add_Category (Style : Style_Access) is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       N         : Natural;
    begin
       --  If this category is already registered, change its parameters.
@@ -196,7 +195,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    function Lookup_Category (Style : Style_Access) return Natural is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if Style = null then
@@ -224,7 +223,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    function Get_Color (Index : Natural) return Gdk_RGBA is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
@@ -240,7 +239,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    function Get_Name (Index : Natural) return String is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
@@ -256,7 +255,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    function Get_Last_Index return Natural is
       Module_Id : constant Source_Editor_Module :=
-                    Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
       if Module_Id.Categories = null then
          return 0;

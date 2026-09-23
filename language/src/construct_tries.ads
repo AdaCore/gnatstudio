@@ -28,15 +28,15 @@ generic
 package Construct_Tries is
 
    type Construct_Node_Wrapper is record
-      Node  : Construct_Tree_Iterator;
-      Data  : Additional_Data_Type;
+      Node : Construct_Tree_Iterator;
+      Data : Additional_Data_Type;
    end record;
 
    Null_Construct_Node_Wrapper : constant Construct_Node_Wrapper :=
      (Null_Construct_Tree_Iterator, Null_Additional_Data_Type);
 
-   package Construct_Trie_Trees is new Vector_Tries
-     (Construct_Node_Wrapper, Null_Construct_Node_Wrapper);
+   package Construct_Trie_Trees is new
+     Vector_Tries (Construct_Node_Wrapper, Null_Construct_Node_Wrapper);
 
    subtype Construct_Trie is Construct_Trie_Trees.Vector_Trie;
    --  A construct trie holds construct iterators into a trie, based on their

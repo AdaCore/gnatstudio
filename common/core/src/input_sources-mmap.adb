@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Unicode.CES;        use Unicode.CES;
-with Unicode.CES.Utf32;  use Unicode.CES.Utf32;
-with Unicode.CES.Utf16;  use Unicode.CES.Utf16;
-with Unicode.CES.Utf8;   use Unicode.CES.Utf8;
-with GNATCOLL.Mmap;          use GNATCOLL.Mmap;
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with Unicode.CES;       use Unicode.CES;
+with Unicode.CES.Utf32; use Unicode.CES.Utf32;
+with Unicode.CES.Utf16; use Unicode.CES.Utf16;
+with Unicode.CES.Utf8;  use Unicode.CES.Utf8;
+with GNATCOLL.Mmap;     use GNATCOLL.Mmap;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
 package body Input_Sources.Mmap is
 
@@ -29,7 +29,7 @@ package body Input_Sources.Mmap is
    ----------
 
    procedure Open (Filename : Filesystem_String; Input : out Mmap_Input) is
-      BOM    : Bom_Type;
+      BOM : Bom_Type;
    begin
       Input.File := Open_Read (+Filename);
       Read (Input.File);
@@ -37,19 +37,25 @@ package body Input_Sources.Mmap is
 
       Read_Bom
         (String (Input.Buffer (1 .. Integer (Length (Input.File)))),
-         Input.Prolog_Size, BOM);
+         Input.Prolog_Size,
+         BOM);
       case BOM is
-         when Utf32_LE =>
+         when Utf32_LE                                  =>
             Set_Encoding (Input, Utf32_LE_Encoding);
-         when Utf32_BE =>
+
+         when Utf32_BE                                  =>
             Set_Encoding (Input, Utf32_BE_Encoding);
-         when Utf16_LE =>
+
+         when Utf16_LE                                  =>
             Set_Encoding (Input, Utf16_LE_Encoding);
-         when Utf16_BE =>
+
+         when Utf16_BE                                  =>
             Set_Encoding (Input, Utf16_BE_Encoding);
+
          when Ucs4_BE | Ucs4_LE | Ucs4_2143 | Ucs4_3412 =>
             raise Invalid_Encoding;
-         when Utf8_All | Unknown =>
+
+         when Utf8_All | Unknown                        =>
             Set_Encoding (Input, Utf8_Encoding);
       end case;
 
@@ -64,7 +70,8 @@ package body Input_Sources.Mmap is
    -- Close --
    -----------
 
-   overriding procedure Close (Input : in out Mmap_Input) is
+   overriding
+   procedure Close (Input : in out Mmap_Input) is
    begin
       Close (Input.File);
       Input_Sources.Close (Input_Source (Input));
@@ -75,9 +82,9 @@ package body Input_Sources.Mmap is
    -- Next_Char --
    ---------------
 
-   overriding procedure Next_Char
-     (From : in out Mmap_Input;
-      C    : out Unicode.Unicode_Char) is
+   overriding
+   procedure Next_Char (From : in out Mmap_Input; C : out Unicode.Unicode_Char)
+   is
    begin
       From.Es.Read
         (String (From.Buffer (From.Index .. From.Index + 6)), From.Index, C);
@@ -88,7 +95,8 @@ package body Input_Sources.Mmap is
    -- Eof --
    ---------
 
-   overriding function Eof (From : Mmap_Input) return Boolean is
+   overriding
+   function Eof (From : Mmap_Input) return Boolean is
    begin
       return GNATCOLL.Mmap.File_Size (From.Index) > Length (From.File);
    end Eof;
@@ -97,8 +105,8 @@ package body Input_Sources.Mmap is
    -- Set_System_Id --
    -------------------
 
-   overriding procedure Set_System_Id
-     (Input : in out Mmap_Input; Id : Byte_Sequence) is
+   overriding
+   procedure Set_System_Id (Input : in out Mmap_Input; Id : Byte_Sequence) is
    begin
       if Is_Absolute_Path (Id) then
          Set_System_Id (Input_Source (Input), Id);

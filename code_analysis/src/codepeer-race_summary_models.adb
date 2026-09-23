@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
 
@@ -34,8 +34,8 @@ package body CodePeer.Race_Summary_Models is
 
    function From_Iter (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Natural;
 
-   package Message_Conversions is
-     new System.Address_To_Access_Conversions
+   package Message_Conversions is new
+     System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
 
    ---------------
@@ -44,8 +44,8 @@ package body CodePeer.Race_Summary_Models is
 
    function From_Iter (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Natural is
       pragma Warnings (Off);
-      function To_Integer is
-        new Ada.Unchecked_Conversion (System.Address, Integer);
+      function To_Integer is new
+        Ada.Unchecked_Conversion (System.Address, Integer);
       pragma Warnings (On);
 
    begin
@@ -61,9 +61,10 @@ package body CodePeer.Race_Summary_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Race_Summary_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Race_Summary_Model_Record; Index : Glib.Gint)
+      return Glib.GType
    is
       pragma Unreferenced (Self);
 
@@ -72,10 +73,10 @@ package body CodePeer.Race_Summary_Models is
          when Object_Name_Column =>
             return Glib.GType_String;
 
-         when Message_Column =>
+         when Message_Column     =>
             return Glib.GType_Pointer;
 
-         when others =>
+         when others             =>
             return Glib.GType_Invalid;
       end case;
    end Get_Column_Type;
@@ -106,10 +107,10 @@ package body CodePeer.Race_Summary_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Race_Summary_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
       Index   : Natural;
@@ -130,9 +131,9 @@ package body CodePeer.Race_Summary_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
-     (Self : access Race_Summary_Model_Record)
-      return Glib.Gint
+   overriding
+   function Get_N_Columns
+     (Self : access Race_Summary_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
 
@@ -144,10 +145,10 @@ package body CodePeer.Race_Summary_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Race_Summary_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Index : constant Natural := From_Iter (Iter);
       Path  : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -170,7 +171,8 @@ package body CodePeer.Race_Summary_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Race_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
@@ -190,19 +192,19 @@ package body CodePeer.Race_Summary_Models is
                  (Value,
                   VSS.Strings.Conversions.To_UTF_8_String
                     (Template.Format
-                         (Image (Self.Data.Element (Index).Name),
-                          Image (Self.Data.Element
-                            (Index).Entry_Points.Length))));
+                       (Image (Self.Data.Element (Index).Name),
+                        Image
+                          (Self.Data.Element (Index).Entry_Points.Length))));
 
-            when Message_Column =>
+            when Message_Column     =>
                Glib.Values.Init (Value, Glib.GType_Pointer);
                Glib.Values.Set_Address
                  (Value,
                   Message_Conversions.To_Address
                     (Message_Conversions.Object_Pointer
-                         (Self.Data (Index).Message)));
+                       (Self.Data (Index).Message)));
 
-            when others =>
+            when others             =>
                null;
          end case;
 
@@ -236,9 +238,9 @@ package body CodePeer.Race_Summary_Models is
       Project_Data : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-             (Tree,
-              GPS.Kernel.Project.Get_Root_Project_View
-                (Kernel)).Analysis_Data.CodePeer_Data.all);
+             (Tree, GPS.Kernel.Project.Get_Root_Project_View (Kernel))
+             .Analysis_Data
+             .CodePeer_Data.all);
 
    begin
       Gtkada.Abstract_List_Model.Initialize (Self);
@@ -249,7 +251,8 @@ package body CodePeer.Race_Summary_Models is
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Race_Summary_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint is
    begin
@@ -265,7 +268,8 @@ package body CodePeer.Race_Summary_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Race_Summary_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
@@ -286,11 +290,11 @@ package body CodePeer.Race_Summary_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Race_Summary_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Index : constant Natural := Natural (N) + 1;
 
@@ -311,8 +315,8 @@ package body CodePeer.Race_Summary_Models is
 
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter is
       pragma Warnings (Off);
-      function To_Address is
-        new Ada.Unchecked_Conversion (Integer, System.Address);
+      function To_Address is new
+        Ada.Unchecked_Conversion (Integer, System.Address);
       pragma Warnings (On);
 
    begin

@@ -28,19 +28,20 @@ package DAP.Requests.Next is
         DAP.Tools.NextRequest'
           (seq       => 0,
            arguments =>
-             (granularity  =>
-                (Is_Set => True, Value => DAP.Tools.Enum.line),
+             (granularity  => (Is_Set => True, Value => DAP.Tools.Enum.line),
               singleThread => False,
               threadId     => 0));
    end record;
 
    type Next_DAP_Request_Access is access all Next_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Next_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Next_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -51,14 +52,14 @@ package DAP.Requests.Next is
      (Self        : in out Next_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Next_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Next_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Next_DAP_Request)
-      return String is ("next");
+   overriding
+   function Method (Self : in out Next_DAP_Request) return String
+   is ("next");
 
 end DAP.Requests.Next;

@@ -15,31 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings; use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
 
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
-with Build_Configurations;             use Build_Configurations;
-with Command_Lines;                    use Command_Lines;
-with Extending_Environments;           use Extending_Environments;
-with Remote;                           use Remote;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Tools_Output;       use GPS.Tools_Output;
+with Build_Configurations;   use Build_Configurations;
+with Command_Lines;          use Command_Lines;
+with Extending_Environments; use Extending_Environments;
+with Remote;                 use Remote;
 
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Argument_List, Argument_List_Access);
 
    procedure Launch_Build_Command
-     (Builder          : Builder_Context;
-      Build            : Build_Information;
-      Server           : Server_Type;
-      Synchronous      : Boolean);
+     (Builder     : Builder_Context;
+      Build       : Build_Information;
+      Server      : Server_Type;
+      Synchronous : Boolean);
    --  Launch a build command using build information stored in Build.
    --  Use given Console to send the output.
 
@@ -60,8 +60,8 @@ package body Commands.Builder is
       Main            : Virtual_File;
       Main_Project    : Project_Type;
       Background      : Boolean;
-      Preserve_Output : Boolean         := False;
-      Directory       : Virtual_File    := No_File;
+      Preserve_Output : Boolean := False;
+      Directory       : Virtual_File := No_File;
       On_Exit         : Subprogram_Type := null)
    is
       T              : Target_Access;
@@ -96,19 +96,20 @@ package body Commands.Builder is
 
          --  Get the unexpanded command line from the target
          if Background then
-            Background_Env := Create_Extending_Environment
-              (Builder.Kernel,
-               Force_File,
+            Background_Env :=
+              Create_Extending_Environment
+                (Builder.Kernel,
+                 Force_File,
 
-               --  We want to recompile the given file in all possible contexts
-               --  to detect errors as early as possible. For instance, when
-               --  using an aggregate project we want to compile the file in
-               --  all the projects to which it belongs.
-               --  The simplest is therefore to pass the root project.
-               --  since using Info_Set (Force_File).First_Element.Project will
-               --  only use one of the possible projects.
+                 --  We want to recompile the given file in all possible contexts
+                 --  to detect errors as early as possible. For instance, when
+                 --  using an aggregate project we want to compile the file in
+                 --  all the projects to which it belongs.
+                 --  The simplest is therefore to pass the root project.
+                 --  since using Info_Set (Force_File).First_Element.Project will
+                 --  only use one of the possible projects.
 
-               Builder.Kernel.Registry.Tree.Root_Project);
+                 Builder.Kernel.Registry.Tree.Root_Project);
          end if;
 
          --  For background compilation synthetic messages category name is
@@ -135,28 +136,28 @@ package body Commands.Builder is
 
          --  Configure output parser fabrics
          Launch_Build_Command
-           (Builder          => Builder,
-            Build            => (Target          => T,
-                                 Main            => Main,
-                                 Main_Project    => Main_Project,
-                                 Force_File      => Force_File,
-                                 Env             => Background_Env,
-                                 Category        => Category_Name,
-                                 Mode            => To_Unbounded_String (Mode),
-                                 Background      => Background,
-                                 Shadow          => Shadow,
-                                 Quiet           => Quiet,
-                                 Preserve_Output => Preserve_Output,
-                                 Console         => null,
-                                 Full            => (Dir    => Directory,
-                                                     others => <>),
-                                 Extra_Args      => All_Extra_Args,
-                                 Dialog          => Dialog,
-                                 Via_Menu        => Via_Menu,
-                                 Launch          => True,
-                                 On_Exit         => The_Exit),
-            Server           => Server,
-            Synchronous      => Synchronous);
+           (Builder     => Builder,
+            Build       =>
+              (Target          => T,
+               Main            => Main,
+               Main_Project    => Main_Project,
+               Force_File      => Force_File,
+               Env             => Background_Env,
+               Category        => Category_Name,
+               Mode            => To_Unbounded_String (Mode),
+               Background      => Background,
+               Shadow          => Shadow,
+               Quiet           => Quiet,
+               Preserve_Output => Preserve_Output,
+               Console         => null,
+               Full            => (Dir => Directory, others => <>),
+               Extra_Args      => All_Extra_Args,
+               Dialog          => Dialog,
+               Via_Menu        => Via_Menu,
+               Launch          => True,
+               On_Exit         => The_Exit),
+            Server      => Server,
+            Synchronous => Synchronous);
       end Launch_For_Mode;
 
    begin
@@ -179,23 +180,22 @@ package body Commands.Builder is
 
       if Mode_Name = "" then
          declare
-            Modes : Argument_List := Get_List_Of_Modes
-              (Builder.Kernel.Get_Build_Mode,
-               Builder.Registry,
-               Get_Model (T));
+            Modes : Argument_List :=
+              Get_List_Of_Modes
+                (Builder.Kernel.Get_Build_Mode,
+                 Builder.Registry,
+                 Get_Model (T));
          begin
             for J in Modes'Range loop
                --  All modes after Modes'First are Shadow modes
                Launch_For_Mode
-                 (T, Modes (J).all, Quiet, J > Modes'First,
-                  Background);
+                 (T, Modes (J).all, Quiet, J > Modes'First, Background);
             end loop;
 
             Free (Modes);
          end;
       else
-         Launch_For_Mode
-           (T, Mode_Name, Quiet, False, Background);
+         Launch_For_Mode (T, Mode_Name, Quiet, False, Background);
       end if;
 
       Unchecked_Free (All_Extra_Args);
@@ -206,10 +206,10 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Builder          : Builder_Context;
-      Build            : Build_Information;
-      Server           : Server_Type;
-      Synchronous      : Boolean)
+     (Builder     : Builder_Context;
+      Build       : Build_Information;
+      Server      : Server_Type;
+      Synchronous : Boolean)
    is
       procedure Expand_Command_Line (Result : in out Build_Information);
 
@@ -218,26 +218,26 @@ package body Commands.Builder is
       -------------------------
 
       procedure Expand_Command_Line (Result : in out Build_Information) is
-         Mode       : constant String := To_String (Result.Mode);
-         CL         : constant Argument_List :=
+         Mode    : constant String := To_String (Result.Mode);
+         CL      : constant Argument_List :=
            Get_Command_Line_Unexpanded (Result.Target);
-         CL_Mode    : Command_Line :=
-           Result.Target.Apply_Mode_Args (Mode, CL);
-         Subdir     : constant Filesystem_String :=
+         CL_Mode : Command_Line := Result.Target.Apply_Mode_Args (Mode, CL);
+         Subdir  : constant Filesystem_String :=
            Get_Mode_Subdir (Builder.Registry, Mode);
       begin
          CL_Mode.Append_Switches (Result.Extra_Args.all);
-         Result.Full := Expand_Command_Line
-           (Builder      => Builder,
-            CL           => CL_Mode,
-            Target       => Result.Target,
-            Server       => Server,
-            Force_File   => Result.Force_File,
-            Main         => Result.Main,
-            Main_Project => Result.Main_Project,
-            Subdir       => Subdir,
-            Background   => Result.Background,
-            Simulate     => False);
+         Result.Full :=
+           Expand_Command_Line
+             (Builder      => Builder,
+              CL           => CL_Mode,
+              Target       => Result.Target,
+              Server       => Server,
+              Force_File   => Result.Force_File,
+              Main         => Result.Main,
+              Main_Project => Result.Main_Project,
+              Subdir       => Subdir,
+              Background   => Result.Background,
+              Simulate     => False);
       end Expand_Command_Line;
 
       Result          : Build_Information;
@@ -253,7 +253,7 @@ package body Commands.Builder is
       --  This executes the Create primitive for each registered output
       --  filter. These can impact the exact command line that will be run
       --  (in particular the end_of_build filter will perform macro expansion)
-      Output_Parser  :=
+      Output_Parser :=
         New_Parser_Chain (Get_Properties (Build.Target).Parser_List);
       --   ??? should we free Output_Parser
 
@@ -279,8 +279,10 @@ package body Commands.Builder is
       if not Build.Quiet then
          Append_To_Build_Output
            (Builder,
-            To_Display_String (Result.Full.Args), Get_Name (Build.Target),
-            Build.Shadow, Build.Background);
+            To_Display_String (Result.Full.Args),
+            Get_Name (Build.Target),
+            Build.Shadow,
+            Build.Background);
       end if;
 
       Cmd_Name := To_Unbounded_String (Get_Name (Build.Target));
@@ -317,10 +319,9 @@ package body Commands.Builder is
 
             --  Launch
             declare
-               Output : constant String := GNATCOLL.Scripts.Execute_Command
-                 (Script  => P,
-                  Command => To_String (C),
-                  Errors  => E'Access);
+               Output : constant String :=
+                 GNATCOLL.Scripts.Execute_Command
+                   (Script => P, Command => To_String (C), Errors => E'Access);
                Status : constant Integer := (if E then 1 else 0);
             begin
                --  Run the On_Exit callback, if any.
@@ -350,25 +351,24 @@ package body Commands.Builder is
 
       elsif Synchronous then
          Builder.Kernel.Process_Launcher.Launch_Process
-            (CL              => CL,
-             Server          => Server,
-             Directory       => Result.Full.Dir,
-             Output_Parser   => Output_Parser,
-             Show_Command_To => Result.Console,
-             Success         => Success);
-      else
-         Builder.Kernel.Process_Launcher.Launch_Process_In_Background
            (CL              => CL,
             Server          => Server,
             Directory       => Result.Full.Dir,
             Output_Parser   => Output_Parser,
             Show_Command_To => Result.Console,
-            Success         => Success,
+            Success         => Success);
+      else
+         Builder.Kernel.Process_Launcher.Launch_Process_In_Background
+           (CL                   => CL,
+            Server               => Server,
+            Directory            => Result.Full.Dir,
+            Output_Parser        => Output_Parser,
+            Show_Command_To      => Result.Console,
+            Success              => Success,
             Show_In_Task_Manager => not Build.Background,
             Name_In_Task_Manager => To_String (Cmd_Name),
-            Block_Exit           => not (Build.Shadow
-              or else Build.Background
-              or else Build.Quiet),
+            Block_Exit           =>
+              not (Build.Shadow or else Build.Background or else Build.Quiet),
             Created_Command      => Created_Command);
 
          if Success and then Build.Background then

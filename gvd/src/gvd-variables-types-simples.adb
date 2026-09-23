@@ -19,13 +19,13 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Strings;            use GNAT.Strings;
-with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Strings; use GNAT.Strings;
+with GNAT.Regpat;  use GNAT.Regpat;
 
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with Language;                use Language;
-with String_Utils;            use String_Utils;
-with MI.Lexer;                use MI.Lexer;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with Language;       use Language;
+with String_Utils;   use String_Utils;
+with MI.Lexer;       use MI.Lexer;
 
 package body GVD.Variables.Types.Simples is
 
@@ -39,18 +39,19 @@ package body GVD.Variables.Types.Simples is
    -- At_End --
    ------------
 
-   overriding function At_End (Self : Field_Iterator) return Boolean is
+   overriding
+   function At_End (Self : Field_Iterator) return Boolean is
    begin
-      return Self.Fields.Is_Empty
-        or else Self.Idx > Integer (Self.Fields.Length);
+      return
+        Self.Fields.Is_Empty or else Self.Idx > Integer (Self.Fields.Length);
    end At_End;
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self : not null access GVD_Debugger_Output_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_Debugger_Output_Type) is
    begin
       Self.Value.Clear;
       if not Self.As_Record.Is_Empty then
@@ -62,9 +63,10 @@ package body GVD.Variables.Types.Simples is
    -- Clear --
    -----------
 
-   overriding procedure Clear (Self : not null access GVD_Simple_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_Simple_Type) is
    begin
-      Self.Value       := Null_Unbounded_String;
+      Self.Value := Null_Unbounded_String;
       Self.Has_Changed := False;
    end Clear;
 
@@ -72,7 +74,8 @@ package body GVD.Variables.Types.Simples is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Simple_Type;
       Item : not null GVD_Generic_Type_Access) is
    begin
@@ -87,7 +90,8 @@ package body GVD.Variables.Types.Simples is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Debugger_Output_Type;
       Item : not null GVD_Generic_Type_Access) is
    begin
@@ -99,8 +103,8 @@ package body GVD.Variables.Types.Simples is
    -- Data --
    ----------
 
-   overriding function Data
-     (Self : Field_Iterator) return GVD_Type_Holder'Class is
+   overriding
+   function Data (Self : Field_Iterator) return GVD_Type_Holder'Class is
    begin
       return Self.Fields (Self.Idx).Typ;
    end Data;
@@ -109,7 +113,8 @@ package body GVD.Variables.Types.Simples is
    -- Field_Name --
    ----------------
 
-   overriding function Field_Name
+   overriding
+   function Field_Name
      (Self : Field_Iterator;
       Lang : not null access Language_Root'Class;
       Base : String := "") return String
@@ -123,8 +128,8 @@ package body GVD.Variables.Types.Simples is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self : not null access GVD_Debugger_Output_Type) is
+   overriding
+   procedure Free (Self : not null access GVD_Debugger_Output_Type) is
    begin
       if not Self.As_Record.Is_Empty then
          Self.As_Record.Clear;
@@ -137,7 +142,8 @@ package body GVD.Variables.Types.Simples is
    -- Get_Simple_Value --
    ----------------------
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Debugger_Output_Type) return String
    is
       Value : Unbounded_String;
@@ -160,7 +166,8 @@ package body GVD.Variables.Types.Simples is
    -- Get_Simple_Value --
    ----------------------
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Simple_Type) return String is
    begin
       if Self.Value = Null_Unbounded_String then
@@ -175,8 +182,7 @@ package body GVD.Variables.Types.Simples is
    ---------------
 
    function Get_Value
-     (Self : not null access GVD_Simple_Type)
-      return Unbounded_String is
+     (Self : not null access GVD_Simple_Type) return Unbounded_String is
    begin
       return Self.Value;
    end Get_Value;
@@ -185,8 +191,9 @@ package body GVD.Variables.Types.Simples is
    -- Is_Changed --
    ----------------
 
-   overriding function Is_Changed
-     (Self : not null access GVD_Simple_Type) return Boolean is
+   overriding
+   function Is_Changed (Self : not null access GVD_Simple_Type) return Boolean
+   is
    begin
       return Self.Has_Changed;
    end Is_Changed;
@@ -195,7 +202,8 @@ package body GVD.Variables.Types.Simples is
    -- Next --
    ----------
 
-   overriding procedure Next (Self : in out Field_Iterator) is
+   overriding
+   procedure Next (Self : in out Field_Iterator) is
    begin
       Self.Idx := Self.Idx + 1;
    end Next;
@@ -204,12 +212,9 @@ package body GVD.Variables.Types.Simples is
    -- New_Access_Type --
    ---------------------
 
-   function New_Access_Type return GVD_Type_Holder
-   is
+   function New_Access_Type return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
-        new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Access_Type);
+        new GVD_Type_Holder_Data'(Count => 1, Instance => new GVD_Access_Type);
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Access_Type;
@@ -219,14 +224,11 @@ package body GVD.Variables.Types.Simples is
    -----------------------
 
    function New_Debugger_Type
-     (Cmd         : String;
-      Split_Lines : Boolean := False)
-      return GVD_Type_Holder
+     (Cmd : String; Split_Lines : Boolean := False) return GVD_Type_Holder
    is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Debugger_Output_Type);
+          (Count => 1, Instance => new GVD_Debugger_Output_Type);
    begin
       GVD_Debugger_Output_Type_Access (Data.Instance).Refresh_Cmd :=
         To_Unbounded_String (Cmd);
@@ -239,12 +241,9 @@ package body GVD.Variables.Types.Simples is
    -- New_Enum_Type --
    -------------------
 
-   function New_Enum_Type return GVD_Type_Holder
-   is
+   function New_Enum_Type return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
-        new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Enum_Type);
+        new GVD_Type_Holder_Data'(Count => 1, Instance => new GVD_Enum_Type);
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Enum_Type;
@@ -253,15 +252,12 @@ package body GVD.Variables.Types.Simples is
    -- New_Mod_Type --
    ------------------
 
-   function New_Mod_Type
-     (Modulo : Long_Integer)
-      return GVD_Type_Holder
-   is
+   function New_Mod_Type (Modulo : Long_Integer) return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
           (Count    => 1,
-           Instance => new GVD_Mod_Type'
-             (GVD_Simple_Type with Modulo => Modulo));
+           Instance =>
+             new GVD_Mod_Type'(GVD_Simple_Type with Modulo => Modulo));
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Mod_Type;
@@ -270,14 +266,12 @@ package body GVD.Variables.Types.Simples is
    -- New_Range_Type --
    --------------------
 
-   function New_Range_Type
-     (Min, Max : Long_Integer) return GVD_Type_Holder
-   is
+   function New_Range_Type (Min, Max : Long_Integer) return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
           (Count    => 1,
-           Instance => new GVD_Range_Type'
-             (GVD_Simple_Type with Min => Min, Max => Max));
+           Instance =>
+             new GVD_Range_Type'(GVD_Simple_Type with Min => Min, Max => Max));
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Range_Type;
@@ -288,9 +282,7 @@ package body GVD.Variables.Types.Simples is
 
    function New_Simple_Type return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
-        new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Simple_Type);
+        new GVD_Type_Holder_Data'(Count => 1, Instance => new GVD_Simple_Type);
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Simple_Type;
@@ -328,8 +320,7 @@ package body GVD.Variables.Types.Simples is
    ---------------------
 
    function Refresh_Command
-     (Self : not null access GVD_Debugger_Output_Type)
-      return String is
+     (Self : not null access GVD_Debugger_Output_Type) return String is
    begin
       return To_String (Self.Refresh_Cmd);
    end Refresh_Command;
@@ -338,8 +329,8 @@ package body GVD.Variables.Types.Simples is
    -- Reset_Recursive --
    ---------------------
 
-   overriding procedure Reset_Recursive
-     (Self : not null access GVD_Debugger_Output_Type)
+   overriding
+   procedure Reset_Recursive (Self : not null access GVD_Debugger_Output_Type)
    is
 
       procedure Mark_Unmodified (X : in out Line_Value);
@@ -362,8 +353,8 @@ package body GVD.Variables.Types.Simples is
    -- Reset_Recursive --
    ---------------------
 
-   overriding procedure Reset_Recursive
-     (Self : not null access GVD_Simple_Type) is
+   overriding
+   procedure Reset_Recursive (Self : not null access GVD_Simple_Type) is
    begin
       Self.Has_Changed := False;
    end Reset_Recursive;
@@ -373,8 +364,7 @@ package body GVD.Variables.Types.Simples is
    ---------------
 
    procedure Set_Value
-     (Self  : not null access GVD_Debugger_Output_Type;
-      Value : String)
+     (Self : not null access GVD_Debugger_Output_Type; Value : String)
    is
       Old        : constant Line_Vector.Vector := Self.Value;
       Locals_Txt : aliased String := "locals=[";
@@ -396,10 +386,11 @@ package body GVD.Variables.Types.Simples is
                Count    : Natural := 0;
                Add_Last : Boolean := False;
             begin
-               Tokens.List := Build_Tokens
-                 (Value
-                    (Integer'Min (Index (Value, "[") + 1, Value'Last) ..
-                         Value'Last - 1));
+               Tokens.List :=
+                 Build_Tokens
+                   (Value
+                      (Integer'Min (Index (Value, "[") + 1, Value'Last)
+                       .. Value'Last - 1));
 
                T := Tokens.List.First;
 
@@ -416,7 +407,7 @@ package body GVD.Variables.Types.Simples is
 
                      if Count = 1
                        and then V /= ""
-                         and then Element (V, Length (V)) /= '='
+                       and then Element (V, Length (V)) /= '='
                      then
                         Self.Value.Append (Line_Value'(V, False));
                         V := Null_Unbounded_String;
@@ -429,15 +420,11 @@ package body GVD.Variables.Types.Simples is
                   elsif Element (T).Code = R_Brace then
                      Count := Count - 1;
 
-                     if Count = 0
-                       and then V /= ""
-                     then
+                     if Count = 0 and then V /= "" then
                         Self.Value.Append (Line_Value'(V, False));
                         V := Null_Unbounded_String;
 
-                     elsif Count > 0
-                       or else Add_Last
-                     then
+                     elsif Count > 0 or else Add_Last then
                         Append (V, "}");
                      end if;
 
@@ -466,7 +453,8 @@ package body GVD.Variables.Types.Simples is
          else
             Self.Value.Append
               (Line_Value'
-                 (Value    => To_Unbounded_String
+                 (Value    =>
+                    To_Unbounded_String
                       (Value (Integer'Min (7, Value'Last) .. Value'Last)),
                   Modified => False));
          end if;
@@ -477,8 +465,8 @@ package body GVD.Variables.Types.Simples is
             else
                Self.Value (L).Modified :=
                  L > Natural (Old.Length)
-                 or else Self.Value.Element (L).Value /=
-                 To_String (Old (L).Value);
+                 or else
+                   Self.Value.Element (L).Value /= To_String (Old (L).Value);
             end if;
          end loop;
 
@@ -486,20 +474,21 @@ package body GVD.Variables.Types.Simples is
          Self.Value.Clear;
          Self.Value.Append
            (Line_Value'
-              (Value    => To_Unbounded_String
-                   ("Error:" &
-                      Value
-                      (Integer'Min (Index (Value, """") + 1, Value'Last) ..
-                        Value'Last - 1)),
+              (Value    =>
+                 To_Unbounded_String
+                   ("Error:"
+                    & Value
+                        (Integer'Min (Index (Value, """") + 1, Value'Last)
+                         .. Value'Last - 1)),
                Modified => False));
 
       else
          if Starts_With (Value, Locals_Txt) then
             MI_Output := True;
-            Prefix    := Locals_Txt'Unchecked_Access;
+            Prefix := Locals_Txt'Unchecked_Access;
          elsif Starts_With (Value, Args_Txt) then
             MI_Output := True;
-            Prefix    := Args_Txt'Unchecked_Access;
+            Prefix := Args_Txt'Unchecked_Access;
          end if;
 
          declare
@@ -511,17 +500,20 @@ package body GVD.Variables.Types.Simples is
             function Split_MI return String_List_Access;
             function Split_MI return String_List_Access is
 
-               procedure Deallocate is new Ada.Unchecked_Deallocation
-                 (Object => String_List, Name => String_List_Access);
+               procedure Deallocate is new
+                 Ada.Unchecked_Deallocation
+                   (Object => String_List,
+                    Name   => String_List_Access);
 
-               S             : constant String := Value
-                 (Value'First + Prefix'Length .. Value'Last - 2);
+               S : constant String :=
+                 Value (Value'First + Prefix'Length .. Value'Last - 2);
                --  Cut prefix at the start and "]LF" at the end
 
-               Local_Pattern : constant Pattern_Matcher := Compile
-                 ("level=""(\d*)""|" &
-                    "{name=""([^""]*)""," &
-                    "value=""(?:\\"")?([^""]*)(?:\\"")?""},?");
+               Local_Pattern : constant Pattern_Matcher :=
+                 Compile
+                   ("level=""(\d*)""|"
+                    & "{name=""([^""]*)"","
+                    & "value=""(?:\\"")?([^""]*)(?:\\"")?""},?");
                From          : Integer := S'First;
                Matched       : Match_Array (0 .. 3);
 
@@ -542,19 +534,20 @@ package body GVD.Variables.Types.Simples is
                   end if;
 
                   if Matched (2) = No_Match then
-                     Result (Result'Last) := new String'
-                       ("level - " &
-                          S (Matched (1).First .. Matched (1).Last));
+                     Result (Result'Last) :=
+                       new String'
+                         ("level - "
+                          & S (Matched (1).First .. Matched (1).Last));
                   else
-                     Result (Result'Last) := new String'
-                       (S (Matched (2).First .. Matched (2).Last) & " = " &
-                          S (Matched (3).First .. Matched (3).Last));
+                     Result (Result'Last) :=
+                       new String'
+                         (S (Matched (2).First .. Matched (2).Last)
+                          & " = "
+                          & S (Matched (3).First .. Matched (3).Last));
                   end if;
                end loop;
 
-               if Prefix.all = Args_Txt
-                 and then Result'Length = 1
-               then
+               if Prefix.all = Args_Txt and then Result'Length = 1 then
                   Free (Result (Result'First));
                   Result (Result'First) := new String'("No value");
                end if;
@@ -566,11 +559,9 @@ package body GVD.Variables.Types.Simples is
                return Result;
             end Split_MI;
 
-            S     : constant String    := Do_Tab_Expansion (Value, 8);
+            S     : constant String := Do_Tab_Expansion (Value, 8);
             Lines : String_List_Access :=
-              (if MI_Output
-               then Split_MI
-               else Split (S, ASCII.LF));
+              (if MI_Output then Split_MI else Split (S, ASCII.LF));
          begin
             --  Compute which lines have changed since the last update.
 
@@ -580,7 +571,8 @@ package body GVD.Variables.Types.Simples is
                if Old.Is_Empty then
                   Self.Value (L).Modified := True;
                else
-                  Self.Value (L).Modified := L > Natural (Old.Length)
+                  Self.Value (L).Modified :=
+                    L > Natural (Old.Length)
                     or else Lines (L).all /= To_String (Old (L).Value);
                end if;
             end loop;
@@ -598,14 +590,16 @@ package body GVD.Variables.Types.Simples is
             declare
                Data : constant GVD_Type_Holder_Data_Access :=
                  new GVD_Type_Holder_Data'
-                   (Count => 1,
-                    Instance => new GVD_Simple_Type'
-                      (GVD_Base_Simple_Type with
-                       Value       => Self.Value (L).Value,
-                       Has_Changed => Self.Value (L).Modified));
+                   (Count    => 1,
+                    Instance =>
+                      new GVD_Simple_Type'
+                        (GVD_Base_Simple_Type
+                         with
+                           Value       => Self.Value (L).Value,
+                           Has_Changed => Self.Value (L).Modified));
             begin
-               Self.As_Record (L).Typ := GVD_Type_Holder'
-                 (Ada.Finalization.Controlled with Data);
+               Self.As_Record (L).Typ :=
+                 GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
             end;
          end loop;
       end if;
@@ -617,14 +611,12 @@ package body GVD.Variables.Types.Simples is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value
-     (Self  : not null access GVD_Simple_Type;
-      Value : String)
+   procedure Set_Value (Self : not null access GVD_Simple_Type; Value : String)
    is
       Q : constant String := Quote_Non_Printable_Characters (Value);
    begin
-      Self.Has_Changed := Self.Value = Null_Unbounded_String
-        or else To_String (Self.Value) /= Q;
+      Self.Has_Changed :=
+        Self.Value = Null_Unbounded_String or else To_String (Self.Value) /= Q;
       Self.Value := To_Unbounded_String (Q);
       Self.Valid := True;
    end Set_Value;
@@ -633,7 +625,8 @@ package body GVD.Variables.Types.Simples is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Debugger_Output_Type)
       return Generic_Iterator'Class is
    begin
@@ -650,24 +643,25 @@ package body GVD.Variables.Types.Simples is
 
    function Start (Self : Type_Vector.Vector) return Generic_Iterator'Class is
    begin
-      return Field_Iterator'
-        (Generic_Iterator with
-         Fields => Self,
-         Idx    => (if Self.Is_Empty then 0 else 1));
+      return
+        Field_Iterator'
+          (Generic_Iterator
+           with Fields => Self, Idx => (if Self.Is_Empty then 0 else 1));
    end Start;
 
    -----------------------------
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Access_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Access_Type; Item : GVD_Type_Holder'Class)
       return Boolean
    is
       pragma Unreferenced (Self);
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Access_Type'Class;
    end Structurally_Equivalent;
@@ -676,10 +670,10 @@ package body GVD.Variables.Types.Simples is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
+   overriding
+   function Structurally_Equivalent
      (Self : not null access GVD_Debugger_Output_Type;
-      Item : GVD_Type_Holder'Class)
-      return Boolean
+      Item : GVD_Type_Holder'Class) return Boolean
    is
       pragma Unreferenced (Self, Item);
    begin
@@ -691,14 +685,15 @@ package body GVD.Variables.Types.Simples is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Enum_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Enum_Type; Item : GVD_Type_Holder'Class)
       return Boolean
    is
       pragma Unreferenced (Self);
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Enum_Type'Class;
    end Structurally_Equivalent;
@@ -707,12 +702,13 @@ package body GVD.Variables.Types.Simples is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Range_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Range_Type; Item : GVD_Type_Holder'Class)
       return Boolean is
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Range_Type'Class
         and then Self.Min = GVD_Range_Type_Access (Item.Data.Instance).Min
@@ -723,12 +719,13 @@ package body GVD.Variables.Types.Simples is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Simple_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Simple_Type; Item : GVD_Type_Holder'Class)
       return Boolean is
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Simple_Type'Class
         and then Self.Type_Name = Item.Data.Instance.Type_Name;
@@ -738,12 +735,13 @@ package body GVD.Variables.Types.Simples is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Mod_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Mod_Type; Item : GVD_Type_Holder'Class)
       return Boolean is
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Mod_Type'Class
         and then Self.Modulo = GVD_Mod_Type_Access (Item.Data.Instance).Modulo;

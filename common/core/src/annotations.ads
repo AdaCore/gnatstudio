@@ -25,15 +25,13 @@
 generic
 package Annotations is
 
-   type Annotation_Kind is
-     (Nothing, Integer_Kind, Boolean_Kind, Other_Kind);
+   type Annotation_Kind is (Nothing, Integer_Kind, Boolean_Kind, Other_Kind);
 
    type General_Annotation_Record is tagged null record;
    --  A general annotation record has to be derived by the implemented in
    --  order to store complex data structure.
 
-   procedure Free
-     (Obj : in out General_Annotation_Record) is null;
+   procedure Free (Obj : in out General_Annotation_Record) is null;
    --  This function will be called when the enclosing annotation if freed.
    --  The implementer is responsible of doing all the necessary deallocations
    --  here.
@@ -84,8 +82,7 @@ package Annotations is
    Null_Annotation_Key_Registry : constant Annotation_Key_Registry;
 
    procedure Get_Annotation_Key
-     (Registry : in out Annotation_Key_Registry;
-      New_Key  : out Annotation_Key);
+     (Registry : in out Annotation_Key_Registry; New_Key : out Annotation_Key);
    --  Creates a new key out of this registry.
 
    type Annotation_Container is private;
@@ -115,8 +112,7 @@ package Annotations is
    --  here, it will first be freed.
 
    function Is_Set
-     (Container : Annotation_Container; Key : Annotation_Key)
-      return Boolean;
+     (Container : Annotation_Container; Key : Annotation_Key) return Boolean;
    --  Return true if the annotation at the key given in parameter is set.
 
    procedure Free_Annotation
@@ -134,8 +130,7 @@ private
 
    Null_Annotation_Key : constant Annotation_Key := 0;
 
-   type Annotation_Array is
-     array (Annotation_Key range <>) of Annotation;
+   type Annotation_Array is array (Annotation_Key range <>) of Annotation;
 
    type Annotation_Array_Access is access Annotation_Array;
 
@@ -143,8 +138,7 @@ private
       Last_Key : Annotation_Key := 0;
    end record;
 
-   type Annotation_Key_Registry is
-     access all Annotation_Key_Registry_Record;
+   type Annotation_Key_Registry is access all Annotation_Key_Registry_Record;
 
    Null_Annotation_Key_Registry : constant Annotation_Key_Registry := null;
 

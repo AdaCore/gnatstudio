@@ -35,13 +35,12 @@ package DAP.Types is
    type Debugger_Status_Kind is
      (Initialization, Initialized, Stopped, Running, Terminating);
 
-   type Debuggee_Start_Method_Kind is
-     (None, Launched, Attached);
+   type Debuggee_Start_Method_Kind is (None, Launched, Attached);
    --  The debuggee start method
-     --  * None: The debuggee has not been started yet
-     --  * Launched: The debuggee has been started by the DAP client
-     --    (e.g: via the 'launch' request).
-     --  * Attached: the DAP client has been attached to a running process
+   --  * None: The debuggee has not been started yet
+   --  * Launched: The debuggee has been started by the DAP client
+   --    (e.g: via the 'launch' request).
+   --  * Attached: the DAP client has been attached to a running process
 
    type Command_Type is (Internal, Hidden, Visible, User);
 
@@ -51,11 +50,15 @@ package DAP.Types is
    --  Type describing the behavior of the debuggee when starting the
    --  debugger.
 
-   package Strings_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, String);
+   package Strings_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, String);
 
-   package String_To_String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-       (String, String, Ada.Strings.Hash, "=");
+   package String_To_String_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        String,
+        Ada.Strings.Hash,
+        "=");
 
    ---------------
    -- Addresses --
@@ -67,13 +70,13 @@ package DAP.Types is
       Address_String : String (1 .. Last);
       --  The string representing the address
 
-      Length         : Natural := 0;
+      Length : Natural := 0;
       --  This is the length of the remaining string once the "0x" prefix as
       --  well as all the following zeros have been stripped.
       --  The meaningful part of Address_String is therefore the one in
       --  the Last - Length + 1 .. Last range.
 
-      Offset         : Integer := 0;
+      Offset : Integer := 0;
       --  Offset used when the address is used to query the debugger.
    end record;
 
@@ -85,64 +88,50 @@ package DAP.Types is
    --  Return a string representation of Address.
 
    function Set_Offset
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type;
+     (Address : Address_Type; Offset : Integer) return Address_Type;
 
    function Add_Address
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type;
+     (Address : Address_Type; Offset : Integer) return Address_Type;
 
    function Address_To_Integer
      (Address : Address_Type) return Long_Long_Integer;
 
-   overriding function "="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+   overriding
+   function "="
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function ">"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function ">="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function "<"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function "<="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    --  Arithmetic on addresses
 
    Invalid_Address : constant Address_Type :=
-     (Address_String => "",
-      Last           => 0,
-      Length         => 0,
-      Offset         => 0);
+     (Address_String => "", Last => 0, Length => 0, Offset => 0);
 
    type Disassemble_Element is record
       Address : Address_Type := Invalid_Address;
       --  The address of the instruction in memory
 
-      Instr   : VSS.Strings.Virtual_String;
+      Instr : VSS.Strings.Virtual_String;
       --  The instruction and its comment and details
 
       Opcodes : VSS.Strings.Virtual_String;
       --  Representation of the instruction in bytes
 
-      Symbol  : VSS.Strings.Virtual_String;
+      Symbol : VSS.Strings.Virtual_String;
       --  The name of the symbol that corresponds with the location of
       --  this instruction, if any.
 
-      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line    : Natural := 0;
+      File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line : Natural := 0;
    end record;
 
-   package Disassemble_Element_Vectors is new Ada.Containers.Vectors
-     (Positive, Disassemble_Element);
+   package Disassemble_Element_Vectors is new
+     Ada.Containers.Vectors (Positive, Disassemble_Element);
 
    subtype Disassemble_Elements is Disassemble_Element_Vectors.Vector;
 
@@ -151,19 +140,19 @@ package DAP.Types is
    -- Frames --
 
    type Frame_Record is record
-      Id             : Integer := -1;
+      Id : Integer := -1;
       --  The frame's unique ID. The first existing frame starts at 0.
 
-      Name           : VSS.Strings.Virtual_String;
+      Name : VSS.Strings.Virtual_String;
       --  The frame's name. Usually refers to the subprogram name.
 
-      File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  The frame's file.
 
-      Line           : Natural := 0;
+      Line : Natural := 0;
       --  The frame's line number.
 
-      Address        : Address_Type := Invalid_Address;
+      Address : Address_Type := Invalid_Address;
       --  The frame's address.
 
       Location_Exists : Boolean := False;
@@ -173,18 +162,22 @@ package DAP.Types is
    end record;
 
    No_Frame : constant Frame_Record :=
-     (-1, VSS.Strings.Empty_Virtual_String,
-      GNATCOLL.VFS.No_File, 0, Invalid_Address, False);
+     (-1,
+      VSS.Strings.Empty_Virtual_String,
+      GNATCOLL.VFS.No_File,
+      0,
+      Invalid_Address,
+      False);
    --  The first frame has id=0, so no_frame has id -1
 
-   package Frames_Vectors is new Ada.Containers.Vectors
-     (Natural, Frame_Record);
+   package Frames_Vectors is new
+     Ada.Containers.Vectors (Natural, Frame_Record);
 
    Messages_Category_Continue_To_Line : constant VSS.Strings.Virtual_String :=
      "debugger-run-to-line";
 
-   Continue_To_Line_Messages_Flags    : constant GPS.Kernel.Messages.
-     Message_Flags :=
+   Continue_To_Line_Messages_Flags :
+     constant GPS.Kernel.Messages.Message_Flags :=
        (GPS.Kernel.Messages.Editor_Line => True,
         GPS.Kernel.Messages.Locations   => False,
         GPS.Kernel.Messages.Editor_Side => False);
@@ -201,7 +194,7 @@ package DAP.Types is
    end record;
    --  Holds DAP variable data
 
-   package Variables_References_Trees is
-     new Ada.Containers.Multiway_Trees (Variable_Data);
+   package Variables_References_Trees is new
+     Ada.Containers.Multiway_Trees (Variable_Data);
 
 end DAP.Types;

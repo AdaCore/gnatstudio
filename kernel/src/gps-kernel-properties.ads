@@ -33,8 +33,8 @@
 --     end;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
-with GPS.Properties;     use GPS.Properties;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GPS.Properties;  use GPS.Properties;
 
 package GPS.Kernel.Properties is
 
@@ -77,9 +77,9 @@ package GPS.Kernel.Properties is
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Name     : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Name   : String);
    --  Remove the named property (persistent or not) from the file.
 
    ------------------------------------------
@@ -99,9 +99,9 @@ package GPS.Kernel.Properties is
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : GNATCOLL.Projects.Project_Type;
-      Name     : String);
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type;
+      Name    : String);
    --  Remove the named property (persistent or not) from the file.
 
    procedure Set_Language_From_File
@@ -122,12 +122,10 @@ package GPS.Kernel.Properties is
    --  Close DB. This subprogram should only be called by the kernel itself.
 
    function Open_Persistent_Properties_DB
-     (Kernel : access Kernel_Handle_Record'Class)
-     return Writer;
+     (Kernel : access Kernel_Handle_Record'Class) return Writer;
    --  Open DB. This subprogram should only be called by the kernel itself.
 
-   procedure Reset_Properties
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Reset_Properties (Kernel : access Kernel_Handle_Record'Class);
    --  Clear the properties cache. No property will be available after this
    --  call.
    --  This subprogram should only be called by the kernel itself.
@@ -149,37 +147,38 @@ private
    -- Writer_Type --
    -----------------
 
-   type Writer_Record is
-     abstract new GPS.Properties.Writer_Record with null record;
+   type Writer_Record is abstract new GPS.Properties.Writer_Record
+   with null record;
    type Writer is access all Writer_Record'Class;
 
    procedure Insert
      (Self     : not null access Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is abstract;
+      Property : Property_Description)
+   is abstract;
 
    procedure Include
      (Self     : not null access Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is abstract;
+      Property : Property_Description)
+   is abstract;
 
    function Contains
-     (Self : not null access Writer_Record;
-      Key  : String;
-      Name : String)
-      return Boolean is abstract;
+     (Self : not null access Writer_Record; Key : String; Name : String)
+      return Boolean
+   is abstract;
    --  Return True when writer contains key/name
 
    procedure Update
      (Self     : not null access Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is abstract;
+      Property : Property_Description)
+   is abstract;
 
-   procedure Dump_Database
-     (Self : not null access Writer_Record) is abstract;
+   procedure Dump_Database (Self : not null access Writer_Record) is abstract;
    --  Dump database's data to test file
 
 end GPS.Kernel.Properties;

@@ -19,13 +19,13 @@ with XML_Utils;
 with Gtk.Handlers;
 with Gtk.Text_Mark;
 
-with GPS.Editors;          use GPS.Editors;
+with GPS.Editors;      use GPS.Editors;
 with GPS.Kernel;
-with GPS.Markers;          use GPS.Markers;
-with GPS.Scripts;          use GPS.Scripts;
-with GNATCOLL.JSON;        use GNATCOLL.JSON;
+with GPS.Markers;      use GPS.Markers;
+with GPS.Scripts;      use GPS.Scripts;
+with GNATCOLL.JSON;    use GNATCOLL.JSON;
 with GNATCOLL.Projects;
-with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 private with Projects.Views;
 
@@ -75,19 +75,24 @@ package Src_Editor_Module.Markers is
    --  Create a new marker either from From_XML or JSON or
    --  from the current context
 
-   overriding function Get_File
+   overriding
+   function Get_File
      (Marker : not null access File_Marker_Data)
-      return GNATCOLL.VFS.Virtual_File with Inline;
+      return GNATCOLL.VFS.Virtual_File
+   with Inline;
    --  Return the file in which Marker is set
-   overriding function Get_Line
-     (Marker : not null access File_Marker_Data)
-      return Editable_Line_Type with Inline;
-   overriding function Get_Column
-     (Marker : not null access File_Marker_Data)
-      return Visible_Column_Type with Inline;
+   overriding
+   function Get_Line
+     (Marker : not null access File_Marker_Data) return Editable_Line_Type
+   with Inline;
+   overriding
+   function Get_Column
+     (Marker : not null access File_Marker_Data) return Visible_Column_Type
+   with Inline;
    function Get_Mark
      (Marker : not null access File_Marker_Data'Class)
-      return Gtk.Text_Mark.Gtk_Text_Mark with Inline;
+      return Gtk.Text_Mark.Gtk_Text_Mark
+   with Inline;
    --  Return the coordinates of the marker
 
    procedure Reset_Markers_For_File
@@ -101,9 +106,9 @@ package Src_Editor_Module.Markers is
    ------------
 
    function Get_Or_Create_Instance
-     (Self            : Location_Marker;
-      Script          : not null access Scripting_Language_Record'Class)
-     return Class_Instance;
+     (Self   : Location_Marker;
+      Script : not null access Scripting_Language_Record'Class)
+      return Class_Instance;
    --  If Self was already associated with a class instance in the given
    --  scripting language, returns that same instance.
    --  Otherwise, create a new instance to wrap Self.
@@ -116,8 +121,9 @@ package Src_Editor_Module.Markers is
 
 private
    type File_Marker_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name (Self : File_Marker_Proxy) return String
-     is ("EditorMark");
+   overriding
+   function Class_Name (Self : File_Marker_Proxy) return String
+   is ("EditorMark");
 
    type File_Marker_Data is new Abstract_File_Marker_Data with record
       File         : GNATCOLL.VFS.Virtual_File;
@@ -131,25 +137,32 @@ private
       Cid          : Gtk.Handlers.Handler_Id;
       Instances    : File_Marker_Proxy;
    end record;
-   overriding procedure Destroy (Marker : in out File_Marker_Data);
-   overriding function Go_To
-     (Marker : not null access File_Marker_Data) return Boolean;
-   overriding function To_String
+   overriding
+   procedure Destroy (Marker : in out File_Marker_Data);
+   overriding
+   function Go_To (Marker : not null access File_Marker_Data) return Boolean;
+   overriding
+   function To_String
      (Marker : not null access File_Marker_Data) return String;
-   overriding function Save
+   overriding
+   function Save
      (Marker : not null access File_Marker_Data) return XML_Utils.Node_Ptr;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Marker : not null access File_Marker_Data; Value : out JSON_Value);
-   overriding function Similar
+   overriding
+   function Similar
      (Left  : not null access File_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Boolean;
-   overriding function Distance
+   overriding
+   function Distance
      (Left  : not null access File_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Integer;
    --  See inherited documentation
 
-   package Proxies is new Script_Proxies
-     (Element_Type => Location_Marker,
-      Proxy        => File_Marker_Proxy);
+   package Proxies is new
+     Script_Proxies
+       (Element_Type => Location_Marker,
+        Proxy        => File_Marker_Proxy);
 
 end Src_Editor_Module.Markers;

@@ -38,14 +38,16 @@ private
       Messages     : access constant CodePeer.Message_Maps.Map;
    end record;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
       Attrs         : Sax.Attributes.Attributes'Class);
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;

@@ -58,21 +58,20 @@ package Virtual_Lists is
 
    function First
      (List : Virtual_List_Component)
-      return Virtual_List_Component_Iterator'Class is abstract;
+      return Virtual_List_Component_Iterator'Class
+   is abstract;
    --  Return an iterator pointing on the first element of a list
 
-   function At_End
-     (It : Virtual_List_Component_Iterator) return Boolean
-      is abstract;
+   function At_End (It : Virtual_List_Component_Iterator) return Boolean
+   is abstract;
    --  Return true if the iterator is at the end of the list, which means after
    --  the last element.
 
    procedure Next (It : in out Virtual_List_Component_Iterator) is abstract;
    --  Moves the iterator to the next element of the list.
 
-   function Get
-     (It : in out Virtual_List_Component_Iterator)
-      return Data_Type is abstract;
+   function Get (It : in out Virtual_List_Component_Iterator) return Data_Type
+   is abstract;
    --  Return the element contained in this iterator.
 
    procedure Append
@@ -113,8 +112,8 @@ package Virtual_Lists is
 
 private
 
-   type Virtual_List_Component_Access is access all
-     Virtual_List_Component'Class;
+   type Virtual_List_Component_Access is
+     access all Virtual_List_Component'Class;
 
    procedure Free (This : in out Virtual_List_Component_Access);
    --  Free the data associated to a Virtual_List_Component_Access.
@@ -153,8 +152,8 @@ private
    procedure Free_Node_Access is new
      Ada.Unchecked_Deallocation (List_Node, List_Node_Access);
 
-   type Virtual_List_Component_Iterator_Access is access all
-     Virtual_List_Component_Iterator'Class;
+   type Virtual_List_Component_Iterator_Access is
+     access all Virtual_List_Component_Iterator'Class;
 
    procedure Free (This : in out Virtual_List_Component_Iterator_Access);
    --  Free the data associated to a Virtual_List_Component_Iterator_Access.
@@ -165,7 +164,6 @@ private
    end record;
 
    Null_Virtual_List_Iterator : constant Virtual_List_Iterator :=
-     (Current_Component => Null_Node,
-      Current_Iterator  => null);
+     (Current_Component => Null_Node, Current_Iterator => null);
 
 end Virtual_Lists;

@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Xref;                      use Xref;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with Language;              use Language;
+with Language_Handlers;     use Language_Handlers;
+with Xref;                  use Xref;
 
 package body GVD.Contexts is
 
@@ -28,8 +28,7 @@ package body GVD.Contexts is
    ------------------
 
    function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info is
+     (Context : GPS.Kernel.Selection_Context) return Item_Info is
    begin
       if Has_Debugging_Variable (Context) then
          return Context_Item_Info_Access (Debugging_Variable (Context)).Info;
@@ -43,31 +42,34 @@ package body GVD.Contexts is
    -----------------------
 
    function Get_Variable_Name
-     (Context     : Selection_Context;
-      Dereference : Boolean) return String
+     (Context : Selection_Context; Dereference : Boolean) return String
    is
-      Lang  : Language_Access;
+      Lang : Language_Access;
    begin
       if Context = No_Context then
          return "";
       end if;
 
       if Has_File_Information (Context) then
-         Lang := Get_Language_From_File
-           (Get_Language_Handler (Get_Kernel (Context)),
-            File_Information (Context));
+         Lang :=
+           Get_Language_From_File
+             (Get_Language_Handler (Get_Kernel (Context)),
+              File_Information (Context));
       end if;
 
       if Has_Debugging_Variable (Context) then
          if Dereference and then Lang /= null then
-            return Dereference_Name
-              (Lang, To_String
-                 (Context_Item_Info_Access
-                      (Debugging_Variable (Context)).Text));
+            return
+              Dereference_Name
+                (Lang,
+                 To_String
+                   (Context_Item_Info_Access (Debugging_Variable (Context))
+                      .Text));
          end if;
 
-         return To_String
-           (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
+         return
+           To_String
+             (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
       end if;
 
       if Has_Area_Information (Context) then
@@ -92,15 +94,14 @@ package body GVD.Contexts is
          begin
             if Dereference
               and then Lang /= null
-              and then (Is_Fuzzy (Entity)
-                        or else (not Is_Type (Entity)
-                                 and then Is_Access (Entity)))
+              and then
+                (Is_Fuzzy (Entity)
+                 or else (not Is_Type (Entity) and then Is_Access (Entity)))
             then
-               return Dereference_Name
-                 (Lang, Entity_Name_Information (Context));
+               return
+                 Dereference_Name (Lang, Entity_Name_Information (Context));
 
-            elsif Is_Fuzzy (Entity)
-              or else Is_Printable_In_Debugger (Entity)
+            elsif Is_Fuzzy (Entity) or else Is_Printable_In_Debugger (Entity)
             then
                return Entity_Name_Information (Context);
             end if;
@@ -119,8 +120,8 @@ package body GVD.Contexts is
       Full_Name : String;
       Info      : Item_Info)
    is
-      Item : constant Context_Item_Info_Access := new Context_Item_Info'
-        (To_Unbounded_String (Full_Name), Info);
+      Item : constant Context_Item_Info_Access :=
+        new Context_Item_Info'(To_Unbounded_String (Full_Name), Info);
    begin
       Set_Debugging_Variable (Context, Context_Item_Access (Item));
    end Set_Variable;

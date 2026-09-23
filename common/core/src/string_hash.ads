@@ -29,7 +29,8 @@ generic
    Case_Sensitive : Boolean := True;
    --  Whether keys are case-sensitive
 
-package String_Hash is
+package String_Hash
+is
 
    type Name_Htable_Num is new Natural range 0 .. 6150;
    --  ??? This limitation should be raised (could be through use of
@@ -43,14 +44,15 @@ package String_Hash is
    function Equal (Key1, Key2 : String) return Boolean;
    --  Whether the two keys are equal, depending on Case_Sensitive
 
-   package String_Hash_Table is new HTables.Simple_HTable
-     (Header_Num   => Name_Htable_Num,
-      Element      => Data_Type,
-      Free_Element => Free_Data,
-      No_Element   => Null_Ptr,
-      Key          => String,
-      Hash         => Hash,
-      Equal        => Equal);
+   package String_Hash_Table is new
+     HTables.Simple_HTable
+       (Header_Num   => Name_Htable_Num,
+        Element      => Data_Type,
+        Free_Element => Free_Data,
+        No_Element   => Null_Ptr,
+        Key          => String,
+        Hash         => Hash,
+        Equal        => Equal);
    --  See HTables for documentation
 
 end String_Hash;

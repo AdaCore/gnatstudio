@@ -15,87 +15,86 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Tags;                use Ada.Tags;
 with Ada.Unchecked_Conversion;
-with System;                    use System;
+with System;                  use System;
 with System.Address_Image;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Strings;            use GNAT.Strings;
 
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists;   use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
+with GNATCOLL.Projects;    use GNATCOLL.Projects;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
+with GNATCOLL.Utils;       use GNATCOLL.Utils;
 
 with VSS.Strings.Conversions;
 
-with Gdk;                       use Gdk;
-with Gdk.Window;                use Gdk.Window;
+with Gdk;        use Gdk;
+with Gdk.Window; use Gdk.Window;
 
-with Glib.Object;               use Glib.Object;
-with Glib.Main;                 use Glib.Main;
-with XML_Utils;                 use XML_Utils;
+with Glib.Object; use Glib.Object;
+with Glib.Main;   use Glib.Main;
+with XML_Utils;   use XML_Utils;
 
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
+with Gtk.Enums;      use Gtk.Enums;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Widget;     use Gtk.Widget;
+with Gtk.Window;     use Gtk.Window;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+with Gtkada.MDI;     use Gtkada.MDI;
 
-with Basic_Mapper;              use Basic_Mapper;
-with Basic_Types;               use Basic_Types;
-with Default_Preferences;       use Default_Preferences;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Default_Styles;        use GPS.Default_Styles;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with Basic_Mapper;                     use Basic_Mapper;
+with Basic_Types;                      use Basic_Types;
+with Default_Preferences;              use Default_Preferences;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Editors;                      use GPS.Editors;
+with GPS.Default_Styles;               use GPS.Default_Styles;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
+with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
+with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;       use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
+with GPS.Kernel.Style_Manager;         use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Scripts.Hooks;
-with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
-with GPS.Properties;            use GPS.Properties;
-with GPS.VCS;                   use GPS.VCS;
-with GUI_Utils;                 use GUI_Utils;
-with Histories;                 use Histories;
-with Language_Handlers;         use Language_Handlers;
-with Language.Tree.Database;    use Language.Tree.Database;
-with GPR;                       use GPR;
-with GPR.Names;                 use GPR.Names;
-with GPR.Attr;                  use GPR.Attr;
-with Projects;                  use Projects;
-with Refactoring;               use Refactoring;
-with String_List_Utils;         use String_List_Utils;
-with Switches_Chooser;          use Switches_Chooser;
-with Xref;                      use Xref;
+with GPS.Kernel.Xref;                  use GPS.Kernel.Xref;
+with GPS.Properties;                   use GPS.Properties;
+with GPS.VCS;                          use GPS.VCS;
+with GUI_Utils;                        use GUI_Utils;
+with Histories;                        use Histories;
+with Language_Handlers;                use Language_Handlers;
+with Language.Tree.Database;           use Language.Tree.Database;
+with GPR;                              use GPR;
+with GPR.Names;                        use GPR.Names;
+with GPR.Attr;                         use GPR.Attr;
+with Projects;                         use Projects;
+with Refactoring;                      use Refactoring;
+with String_List_Utils;                use String_List_Utils;
+with Switches_Chooser;                 use Switches_Chooser;
+with Xref;                             use Xref;
 with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 
 package body GPS.Kernel is
 
-   Me        : constant Trace_Handle := Create ("GPS.KERNEL.GPS_KERNEL");
-   Me_Filters : constant Trace_Handle := Create
-     ("GPS.INTERNAL.FILTERS", GNATCOLL.Traces.Off);
-   Create_Me : constant Trace_Handle :=
-     Create ("GPS.KERNEL.CONTEXTS_MEM",
-             GNATCOLL.Traces.Off);
-   Me_Hooks  : constant Trace_Handle := Create
-     ("GPS.KERNEL.HOOKS", GNATCOLL.Traces.Off);
+   Me         : constant Trace_Handle := Create ("GPS.KERNEL.GPS_KERNEL");
+   Me_Filters : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.FILTERS", GNATCOLL.Traces.Off);
+   Create_Me  : constant Trace_Handle :=
+     Create ("GPS.KERNEL.CONTEXTS_MEM", GNATCOLL.Traces.Off);
+   Me_Hooks   : constant Trace_Handle :=
+     Create ("GPS.KERNEL.HOOKS", GNATCOLL.Traces.Off);
 
    History_File_Base_Name : constant String := "histories.xml";
    --  The base name of the GNAT Studio history file.
@@ -109,53 +108,59 @@ package body GPS.Kernel is
 
    use Action_Filters_Maps;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Kernel_Handle);
-   function Convert is new Ada.Unchecked_Conversion
-     (Kernel_Handle, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Kernel_Handle);
+   function Convert is new
+     Ada.Unchecked_Conversion (Kernel_Handle, System.Address);
 
    procedure Free (Tool : in out Tool_Properties);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
    --  Free the list of registered tools
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences change
 
    type On_File_Closed is new File_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_File_Closed;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File);
+   overriding
+   procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file is closed
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_File_Edited;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File);
+   overriding
+   procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file is opened
 
    type On_File_Renamed is new File2_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_File_Renamed;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File;
-       File2  : Virtual_File);
+   overriding
+   procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      File2  : Virtual_File);
    --  Called when a file is renamed
 
-   type GPS_Refactoring_Factory_Context
-     is new Refactoring.Factory_Context_Record with record
+   type GPS_Refactoring_Factory_Context is
+     new Refactoring.Factory_Context_Record
+   with record
       Kernel : Kernel_Handle;
    end record;
 
-   overriding procedure Report_Error
-     (Self : access GPS_Refactoring_Factory_Context;
-      Msg  : String);
-   overriding procedure Report_Location
+   overriding
+   procedure Report_Error
+     (Self : access GPS_Refactoring_Factory_Context; Msg : String);
+   overriding
+   procedure Report_Location
      (Self     : access GPS_Refactoring_Factory_Context;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
@@ -164,7 +169,7 @@ package body GPS.Kernel is
       Text     : String);
 
    procedure On_Main_Window_Destroyed (Data, Self : System.Address)
-     with Convention => C;
+   with Convention => C;
    --  Called when the main window is destroyed.
    --  We unfortunately cannot reuse the mechanics from GtkApplication, since
    --  the window is unregistered very early (gtk_window_destroy), before its
@@ -181,10 +186,10 @@ package body GPS.Kernel is
 
    function Remove
      (List       : in out Hook_Func_Lists.List;
-      If_Matches : not null access function
-        (F : not null access Hook_Function'Class) return Boolean;
-      Hook_Name : String)
-      return Boolean;
+      If_Matches :
+        not null access function
+          (F : not null access Hook_Function'Class) return Boolean;
+      Hook_Name  : String) return Boolean;
    --  Remove the first attached function for which the function returns True.
    --  Return True if function has been removed.
 
@@ -192,9 +197,7 @@ package body GPS.Kernel is
    -- Hooks --
    -----------
 
-   procedure Remove_Hook_Cb
-      (Data : System.Address;
-       Obj  : System.Address);
+   procedure Remove_Hook_Cb (Data : System.Address; Obj : System.Address);
    pragma Convention (C, Remove_Hook_Cb);
    --  Called when an object is destroyed, to disconnect hook functions
    --  that depended on it.
@@ -205,18 +208,18 @@ package body GPS.Kernel is
    end record;
    type Hook_User_Data_Access is access all Hook_User_Data;
    pragma Convention (C, Hook_User_Data_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-      (Hook_User_Data, Hook_User_Data_Access);
-   function Convert is new Ada.Unchecked_Conversion
-      (System.Address, Hook_User_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Hook_User_Data, Hook_User_Data_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Hook_User_Data_Access);
 
    ------------------
    -- Report_Error --
    ------------------
 
-   overriding procedure Report_Error
-     (Self : access GPS_Refactoring_Factory_Context;
-      Msg  : String) is
+   overriding
+   procedure Report_Error
+     (Self : access GPS_Refactoring_Factory_Context; Msg : String) is
    begin
       Insert (Self.Kernel, Msg, Mode => Error);
    end Report_Error;
@@ -225,18 +228,21 @@ package body GPS.Kernel is
    -- Report_Location --
    ---------------------
 
-   overriding procedure Report_Location
+   overriding
+   procedure Report_Location
      (Self     : access GPS_Refactoring_Factory_Context;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;
-      Text     : String)
-   is
+      Text     : String) is
    begin
       Create_Simple_Message
         (Get_Messages_Container (Self.Kernel),
-         Category, File, Line, Column,
+         Category,
+         File,
+         Line,
+         Column,
          VSS.Strings.Conversions.To_Virtual_String (Text),
          Informational,
          (Editor_Side => True, Locations => True, Editor_Line => False));
@@ -268,8 +274,7 @@ package body GPS.Kernel is
    --------------------------
 
    procedure Set_Destruction_Flag
-     (Handle : access Kernel_Handle_Record;
-      Flag   : Boolean) is
+     (Handle : access Kernel_Handle_Record; Flag : Boolean) is
    begin
       Handle.Is_In_Destruction := Flag;
    end Set_Destruction_Flag;
@@ -289,12 +294,13 @@ package body GPS.Kernel is
    ------------------
 
    function GNAT_Version
-     (Handle : access Kernel_Handle_Record)
-      return VSS.Strings.Virtual_String is
+     (Handle : access Kernel_Handle_Record) return VSS.Strings.Virtual_String
+   is
    begin
       return
         (if Handle.GNAT_Version_Cache.Is_Empty
-         then -"<unknown version>" else Handle.GNAT_Version_Cache);
+         then -"<unknown version>"
+         else Handle.GNAT_Version_Cache);
    end GNAT_Version;
 
    -----------------------
@@ -302,8 +308,7 @@ package body GPS.Kernel is
    -----------------------
 
    function Require_GNAT_Date
-     (Handle : access Kernel_Handle_Record;
-      Date   : Date_Type) return Boolean
+     (Handle : access Kernel_Handle_Record; Date : Date_Type) return Boolean
    is
       Version       : constant String :=
         VSS.Strings.Conversions.To_UTF_8_String (Handle.GNAT_Version_Cache);
@@ -326,12 +331,12 @@ package body GPS.Kernel is
             return False;
          else
             Compiler_Date :=
-              (Year  => Integer'Value
-                 (Version (Open_Index + 1 .. Open_Index + 4)),
-               Month => Integer'Value
-                 (Version (Open_Index + 5 .. Open_Index + 6)),
-               Day   => Integer'Value
-                 (Version (Open_Index + 7 .. Open_Index + 8)));
+              (Year  =>
+                 Integer'Value (Version (Open_Index + 1 .. Open_Index + 4)),
+               Month =>
+                 Integer'Value (Version (Open_Index + 5 .. Open_Index + 6)),
+               Day   =>
+                 Integer'Value (Version (Open_Index + 7 .. Open_Index + 8)));
 
             return Compiler_Date >= Date;
          end if;
@@ -349,7 +354,8 @@ package body GPS.Kernel is
    -- Create_Registry --
    ---------------------
 
-   overriding procedure Create_Registry
+   overriding
+   procedure Create_Registry
      (Self   : not null access Kernel_Handle_Record;
       Result : out Projects.Project_Registry_Access) is
    begin
@@ -365,7 +371,8 @@ package body GPS.Kernel is
    -- Create_Database --
    ---------------------
 
-   overriding procedure Create_Database
+   overriding
+   procedure Create_Database
      (Self   : not null access Kernel_Handle_Record;
       Result : out Standard.Xref.General_Xref_Database) is
    begin
@@ -389,7 +396,7 @@ package body GPS.Kernel is
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
       Handle.Log_Dir := Log_Dir;
-      Handle.Prefix   := Prefix_Directory;
+      Handle.Prefix := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
       Handle.Env := Spawn.Environments.System_Environment;
       Handle.Application := Application;
@@ -403,8 +410,8 @@ package body GPS.Kernel is
       --  We need to load now so that for instance the splash screen is
       --  correctly taken into account.
       Handle.Preferences := new GPS_Preferences_Manager_Record;
-      GPS_Preferences_Manager_Record (Handle.Preferences.all).
-        Set_Kernel (Handle);
+      GPS_Preferences_Manager_Record (Handle.Preferences.all).Set_Kernel
+        (Handle);
 
       declare
          Style_Manager : Style_Manager_Access;
@@ -424,8 +431,7 @@ package body GPS.Kernel is
 
       Handle.History := new History_Record;
       Trace (Me, "Loading " & History_File_Base_Name);
-      Load (Handle.History.all,
-            Handle.Get_History_File);
+      Load (Handle.History.all, Handle.Get_History_File);
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       GPS.Properties.Set_Writer (Open_Persistent_Properties_DB (Handle));
@@ -472,16 +478,15 @@ package body GPS.Kernel is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
    begin
-      if Pref = null
-        or else Pref = Preference (Hidden_Files_Pattern)
-      then
+      if Pref = null or else Pref = Preference (Hidden_Files_Pattern) then
          if Kernel.Hidden_File_Matcher /= null then
             Unchecked_Free (Kernel.Hidden_File_Matcher);
          end if;
@@ -509,9 +514,7 @@ package body GPS.Kernel is
    ----------------------
 
    function Preferences_File
-     (Self : access Kernel_Handle_Record)
-      return GNATCOLL.VFS.Virtual_File
-   is
+     (Self : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File is
    begin
       return Create_From_Dir (Self.Home_Dir, "preferences.xml");
    end Preferences_File;
@@ -522,8 +525,7 @@ package body GPS.Kernel is
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
    begin
-      Load_Preferences
-        (Handle.Preferences, Handle.Preferences_File);
+      Load_Preferences (Handle.Preferences, Handle.Preferences_File);
    end Load_Preferences;
 
    ------------------------
@@ -560,8 +562,7 @@ package body GPS.Kernel is
    --------------------------------------
 
    procedure Set_Ignore_Saved_Scenario_Values
-     (Self   : not null access Kernel_Handle_Record;
-      Status : Boolean) is
+     (Self : not null access Kernel_Handle_Record; Status : Boolean) is
    begin
       Self.Ignore_Saved_Scenario_Values := Status;
    end Set_Ignore_Saved_Scenario_Values;
@@ -571,8 +572,7 @@ package body GPS.Kernel is
    --------------------------------------
 
    function Get_Ignore_Saved_Scenario_Values
-     (Self : not null access Kernel_Handle_Record)
-      return Boolean is
+     (Self : not null access Kernel_Handle_Record) return Boolean is
    begin
       return Self.Ignore_Saved_Scenario_Values;
    end Get_Ignore_Saved_Scenario_Values;
@@ -582,8 +582,7 @@ package body GPS.Kernel is
    ------------------------------------
 
    procedure Set_Ignore_Project_Load_Errors
-     (Self   : not null access Kernel_Handle_Record;
-      Status : Boolean) is
+     (Self : not null access Kernel_Handle_Record; Status : Boolean) is
    begin
       Self.Ignore_Project_Load_Errors := Status;
    end Set_Ignore_Project_Load_Errors;
@@ -593,8 +592,7 @@ package body GPS.Kernel is
    ------------------------------------
 
    function Get_Ignore_Project_Load_Errors
-     (Self : not null access Kernel_Handle_Record)
-      return Boolean is
+     (Self : not null access Kernel_Handle_Record) return Boolean is
    begin
       return Self.Ignore_Project_Load_Errors;
    end Get_Ignore_Project_Load_Errors;
@@ -625,7 +623,8 @@ package body GPS.Kernel is
    -- Default_Language_Tree_Provider --
    ------------------------------------
 
-   overriding function Default_Language_Tree_Provider
+   overriding
+   function Default_Language_Tree_Provider
      (Kernel : not null access Kernel_Handle_Record)
       return Semantic_Tree_Provider_Access is
    begin
@@ -636,10 +635,10 @@ package body GPS.Kernel is
    -- Get_Buffer_Factory --
    ------------------------
 
-   overriding function Get_Buffer_Factory
+   overriding
+   function Get_Buffer_Factory
      (Kernel : not null access Kernel_Handle_Record)
-      return Editor_Buffer_Factory_Access
-   is
+      return Editor_Buffer_Factory_Access is
    begin
       return Kernel.Editor_Factory;
    end Get_Buffer_Factory;
@@ -659,10 +658,11 @@ package body GPS.Kernel is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_File_Edited;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File)
+   overriding
+   procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Self);
    begin
@@ -673,18 +673,21 @@ package body GPS.Kernel is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_File_Closed;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File)
+   overriding
+   procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Self);
    begin
       if Kernel.Open_Files.Contains (File) then
          Kernel.Open_Files.Delete (File);
       else
-         Trace (Me, "file_closed on a file not registered as open: "
-             & File.Display_Full_Name);
+         Trace
+           (Me,
+            "file_closed on a file not registered as open: "
+            & File.Display_Full_Name);
       end if;
    end Execute;
 
@@ -692,19 +695,22 @@ package body GPS.Kernel is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_File_Renamed;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File;
-       File2  : Virtual_File)
+   overriding
+   procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      File2  : Virtual_File)
    is
       pragma Unreferenced (Self);
    begin
       if Kernel.Open_Files.Contains (File) then
          Kernel.Open_Files.Delete (File);
       else
-         Trace (Me, "file_renamed on a file not registered as open: "
-             & File.Display_Full_Name);
+         Trace
+           (Me,
+            "file_renamed on a file not registered as open: "
+            & File.Display_Full_Name);
       end if;
 
       Kernel.Open_Files.Include (File2);
@@ -729,7 +735,8 @@ package body GPS.Kernel is
    -- Open_Files --
    ----------------
 
-   overriding function Opened_Files
+   overriding
+   function Opened_Files
      (Kernel : access Kernel_Handle_Record) return File_Sets.Set is
    begin
       return Kernel.Open_Files;
@@ -740,11 +747,11 @@ package body GPS.Kernel is
    ---------------
 
    function Is_Hidden
-     (Kernel    : access Kernel_Handle_Record;
-      File      : GNATCOLL.VFS.Virtual_File) return Boolean
-   is
+     (Kernel : access Kernel_Handle_Record; File : GNATCOLL.VFS.Virtual_File)
+      return Boolean is
    begin
-      return not Show_Hidden_Files.Get_Pref
+      return
+        not Show_Hidden_Files.Get_Pref
         and then Kernel.Hidden_File_Matcher /= null
         and then Match (Kernel.Hidden_File_Matcher.all, +File.Base_Dir_Name);
    end Is_Hidden;
@@ -754,8 +761,7 @@ package body GPS.Kernel is
    ---------------------
 
    procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record;
-      Context : Selection_Context) is
+     (Handle : access Kernel_Handle_Record; Context : Selection_Context) is
    begin
       Handle.Current_Context := Context;
       --  Only run the context_changed_hook when the main window is visible
@@ -775,20 +781,25 @@ package body GPS.Kernel is
    is
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
-      Part : constant String := (if Is_Saving then " save " else " load ");
+      Part   : constant String := (if Is_Saving then " save " else " load ");
    begin
       if Is_In_Destruction (Handle) then
-         Button := GPS_Message_Dialog
-           ((-"Could not " & Part & " the configuration file ") &
-            Filename.Display_Full_Name & ASCII.LF &
-            (-"Please verify that you have write access to this file."),
-            Error, Button_OK, Justification => Justify_Left,
-            Parent => Handle.Get_Main_Window);
+         Button :=
+           GPS_Message_Dialog
+             ((-"Could not " & Part & " the configuration file ")
+              & Filename.Display_Full_Name
+              & ASCII.LF
+              & (-"Please verify that you have write access to this file."),
+              Error,
+              Button_OK,
+              Justification => Justify_Left,
+              Parent        => Handle.Get_Main_Window);
       else
          Handle.Insert
-           ((-"Could not " & Part & " the configuration file ") &
-            Filename.Display_Full_Name & ASCII.LF &
-            (-"Please verify that you have write access to this file."),
+           ((-"Could not " & Part & " the configuration file ")
+            & Filename.Display_Full_Name
+            & ASCII.LF
+            & (-"Please verify that you have write access to this file."),
             Mode => Error);
       end if;
    end Report_Preference_File_Error;
@@ -798,15 +809,16 @@ package body GPS.Kernel is
    ----------
 
    procedure Free (Self : in out Selection_Context_Data_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Addresses_Array, Addresses_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Addresses_Array, Addresses_Array_Access);
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Context_Item'Class, Context_Item_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Context_Item'Class, Context_Item_Access);
    begin
       if Active (Create_Me) then
-         Trace (Create_Me, "Freeing context: 0x"
-                & System.Address_Image (Self'Address));
+         Trace
+           (Create_Me,
+            "Freeing context: 0x" & System.Address_Image (Self'Address));
       end if;
 
       --  Do not unref the entity stored in the context if the kernel is in
@@ -850,7 +862,7 @@ package body GPS.Kernel is
      (Kernel      : not null access Kernel_Handle_Record'Class;
       Focus_Check : Boolean := True)
    is
-      Child    : MDI_Child;
+      Child : MDI_Child;
       --  The child which should create the context
 
       Toplevel : Gtk_Widget;
@@ -872,8 +884,8 @@ package body GPS.Kernel is
       else
          if Active (Me) then
             Trace
-              (Me, "Refreshing context, focused child now is: "
-               & Child.Get_Title);
+              (Me,
+               "Refreshing context, focused child now is: " & Child.Get_Title);
          end if;
 
          --  Additional check: make sure the selected child has
@@ -881,8 +893,8 @@ package body GPS.Kernel is
          --  window, create a context as if no child was selected.
          if Focus_Check then
             Toplevel := Child.Get_Toplevel;
-            if Toplevel.all in Gtk_Window_Record'Class and then
-              not Gtk_Window (Toplevel).Has_Toplevel_Focus
+            if Toplevel.all in Gtk_Window_Record'Class
+              and then not Gtk_Window (Toplevel).Has_Toplevel_Focus
             then
                if Active (Me) then
                   Trace (Me, "The window does not have the toplevel focus");
@@ -916,7 +928,7 @@ package body GPS.Kernel is
    ------------------------
 
    function Get_Search_Context
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
       return Selection_Context is
    begin
       return Kernel.Search_Context;
@@ -939,8 +951,8 @@ package body GPS.Kernel is
    -- Get_Creator --
    -----------------
 
-   function Get_Creator
-     (Context : Selection_Context) return Abstract_Module_ID is
+   function Get_Creator (Context : Selection_Context) return Abstract_Module_ID
+   is
    begin
       if Context.Ref.Is_Null then
          return null;
@@ -960,14 +972,17 @@ package body GPS.Kernel is
    is
       Context : Selection_Context;
    begin
-      Context.Ref.Set (Selection_Context_Data_Record'(
-         Kernel  => Kernel_Handle_Record (Kernel.all)'Unchecked_Access,
-         Creator => Abstract_Module (Creator),
-         others  => <>));
+      Context.Ref.Set
+        (Selection_Context_Data_Record'
+           (Kernel  => Kernel_Handle_Record (Kernel.all)'Unchecked_Access,
+            Creator => Abstract_Module (Creator),
+            others  => <>));
 
       if Active (Create_Me) then
-         Trace (Create_Me, "Creating new context: 0x"
-                & System.Address_Image (Context.Ref.Get.Element.all'Address));
+         Trace
+           (Create_Me,
+            "Creating new context: 0x"
+            & System.Address_Image (Context.Ref.Get.Element.all'Address));
       end if;
       return Context;
    end New_Context;
@@ -996,7 +1011,8 @@ package body GPS.Kernel is
    -- Get_System_Dir --
    --------------------
 
-   overriding function Get_System_Dir
+   overriding
+   function Get_System_Dir
      (Handle : not null access Kernel_Handle_Record) return Virtual_File is
    begin
       return Handle.Prefix;
@@ -1016,7 +1032,8 @@ package body GPS.Kernel is
    -- Get_Share_Dir --
    -------------------
 
-   overriding function Get_Share_Dir
+   overriding
+   function Get_Share_Dir
      (Self : not null access Kernel_Handle_Record)
       return GNATCOLL.VFS.Virtual_File is
    begin
@@ -1052,16 +1069,17 @@ package body GPS.Kernel is
    procedure Destroy (Handle : access Kernel_Handle_Record) is
       Success : Boolean;
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (History_Record, History);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Root_Table'Class, Root_Table_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Refactoring.Factory_Context_Record'Class,
-         Refactoring.Factory_Context);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (History_Record, History);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Root_Table'Class, Root_Table_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Refactoring.Factory_Context_Record'Class,
+           Refactoring.Factory_Context);
 
       History_File : constant GNATCOLL.VFS.Virtual_File :=
-                       Handle.Get_History_File;
+        Handle.Get_History_File;
    begin
       Trace (Me, "Destroying the kernel");
       Destroy_Backup_Desktop (Handle);
@@ -1084,15 +1102,12 @@ package body GPS.Kernel is
       Reset_Properties (Handle);
 
       Trace (Me, "Saving " & History_File_Base_Name);
-      Save (Handle.History.all,
-            History_File,
-            Success);
+      Save (Handle.History.all, History_File, Success);
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
       if not Success then
-         Report_Preference_File_Error
-           (Handle, History_File);
+         Report_Preference_File_Error (Handle, History_File);
       end if;
 
       Reset (Handle.Startup_Scripts);
@@ -1120,8 +1135,10 @@ package body GPS.Kernel is
 
       --  Free the registered filters
       declare
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (Action_Filter_Record'Class, Action_Filter);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation
+             (Action_Filter_Record'Class,
+              Action_Filter);
       begin
          for Act of Handle.All_Action_Filters loop
             Free (Act.all);
@@ -1163,8 +1180,7 @@ package body GPS.Kernel is
    ----------------------------
 
    procedure Push_Marker_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Marker : Location_Marker) is
+     (Kernel : access Kernel_Handle_Record'Class; Marker : Location_Marker) is
    begin
       Marker_Added_To_History_Hook.Run (Kernel, Marker);
    end Push_Marker_In_History;
@@ -1184,8 +1200,8 @@ package body GPS.Kernel is
    ----------------------
 
    function Get_History_File
-     (Self : not null access Kernel_Handle_Record) return Virtual_File
-   is begin
+     (Self : not null access Kernel_Handle_Record) return Virtual_File is
+   begin
       return Create_From_Dir (Self.Get_Home_Dir, +History_File_Base_Name);
    end Get_History_File;
 
@@ -1209,8 +1225,7 @@ package body GPS.Kernel is
    -------------------
 
    function Lookup_Filter
-     (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Action_Filter
+     (Kernel : access Kernel_Handle_Record; Name : String) return Action_Filter
    is
       C : constant Action_Filters_Maps.Cursor :=
         Kernel.Action_Filters.Find (Name);
@@ -1247,7 +1262,8 @@ package body GPS.Kernel is
    -- Register_Filter --
    ---------------------
 
-   overriding procedure Register_Filter
+   overriding
+   procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Base_Action_Filter_Record;
       Name   : String) is
@@ -1257,15 +1273,15 @@ package body GPS.Kernel is
          when Standard_Filter =>
             null;
 
-         when Filter_And =>
+         when Filter_And      =>
             Register_Filter (Kernel, Filter.And1, "");
             Register_Filter (Kernel, Filter.And2, "");
 
-         when Filter_Or =>
+         when Filter_Or       =>
             Register_Filter (Kernel, Filter.Or1, "");
             Register_Filter (Kernel, Filter.Or2, "");
 
-         when Filter_Not =>
+         when Filter_Not      =>
             Register_Filter (Kernel, Filter.Not1, "");
       end case;
    end Register_Filter;
@@ -1282,19 +1298,18 @@ package body GPS.Kernel is
    is
       File : GNATCOLL.VFS.Virtual_File;
    begin
-      if Use_Source_Path
-        and then Use_Object_Path
-      then
+      if Use_Source_Path and then Use_Object_Path then
          --  When we're using the default values for Use_Source_Path
          --  and Use_Object_Path (which is the vast majority of cases),
          --  use the caching Create function in the Registry, for
          --  performance.
          File := Get_Registry (Kernel).Create (Name);
       else
-         File := Get_Registry (Kernel).Tree.Create
-           (Name,
-            Use_Source_Path => Use_Source_Path,
-            Use_Object_Path => Use_Object_Path);
+         File :=
+           Get_Registry (Kernel).Tree.Create
+             (Name,
+              Use_Source_Path => Use_Source_Path,
+              Use_Object_Path => Use_Object_Path);
       end if;
 
       if File = GNATCOLL.VFS.No_File then
@@ -1309,8 +1324,8 @@ package body GPS.Kernel is
    ----------
 
    procedure Free (Tool : in out Tool_Properties) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Tool_Properties_Record, Tool_Properties);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Tool_Properties_Record, Tool_Properties);
    begin
       Free (Tool.Languages);
       Free (Tool.Config);
@@ -1339,8 +1354,7 @@ package body GPS.Kernel is
    -------------------
 
    procedure Register_Tool
-     (Kernel : access Kernel_Handle_Record;
-      Tool   : not null Tool_Properties)
+     (Kernel : access Kernel_Handle_Record; Tool : not null Tool_Properties)
    is
       Pkg  : Package_Node_Id;
       Attr : Attribute_Node_Id;
@@ -1360,8 +1374,9 @@ package body GPS.Kernel is
       Name_Len := Length (Tool.Project_Attribute);
       Name_Buffer (1 .. Name_Len) :=
         To_Lower (To_String (Tool.Project_Attribute));
-      Attr := Attribute_Node_Id_Of
-        (Name  => Name_Find, Starting_At => First_Attribute_Of (Pkg));
+      Attr :=
+        Attribute_Node_Id_Of
+          (Name => Name_Find, Starting_At => First_Attribute_Of (Pkg));
 
       if Attr = Empty_Attribute then
          if Tool.Project_Index = "" then
@@ -1379,8 +1394,7 @@ package body GPS.Kernel is
                --  so that we can set and retrieve both of them.
 
                if not Attribute_Registered
-                 (Name       => "switches",
-                  In_Package => Pkg)
+                        (Name => "switches", In_Package => Pkg)
                then
                   Register_New_Attribute
                     (Name       => "switches",
@@ -1410,12 +1424,14 @@ package body GPS.Kernel is
             Free (Elm);
 
             if not Tool.Override then
-               Insert (Kernel,
-                       Text   =>  -"Warning: tool "
-                                  & To_String (Tool.Tool_Name)
-                                  & (-" is defined twice"),
-                       Add_LF => True,
-                       Mode   => Error);
+               Insert
+                 (Kernel,
+                  Text   =>
+                    -"Warning: tool "
+                    & To_String (Tool.Tool_Name)
+                    & (-" is defined twice"),
+                  Add_LF => True,
+                  Mode   => Error);
             end if;
 
             return;
@@ -1452,8 +1468,8 @@ package body GPS.Kernel is
    -------------------------
 
    function Get_Tool_Properties
-     (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String) return Tool_Properties
+     (Kernel : access Kernel_Handle_Record; Tool_Name : String)
+      return Tool_Properties
    is
       use Tools_List;
       Iter : Tools_List.Cursor := First (Kernel.Tools);
@@ -1489,7 +1505,8 @@ package body GPS.Kernel is
          F.Shell := To_Unbounded_String (Shell);
          F.Shell_Lang :=
            (if Shell /= ""
-            then To_Unbounded_String (Shell_Lang) else Null_Unbounded_String);
+            then To_Unbounded_String (Shell_Lang)
+            else Null_Unbounded_String);
          F.Module := To_Unbounded_String (Module);
          return Action_Filter (F);
       end if;
@@ -1500,8 +1517,8 @@ package body GPS.Kernel is
    -----------
 
    function "and"
-     (Filter1 : access Action_Filter_Record'Class;
-      Filter2 : Action_Filter) return Action_Filter is
+     (Filter1 : access Action_Filter_Record'Class; Filter2 : Action_Filter)
+      return Action_Filter is
    begin
       if Filter1 = null then
          return Filter2;
@@ -1513,13 +1530,14 @@ package body GPS.Kernel is
          --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
          --  user code, since it won't require temporary variable. Also done
          --  for actions themselves.
-         return new Base_Action_Filter_Record'
-           (Kind       => Filter_And,
-            Error_Msg  => Null_Unbounded_String,
-            Name       => Null_Unbounded_String,
-            Registered => False,
-            And1       => Filter1.all'Unrestricted_Access,
-            And2       => Filter2);
+         return
+           new Base_Action_Filter_Record'
+             (Kind       => Filter_And,
+              Error_Msg  => Null_Unbounded_String,
+              Name       => Null_Unbounded_String,
+              Registered => False,
+              And1       => Filter1.all'Unrestricted_Access,
+              And2       => Filter2);
       end if;
    end "and";
 
@@ -1536,13 +1554,14 @@ package body GPS.Kernel is
       elsif Filter2 = null then
          return Action_Filter (Filter1);
       else
-         return new Base_Action_Filter_Record'
-           (Kind       => Filter_Or,
-            Error_Msg  => Null_Unbounded_String,
-            Name       => Null_Unbounded_String,
-            Registered => False,
-            Or1        => Filter1.all'Unrestricted_Access,
-            Or2        => Filter2.all'Unrestricted_Access);
+         return
+           new Base_Action_Filter_Record'
+             (Kind       => Filter_Or,
+              Error_Msg  => Null_Unbounded_String,
+              Name       => Null_Unbounded_String,
+              Registered => False,
+              Or1        => Filter1.all'Unrestricted_Access,
+              Or2        => Filter2.all'Unrestricted_Access);
       end if;
    end "or";
 
@@ -1556,12 +1575,13 @@ package body GPS.Kernel is
       if Filter = null then
          return null;
       else
-         return new Base_Action_Filter_Record'
-           (Kind       => Filter_Not,
-            Registered => False,
-            Error_Msg  => Null_Unbounded_String,
-            Name       => Null_Unbounded_String,
-            Not1       => Filter.all'Unrestricted_Access);
+         return
+           new Base_Action_Filter_Record'
+             (Kind       => Filter_Not,
+              Registered => False,
+              Error_Msg  => Null_Unbounded_String,
+              Name       => Null_Unbounded_String,
+              Not1       => Filter.all'Unrestricted_Access);
       end if;
    end "not";
 
@@ -1580,9 +1600,8 @@ package body GPS.Kernel is
    -- Set_Error_Message --
    -----------------------
 
-   procedure Set_Error_Message
-     (Filter : Action_Filter;
-      Msg    : Unbounded_String) is
+   procedure Set_Error_Message (Filter : Action_Filter; Msg : Unbounded_String)
+   is
    begin
       Filter.Error_Msg := Msg;
    end Set_Error_Message;
@@ -1616,8 +1635,8 @@ package body GPS.Kernel is
    -- Get_Debug_Name --
    --------------------
 
-   function Get_Debug_Name
-     (Filter : access Action_Filter_Record) return String is
+   function Get_Debug_Name (Filter : access Action_Filter_Record) return String
+   is
    begin
       if Filter = null then
          return "";
@@ -1634,21 +1653,32 @@ package body GPS.Kernel is
    -- Get_Debug_Name --
    --------------------
 
-   overriding function Get_Debug_Name
+   overriding
+   function Get_Debug_Name
      (Filter : access Base_Action_Filter_Record) return String is
    begin
       case Filter.Kind is
          when Standard_Filter =>
-            return "Base"
+            return
+              "Base"
               & (if Filter.Language /= ""
-                 then " lang=" & To_String (Filter.Language) else "")
+                 then " lang=" & To_String (Filter.Language)
+                 else "")
               & (if Filter.Shell /= ""
-                 then " shell=" & To_String (Filter.Shell) else "")
+                 then " shell=" & To_String (Filter.Shell)
+                 else "")
               & (if Filter.Module /= ""
-                 then " module=" & To_String (Filter.Module) else "");
-         when Filter_And      => return """and""";
-         when Filter_Not      => return """not""";
-         when Filter_Or       => return """or""";
+                 then " module=" & To_String (Filter.Module)
+                 else "");
+
+         when Filter_And      =>
+            return """and""";
+
+         when Filter_Not      =>
+            return """not""";
+
+         when Filter_Or       =>
+            return """or""";
       end case;
    end Get_Debug_Name;
 
@@ -1656,9 +1686,10 @@ package body GPS.Kernel is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Base_Action_Filter_Record;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Base_Action_Filter_Record; Context : Selection_Context)
+      return Boolean
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Result : Boolean := True;
@@ -1670,20 +1701,21 @@ package body GPS.Kernel is
                  and then GNATCOLL.VFS.No_File /= File_Information (Context)
                then
                   declare
-                     Lang : constant String := Get_Language_From_File
-                       (Get_Language_Handler (Kernel),
-                        File_Information (Context));
+                     Lang : constant String :=
+                       Get_Language_From_File
+                         (Get_Language_Handler (Kernel),
+                          File_Information (Context));
                   begin
-                     if not Equal
-                       (Lang, To_String (Filter.Language), False)
+                     if not Equal (Lang, To_String (Filter.Language), False)
                      then
                         Result := False;
                      end if;
                   end;
 
                elsif Has_Project_Information (Context) then
-                  Result := Project_Information (Context)
-                    .Has_Language (To_String (Filter.Language));
+                  Result :=
+                    Project_Information (Context).Has_Language
+                      (To_String (Filter.Language));
 
                else
                   Result := False;
@@ -1692,11 +1724,13 @@ package body GPS.Kernel is
 
             if Result
               and then Filter.Module /= Null_Unbounded_String
-              and then (Get_Creator (Context) = null
-                        or else not Equal
-                          (Module_Name (Module_ID (Get_Creator (Context))),
-                           To_String (Filter.Module),
-                           False))
+              and then
+                (Get_Creator (Context) = null
+                 or else
+                   not Equal
+                         (Module_Name (Module_ID (Get_Creator (Context))),
+                          To_String (Filter.Module),
+                          False))
             then
                Result := False;
             end if;
@@ -1704,12 +1738,11 @@ package body GPS.Kernel is
             if Result and then Filter.Shell /= Null_Unbounded_String then
                declare
                   Lang : constant Scripting_Language :=
-                           Lookup_Scripting_Language
-                             (Kernel.Scripts, To_String (Filter.Shell_Lang));
+                    Lookup_Scripting_Language
+                      (Kernel.Scripts, To_String (Filter.Shell_Lang));
 
                   function Substitution
-                    (Param : String;
-                     Mode  : Command_Line_Mode) return Arg_List;
+                    (Param : String; Mode : Command_Line_Mode) return Arg_List;
                   --  Local substitution of special chars
 
                   ------------------
@@ -1717,14 +1750,15 @@ package body GPS.Kernel is
                   ------------------
 
                   function Substitution
-                    (Param : String;
-                     Mode  : Command_Line_Mode) return Arg_List
+                    (Param : String; Mode : Command_Line_Mode) return Arg_List
                   is
                      pragma Unreferenced (Mode);
                      Done : aliased Boolean := False;
                   begin
-                     return Create (GPS.Kernel.Macros.Substitute
-                                    (Param, Context, False, Done'Access));
+                     return
+                       Create
+                         (GPS.Kernel.Macros.Substitute
+                            (Param, Context, False, Done'Access));
                   end Substitution;
 
                   CL : Arg_List;
@@ -1734,9 +1768,10 @@ package body GPS.Kernel is
                      Result := False;
 
                   else
-                     CL := Parse_String
-                       (To_String (Filter.Shell),
-                        Command_Line_Treatment (Lang));
+                     CL :=
+                       Parse_String
+                         (To_String (Filter.Shell),
+                          Command_Line_Treatment (Lang));
 
                      Substitute
                        (CL,
@@ -1746,11 +1781,11 @@ package body GPS.Kernel is
                      declare
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
-                         GNATCOLL.Scripts.Execute_Command
+                          GNATCOLL.Scripts.Execute_Command
                             (Lang,
                              CL,
                              Hide_Output => True,
-                             Errors => Errors'Unchecked_Access);
+                             Errors      => Errors'Unchecked_Access);
                      begin
                         Result := not Errors and then R;
                      end;
@@ -1760,15 +1795,17 @@ package body GPS.Kernel is
 
             return Result;
 
-         when Filter_And =>
-            return Filter_Matches (Filter.And1, Context)
+         when Filter_And      =>
+            return
+              Filter_Matches (Filter.And1, Context)
               and then Filter_Matches (Filter.And2, Context);
 
-         when Filter_Or =>
-            return Filter_Matches (Filter.Or1, Context)
+         when Filter_Or       =>
+            return
+              Filter_Matches (Filter.Or1, Context)
               or else Filter_Matches (Filter.Or2, Context);
 
-         when Filter_Not =>
+         when Filter_Not      =>
             return not Filter_Matches (Filter.Not1, Context);
       end case;
    end Filter_Matches_Primitive;
@@ -1778,8 +1815,8 @@ package body GPS.Kernel is
    --------------------
 
    function Filter_Matches
-     (Filter  : access Action_Filter_Record'Class;
-      Context : Selection_Context) return Boolean
+     (Filter : access Action_Filter_Record'Class; Context : Selection_Context)
+      return Boolean
    is
       use Filter_Result_Map;
       C      : Filter_Result_Map.Cursor;
@@ -1802,7 +1839,7 @@ package body GPS.Kernel is
       else
          if Active (Me_Filters) then
             Increase_Indent
-               (Me_Filters, "Running filter " & Filter.Get_Debug_Name);
+              (Me_Filters, "Running filter " & Filter.Get_Debug_Name);
          end if;
 
          Result := Filter_Matches_Primitive (Filter, Context);
@@ -1811,8 +1848,7 @@ package body GPS.Kernel is
             Decrease_Indent (Me_Filters, "");
          end if;
 
-         Context.Ref.Get.Computed_Filters.Insert
-           (Filter.all'Address, Result);
+         Context.Ref.Get.Computed_Filters.Insert (Filter.all'Address, Result);
          return Result;
       end if;
    end Filter_Matches;
@@ -1839,8 +1875,8 @@ package body GPS.Kernel is
    -- In_Hyper_Mode --
    -------------------
 
-   function In_Hyper_Mode
-     (Kernel : access Kernel_Handle_Record) return Boolean is
+   function In_Hyper_Mode (Kernel : access Kernel_Handle_Record) return Boolean
+   is
    begin
       return Kernel.Hyper_Mode;
    end In_Hyper_Mode;
@@ -1863,7 +1899,8 @@ package body GPS.Kernel is
    function In_Signature_Help
      (Kernel : access Kernel_Handle_Record) return Boolean is
    begin
-      return Kernel.In_Signature_Help_Provider /= null
+      return
+        Kernel.In_Signature_Help_Provider /= null
         and then Kernel.In_Signature_Help_Provider.all;
    end In_Signature_Help;
 
@@ -1900,23 +1937,24 @@ package body GPS.Kernel is
    -------------------------
 
    function Refactoring_Context
-     (Kernel : access Kernel_Handle_Record)
-      return Refactoring.Factory_Context is
+     (Kernel : access Kernel_Handle_Record) return Refactoring.Factory_Context
+   is
    begin
       if Kernel.Refactoring = null then
-         Kernel.Refactoring := new GPS_Refactoring_Factory_Context'
-           (Kernel                 => Kernel_Handle (Kernel),
-            Buffer_Factory         => Get_Buffer_Factory (Kernel),
-            Db                     => Kernel.Databases,
-            Add_Subprogram_Box     => False,
-            Add_In_Keyword         => False,
-            Create_Subprogram_Decl => False);
+         Kernel.Refactoring :=
+           new GPS_Refactoring_Factory_Context'
+             (Kernel                 => Kernel_Handle (Kernel),
+              Buffer_Factory         => Get_Buffer_Factory (Kernel),
+              Db                     => Kernel.Databases,
+              Add_Subprogram_Box     => False,
+              Add_In_Keyword         => False,
+              Create_Subprogram_Decl => False);
       end if;
 
       --  Update the flags from the current value of the preferences
 
       Kernel.Refactoring.Add_Subprogram_Box := Add_Subprogram_Box.Get_Pref;
-      Kernel.Refactoring.Add_In_Keyword     := Add_In_Keyword.Get_Pref;
+      Kernel.Refactoring.Add_In_Keyword := Add_In_Keyword.Get_Pref;
       Kernel.Refactoring.Create_Subprogram_Decl :=
         Create_Subprogram_Decl.Get_Pref;
 
@@ -1931,8 +1969,7 @@ package body GPS.Kernel is
      (Kernel        : access Kernel_Handle_Record;
       Setter        : Key_Setter;
       Getter        : Key_Getter;
-      Getter_Simple : Key_Getter_Simple)
-   is
+      Getter_Simple : Key_Getter_Simple) is
    begin
       Kernel.Key_Setter_Function := Setter;
       Kernel.Key_Getter_Function := Getter;
@@ -1962,14 +1999,14 @@ package body GPS.Kernel is
      (Kernel          : access Kernel_Handle_Record'Class;
       Action          : String;
       Use_Markup      : Boolean := True;
-      Return_Multiple : Boolean := True) return String
-   is
+      Return_Multiple : Boolean := True) return String is
    begin
       if Kernel.Key_Getter_Function = null then
          return "";
       else
-         return Kernel.Key_Getter_Function
-           (Kernel, Action, Use_Markup, Return_Multiple);
+         return
+           Kernel.Key_Getter_Function
+             (Kernel, Action, Use_Markup, Return_Multiple);
       end if;
    end Get_Shortcut;
 
@@ -1978,16 +2015,16 @@ package body GPS.Kernel is
    -------------------------
 
    procedure Get_Shortcut_Simple
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Key        : out Gdk.Types.Gdk_Key_Type;
-      Button     : out Guint;
-      Mods       : out Gdk.Types.Gdk_Modifier_Type) is
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type) is
    begin
       if Kernel.Key_Getter_Simple_Function = null then
-         Key    := 0;
+         Key := 0;
          Button := 0;
-         Mods   := 0;
+         Mods := 0;
       else
          Kernel.Key_Getter_Simple_Function (Kernel, Action, Key, Button, Mods);
       end if;
@@ -2013,7 +2050,7 @@ package body GPS.Kernel is
    --------------------------
 
    function Get_Messages_Console
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is
    begin
       return Kernel.Messages.Get_Console_Window;
@@ -2035,9 +2072,8 @@ package body GPS.Kernel is
    -------------------------
 
    function Get_Messages_Window
-     (Kernel  : not null access Kernel_Handle_Record'Class)
-      return Virtual_Console
-   is
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Virtual_Console is
    begin
       return Kernel.Messages.Get_Virtual_Console;
    end Get_Messages_Window;
@@ -2046,12 +2082,13 @@ package body GPS.Kernel is
    -- Messages_Window --
    ---------------------
 
-   overriding function Messages_Window
+   overriding
+   function Messages_Window
      (Self : not null access Kernel_Handle_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access is
    begin
-      return GPS.Messages_Windows.Abstract_Messages_Window_Access
-        (Self.Messages);
+      return
+        GPS.Messages_Windows.Abstract_Messages_Window_Access (Self.Messages);
    end Messages_Window;
 
    ------------
@@ -2121,8 +2158,7 @@ package body GPS.Kernel is
    --------------------
 
    procedure Set_Build_Mode
-     (Kernel   : access Kernel_Handle_Record'Class;
-      New_Mode : String) is
+     (Kernel : access Kernel_Handle_Record'Class; New_Mode : String) is
    begin
       Trace (Me, "Change build mode to: " & New_Mode);
 
@@ -2148,7 +2184,8 @@ package body GPS.Kernel is
    -- Get_Build_Mode --
    --------------------
 
-   overriding function Get_Build_Mode
+   overriding
+   function Get_Build_Mode
      (Kernel : not null access Kernel_Handle_Record) return String
    is
       Prop  : String_Property;
@@ -2173,7 +2210,8 @@ package body GPS.Kernel is
    -- Process_Launcher --
    ----------------------
 
-   overriding function Process_Launcher
+   overriding
+   function Process_Launcher
      (Self : not null access Kernel_Handle_Record)
       return GPS.Process_Launchers.Process_Launcher is
    begin
@@ -2184,7 +2222,8 @@ package body GPS.Kernel is
    -- Get_Target --
    ----------------
 
-   overriding function Get_Target
+   overriding
+   function Get_Target
      (Self : not null access Kernel_Handle_Record) return String
    is
       P : constant Project_Type := Self.Registry.Tree.Root_Project;
@@ -2200,7 +2239,8 @@ package body GPS.Kernel is
    -- Get_Runtime --
    -----------------
 
-   overriding function Get_Runtime
+   overriding
+   function Get_Runtime
      (Self : not null access Kernel_Handle_Record) return String is
    begin
       return Self.Registry.Tree.Root_Project.Get_Runtime;
@@ -2211,24 +2251,19 @@ package body GPS.Kernel is
    --------------
 
    procedure Register
-      (Self    : not null access Hook_Types'Class;
-       Kernel  : not null access Kernel_Handle_Record'Class)
-   is
+     (Self   : not null access Hook_Types'Class;
+      Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Kernel.Hooks.Include
-         (Hook_Type_Prefix & Self.Type_Name, Hook_Types_Access (Self));
-      Kernel.Hooks.Include
-        (To_String (Self.Name), Hook_Types_Access (Self));
+        (Hook_Type_Prefix & Self.Type_Name, Hook_Types_Access (Self));
+      Kernel.Hooks.Include (To_String (Self.Name), Hook_Types_Access (Self));
    end Register;
 
    --------------------
    -- Remove_Hook_Cb --
    --------------------
 
-   procedure Remove_Hook_Cb
-      (Data : System.Address;
-       Obj  : System.Address)
-   is
+   procedure Remove_Hook_Cb (Data : System.Address; Obj : System.Address) is
       pragma Unreferenced (Obj);
       D : Hook_User_Data_Access := Convert (Data);
    begin
@@ -2241,12 +2276,12 @@ package body GPS.Kernel is
    ----------------------
 
    procedure Remove_Hook_Func
-      (Self  : in out Hook_Types'Class;
-       Func  : not null access Hook_Function'Class)
+     (Self : in out Hook_Types'Class;
+      Func : not null access Hook_Function'Class)
    is
       function If_Matches
-         (F : not null access Hook_Function'Class) return Boolean
-         is (F = Func);
+        (F : not null access Hook_Function'Class) return Boolean
+      is (F = Func);
    begin
       Self.Remove (If_Matches'Access);
    end Remove_Hook_Func;
@@ -2265,9 +2300,12 @@ package body GPS.Kernel is
       D : Hook_User_Data_Access;
    begin
       if Active (Me_Hooks) then
-         Trace (Me_Hooks, "Adding "
-             & GPS.Kernel.Hooks.Name (Func) & " to hook "
-             & GPS.Kernel.Hooks.Name (Self));
+         Trace
+           (Me_Hooks,
+            "Adding "
+            & GPS.Kernel.Hooks.Name (Func)
+            & " to hook "
+            & GPS.Kernel.Hooks.Name (Self));
       end if;
 
       Func.Refcount := Func.Refcount + 1;
@@ -2284,9 +2322,10 @@ package body GPS.Kernel is
       if Watch /= null then
          --  D is freed as part of Remove_Hook_Cb.
          --  The access on Self is valid, since a hook is never freed.
-         D := new Hook_User_Data'
-            (Hook => Self'Unchecked_Access,
-             Func => Func.all'Unrestricted_Access);
+         D :=
+           new Hook_User_Data'
+             (Hook => Self'Unchecked_Access,
+              Func => Func.all'Unrestricted_Access);
          Watch.Weak_Ref (Remove_Hook_Cb'Access, D.all'Address);
       end if;
    end Internal_Add_Hook_Func;
@@ -2296,10 +2335,10 @@ package body GPS.Kernel is
    -------------------
 
    procedure Add_Hook_Func
-      (Self  : in out Hook_Types'Class;
-       Func  : not null access Hook_Function'Class;
-       Last  : Boolean := True;
-       Watch : access Glib.Object.GObject_Record'Class := null) is
+     (Self  : in out Hook_Types'Class;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null) is
    begin
       Internal_Add_Hook_Func (Self, Self.Funcs, Func, Last, Watch);
    end Add_Hook_Func;
@@ -2309,10 +2348,10 @@ package body GPS.Kernel is
    ----------------------------
 
    procedure Add_Debounce_Hook_Func
-      (Self  : in out Debounce_Hook_Types'Class;
-       Func  : not null access Hook_Function'Class;
-       Last  : Boolean := True;
-       Watch : access Glib.Object.GObject_Record'Class := null) is
+     (Self  : in out Debounce_Hook_Types'Class;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null) is
    begin
       Internal_Add_Hook_Func (Self, Self.Asynch_Funcs, Func, Last, Watch);
    end Add_Debounce_Hook_Func;
@@ -2323,13 +2362,13 @@ package body GPS.Kernel is
 
    function Remove
      (List       : in out Hook_Func_Lists.List;
-      If_Matches : not null access function
-        (F : not null access Hook_Function'Class) return Boolean;
-      Hook_Name : String)
-      return Boolean
+      If_Matches :
+        not null access function
+          (F : not null access Hook_Function'Class) return Boolean;
+      Hook_Name  : String) return Boolean
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (Hook_Function'Class, Hook_Function_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Hook_Function'Class, Hook_Function_Access);
 
       use Hook_Func_Lists;
 
@@ -2342,8 +2381,11 @@ package body GPS.Kernel is
          if If_Matches (F) then
             if Active (Me_Hooks) then
                Trace
-                 (Me_Hooks, "Removing " & GPS.Kernel.Hooks.Name (F)
-                  & " from hook " & Hook_Name);
+                 (Me_Hooks,
+                  "Removing "
+                  & GPS.Kernel.Hooks.Name (F)
+                  & " from hook "
+                  & Hook_Name);
             end if;
             F.Refcount := F.Refcount - 1;
             if F.Refcount = 0 then
@@ -2365,11 +2407,13 @@ package body GPS.Kernel is
    ------------
 
    procedure Remove
-      (Self       : in out Hook_Types;
-       If_Matches : not null access function
+     (Self       : in out Hook_Types;
+      If_Matches :
+        not null access function
           (F : not null access Hook_Function'Class) return Boolean)
    is
-      Result : Boolean with Unreferenced;
+      Result : Boolean
+      with Unreferenced;
 
    begin
       Result := Remove (Self.Funcs, If_Matches, Hooks.Name (Self));
@@ -2379,12 +2423,15 @@ package body GPS.Kernel is
    -- Remove --
    ------------
 
-   overriding procedure Remove
-      (Self       : in out Debounce_Hook_Types;
-       If_Matches : not null access function
+   overriding
+   procedure Remove
+     (Self       : in out Debounce_Hook_Types;
+      If_Matches :
+        not null access function
           (F : not null access Hook_Function'Class) return Boolean)
    is
-      Result : Boolean with Unreferenced;
+      Result : Boolean
+      with Unreferenced;
 
    begin
       if not Remove (Self.Funcs, If_Matches, Hooks.Name (Self)) then
@@ -2397,21 +2444,19 @@ package body GPS.Kernel is
    --------------------
 
    function List_Functions
-      (Self : not null access Hook_Types)
-      return GNAT.Strings.String_List
+     (Self : not null access Hook_Types) return GNAT.Strings.String_List
    is
       use GPS.Kernel.Scripts.Hooks;
-      Result : GNAT.Strings.String_List
-        (1 .. Integer (Self.Funcs.Length));
-      Idx : Integer := Result'First - 1;
+      Result : GNAT.Strings.String_List (1 .. Integer (Self.Funcs.Length));
+      Idx    : Integer := Result'First - 1;
 
    begin
       for F of Self.Funcs loop
          Idx := Idx + 1;
 
          if F.Func.all in Python_Hook_Function'Class then
-            Result (Idx) := new String'
-               (Python_Hook_Function (F.Func.all).Func.Get_Name);
+            Result (Idx) :=
+              new String'(Python_Hook_Function (F.Func.all).Func.Get_Name);
          else
             Result (Idx) := new String'(External_Tag (F.Func'Tag));
          end if;
@@ -2424,15 +2469,18 @@ package body GPS.Kernel is
    -- List_Functions --
    --------------------
 
-   overriding function List_Functions
-      (Self : not null access Debounce_Hook_Types)
+   overriding
+   function List_Functions
+     (Self : not null access Debounce_Hook_Types)
       return GNAT.Strings.String_List
    is
       use GPS.Kernel.Scripts.Hooks;
-      Result : GNAT.Strings.String_List
-        (1 .. Integer (Self.Funcs.Length) +
-             Integer (Self.Asynch_Funcs.Length));
-      Idx : Integer := Result'First - 1;
+      Result :
+        GNAT.Strings.String_List
+          (1
+           ..
+             Integer (Self.Funcs.Length) + Integer (Self.Asynch_Funcs.Length));
+      Idx    : Integer := Result'First - 1;
 
       procedure Append (F : Hook_Func_Info);
 
@@ -2443,8 +2491,8 @@ package body GPS.Kernel is
       procedure Append (F : Hook_Func_Info) is
       begin
          if F.Func.all in Python_Hook_Function'Class then
-            Result (Idx) := new String'
-               (Python_Hook_Function (F.Func.all).Func.Get_Name);
+            Result (Idx) :=
+              new String'(Python_Hook_Function (F.Func.all).Func.Get_Name);
          else
             Result (Idx) := new String'(External_Tag (F.Func'Tag));
          end if;
@@ -2469,9 +2517,8 @@ package body GPS.Kernel is
    ---------------------
 
    function Get_Application
-      (Self : not null access Kernel_Handle_Record'Class)
-      return not null access Gtk_Application_Record'Class
-   is
+     (Self : not null access Kernel_Handle_Record'Class)
+      return not null access Gtk_Application_Record'Class is
    begin
       return Self.Application;
    end Get_Application;
@@ -2480,7 +2527,8 @@ package body GPS.Kernel is
    -- Get_Scheduled_Command --
    ---------------------------
 
-   overriding function Get_Scheduled_Command
+   overriding
+   function Get_Scheduled_Command
      (Kernel  : not null access Kernel_Handle_Record;
       Command : access Commands.Root_Command'Class)
       return Commands.Command_Access
@@ -2490,8 +2538,9 @@ package body GPS.Kernel is
       if Kernel.Tasks = null or else Command = null then
          return null;
       else
-         return Command_Access
-           (Kernel.Tasks.Scheduled_Command_From_Command (Command));
+         return
+           Command_Access
+             (Kernel.Tasks.Scheduled_Command_From_Command (Command));
       end if;
    end Get_Scheduled_Command;
 
@@ -2519,14 +2568,15 @@ package body GPS.Kernel is
    is
       Dummy : Boolean;
    begin
-      if Kernel.Default_Line_Click_Actions
-        (Click_Type) /= Null_Unbounded_String
+      if Kernel.Default_Line_Click_Actions (Click_Type)
+        /= Null_Unbounded_String
       then
-         Dummy := Execute_Action
-           (Kernel,
-            Action  => To_String
-              (Kernel.Default_Line_Click_Actions (Click_Type)),
-            Context => Context);
+         Dummy :=
+           Execute_Action
+             (Kernel,
+              Action  =>
+                To_String (Kernel.Default_Line_Click_Actions (Click_Type)),
+              Context => Context);
       end if;
    end Execute_Default_Line_Number_Click;
 
@@ -2542,12 +2592,12 @@ package body GPS.Kernel is
       use GPS.Editors;
 
       Editor : constant Editor_Buffer'Class :=
-                 GPS.Editors.Get
-                   (This        => Kernel.Get_Buffer_Factory.all,
-                    File        => File,
-                    Force       => False,
-                    Open_Buffer => False,
-                    Open_View   => False);
+        GPS.Editors.Get
+          (This        => Kernel.Get_Buffer_Factory.all,
+           File        => File,
+           Force       => False,
+           Open_Buffer => False,
+           Open_View   => False);
    begin
       if Editor = Nil_Editor_Buffer
         or else Editor.Current_View = Nil_Editor_View
@@ -2580,13 +2630,13 @@ package body GPS.Kernel is
    -- Semantic_Tree_Updated --
    ---------------------------
 
-   overriding procedure Semantic_Tree_Updated
-     (Kernel  : not null access Kernel_Handle_Record;
-      File    : GNATCOLL.VFS.Virtual_File) is
+   overriding
+   procedure Semantic_Tree_Updated
+     (Kernel : not null access Kernel_Handle_Record;
+      File   : GNATCOLL.VFS.Virtual_File) is
    begin
       GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
-        (Kernel => Kernel,
-         File   => File);
+        (Kernel => Kernel, File => File);
    end Semantic_Tree_Updated;
 
 end GPS.Kernel;

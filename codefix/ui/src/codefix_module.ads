@@ -17,7 +17,7 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Menu;               use Gtk.Menu;
 with GPS.Kernel;             use GPS.Kernel;
@@ -42,26 +42,25 @@ package Codefix_Module is
    type Codefix_Session is access all Codefix_Session_Record;
 
    procedure Create_Submenu
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Menu         : access Gtk.Menu.Gtk_Menu_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id);
    --  Add to menu all the possible fixes for Error
 
    procedure Create_Pixmap_And_Category
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id);
    --  Add to the location box a pixmap that will fixes the error.
 
    procedure Remove_Pixmap
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Session      : access Codefix_Session_Record;
-      Error        : Error_Id);
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Session : access Codefix_Session_Record;
+      Error   : Error_Id);
    --  Remove from the location box the pixmap of the error.
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Register the codefix-related preferences
 
    package Codefix_Remove_Policy_Preferences is new

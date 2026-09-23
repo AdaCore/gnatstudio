@@ -23,7 +23,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.VFS;
 
-with Codefix.Text_Manager;  use Codefix.Text_Manager;
+with Codefix.Text_Manager; use Codefix.Text_Manager;
 
 package Codefix.Ada_Tools is
 
@@ -110,8 +110,7 @@ private
    function Get_Arr_Str (Str : String) return Arr_Str;
    --  Return an array in witch each line is initialized with a part of Str.
 
-   procedure Try_Link_Clauses
-     (With_Clause : Ptr_With; Use_Clause  : Ptr_Use);
+   procedure Try_Link_Clauses (With_Clause : Ptr_With; Use_Clause : Ptr_Use);
    --  Make the link between With_Clause and Use_Clause if the use is a use of
    --  a package evocated in With_Clause.
 

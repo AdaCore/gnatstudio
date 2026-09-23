@@ -26,15 +26,15 @@ with GNATCOLL.Symbols;
 package C_Analyzer is
 
    procedure Analyze_C_Source
-     (Buffer           : String;
-      Symbols          : GNATCOLL.Symbols.Symbol_Table_Access;
-      Indent_Params    : Indent_Parameters;
-      Format           : Boolean               := True;
-      From, To         : Natural               := 0;
-      Replace          : Replace_Text_Callback := null;
-      Constructs       : Construct_List_Access := null;
-      Callback         : Entity_Callback       := null;
-      Enable_Cpp       : Boolean               := False);
+     (Buffer        : String;
+      Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
+      Indent_Params : Indent_Parameters;
+      Format        : Boolean := True;
+      From, To      : Natural := 0;
+      Replace       : Replace_Text_Callback := null;
+      Constructs    : Construct_List_Access := null;
+      Callback      : Entity_Callback := null;
+      Enable_Cpp    : Boolean := False);
    --  Analyze a given C/C++ source in Buffer, and perform source reformatting
    --  between lines From .. To if Format is True.
    --  If Constructs is not null, store the list of constructs analyzed.

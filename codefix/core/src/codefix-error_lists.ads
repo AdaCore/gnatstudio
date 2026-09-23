@@ -19,12 +19,12 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Regpat;           use GNAT.Regpat;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNAT.Regpat;  use GNAT.Regpat;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 
-with Projects;              use Projects;
+with Projects; use Projects;
 
 package Codefix.Error_Lists is
 
@@ -75,8 +75,7 @@ package Codefix.Error_Lists is
       File   : Virtual_File;
       Line   : Integer;
       Column : Visible_Column_Type;
-      Order  : Long_Long_Integer)
-      return Error_Message_Iterator;
+      Order  : Long_Long_Integer) return Error_Message_Iterator;
    --  Return an iterator starting on the first message matching the location
    --  given in parameter - and won't go beyond that location. The retreived
    --  message is the one starting at the given order
@@ -110,8 +109,8 @@ private
 
    function Lt (Left, Right : Error_Message) return Boolean;
 
-   package Internal_Message_List_Pckg is new Ada.Containers.Ordered_Sets
-     (Error_Message, "<" => Lt);
+   package Internal_Message_List_Pckg is new
+     Ada.Containers.Ordered_Sets (Error_Message, "<" => Lt);
 
    use Internal_Message_List_Pckg;
 
@@ -125,25 +124,29 @@ private
 
    type Internal_List_Access is access all Internal_Message_List_Pckg.Set;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Internal_Message_List_Pckg.Set, Internal_List_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Internal_Message_List_Pckg.Set,
+        Internal_List_Access);
 
-   package Error_Message_Container is new Ada.Containers.Ordered_Maps
-     (Messages_Loc, Internal_List_Access);
+   package Error_Message_Container is new
+     Ada.Containers.Ordered_Maps (Messages_Loc, Internal_List_Access);
 
    use Error_Message_Container;
 
    type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Regpat.Pattern_Matcher,
+        Pattern_Matcher_Access);
 
    type Error_Message_List_Record is record
       Messages : Error_Message_Container.Map;
 
-      File_Regexp : Pattern_Matcher_Access;
+      File_Regexp                                  : Pattern_Matcher_Access;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer;
+      Style_Index, Warning_Index                   : Integer;
    end record;
 
    type Error_Message_List is access all Error_Message_List_Record;

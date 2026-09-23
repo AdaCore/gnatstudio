@@ -19,7 +19,7 @@
 --  processes.
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;  use GPS.Kernel;
 with VSS.Strings; use VSS.Strings;
 
 package GVD.Proc_Utils is
@@ -30,20 +30,18 @@ package GVD.Proc_Utils is
    subtype Info_Len_Range is Natural range 0 .. 4095;
    --  Range of a process information.
 
-   procedure Open_Processes (Handle : out Process_Handle;
-                             Kernel : Kernel_Handle);
+   procedure Open_Processes
+     (Handle : out Process_Handle; Kernel : Kernel_Handle);
    --  Initialize a connection to the debug machine in order to retrieve
    --  process information.
 
    type Process_Info is record
-      Id : Virtual_String;
+      Id   : Virtual_String;
       Name : Virtual_String;
    end record;
 
    procedure Next_Process
-     (Handle  : Process_Handle;
-      Info    : out Process_Info;
-      Success : out Boolean);
+     (Handle : Process_Handle; Info : out Process_Info; Success : out Boolean);
    --  Return information concerning the next process.
    --  Success is set to True if there is a remaining process, false otherwise.
 
@@ -53,9 +51,7 @@ package GVD.Proc_Utils is
    package Process_Info_List is new
      Ada.Containers.Indefinite_Doubly_Linked_Lists (Process_Info, "=");
 
-   function Py_PSUtils
-     (Kernel : Kernel_Handle)
-      return Process_Info_List.List;
+   function Py_PSUtils (Kernel : Kernel_Handle) return Process_Info_List.List;
    --  Return the list of processes using the psutils python package.
 
 private

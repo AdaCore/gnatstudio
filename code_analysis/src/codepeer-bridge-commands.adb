@@ -77,17 +77,16 @@ package body CodePeer.Bridge.Commands is
       end Add_Simple_Child;
 
       Database_Node  : XML_Utils.Node_Ptr :=
-                         Create_Database_Node
-                           (Server_URL          => Server_URL,
-                            Output_Directory    => Output_Directory,
-                            SAM_Directory       => SAM_Directory,
-                            DB_Directory        => DB_Directory,
-                            Message_Patterns    => Message_Patterns,
-                            Additional_Patterns => Additional_Patterns);
+        Create_Database_Node
+          (Server_URL          => Server_URL,
+           Output_Directory    => Output_Directory,
+           SAM_Directory       => SAM_Directory,
+           DB_Directory        => DB_Directory,
+           Message_Patterns    => Message_Patterns,
+           Additional_Patterns => Additional_Patterns);
       Add_Audit_Node : constant XML_Utils.Node_Ptr :=
-                         new XML_Utils.Node'
-                               (Tag    => new String'("add_audit_record"),
-                                others => <>);
+        new XML_Utils.Node'
+          (Tag => new String'("add_audit_record"), others => <>);
       Message_Node   : XML_Utils.Node_Ptr;
 
    begin
@@ -103,7 +102,7 @@ package body CodePeer.Bridge.Commands is
            new XML_Utils.Node'
              (Tag    => new String'("message"),
               Value  =>
-                 new String'(To_String (Message.Audit.First_Element.Comment)),
+                new String'(To_String (Message.Audit.First_Element.Comment)),
               others => <>);
          XML_Utils.Set_Attribute_S
            (Message_Node, "identifier", Positive'Image (Message.Id));
@@ -118,7 +117,8 @@ package body CodePeer.Bridge.Commands is
               (Message.Audit.First_Element.Status.Category));
          XML_Utils.Set_Attribute_S
            (Message_Node,
-            "approved", To_String (Message.Audit.First_Element.Approved_By));
+            "approved",
+            To_String (Message.Audit.First_Element.Approved_By));
 
          if Is_GNATSAS then
             XML_Utils.Set_Attribute_S
@@ -126,7 +126,8 @@ package body CodePeer.Bridge.Commands is
             XML_Utils.Set_Attribute_S
               (Message_Node, "kind", To_String (Message.GNATSAS_Id.Kind));
             XML_Utils.Set_Attribute_S
-              (Message_Node, "key_seq",
+              (Message_Node,
+               "key_seq",
                To_String (Message.GNATSAS_Id.Key_Seq));
 
             --  Add those as data of subnodes so that we correctly deal with
@@ -138,7 +139,8 @@ package body CodePeer.Bridge.Commands is
             Add_Simple_Child
               (Message_Node, "key", To_String (Message.GNATSAS_Id.Key));
             Add_Simple_Child
-              (Message_Node, "comment",
+              (Message_Node,
+               "comment",
                To_String (Message.Audit.First_Element.Comment));
          end if;
 
@@ -195,17 +197,15 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
-                           Create_Database_Node
-                             (Server_URL          => Server_URL,
-                              Output_Directory    => Output_Directory,
-                              SAM_Directory       => No_File,
-                              DB_Directory        => DB_Directory,
-                              Message_Patterns    => Message_Patterns,
-                              Additional_Patterns => Additional_Patterns);
+        Create_Database_Node
+          (Server_URL          => Server_URL,
+           Output_Directory    => Output_Directory,
+           SAM_Directory       => No_File,
+           DB_Directory        => DB_Directory,
+           Message_Patterns    => Message_Patterns,
+           Additional_Patterns => Additional_Patterns);
       Audit_Trail_Node : constant XML_Utils.Node_Ptr :=
-                           new XML_Utils.Node'
-                             (Tag    => new String'("audit_trail"),
-                              others => <>);
+        new XML_Utils.Node'(Tag => new String'("audit_trail"), others => <>);
       Ids              : Unbounded_String;
 
    begin
@@ -251,10 +251,9 @@ package body CodePeer.Bridge.Commands is
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr is
    begin
-      return Database_Node : constant XML_Utils.Node_Ptr
-        := new XML_Utils.Node'
-          (Tag    => new String'("database"),
-           others => <>)
+      return
+         Database_Node : constant XML_Utils.Node_Ptr :=
+           new XML_Utils.Node'(Tag => new String'("database"), others => <>)
       do
          if Server_URL /= "" then
             XML_Utils.Set_Attribute_S
@@ -269,11 +268,12 @@ package body CodePeer.Bridge.Commands is
                   XML_Utils.Set_Attribute_S
                     (Database_Node, "cpm_file", To_String (SAM_File));
                --  use cpm instead of sam for compatibility
+
                end if;
 
                XML_Utils.Set_Attribute_S
                  (Database_Node, "cpm_directory", +SAM_Directory.Full_Name);
-               --  use cpm instead of sam for compatibility
+            --  use cpm instead of sam for compatibility
 
             else
                XML_Utils.Set_Attribute_S
@@ -289,7 +289,8 @@ package body CodePeer.Bridge.Commands is
          if Additional_Patterns /= No_File then
             XML_Utils.Set_Attribute_S
               (Database_Node,
-               "additional_patterns", +Additional_Patterns.Full_Name);
+               "additional_patterns",
+               +Additional_Patterns.Full_Name);
          end if;
       end return;
    end Create_Database_Node;
@@ -313,17 +314,15 @@ package body CodePeer.Bridge.Commands is
       Maximum_Version      : Format_Version)
    is
       Database_Node   : XML_Utils.Node_Ptr :=
-                         Create_Database_Node
-                           (Server_URL          => Server_URL,
-                            Output_Directory    => Output_Directory,
-                            SAM_Directory       => SAM_Directory,
-                            DB_Directory        => DB_Directory,
-                            Message_Patterns    => Message_Patterns,
-                            Additional_Patterns => Additional_Patterns);
+        Create_Database_Node
+          (Server_URL          => Server_URL,
+           Output_Directory    => Output_Directory,
+           SAM_Directory       => SAM_Directory,
+           DB_Directory        => DB_Directory,
+           Message_Patterns    => Message_Patterns,
+           Additional_Patterns => Additional_Patterns);
       Inspection_Node : constant XML_Utils.Node_Ptr :=
-                          new XML_Utils.Node'
-                            (Tag    => new String'("inspection"),
-                             others => <>);
+        new XML_Utils.Node'(Tag => new String'("inspection"), others => <>);
 
       procedure Do_Annot_File (P : Annot_File_Sets.Cursor);
       --  Write one annotation file path
@@ -336,10 +335,10 @@ package body CodePeer.Bridge.Commands is
          File : constant String :=
            To_String (Annot_File_Sets.Element (Annot_Files, P));
 
-         Node  : constant XML_Utils.Node_Ptr :=
+         Node : constant XML_Utils.Node_Ptr :=
            new XML_Utils.Node'
              (Tag    => new String'("annotation_file"),
-              Value => new String'(File),
+              Value  => new String'(File),
               others => <>);
       begin
          XML_Utils.Add_Child (Database_Node, Node);
@@ -358,10 +357,7 @@ package body CodePeer.Bridge.Commands is
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute_S
-        (Database_Node,
-         "display_progress",
-         "true");
+      XML_Utils.Set_Attribute_S (Database_Node, "display_progress", "true");
       XML_Utils.Set_Attribute_S
         (Inspection_Node, "output_file", +Inspection_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be

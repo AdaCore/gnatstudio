@@ -25,14 +25,14 @@ private package CodePeer.Listeners is
 
    type Listener_Access is access all Listener'Class;
 
-   overriding function Message_Can_Be_Destroyed
+   overriding
+   function Message_Can_Be_Destroyed
      (Self    : not null access Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
       return Boolean;
 
    procedure Set_Cleanup_Mode
-     (Self    : not null access Listener;
-      Enabled : Boolean);
+     (Self : not null access Listener; Enabled : Boolean);
 
 private
 

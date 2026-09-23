@@ -25,7 +25,7 @@ with GNAT.Strings;
 
 with VSS.Strings;
 
-with Basic_Types;   use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 package GPS.Search is
 
@@ -56,7 +56,7 @@ package GPS.Search is
    --  Return a suitable label for the given search kind
    --  (e.g : Fuzzy -  > "Fuzzy matching").
 
-   Default_Tab_Width    : constant := 8;
+   Default_Tab_Width : constant := 8;
 
    Max_Capturing_Groups : constant := 10;
    --  Maximum number of capturing parenthesis groups for which we want to
@@ -78,9 +78,10 @@ package GPS.Search is
             null;
 
          when True =>
-            Index : UTF8_Code_Unit_Count;
+            Index          : UTF8_Code_Unit_Count;
             --  Index in the buffer string, in UTF-8 code units
-            Line  : Natural;   --  line corresponding to this index (from 1)
+            Line           :
+              Natural;   --  line corresponding to this index (from 1)
             Column         : Character_Offset_Type;  --  column for this index
             Visible_Column : Visible_Column_Type; --  visible column for this
       end case;
@@ -98,8 +99,8 @@ package GPS.Search is
       Line           : Natural;
       Column         : Character_Offset_Type := 1;
       Visible_Column : Visible_Column_Type := 1) return Buffer_Position
-   is (Buffer_Position'(True, UTF8_Code_Unit_Count (Index), Line, Column,
-                        Visible_Column));
+   is (Buffer_Position'
+         (True, UTF8_Code_Unit_Count (Index), Line, Column, Visible_Column));
    --  A position at Index of Line. The search engines walk the buffer in
    --  String indices, while a position records an offset in UTF-8 code units.
 
@@ -128,23 +129,23 @@ package GPS.Search is
       --  Locations of start and end of the current match. When the match is
       --  an empty string set Finish to Unknown_Position.
 
-      Score         : Natural;
+      Score : Natural;
       --  The score for the current match
 
-      Buffer_Start  : Integer;
-      Buffer_End    : Integer;
+      Buffer_Start : Integer;
+      Buffer_End   : Integer;
       --  The range of the buffer that we are searching
 
-      Ref           : Buffer_Position;
+      Ref : Buffer_Position;
       --  last known position in the buffer
 
-      Groups        : GNAT.Regpat.Match_Array (0 .. Max_Capturing_Groups);
+      Groups : GNAT.Regpat.Match_Array (0 .. Max_Capturing_Groups);
       --  The parenthesis groups that matched. This is only set when matching
       --  a regexp.
 
-      Color_String  : RGB_String := Blue;
+      Color_String : RGB_String := Blue;
 
-      Tab_Width     : Natural;
+      Tab_Width : Natural;
       --  The current size of tabs use in the buffer
    end record;
    No_Match : constant Search_Context;
@@ -155,35 +156,36 @@ package GPS.Search is
    --  highlighting search results.
 
    function Failed (Self : Search_Context) return Boolean
-      is (not Self.Start.Defined);
+   is (not Self.Start.Defined);
    --  Whether Self failed to match. This is somewhat equivalent to comparing
    --  with No_Match, but is more efficient and does not require a
    --  "use type Search_Context.
 
    function Is_Empty_Match (Self : Search_Context) return Boolean
-      is (not Self.Finish.Defined);
+   is (not Self.Finish.Defined);
    --  Whether Self matches an empty string
 
    function Index_After_Match (Self : Search_Context) return Positive;
    --  Return index of position just after end of match
 
    procedure Matched_Subexpression
-     (Result      : Search_Context;
-      Index       : Natural;
-      First       : out Natural;
-      Last        : out Natural);
+     (Result : Search_Context;
+      Index  : Natural;
+      First  : out Natural;
+      Last   : out Natural);
    --  Return regexp subexpression slice for last matched regexp search
 
    procedure Free (Self : in out Search_Pattern);
    procedure Free (Self : in out Search_Pattern_Access);
    --  Free the memory used by the matcher
 
-   overriding function "=" (P1, P2 : Search_Pattern) return Boolean;
+   overriding
+   function "=" (P1, P2 : Search_Pattern) return Boolean;
    function Equals (P1, P2 : Search_Pattern_Access) return Boolean;
    --  Compares the two patterns
 
    function Get_Allow_Highlights
-     (Self  : not null access Search_Pattern'Class) return Boolean;
+     (Self : not null access Search_Pattern'Class) return Boolean;
 
    function Build
      (Pattern         : String;
@@ -191,8 +193,7 @@ package GPS.Search is
       Whole_Word      : Boolean := False;
       Negate          : Boolean := False;
       Kind            : Search_Kind := Full_Text;
-      Allow_Highlight : Boolean := False)
-      return Search_Pattern_Access;
+      Allow_Highlight : Boolean := False) return Search_Pattern_Access;
    --  Create a new search matcher.
    --  It can be shared among multiple search providers, since it does not
    --  embed any context.
@@ -209,11 +210,11 @@ package GPS.Search is
    --  pattern in fact does not match).
 
    function Build
-      (Pattern    : not null access Search_Pattern'Class;
-       Text       : String) return Search_Pattern_Access;
+     (Pattern : not null access Search_Pattern'Class; Text : String)
+      return Search_Pattern_Access;
    function Build
-      (Pattern    : not null access Search_Pattern'Class;
-       Kind       : Search_Kind) return Search_Pattern_Access;
+     (Pattern : not null access Search_Pattern'Class; Kind : Search_Kind)
+      return Search_Pattern_Access;
    --  Allocates a new pattern, preserving the attributes of pattern,
    --  except the ones given in parameter.
    --  In particular, this can be used to detect particular values in the
@@ -221,10 +222,10 @@ package GPS.Search is
    --  be searched.
 
    function Build_If_Needed
-     (Pattern    : not null access Search_Pattern'Class;
-      Kind       : Search_Kind;
-      New_Kind   : Search_Kind;
-      Built      : out Boolean) return Search_Pattern_Access;
+     (Pattern  : not null access Search_Pattern'Class;
+      Kind     : Search_Kind;
+      New_Kind : Search_Kind;
+      Built    : out Boolean) return Search_Pattern_Access;
    --  If Pattern.Kind = Kind, allocates a new pattern, preserving the
    --  attributes of pattern, except for Pattern.Kind which is set to New_Kind.
    --  If Pattern.Kind /= Kind, return Pattern.
@@ -232,15 +233,15 @@ package GPS.Search is
    --  False otherwise.
 
    function Get_Text
-      (Pattern    : not null access Search_Pattern'Class) return String;
+     (Pattern : not null access Search_Pattern'Class) return String;
    function Get_Kind
-     (Pattern    : not null access Search_Pattern'Class) return Search_Kind;
+     (Pattern : not null access Search_Pattern'Class) return Search_Kind;
    function Get_Case_Sensitive
-     (Pattern    : not null access Search_Pattern'Class) return Boolean;
+     (Pattern : not null access Search_Pattern'Class) return Boolean;
    function Get_Whole_Word
-     (Pattern    : not null access Search_Pattern'Class) return Boolean;
+     (Pattern : not null access Search_Pattern'Class) return Boolean;
    function Get_Negate
-     (Pattern    : not null access Search_Pattern'Class) return Boolean;
+     (Pattern : not null access Search_Pattern'Class) return Boolean;
    --  Return the text searched by the user.
 
    function Start
@@ -249,9 +250,8 @@ package GPS.Search is
       Start_Index : Natural;
       End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
-      Tab_Width   : Natural := Default_Tab_Width)
-      return Search_Context
-      is abstract;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context
+   is abstract;
    --  Start searching for Self in Buffer (Start_Index .. End_Index).
    --  Note: it is important to pass the full file contents in Buffer, since
    --  otherwise regular expressions starting with "^" or ending with "$" will
@@ -271,15 +271,13 @@ package GPS.Search is
      (Self      : Search_Pattern'Class;
       Buffer    : String;
       Ref       : Buffer_Position := Unknown_Position;
-      Tab_Width : Natural := Default_Tab_Width)
-      return Search_Context
+      Tab_Width : Natural := Default_Tab_Width) return Search_Context
    is (Start (Self, Buffer, Buffer'First, Buffer'Last, Ref, Tab_Width));
    --  Same as above, searching the whole of Buffer
 
    procedure Next
-     (Self    : Search_Pattern;
-      Buffer  : String;
-      Context : in out Search_Context) is abstract;
+     (Self : Search_Pattern; Buffer : String; Context : in out Search_Context)
+   is abstract;
    --  Find the next occurrence of Self in Buffer.
    --  Buffer must be the same that was passed to Start (same bounds for
    --  instance).
@@ -287,16 +285,15 @@ package GPS.Search is
    --  Context is set to No_Match if the Buffer did not match.
 
    function Search_Best_Match
-     (Self    : not null access Search_Pattern'Class;
-      Buffer  : String) return Search_Context;
+     (Self : not null access Search_Pattern'Class; Buffer : String)
+      return Search_Context;
    --  Search for the best occurence (highest score) of Self in buffer and
    --  return it.
    --  No_Match is returned if the Buffer did not match.
 
    function Highlight_Match
-      (Self      : Search_Pattern;
-       Buffer    : String;
-       Context   : Search_Context) return String;
+     (Self : Search_Pattern; Buffer : String; Context : Search_Context)
+      return String;
    --  Return a copy of Buffer where the substring or characters matching
    --  Context are highlighted.
    --  Buffer must the same one passed to Start or Next, or a substring of it.
@@ -317,9 +314,9 @@ package GPS.Search is
 
    type Search_Provider is abstract tagged record
       Rank           : Positive := 100;
-      Count          : Natural  := 0;
-      Searched_Count : Natural  := 0;
-      Enabled        : Boolean  := True;
+      Count          : Natural := 0;
+      Searched_Count : Natural := 0;
+      Enabled        : Boolean := True;
    end record;
    type Search_Provider_Access is access all Search_Provider'Class;
    --  Instances of this type will look for matches of a given pattern, in a
@@ -391,7 +388,8 @@ package GPS.Search is
    --  Free the memory used by Self.
 
    function Can_Display_In_Locations
-     (Self : not null access Search_Result) return Boolean is (False);
+     (Self : not null access Search_Result) return Boolean
+   is (False);
    --  Whether this result can be displayed in the Locations window.
 
    procedure To_Message (Self : not null access Search_Result) is null;
@@ -402,8 +400,8 @@ package GPS.Search is
    --  to GNAT Studio.
 
    procedure Execute
-     (Self       : not null access Search_Result;
-      Give_Focus : Boolean) is abstract;
+     (Self : not null access Search_Result; Give_Focus : Boolean)
+   is abstract;
    --  Execute the action for Self, when the user selects it in a dialog. For
    --  instance, when search file names, the action could be to open a new
    --  editor for this file; in the completion window, it might be to insert
@@ -418,7 +416,8 @@ package GPS.Search is
    procedure Replace
      (Self            : not null access Search_Result;
       Replace_With    : String;
-      Case_Preserving : Boolean) is null;
+      Case_Preserving : Boolean)
+   is null;
    --  Replace the text matched by Self with Replace_With.
    --  This might not have an effect, depending on the type of result.
    --  If the user's replacement string contained references to parenthesis
@@ -436,38 +435,39 @@ package GPS.Search is
    procedure Free (Self : in out Search_Provider_Access);
    --  Free the memory used by Self.
 
-   function Display_Name
-      (Self : not null access Search_Provider) return String is abstract;
+   function Display_Name (Self : not null access Search_Provider) return String
+   is abstract;
    --  Return the name of the provider, as should be displayed to the user.
 
    function Documentation
-      (Self : not null access Search_Provider) return String is ("");
+     (Self : not null access Search_Provider) return String
+   is ("");
    --  The documentation for this provider. This explains what pattern is
    --  supported, where the search occurs,...
 
    function Get_Current_Progress
      (Self : not null access Search_Provider) return Natural
-   is
-     (Self.Searched_Count);
+   is (Self.Searched_Count);
    --  Return the current search's progress.
    --  It's not necessary to override this function: just increment the
    --  Searched_Count counter after trying to match an item in the provider's
    --  list of items to search.
 
    function Get_Total_Progress
-     (Self : not null access Search_Provider) return Integer is (-1)
-     with Post'Class => Get_Total_Progress'Result /= 0;
+     (Self : not null access Search_Provider) return Integer
+   is (-1)
+   with Post'Class => Get_Total_Progress'Result /= 0;
    --  Return the total number of items to search (e.g: number of filenames
    --  we should try to match for a provider that searches among filenames).
 
-   procedure Reset_Progress
-     (Self : not null access Search_Provider);
+   procedure Reset_Progress (Self : not null access Search_Provider);
    --  Reset the provider's Searched_Count progress counter.
 
    procedure Set_Pattern
      (Self    : not null access Search_Provider;
       Pattern : not null access Search_Pattern'Class;
-      Limit   : Natural := Natural'Last) is abstract;
+      Limit   : Natural := Natural'Last)
+   is abstract;
    --  Sets the pattern to search for in Self's context.
    --  Self might be optimized in case the new pattern is similar to the
    --  previous one, to reuse some of the results.
@@ -487,7 +487,8 @@ package GPS.Search is
    procedure Next
      (Self     : not null access Search_Provider;
       Result   : out Search_Result_Access;
-      Has_Next : out Boolean) is abstract;
+      Has_Next : out Boolean)
+   is abstract;
    --  Returns the next match.
    --  The result might be set to null if Self did not find any occurrence,
    --  but should be called again the next time GNAT Studio is idle (in fact,
@@ -529,12 +530,14 @@ package GPS.Search is
    --  search window.
 
    function Is_Result_Ready
-     (Self : not null access Search_Provider) return Boolean is (True);
+     (Self : not null access Search_Provider) return Boolean
+   is (True);
    --  Returns True when result is ready and can be taken by using Next.
 
    procedure On_Result_Executed
-      (Self   : not null access Search_Provider;
-       Result : not null access Search_Result'Class) is null;
+     (Self   : not null access Search_Provider;
+      Result : not null access Search_Result'Class)
+   is null;
    --  Called when a user has executed Result. It might be used to do various
    --  cleanups or changes in the provider, for instance storing the list of
    --  recent items selected by the user so that the scores can be modified
@@ -542,8 +545,8 @@ package GPS.Search is
 
    function Complete_Suffix
      (Self          : not null access Search_Provider;
-      Dummy_Pattern : not null access Search_Pattern'Class)
-      return String is ("");
+      Dummy_Pattern : not null access Search_Pattern'Class) return String
+   is ("");
    --  Used to implement completion through <tab>.
    --  Returns the possible completion for pattern.
 
@@ -569,48 +572,47 @@ package GPS.Search is
    --  ranks are edited.
 
    function Get
-     (Self : Search_Provider_Registry;
-      Name : String) return Search_Provider_Access;
+     (Self : Search_Provider_Registry; Name : String)
+      return Search_Provider_Access;
    --  Retrieve a copy of the registered provider with this name (or null if
    --  there is no such registered provider.
 
    function Get
-     (Self : Search_Provider_Registry;
-      N    : Positive) return Search_Provider_Access;
+     (Self : Search_Provider_Registry; N : Positive)
+      return Search_Provider_Access;
    --  Retrieve a provider by rank
 
-   procedure Free
-     (Self : in out Search_Provider_Registry_Access);
+   procedure Free (Self : in out Search_Provider_Registry_Access);
    --  Free all the providers registered in Self.
 
 private
 
    type Search_Pattern is abstract tagged record
-      Text           : GNAT.Strings.String_Access;
-      Case_Sensitive : Boolean := False;
-      Whole_Word     : Boolean := False;
-      Kind           : Search_Kind := Full_Text;
+      Text            : GNAT.Strings.String_Access;
+      Case_Sensitive  : Boolean := False;
+      Whole_Word      : Boolean := False;
+      Kind            : Search_Kind := Full_Text;
       Allow_Highlight : Boolean := False;
-      Negate         : Boolean := False;
+      Negate          : Boolean := False;
    end record;
 
    No_Match : constant Search_Context :=
-     (Start              => Unknown_Position,
-      Finish             => Unknown_Position,
-      Score              => 0,
-      Buffer_Start       => -1,
-      Buffer_End         => -1,
-      Ref                => Unknown_Position,
-      Groups             => (others => GNAT.Regpat.No_Match),
-      Color_String       => <>,
-      Tab_Width          => Default_Tab_Width);
+     (Start        => Unknown_Position,
+      Finish       => Unknown_Position,
+      Score        => 0,
+      Buffer_Start => -1,
+      Buffer_End   => -1,
+      Ref          => Unknown_Position,
+      Groups       => (others => GNAT.Regpat.No_Match),
+      Color_String => <>,
+      Tab_Width    => Default_Tab_Width);
 
    type Provider_Info is record
       Provider : Search_Provider_Access;
    end record;
 
-   package Provider_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Provider_Info);
+   package Provider_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Provider_Info);
 
    type Search_Provider_Registry is tagged record
       Providers : Provider_Lists.List;

@@ -24,8 +24,7 @@ package body GPS.Valgrind is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-   is
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class) is
    begin
       GPS.Valgrind.Script.Register_Commands (Kernel);
    end Register_Module;

@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Text_Tag;        use Gtk.Text_Tag;
 with Glib.Properties;
 with Default_Preferences; use Default_Preferences;
 
 package body Src_Editor_Buffer.Cursors is
 
-   Mc_Selection_Tag : constant String := "mc_selection";
+   Mc_Selection_Tag    : constant String := "mc_selection";
    Selection_Pref_Name : constant String :=
      "Editor/Fonts & Colors:General/multicursor_selection_color";
    --  This constant should be synchronized with
@@ -31,13 +31,9 @@ package body Src_Editor_Buffer.Cursors is
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
 
    procedure Remove_Slave_Cursor
-     (Buffer : Source_Buffer;
-      Cursor : Slave_Cursor);
+     (Buffer : Source_Buffer; Cursor : Slave_Cursor);
 
-   function Exists
-     (Buffer : Source_Buffer;
-      Id     : Integer)
-      return Boolean;
+   function Exists (Buffer : Source_Buffer; Id : Integer) return Boolean;
    --  Check whether the slave cursor with given id is still exist
 
    ----------------------------
@@ -45,8 +41,9 @@ package body Src_Editor_Buffer.Cursors is
    ----------------------------
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer) is
-      T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
-      P : constant Preference :=
+      T          : Gtk_Text_Tag :=
+        Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
+      P          : constant Preference :=
         Buffer.Kernel.Get_Preferences.Get_Pref_From_Name
           (Selection_Pref_Name, True);
       Color_Name : constant String := P.Get_Pref;
@@ -66,28 +63,23 @@ package body Src_Editor_Buffer.Cursors is
 
    function Create
      (C : Slave_Cursor_Access; Buffer : Source_Buffer) return Cursor
-   is
-     ((Is_Main_Cursor => False,
-       Cursor         => C,
-       Cursor_Id      => C.Id,
-       Buffer         => Buffer));
+   is ((Is_Main_Cursor => False,
+        Cursor         => C,
+        Cursor_Id      => C.Id,
+        Buffer         => Buffer));
 
    --------------
    -- Is_Alive --
    --------------
 
-   function Is_Alive (C : Cursor) return Boolean is
-     (C.Is_Main_Cursor
-      or else Exists (C.Buffer, C.Cursor_Id));
+   function Is_Alive (C : Cursor) return Boolean
+   is (C.Is_Main_Cursor or else Exists (C.Buffer, C.Cursor_Id));
 
    ------------
    -- Exists --
    ------------
 
-   function Exists
-     (Buffer : Source_Buffer;
-      Id     : Integer)
-      return Boolean is
+   function Exists (Buffer : Source_Buffer; Id : Integer) return Boolean is
    begin
       for Cursor of Buffer.Slave_Cursors_List loop
          if Cursor.Id = Id then
@@ -104,9 +96,9 @@ package body Src_Editor_Buffer.Cursors is
 
    procedure Update_MC_Selection (B : Source_Buffer) is
       Start_Loc, End_Loc : Gtk_Text_Iter;
-      T : Gtk_Text_Tag;
-      Line : Editable_Line_Type;
-      Col  : Character_Index;
+      T                  : Gtk_Text_Tag;
+      Line               : Editable_Line_Type;
+      Col                : Character_Index;
    begin
       Check_Mc_Selection_Tag (B);
       T := B.Get_Tag_Table.Lookup (Mc_Selection_Tag);
@@ -129,23 +121,22 @@ package body Src_Editor_Buffer.Cursors is
    --------------
 
    function Get_Mark (C : Cursor) return Gtk_Text_Mark
-   is (if C.Is_Main_Cursor then C.Buffer.Get_Insert
-       else C.Cursor.Mark);
+   is (if C.Is_Main_Cursor then C.Buffer.Get_Insert else C.Cursor.Mark);
 
    -----------------------
    -- Get_Sel_Mark_Name --
    -----------------------
 
    function Get_Sel_Mark_Name (Cursor_Mark_Name : String) return String
-   is
-     (Cursor_Mark_Name & "_sel");
+   is (Cursor_Mark_Name & "_sel");
 
    ------------------
    -- Get_Sel_Mark --
    ------------------
 
    function Get_Sel_Mark (C : Cursor) return Gtk_Text_Mark
-   is (if C.Is_Main_Cursor then C.Buffer.Get_Mark ("selection_bound")
+   is (if C.Is_Main_Cursor
+       then C.Buffer.Get_Mark ("selection_bound")
        else C.Cursor.Sel_Mark);
 
    -----------------------
@@ -153,7 +144,8 @@ package body Src_Editor_Buffer.Cursors is
    -----------------------
 
    function Get_Column_Memory (C : Cursor) return Gint
-   is (if C.Is_Main_Cursor then C.Buffer.Cursor_Column_Memory
+   is (if C.Is_Main_Cursor
+       then C.Buffer.Cursor_Column_Memory
        else C.Cursor.Column_Memory);
 
    -----------------------
@@ -173,19 +165,16 @@ package body Src_Editor_Buffer.Cursors is
    -- Add_Cursor --
    ----------------
 
-   procedure Add_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
-   is
+   procedure Add_Cursor (Buffer : Source_Buffer; Location : Gtk_Text_Iter) is
       use type Ada.Containers.Count_Type;
 
-      Cursor_ID   : constant Positive := Positive
-        (Buffer.Slave_Cursors_List.Length + 1);
-      Cursor_Name : constant String :=
-        "slave_cursor_" & Cursor_ID'Img;
-      Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
-        (Cursor_Name, False);
-      Sel_Mark    : constant Gtk_Text_Mark := Gtk_Text_Mark_New
-        (Get_Sel_Mark_Name (Cursor_Name), False);
+      Cursor_ID   : constant Positive :=
+        Positive (Buffer.Slave_Cursors_List.Length + 1);
+      Cursor_Name : constant String := "slave_cursor_" & Cursor_ID'Img;
+      Cursor_Mark : constant Gtk_Text_Mark :=
+        Gtk_Text_Mark_New (Cursor_Name, False);
+      Sel_Mark    : constant Gtk_Text_Mark :=
+        Gtk_Text_Mark_New (Get_Sel_Mark_Name (Cursor_Name), False);
    begin
       Check_Mc_Selection_Tag (Buffer);
 
@@ -207,16 +196,16 @@ package body Src_Editor_Buffer.Cursors is
    ----------------
 
    function Add_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor
-   is
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor is
    begin
       Add_Cursor (Buffer, Location);
       declare
          Last_El : constant Slave_Cursors_Lists.Cursor :=
            Buffer.Slave_Cursors_List.Last;
       begin
-         return Create
-           (Buffer.Slave_Cursors_List.Reference (Last_El).Element, Buffer);
+         return
+           Create
+             (Buffer.Slave_Cursors_List.Reference (Last_El).Element, Buffer);
       end;
    end Add_Cursor;
 
@@ -224,8 +213,7 @@ package body Src_Editor_Buffer.Cursors is
    -- Delete_Cursor --
    -------------------
 
-   procedure Delete_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
+   procedure Delete_Cursor (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
    is
       use Slave_Cursors_Lists;
       C    : Slave_Cursors_Lists.Cursor := Buffer.Slave_Cursors_List.First;
@@ -247,8 +235,7 @@ package body Src_Editor_Buffer.Cursors is
    -------------------------
 
    procedure Remove_Slave_Cursor
-     (Buffer : Source_Buffer;
-      Cursor : Slave_Cursor) is
+     (Buffer : Source_Buffer; Cursor : Slave_Cursor) is
    begin
       Buffer.Delete_Mark (Cursor.Mark);
       Buffer.Delete_Mark (Cursor.Sel_Mark);
@@ -275,21 +262,19 @@ package body Src_Editor_Buffer.Cursors is
    -- Set_Manual_Sync --
    ---------------------
 
-   procedure Set_Manual_Sync
-     (C : Cursor)
-   is
+   procedure Set_Manual_Sync (C : Cursor) is
    begin
-      C.Buffer.Cursors_Sync := (if C.Is_Main_Cursor
-                                then (Mode => Manual_Master)
-                                else (Manual_Slave, C.Cursor));
+      C.Buffer.Cursors_Sync :=
+        (if C.Is_Main_Cursor
+         then (Mode => Manual_Master)
+         else (Manual_Slave, C.Cursor));
    end Set_Manual_Sync;
 
    ---------------------------
    -- Set_Cursors_Auto_Sync --
    ---------------------------
 
-   procedure Set_Cursors_Auto_Sync (Buffer : Source_Buffer)
-   is
+   procedure Set_Cursors_Auto_Sync (Buffer : Source_Buffer) is
    begin
       Buffer.Cursors_Sync := (Mode => Auto);
    end Set_Cursors_Auto_Sync;
@@ -298,16 +283,14 @@ package body Src_Editor_Buffer.Cursors is
    -- Has_Slave_Cursors --
    -----------------------
 
-   function Has_Slave_Cursors
-     (Buffer : Source_Buffer) return Boolean
+   function Has_Slave_Cursors (Buffer : Source_Buffer) return Boolean
    is (not Buffer.Slave_Cursors_List.Is_Empty);
 
    ----------
    -- Move --
    ----------
 
-   procedure Move
-     (C : Cursor; Loc : Gtk_Text_Iter; Extend_Selection : Boolean)
+   procedure Move (C : Cursor; Loc : Gtk_Text_Iter; Extend_Selection : Boolean)
    is
    begin
       if C.Is_Main_Cursor and then not Extend_Selection then
@@ -324,9 +307,7 @@ package body Src_Editor_Buffer.Cursors is
    -- Get_Cursors --
    -----------------
 
-   function Get_Cursors
-     (Buffer : Source_Buffer) return Cursors_Lists.List
-   is
+   function Get_Cursors (Buffer : Source_Buffer) return Cursors_Lists.List is
       package L renames Slave_Cursors_Lists;
       C : L.Cursor;
    begin
@@ -346,8 +327,7 @@ package body Src_Editor_Buffer.Cursors is
    -- Get_Cursors_Sync --
    ----------------------
 
-   function Get_Cursors_Sync
-     (Buffer : Source_Buffer) return Cursors_Sync_Type
+   function Get_Cursors_Sync (Buffer : Source_Buffer) return Cursors_Sync_Type
    is (Buffer.Cursors_Sync);
 
    ----------------------
@@ -355,8 +335,7 @@ package body Src_Editor_Buffer.Cursors is
    ----------------------
 
    procedure Set_Cursors_Sync
-     (Buffer : Source_Buffer; Sync : Cursors_Sync_Type)
-   is
+     (Buffer : Source_Buffer; Sync : Cursors_Sync_Type) is
    begin
       Buffer.Cursors_Sync := Sync;
    end Set_Cursors_Sync;

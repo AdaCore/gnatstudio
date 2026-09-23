@@ -25,19 +25,19 @@ package DAP.Requests.SetExpression is
 
    type Set_Expression_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.SetExpressionRequest :=
-        DAP.Tools.SetExpressionRequest'
-          (seq       => 0,
-           arguments => <>);
+        DAP.Tools.SetExpressionRequest'(seq => 0, arguments => <>);
    end record;
 
    type Set_Expression_DAP_Request_Access is
      access all Set_Expression_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Set_Expression_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Expression_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -48,14 +48,14 @@ package DAP.Requests.SetExpression is
      (Self        : in out Set_Expression_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExpressionResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Set_Expression_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Set_Expression_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Set_Expression_DAP_Request)
-      return String is ("setExpression");
+   overriding
+   function Method (Self : in out Set_Expression_DAP_Request) return String
+   is ("setExpression");
 
 end DAP.Requests.SetExpression;

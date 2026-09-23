@@ -48,16 +48,16 @@ package body Password_Manager is
       Next      : Tool_Access;
    end record;
 
-   Password_List   : Password_Access    := null;
-   Passphrase_List : Passphrase_Access  := null;
-   Tool_List       : Tool_Access        := null;
+   Password_List   : Password_Access := null;
+   Passphrase_List : Passphrase_Access := null;
+   Tool_List       : Tool_Access := null;
 
-   Password_Regexp : constant Pattern_Matcher :=
-                       Compile ("^[^\n]*[Pp]ass[^p].*: *$",
-                                Multiple_Lines or Single_Line);
+   Password_Regexp   : constant Pattern_Matcher :=
+     Compile ("^[^\n]*[Pp]ass[^p].*: *$", Multiple_Lines or Single_Line);
    Passphrase_Regexp : constant Pattern_Matcher :=
-                         Compile ("^[^\n]*[Pp]assphrase for key '([^']*)': *$",
-                                  Multiple_Lines or Single_Line);
+     Compile
+       ("^[^\n]*[Pp]assphrase for key '([^']*)': *$",
+        Multiple_Lines or Single_Line);
 
    ---------------------------------
    -- Get_Default_Password_Regexp --
@@ -105,17 +105,19 @@ package body Password_Manager is
 
    begin
       while Pwd /= null loop
-         exit when Pwd.Machine.all = Network_Name
+         exit when
+           Pwd.Machine.all = Network_Name
            and then Pwd.User_Name.all = User_Name;
          Pwd := Pwd.Next;
       end loop;
 
       if Pwd = null then
-         Pwd := new Password_Record'
-           (Machine   => new String'(Network_Name),
-            User_Name => new String'(User_Name),
-            Password  => null,
-            Next      => Password_List);
+         Pwd :=
+           new Password_Record'
+             (Machine   => new String'(Network_Name),
+              User_Name => new String'(User_Name),
+              Password  => null,
+              Next      => Password_List);
          Password_List := Pwd;
       end if;
 
@@ -124,9 +126,9 @@ package body Password_Manager is
 
          declare
             Str : constant String :=
-                    Query_User
-                      ("Please enter " & Full_Machine_Name & "'s password:",
-                       Password_Mode => True);
+              Query_User
+                ("Please enter " & Full_Machine_Name & "'s password:",
+                 Password_Mode => True);
          begin
             if Str = "" then
                return Str;
@@ -144,8 +146,7 @@ package body Password_Manager is
    --------------------
 
    function Get_Passphrase
-     (Key_Id       : String;
-      Force_Asking : Boolean := False) return String
+     (Key_Id : String; Force_Asking : Boolean := False) return String
    is
       Psp : Passphrase_Access := Passphrase_List;
    begin
@@ -155,10 +156,11 @@ package body Password_Manager is
       end loop;
 
       if Psp = null then
-         Psp := new Passphrase_Record'
-           (Key_Id     => new String'(Key_Id),
-            Passphrase => null,
-            Next       => Passphrase_List);
+         Psp :=
+           new Passphrase_Record'
+             (Key_Id     => new String'(Key_Id),
+              Passphrase => null,
+              Next       => Passphrase_List);
          Passphrase_List := Psp;
       end if;
 
@@ -167,9 +169,9 @@ package body Password_Manager is
 
          declare
             Str : constant String :=
-                    Query_User
-                      ("Please enter passphrase for key " & Key_Id & ":",
-                       Password_Mode => True);
+              Query_User
+                ("Please enter passphrase for key " & Key_Id & ":",
+                 Password_Mode => True);
          begin
             if Str = "" then
                return "";
@@ -187,8 +189,7 @@ package body Password_Manager is
    -----------------------
 
    function Get_Tool_Password
-     (Tool         : String;
-      Force_Asking : Boolean := False) return String
+     (Tool : String; Force_Asking : Boolean := False) return String
    is
       Psp : Tool_Access := Tool_List;
    begin
@@ -198,10 +199,11 @@ package body Password_Manager is
       end loop;
 
       if Psp = null then
-         Psp := new Tool_Record'
-           (Tool_Name => new String'(Tool),
-            Password  => null,
-            Next      => Tool_List);
+         Psp :=
+           new Tool_Record'
+             (Tool_Name => new String'(Tool),
+              Password  => null,
+              Next      => Tool_List);
          Tool_List := Psp;
       end if;
 
@@ -210,9 +212,9 @@ package body Password_Manager is
 
          declare
             Str : constant String :=
-                    Query_User
-                      ("Please enter password for tool " & Tool & ":",
-                       Password_Mode => True);
+              Query_User
+                ("Please enter password for tool " & Tool & ":",
+                 Password_Mode => True);
          begin
             if Str = "" then
                return "";

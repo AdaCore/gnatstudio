@@ -37,7 +37,8 @@ generic
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
    Enable_Tooltips : Boolean := False;
 
-package CodePeer.Generic_Criteria_Editors is
+package CodePeer.Generic_Criteria_Editors
+is
 
    type Criteria_Editor_Record is
      new Gtk.Widget.Gtk_Widget_Record with private;
@@ -71,11 +72,10 @@ package CodePeer.Generic_Criteria_Editors is
 
 private
 
-   package Ordered_Set_Models is
-     new CodePeer.Generic_Ordered_Set_Models
-           (Item, Item_Access, "<", Item_Sets);
-   package Criteria_Models is
-     new CodePeer.Generic_Criteria_Models
+   package Ordered_Set_Models is new
+     CodePeer.Generic_Ordered_Set_Models (Item, Item_Access, "<", Item_Sets);
+   package Criteria_Models is new
+     CodePeer.Generic_Criteria_Models
        (Item,
         Item_Access,
         Get_Name,
@@ -85,12 +85,12 @@ private
         Ordered_Set_Models);
 
    type Criteria_Editor_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
-      record
-         Model  : Criteria_Models.Criteria_Model;
-         View   : Gtk.Tree_View.Gtk_Tree_View;
-         Toggle : Gtk.Check_Button.Gtk_Check_Button;
-      end record;
+     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
+   with record
+      Model  : Criteria_Models.Criteria_Model;
+      View   : Gtk.Tree_View.Gtk_Tree_View;
+      Toggle : Gtk.Check_Button.Gtk_Check_Button;
+   end record;
 
    Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria-changed";
 

@@ -24,8 +24,10 @@ package body Annotations is
    ----------
 
    procedure Free (Annot : in out Annotation) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (General_Annotation_Record'Class, General_Annotation);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation
+          (General_Annotation_Record'Class,
+           General_Annotation);
    begin
       if Annot.Kind = Other_Kind then
          Free (Annot.Other_Val.all);
@@ -47,8 +49,10 @@ package body Annotations is
    ----------
 
    procedure Free (Registry : in out Annotation_Key_Registry) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Annotation_Key_Registry_Record, Annotation_Key_Registry);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation
+          (Annotation_Key_Registry_Record,
+           Annotation_Key_Registry);
    begin
       Internal (Registry);
    end Free;
@@ -58,8 +62,7 @@ package body Annotations is
    ------------------------
 
    procedure Get_Annotation_Key
-     (Registry : in out Annotation_Key_Registry;
-      New_Key  : out Annotation_Key)
+     (Registry : in out Annotation_Key_Registry; New_Key : out Annotation_Key)
    is
    begin
       Registry.Last_Key := Registry.Last_Key + 1;
@@ -70,11 +73,9 @@ package body Annotations is
    -- Free --
    ----------
 
-   procedure Free
-     (Container : in out Annotation_Container)
-   is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Annotation_Array, Annotation_Array_Access);
+   procedure Free (Container : in out Annotation_Container) is
+      procedure Internal is new
+        Ada.Unchecked_Deallocation (Annotation_Array, Annotation_Array_Access);
    begin
       if Container.Annotations /= null then
          for J in Container.Annotations'Range loop
@@ -94,11 +95,9 @@ package body Annotations is
    procedure Get_Annotation
      (Container : Annotation_Container;
       Key       : Annotation_Key;
-      Result    : out Annotation)
-   is
+      Result    : out Annotation) is
    begin
-      if Container.Annotations = null
-        or else Container.Annotations'Last < Key
+      if Container.Annotations = null or else Container.Annotations'Last < Key
       then
          Result := Null_Annotation;
       else
@@ -117,8 +116,8 @@ package body Annotations is
    is
       Tmp : Annotation_Array_Access;
 
-      procedure Free_Pointer is new Ada.Unchecked_Deallocation
-        (Annotation_Array, Annotation_Array_Access);
+      procedure Free_Pointer is new
+        Ada.Unchecked_Deallocation (Annotation_Array, Annotation_Array_Access);
    begin
       if Container.Annotations = null then
          Container.Annotations := new Annotation_Array (1 .. Key);
@@ -126,7 +125,7 @@ package body Annotations is
       elsif Container.Annotations'Last < Key then
          Tmp := new Annotation_Array (1 .. Key);
          Tmp (1 .. Container.Annotations'Last) := Container.Annotations.all;
-         Tmp (Container.Annotations'Last  + 1 .. Tmp'Last) :=
+         Tmp (Container.Annotations'Last + 1 .. Tmp'Last) :=
            (others => (Kind => Nothing));
          Free_Pointer (Container.Annotations);
          Container.Annotations := Tmp;
@@ -141,11 +140,10 @@ package body Annotations is
    ------------
 
    function Is_Set
-     (Container : Annotation_Container; Key : Annotation_Key)
-         return Boolean
-   is
+     (Container : Annotation_Container; Key : Annotation_Key) return Boolean is
    begin
-      return Container.Annotations /= null
+      return
+        Container.Annotations /= null
         and then Container.Annotations'Last >= Key
         and then Container.Annotations (Key).Kind /= Nothing;
    end Is_Set;

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language; use Language;
+with Language;         use Language;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 
 package body Construct_Tries is
@@ -27,8 +27,7 @@ package body Construct_Tries is
    ----------------------
 
    function Get_Construct_It
-     (It : Construct_Trie_Iterator) return Construct_Tree_Iterator
-   is
+     (It : Construct_Trie_Iterator) return Construct_Tree_Iterator is
    begin
       return Get (It).Node;
    end Get_Construct_It;
@@ -38,8 +37,7 @@ package body Construct_Tries is
    -------------------------
 
    function Get_Additional_Data
-     (It : Construct_Trie_Iterator) return Additional_Data_Type
-   is
+     (It : Construct_Trie_Iterator) return Additional_Data_Type is
    begin
       return Get (It).Data;
    end Get_Additional_Data;
@@ -95,7 +93,7 @@ package body Construct_Tries is
       New_Construct_It : Construct_Tree_Iterator;
       New_Data         : Additional_Data_Type)
    is
-      Wrapper   : Construct_Node_Wrapper;
+      Wrapper : Construct_Node_Wrapper;
    begin
       Wrapper.Node := New_Construct_It;
       Wrapper.Data := New_Data;

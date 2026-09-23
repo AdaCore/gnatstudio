@@ -69,8 +69,8 @@ package GPS.Kernel.Task_Manager is
    --  manager.
 
    function Has_Queue
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Queue_Id : String) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Id : String)
+      return Boolean;
    --  Return True if a queue identified by Queue_Id is currently running or
    --  paused in the task manager.
 
@@ -78,8 +78,7 @@ package GPS.Kernel.Task_Manager is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Scheduled_Command_Access);
    procedure Interrupt_Queue
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Queue_Id : String);
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Id : String);
    --  Interrupt the Queue that contains Command.
    --  Do nothing if there is no such queue.
 

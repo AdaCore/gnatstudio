@@ -17,7 +17,7 @@
 -- The CodePeer technology was originally developed by SofCheck, Inc.       --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;    use Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 
 with Sax.Readers;    use Sax.Readers;
 with Sax.Attributes; use Sax.Attributes;
@@ -28,7 +28,7 @@ with Input_Sources.File;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body BT.Xml.Reader is
 
@@ -48,19 +48,20 @@ package body BT.Xml.Reader is
    --  as Srcpos, and the closest column available.
 
    function Hash (Key_Type : Natural) return Hash_Type
-     is (Hash_Type (Key_Type));
+   is (Hash_Type (Key_Type));
    --  Hash function on the VN_Id
 
    function Hash (Key_Type : Source_Position) return Hash_Type;
    --  Hash function on source locations
 
    --  mapping srcpos -> (vn_image, vn_vals)
-   package Srcpos_Vals_Mappings is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Source_Position,
-      Element_Type    => Vn_Values_Seqs.Vector,
-      Hash            => Hash,
-      Equivalent_Keys => "=",
-      "="             => Vn_Values_Seqs."=");  --  elements "="
+   package Srcpos_Vals_Mappings is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Source_Position,
+        Element_Type    => Vn_Values_Seqs.Vector,
+        Hash            => Hash,
+        Equivalent_Keys => "=",
+        "="             => Vn_Values_Seqs."=");  --  elements "="
 
    File_Vals : Srcpos_Vals_Mappings.Map;
 
@@ -80,11 +81,12 @@ package body BT.Xml.Reader is
       Callee_Srcpos    : Source_Position;
    end record;
 
-   package Callee_Mappings is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Natural,
-      Element_Type    => Callee_Info_Record,
-      Hash            => Hash,
-      Equivalent_Keys => "=");
+   package Callee_Mappings is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Natural,
+        Element_Type    => Callee_Info_Record,
+        Hash            => Hash,
+        Equivalent_Keys => "=");
 
    Callee_Mapping : Callee_Mappings.Map;
 
@@ -95,23 +97,23 @@ package body BT.Xml.Reader is
       Current_Vals : Vn_Values_Seqs.Vector;
    end record;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Vals_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
       Attrs         : Sax.Attributes.Attributes'Class);
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Vals_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
 
    procedure Read_File_Vals_Xml
-     (Output_Dir  : String;
-      File_Name   : String;
-      File_Exists : out Boolean);
+     (Output_Dir : String; File_Name : String; File_Exists : out Boolean);
 
    -----------
    -- Clear --
@@ -143,7 +145,8 @@ package body BT.Xml.Reader is
       Inspection_Output_Directory := To_Unbounded_String (Output_Directory);
    end Initialize;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Vals_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -175,10 +178,11 @@ package body BT.Xml.Reader is
                   Attr_Value : constant String := Get_Value (Attrs, J);
                begin
                   case Source_Attribute_Enum'Value (Get_Qname (Attrs, J)) is
-                  when Line =>
-                     Self.Current_Src.Line := Positive'Value (Attr_Value);
-                  when Col =>
-                     Self.Current_Src.Column := Positive'Value (Attr_Value);
+                     when Line =>
+                        Self.Current_Src.Line := Positive'Value (Attr_Value);
+
+                     when Col  =>
+                        Self.Current_Src.Column := Positive'Value (Attr_Value);
                   end case;
                end;
             end loop;
@@ -193,10 +197,11 @@ package body BT.Xml.Reader is
                   Attr_Value : constant String := Get_Value (Attrs, J);
                begin
                   case Source_Attribute_Enum'Value (Get_Qname (Attrs, J)) is
-                  when Name =>
-                     Vn_Vals.Vn_Image := To_Unbounded_String (Attr_Value);
-                  when Vals =>
-                     Vn_Vals.Set_Image := To_Unbounded_String (Attr_Value);
+                     when Name =>
+                        Vn_Vals.Vn_Image := To_Unbounded_String (Attr_Value);
+
+                     when Vals =>
+                        Vn_Vals.Set_Image := To_Unbounded_String (Attr_Value);
                   end case;
                end;
             end loop;
@@ -211,7 +216,8 @@ package body BT.Xml.Reader is
    -- End_Element --
    -------------------
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Vals_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -225,8 +231,7 @@ package body BT.Xml.Reader is
       elsif Qname = Srcpos_Tag then
          --  store seq of vals into mapping
          pragma Assert (Self.Current_Src.Line /= 0);
-         File_Vals.Include
-           (Self.Current_Src, Self.Current_Vals);
+         File_Vals.Include (Self.Current_Src, Self.Current_Vals);
          Self.Current_Vals := Vn_Values_Seqs.Empty_Vector;
          Self.Current_Src.Line := 0;
 
@@ -236,9 +241,7 @@ package body BT.Xml.Reader is
    end End_Element;
 
    procedure Read_File_Vals_Xml
-     (Output_Dir  : String;
-      File_Name   : String;
-      File_Exists : out Boolean)
+     (Output_Dir : String; File_Name : String; File_Exists : out Boolean)
    is
       use Input_Sources.File;
 
@@ -272,8 +275,7 @@ package body BT.Xml.Reader is
       Files_Read.Append (File_To_Read);
    end Read_File_Vals_Xml;
 
-   procedure Read_Xml_File (File_Name : String;
-      File_Exists : out Boolean);
+   procedure Read_Xml_File (File_Name : String; File_Exists : out Boolean);
    --  Read the *_vals XML file corresponding to File_Name if it has not yet
    --  been read
 
@@ -281,18 +283,14 @@ package body BT.Xml.Reader is
    -- Read_Xml_File --
    -------------------
 
-   procedure Read_Xml_File (File_Name : String;
-      File_Exists : out Boolean) is
+   procedure Read_Xml_File (File_Name : String; File_Exists : out Boolean) is
    begin
-      if not Files_Read.Contains (
-         BT.Xml.Xml_Vals_File_Name (
-            To_String (Inspection_Output_Directory),
-            File_Name))
+      if not Files_Read.Contains
+               (BT.Xml.Xml_Vals_File_Name
+                  (To_String (Inspection_Output_Directory), File_Name))
       then
          Read_File_Vals_Xml
-            (To_String (Inspection_Output_Directory),
-               File_Name,
-               File_Exists);
+           (To_String (Inspection_Output_Directory), File_Name, File_Exists);
       else
          File_Exists := True;
       end if;
@@ -315,7 +313,8 @@ package body BT.Xml.Reader is
       Min_Distance : Natural := Integer'Last;
       Set_Image    : Unbounded_String;
 
-      function Distance (A, B : Integer) return Natural is (abs (A - B));
+      function Distance (A, B : Integer) return Natural
+      is (abs (A - B));
       --  Return the distance between A and B
 
    begin
@@ -326,19 +325,25 @@ package body BT.Xml.Reader is
 
       if not File_Exists then
          if Debug_On then
-            Put_Line ("Get_Variable_Vn_Value ("
-              & Variable & "), no values found for file "
-              & File);
+            Put_Line
+              ("Get_Variable_Vn_Value ("
+               & Variable
+               & "), no values found for file "
+               & File);
          end if;
 
          return "";
       end if;
 
       if Debug_On then
-         Put_Line ("Get_Variable_Vn_Value for " & Variable &
-           " at" &
-            Integer'Image (Srcpos.Line) & ":" &
-            Integer'Image (Srcpos.Column) & ":");
+         Put_Line
+           ("Get_Variable_Vn_Value for "
+            & Variable
+            & " at"
+            & Integer'Image (Srcpos.Line)
+            & ":"
+            & Integer'Image (Srcpos.Column)
+            & ":");
       end if;
 
       Curr := Srcpos_Vals_Mappings.First (File_Vals);
@@ -352,8 +357,9 @@ package body BT.Xml.Reader is
                   if Pos.Column = Srcpos.Column then
                      --  exact match
                      if Debug_On then
-                        Put_Line ("found an exact match: " &
-                          To_String (Info.Set_Image));
+                        Put_Line
+                          ("found an exact match: "
+                           & To_String (Info.Set_Image));
                      end if;
 
                      Closest_Match := Srcpos;
@@ -363,10 +369,13 @@ package body BT.Xml.Reader is
 
                      if D < Min_Distance then
                         if Debug_On then
-                           Put_Line ("found a match at" &
-                             Integer'Image (Pos.Line) & ":" &
-                             Integer'Image (Pos.Column) & ": " &
-                             To_String (Info.Set_Image));
+                           Put_Line
+                             ("found a match at"
+                              & Integer'Image (Pos.Line)
+                              & ":"
+                              & Integer'Image (Pos.Column)
+                              & ": "
+                              & To_String (Info.Set_Image));
                         end if;
 
                         Closest_Match := Srcpos;
@@ -389,12 +398,12 @@ package body BT.Xml.Reader is
    --------------------------
 
    function Get_Srcpos_Vn_Values
-     (File_Name : String;
-      Line      : Line_Number) return Vn_Values_Seqs.Vector is
+     (File_Name : String; Line : Line_Number) return Vn_Values_Seqs.Vector
+   is
 
-      File_Exists  : Boolean;
-      Curr         : Srcpos_Vals_Mappings.Cursor;
-      Result       : Vn_Values_Seqs.Vector;
+      File_Exists : Boolean;
+      Curr        : Srcpos_Vals_Mappings.Cursor;
+      Result      : Vn_Values_Seqs.Vector;
 
    begin
       --  Make sure we have read the corresponding Xml file
@@ -421,8 +430,8 @@ package body BT.Xml.Reader is
    end Get_Srcpos_Vn_Values;
 
    function Get_Srcpos_Vn_Values
-     (File_Name : String;
-      Srcpos    : Source_Position) return Vn_Values_Seqs.Vector
+     (File_Name : String; Srcpos : Source_Position)
+      return Vn_Values_Seqs.Vector
    is
       File_Exists       : Boolean;
       Line              : constant Line_Number := Srcpos.Line;
@@ -484,8 +493,9 @@ package body BT.Xml.Reader is
 
                Vn_Values_Seqs.Append
                  (Result,
-                  Vn_Values'(To_Unbounded_String (Var_Name),
-                             To_Unbounded_String (Var_Values)));
+                  Vn_Values'
+                    (To_Unbounded_String (Var_Name),
+                     To_Unbounded_String (Var_Values)));
             end if;
          end Find_One_Variable;
 

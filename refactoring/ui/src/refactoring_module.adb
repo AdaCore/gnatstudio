@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with Refactoring.Rename;
 with Refactoring.Parameters;
 with Refactoring.Subprograms;

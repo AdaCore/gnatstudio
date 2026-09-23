@@ -25,18 +25,18 @@ package DAP.Requests.Variables is
 
    type Variables_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.VariablesRequest :=
-        DAP.Tools.VariablesRequest'
-          (seq       => 0,
-           arguments => <>);
+        DAP.Tools.VariablesRequest'(seq => 0, arguments => <>);
    end record;
 
    type Variables_DAP_Request_Access is access all Variables_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Variables_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Variables_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -47,14 +47,14 @@ package DAP.Requests.Variables is
      (Self        : in out Variables_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Variables_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Variables_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Variables_DAP_Request)
-      return String is ("variables");
+   overriding
+   function Method (Self : in out Variables_DAP_Request) return String
+   is ("variables");
 
 end DAP.Requests.Variables;

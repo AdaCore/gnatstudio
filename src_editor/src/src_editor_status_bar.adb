@@ -15,44 +15,44 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;                    use GNAT.Strings;
+with GNAT.Strings;          use GNAT.Strings;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
-with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
-with GNATCOLL.Utils;                  use GNATCOLL.Utils;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Glib.Convert;
-with Glib.Object;                     use Glib.Object;
+with Glib.Object; use Glib.Object;
 with Glib.Values;
-with Glib;                            use Glib;
+with Glib;        use Glib;
 
-with GPS.Intl;                        use GPS.Intl;
-with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
-with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with GPS.Kernel;                      use GPS.Kernel;
-with GPS.Stock_Icons;                 use GPS.Stock_Icons;
-with GPS.VCS;                         use GPS.VCS;
-with Gtk.Arguments;                   use Gtk.Arguments;
-with Gtk.Enums;                       use Gtk.Enums;
-with Gtk.Handlers;                    use Gtk.Handlers;
-with Gtk.Label;                       use Gtk.Label;
-with Gtk.Style_Context;               use Gtk.Style_Context;
-with Gtk.Text_Iter;                   use Gtk.Text_Iter;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Stock_Icons;            use GPS.Stock_Icons;
+with GPS.VCS;                    use GPS.VCS;
+with Gtk.Arguments;              use Gtk.Arguments;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Style_Context;          use Gtk.Style_Context;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtkada.Handlers;
-with Gtkada.MDI;                      use Gtkada.MDI;
-with Language;                        use Language;
-with Pango.Layout;                    use Pango.Layout;
-with Src_Editor_Box;                  use Src_Editor_Box;
-with Src_Editor_Module.Commands;      use Src_Editor_Module.Commands;
-with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
-with Src_Editor_Module;               use Src_Editor_Module;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Language;                   use Language;
+with Pango.Layout;               use Pango.Layout;
+with Src_Editor_Box;             use Src_Editor_Box;
+with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
+with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
+with Src_Editor_Module;          use Src_Editor_Module;
 with String_Utils;
 
 package body Src_Editor_Status_Bar is
@@ -62,10 +62,11 @@ package body Src_Editor_Status_Bar is
    --  status.
 
    procedure Setup (Data : Source_Editor_Status_Bar; Id : Handler_Id);
-   package Bar_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Widget_Type => Glib.Object.GObject_Record,
-      User_Type   => Source_Editor_Status_Bar,
-      Setup       => Setup);
+   package Bar_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Widget_Type => Glib.Object.GObject_Record,
+        User_Type   => Source_Editor_Status_Bar,
+        Setup       => Setup);
 
    procedure Cursor_Position_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
@@ -85,8 +86,8 @@ package body Src_Editor_Status_Bar is
    --  Toggle read-only/writable state of a given box
 
    function On_Subprogram_Link
-     (Ob  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args : Gtk_Args) return Boolean;
+     (Ob : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
+      return Boolean;
    --  Called when the user clicks on one of the links in the subprogram box in
    --  the status bar.
 
@@ -106,12 +107,13 @@ package body Src_Editor_Status_Bar is
    type On_VCS_Status_Changed is new Vcs_File_Status_Hooks_Function with record
       Bar : Source_Editor_Status_Bar;
    end record;
-   overriding procedure Execute
-     (Self          : On_VCS_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : File_Sets.Set;
-      Props         : VCS_File_Properties);
+   overriding
+   procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : File_Sets.Set;
+      Props  : VCS_File_Properties);
 
    procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class);
    --  Called when the user clicks on the VCS status icon
@@ -123,8 +125,8 @@ package body Src_Editor_Status_Bar is
    procedure Destroy_Info_Frames
      (Bar : access Source_Editor_Status_Bar_Record'Class)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Frames_Array, Frames_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Frames_Array, Frames_Array_Access);
    begin
       if Bar.Buffer_Info_Frames /= null then
          for J of Bar.Buffer_Info_Frames.all loop
@@ -145,7 +147,7 @@ package body Src_Editor_Status_Bar is
       Bar    : Source_Editor_Status_Bar)
    is
       pragma Unreferenced (Ob, Params);
-      Info  : constant Extra_Information_Array_Access :=
+      Info : constant Extra_Information_Array_Access :=
         Get_Extra_Information (Bar.Buffer);
    begin
       Destroy_Info_Frames (Bar);
@@ -168,9 +170,7 @@ package body Src_Editor_Status_Bar is
               (To_String (Info (J).Info.Text));
          end if;
 
-         if Info (J).Tooltip /= null
-           and then Info (J).Tooltip.all /= ""
-         then
+         if Info (J).Tooltip /= null and then Info (J).Tooltip.all /= "" then
             Bar.Buffer_Info_Frames (J).Set_Tooltip_Markup
               (Info (J).Tooltip.all);
          end if;
@@ -188,29 +188,31 @@ package body Src_Editor_Status_Bar is
    procedure Update_Subprogram_Name
      (Bar : not null access Source_Editor_Status_Bar_Record'Class)
    is
-      Block  : Block_Record;
-      Parent : Block_Record;
-      Val   : Unbounded_String;
+      Block               : Block_Record;
+      Parent              : Block_Record;
+      Val                 : Unbounded_String;
       Previous_First_Line : Editable_Line_Type;
    begin
       if Display_Subprogram_Names.Get_Pref then
          Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line);
-         if Block.Block_Type /= Cat_Unknown
-           and then Block.Name /= No_Symbol
+         if Block.Block_Type /= Cat_Unknown and then Block.Name /= No_Symbol
          then
             --  We cannot control the underline from the theme unfortunately.
-            Val := To_Unbounded_String
-              ("<span underline='none'><a href='" & Block.First_Line'Img & "'>"
-               & Glib.Convert.Escape_Text (Get (Block.Name).all)
-               & "</a></span>");
+            Val :=
+              To_Unbounded_String
+                ("<span underline='none'><a href='"
+                 & Block.First_Line'Img
+                 & "'>"
+                 & Glib.Convert.Escape_Text (Get (Block.Name).all)
+                 & "</a></span>");
 
             Parent := Block;
 
             while Parent.First_Line > 1 loop
                Previous_First_Line := Parent.First_Line;
 
-               Parent := Get_Subprogram_Block (Bar.Buffer,
-                                               Parent.First_Line - 1);
+               Parent :=
+                 Get_Subprogram_Block (Bar.Buffer, Parent.First_Line - 1);
 
                --  Loop invariant: in each iteration of this loop, we're
                --  counting on the fact that Parent.First_Line keeps
@@ -226,7 +228,9 @@ package body Src_Editor_Status_Bar is
                   Val :=
                     "<span underline='none'><a href='"
                     & Parent.First_Line'Img
-                    & "'>" & Get (Parent.Name).all & "</a></span>."
+                    & "'>"
+                    & Get (Parent.Name).all
+                    & "</a></span>."
                     & Val;
                end if;
             end loop;
@@ -246,22 +250,20 @@ package body Src_Editor_Status_Bar is
    procedure Update_Status
      (Bar : not null access Source_Editor_Status_Bar_Record'Class)
    is
-      Source_Box  : constant Source_Editor_Box :=
-        Source_Editor_Box (Bar.Box);
-      Child       : constant MDI_Child := Find_Child
-        (Get_Kernel (Bar.Buffer), Source_Editor_Box (Bar.Box));
+      Source_Box  : constant Source_Editor_Box := Source_Editor_Box (Bar.Box);
+      Child       : constant MDI_Child :=
+        Find_Child (Get_Kernel (Bar.Buffer), Source_Editor_Box (Bar.Box));
       Icon_Suffix : constant String :=
         (if Source_Box.Is_Locked then Locked_Suffix else "");
       Icon_Name   : constant String :=
         (case Get_Status (Bar.Buffer) is
-            when Unmodified | Readonly | Saved =>
-              File_Pixbuf & Icon_Suffix,
+           when Unmodified | Readonly | Saved => File_Pixbuf & Icon_Suffix,
 
-            when Unsaved                       =>
-              File_Unsaved_Pixbuf & Icon_Suffix,
+           when Unsaved                       =>
+             File_Unsaved_Pixbuf & Icon_Suffix,
 
-            when Modified                      =>
-              File_Modified_Pixbuf & Icon_Suffix);
+           when Modified                      =>
+             File_Modified_Pixbuf & Icon_Suffix);
    begin
       if Child /= null then
          Child.Set_Icon_Name (Icon_Name);
@@ -294,11 +296,12 @@ package body Src_Editor_Status_Bar is
    ------------------------
 
    function On_Subprogram_Link
-     (Ob  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args : Gtk_Args) return Boolean
+     (Ob : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
+      return Boolean
    is
-      Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
-      URI : constant String := To_String (Args, 1);
+      Bar  : constant Source_Editor_Status_Bar :=
+        Source_Editor_Status_Bar (Ob);
+      URI  : constant String := To_String (Args, 1);
       Line : constant Editable_Line_Type := Editable_Line_Type'Value (URI);
       Box  : constant Source_Editor_Box := Source_Editor_Box (Bar.Box);
    begin
@@ -336,29 +339,26 @@ package body Src_Editor_Status_Bar is
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type)
    is
-      Pos : constant String :=
-         String_Utils.Image (Integer (Line))
-         & ':' & String_Utils.Image (Integer (Column));
+      Pos            : constant String :=
+        String_Utils.Image (Integer (Line))
+        & ':'
+        & String_Utils.Image (Integer (Column));
       Start, The_End : Gtk_Text_Iter;
-      Result : Boolean;
-      Lines, Offset : Gint;
+      Result         : Boolean;
+      Lines, Offset  : Gint;
    begin
       Bar.Buffer.Get_Selection_Bounds (Start, The_End, Result);
       if Result then
          Lines := Get_Line (The_End) - Get_Line (Start) + 1;
          Offset := Get_Offset (The_End) - Get_Offset (Start);
-            Bar.Cursor_Loc.Set_Label
-              ("("
-               & Image (Integer (Lines), Min_Width => 1)
-               & (if Lines > 1
-                 then " lines,"
-                 else " line,")
-               & Offset'Img
-               & (if Offset > 1
-                 then " chars"
-                 else " char")
-               & ") "
-               & Pos);
+         Bar.Cursor_Loc.Set_Label
+           ("("
+            & Image (Integer (Lines), Min_Width => 1)
+            & (if Lines > 1 then " lines," else " line,")
+            & Offset'Img
+            & (if Offset > 1 then " chars" else " char")
+            & ") "
+            & Pos);
       else
          Bar.Cursor_Loc.Set_Label (Pos);
       end if;
@@ -391,17 +391,14 @@ package body Src_Editor_Status_Bar is
       --  changing the current line from the "Go to line" dialog, the latter
       --  still has the focus at this point.
 
-      Child := Find_Editor
-        (Get_Kernel (Bar.Buffer),
-         File,
-         No_Project);
+      Child := Find_Editor (Get_Kernel (Bar.Buffer), File, No_Project);
 
       if Child /= null and then Get_Widget (Child) = Gtk_Widget (Bar.Box) then
          Show_Cursor_Position
            (Bar,
             Line   => Bar.Current_Line,
-            Column => Character_Offset_Type
-              (Values.Get_Int (Values.Nth (Params, 2))));
+            Column =>
+              Character_Offset_Type (Values.Get_Int (Values.Nth (Params, 2))));
       end if;
    end Cursor_Position_Changed_Handler;
 
@@ -410,9 +407,10 @@ package body Src_Editor_Status_Bar is
    ---------------------------
 
    procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class) is
-      B : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Bar);
+      B      : constant Source_Editor_Status_Bar :=
+        Source_Editor_Status_Bar (Bar);
       Kernel : constant Kernel_Handle := Get_Kernel (B.Buffer);
-      Dummy : Boolean;
+      Dummy  : Boolean;
    begin
       if Perspective_Exists (Kernel, "VCS") then
          Load_Perspective (Kernel, "VCS");
@@ -431,12 +429,13 @@ package body Src_Editor_Status_Bar is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self          : On_VCS_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : File_Sets.Set;
-      Props         : VCS_File_Properties)
+   overriding
+   procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : File_Sets.Set;
+      Props  : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
       Bar : constant Source_Editor_Status_Bar := Self.Bar;
@@ -494,7 +493,9 @@ package body Src_Editor_Status_Bar is
       Bar.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Bar.Function_Label,
-         Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
+         Gtk.Label.Signal_Activate_Link,
+         On_Subprogram_Link'Access,
+         Bar);
 
       Gtk_New (Bar.Toolbar);
       Bar.Toolbar.Set_Icon_Size (Get_Icon_Size_For_Local_Toolbars);
@@ -532,8 +533,9 @@ package body Src_Editor_Status_Bar is
       if VCS /= null then
          --  Monitor changes to VCS status (and get the initial status for the
          --  file)
-         H := new On_VCS_Status_Changed'
-           (Vcs_File_Status_Hooks_Function with Bar => Bar);
+         H :=
+           new On_VCS_Status_Changed'
+             (Vcs_File_Status_Hooks_Function with Bar => Bar);
          Vcs_File_Status_Changed_Hook.Add (H, Watch => Bar);  --  will update
 
          VCS_Engine := VCS.Get_VCS (P);

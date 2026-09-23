@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Style_Context;  use Gtk.Style_Context;
-with Pango.Enums;        use Pango.Enums;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Pango.Enums;       use Pango.Enums;
 
-with GUI_Utils;          use GUI_Utils;
+with GUI_Utils; use GUI_Utils;
 
 package body Dialog_Utils is
 
@@ -41,7 +41,7 @@ package body Dialog_Utils is
      (Child : not null access Gtk_Flow_Box_Child_Record'Class) return Boolean
    is
       Group_Widget : constant Dialog_Group_Widget :=
-                       Dialog_Group_Widget (Child.Get_Parent.Get_Parent);
+        Dialog_Group_Widget (Child.Get_Parent.Get_Parent);
       Result       : constant Boolean := Group_Widget.Filter_Func (Child);
       Index        : constant Gint := Child.Get_Index;
    begin
@@ -69,8 +69,7 @@ package body Dialog_Utils is
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (Self : not null access Dialog_View_Record'Class) is
+   procedure Initialize (Self : not null access Dialog_View_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -92,8 +91,7 @@ package body Dialog_Utils is
 
    function Get_Number_Of_Children
      (Self : not null access Dialog_View_Record'Class) return Natural
-   is
-      (Self.Number_Of_Children);
+   is (Self.Number_Of_Children);
 
    ----------------
    -- Initialize --
@@ -105,12 +103,11 @@ package body Dialog_Utils is
    is
       Box         : Gtk_Box;
       Orientation : constant Gtk_Orientation :=
-                      (if Position in Pos_Left .. Pos_Right then
-                          Orientation_Vertical
-                       else
-                          Orientation_Horizontal);
+        (if Position in Pos_Left .. Pos_Right
+         then Orientation_Vertical
+         else Orientation_Horizontal);
       At_Start    : constant Boolean :=
-                      Position = Pos_Left or else Position = Pos_Top;
+        Position = Pos_Left or else Position = Pos_Top;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -132,10 +129,7 @@ package body Dialog_Utils is
       Self.Add (Box);
 
       --  Create the button box
-      Gtk_New
-        (Self.Button_Box,
-         Orientation => Orientation,
-         Spacing     => 0);
+      Gtk_New (Self.Button_Box, Orientation => Orientation, Spacing => 0);
       Get_Style_Context (Self.Button_Box).Add_Class
         ("dialog-views-button-boxes");
 
@@ -179,8 +173,7 @@ package body Dialog_Utils is
       Widget        : not null access Gtk_Widget_Record'Class;
       Expand        : Boolean := True;
       Fill          : Boolean := True;
-      Add_Separator : Boolean := True)
-   is
+      Add_Separator : Boolean := True) is
    begin
       --  Add a separator before the given widget if the dialog view already
       --  has children.
@@ -217,9 +210,7 @@ package body Dialog_Utils is
          Fill          => Fill,
          Add_Separator => Add_Separator);
 
-      Self.Main_Box.Reorder_Child
-        (Widget,
-         Position => Position);
+      Self.Main_Box.Reorder_Child (Widget, Position => Position);
 
       if Add_Separator then
          Self.Main_Box.Reorder_Child
@@ -245,8 +236,8 @@ package body Dialog_Utils is
    ---------------
 
    function Has_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String) return Boolean is
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String)
+      return Boolean is
    begin
       return Self.Children_Map.Contains (Child_Key);
    end Has_Child;
@@ -256,8 +247,7 @@ package body Dialog_Utils is
    ------------------
 
    procedure Remove_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String)
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String)
    is
       Position : Gtk_Flow_Box_Child_Maps.Cursor;
       Child    : Gtk_Flow_Box_Child;
@@ -370,8 +360,7 @@ package body Dialog_Utils is
    ---------------------------------
 
    procedure Remove_Information_On_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String)
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String)
    is
       Child : Gtk_Flow_Box_Child;
    begin
@@ -402,11 +391,9 @@ package body Dialog_Utils is
       Get_Style_Context (View).Add_Class ("with-message");
 
       Group_Widget := new Dialog_Group_Widget_Record;
-      Initialize (Group_Widget,
-                  Parent_View         => View,
-                  Allow_Multi_Columns => False);
-      Get_Style_Context (Group_Widget).Add_Class
-        ("with-message");
+      Initialize
+        (Group_Widget, Parent_View => View, Allow_Multi_Columns => False);
+      Get_Style_Context (Group_Widget).Add_Class ("with-message");
 
       Gtk_New (Label);
       Label.Set_Alignment (0.0, 0.5);
@@ -500,16 +487,14 @@ package body Dialog_Utils is
    procedure Initialize
      (Self                : not null access Dialog_Group_Widget_Record'Class;
       Parent_View         : not null access Dialog_View_Record'Class;
-      Group_Name          : String                 := "";
-      Allow_Multi_Columns : Boolean                := True;
-      Selection           : Gtk_Selection_Mode     := Selection_None;
+      Group_Name          : String := "";
+      Allow_Multi_Columns : Boolean := True;
+      Selection           : Gtk_Selection_Mode := Selection_None;
       Sorting_Function    : Gtk_Flow_Box_Sort_Func := null;
       Filtering_Function  : Gtk_Flow_Box_Filter_Func := null)
    is
-      Max_Children_Per_Line : constant Guint := (if Allow_Multi_Columns then
-                                                    2
-                                                 else
-                                                    1);
+      Max_Children_Per_Line : constant Guint :=
+        (if Allow_Multi_Columns then 2 else 1);
    begin
       Gtk.Frame.Initialize (Self, Group_Name);
       Get_Style_Context (Self).Add_Class ("dialog-views-groups");
@@ -535,9 +520,7 @@ package body Dialog_Utils is
 
       Self.Parent_View := Dialog_View (Parent_View);
       Self.Parent_View.Append
-        (Widget        => Self,
-         Expand        => False,
-         Add_Separator => False);
+        (Widget => Self, Expand => False, Add_Separator => False);
    end Initialize;
 
    -----------------------
@@ -549,9 +532,7 @@ package body Dialog_Utils is
       Call : Cb_GObject_Gtk_Flow_Box_Child_Void;
       Slot : not null access GObject_Record'Class) is
    begin
-      Self.Flow_Box.On_Child_Activated
-        (Call  => Call,
-         Slot  => Slot);
+      Self.Flow_Box.On_Child_Activated (Call => Call, Slot => Slot);
    end On_Child_Selected;
 
    ----------------------------
@@ -560,16 +541,15 @@ package body Dialog_Utils is
 
    function Get_Number_Of_Children
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural
-   is
-     (Self.Number_Of_Children);
+   is (Self.Number_Of_Children);
 
    ------------------------
    -- Set_Column_Spacing --
    ------------------------
 
    procedure Set_Column_Spacing
-     (Self    : not null access Dialog_Group_Widget_Record'Class;
-      Spacing : Guint) is
+     (Self : not null access Dialog_Group_Widget_Record'Class; Spacing : Guint)
+   is
    begin
       Self.Flow_Box.Set_Column_Spacing (Spacing);
    end Set_Column_Spacing;
@@ -579,8 +559,8 @@ package body Dialog_Utils is
    ---------------------
 
    procedure Set_Row_Spacing
-     (Self    : not null access Dialog_Group_Widget_Record'Class;
-      Spacing : Guint) is
+     (Self : not null access Dialog_Group_Widget_Record'Class; Spacing : Guint)
+   is
    begin
       Self.Flow_Box.Set_Row_Spacing (Spacing);
    end Set_Row_Spacing;
@@ -610,16 +590,17 @@ package body Dialog_Utils is
       end if;
 
       --  Finally, create the child
-      return Self.Create_Child
-        (Widget       => Widget,
-         Button       => Button,
-         Label_Widget => Label_Widget,
-         Doc          => Doc,
-         Child_Key    => Child_Key,
-         Expand       => Expand,
-         Fill         => Fill,
-         Same_Height  => Same_Height,
-         Expand_Child => Expand_Child);
+      return
+        Self.Create_Child
+          (Widget       => Widget,
+           Button       => Button,
+           Label_Widget => Label_Widget,
+           Doc          => Doc,
+           Child_Key    => Child_Key,
+           Expand       => Expand,
+           Fill         => Fill,
+           Same_Height  => Same_Height,
+           Expand_Child => Expand_Child);
    end Create_Child;
 
    ------------------
@@ -653,10 +634,7 @@ package body Dialog_Utils is
          Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
       end if;
 
-      Child_Box.Pack_Start
-        (Widget,
-         Expand  => Expand,
-         Fill    => Fill);
+      Child_Box.Pack_Start (Widget, Expand => Expand, Fill => Fill);
 
       if Button /= null then
          Self.Parent_View.Button_Size_Group.Add_Widget (Button);
@@ -665,8 +643,8 @@ package body Dialog_Utils is
 
       if Doc /= "" then
          declare
-            Vbox        : Gtk_Box;
-            Doc_Widget  : Gtk_Label;
+            Vbox       : Gtk_Box;
+            Doc_Widget : Gtk_Label;
          begin
             Gtk_New_Vbox (Vbox);
             Vbox.Pack_Start (Child_Box, Expand => False);
@@ -717,17 +695,17 @@ package body Dialog_Utils is
       Expand_Child : Boolean := False)
    is
       Row : constant Gtk_Widget :=
-              Create_Child
-                (Self         => Self,
-                 Widget       => Widget,
-                 Button       => Button,
-                 Label        => Label,
-                 Doc          => Doc,
-                 Child_Key    => Child_Key,
-                 Expand       => Expand,
-                 Fill         => Fill,
-                 Same_Height  => Same_Height,
-                 Expand_Child => Expand_Child);
+        Create_Child
+          (Self         => Self,
+           Widget       => Widget,
+           Button       => Button,
+           Label        => Label,
+           Doc          => Doc,
+           Child_Key    => Child_Key,
+           Expand       => Expand,
+           Fill         => Fill,
+           Same_Height  => Same_Height,
+           Expand_Child => Expand_Child);
       pragma Unreferenced (Row);
    begin
       null;
@@ -750,17 +728,17 @@ package body Dialog_Utils is
       Expand_Child : Boolean := False)
    is
       Row : constant Gtk_Widget :=
-              Create_Child
-                (Self         => Self,
-                 Widget       => Widget,
-                 Button       => Button,
-                 Label_Widget => Label_Widget,
-                 Doc          => Doc,
-                 Child_Key    => Child_Key,
-                 Expand       => Expand,
-                 Fill         => Fill,
-                 Same_Height  => Same_Height,
-                 Expand_Child => Expand_Child);
+        Create_Child
+          (Self         => Self,
+           Widget       => Widget,
+           Button       => Button,
+           Label_Widget => Label_Widget,
+           Doc          => Doc,
+           Child_Key    => Child_Key,
+           Expand       => Expand,
+           Fill         => Fill,
+           Same_Height  => Same_Height,
+           Expand_Child => Expand_Child);
       pragma Unreferenced (Row);
    begin
       null;
@@ -778,10 +756,8 @@ package body Dialog_Utils is
       Homogeneous : Boolean := False;
       Child_Key   : String := "")
    is
-      Valign : constant Gtk_Align := (if Expand and then Fill then
-                                         Align_Fill
-                                      else
-                                         Align_Start);
+      Valign : constant Gtk_Align :=
+        (if Expand and then Fill then Align_Fill else Align_Start);
    begin
       --  Set the Vexpand and Valign properties on the widget itself, depending
       --  on the Expand and Fill parameters.
@@ -805,10 +781,9 @@ package body Dialog_Utils is
       if Child_Key /= "" then
          Self.Parent_View.Children_Map.Insert
            (Child_Key,
-            (if Widget.all not in Gtk_Flow_Box_Child_Record'Class then
-               Gtk_Flow_Box_Child (Widget.Get_Parent)
-            else
-               Gtk_Flow_Box_Child (Widget)));
+            (if Widget.all not in Gtk_Flow_Box_Child_Record'Class
+             then Gtk_Flow_Box_Child (Widget.Get_Parent)
+             else Gtk_Flow_Box_Child (Widget)));
       end if;
 
       --  Disable the focus on the Gtk_Flow_Box_Child to ensure that the focus
@@ -825,8 +800,7 @@ package body Dialog_Utils is
 
    function Get_Selected_Children
      (Self : not null access Dialog_Group_Widget_Record'Class)
-      return Gtk.Widget.Widget_List.Glist
-   is
+      return Gtk.Widget.Widget_List.Glist is
    begin
       return Self.Flow_Box.Get_Selected_Children;
    end Get_Selected_Children;
@@ -836,8 +810,7 @@ package body Dialog_Utils is
    ------------
 
    procedure Force_Sort
-     (Self : not null access Dialog_Group_Widget_Record'Class)
-   is
+     (Self : not null access Dialog_Group_Widget_Record'Class) is
    begin
       Self.Flow_Box.Invalidate_Sort;
    end Force_Sort;
@@ -847,8 +820,7 @@ package body Dialog_Utils is
    --------------------
 
    procedure Force_Refilter
-     (Self : not null access Dialog_Group_Widget_Record'Class)
-   is
+     (Self : not null access Dialog_Group_Widget_Record'Class) is
    begin
       Self.Flow_Box.Invalidate_Filter;
    end Force_Refilter;

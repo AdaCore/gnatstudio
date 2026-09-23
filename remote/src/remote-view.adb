@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.Expect;            use GNAT.Expect;
-with GNAT.Strings;           use GNAT.Strings;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNAT.Expect;  use GNAT.Expect;
+with GNAT.Strings; use GNAT.Strings;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with XML_Utils;              use XML_Utils;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
+with XML_Utils;   use XML_Utils;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
@@ -46,17 +46,18 @@ with Gtkada.MDI;             use Gtkada.MDI;
 with Collapsing_Pane;        use Collapsing_Pane;
 
 with Generic_Views;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
-with GUI_Utils;              use GUI_Utils;
+with GUI_Utils;          use GUI_Utils;
 
-with Remote.Config_Dialog;   use Remote.Config_Dialog;
-with Gexpect.Db;             use Gexpect, Gexpect.Db;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with Remote.Config_Dialog; use Remote.Config_Dialog;
+with Gexpect.Db;
+use Gexpect, Gexpect.Db;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Remote.View is
 
@@ -82,26 +83,27 @@ package body Remote.View is
       --  ??? Gtk3: These need to be converted to Gtk.Style_Context
       Connecting         : Boolean := False;
    end record;
-   overriding procedure Save_To_XML
-     (View : access Remote_View_Record;
-      XML  : in out XML_Utils.Node_Ptr);
-   overriding procedure Load_From_XML
+   overriding
+   procedure Save_To_XML
+     (View : access Remote_View_Record; XML : in out XML_Utils.Node_Ptr);
+   overriding
+   procedure Load_From_XML
      (View : in out Remote_View_Record; XML : XML_Utils.Node_Ptr);
 
    function Initialize
-     (View            : access Remote_View_Record'Class)
-      return Gtk_Widget;
+     (View : access Remote_View_Record'Class) return Gtk_Widget;
    --  Initialize view and returns the focus widget.
 
-   package Remote_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Remote_Module",
-      View_Name          => "Remote",
-      Formal_View_Record => Remote_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Left);
+   package Remote_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Remote_Module",
+        View_Name          => "Remote",
+        Formal_View_Record => Remote_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Position_Left);
    subtype Remote_View is Remote_Views.View_Access;
 
    procedure Set_Servers
@@ -128,59 +130,61 @@ package body Remote.View is
    end record;
 
    procedure Setup (Data : Remote_Data; Id : Handler_Id);
-   package View_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Gtk_Widget_Record, Remote_Data, Setup);
+   package View_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Gtk_Widget_Record,
+        Remote_Data,
+        Setup);
 
    procedure Setup (Data : Sync_Data; Id : Handler_Id);
-   package Sync_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Gtk_Widget_Record, Sync_Data, Setup);
+   package Sync_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Gtk_Widget_Record,
+        Sync_Data,
+        Setup);
 
    type On_Server_Config is new Server_Hooks_Function with record
       View : Remote_View;
    end record;
-   overriding procedure Execute
-     (Self   : On_Server_Config;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Server : Distant_Server_Type;
+   overriding
+   procedure Execute
+     (Self     : On_Server_Config;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Server   : Distant_Server_Type;
       Nickname : String);
    --  Called when server configuration changed
 
    type On_Server_List is new Simple_Hooks_Function with record
       View : Remote_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Server_List;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when server list changed
 
    procedure On_Combo_Changed
-     (Combo : access Gtk_Widget_Record'Class;
-      User  : Remote_Data);
+     (Combo : access Gtk_Widget_Record'Class; User : Remote_Data);
    --  Called when one of the combo box's value changes
 
    procedure On_Check_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Remote_Data);
+     (W : access Gtk_Widget_Record'Class; User : Remote_Data);
    --  Called when the 'check' button is clicked
 
    procedure On_Connect_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Remote_Data);
+     (W : access Gtk_Widget_Record'Class; User : Remote_Data);
    --  Called when the 'Apply' button is clicked
 
    procedure On_Sync_Menu_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Sync_Data);
+     (W : access Gtk_Widget_Record'Class; User : Sync_Data);
    --  Called when an item of the sync menu is clicked
 
    procedure On_Config_List_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data);
+     (View : access Gtk_Widget_Record'Class; User : Remote_Data);
    --  Called when the "Settings" button is clicked
 
    procedure On_Set_Default_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data);
+     (View : access Gtk_Widget_Record'Class; User : Remote_Data);
    --  Called when the "Set default" button is clicked
 
    function Get_Selected
@@ -208,18 +212,17 @@ package body Remote.View is
    ----------------
 
    function Initialize
-     (View            : access Remote_View_Record'Class)
-      return Gtk_Widget
+     (View : access Remote_View_Record'Class) return Gtk_Widget
    is
-      Server_Label   : Gtk_Label;
-      Simple_Table   : Gtk_Table;
-      Full_Table     : Gtk_Table;
-      Hbox           : Gtk_Hbox;
-      Buttons_Box    : Gtk_Hbox;
-      List           : Gtk_List_Store;
-      Cell           : Gtk_Cell_Renderer_Text;
-      Scrolled       : Gtk_Scrolled_Window;
-      Image          : Gtk_Image;
+      Server_Label : Gtk_Label;
+      Simple_Table : Gtk_Table;
+      Full_Table   : Gtk_Table;
+      Hbox         : Gtk_Hbox;
+      Buttons_Box  : Gtk_Hbox;
+      List         : Gtk_List_Store;
+      Cell         : Gtk_Cell_Renderer_Text;
+      Scrolled     : Gtk_Scrolled_Window;
+      Image        : Gtk_Image;
 
    begin
       Initialize_Vbox (View, Homogeneous => False);
@@ -237,15 +240,12 @@ package body Remote.View is
       --  Server selection pane
 
       Gtk_New (View.Pane, "Servers assignment");
-      Attach (View.Main_Table, View.Pane, 0, 2, 0, 1,
-              Expand or Fill, 0);
+      Attach (View.Main_Table, View.Pane, 0, 2, 0, 1, Expand or Fill, 0);
 
       Gtk_New (Simple_Table, 1, 2, False);
-      Set_Collapsed_Widget (View.Pane,
-                            Simple_Table);
+      Set_Collapsed_Widget (View.Pane, Simple_Table);
       Gtk_New (Full_Table, 6, 2, False);
-      Set_Expanded_Widget (View.Pane,
-                           Full_Table);
+      Set_Expanded_Widget (View.Pane, Full_Table);
 
       Set_State (View.Pane, Collapsed);
 
@@ -256,35 +256,34 @@ package body Remote.View is
          View.Servers_Combo (S).Pack_Start (Cell, True);
          View.Servers_Combo (S).Add_Attribute (Cell, "text", 0);
          View_Callback.Connect
-           (View.Servers_Combo (S), Signal_Changed, On_Combo_Changed'Access,
+           (View.Servers_Combo (S),
+            Signal_Changed,
+            On_Combo_Changed'Access,
             (View => Remote_View (View), Server => S));
 
          case S is
-            when GPS_Server =>
+            when GPS_Server       =>
                Server_Label := null;
-               Set_Name (View.Servers_Combo (S),
-                         "combo_remote_server_all");
-            when Build_Server =>
+               Set_Name (View.Servers_Combo (S), "combo_remote_server_all");
+
+            when Build_Server     =>
                Gtk_New (Server_Label, -("Build:"));
-               Set_Name (View.Servers_Combo (S),
-                         "combo_remote_server_build");
-            when Debug_Server =>
+               Set_Name (View.Servers_Combo (S), "combo_remote_server_build");
+
+            when Debug_Server     =>
                Gtk_New (Server_Label, -("Debug:"));
-               Set_Name (View.Servers_Combo (S),
-                         "combo_remote_server_debug");
+               Set_Name (View.Servers_Combo (S), "combo_remote_server_debug");
+
             when Execution_Server =>
                Gtk_New (Server_Label, -("Execution:"));
-               Set_Name (View.Servers_Combo (S),
-                         "combo_remote_server_exec");
+               Set_Name (View.Servers_Combo (S), "combo_remote_server_exec");
          end case;
 
          if Server_Label /= null then
             Set_Alignment (Server_Label, 0.0, 0.5);
          end if;
 
-         Gtk_New_From_Icon_Name
-           (Image, "gps-sync-to-local",
-            Icon_Size_Button);
+         Gtk_New_From_Icon_Name (Image, "gps-sync-to-local", Icon_Size_Button);
          Gtk_New (View.To_Local_Buttons (S));
          View.To_Local_Buttons (S).Add (Image);
          View.To_Local_Buttons (S).Show_All;
@@ -292,12 +291,11 @@ package body Remote.View is
          Set_Border_Width (View.To_Local_Buttons (S), 0);
          Set_Tooltip_Text
            (View.To_Local_Buttons (S),
-            -("Synchronize all directories from the remote" &
-              " server to the local machine"));
+            -("Synchronize all directories from the remote"
+              & " server to the local machine"));
 
          Gtk_New_From_Icon_Name
-           (Image, "gps-sync-to-remote",
-            Icon_Size_Button);
+           (Image, "gps-sync-to-remote", Icon_Size_Button);
          Gtk_New (View.To_Remote_Buttons (S));
          View.To_Remote_Buttons (S).Add (Image);
          View.To_Remote_Buttons (S).Show_All;
@@ -307,27 +305,31 @@ package body Remote.View is
          Set_Can_Default (View.To_Remote_Buttons (S), False);
          Set_Tooltip_Text
            (View.To_Remote_Buttons (S),
-            -("Synchronize all directories from the local" &
-              " machine to the remote server"));
+            -("Synchronize all directories from the local"
+              & " machine to the remote server"));
 
          if S /= GPS_Server then
             Sync_Callback.Connect
-              (View.To_Local_Buttons (S), Signal_Clicked,
+              (View.To_Local_Buttons (S),
+               Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View), From => S, To => GPS_Server));
             Sync_Callback.Connect
-              (View.To_Remote_Buttons (S), Signal_Clicked,
+              (View.To_Remote_Buttons (S),
+               Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View), From => GPS_Server, To => S));
          else
             Sync_Callback.Connect
-              (View.To_Local_Buttons (S), Signal_Clicked,
+              (View.To_Local_Buttons (S),
+               Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View),
                 From => Build_Server,
                 To   => GPS_Server));
             Sync_Callback.Connect
-              (View.To_Remote_Buttons (S), Signal_Clicked,
+              (View.To_Remote_Buttons (S),
+               Signal_Clicked,
                On_Sync_Menu_Clicked'Access,
                (View => Remote_View (View),
                 From => GPS_Server,
@@ -339,39 +341,31 @@ package body Remote.View is
          Pack_Start (Hbox, View.To_Remote_Buttons (S));
 
          case S is
-            when GPS_Server =>
-               Attach (Simple_Table, View.Servers_Combo (S),
-                       0, 1, 0, 1);
-               Attach (Simple_Table, Hbox,
-                       1, 2, 0, 1, 0, 0, 0, 0);
-            when Build_Server =>
-               Attach (Full_Table, Server_Label,
-                       0, 2, 0, 1, Fill);
-               Attach (Full_Table, View.Servers_Combo (S),
-                       0, 1, 1, 2);
-               Attach (Full_Table, Hbox,
-                       1, 2, 1, 2, 0, 0, 0, 0);
-            when Debug_Server =>
-               Attach (Full_Table, Server_Label,
-                       0, 2, 2, 3, Fill);
-               Attach (Full_Table, View.Servers_Combo (S),
-                       0, 1, 3, 4);
-               Attach (Full_Table, Hbox,
-                       1, 2, 3, 4, 0, 0, 0, 0);
+            when GPS_Server       =>
+               Attach (Simple_Table, View.Servers_Combo (S), 0, 1, 0, 1);
+               Attach (Simple_Table, Hbox, 1, 2, 0, 1, 0, 0, 0, 0);
+
+            when Build_Server     =>
+               Attach (Full_Table, Server_Label, 0, 2, 0, 1, Fill);
+               Attach (Full_Table, View.Servers_Combo (S), 0, 1, 1, 2);
+               Attach (Full_Table, Hbox, 1, 2, 1, 2, 0, 0, 0, 0);
+
+            when Debug_Server     =>
+               Attach (Full_Table, Server_Label, 0, 2, 2, 3, Fill);
+               Attach (Full_Table, View.Servers_Combo (S), 0, 1, 3, 4);
+               Attach (Full_Table, Hbox, 1, 2, 3, 4, 0, 0, 0, 0);
+
             when Execution_Server =>
-               Attach (Full_Table, Server_Label,
-                       0, 2, 4, 5, Fill);
-               Attach (Full_Table, View.Servers_Combo (S),
-                       0, 1, 5, 6);
-               Attach (Full_Table, Hbox,
-                       1, 2, 5, 6, 0, 0, 0, 0);
+               Attach (Full_Table, Server_Label, 0, 2, 4, 5, Fill);
+               Attach (Full_Table, View.Servers_Combo (S), 0, 1, 5, 6);
+               Attach (Full_Table, Hbox, 1, 2, 5, 6, 0, 0, 0, 0);
          end case;
       end loop;
 
       Set_Tooltip_Text
         (View.Servers_Combo (GPS_Server),
-         -("The remote server used to compile, debug and execute your " &
-           "project."));
+         -("The remote server used to compile, debug and execute your "
+           & "project."));
       Set_Tooltip_Text
         (View.Servers_Combo (Build_Server),
          -"The server used to perform builds and execute gnat tools");
@@ -389,11 +383,17 @@ package body Remote.View is
       --  Buttons
 
       Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
-      Attach (View.Main_Table, Buttons_Box, 0, 1, 1, 2,
-              Xoptions => Fill or Expand,
-              Yoptions => 0,
-              Xpadding => 5,
-              Ypadding => 0);
+      Attach
+        (View.Main_Table,
+         Buttons_Box,
+         0,
+         1,
+         1,
+         2,
+         Xoptions => Fill or Expand,
+         Yoptions => 0,
+         Xpadding => 5,
+         Ypadding => 0);
 
       Gtk_New (View.Check_Button, Label => -"Check");
       Set_Tooltip_Text
@@ -402,56 +402,67 @@ package body Remote.View is
       Set_Sensitive (View.Check_Button, False);
       Pack_Start (Buttons_Box, View.Check_Button, False, False);
       View_Callback.Connect
-        (View.Check_Button, Signal_Clicked, On_Check_Clicked'Access,
+        (View.Check_Button,
+         Signal_Clicked,
+         On_Check_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Apply_Button, Label => -"Apply");
       Set_Tooltip_Text
-        (View.Apply_Button,
-         -"Apply remote servers configuration");
+        (View.Apply_Button, -"Apply remote servers configuration");
       Set_Sensitive (View.Apply_Button, False);
       Pack_Start (Buttons_Box, View.Apply_Button, False, False);
       View_Callback.Connect
-        (View.Apply_Button, Signal_Clicked, On_Connect_Clicked'Access,
+        (View.Apply_Button,
+         Signal_Clicked,
+         On_Connect_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New (View.Set_Default_Button, -"Set default");
       Set_Tooltip_Text
         (View.Set_Default_Button,
          -"Set the servers assignment as default for the current project");
-      Attach (View.Main_Table, View.Set_Default_Button,
-              1, 2, 1, 2, 0, 0, 5, 0);
+      Attach
+        (View.Main_Table, View.Set_Default_Button, 1, 2, 1, 2, 0, 0, 5, 0);
       View_Callback.Connect
-        (View.Set_Default_Button, Signal_Clicked,
+        (View.Set_Default_Button,
+         Signal_Clicked,
          On_Set_Default_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Gtk_New_Hbox (Buttons_Box, Homogeneous => False, Spacing => 5);
-      Attach (View.Main_Table, Buttons_Box, 0, 2, 2, 3,
-              Yoptions => 0,
-              Xpadding => 5,
-              Ypadding => 5);
+      Attach
+        (View.Main_Table,
+         Buttons_Box,
+         0,
+         2,
+         2,
+         3,
+         Yoptions => 0,
+         Xpadding => 5,
+         Ypadding => 5);
 
       Gtk_New (View.Settings_Button, -"Servers settings");
       Set_Name (View.Settings_Button, -"remote_view_servers_settings");
       Set_Tooltip_Text
-        (View.Settings_Button,
-         -"Configure the list of available servers");
+        (View.Settings_Button, -"Configure the list of available servers");
       Pack_Start (Buttons_Box, View.Settings_Button, False, False);
       View_Callback.Connect
-        (View.Settings_Button, Signal_Clicked, On_Config_List_Clicked'Access,
+        (View.Settings_Button,
+         Signal_Clicked,
+         On_Config_List_Clicked'Access,
          (View => Remote_View (View), Server => GPS_Server));
 
       Set_Servers (View);
 
       Server_Config_Hook.Add
-         (new On_Server_Config'
-            (Server_Hooks_Function with View => Remote_View (View)),
-          Watch => View);
+        (new On_Server_Config'
+           (Server_Hooks_Function with View => Remote_View (View)),
+         Watch => View);
       Server_List_Hook.Add
-         (new On_Server_List'
-            (Simple_Hooks_Function with View => Remote_View (View)),
-          Watch => View);
+        (new On_Server_List'
+           (Simple_Hooks_Function with View => Remote_View (View)),
+         Watch => View);
 
       return Gtk_Widget (View.Settings_Button);
    end Initialize;
@@ -460,12 +471,13 @@ package body Remote.View is
    -- Load_From_XML --
    -------------------
 
-   overriding procedure Load_From_XML
+   overriding
+   procedure Load_From_XML
      (View : in out Remote_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Mode     : Boolean;
       Mode_Str : constant String :=
-                   Get_Attribute_S (XML, "simple_mode", "True");
+        Get_Attribute_S (XML, "simple_mode", "True");
    begin
       begin
          Mode := Boolean'Value (Mode_Str);
@@ -485,9 +497,9 @@ package body Remote.View is
    -- Save_To_XML --
    -----------------
 
-   overriding procedure Save_To_XML
-     (View : access Remote_View_Record;
-      XML  : in out XML_Utils.Node_Ptr) is
+   overriding
+   procedure Save_To_XML
+     (View : access Remote_View_Record; XML : in out XML_Utils.Node_Ptr) is
    begin
       if Get_State (View.Pane) = Collapsed then
          Set_Attribute_S (XML, "simple_mode", "true");
@@ -527,14 +539,13 @@ package body Remote.View is
       for S in View.Servers_Combo'Range loop
          --  Set server for full view
          declare
-            List       : constant Gtk_List_Store :=
-                           -Get_Model (View.Servers_Combo (S));
-            Iter       : Gtk_Tree_Iter :=
-                           View.Servers_Combo (S).Get_Active_Iter;
+            List : constant Gtk_List_Store :=
+              -Get_Model (View.Servers_Combo (S));
+            Iter : Gtk_Tree_Iter := View.Servers_Combo (S).Get_Active_Iter;
 
             --  Save the selected server to select it back after list update
             Old_Server : constant String :=
-                           Get_Selected (View.Servers_Combo (S));
+              Get_Selected (View.Servers_Combo (S));
 
          begin
             List.Clear;
@@ -559,8 +570,9 @@ package body Remote.View is
 
       --  Set 'set default' button sensitivity
 
-      Set_Sensitive (View.Set_Default_Button,
-                     not GPS.Kernel.Remote.Is_Default_Remote_Setting);
+      Set_Sensitive
+        (View.Set_Default_Button,
+         not GPS.Kernel.Remote.Is_Default_Remote_Setting);
 
       --  Update the view according to the modification in the servers list
       --  We just need to call it once for one of the distant servers
@@ -574,10 +586,11 @@ package body Remote.View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Server_Config;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Server : Distant_Server_Type;
+   overriding
+   procedure Execute
+     (Self     : On_Server_Config;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Server   : Distant_Server_Type;
       Nickname : String)
    is
       pragma Unreferenced (Kernel, Server);
@@ -591,7 +604,8 @@ package body Remote.View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Server_List;
       Kernel : not null access Kernel_Handle_Record'Class) is
    begin
@@ -614,8 +628,7 @@ package body Remote.View is
    ----------------------
 
    procedure On_Combo_Changed
-     (Combo : access Gtk_Widget_Record'Class;
-      User  : Remote_Data)
+     (Combo : access Gtk_Widget_Record'Class; User : Remote_Data)
    is
       List     : Gtk_List_Store;
       Iter     : Gtk_Tree_Iter;
@@ -628,8 +641,11 @@ package body Remote.View is
 
    begin
       if Active (Me) then
-         Trace (Me, "Combo for Server " & Server_Type'Image (User.Server) &
-                " changed");
+         Trace
+           (Me,
+            "Combo for Server "
+            & Server_Type'Image (User.Server)
+            & " changed");
       end if;
 
       --  Take care of the 'advanced' state of the simple view: remove it if
@@ -677,12 +693,12 @@ package body Remote.View is
       Advanced := False;
 
       if User.Server /= GPS_Server then
-         Servers_Loop :
-         for S1 in Distant_Server_Type'Range loop
+         Servers_Loop : for S1 in Distant_Server_Type'Range loop
             for S2 in Distant_Server_Type'Range loop
                if S1 /= S2
-                 and then Get_Selected (User.View.Servers_Combo (S1)) /=
-                 Get_Selected (User.View.Servers_Combo (S2))
+                 and then
+                   Get_Selected (User.View.Servers_Combo (S1))
+                   /= Get_Selected (User.View.Servers_Combo (S2))
                then
                   List := -User.View.Servers_Combo (GPS_Server).Get_Model;
                   Iter := List.Get_Iter_First;
@@ -719,26 +735,27 @@ package body Remote.View is
       --  Now make sure that the modification states are properly set
 
       Modified := False;
-      Remote   := False;
+      Remote := False;
       Set_Sensitive (User.View.To_Local_Buttons (GPS_Server), False);
       Set_Sensitive (User.View.To_Remote_Buttons (GPS_Server), False);
 
       for S in Distant_Server_Type'Range loop
          --  Set modified states if needed
-         if Get_Selected (User.View.Servers_Combo (S)) /=
-           Get_Printable_Nickname (S)
+         if Get_Selected (User.View.Servers_Combo (S))
+           /= Get_Printable_Nickname (S)
          then
             Modified := True;
-            Set_Style (User.View.Servers_Combo (S).Get_Child,
-                       User.View.Modified_Style);
+            Set_Style
+              (User.View.Servers_Combo (S).Get_Child,
+               User.View.Modified_Style);
          else
-            Set_Style (User.View.Servers_Combo (S).Get_Child,
-                       User.View.Normal_Style);
+            Set_Style
+              (User.View.Servers_Combo (S).Get_Child, User.View.Normal_Style);
          end if;
 
          --  Update buttons sensitity
-         if Get_Selected (User.View.Servers_Combo (S)) /=
-           Display_Local_Nickname
+         if Get_Selected (User.View.Servers_Combo (S))
+           /= Display_Local_Nickname
          then
             Remote := True;
             Set_Sensitive (User.View.To_Local_Buttons (S), True);
@@ -769,7 +786,8 @@ package body Remote.View is
       Set_Sensitive (User.View.Apply_Button, Modified);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Combo_Changed;
 
    ----------------
@@ -797,16 +815,15 @@ package body Remote.View is
    ----------------------
 
    procedure On_Check_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Remote_Data)
+     (W : access Gtk_Widget_Record'Class; User : Remote_Data)
    is
       New_Server : constant String :=
-                     Get_Selected (User.View.Servers_Combo (Build_Server));
+        Get_Selected (User.View.Servers_Combo (Build_Server));
       --  ??? We used to have a single assignment for Prj and Project below,
       --  but this caused a memory corruption (codegen bug ?), so work around
       --  it for now
       Prj        : constant GNATCOLL.VFS.Virtual_File :=
-                     Get_Project (User.View.Kernel).Object_Dir;
+        Get_Project (User.View.Kernel).Object_Dir;
       Reasons    : Ada.Strings.Unbounded.Unbounded_String;
       Failure    : Boolean := False;
       Ignore     : Message_Dialog_Buttons;
@@ -815,16 +832,16 @@ package body Remote.View is
    begin
       for S in Distant_Server_Type'Range loop
          declare
-            Server_Name : constant String :=
-                            Get_Selected (User.View.Servers_Combo (S));
+            Server_Name     : constant String :=
+              Get_Selected (User.View.Servers_Combo (S));
             Already_Checked : Boolean := False;
 
          begin
             --  Catch potential Constraint_Error raised by 'Pred use
             begin
                for S2 in Distant_Server_Type'First .. Server_Type'Pred (S) loop
-                  Already_Checked := Server_Name =
-                    Get_Selected (User.View.Servers_Combo (S2));
+                  Already_Checked :=
+                    Server_Name = Get_Selected (User.View.Servers_Combo (S2));
                   exit when Already_Checked;
                end loop;
 
@@ -842,8 +859,13 @@ package body Remote.View is
                begin
                   if Error_Msg /= "" then
                      Failure := True;
-                     Reasons := Reasons & "Check failed for server " &
-                                Server_Name & ": " & Error_Msg & ASCII.LF;
+                     Reasons :=
+                       Reasons
+                       & "Check failed for server "
+                       & Server_Name
+                       & ": "
+                       & Error_Msg
+                       & ASCII.LF;
                   end if;
                end;
             end if;
@@ -857,46 +879,65 @@ package body Remote.View is
            and then not Is_Regular_File (To_Remote (Prj, New_Server))
          then
             Failure := True;
-            Reasons := Reasons & "Project " & Prj.Display_Full_Name &
-              " has no equivalence on build server " & New_Server &
-              ASCII.LF & ASCII.LF &
-              "Please verify the Path translation setting in the 'Servers " &
-              "settings' dialog, and in particular verify that " & ASCII.LF &
-              Prj.Display_Dir_Name &
-              " can be synchronized to the server '" &
-              New_Server & "'" & ASCII.LF;
+            Reasons :=
+              Reasons
+              & "Project "
+              & Prj.Display_Full_Name
+              & " has no equivalence on build server "
+              & New_Server
+              & ASCII.LF
+              & ASCII.LF
+              & "Please verify the Path translation setting in the 'Servers "
+              & "settings' dialog, and in particular verify that "
+              & ASCII.LF
+              & Prj.Display_Dir_Name
+              & " can be synchronized to the server '"
+              & New_Server
+              & "'"
+              & ASCII.LF;
          end if;
 
       exception
          when E : Invalid_Process =>
             Failure := True;
-            Reasons := Reasons & "Could not connect to host " &
-              New_Server & ": " & Exception_Message (E) & ASCII.LF;
+            Reasons :=
+              Reasons
+              & "Could not connect to host "
+              & New_Server
+              & ": "
+              & Exception_Message (E)
+              & ASCII.LF;
       end;
 
       if not Failure then
-         Ignore := GPS_Message_Dialog
-           ("Remote configuration check has successfully completed",
-            Buttons => Button_OK,
-            Parent  => Gtk_Window (W.Get_Toplevel));
+         Ignore :=
+           GPS_Message_Dialog
+             ("Remote configuration check has successfully completed",
+              Buttons => Button_OK,
+              Parent  => Gtk_Window (W.Get_Toplevel));
       else
-         Ignore := GPS_Message_Dialog
-           ("Remote configuration check has failed for the following reasons:"
-            & ASCII.LF & To_String (Reasons),
-            Dialog_Type => Error,
-            Buttons     => Button_OK,
-            Parent      => Gtk_Window (W.Get_Toplevel));
+         Ignore :=
+           GPS_Message_Dialog
+             ("Remote configuration check has failed for the following reasons:"
+              & ASCII.LF
+              & To_String (Reasons),
+              Dialog_Type => Error,
+              Buttons     => Button_OK,
+              Parent      => Gtk_Window (W.Get_Toplevel));
       end if;
 
    exception
       when E : others =>
-         Ignore := GPS_Message_Dialog
-           ("Remote configuration check has failed for the following reasons:"
-            & ASCII.LF & "Exception received: " & ASCII.LF &
-            Ada.Exceptions.Exception_Information (E),
-            Dialog_Type => Error,
-            Buttons     => Button_OK,
-            Parent      => Gtk_Window (W.Get_Toplevel));
+         Ignore :=
+           GPS_Message_Dialog
+             ("Remote configuration check has failed for the following reasons:"
+              & ASCII.LF
+              & "Exception received: "
+              & ASCII.LF
+              & Ada.Exceptions.Exception_Information (E),
+              Dialog_Type => Error,
+              Buttons     => Button_OK,
+              Parent      => Gtk_Window (W.Get_Toplevel));
    end On_Check_Clicked;
 
    ------------------------
@@ -904,8 +945,7 @@ package body Remote.View is
    ------------------------
 
    procedure On_Connect_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Remote_Data)
+     (W : access Gtk_Widget_Record'Class; User : Remote_Data)
    is
       pragma Unreferenced (W);
 
@@ -915,21 +955,29 @@ package body Remote.View is
       for S in Distant_Server_Type'Range loop
          declare
             Server_Name : constant String :=
-                            Get_Selected (User.View.Servers_Combo (S));
+              Get_Selected (User.View.Servers_Combo (S));
          begin
             if Server_Name /= Get_Printable_Nickname (S) then
                if Active (Me) then
-                  Trace (Me, "Assign server " & Server_Type'Image (S) &
-                         " to " & Server_Name);
+                  Trace
+                    (Me,
+                     "Assign server "
+                     & Server_Type'Image (S)
+                     & " to "
+                     & Server_Name);
                end if;
 
                if Server_Name = Display_Local_Nickname then
                   GPS.Kernel.Remote.Assign
-                    (User.View.Kernel, S, Local_Nickname,
+                    (User.View.Kernel,
+                     S,
+                     Local_Nickname,
                      Reload_Prj => S = Build_Server);
                else
                   GPS.Kernel.Remote.Assign
-                    (User.View.Kernel, S, Server_Name,
+                    (User.View.Kernel,
+                     S,
+                     Server_Name,
                      Reload_Prj => S = Build_Server);
                end if;
             end if;
@@ -945,8 +993,7 @@ package body Remote.View is
    --------------------------
 
    procedure On_Sync_Menu_Clicked
-     (W    : access Gtk_Widget_Record'Class;
-      User : Sync_Data)
+     (W : access Gtk_Widget_Record'Class; User : Sync_Data)
    is
       pragma Unreferenced (W);
 
@@ -963,10 +1010,10 @@ package body Remote.View is
             when GPS_Server =>
                return "";
 
-            when others =>
+            when others     =>
                declare
                   Str : constant String :=
-                          Get_Selected (User.View.Servers_Combo (S));
+                    Get_Selected (User.View.Servers_Combo (S));
                begin
                   if Str = Local_Nickname then
                      return "";
@@ -1000,23 +1047,22 @@ package body Remote.View is
    ----------------------------
 
    procedure On_Config_List_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data)
+     (View : access Gtk_Widget_Record'Class; User : Remote_Data)
    is
       pragma Unreferenced (View);
       Build_Txt : constant String :=
-                    Get_Selected (User.View.Servers_Combo (Build_Server));
+        Get_Selected (User.View.Servers_Combo (Build_Server));
    begin
       if Build_Txt /= Local_Nickname then
          Remote.Config_Dialog.Configure_Server_List
            (User.View.Kernel, Build_Txt);
       else
-         Remote.Config_Dialog.Configure_Server_List
-           (User.View.Kernel);
+         Remote.Config_Dialog.Configure_Server_List (User.View.Kernel);
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Config_List_Clicked;
 
    ----------------------------
@@ -1024,8 +1070,7 @@ package body Remote.View is
    ----------------------------
 
    procedure On_Set_Default_Clicked
-     (View : access Gtk_Widget_Record'Class;
-      User : Remote_Data)
+     (View : access Gtk_Widget_Record'Class; User : Remote_Data)
    is
       pragma Unreferenced (View);
    begin

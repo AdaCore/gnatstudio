@@ -33,7 +33,7 @@
 --  related units.
 
 package HTables is
-pragma Preelaborate (HTables);
+   pragma Preelaborate (HTables);
 
    -------------------
    -- Static_HTable --
@@ -73,19 +73,20 @@ pragma Preelaborate (HTables);
       --  The null value of the Elmt_Ptr type
 
       with procedure Set_Next (E : Elmt_Ptr; Next : Elmt_Ptr);
-      with function  Next     (E : Elmt_Ptr) return Elmt_Ptr;
+      with function Next (E : Elmt_Ptr) return Elmt_Ptr;
       --  The type must provide an internal link for the sake of the
       --  staticness of the HTable.
 
       type Key (<>) is limited private;
       with function Get_Key (E : Elmt_Ptr) return Key;
-      with function Hash    (F : Key)      return Header_Num;
-      with function Equal   (F1, F2 : Key) return Boolean;
+      with function Hash (F : Key) return Header_Num;
+      with function Equal (F1, F2 : Key) return Boolean;
 
       with procedure Free_Elmt_Ptr (E : in out Elmt_Ptr);
       --  Free the memory occupied by E
 
-   package Static_HTable is
+   package Static_HTable
+   is
 
       type Instance is private;
       Nil : constant Instance;
@@ -172,14 +173,15 @@ pragma Preelaborate (HTables);
       --  a given key
 
       type Key (<>) is private;
-      with function Hash  (F : Key)      return Header_Num;
+      with function Hash (F : Key) return Header_Num;
       with function Equal (F1, F2 : Key) return Boolean;
 
       with procedure Free_Element (X : in out Element);
       --  Free memory occupied by the element (called when the element is
       --  removed from the table)
 
-   package Simple_HTable is
+   package Simple_HTable
+   is
 
       type Instance is private;
       Nil : constant Instance;
@@ -249,21 +251,22 @@ pragma Preelaborate (HTables);
       procedure Free (X : in out Elmt_Ptr);
 
       procedure Set_Next (E : Elmt_Ptr; Next : Elmt_Ptr);
-      function  Next     (E : Elmt_Ptr) return Elmt_Ptr;
-      function  Get_Key  (E : Elmt_Ptr) return Key;
+      function Next (E : Elmt_Ptr) return Elmt_Ptr;
+      function Get_Key (E : Elmt_Ptr) return Key;
 
-      package Tab is new Static_HTable (
-        Header_Num    => Header_Num,
-        Element       => Element,
-        Elmt_Ptr      => Elmt_Ptr,
-        Null_Ptr      => null,
-        Set_Next      => Set_Next,
-        Next          => Next,
-        Key           => Key,
-        Get_Key       => Get_Key,
-        Hash          => Hash,
-        Equal         => Equal,
-        Free_Elmt_Ptr => Free);
+      package Tab is new
+        Static_HTable
+          (Header_Num    => Header_Num,
+           Element       => Element,
+           Elmt_Ptr      => Elmt_Ptr,
+           Null_Ptr      => null,
+           Set_Next      => Set_Next,
+           Next          => Next,
+           Key           => Key,
+           Get_Key       => Get_Key,
+           Hash          => Hash,
+           Equal         => Equal,
+           Free_Elmt_Ptr => Free);
 
       type Cursor is record
          Iter : Tab.Cursor;

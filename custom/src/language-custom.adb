@@ -34,42 +34,45 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 --  ??? Would be nice if languages registered themselves somewhere instead
 --  of having a static knowledge of all the language defined.
-pragma Warnings
-  (Off, "child unit * hides compilation unit with the same name");
+pragma
+  Warnings (Off, "child unit * hides compilation unit with the same name");
 with Language.Ada;
 pragma Warnings (On, "child unit * hides compilation unit with the same name");
 with Language.C;
 with Language.Cpp;
 with Language.Java;
 with Basic_Types;
-with Language_Handlers;     use Language_Handlers;
-with GPS.Kernel;            use GPS.Kernel;
-with GPS.Intl;              use GPS.Intl;
-with Projects;              use Projects;
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with String_Utils;          use String_Utils;
-with XML_Utils;             use XML_Utils;
+with Language_Handlers;  use Language_Handlers;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Intl;           use GPS.Intl;
+with Projects;           use Projects;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
+with String_Utils;       use String_Utils;
+with XML_Utils;          use XML_Utils;
 
 package body Language.Custom is
 
    Me : constant Trace_Handle := Create ("GPS.LANGUAGE.CUSTOM");
 
-   procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-     (Project_Field_Array, Project_Field_Array_Access);
+   procedure Unchecked_Free is new
+     Standard.Ada.Unchecked_Deallocation
+       (Project_Field_Array,
+        Project_Field_Array_Access);
 
    Null_Context : aliased Language_Context :=
-     (Syntax => (Comment_Start                 => null,
-                 Comment_End                   => null,
-                 New_Line_Comment_Start        => null,
-                 New_Line_Comment_Start_Regexp => null),
-      String_Delimiter              => ASCII.NUL,
-      Quote_Character               => ASCII.NUL,
-      Constant_Character            => ASCII.NUL,
-      Can_Indent                    => False,
-      Syntax_Highlighting           => False,
-      Case_Sensitive                => True,
-      Accurate_Xref                 => False,
-      Use_Semicolon                 => False);
+     (Syntax              =>
+        (Comment_Start                 => null,
+         Comment_End                   => null,
+         New_Line_Comment_Start        => null,
+         New_Line_Comment_Start_Regexp => null),
+      String_Delimiter    => ASCII.NUL,
+      Quote_Character     => ASCII.NUL,
+      Constant_Character  => ASCII.NUL,
+      Can_Indent          => False,
+      Syntax_Highlighting => False,
+      Case_Sensitive      => True,
+      Accurate_Xref       => False,
+      Use_Semicolon       => False);
 
    Custom_Root : Custom_Language_Access;
    --  Holds a linked list of custom languages, so that we can implement
@@ -98,10 +101,10 @@ package body Language.Custom is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access Custom_Language;
-      Name  : String;
-      Index : String) return String is
+   overriding
+   function Array_Item_Name
+     (Lang : access Custom_Language; Name : String; Index : String)
+      return String is
    begin
       if Lang.Parent = null then
          return "";
@@ -114,9 +117,9 @@ package body Language.Custom is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access Custom_Language;
-      Name : String) return String is
+   overriding
+   function Dereference_Name
+     (Lang : access Custom_Language; Name : String) return String is
    begin
       if Lang.Parent = null then
          return "";
@@ -129,12 +132,11 @@ package body Language.Custom is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Custom_Language) return Explorer_Categories is
    begin
-      if Lang.Categories'Length > 0
-        or else Lang.Parent = null
-      then
+      if Lang.Categories'Length > 0 or else Lang.Parent = null then
          return Lang.Categories.all;
       else
          return Explorer_Regexps (Lang.Parent);
@@ -145,17 +147,18 @@ package body Language.Custom is
    -- Get_Indentation_Parameters --
    --------------------------------
 
-   overriding procedure Get_Indentation_Parameters
+   overriding
+   procedure Get_Indentation_Parameters
      (Lang         : access Custom_Language;
       Params       : out Indent_Parameters;
       Indent_Style : out Indentation_Kind) is
    begin
       if Lang.Parent /= null then
-         Params       := Lang.Parent.Indent_Params;
+         Params := Lang.Parent.Indent_Params;
          Indent_Style := Lang.Parent.Indent_Style;
 
       else
-         Params       := Lang.Indent_Params;
+         Params := Lang.Indent_Params;
          Indent_Style := Lang.Indent_Style;
       end if;
    end Get_Indentation_Parameters;
@@ -164,12 +167,11 @@ package body Language.Custom is
    -- Get_Language_Context --
    --------------------------
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access is
    begin
-      if Lang.Parent = null
-        or else Lang.Context /= Null_Context'Access
-      then
+      if Lang.Parent = null or else Lang.Context /= Null_Context'Access then
          return Lang.Context;
       else
          return Get_Language_Context (Lang.Parent);
@@ -180,11 +182,16 @@ package body Language.Custom is
    -- Free --
    ----------
 
-   overriding procedure Free (Lang : in out Custom_Language) is
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Explorer_Categories, Explorer_Categories_Access);
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Project_Field_Array, Project_Field_Array_Access);
+   overriding
+   procedure Free (Lang : in out Custom_Language) is
+      procedure Unchecked_Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Explorer_Categories,
+           Explorer_Categories_Access);
+      procedure Unchecked_Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Project_Field_Array,
+           Project_Field_Array_Access);
    begin
       if Lang.Categories /= null then
          Language.Free (Lang.Categories.all);
@@ -220,17 +227,17 @@ package body Language.Custom is
       Lang : constant Custom_Language_Access :=
         new Language.Custom.Custom_Language;
 
-      N, Node                 : Node_Ptr;
-      Parent                  : Node_Ptr;
-      Comment_Start           : String_Ptr;
-      Comment_End             : String_Ptr;
-      Tmp_Str                 : String_Ptr;
-      Flags                   : Regexp_Flags := Multiple_Lines;
-      New_Line_Comment_Start  : String_Ptr;
-      Num_Categories          : Natural := 0;
-      Tmp                     : Project_Field_Array_Access;
-      Str                     : Unbounded_String;
-      Keyword_Append          : Boolean := False; -- default is override
+      N, Node                : Node_Ptr;
+      Parent                 : Node_Ptr;
+      Comment_Start          : String_Ptr;
+      Comment_End            : String_Ptr;
+      Tmp_Str                : String_Ptr;
+      Flags                  : Regexp_Flags := Multiple_Lines;
+      New_Line_Comment_Start : String_Ptr;
+      Num_Categories         : Natural := 0;
+      Tmp                    : Project_Field_Array_Access;
+      Str                    : Unbounded_String;
+      Keyword_Append         : Boolean := False; -- default is override
 
       function Contains_Special_Characters (S : String) return Boolean;
       --  Return whether S contains special regexp characters.
@@ -355,7 +362,8 @@ package body Language.Custom is
 
       end Parse_Shared_Lib;
 
-   begin  -- Initialize
+   begin
+      -- Initialize
       Lang.Next := Custom_Root;
       Custom_Root := Lang;
 
@@ -364,18 +372,15 @@ package body Language.Custom is
       Register_Language (Handler, Language_Access (Lang), null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => Get_Name (Lang),
-         Default_Spec_Suffix =>
-           Get_String (Get_Field (Top, "Spec_Suffix")),
-         Default_Body_Suffix =>
-           Get_String (Get_Field (Top, "Body_Suffix")),
-         Obj_Suffix => Get_String (Get_Field (Top, "Obj_Suffix")));
+         Default_Spec_Suffix => Get_String (Get_Field (Top, "Spec_Suffix")),
+         Default_Body_Suffix => Get_String (Get_Field (Top, "Body_Suffix")),
+         Obj_Suffix          => Get_String (Get_Field (Top, "Obj_Suffix")));
 
       Node := Top.Child;
       while Node /= null loop
          if Node.Tag.all = "Extension" then
             Get_Registry (Kernel).Environment.Add_Language_Extension
-              (Language_Name => Get_Name (Lang),
-               Extension     => Node.Value.all);
+              (Language_Name => Get_Name (Lang), Extension => Node.Value.all);
          end if;
 
          Node := Node.Next;
@@ -433,8 +438,8 @@ package body Language.Custom is
             Lang.Project_Fields := new Project_Field_Array (1 .. 1);
          else
             Tmp := Lang.Project_Fields;
-            Lang.Project_Fields := new Project_Field_Array
-              (Tmp'First .. Tmp'Last + 1);
+            Lang.Project_Fields :=
+              new Project_Field_Array (Tmp'First .. Tmp'Last + 1);
             Lang.Project_Fields (Tmp'Range) := Tmp.all;
             Unchecked_Free (Tmp);
          end if;
@@ -459,7 +464,7 @@ package body Language.Custom is
 
          declare
             NL : constant Node_Ptr :=
-                   Find_Tag (Node.Child, "New_Line_Comment_Start");
+              Find_Tag (Node.Child, "New_Line_Comment_Start");
          begin
             if NL = null then
                New_Line_Comment_Start := null;
@@ -467,14 +472,19 @@ package body Language.Custom is
             elsif Get_Attribute_S (NL, "mode", "override") = "append"
               and then Lang.Parent /= null
               and then Get_Language_Context (Lang.Parent) /= null
-              and then Get_Language_Context
-                (Lang.Parent).Syntax.New_Line_Comment_Start /= null
+              and then
+                Get_Language_Context (Lang.Parent)
+                  .Syntax
+                  .New_Line_Comment_Start
+                /= null
             then
                New_Line_Comment_Start :=
-                 new String'(Get_Language_Context
-                             (Lang.Parent).Syntax.New_Line_Comment_Start.all
-                             & '|' &
-                             NL.Value.all);
+                 new String'
+                   (Get_Language_Context (Lang.Parent)
+                      .Syntax
+                      .New_Line_Comment_Start.all
+                    & '|'
+                    & NL.Value.all);
             else
                New_Line_Comment_Start := NL.Value;
             end if;
@@ -487,8 +497,7 @@ package body Language.Custom is
          end if;
 
          if Comment_End /= null then
-            Lang.Context.Syntax.Comment_End :=
-              new String'(Comment_End.all);
+            Lang.Context.Syntax.Comment_End := new String'(Comment_End.all);
          end if;
 
          if New_Line_Comment_Start = null then
@@ -511,8 +520,7 @@ package body Language.Custom is
            (Node, "Quote_Character", Lang.Context.Quote_Character);
          Parse_Character
            (Node, "Constant_Character", Lang.Context.Constant_Character);
-         Parse_Boolean
-           (Node, "Can_Indent", Lang.Context.Can_Indent);
+         Parse_Boolean (Node, "Can_Indent", Lang.Context.Can_Indent);
          Parse_Boolean
            (Node, "Syntax_Highlighting", Lang.Context.Syntax_Highlighting);
          Parse_Boolean
@@ -565,13 +573,17 @@ package body Language.Custom is
          Keywords : constant String := Lang.Keywords_Regexp.all;
       begin
          if Keywords /= "" then
-            Lang.Keywords := new Pattern_Matcher'
-              (Compile ("^(" & Keywords & ")", Flags and not Multiple_Lines));
+            Lang.Keywords :=
+              new Pattern_Matcher'
+                (Compile
+                   ("^(" & Keywords & ")", Flags and not Multiple_Lines));
          end if;
       exception
          when Expression_Error =>
-            Insert (Kernel, -"Invalid regexp in <keywords>: ^("
-                    & Keywords & ")", Mode => Error);
+            Insert
+              (Kernel,
+               -"Invalid regexp in <keywords>: ^(" & Keywords & ")",
+               Mode => Error);
       end;
 
       Node := Find_Tag (Top.Child, "Wordchars");
@@ -600,13 +612,15 @@ package body Language.Custom is
       Node := Parent.Child;
 
       for J in 1 .. Num_Categories loop
-         Assert (Me, Node.Tag.all = "Category",
-                 "Expecting <category> node in XML file");
+         Assert
+           (Me,
+            Node.Tag.all = "Category",
+            "Expecting <category> node in XML file");
 
          --  Concatenate all Pattern tags
 
          Str := Null_Unbounded_String;
-         N   := Node.Child;
+         N := Node.Child;
 
          loop
             N := Find_Tag (N, "Pattern");
@@ -644,8 +658,8 @@ package body Language.Custom is
             Lang.Categories (J) :=
               (Category       => Category,
                Category_Name  => Category_Name,
-               Regexp         => new Pattern_Matcher'
-                 (Compile (Pattern, Flags)),
+               Regexp         =>
+                 new Pattern_Matcher'(Compile (Pattern, Flags)),
                Position_Index => Index,
                End_Index      => End_Index,
                Make_Entry     => null);
@@ -655,8 +669,8 @@ package body Language.Custom is
                --  ??? Should display an error instead.
                Lang.Categories (J) :=
                  (Cat_Unknown, No_Symbol, null, 0, 0, null);
-               Trace (Me, "Invalid Category found for language "
-                      & Lang.Name.all);
+               Trace
+                 (Me, "Invalid Category found for language " & Lang.Name.all);
          end;
 
          Node := Node.Next;
@@ -667,9 +681,9 @@ package body Language.Custom is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
-     (Lang : access Custom_Language;
-      Str  : String) return Boolean is
+   overriding
+   function Is_Simple_Type
+     (Lang : access Custom_Language; Str : String) return Boolean is
    begin
       if Lang.Parent = null then
          return False;
@@ -682,13 +696,15 @@ package body Language.Custom is
    -- Keywords --
    --------------
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return Strings.String_Access is
    begin
       return Lang.Keywords_Regexp;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access is
    begin
       if Lang.Keywords = null then
@@ -702,7 +718,8 @@ package body Language.Custom is
       end if;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List
    is
       use type Strings.String_List_Access;
@@ -721,10 +738,10 @@ package body Language.Custom is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access Custom_Language;
-      Name  : String;
-      Field : String) return String is
+   overriding
+   function Record_Field_Name
+     (Lang : access Custom_Language; Name : String; Field : String)
+      return String is
    begin
       if Lang.Parent = null then
          return "";
@@ -737,8 +754,8 @@ package body Language.Custom is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Lang : access Custom_Language) return String is
+   overriding
+   function Get_Name (Lang : access Custom_Language) return String is
    begin
       if Lang.Name = null then
          return "";
@@ -751,7 +768,8 @@ package body Language.Custom is
    -- Comment_Line --
    ------------------
 
-   overriding function Comment_Line
+   overriding
+   function Comment_Line
      (Lang    : access Custom_Language;
       Line    : String;
       Comment : Boolean := True;
@@ -760,8 +778,7 @@ package body Language.Custom is
       pragma Unreferenced (Clean);
    begin
       if Lang.Parent = null then
-         return Comment_Line
-           (Language_Root (Lang.all)'Access, Line, Comment);
+         return Comment_Line (Language_Root (Lang.all)'Access, Line, Comment);
       else
          return Comment_Line (Lang.Parent, Line, Comment);
       end if;
@@ -771,15 +788,16 @@ package body Language.Custom is
    -- Parse_Constructs --
    ----------------------
 
-   overriding procedure Parse_Constructs
+   overriding
+   procedure Parse_Constructs
      (Lang   : access Custom_Language;
       File   : GNATCOLL.VFS.Virtual_File;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List) is
    begin
       if Lang.Parent = null or else Lang.Categories'Length > 0 then
-         Parse_Constructs (Language_Root (Lang.all)'Access, File,
-                           Buffer, Result);
+         Parse_Constructs
+           (Language_Root (Lang.all)'Access, File, Buffer, Result);
       else
          Parse_Constructs (Lang.Parent, File, Buffer, Result);
       end if;
@@ -789,16 +807,17 @@ package body Language.Custom is
    -- Format_Buffer --
    -------------------
 
-   overriding procedure Format_Buffer
-    (Lang                : access Custom_Language;
-     Buffer              : String;
-     Replace             : Replace_Text_Callback;
-     From, To            : Natural := 0;
-     Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
-     Case_Exceptions     : Case_Handling.Casing_Exceptions :=
-       Case_Handling.No_Casing_Exception;
-     Is_Optional_Keyword : access function (S : String)
-                                            return Boolean := null)
+   overriding
+   procedure Format_Buffer
+     (Lang                : access Custom_Language;
+      Buffer              : String;
+      Replace             : Replace_Text_Callback;
+      From, To            : Natural := 0;
+      Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
+      Case_Exceptions     : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null)
    is
       pragma Unreferenced (Is_Optional_Keyword);
 
@@ -820,12 +839,21 @@ package body Language.Custom is
       if Lang.Parent = null then
          Format_Buffer
            (Language_Root (Lang.all)'Access,
-            Buffer, Replace, From, To,
-            Indent_Params, Case_Exceptions);
+            Buffer,
+            Replace,
+            From,
+            To,
+            Indent_Params,
+            Case_Exceptions);
       else
          Format_Buffer
-           (Lang.Parent, Buffer, Replace, From, To,
-            Indent_Params, Case_Exceptions,
+           (Lang.Parent,
+            Buffer,
+            Replace,
+            From,
+            To,
+            Indent_Params,
+            Case_Exceptions,
             Is_Keyword'Access);
       end if;
    end Format_Buffer;
@@ -834,7 +862,8 @@ package body Language.Custom is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
+   overriding
+   procedure Parse_Entities
      (Lang     : access Custom_Language;
       Buffer   : String;
       Callback : Entity_Callback) is
@@ -843,8 +872,7 @@ package body Language.Custom is
         or else Lang.Context /= Null_Context'Access
         or else Lang.Keywords /= null
       then
-         Parse_Entities
-           (Language_Root (Lang.all)'Access, Buffer, Callback);
+         Parse_Entities (Language_Root (Lang.all)'Access, Buffer, Callback);
       else
          Parse_Entities (Lang.Parent, Buffer, Callback);
       end if;
@@ -854,9 +882,10 @@ package body Language.Custom is
    -- Is_Word_Char --
    ------------------
 
-   overriding function Is_Word_Char
-     (Lang : access Custom_Language;
-      Char : Wide_Wide_Character) return Boolean is
+   overriding
+   function Is_Word_Char
+     (Lang : access Custom_Language; Char : Wide_Wide_Character) return Boolean
+   is
    begin
       if Is_Entity_Letter (Char) then
          return True;

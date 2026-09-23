@@ -37,7 +37,7 @@ package Codefix.Text_Manager.Spark_Commands is
 
 private
 
-   type Move_Tilde_Or_Percent_Cmd is
-     new Text_Command (Simple) with null record;
+   type Move_Tilde_Or_Percent_Cmd is new Text_Command (Simple)
+   with null record;
 
 end Codefix.Text_Manager.Spark_Commands;

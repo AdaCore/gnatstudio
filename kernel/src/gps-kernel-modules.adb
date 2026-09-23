@@ -18,11 +18,11 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Glib.Module;               use Glib.Module;
-with Glib.Object;               use Glib.Object;
+with Glib.Module; use Glib.Module;
+with Glib.Object; use Glib.Object;
 
 package body GPS.Kernel.Modules is
 
@@ -53,8 +53,8 @@ package body GPS.Kernel.Modules is
    ---------------------
 
    function Tooltip_Handler
-     (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
+     (Module : access Module_ID_Record; Context : Selection_Context)
+      return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Module, Context);
    begin
@@ -66,8 +66,8 @@ package body GPS.Kernel.Modules is
    ----------
 
    procedure Free (Module : in out Module_ID) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Module_ID_Record'Class, Module_ID);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Module_ID_Record'Class, Module_ID);
    begin
       if Module /= null then
          Destroy (Module.all);
@@ -94,9 +94,7 @@ package body GPS.Kernel.Modules is
       --  The module might be null, for instance the Welcome page has
       --  no associated module.
 
-      if Module = null
-        or else Module.Name = null
-      then
+      if Module = null or else Module.Name = null then
          return "";
       end if;
 
@@ -113,9 +111,9 @@ package body GPS.Kernel.Modules is
       Module_Name : String;
       Priority    : Module_Priority := Default_Priority) is
    begin
-      Module.Name     := new String'(Module_Name);
+      Module.Name := new String'(Module_Name);
       Module.Priority := Priority;
-      Module.Kernel   := Kernel_Handle (Kernel);
+      Module.Kernel := Kernel_Handle (Kernel);
 
       Kernel.Register_Module (Abstract_Module (Module));
    end Register_Module;
@@ -130,8 +128,9 @@ package body GPS.Kernel.Modules is
       Module_Name : String;
       Success     : out Boolean)
    is
-      type Register_Module_Access is access procedure
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+      type Register_Module_Access is
+        access procedure
+          (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
       type Init_Proc is access procedure;
 
@@ -142,8 +141,7 @@ package body GPS.Kernel.Modules is
       procedure Get_Symbol is new
         Generic_Module_Symbol (Register_Module_Access);
 
-      procedure Get_Symbol is new
-        Generic_Module_Symbol (Init_Proc);
+      procedure Get_Symbol is new Generic_Module_Symbol (Init_Proc);
 
    begin
       Dyn_Module := Module_Open (Module_Build_Path ("", Shared_Lib));
@@ -162,8 +160,10 @@ package body GPS.Kernel.Modules is
             Init.all;
 
             Get_Symbol
-              (Dyn_Module, Module_Name & "__register_module",
-               Dyn_Register, Success);
+              (Dyn_Module,
+               Module_Name & "__register_module",
+               Dyn_Register,
+               Success);
 
             if Success then
                Trace (Me, "Registering module: " & Module_Name);
@@ -203,7 +203,7 @@ package body GPS.Kernel.Modules is
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
       use Abstract_Module_List;
-      List : constant Abstract_Module_List.List :=
+      List    : constant Abstract_Module_List.List :=
         Kernel.Module_List (Module_ID_Record'Tag);
       Current : Cursor := Abstract_Module_List.Last (List);
    begin

@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Interactive_Consoles;         use Interactive_Consoles;
-with Build_Configurations;         use Build_Configurations;
-with String_Utils;                 use String_Utils;
-with Time_Utils;                   use Time_Utils;
-with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel;                   use GPS.Kernel;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Interactive_Consoles;  use Interactive_Consoles;
+with Build_Configurations;  use Build_Configurations;
+with String_Utils;          use String_Utils;
+with Time_Utils;            use Time_Utils;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Messages.Legacy;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with UTF8_Utils;                   use UTF8_Utils;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with UTF8_Utils;            use UTF8_Utils;
 
 package body Build_Command_Manager.Console_Writers is
 
@@ -33,9 +33,9 @@ package body Build_Command_Manager.Console_Writers is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
       Build          : Build_Information := Self.Builder.Get_Last_Build;
@@ -47,11 +47,14 @@ package body Build_Command_Manager.Console_Writers is
    begin
       if Is_Run (Build.Target) then
          if not Build.Quiet then
-            Cmd_Console := Get_Build_Console
-              (Kernel_Handle (Self.Builder.Kernel),
-               Build.Shadow, Build.Background, False,
-               "Run: " & Build.Main.Display_Base_Name,
-              Toolbar_Name => "Run");
+            Cmd_Console :=
+              Get_Build_Console
+                (Kernel_Handle (Self.Builder.Kernel),
+                 Build.Shadow,
+                 Build.Background,
+                 False,
+                 "Run: " & Build.Main.Display_Base_Name,
+                 Toolbar_Name => "Run");
 
             --  Update console in Builder.Last_Build
             Build.Console := Cmd_Console.Get_Console_Messages_Window;
@@ -67,11 +70,12 @@ package body Build_Command_Manager.Console_Writers is
             end if;
          end if;
       else
-         Cmd_Console := Get_Build_Console
-           (Kernel_Handle (Self.Builder.Kernel),
-            Shadow              => Build.Shadow,
-            Background          => Build.Background,
-            Create_If_Not_Exist => True);
+         Cmd_Console :=
+           Get_Build_Console
+             (Kernel_Handle (Self.Builder.Kernel),
+              Shadow              => Build.Shadow,
+              Background          => Build.Background,
+              Create_If_Not_Exist => True);
 
          --  Update console in Builder.Last_Build
          Build.Console := Cmd_Console.Get_Console_Messages_Window;
@@ -88,18 +92,20 @@ package body Build_Command_Manager.Console_Writers is
          end if;
       end if;
 
-      if Console =  null then
+      if Console = null then
          return Child;
       else
          Console.Ref;
 
-         return new Console_Writer'(Child          => Child,
-                                    Builder        => Self.Builder,
-                                    Build          => Build,
-                                    Console        => Console,
-                                    Raise_On_Error => Raise_On_Error,
-                                    Show_Status    => Show_Status,
-                                    Start_Time     => Ada.Calendar.Clock);
+         return
+           new Console_Writer'
+             (Child          => Child,
+              Builder        => Self.Builder,
+              Build          => Build,
+              Console        => Console,
+              Raise_On_Error => Raise_On_Error,
+              Show_Status    => Show_Status,
+              Start_Time     => Ada.Calendar.Clock);
       end if;
    end Create;
 
@@ -107,13 +113,14 @@ package body Build_Command_Manager.Console_Writers is
    -- End_Of_Stream --
    -------------------
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Console_Writer;
       Status  : Integer;
       Command : access Root_Command'Class)
    is
       use GPS.Kernel.Messages.Legacy;
-      Kernel  : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
+      Kernel : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
    begin
       if Self.Console = null then
          return;
@@ -123,8 +130,8 @@ package body Build_Command_Manager.Console_Writers is
          declare
             End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
             Time_Stamp : constant String := Timestamp (End_Time);
-            Msg : Unbounded_String;
-            Progress : constant Progress_Record := Command.Progress;
+            Msg        : Unbounded_String;
+            Progress   : constant Progress_Record := Command.Progress;
          begin
             Msg := To_Unbounded_String (Time_Stamp);
 
@@ -135,24 +142,23 @@ package body Build_Command_Manager.Console_Writers is
             end if;
 
             if Progress.Current /= 0
-               and then Progress.Total > 1
-               and then (Status /= 0
-                         or else Progress.Current /= Progress.Total)
+              and then Progress.Total > 1
+              and then (Status /= 0 or else Progress.Current /= Progress.Total)
             then
                Append
-                  (Msg,
-                   ","
-                   & Integer'Image (100 * Progress.Current / Progress.Total)
-                   & "% ("
-                   & Image (Progress.Current, Min_Width => 1)
-                   & "/"
-                   & Image (Progress.Total, Min_Width => 1)
-                   & ")");
+                 (Msg,
+                  ","
+                  & Integer'Image (100 * Progress.Current / Progress.Total)
+                  & "% ("
+                  & Image (Progress.Current, Min_Width => 1)
+                  & "/"
+                  & Image (Progress.Total, Min_Width => 1)
+                  & ")");
             end if;
 
             Append
-               (Msg, ", elapsed time: "
-                & Elapsed (Self.Start_Time, End_Time) & "s");
+              (Msg,
+               ", elapsed time: " & Elapsed (Self.Start_Time, End_Time) & "s");
 
             Self.Console.Insert_With_Links_Protected (To_String (Msg));
          end;
@@ -161,8 +167,9 @@ package body Build_Command_Manager.Console_Writers is
       --  Raise the messages window if compilation failed
       --  and no error was parsed. See D914-005
 
-      if Self.Raise_On_Error and then Status /= 0 and then
-        Category_Count (Kernel, Self.Build.Category) = 0
+      if Self.Raise_On_Error
+        and then Status /= 0
+        and then Category_Count (Kernel, Self.Build.Category) = 0
       then
          Kernel.Raise_Console;
       end if;
@@ -176,7 +183,8 @@ package body Build_Command_Manager.Console_Writers is
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Console_Writer;
       Item    : String;
       Command : access Root_Command'Class)
@@ -191,8 +199,7 @@ package body Build_Command_Manager.Console_Writers is
          Tools_Output_Parser (Self.all).Parse_Standard_Output (UTF8, Command);
       elsif Self.Console /= null then
          Self.Console.Get_Console_Messages_Window.Insert
-           ("Could not convert process output to UTF-8",
-            Mode => Error);
+           ("Could not convert process output to UTF-8", Mode => Error);
       end if;
    end Parse_Standard_Output;
 
@@ -201,8 +208,7 @@ package body Build_Command_Manager.Console_Writers is
    ---------
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context) is
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context) is
    begin
       Self.Builder := Builder;
    end Set;
@@ -211,7 +217,8 @@ package body Build_Command_Manager.Console_Writers is
    --  Destroy --
    --------------
 
-   overriding procedure Destroy (Self : not null access Console_Writer) is
+   overriding
+   procedure Destroy (Self : not null access Console_Writer) is
    begin
       if Self.Build.On_Exit /= null then
          Free (Self.Build.On_Exit);

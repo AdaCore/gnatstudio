@@ -29,8 +29,8 @@ with Interfaces.C;
 
 package Gtkada.Terminal is
 
-   type Gtkada_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
-      with private;
+   type Gtkada_Terminal_Record is
+     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with private;
    type Gtkada_Terminal is access all Gtkada_Terminal_Record'Class;
 
    procedure Gtk_New
@@ -49,14 +49,14 @@ package Gtkada.Terminal is
    --  or other full-screen applications), not if you are using the terminal
    --  just to be able to see colors for instance.
 
-   overriding procedure Place_Cursor
-     (Self   : access Gtkada_Terminal_Record;
-      Where  : Gtk.Text_Iter.Gtk_Text_Iter);
+   overriding
+   procedure Place_Cursor
+     (Self  : access Gtkada_Terminal_Record;
+      Where : Gtk.Text_Iter.Gtk_Text_Iter);
    --  See inherited subprogram
 
    procedure On_Set_Title
-     (Term  : access Gtkada_Terminal_Record;
-      Title : String);
+     (Term : access Gtkada_Terminal_Record; Title : String);
    --  Called when the title of the terminal should be changed. Since the
    --  terminal is not a widget in itself, you must override this subprogram to
    --  make something useful with it
@@ -99,8 +99,8 @@ private
       Current_Arg : Integer := Numerical_Arguments'First;
       --  Numerical arguments to some of the commands
 
-      Current           : FSM_Transition_Access;
-      Tmp               : FSM_Transition_Access;
+      Current : FSM_Transition_Access;
+      Tmp     : FSM_Transition_Access;
       --  Current state of the finite-state machine. Tmp is used when we need
       --  to follow two possible branches at once (eg when parsing numerical
       --  arguments)
@@ -110,7 +110,7 @@ private
       --  self-insert char. This is used to rollback when an escape sequence
       --  could not be interpreted after all.
 
-      Parsing_Number    : Boolean := False;
+      Parsing_Number : Boolean := False;
       --  Whether we are parsing a digit argument
    end record;
    --  Describes the current state of the finite state machine
@@ -129,6 +129,7 @@ private
       case Is_Active is
          when True =>
             Color : Color_Kind;
+
          when False =>
             null;
       end case;
@@ -146,18 +147,18 @@ private
       --  the cursor, and always inserts at that position, even if the cursor
       --  was moved with the mouse to another location
 
-      Cursor_Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      Cursor_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
 
       Alternate_Charset : Boolean := False;
       --  Whether we are in the alternate character set. This is a way for
       --  applications to display height bit chars by sending only 7bits
 
-      Bold_Tag       : Gtk.Text_Tag.Gtk_Text_Tag;
-      Bold           : Boolean := False;
+      Bold_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      Bold     : Boolean := False;
       --  Whether text should be output in bold
 
-      Standout_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
-      Standout       : Boolean := False;
+      Standout_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      Standout     : Boolean := False;
       --  Whether text should be printed in reverse video
 
       Foreground_Tags    : Tag_Array;
@@ -166,9 +167,9 @@ private
       Background_Tags    : Tag_Array;
       Current_Background : Selected_Color;
 
-      Region             : Scrolling_Region;
+      Region : Scrolling_Region;
 
-      State              : FSM_Current_State;
+      State : FSM_Current_State;
    end record;
 
 end Gtkada.Terminal;

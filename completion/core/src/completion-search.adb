@@ -15,43 +15,45 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
-with GPS.Kernel;                     use GPS.Kernel;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GNAT.Strings;                   use GNAT.Strings;
-with Gtk.Label;                      use Gtk.Label;
-with Gtk.Widget;                     use Gtk.Widget;
-with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
-with GNATCOLL.Utils;                 use GNATCOLL.Utils;
-with Language.Tree.Database;         use Language.Tree.Database;
-with Xref;                           use Xref;
-with GPS.Kernel.Xref;                use GPS.Kernel.Xref;
+with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GNAT.Strings;           use GNAT.Strings;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Widget;             use Gtk.Widget;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with Language.Tree.Database; use Language.Tree.Database;
+with Xref;                   use Xref;
+with GPS.Kernel.Xref;        use GPS.Kernel.Xref;
 
 package body Completion.Search is
 
    type Entity_Search_Result is new Kernel_Search_Result with record
-      Entity : Entity_Persistent_Access :=
-        Null_Entity_Persistent_Access;
+      Entity : Entity_Persistent_Access := Null_Entity_Persistent_Access;
    end record;
-   overriding procedure Execute
-     (Self       : not null access Entity_Search_Result;
-      Give_Focus : Boolean);
-   overriding function Full
-     (Self  : not null access Entity_Search_Result)
-     return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Self : in out Entity_Search_Result);
+   overriding
+   procedure Execute
+     (Self : not null access Entity_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
+     (Self : not null access Entity_Search_Result)
+      return Gtk.Widget.Gtk_Widget;
+   overriding
+   procedure Free (Self : in out Entity_Search_Result);
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Entity_Search_Result) is
+   overriding
+   procedure Free (Self : in out Entity_Search_Result) is
    begin
       if Self.Entity /= Null_Entity_Persistent_Access then
          Unref (Self.Entity);
@@ -64,13 +66,13 @@ package body Completion.Search is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Entity_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Entity_Search_Result; Give_Focus : Boolean)
    is
       Construct : constant Simple_Construct_Information :=
         Get_Construct (Self.Entity);
-      File : constant Structured_File_Access := Get_File (Self.Entity);
+      File      : constant Structured_File_Access := Get_File (Self.Entity);
    begin
       Open_File_Action_Hook.Run
         (Self.Kernel,
@@ -85,26 +87,29 @@ package body Completion.Search is
    -- Full --
    ----------
 
-   overriding function Full
-     (Self  : not null access Entity_Search_Result)
-     return Gtk.Widget.Gtk_Widget
+   overriding
+   function Full
+     (Self : not null access Entity_Search_Result) return Gtk.Widget.Gtk_Widget
    is
-      Label : Gtk_Label;
+      Label     : Gtk_Label;
       Construct : constant Simple_Construct_Information :=
         Get_Construct (Self.Entity);
-      File : constant Structured_File_Access := Get_File (Self.Entity);
+      File      : constant Structured_File_Access := Get_File (Self.Entity);
    begin
-      Gtk_New (Label, Documentation
-                 (Self.Kernel.Databases,
-                  Self.Kernel.Get_Language_Handler,
-                  Xref.Get_Entity
-                    (Self.Kernel.Databases,
-                     Name  => Get (Construct.Name).all,
-                     Loc   => (File => Get_File_Path (File),
-                               Project_Path => No_File,  --  ??? unknown
-                               Line => Construct.Sloc_Entity.Line,
-                               Column => Visible_Column_Type
-                                 (Construct.Sloc_Entity.Column)))));
+      Gtk_New
+        (Label,
+         Documentation
+           (Self.Kernel.Databases,
+            Self.Kernel.Get_Language_Handler,
+            Xref.Get_Entity
+              (Self.Kernel.Databases,
+               Name => Get (Construct.Name).all,
+               Loc  =>
+                 (File         => Get_File_Path (File),
+                  Project_Path => No_File,  --  ??? unknown
+                  Line         => Construct.Sloc_Entity.Line,
+                  Column       =>
+                    Visible_Column_Type (Construct.Sloc_Entity.Column)))));
       Label.Set_Use_Markup (True);
       Label.Modify_Font (View_Fixed_Font.Get_Pref);
       return Gtk_Widget (Label);
@@ -114,8 +119,9 @@ package body Completion.Search is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
-     (Self    : not null access Entities_Search_Provider) return String
+   overriding
+   function Documentation
+     (Self : not null access Entities_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
@@ -126,8 +132,8 @@ package body Completion.Search is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self : in out Entities_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Entities_Search_Provider) is
    begin
       Free (Self.Iter);
       Free (Kernel_Search_Provider (Self));  --  inherited
@@ -137,7 +143,8 @@ package body Completion.Search is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Entities_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -154,21 +161,23 @@ package body Completion.Search is
       end if;
 
       Self.Pattern := Search_Pattern_Access (Pattern);
-      Self.Iter := Start
-        (Self.Kernel.Databases.Constructs, Prefix => "", Is_Partial => True);
+      Self.Iter :=
+        Start
+          (Self.Kernel.Databases.Constructs, Prefix => "", Is_Partial => True);
    end Set_Pattern;
 
    ----------
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Entities_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      L : GNAT.Strings.String_Access;
-      C : GPS.Search.Search_Context;
+      L      : GNAT.Strings.String_Access;
+      C      : GPS.Search.Search_Context;
       Entity : Entity_Access;
    begin
       Result := null;
@@ -189,34 +198,39 @@ package body Completion.Search is
          declare
             Construct : constant access Simple_Construct_Information :=
               Get_Construct (Entity);
-            File : constant Structured_File_Access := Get_File (Self.Iter);
-            Name : constant String := Get (Construct.Name).all;
+            File      : constant Structured_File_Access :=
+              Get_File (Self.Iter);
+            Name      : constant String := Get (Construct.Name).all;
          begin
             --  Check whether the entity's file belongs to the current
             --  search context.
 
-            if Entities_Search_Provider'Class
-              (Self.all).Is_File_In_Search_Context (Get_File_Path (File))
+            if Entities_Search_Provider'Class (Self.all)
+                 .Is_File_In_Search_Context (Get_File_Path (File))
             then
                C := Self.Pattern.Start (Name);
                if C /= GPS.Search.No_Match then
-                  L := new String'
-                    (Get_File_Path (File).Display_Base_Name
-                     & ":" & Image (Construct.Sloc_Entity.Line, Min_Width => 0)
-                     & ":"
-                     & Image (Construct.Sloc_Entity.Column, Min_Width => 0));
+                  L :=
+                    new String'
+                      (Get_File_Path (File).Display_Base_Name
+                       & ":"
+                       & Image (Construct.Sloc_Entity.Line, Min_Width => 0)
+                       & ":"
+                       & Image (Construct.Sloc_Entity.Column, Min_Width => 0));
 
-                  Result := new Entity_Search_Result'
-                    (Kernel   => Self.Kernel,
-                     Provider => Self,
-                     Score    => C.Score,
-                     Short    => new String'
-                       (Self.Pattern.Highlight_Match (Name, Context => C)),
-                     Long     => L,
-                     Id       =>
-                       VSS.Strings.Conversions.To_Virtual_String
-                         (Name & ":" & L.all),
-                     Entity   => To_Entity_Persistent_Access (Entity));
+                  Result :=
+                    new Entity_Search_Result'
+                      (Kernel   => Self.Kernel,
+                       Provider => Self,
+                       Score    => C.Score,
+                       Short    =>
+                         new String'
+                           (Self.Pattern.Highlight_Match (Name, Context => C)),
+                       Long     => L,
+                       Id       =>
+                         VSS.Strings.Conversions.To_Virtual_String
+                           (Name & ":" & L.all),
+                       Entity   => To_Entity_Persistent_Access (Entity));
 
                   --  Matches in runtime files should get a lower score, so
                   --  that we first list those matches in user code. "10" is
@@ -228,7 +242,8 @@ package body Completion.Search is
                      Inf : constant File_Info'Class :=
                        File_Info'Class
                          (Get_Project_Tree (Self.Kernel.all).Info_Set
-                          (Get_File_Path (File)).First_Element);
+                            (Get_File_Path (File))
+                            .First_Element);
                   begin
                      if Inf.Project (Root_If_Not_Found => False) = No_Project
                      then
@@ -250,15 +265,15 @@ package body Completion.Search is
    -- Complete_Suffix --
    ---------------------
 
-   overriding function Complete_Suffix
-     (Self      : not null access Entities_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Entities_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String
    is
       Suffix      : Unbounded_String;
       Suffix_Last : Natural := 0;
-      C : GPS.Search.Search_Context;
-      Entity : Entity_Access;
+      C           : GPS.Search.Search_Context;
+      Entity      : Entity_Access;
    begin
       Self.Set_Pattern (Pattern);
 
@@ -271,7 +286,7 @@ package body Completion.Search is
                declare
                   Construct : constant access Simple_Construct_Information :=
                     Get_Construct (Entity);
-                  Name : constant String := Get (Construct.Name).all;
+                  Name      : constant String := Get (Construct.Name).all;
                begin
                   C := Self.Pattern.Start (Name);
                   if C /= GPS.Search.No_Match then
@@ -294,8 +309,8 @@ package body Completion.Search is
    -------------------------------
 
    function Is_File_In_Search_Context
-     (Self : not null access Entities_Search_Provider;
-      File : Virtual_File) return Boolean
+     (Self : not null access Entities_Search_Provider; File : Virtual_File)
+      return Boolean
    is
       pragma Unreferenced (Self, File);
    begin
@@ -306,7 +321,8 @@ package body Completion.Search is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
+   overriding
+   function Documentation
      (Self : not null access Current_File_Entities_Search_Provider)
       return String
    is
@@ -319,25 +335,27 @@ package body Completion.Search is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Current_File_Entities_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last) is
    begin
       Entities_Search_Provider (Self.all).Set_Pattern
-        (Pattern => Pattern,
-         Limit   => Limit);
+        (Pattern => Pattern, Limit => Limit);
 
-      Self.File := Self.Kernel.Get_Buffer_Factory.Get
-        (Open_Buffer => False,
-         Open_View   => False).File;
+      Self.File :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (Open_Buffer => False, Open_View => False)
+          .File;
    end Set_Pattern;
 
    -------------------------------
    -- Is_File_In_Search_Context --
    -------------------------------
 
-   overriding function Is_File_In_Search_Context
+   overriding
+   function Is_File_In_Search_Context
      (Self : not null access Current_File_Entities_Search_Provider;
       File : Virtual_File) return Boolean is
    begin

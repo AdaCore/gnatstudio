@@ -30,10 +30,11 @@ package Browsers.Dependency_Items is
       File         : Virtual_File;
       Project_Path : Virtual_File;
    end record;
-   package Dependency_Description_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Dependency_Description_Type,
-      "="          => "=");
+   package Dependency_Description_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Dependency_Description_Type,
+        "="          => "=");
    --  Types used to describe dependencies.
 
    type Dependency_Kind_Type is (Show_Imported, Show_Importing);
@@ -60,7 +61,8 @@ package Browsers.Dependency_Items is
       File          : Virtual_File;
       Project       : GNATCOLL.Projects.Project_Type;
       Kind          : Dependency_Kind_Type;
-      Show_Implicit : Boolean) is abstract;
+      Show_Implicit : Boolean)
+   is abstract;
    --  Compute the dependencies for the given File.
    --  If Show_Implicit is True, implicit dependencies should also be computed.
    --  Call Show_Dependencies once the dependencies have been computed in order

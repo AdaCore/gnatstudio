@@ -47,19 +47,21 @@ package Gtkada.Entry_Completion is
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New
-     (Self           : out Gtkada_Entry;
-      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : not null access GPS.Search.Search_Provider'Class;
-      Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False;
+     (Self                : out Gtkada_Entry;
+      Kernel              :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion          : not null access GPS.Search.Search_Provider'Class;
+      Name                : Histories.History_Key;
+      Case_Sensitive      : Boolean := False;
       Completion_In_Popup : Boolean := True;
       Placeholder         : String := "search");
    procedure Initialize
-     (Self           : not null access Gtkada_Entry_Record'Class;
-      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Completion     : not null access GPS.Search.Search_Provider'Class;
-      Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False;
+     (Self                : not null access Gtkada_Entry_Record'Class;
+      Kernel              :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Completion          : not null access GPS.Search.Search_Provider'Class;
+      Name                : Histories.History_Key;
+      Case_Sensitive      : Boolean := False;
       Completion_In_Popup : Boolean := True;
       Placeholder         : String := "search");
    --  Create a new entry.
@@ -87,20 +89,19 @@ package Gtkada.Entry_Completion is
    --  The internal gtk+ type
 
    function Get_Kernel
-      (Self : not null access Gtkada_Entry_Record)
+     (Self : not null access Gtkada_Entry_Record)
       return GPS.Kernel.Kernel_Handle;
    --  Return a handle to the kernel
 
    function Get_Text
-      (Self : not null access Gtkada_Entry_Record) return String;
+     (Self : not null access Gtkada_Entry_Record) return String;
    procedure Set_Text
-      (Self : not null access Gtkada_Entry_Record;
-       Text : String);
+     (Self : not null access Gtkada_Entry_Record; Text : String);
    --  Force the text in the entry.
 
    procedure Set_Completion
-      (Self : not null access Gtkada_Entry_Record;
-       Completion : not null access GPS.Search.Search_Provider'Class);
+     (Self       : not null access Gtkada_Entry_Record;
+      Completion : not null access GPS.Search.Search_Provider'Class);
    --  Override the provider for the completions
 
    procedure Reset_Completion (Self : not null access Gtkada_Entry_Record);
@@ -136,27 +137,27 @@ private
       Pattern            : GPS.Search.Search_Pattern_Access;
       Kernel             : GPS.Kernel.Kernel_Handle;
 
-      Search_Kind        : GPS.Search.Search_Kind := GPS.Search.Fuzzy;
+      Search_Kind : GPS.Search.Search_Kind := GPS.Search.Fuzzy;
       --  The currently used search kind
 
-      Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      Need_Clear       : Boolean := False;
+      Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Need_Clear : Boolean := False;
 
-      Name             : History_Key_Access;
+      Name : History_Key_Access;
 
-      Completion_Box   : Gtk.Box.Gtk_Box;
+      Completion_Box : Gtk.Box.Gtk_Box;
       --  Box that contains the list of completion and the notes_scroll
 
-      Popup            : Gtk.Window.Gtk_Window;
+      Popup : Gtk.Window.Gtk_Window;
       --  The popup window
 
-      Progress_Bar     : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      Progress_Bar : Gtk.Progress_Bar.Gtk_Progress_Bar;
       --  Bar displaying the current search's progress
 
       No_Results_Label : Gtk.Label.Gtk_Label;
       --  The label that is displayed when there is no search results
 
-      Previous_Focus   : Gtk.Widget.Gtk_Widget;
+      Previous_Focus : Gtk.Widget.Gtk_Widget;
       --  The widget that had the focus before we gave it to the search field
       --  for the last time
 
@@ -168,32 +169,32 @@ private
       --  The context that was set just before entering the search field.
       --  Used to perform the search with this context.
 
-      Grab_Device      : Gdk.Device.Gdk_Device;
+      Grab_Device : Gdk.Device.Gdk_Device;
 
-      Column_Provider  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Column_Match     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Column_Provider : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Column_Match    : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
 
-      Settings                : Gtk.Box.Gtk_Box;
-      Settings_Area           : Gtk.Box.Gtk_Box;
+      Settings      : Gtk.Box.Gtk_Box;
+      Settings_Area : Gtk.Box.Gtk_Box;
       --  The area where the settings are to be displayed
 
-      Settings_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
+      Settings_Toggle : Gtk.Toggle_Button.Gtk_Toggle_Button;
       --  The button that toggles the settings on/off
 
       Settings_Case_Sensitive : Gtk.Toggle_Button.Gtk_Toggle_Button;
       Settings_Whole_Word     : Gtk.Toggle_Button.Gtk_Toggle_Button;
       Settings_Width          : Gtk.Spin_Button.Gtk_Spin_Button;
 
-      Completions      : Gtk.List_Store.Gtk_List_Store;
-      View             : Gtk.Tree_View.Gtk_Tree_View;
+      Completions : Gtk.List_Store.Gtk_List_Store;
+      View        : Gtk.Tree_View.Gtk_Tree_View;
       --  The widget that displays the list of possible completions
 
-      Notes_Popup      : Gtk.Widget.Gtk_Widget;
+      Notes_Popup : Gtk.Widget.Gtk_Widget;
       --  A Gtk_Window or Gtk_Frame, depending on whether we are using
       --  popup or not for the preview
 
-      Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Notes_Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Notes_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Notes_Idle   : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --   Display extra information on the currently selected item
 
       Focus_Check_Idle : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;

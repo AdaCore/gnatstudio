@@ -21,7 +21,7 @@ with Gtk.Text_Buffer;
 package Gtkada.Text_Buffer is
 
    type Gtkada_Text_Buffer_Record is
-     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record  with private;
+     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with private;
    type Gtkada_Text_Buffer is access all Gtkada_Text_Buffer_Record;
 
    procedure Gtk_New (Buffer : out Gtkada_Text_Buffer);
@@ -39,7 +39,7 @@ package Gtkada.Text_Buffer is
 
 private
 
-   type Gtkada_Text_Buffer_Record is
-     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with null record;
+   type Gtkada_Text_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+   with null record;
 
 end Gtkada.Text_Buffer;

@@ -25,7 +25,8 @@ package body VSS.Implementation.Text_Storages.Python is
    -- Capacity --
    --------------
 
-   overriding function Capacity
+   overriding
+   function Capacity
      (Self : in out Python_Text_Storage)
       return VSS.Unicode.UTF8_Code_Unit_Count is
    begin
@@ -39,9 +40,8 @@ package body VSS.Implementation.Text_Storages.Python is
    function Get_Bytes
      (Self : Python_Text_Storage'Class) return GNATCOLL.Python.PyObject
    is
-      package Conversions is
-        new System.Address_To_Access_Conversions
-          (GNATCOLL.Python.PyObject_Opaque);
+      package Conversions is new
+        System.Address_To_Access_Conversions (GNATCOLL.Python.PyObject_Opaque);
 
    begin
       return GNATCOLL.Python.PyObject (Conversions.To_Pointer (Self.Pointer));
@@ -56,8 +56,8 @@ package body VSS.Implementation.Text_Storages.Python is
       Storage_Address : out System.Address;
       Bytes           : GNATCOLL.Python.PyObject)
    is
-      function To_Address is
-        new Ada.Unchecked_Conversion
+      function To_Address is new
+        Ada.Unchecked_Conversion
           (VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access,
            System.Address);
 
@@ -71,7 +71,8 @@ package body VSS.Implementation.Text_Storages.Python is
    -- Mutate --
    ------------
 
-   overriding procedure Mutate
+   overriding
+   procedure Mutate
      (Self            : in out Python_Text_Storage;
       Storage_Address : in out System.Address;
       Size            : VSS.Unicode.UTF8_Code_Unit_Count;
@@ -83,21 +84,19 @@ package body VSS.Implementation.Text_Storages.Python is
       Bytes_Size : constant VSS.Unicode.UTF8_Code_Unit_Count :=
         VSS.Unicode.UTF8_Code_Unit_Count
           (VSS.Implementation.Python3.PyBytes_Size (Bytes));
-      Storage : constant VSS.Implementation.UTF8_Encoding.UTF8_Code_Unit_Array
-        (0 .. Bytes_Size - 1)
-        with Import, Address => Storage_Address;
+      Storage    :
+        constant VSS.Implementation.UTF8_Encoding.UTF8_Code_Unit_Array
+                   (0 .. Bytes_Size - 1)
+      with Import, Address => Storage_Address;
 
       Manager : VSS.Implementation.Text_Storages.Heap.Heap_Storage :=
         (others => <>)
-        with Address => Self'Address;
+      with Address => Self'Address;
 
    begin
       pragma Assert (Bytes_Size = Size);
 
-      Manager.Initialize
-        (Storage_Address,
-         Storage,
-         Bytes_Size);
+      Manager.Initialize (Storage_Address, Storage, Bytes_Size);
       GNATCOLL.Python.Py_DECREF (Bytes);
    end Mutate;
 
@@ -105,7 +104,8 @@ package body VSS.Implementation.Text_Storages.Python is
    -- Reference --
    ---------------
 
-   overriding procedure Reference (Self : in out Python_Text_Storage) is
+   overriding
+   procedure Reference (Self : in out Python_Text_Storage) is
       use type GNATCOLL.Python.PyObject;
 
       Bytes : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;
@@ -124,9 +124,8 @@ package body VSS.Implementation.Text_Storages.Python is
      (Self  : in out Python_Text_Storage'Class;
       Bytes : GNATCOLL.Python.PyObject)
    is
-      package Conversions is
-        new System.Address_To_Access_Conversions
-          (GNATCOLL.Python.PyObject_Opaque);
+      package Conversions is new
+        System.Address_To_Access_Conversions (GNATCOLL.Python.PyObject_Opaque);
 
    begin
       Self.Pointer :=
@@ -137,7 +136,8 @@ package body VSS.Implementation.Text_Storages.Python is
    -- Unreference --
    -----------------
 
-   overriding procedure Unreference (Self : in out Python_Text_Storage) is
+   overriding
+   procedure Unreference (Self : in out Python_Text_Storage) is
       use type GNATCOLL.Python.PyObject;
 
       Bytes : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;

@@ -15,25 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
-with Glib.Object;               use Glib.Object;
-with Glib;                      use Glib;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Main_Window;           use GPS.Main_Window;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Ada.Strings.Fixed;
+use Ada.Strings, Ada.Strings.Fixed;
+with Glib.Object;            use Glib.Object;
+with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Main_Window;        use GPS.Main_Window;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk;                       use Gtk;
-with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
-with GVD.Proc_Utils;            use GVD.Proc_Utils;
-with String_Utils;              use String_Utils;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk;                    use Gtk;
+with Gtkada.Stock_Labels;    use Gtkada.Stock_Labels;
+with GVD.Proc_Utils;         use GVD.Proc_Utils;
+with String_Utils;           use String_Utils;
 with VSS.Strings.Conversions;
 
 package body GVD.Process_Lists is
@@ -62,24 +63,22 @@ package body GVD.Process_Lists is
    -------------
 
    procedure Gtk_New
-     (Self   : out Gtk_Process_List;
-      Kernel : GPS.Kernel.Kernel_Handle)
+     (Self : out Gtk_Process_List; Kernel : GPS.Kernel.Kernel_Handle)
    is
-      Hbox           : Gtk_Hbox;
-      Scrolled       : Gtk_Scrolled_Window;
-      T              : Gtk_Cell_Renderer_Text;
-      C              : Gtk_Tree_View_Column;
-      Dummy          : Gint;
-      Dummy_Button   : Gtk_Widget;
+      Hbox         : Gtk_Hbox;
+      Scrolled     : Gtk_Scrolled_Window;
+      T            : Gtk_Cell_Renderer_Text;
+      C            : Gtk_Tree_View_Column;
+      Dummy        : Gint;
+      Dummy_Button : Gtk_Widget;
    begin
       Self := new Process_List_Record;
       Gtk.Dialog.Initialize
         (Self,
-         Title         => -"Select the process to attach to",
-         Parent        => Kernel.Get_Main_Window,
-         Flags         => Modal or Destroy_With_Parent);
-      Set_Default_Size_From_History
-        (Self, "gvd-processes", Kernel, 500, 250);
+         Title  => -"Select the process to attach to",
+         Parent => Kernel.Get_Main_Window,
+         Flags  => Modal or Destroy_With_Parent);
+      Set_Default_Size_From_History (Self, "gvd-processes", Kernel, 500, 250);
 
       Gtk_New_Hbox (Hbox, False);
       Self.Get_Content_Area.Pack_Start (Hbox, True, True);
@@ -90,9 +89,9 @@ package body GVD.Process_Lists is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Hbox.Pack_Start (Scrolled, True, True);
 
-      Gtk_New (Self.Tree_Model,
-               (Column_Pid     => GType_String,
-                Column_Command => GType_String));
+      Gtk_New
+        (Self.Tree_Model,
+         (Column_Pid => GType_String, Column_Command => GType_String));
       Gtk_New (Self.Tree_View, Self.Tree_Model);
       Self.Tree_Model.Set_Sort_Func (Column_Pid, Pid_Sort'Access);
       Self.Tree_Model.Unref;   --  owned by the tree view
@@ -142,21 +141,19 @@ package body GVD.Process_Lists is
    ---------------
 
    procedure Fill_Pids
-     (Self   : Gtk_Process_List;
-      Kernel : GPS.Kernel.Kernel_Handle)
+     (Self : Gtk_Process_List; Kernel : GPS.Kernel.Kernel_Handle)
    is
       use VSS.Strings.Conversions;
-      Py_Processes : constant Process_Info_List.List :=
-        Py_PSUtils (Kernel);
+      Py_Processes : constant Process_Info_List.List := Py_PSUtils (Kernel);
       Iter         : Gtk_Tree_Iter;
    begin
       for Py_Info of Py_Processes loop
          Self.Tree_Model.Append (Iter, Null_Iter);
          Set_And_Clear
-           (Self.Tree_Model, Iter,
+           (Self.Tree_Model,
+            Iter,
             (Column_Pid     => As_String (To_UTF_8_String (Py_Info.Id)),
-             Column_Command => As_String (To_UTF_8_String (Py_Info.Name))
-            ));
+             Column_Command => As_String (To_UTF_8_String (Py_Info.Name))));
       end loop;
       Self.Tree_View.Columns_Autosize;
    end Fill_Pids;
@@ -185,7 +182,8 @@ package body GVD.Process_Lists is
 
             Self.Tree_Model.Append (Iter, Null_Iter);
             Set_And_Clear
-              (Self.Tree_Model, Iter,
+              (Self.Tree_Model,
+               Iter,
                (Column_Pid     => As_String (To_UTF_8_String (Info.Id)),
                 Column_Command => As_String (To_UTF_8_String (Info.Name))));
          end loop;
@@ -199,9 +197,7 @@ package body GVD.Process_Lists is
    -------------------
 
    function Get_Selection
-     (Self  : not null access Process_List_Record)
-      return String
-   is
+     (Self : not null access Process_List_Record) return String is
    begin
       Self.Show_All;
 
@@ -223,9 +219,7 @@ package body GVD.Process_Lists is
    begin
       Self.Tree_View.Get_Selection.Get_Selected (Model, Iter);
       Self.Ent.Set_Text
-        (Trim
-           (Source => Get_String (Model, Iter, Column_Pid),
-            Side   => Both));
+        (Trim (Source => Get_String (Model, Iter, Column_Pid), Side => Both));
    end On_Select_Row;
 
    ----------------------

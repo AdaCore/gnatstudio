@@ -17,40 +17,40 @@
 
 with GNATCOLL.Utils;
 
-with Glib;                       use Glib;
-with Glib.Convert;               use Glib.Convert;
-with Glib.Object;                use Glib.Object;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gdk.RGBA;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Toolbar;                use Gtk.Toolbar;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Toolbar;            use Gtk.Toolbar;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
 
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Tree_View;           use Gtkada.Tree_View;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
 with GPS.Default_Styles;
 with GPS.Kernel.Actions;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
-with GPS.Search;                 use GPS.Search;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with GPS.Search;               use GPS.Search;
 
-with Default_Preferences;        use Default_Preferences;
-with Commands.Interactive;       use Commands.Interactive;
-with Filter_Panels;              use Filter_Panels;
+with Default_Preferences;  use Default_Preferences;
+with Commands.Interactive; use Commands.Interactive;
+with Filter_Panels;        use Filter_Panels;
 with GUI_Utils;
 
-with DAP.Types;                  use DAP.Types;
-with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
+with DAP.Types;               use DAP.Types;
+with DAP.Clients.Stack_Trace; use DAP.Clients.Stack_Trace;
 with VSS.Strings;
 with VSS.Strings.Conversions;
 
@@ -90,22 +90,27 @@ package body DAP.Views.Call_Stack is
       Last   : Integer := -1;
       Filter : GPS.Search.Search_Pattern_Access := null;
    end record;
-   overriding procedure Update (View : not null access Call_Stack_Record);
-   overriding procedure On_Process_Terminated
-     (View : not null access Call_Stack_Record);
-   overriding procedure On_Status_Changed
+   overriding
+   procedure Update (View : not null access Call_Stack_Record);
+   overriding
+   procedure On_Process_Terminated (View : not null access Call_Stack_Record);
+   overriding
+   procedure On_Status_Changed
      (View   : not null access Call_Stack_Record;
       Status : GPS.Debuggers.Debugger_State);
-   overriding procedure On_Location_Changed
-     (Self : not null access Call_Stack_Record);
+   overriding
+   procedure On_Location_Changed (Self : not null access Call_Stack_Record);
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Call_Stack_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Call_Stack_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Call_Stack_Record;
       Pattern : in out Search_Pattern_Access);
 
@@ -116,74 +121,79 @@ package body DAP.Views.Call_Stack is
    procedure Goto_Location (Self : not null access Call_Stack_Record'Class);
 
    type Call_Stack_Tree_Record is new Tree_View_Record with record
-      Filter       : GPS.Search.Search_Pattern_Access := null;
+      Filter : GPS.Search.Search_Pattern_Access := null;
    end record;
    type Call_Stack_Tree_View is access all Call_Stack_Tree_Record'Class;
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Call_Stack_Tree_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
-   package CS_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Call_Stack",
-      View_Name                       => "Call Stack",
-      Formal_View_Record              => Call_Stack_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => True,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Local_Config                    => True,
-      Local_Toolbar                   => True,
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
+   package CS_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Call_Stack",
+        View_Name                       => "Call Stack",
+        Formal_View_Record              => Call_Stack_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => True,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Local_Config                    => True,
+        Local_Toolbar                   => True,
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
    subtype Call_Stack is CS_MDI_Views.View_Access;
    use type Call_Stack;
 
-   package Simple_Views is new DAP.Views.Simple_Views
-     (Formal_Views           => CS_MDI_Views,
-      Formal_View_Record     => Call_Stack_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record);
+   package Simple_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => CS_MDI_Views,
+        Formal_View_Record => Call_Stack_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Update_Columns_Visibility
      (Self : not null access Call_Stack_Record'Class);
    --  Update the view's columuns' visibility according to the user's
    --  preferences.
 
-   type On_Pref_Changed is
-     new GPS.Kernel.Hooks.Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   type On_Pref_Changed is new GPS.Kernel.Hooks.Preferences_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences have changed
 
    type Fetch_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Fetch_Command;
-      Context : Interactive_Command_Context)
+   overriding
+   function Execute
+     (Command : access Fetch_Command; Context : Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Fetch next portion of frames
 
-   type Call_Stack_Fetch_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Call_Stack_Fetch_Filter;
-      Context : Selection_Context) return Boolean;
+   type Call_Stack_Fetch_Filter is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Call_Stack_Fetch_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if not all frames are fetched.
 
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
+      Column :
+        not null access
+          Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
 
    -----------------
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Call_Stack_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
@@ -197,7 +207,8 @@ package body DAP.Views.Call_Stack is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Call_Stack_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -215,7 +226,8 @@ package body DAP.Views.Call_Stack is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Call_Stack_Record;
       Pattern : in out Search_Pattern_Access)
    is
@@ -231,9 +243,10 @@ package body DAP.Views.Call_Stack is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Call_Stack_Fetch_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Call_Stack_Fetch_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       use type DAP.Clients.DAP_Client_Access;
@@ -282,7 +295,8 @@ package body DAP.Views.Call_Stack is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -308,16 +322,16 @@ package body DAP.Views.Call_Stack is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Fetch_Command;
-      Context : Interactive_Command_Context)
+   overriding
+   function Execute
+     (Command : access Fetch_Command; Context : Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
       use type DAP.Clients.DAP_Client_Access;
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant Call_Stack    :=
+      View   : constant Call_Stack :=
         Call_Stack (CS_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
       Client : DAP.Clients.DAP_Client_Access;
    begin
@@ -369,8 +383,7 @@ package body DAP.Views.Call_Stack is
          Column.Set_Resizable (True);
          Column.Set_Title (Name);
          Column.Pack_Start (Text_Renderer, Expand => False);
-         Column.Add_Attribute
-           (Text_Renderer, "markup", Index);
+         Column.Add_Attribute (Text_Renderer, "markup", Index);
          Column.Add_Attribute
            (Text_Renderer, "foreground-rgba", Fg_Color_Column);
          Dummy := Widget.Tree.Append_Column (Column);
@@ -415,17 +428,17 @@ package body DAP.Views.Call_Stack is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Call_Stack_Tree_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is
    begin
       return
         Iter = Null_Iter
         or else Self.Filter = null
         or else
-          Self.Filter.Start
-            (Self.Model.Get_String (Iter, Name_Column)) /= No_Match;
+          Self.Filter.Start (Self.Model.Get_String (Iter, Name_Column))
+          /= No_Match;
    end Is_Visible;
 
    ----------------
@@ -435,8 +448,8 @@ package body DAP.Views.Call_Stack is
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
+      Column :
+        not null access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
    is
       pragma Unreferenced (Column);
       Stack : constant Call_Stack := Call_Stack (Self);
@@ -449,8 +462,9 @@ package body DAP.Views.Call_Stack is
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
-     (View : not null access Call_Stack_Record) is
+   overriding
+   procedure On_Process_Terminated (View : not null access Call_Stack_Record)
+   is
    begin
       Clear (View.Model);
    end On_Process_Terminated;
@@ -459,7 +473,8 @@ package body DAP.Views.Call_Stack is
    -- On_Status_Changed --
    -----------------------
 
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Status_Changed
      (View   : not null access Call_Stack_Record;
       Status : GPS.Debuggers.Debugger_State) is
    begin
@@ -470,9 +485,8 @@ package body DAP.Views.Call_Stack is
    -- On_Location_Changed --
    -------------------------
 
-   overriding procedure On_Location_Changed
-     (Self : not null access Call_Stack_Record)
-   is
+   overriding
+   procedure On_Location_Changed (Self : not null access Call_Stack_Record) is
       use type DAP.Clients.DAP_Client_Access;
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Iter   : Gtk_Tree_Iter;
@@ -483,12 +497,14 @@ package body DAP.Views.Call_Stack is
       end if;
 
       if Client.Get_Stack_Trace.Get_Current_Frame_Id >= 0 then
-         Iter := GUI_Utils.Find_Node
-           (Model     => Self.Tree.Model,
-            Name      => GNATCOLL.Utils.Image
-              (Client.Get_Stack_Trace.Get_Current_Frame_Id, 1),
-            Column    => Frame_Id_Column,
-            Recursive => False);
+         Iter :=
+           GUI_Utils.Find_Node
+             (Model     => Self.Tree.Model,
+              Name      =>
+                GNATCOLL.Utils.Image
+                  (Client.Get_Stack_Trace.Get_Current_Frame_Id, 1),
+              Column    => Frame_Id_Column,
+              Recursive => False);
 
          if Iter /= Null_Iter then
             Self.Tree.Get_Selection.Select_Iter
@@ -505,12 +521,10 @@ package body DAP.Views.Call_Stack is
      (Kernel : GPS.Kernel.Kernel_Handle;
       Client : not null access DAP.Clients.DAP_Client'Class)
    is
-      View : constant Call_Stack    :=
+      View : constant Call_Stack :=
         Call_Stack (CS_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
    begin
-      if View /= null
-        and then Get_Client (View) = Client
-      then
+      if View /= null and then Get_Client (View) = Client then
          View.Update;
       end if;
    end Update;
@@ -519,10 +533,11 @@ package body DAP.Views.Call_Stack is
    -- Update --
    ------------
 
-   overriding procedure Update (View : not null access Call_Stack_Record) is
+   overriding
+   procedure Update (View : not null access Call_Stack_Record) is
       use type DAP.Clients.DAP_Client_Access;
 
-      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Client   : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       Status   : Debugger_Status_Kind;
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
@@ -536,31 +551,38 @@ package body DAP.Views.Call_Stack is
          if Status = Stopped then
             for Frame of Client.Get_Stack_Trace.Get_Trace loop
                Fg_Color :=
-                 (if Frame.Location_Exists then
-                     GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg
+                 (if Frame.Location_Exists
+                  then GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg
                   else
-                     Background
-                       (GPS.Default_Styles.Editor_Code_Annotations_Style));
+                    Background
+                      (GPS.Default_Styles.Editor_Code_Annotations_Style));
 
                View.Model.Append (Iter, Null_Iter);
 
                Set_All_And_Clear
-                 (View.Model, Iter,
-                  (Frame_Id_Column  => As_String
-                       (GNATCOLL.Utils.Image (Frame.Id, 1)),
-                   Name_Column      => As_String
-                     (Escape_Text (VSS.Strings.Conversions.To_UTF_8_String
-                      (Frame.Name))),
-                   Location_Column  => As_String
-                     (Escape_Text (+Full_Name (Frame.File) & ":" &
-                        GNATCOLL.Utils.Image (Frame.Line, 1))),
-                   Memory_Column    => As_String
-                     (Escape_Text
-                        ((if Frame.Address = Invalid_Address
-                         then "<>"
-                         else Address_To_String (Frame.Address)))),
-                   Sourse_Column    => As_String (+Full_Name (Frame.File)),
-                   Fg_Color_Column  => As_RGBA (Fg_Color)));
+                 (View.Model,
+                  Iter,
+                  (Frame_Id_Column =>
+                     As_String (GNATCOLL.Utils.Image (Frame.Id, 1)),
+                   Name_Column     =>
+                     As_String
+                       (Escape_Text
+                          (VSS.Strings.Conversions.To_UTF_8_String
+                             (Frame.Name))),
+                   Location_Column =>
+                     As_String
+                       (Escape_Text
+                          (+Full_Name (Frame.File)
+                           & ":"
+                           & GNATCOLL.Utils.Image (Frame.Line, 1))),
+                   Memory_Column   =>
+                     As_String
+                       (Escape_Text
+                          ((if Frame.Address = Invalid_Address
+                            then "<>"
+                            else Address_To_String (Frame.Address)))),
+                   Sourse_Column   => As_String (+Full_Name (Frame.File)),
+                   Fg_Color_Column => As_RGBA (Fg_Color)));
             end loop;
 
             View.Tree.Refilter;
@@ -585,11 +607,13 @@ package body DAP.Views.Call_Stack is
 
             View.Model.Append (Iter, Null_Iter);
             Set_And_Clear
-              (View.Model, Iter, (Frame_Id_Column, Name_Column),
+              (View.Model,
+               Iter,
+               (Frame_Id_Column, Name_Column),
                (1 => As_String (String'("")),
-                2 => As_String (if Status = Running
-                  then "Running..."
-                  else "No data")));
+                2 =>
+                  As_String
+                    (if Status = Running then "Running..." else "No data")));
          end if;
       end if;
    end Update;
@@ -601,8 +625,7 @@ package body DAP.Views.Call_Stack is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Fetch_Filter : constant Action_Filter :=
-        new Call_Stack_Fetch_Filter;
+      Fetch_Filter : constant Action_Filter := new Call_Stack_Fetch_Filter;
 
    begin
       Simple_Views.Register_Module (Kernel);
@@ -611,18 +634,20 @@ package body DAP.Views.Call_Stack is
          Action_Name => "open debugger call stack",
          Description => "Open the Call Stack window for the debugger");
 
-      Show_Frame_Number := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-frame-num", True,
-         Label => "Show Frame Number");
-      Show_Name := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-name", True,
-         Label => "Show Name");
-      Show_Location := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-location", False,
-         Label => "Show Location");
-      Show_Address := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-address", False,
-         Label => "Show Address");
+      Show_Frame_Number :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debug-callstack-show-frame-num",
+           True,
+           Label => "Show Frame Number");
+      Show_Name :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debug-callstack-show-name", True, Label => "Show Name");
+      Show_Location :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debug-callstack-show-location", False, Label => "Show Location");
+      Show_Address :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debug-callstack-show-address", False, Label => "Show Address");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,

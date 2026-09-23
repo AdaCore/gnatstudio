@@ -38,15 +38,16 @@ package Src_Editor_Module.Shell is
    -- Find_All_Refs --
    -------------------
 
-   type Find_All_Refs_Handler_Procedure is access procedure
-     (Kernel   : Kernel_Handle;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Integer;
-      Column   : Visible_Column_Type;
-      Name     : String;
-      Implicit : Boolean;
-      In_File  : Virtual_File;
-      Data     : Callback_Data_Access);
+   type Find_All_Refs_Handler_Procedure is
+     access procedure
+       (Kernel   : Kernel_Handle;
+        File     : GNATCOLL.VFS.Virtual_File;
+        Line     : Integer;
+        Column   : Visible_Column_Type;
+        Name     : String;
+        Implicit : Boolean;
+        In_File  : Virtual_File;
+        Data     : Callback_Data_Access);
 
    procedure Find_All_Refs
      (Kernel   : Kernel_Handle;
@@ -60,16 +61,17 @@ package Src_Editor_Module.Shell is
    --  This procedure calls GPS.Entities, e.g. redirecting
    --  Should be removed when we have totally switched to LSP
 
-   type Refactoring_Rename_Handler_Procedure is access procedure
-     (Kernel              : Kernel_Handle;
-      File                : GNATCOLL.VFS.Virtual_File;
-      Location            : Editor_Location'Class;
-      Name                : String;
-      New_Name            : String;
-      Make_Writable       : Boolean;
-      Auto_Save           : Boolean;
-      Allow_File_Renaming : Boolean;
-      In_Comments         : Boolean);
+   type Refactoring_Rename_Handler_Procedure is
+     access procedure
+       (Kernel              : Kernel_Handle;
+        File                : GNATCOLL.VFS.Virtual_File;
+        Location            : Editor_Location'Class;
+        Name                : String;
+        New_Name            : String;
+        Make_Writable       : Boolean;
+        Auto_Save           : Boolean;
+        Allow_File_Renaming : Boolean;
+        In_Comments         : Boolean);
 
    Find_All_Refs_Handler : Find_All_Refs_Handler_Procedure :=
      Find_All_Refs'Access;

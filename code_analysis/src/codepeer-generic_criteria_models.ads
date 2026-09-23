@@ -33,12 +33,12 @@ generic
 
    with function "<" (Left : Item_Access; Right : Item_Access) return Boolean;
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
-   with package Ordered_Set_Models is
-     new CodePeer.Generic_Ordered_Set_Models
-       (Item, Item_Access, "<", Item_Sets);
+   with package Ordered_Set_Models is new
+     CodePeer.Generic_Ordered_Set_Models (Item, Item_Access, "<", Item_Sets);
    --  Containers of criterias
 
-package CodePeer.Generic_Criteria_Models is
+package CodePeer.Generic_Criteria_Models
+is
 
    Active_Column  : constant := 0;
    Name_Column    : constant := 1;
@@ -68,12 +68,10 @@ package CodePeer.Generic_Criteria_Models is
       Default        : Boolean);
 
    procedure Show
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access);
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access);
 
    procedure Hide
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access);
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access);
 
    procedure Show_All (Self : access Criteria_Model_Record'Class);
 
@@ -89,7 +87,8 @@ package CodePeer.Generic_Criteria_Models is
    function Is_Full (Self : access Criteria_Model_Record'Class) return Boolean;
    --  Returns True is all items is selected
 
-   overriding procedure Clear (Self : access Criteria_Model_Record);
+   overriding
+   procedure Clear (Self : access Criteria_Model_Record);
 
 private
 
@@ -101,14 +100,17 @@ private
       Selected_Items : Item_Sets.Set;
    end record;
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Criteria_Model_Record) return Glib.Gint;
 
-   overriding function Get_Column_Type
-     (Self  : access Criteria_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
+   overriding
+   function Get_Column_Type
+     (Self : access Criteria_Model_Record; Index : Glib.Gint)
+      return Glib.GType;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Criteria_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;

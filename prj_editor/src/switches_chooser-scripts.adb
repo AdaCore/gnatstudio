@@ -15,21 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada;    use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Histories;
-with Switches_Chooser.Gtkada;    use Switches_Chooser.Gtkada;
-with Switches_Parser;            use Switches_Parser;
-with XML_Utils;                  use XML_Utils;
+with Switches_Chooser.Gtkada; use Switches_Chooser.Gtkada;
+with Switches_Parser;         use Switches_Parser;
+with XML_Utils;               use XML_Utils;
 
 package body Switches_Chooser.Scripts is
 
@@ -63,13 +63,13 @@ package body Switches_Chooser.Scripts is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Class    : constant Class_Type :=
-                   New_Class (Get_Kernel (Data), "SwitchesChooser");
-      Inst     : constant Class_Instance := Nth_Arg (Data, 1, Class);
-      Config   : Switches_Editor_Config;
-      Editor   : Switches_Chooser.Gtkada.Switches_Editor;
-      Error    : Unbounded_String;
-      Xml      : XML_Utils.Node_Ptr;
+      Class  : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "SwitchesChooser");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Config : Switches_Editor_Config;
+      Editor : Switches_Chooser.Gtkada.Switches_Editor;
+      Error  : Unbounded_String;
+      Xml    : XML_Utils.Node_Ptr;
 
    begin
       if Command = Constructor_Method then
@@ -87,19 +87,20 @@ package body Switches_Chooser.Scripts is
             Finder              => Dummy_Other_Config_Finder'Access,
             Node                => Xml);
          Switches_Chooser.Gtkada.Gtk_New
-           (Editor, Config,
+           (Editor,
+            Config,
             Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
             Read_Only          => False,
             History            => null,
             Key                => Histories.No_Key,
             Cmd_Line_Tooltip   => Command_Line_Editor_Tooltip_Text);
 
-         GNATCOLL.Scripts.Gtkada.Set_Data
-           (Inst, GObject (Editor));
+         GNATCOLL.Scripts.Gtkada.Set_Data (Inst, GObject (Editor));
 
       else
-         Editor := Switches_Chooser.Gtkada.Switches_Editor
-           (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
+         Editor :=
+           Switches_Chooser.Gtkada.Switches_Editor
+             (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
 
          if Command = "set_cmd_line" then
             Editor.Set_Command_Line (Nth_Arg (Data, 2));
@@ -107,7 +108,7 @@ package body Switches_Chooser.Scripts is
          elsif Command = "get_cmd_line" then
             declare
                Cmd_Line : constant String_List_Access :=
-                            Editor.Get_Command_Line (False);
+                 Editor.Get_Command_Line (False);
                Ret      : Unbounded_String;
             begin
                for J in Cmd_Line'Range loop
@@ -131,17 +132,29 @@ package body Switches_Chooser.Scripts is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Class : constant Class_Type := New_Class
-        (Kernel, "SwitchesChooser", Get_GUI_Class (Kernel));
+      Class : constant Class_Type :=
+        New_Class (Kernel, "SwitchesChooser", Get_GUI_Class (Kernel));
    begin
       Register_Command
-        (Kernel, Constructor_Method, 2, 2, Class => Class,
-         Handler                                 => Command_Handler'Access);
-      Register_Command
-        (Kernel, "set_cmd_line", 1, 1, Class => Class,
+        (Kernel,
+         Constructor_Method,
+         2,
+         2,
+         Class   => Class,
          Handler => Command_Handler'Access);
       Register_Command
-        (Kernel, "get_cmd_line", 0, 0, Class => Class,
+        (Kernel,
+         "set_cmd_line",
+         1,
+         1,
+         Class   => Class,
+         Handler => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         "get_cmd_line",
+         0,
+         0,
+         Class   => Class,
          Handler => Command_Handler'Access);
    end Register_Module;
 

@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with Default_Preferences;        use Default_Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Default_Preferences;    use Default_Preferences;
 
 package Cpp_Module is
 
@@ -32,13 +32,13 @@ package Cpp_Module is
    C_Use_Tabs              : Boolean_Preference;
    --  Use tabulations when indenting.
 
-   C_Comment_Two_Slashes   : Boolean_Preference;
+   C_Comment_Two_Slashes : Boolean_Preference;
    --  Whether to indent C with // rather than with /* */
 
-   C_Indentation_Level     : Integer_Preference;
+   C_Indentation_Level : Integer_Preference;
    --  Number of spaces for the default indentation.
 
-   C_Indent_Extra          : Boolean_Preference;
-   C_Indent_Comments       : Boolean_Preference;
+   C_Indent_Extra    : Boolean_Preference;
+   C_Indent_Comments : Boolean_Preference;
 
 end Cpp_Module;

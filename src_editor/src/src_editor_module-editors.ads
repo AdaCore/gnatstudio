@@ -20,8 +20,8 @@ with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Src_Editor_Module.Editors is
 
-   type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
-   with private;
+   type Src_Editor_Buffer_Factory is
+     new GPS.Editors.Editor_Buffer_Factory with private;
 
    function Create (Kernel : Kernel_Handle) return Src_Editor_Buffer_Factory;
    --  Constructor
@@ -29,7 +29,8 @@ package Src_Editor_Module.Editors is
    procedure Destroy (X : in out Src_Editor_Buffer_Factory);
    --  Destructor
 
-   overriding function Get
+   overriding
+   function Get
      (This            : Src_Editor_Buffer_Factory;
       File            : Virtual_File;
       Force           : Boolean := False;
@@ -38,23 +39,28 @@ package Src_Editor_Module.Editors is
       Focus           : Boolean := True;
       Only_If_Focused : Boolean := False;
       Unlocked_Only   : Boolean := False) return Editor_Buffer'Class;
-   overriding function Get_New
+   overriding
+   function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
-   overriding function New_Mark
+   overriding
+   function New_Mark
      (This   : Src_Editor_Buffer_Factory;
       File   : Virtual_File := No_File;
       Line   : Integer;
       Column : Integer) return Editor_Mark'Class;
-   overriding function Buffers
-     (This   : Src_Editor_Buffer_Factory) return Buffer_Lists.List;
-   overriding function Create_Marker
+   overriding
+   function Buffers
+     (This : Src_Editor_Buffer_Factory) return Buffer_Lists.List;
+   overriding
+   function Create_Marker
      (This    : Src_Editor_Buffer_Factory;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
       Length  : Natural := 0) return Location_Marker;
-   overriding procedure File_Renamed
+   overriding
+   procedure File_Renamed
      (This     : Src_Editor_Buffer_Factory;
       Old_File : GNATCOLL.VFS.Virtual_File;
       New_File : GNATCOLL.VFS.Virtual_File);
@@ -62,14 +68,12 @@ package Src_Editor_Module.Editors is
 
    function Get
      (This   : Src_Editor_Buffer_Factory'Class;
-      Buffer : access Source_Buffer_Record'Class)
-      return Editor_Buffer'Class;
+      Buffer : access Source_Buffer_Record'Class) return Editor_Buffer'Class;
    --  Wrap a gtk+ buffer into an abstract representation. If Buffer is null,
    --  Nil_Editor_Buffer is returned
 
    function Get_Pure_Buffer
-     (This : Src_Editor_Buffer_Factory'Class;
-      File : GNATCOLL.VFS.Virtual_File)
+     (This : Src_Editor_Buffer_Factory'Class; File : GNATCOLL.VFS.Virtual_File)
       return Source_Buffer;
 
    ---------------
@@ -100,24 +104,23 @@ package Src_Editor_Module.Editors is
    --  instance, thus breaking any instance that might have been set before
 
    function Instance_From_Buffer
-     (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
-      Buffer  : Editor_Buffer'Class) return Class_Instance;
-   overriding function Buffer_From_Instance
-     (This       : Src_Editor_Buffer_Factory;
-      Instance   : Class_Instance) return Editor_Buffer'Class;
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      Buffer : Editor_Buffer'Class) return Class_Instance;
+   overriding
+   function Buffer_From_Instance
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_Buffer'Class;
    --  See comment above
 
    function Instance_From_View
-     (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
-      View    : Editor_View'Class) return Class_Instance;
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      View   : Editor_View'Class) return Class_Instance;
    function View_From_Instance
-     (This       : Src_Editor_Buffer_Factory;
-      Instance   : Class_Instance) return Editor_View'Class;
-   procedure Set_Data
-     (Instance   : Class_Instance;
-      View       : Editor_View'Class);
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_View'Class;
+   procedure Set_Data (Instance : Class_Instance; View : Editor_View'Class);
    --  See comment above
 
    function Instance_From_Overlay
@@ -125,15 +128,15 @@ package Src_Editor_Module.Editors is
       Class   : Class_Type;
       Overlay : Editor_Overlay'Class) return Class_Instance;
    function Overlay_From_Instance
-     (Instance   : Class_Instance) return Editor_Overlay'Class;
+     (Instance : Class_Instance) return Editor_Overlay'Class;
    --  See comment above
 
    function Instance_From_Mark
-     (Script  : access Scripting_Language_Record'Class;
-      Mark    : Editor_Mark'Class) return Class_Instance;
+     (Script : access Scripting_Language_Record'Class;
+      Mark   : Editor_Mark'Class) return Class_Instance;
    function Mark_From_Instance
-     (This     : Src_Editor_Buffer_Factory;
-      Instance : Class_Instance) return Editor_Mark'Class;
+     (This : Src_Editor_Buffer_Factory; Instance : Class_Instance)
+      return Editor_Mark'Class;
    --  See comment above
 
    type Editor_Location_Access is access all Editor_Location'Class;
@@ -148,8 +151,8 @@ package Src_Editor_Module.Editors is
       Class_Name : String;
       Location   : Editor_Location'Class);
    function Get_Data
-     (Instance   : Class_Instance;
-      Class_Name : String) return Editor_Location_Access;
+     (Instance : Class_Instance; Class_Name : String)
+      return Editor_Location_Access;
 
 private
 
@@ -159,11 +162,12 @@ private
 
    No_Element : constant Element := (Buf => null);
 
-   package Pure_Editors_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Element_Type    => Element,
-      Key_Type        => Virtual_File,
-      Equivalent_Keys => GNATCOLL.VFS."=",
-      Hash            => GNATCOLL.VFS.Full_Name_Hash);
+   package Pure_Editors_Hash is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Element_Type    => Element,
+        Key_Type        => Virtual_File,
+        Equivalent_Keys => GNATCOLL.VFS."=",
+        Hash            => GNATCOLL.VFS.Full_Name_Hash);
    --  ??? This is only updated for views created through this package, not
    --  any other means
 

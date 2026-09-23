@@ -67,7 +67,7 @@ package GPS.Tree_View.Locations is
 
    procedure Initialize
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
-      Model  : Gtk.Tree_Model.Gtk_Tree_Model);
+      Model : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Set_Order
      (Self       : not null access GPS_Locations_Tree_View_Record'Class;
@@ -93,18 +93,19 @@ package GPS.Tree_View.Locations is
 
    function Get_Multiple_Action
      (Self : not null access GPS_Locations_Tree_View_Record'Class)
-      return Boolean with Inline;
+      return Boolean
+   with Inline;
    --  Returns True if a last click was on message's action
    --  and more than one message is selected.
 
-   Signal_Action_Clicked   : constant Glib.Signal_Name;
+   Signal_Action_Clicked : constant Glib.Signal_Name;
    --  Emitted on click in action column.
    --  procedure Handler
    --    (Self : not null access GPS_Locations_Tree_View_Record'Class;
    --     Path : Gtk_Tree_Path;
    --     Iter : Gtk_Tree_Iter);
 
-   Signal_File_Clicked     : constant Glib.Signal_Name;
+   Signal_File_Clicked : constant Glib.Signal_Name;
    --  Emitted on click in file row.
    --  procedure Handler
    --  (Self : not null access GPS_Locations_Tree_View_Record'Class;
@@ -124,18 +125,16 @@ private
    Signal_File_Clicked     : constant Glib.Signal_Name := "file_clicked";
    Signal_Location_Clicked : constant Glib.Signal_Name := "location_clicked";
 
-   type GPS_Locations_Tree_View_Record is
-     new GPS_Tree_View_Record with record
-      Action_Column           : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+   type GPS_Locations_Tree_View_Record is new GPS_Tree_View_Record with record
+      Action_Column   : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       --  Column for action icon
-      Location_Column         : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Location_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       --  Column for location and text of the message; it is used for the name
       --  of category and file also.
-      Text_Renderer           : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       --  Renderer for location and its text
 
-      Filter                  :
-        GPS.Location_View_Filter.Location_View_Filter_Model;
+      Filter : GPS.Location_View_Filter.Location_View_Filter_Model;
       --  Intermediate model to support filtering of items in the view
 
       On_Row_Expanded_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -144,12 +143,13 @@ private
       --  Context for scrolling after node expansion. Path points to the top
       --  expanded node. Handler is a Gtk+ idle handler.
 
-      Multiple_Action         : Boolean := False;
+      Multiple_Action : Boolean := False;
       --  Set True when clicked on message's action
       --  and more than one message is selected
    end record;
 
-   overriding procedure On_Lowest_Model_Row_Inserted
+   overriding
+   procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -157,7 +157,8 @@ private
    --  Force expanded state for all nodes of level 3 (which means primary
    --  message).
 
-   overriding procedure On_Row_Expanded
+   overriding
+   procedure On_Row_Expanded
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -165,10 +166,10 @@ private
    --  Registers idle callback to scroll view to make visible the first child
    --  node.
 
-   overriding function To_Lowest_Model_Iter
+   overriding
+   function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Converts iterator from the view's source model to lowerst model.
 
 end GPS.Tree_View.Locations;

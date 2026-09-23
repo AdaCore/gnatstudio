@@ -26,7 +26,7 @@ package GPS.Tools_Output is
    type Tools_Output_Parser_Access is access all Tools_Output_Parser'Class;
 
    type Tools_Output_Parser (Child : Tools_Output_Parser_Access) is
-     abstract tagged null record;
+   abstract tagged null record;
    --  Output parsers organized in the chains.
    --  Child is pointer to next item in the chain.
 
@@ -68,17 +68,16 @@ package GPS.Tools_Output is
    type Output_Parser_Fabric_Access is access all Output_Parser_Fabric'Class;
 
    function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access is abstract;
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
+      return Tools_Output_Parser_Access
+   is abstract;
    --  Create output parser object. Set Child as next item in the chain.
    --  This is called before the build target executes, and can be used to
    --  change the command that will be executed by calling
    --  Self.Builder.Set_Last_Build.
 
    procedure Register_Output_Parser
-     (Fabric   : access Output_Parser_Fabric'Class;
-      Name     : String);
+     (Fabric : access Output_Parser_Fabric'Class; Name : String);
    --  Register new output parser fabric with given name
 
    function New_Parser_Chain
@@ -93,7 +92,8 @@ package GPS.Tools_Output is
      (Self        : access External_Parser_Fabric;
       Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
-      Found       : out Boolean) is abstract;
+      Found       : out Boolean)
+   is abstract;
    --  This procedure iterates over Parser_List and creates output parser chain
    --  in scripting language. Then it creates wrapper and adds it to Child.
    --  It stops when unknown parser encountered.

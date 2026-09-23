@@ -20,11 +20,11 @@ with Ada.Strings.Hash;
 
 with VSS.Strings.Conversions;
 
-with GPS.Editors;                    use GPS.Editors;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Editors;       use GPS.Editors;
+with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.References;
-with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with Src_Editor_Buffer;              use Src_Editor_Buffer;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -36,7 +36,8 @@ package body Src_Editor_Module.Messages is
    type On_File_Edited is new File_Hooks_Function with record
       Manager : not null access Highlighting_Manager'Class;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -47,8 +48,7 @@ package body Src_Editor_Module.Messages is
    Warnings_Count : Natural := 0;
 
    function Calc_Errors_And_Warnings
-     (Message : not null access Abstract_Message'Class)
-      return Boolean;
+     (Message : not null access Abstract_Message'Class) return Boolean;
    --  Calculate errors and warnings messages up to two of each and store
    --  result in Errors_Count & Warnings_Count
 
@@ -57,8 +57,7 @@ package body Src_Editor_Module.Messages is
    ------------------------------
 
    function Calc_Errors_And_Warnings
-     (Message : not null access Abstract_Message'Class)
-      return Boolean is
+     (Message : not null access Abstract_Message'Class) return Boolean is
    begin
       if Message.Get_Importance = High then
          Errors_Count := @ + 1;
@@ -75,7 +74,8 @@ package body Src_Editor_Module.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -94,7 +94,7 @@ package body Src_Editor_Module.Messages is
       File : GNATCOLL.VFS.Virtual_File)
    is
       Controller : constant Messages_Container_Access :=
-                     Get_Messages_Container (Self.Kernel);
+        Get_Messages_Container (Self.Kernel);
       B          : Source_Buffer;
 
    begin
@@ -142,13 +142,14 @@ package body Src_Editor_Module.Messages is
    -- File_Removed --
    ------------------
 
-   overriding procedure File_Removed
+   overriding
+   procedure File_Removed
      (Self     : not null access Highlighting_Manager;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
    is
-      procedure Free is
-        new Ada.Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
 
       Map_Position : Style_Maps.Cursor := Self.Map.Find ((Category, File));
       Styles       : Style_Set_Access;
@@ -162,12 +163,9 @@ package body Src_Editor_Module.Messages is
          Set_Position := Styles.First;
 
          while Has_Element (Set_Position) loop
-            Get_Buffer_Factory (Self.Kernel).Get
-              (File, Open_View => False).Remove_Style
-              (Get_Name (Style_Sets.Element (Set_Position)),
-               0,
-               0,
-               0);
+            Get_Buffer_Factory (Self.Kernel).Get (File, Open_View => False)
+              .Remove_Style
+                 (Get_Name (Style_Sets.Element (Set_Position)), 0, 0, 0);
 
             Next (Set_Position);
          end loop;
@@ -180,8 +178,7 @@ package body Src_Editor_Module.Messages is
    -- Hash --
    ----------
 
-   function Hash
-     (Item : Style_Access) return Ada.Containers.Hash_Type is
+   function Hash (Item : Style_Access) return Ada.Containers.Hash_Type is
    begin
       return Ada.Strings.Hash (Get_Name (Item));
    end Hash;
@@ -195,30 +192,29 @@ package body Src_Editor_Module.Messages is
       return
         Ada.Strings.Hash
           (VSS.Strings.Conversions.To_UTF_8_String (Item.Category)
-             & String (Item.File.Full_Name.all));
+           & String (Item.File.Full_Name.all));
    end Hash;
 
    -------------------
    -- Message_Added --
    -------------------
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class)
    is
       B : Source_Buffer;
 
       function Calc_Errors
-        (Message : not null access Abstract_Message'Class)
-         return Boolean;
+        (Message : not null access Abstract_Message'Class) return Boolean;
 
       -----------------
       -- Calc_Errors --
       -----------------
 
       function Calc_Errors
-        (Message : not null access Abstract_Message'Class)
-         return Boolean is
+        (Message : not null access Abstract_Message'Class) return Boolean is
       begin
          if Message.Get_Importance = High then
             Errors_Count := @ + 1;
@@ -238,14 +234,15 @@ package body Src_Editor_Module.Messages is
             (1 => Message_Access (Message)));
 
          --  Highlight tab name on errors/warnings
-         Errors_Count   := 0;
+         Errors_Count := 0;
          Warnings_Count := 0;
 
          if Message.Get_Importance = High then
             Self.Kernel.Get_Messages_Container.For_All_Messages
               (Message.Get_File, Calc_Errors'Unrestricted_Access);
 
-            if Errors_Count = 1 then --  the first error message
+            if Errors_Count = 1 then
+               --  the first error message
                Apply_Error_Warning_Tab_Style
                  (Self.Kernel, Message.Get_File, Error);
             end if;
@@ -268,11 +265,12 @@ package body Src_Editor_Module.Messages is
    -- Message_Property_Changed --
    ------------------------------
 
-   overriding procedure Message_Property_Changed
+   overriding
+   procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;
       Message  : not null access Abstract_Message'Class;
       Property : Message_Property_Type)
- is
+   is
       B : Source_Buffer;
    begin
       if Property = Highlighting_Property then
@@ -284,12 +282,14 @@ package body Src_Editor_Module.Messages is
             return;
          end if;
 
-         Highlight_Message (Buffer        => B,
-                            Editable_Line => 0,
-                            Buffer_Line   => 0,
-                            Message       => Message_Access (Message));
+         Highlight_Message
+           (Buffer        => B,
+            Editable_Line => 0,
+            Buffer_Line   => 0,
+            Message       => Message_Access (Message));
 
-         --  ??? We should refresh the message when property is "action"
+      --  ??? We should refresh the message when property is "action"
+
       end if;
    end Message_Property_Changed;
 
@@ -297,7 +297,8 @@ package body Src_Editor_Module.Messages is
    -- Message_Removed --
    ---------------------
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class)
    is
@@ -308,19 +309,20 @@ package body Src_Editor_Module.Messages is
 
       if B /= null then
          Remove_Message
-           (B, GPS.Kernel.Messages.References.Create
-              (Message_Access (Message)));
+           (B,
+            GPS.Kernel.Messages.References.Create (Message_Access (Message)));
 
          --  Unhighlight tab name on errors/warnings
          if Message.Get_Importance in Medium .. High then
-            Errors_Count   := 0;
+            Errors_Count := 0;
             Warnings_Count := 0;
 
             Self.Kernel.Get_Messages_Container.For_All_Messages
               (Message.Get_File, Calc_Errors_And_Warnings'Access);
 
             if Message.Get_Importance = High then
-               if Errors_Count = 1 then --  the last Error message
+               if Errors_Count = 1 then
+                  --  the last Error message
                   if Warnings_Count = 0 then
                      --  no Warnings
                      Apply_Error_Warning_Tab_Style
@@ -358,14 +360,13 @@ package body Src_Editor_Module.Messages is
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class) is
 
-      function To_Address is
-        new Ada.Unchecked_Conversion
-              (Highlighting_Manager_Access, System.Address);
+      function To_Address is new
+        Ada.Unchecked_Conversion (Highlighting_Manager_Access, System.Address);
 
       Id      : constant Source_Editor_Module :=
-                  Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       Manager : constant Highlighting_Manager_Access :=
-                  new Highlighting_Manager (Kernel);
+        new Highlighting_Manager (Kernel);
 
    begin
       Get_Messages_Container (Kernel).Register_Listener
@@ -373,8 +374,8 @@ package body Src_Editor_Module.Messages is
          (Editor_Line => True, Editor_Side => True, Locations => False));
       Id.Highlighting_Manager := To_Address (Manager);
       File_Edited_Hook.Add
-         (new On_File_Edited'(File_Hooks_Function with Manager => Manager),
-          Last => True);
+        (new On_File_Edited'(File_Hooks_Function with Manager => Manager),
+         Last => True);
       --  Register this hook with Last => True, so that it is called after the
       --  one (registered in Src_Editor_Module.Register_Module that reacts to
       --  file_edited and updates marks.
@@ -384,21 +385,20 @@ package body Src_Editor_Module.Messages is
    -- Unregister --
    ----------------
 
-   procedure Unregister
-     (Kernel : not null access Kernel_Handle_Record'Class)
+   procedure Unregister (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      function To_Highlighting_Manager is
-        new Ada.Unchecked_Conversion
-              (System.Address, Highlighting_Manager_Access);
+      function To_Highlighting_Manager is new
+        Ada.Unchecked_Conversion (System.Address, Highlighting_Manager_Access);
 
-      procedure Free is
-        new Ada.Unchecked_Deallocation
-              (Highlighting_Manager'Class, Highlighting_Manager_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Highlighting_Manager'Class,
+           Highlighting_Manager_Access);
 
       Id      : constant Source_Editor_Module :=
-                  Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
       Manager : Highlighting_Manager_Access :=
-                  To_Highlighting_Manager (Id.Highlighting_Manager);
+        To_Highlighting_Manager (Id.Highlighting_Manager);
 
    begin
       Get_Messages_Container (Kernel).Unregister_Listener

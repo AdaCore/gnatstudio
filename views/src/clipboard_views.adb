@@ -15,77 +15,81 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.Strings;              use GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
 
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-with Glib.Unicode;              use Glib.Unicode;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Rectangle;     use Gdk.Rectangle;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
+with Glib.Unicode;      use Glib.Unicode;
 
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
+with Gtk.Tree_Selection;  use Gtk.Tree_Selection;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.MDI;
 
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Intl;                  use GPS.Intl;
-with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
-with Tooltips;                  use Tooltips;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Intl;               use GPS.Intl;
+with GUI_Utils;              use GUI_Utils;
+with String_Utils;           use String_Utils;
+with Tooltips;               use Tooltips;
 
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 package body Clipboard_Views is
    Me : constant Trace_Handle := Create ("GPS.VIEWS.CLIPBOARD");
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
-      Tree    : Gtk_Tree_View;
+      Tree : Gtk_Tree_View;
    end record;
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class) return Gtk_Widget;
+     (View : access Clipboard_View_Record'Class) return Gtk_Widget;
    --  Create a new clipboard view
 
-   package Generic_View is new Generic_Views.Simple_Views
-     (Module_Name        => "Clipboard_View",
-      View_Name          => "Clipboard",
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Formal_View_Record => Clipboard_View_Record,
-      Areas              => Gtkada.MDI.Sides_Only);
+   package Generic_View is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Clipboard_View",
+        View_Name          => "Clipboard",
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Formal_View_Record => Clipboard_View_Record,
+        Areas              => Gtkada.MDI.Sides_Only);
    use Generic_View;
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
    type On_Clipboard_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Clipboard_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the contents of the clipboard has changed
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
@@ -95,25 +99,25 @@ package body Clipboard_Views is
    --  Refresh the contents of the clipboard view
 
    function Button_Press
-     (Clip  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (Clip : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
    function Get_Selected_From_Event
-     (View  : access Clipboard_View_Record'Class;
-      Event : Gdk_Event) return Integer;
+     (View : access Clipboard_View_Record'Class; Event : Gdk_Event)
+      return Integer;
    --  Return the entry selected by event
 
-   type Merge_With_Previous_Command
-     is new Interactive_Command with null record;
-   overriding function Execute
+   type Merge_With_Previous_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Merge_With_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Merge the selected entry with the previous one
 
-   type Remove_Entry_Command
-     is new Interactive_Command with null record;
-   overriding function Execute
+   type Remove_Entry_Command is new Interactive_Command with null record;
+   overriding
+   function Execute
      (Command : access Remove_Entry_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove the currently selected entry
@@ -122,32 +126,34 @@ package body Clipboard_Views is
    -- Tooltips --
    --------------
 
-   type Clipboard_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
-   record
+   type Clipboard_View_Tooltip_Handler is new Tooltips.Tooltip_Handler
+   with record
       Kernel : Kernel_Handle;
    end record;
    type Clipboard_View_Tooltip_Handler_Access is
      access all Clipboard_View_Tooltip_Handler;
-   overriding function Create_Contents
-     (Tooltip  : not null access Clipboard_View_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Clipboard_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    ---------------------
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Tooltip  : not null access Clipboard_View_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Clipboard_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Model      : constant Gtk_Tree_Model := Get_Model (Tree);
-      Iter       : Gtk_Tree_Iter;
-      Selected   : Integer;
-      Label      : Gtk_Label;
-      Area       : Gdk_Rectangle;
+      Tree     : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model    : constant Gtk_Tree_Model := Get_Model (Tree);
+      Iter     : Gtk_Tree_Iter;
+      Selected : Integer;
+      Label    : Gtk_Label;
+      Area     : Gdk_Rectangle;
    begin
       Initialize_Tooltips (Tree, X, Y, Area, Iter);
       if Iter /= Null_Iter then
@@ -166,16 +172,17 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Merge_With_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Selected : Integer;
-      View : constant Clipboard_View_Access :=
+      View     : constant Clipboard_View_Access :=
         Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Iter     : Gtk_Tree_Iter;
    begin
       if View /= null then
          Get_Selected (View.Tree.Get_Selection, Model, Iter);
@@ -195,16 +202,17 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Entry_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Selected : Integer;
-      View : constant Clipboard_View_Access :=
+      View     : constant Clipboard_View_Access :=
         Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Iter     : Gtk_Tree_Iter;
    begin
       if View /= null then
          Get_Selected (View.Tree.Get_Selection, Model, Iter);
@@ -224,11 +232,11 @@ package body Clipboard_Views is
    -----------------------------
 
    function Get_Selected_From_Event
-     (View  : access Clipboard_View_Record'Class;
-      Event : Gdk_Event) return Integer
+     (View : access Clipboard_View_Record'Class; Event : Gdk_Event)
+      return Integer
    is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
-      Iter : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (View.Tree, Event);
       if Iter /= Null_Iter then
@@ -243,10 +251,10 @@ package body Clipboard_Views is
    ------------------
 
    function Button_Press
-     (Clip  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (Clip : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean
    is
-      View : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
+      View     : constant Clipboard_View_Access :=
+        Clipboard_View_Access (Clip);
       Selected : Integer;
       CL       : Arg_List;
    begin
@@ -269,9 +277,7 @@ package body Clipboard_Views is
             CL := Create ("MDIWindow.raise_window %1");
             Execute_GPS_Shell_Command (View.Kernel, CL);
 
-            Paste_Clipboard
-              (Get_Clipboard (View.Kernel),
-               Selected);
+            Paste_Clipboard (Get_Clipboard (View.Kernel), Selected);
             return True;
          end if;
       end if;
@@ -282,7 +288,8 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Clipboard_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -295,7 +302,8 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -314,10 +322,10 @@ package body Clipboard_Views is
    procedure Refresh (View : access Clipboard_View_Record'Class) is
       Model           : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Selection       : constant Selection_List :=
-                          Get_Content (Get_Clipboard (View.Kernel));
+        Get_Content (Get_Clipboard (View.Kernel));
       Iter            : Gtk_Tree_Iter;
       Last_Paste      : constant Integer :=
-                          Get_Last_Paste (Get_Clipboard (View.Kernel));
+        Get_Last_Paste (Get_Clipboard (View.Kernel));
       Index, First    : Natural;
       Start_Truncated : Boolean;
       End_Truncated   : Boolean;
@@ -338,7 +346,7 @@ package body Clipboard_Views is
             --  Show only the first line of the selection
             First := Selection (S)'First;
             while First <= Selection (S)'Last
-              and then Is_Blank (Selection (S)(First))
+              and then Is_Blank (Selection (S) (First))
             loop
                Start_Truncated := True;
                First := First + 1;
@@ -379,17 +387,18 @@ package body Clipboard_Views is
             --  selected, it will be shown in the view on 2 lines.
 
             Set_And_Clear
-              (Model, Iter,
-               (0 => As_String
-                    (if Last_Paste = S
-                     then "gps-forward-symbolic"
-                     else ""),
+              (Model,
+               Iter,
+               (0 =>
+                  As_String
+                    (if Last_Paste = S then "gps-forward-symbolic" else ""),
                 1 => As_String (To_String (Result)),
-                2 => As_Int    (Gint (S))));
+                2 => As_Int (Gint (S))));
          end if;
       end loop;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Refresh;
 
    ----------------
@@ -397,7 +406,7 @@ package body Clipboard_Views is
    ----------------
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class) return Gtk_Widget
+     (View : access Clipboard_View_Record'Class) return Gtk_Widget
    is
       Tooltip  : Clipboard_View_Tooltip_Handler_Access;
       Scrolled : Gtk_Scrolled_Window;
@@ -407,15 +416,15 @@ package body Clipboard_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      View.Tree := Create_Tree_View
-        (Column_Types       => (0 => GType_Icon_Name_String,
-                                1 => GType_String,
-                                2 => GType_Int),
-         Column_Names       => (1 => null, 2 => null),
-         Show_Column_Titles => False,
-         Selection_Mode     => Selection_Single,
-         Sortable_Columns   => False,
-         Hide_Expander      => True);
+      View.Tree :=
+        Create_Tree_View
+          (Column_Types       =>
+             (0 => GType_Icon_Name_String, 1 => GType_String, 2 => GType_Int),
+           Column_Names       => (1 => null, 2 => null),
+           Show_Column_Titles => False,
+           Selection_Mode     => Selection_Single,
+           Sortable_Columns   => False,
+           Hide_Expander      => True);
       Scrolled.Add (View.Tree);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
@@ -450,17 +459,20 @@ package body Clipboard_Views is
       Generic_View.Register_Module (Kernel);
 
       Register_Action
-        (Kernel, "Clipboard View Append To Previous",
+        (Kernel,
+         "Clipboard View Append To Previous",
          new Merge_With_Previous_Command,
          -"Append to previous clipboard entry",
          Icon_Name => "gps-add-symbolic",
-         Category => -"Clipboard");
+         Category  => -"Clipboard");
 
       Register_Action
-        (Kernel, "Clipboard View Remove Entry", new Remove_Entry_Command,
+        (Kernel,
+         "Clipboard View Remove Entry",
+         new Remove_Entry_Command,
          -"Remove selected clipboard entry",
          Icon_Name => "gps-remove-symbolic",
-         Category => -"Clipboard");
+         Category  => -"Clipboard");
    end Register_Module;
 
 end Clipboard_Views;

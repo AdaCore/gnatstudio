@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Tags; use Ada.Tags;
 
-with Gtk;                       use Gtk;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk;           use Gtk;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Gtk.Widget;    use Gtk.Widget;
 
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
@@ -32,15 +32,17 @@ package body Src_Editor_Buffer.Buffer_Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Jump_To_Delimiter_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel               : constant Kernel_Handle :=
+        Get_Kernel (Context.Context);
       View                 : Source_View;
       Widget               : constant Gtk_Widget :=
-                               Get_Current_Focus_Widget (Kernel);
+        Get_Current_Focus_Widget (Kernel);
       Buffer               : Source_Buffer;
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
@@ -48,9 +50,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
       Found                : Integer;
 
    begin
-      if Widget /= null
-        and then Widget.all'Tag = Source_View_Record'Tag
-      then
+      if Widget /= null and then Widget.all'Tag = Source_View_Record'Tag then
          View := Source_View (Widget);
          Buffer := Source_Buffer (Get_Buffer (View));
       else
@@ -62,15 +62,18 @@ package body Src_Editor_Buffer.Buffer_Commands is
       Get_Delimiters
         (Buffer,
          On_Cursor_Iter,
-         First_Highlight_Iter, Last_Highlight_Iter,
+         First_Highlight_Iter,
+         Last_Highlight_Iter,
          Found,
          Counter_Max => Natural'Last);
 
       if Found > 0 then
-         Move (Get_Main_Cursor (Buffer),
-               (if Equal (First_Highlight_Iter, On_Cursor_Iter)
-                then Last_Highlight_Iter
-                else First_Highlight_Iter), False);
+         Move
+           (Get_Main_Cursor (Buffer),
+            (if Equal (First_Highlight_Iter, On_Cursor_Iter)
+             then Last_Highlight_Iter
+             else First_Highlight_Iter),
+            False);
          View.Scroll_To_Cursor_Location;
       end if;
 

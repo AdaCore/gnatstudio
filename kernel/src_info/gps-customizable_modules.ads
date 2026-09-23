@@ -19,9 +19,9 @@
 
 with GNATCOLL.VFS;
 
-with GPS.Core_Kernels;                 use GPS.Core_Kernels;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
-with XML_Utils;                        use XML_Utils;
+with XML_Utils; use XML_Utils;
 
 package GPS.Customizable_Modules is
 
@@ -39,14 +39,15 @@ package GPS.Customizable_Modules is
    --  Themes is used if the customization was found in a theme definition,
    --  wherever that definition was found.
 
-   type Customizable_Module_Record is
-     abstract new Abstract_Module_Record with null record;
+   type Customizable_Module_Record is abstract new Abstract_Module_Record
+   with null record;
 
    procedure Customize
      (Module : access Customizable_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
-      Level  : Customization_Level) is abstract;
+      Level  : Customization_Level)
+   is abstract;
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
    --  and gets passed a single XML node.

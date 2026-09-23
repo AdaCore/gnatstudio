@@ -39,12 +39,12 @@ package VCS2.Views is
    -------------------
 
    type Base_VCS_View_Record is new Generic_Views.View_Record with record
-      Tree               : Tree_View;
+      Tree : Tree_View;
       --  The tree that represents data.
       --  Whenever the selection changes, the GNAT Studio context is
       --  automatically updated.
 
-      Text_Render        : Gtk_Cell_Renderer_Text;
+      Text_Render : Gtk_Cell_Renderer_Text;
       --  The text renderer for the longuest cell. This will automatically
       --  be ellipsized depending on the corresponding preference
 
@@ -52,15 +52,17 @@ package VCS2.Views is
         Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy;
       Filter_Hist_Prefix : Unbounded_String;
 
-      No_VCS_Help        : Gtk_Scrolled_Window;
+      No_VCS_Help : Gtk_Scrolled_Window;
       --  Widget displayed when there is no active VCS set for the loaded
       --  project.
    end record;
    type Base_VCS_View is access all Base_VCS_View_Record'Class;
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Base_VCS_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure On_Create
+   overriding
+   procedure On_Create
      (Self  : not null access Base_VCS_View_Record;
       Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
 
@@ -70,8 +72,7 @@ package VCS2.Views is
    --  (e.g: the "MODIFIED" section of the Commits view).
 
    procedure On_Preferences_Changed
-     (Self    : not null access Base_VCS_View_Record;
-      Pref    : Preference);
+     (Self : not null access Base_VCS_View_Record; Pref : Preference);
    --  Called when preferences change.
    --  Can be overridden.
 
@@ -79,7 +80,7 @@ package VCS2.Views is
    --  Refresh the contents of the view
 
    function Refresh_On_Terminate
-      (Kernel    : not null access Kernel_Handle_Record'Class)
+     (Kernel : not null access Kernel_Handle_Record'Class)
       return not null access Task_Visitor'Class;
    --  Returns a task visitor that refreshes the contents of all VCS views
    --  when the command terminates.

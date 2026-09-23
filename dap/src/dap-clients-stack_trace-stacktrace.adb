@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.Kernel;
 with DAP.Views.Call_Stack;
-with DAP.Utils;               use DAP.Utils;
+with DAP.Utils; use DAP.Utils;
 
 package body DAP.Clients.Stack_Trace.StackTrace is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.DAP.STACKTRACE_REQUEST_IMPL", On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.DAP.STACKTRACE_REQUEST_IMPL", On);
 
    ------------
    -- Create --
@@ -33,8 +33,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
    function Create
      (Client : access DAP.Clients.DAP_Client'Class;
       From   : Integer := 0;
-      Limit  : Integer := 0)
-      return StackTrace_Request_Access
+      Limit  : Integer := 0) return StackTrace_Request_Access
    is
       Self : constant StackTrace_Request_Access :=
         new StackTrace_Request (GPS.Kernel.Kernel_Handle (Client.Kernel));
@@ -42,7 +41,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       Self.Parameters.arguments.threadId := Client.Get_Current_Thread;
       if Limit /= 0 then
          Self.Parameters.arguments.startFrame := (True, From);
-         Self.Parameters.arguments.levels     := (True, Limit);
+         Self.Parameters.arguments.levels := (True, Limit);
       end if;
 
       return Self;
@@ -52,7 +51,8 @@ package body DAP.Clients.Stack_Trace.StackTrace is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out StackTrace_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
@@ -67,8 +67,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       New_Request := null;
 
       if Result.a_body.totalFrames.Is_Set then
-         Stack_Trace.Total_Count :=
-           Result.a_body.totalFrames.Value;
+         Stack_Trace.Total_Count := Result.a_body.totalFrames.Value;
 
       elsif Length (Result.a_body.stackFrames) = 0 then
          --  We do not have more frames, set Total_Count > 0 to
@@ -83,12 +82,13 @@ package body DAP.Clients.Stack_Trace.StackTrace is
                 (Result.a_body.stackFrames, Index);
             Frame     : Frame_Record;
          begin
-            Frame.Id   := Frame_Ref.id;
+            Frame.Id := Frame_Ref.id;
             Frame.Name := Frame_Ref.name;
 
             if not Frame_Ref.instructionPointerReference.Is_Empty then
-               Frame.Address := String_To_Address
-                 (To_UTF8 (Frame_Ref.instructionPointerReference));
+               Frame.Address :=
+                 String_To_Address
+                   (To_UTF8 (Frame_Ref.instructionPointerReference));
             end if;
 
             if Frame_Ref.source.Is_Set then
@@ -103,13 +103,10 @@ package body DAP.Clients.Stack_Trace.StackTrace is
 
       --  Select the first Frame_Ref that has an existing location, showing it
       --  to the user.
-      for Id in Integer (Frames.First_Index) ..
-        Integer (Frames.Last_Index)
+      for Id in Integer (Frames.First_Index) .. Integer (Frames.Last_Index)
       loop
          if Frames (Id).Location_Exists then
-            Stack_Trace.Select_Frame
-              (Frame  => Frames (Id),
-               Client => Client);
+            Stack_Trace.Select_Frame (Frame => Frames (Id), Client => Client);
             exit;
          end if;
       end loop;
@@ -126,13 +123,14 @@ package body DAP.Clients.Stack_Trace.StackTrace is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out StackTrace_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.StackTrace.StackTrace_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.StackTrace.StackTrace_DAP_Request (Self).On_Error_Message
+        (Client, Message);
 
       Self.On_Response (Client, False);
    end On_Error_Message;
@@ -141,12 +139,13 @@ package body DAP.Clients.Stack_Trace.StackTrace is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out StackTrace_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP.Requests.StackTrace.StackTrace_DAP_Request
-        (Self).On_Rejected (Client);
+      DAP.Requests.StackTrace.StackTrace_DAP_Request (Self).On_Rejected
+        (Client);
 
       Self.On_Response (Client, False);
    end On_Rejected;

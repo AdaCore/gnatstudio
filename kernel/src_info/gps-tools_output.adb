@@ -21,8 +21,10 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 package body GPS.Tools_Output is
    use String_List_Utils.String_List;
 
-   package Fabric_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Output_Parser_Fabric_Access);
+   package Fabric_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String,
+        Output_Parser_Fabric_Access);
 
    Map : Fabric_Maps.Map;
    --  Map of registered parser sorted by unique parser name
@@ -61,9 +63,10 @@ package body GPS.Tools_Output is
    ----------
 
    procedure Free (Self : in out Tools_Output_Parser_Access) is
-      procedure Free_Instance is
-        new Ada.Unchecked_Deallocation
-          (Tools_Output_Parser'Class, Tools_Output_Parser_Access);
+      procedure Free_Instance is new
+        Ada.Unchecked_Deallocation
+          (Tools_Output_Parser'Class,
+           Tools_Output_Parser_Access);
    begin
       Self.Destroy;
       Free_Instance (Self);
@@ -76,9 +79,9 @@ package body GPS.Tools_Output is
    function New_Parser_Chain
      (Name_List : Vector) return Tools_Output_Parser_Access
    is
-      Node    : Cursor := Name_List.First;
-      Result  : Tools_Output_Parser_Access;
-      Found   : Boolean;
+      Node   : Cursor := Name_List.First;
+      Result : Tools_Output_Parser_Access;
+      Found  : Boolean;
    begin
       while Has_Element (Node) loop
          if Map.Contains (Element (Node)) then
@@ -140,8 +143,7 @@ package body GPS.Tools_Output is
    ----------------------------
 
    procedure Register_Output_Parser
-     (Fabric   : access Output_Parser_Fabric'Class;
-      Name     : String) is
+     (Fabric : access Output_Parser_Fabric'Class; Name : String) is
    begin
       Map.Insert (Name, Output_Parser_Fabric_Access (Fabric));
    end Register_Output_Parser;
@@ -150,8 +152,8 @@ package body GPS.Tools_Output is
    -- Set_External_Parser_Fabric --
    --------------------------------
 
-   procedure Set_External_Parser_Fabric
-     (Value : External_Parser_Fabric_Access) is
+   procedure Set_External_Parser_Fabric (Value : External_Parser_Fabric_Access)
+   is
    begin
       External_Parsers_Fabric := Value;
    end Set_External_Parser_Fabric;

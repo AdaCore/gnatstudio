@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada_Semantic_Tree.Parts;     use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Ada.Unchecked_Deallocation;
-with Language.Ada;                use Language.Ada;
+with Language.Ada;            use Language.Ada;
 
 package body Ada_Semantic_Tree is
 
@@ -25,8 +25,7 @@ package body Ada_Semantic_Tree is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation
-     (E : access Entity_View_Record) return String is
+   function Get_Documentation (E : access Entity_View_Record) return String is
    begin
       pragma Unreferenced (E);
       return "";
@@ -58,10 +57,7 @@ package body Ada_Semantic_Tree is
    -- Is_Accessible --
    -------------------
 
-   function Is_Accessible
-     (E : access Entity_View_Record)
-      return Boolean
-   is
+   function Is_Accessible (E : access Entity_View_Record) return Boolean is
       pragma Unreferenced (E);
    begin
       return True;
@@ -136,8 +132,8 @@ package body Ada_Semantic_Tree is
    ----------
 
    procedure Free (E : in out Entity_View) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entity_View_Record'Class, Entity_View);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Entity_View_Record'Class, Entity_View);
    begin
       if E /= null then
          Free (E.all);
@@ -152,8 +148,7 @@ package body Ada_Semantic_Tree is
    -- Deep_Copy --
    ---------------
 
-   function Deep_Copy (E : Entity_View) return Entity_View
-   is
+   function Deep_Copy (E : Entity_View) return Entity_View is
       Copy : Entity_View;
    begin
       if E = null then
@@ -163,7 +158,7 @@ package body Ada_Semantic_Tree is
 
          if Copy.Entity /= Null_Entity_Access then
             Copy.Persistent := To_Entity_Persistent_Access (Copy.Entity);
-            Copy.Entity     := Null_Entity_Access;
+            Copy.Entity := Null_Entity_Access;
 
          elsif Copy.Persistent /= Null_Entity_Persistent_Access then
             Ref (Copy.Persistent);
@@ -189,8 +184,7 @@ package body Ada_Semantic_Tree is
    ----------------
 
    function Get_Entity
-     (E : access Entity_View_Record'Class) return Entity_Access
-   is
+     (E : access Entity_View_Record'Class) return Entity_Access is
    begin
       if E = null then
          return Null_Entity_Access;
@@ -217,7 +211,7 @@ package body Ada_Semantic_Tree is
          when Categories_Filter =>
             return Filter.Categories (Get_Construct (E).Category);
 
-         when Exceptions_Only =>
+         when Exceptions_Only   =>
             if Get_Construct (E).Category = Cat_Package then
                return True;
             elsif Get_Construct (E).Category = Cat_Local_Variable
@@ -229,8 +223,8 @@ package body Ada_Semantic_Tree is
                       (To_Construct_Tree_Iterator (E));
                begin
                   if List /= Null_Referenced_Identifiers_List then
-                     if Get_Identifier (List) =
-                       Find_Normalized (Ada_Lang.Symbols, "exception")
+                     if Get_Identifier (List)
+                       = Find_Normalized (Ada_Lang.Symbols, "exception")
                      then
                         return True;
                      end if;
@@ -240,7 +234,7 @@ package body Ada_Semantic_Tree is
 
             return False;
 
-         when others =>
+         when others            =>
             return True;
 
       end case;
@@ -250,9 +244,7 @@ package body Ada_Semantic_Tree is
    -- Create --
    ------------
 
-   function Create
-     (Categories : Category_Array) return Entity_Filter
-   is
+   function Create (Categories : Category_Array) return Entity_Filter is
       Result : Entity_Filter (Categories_Filter);
    begin
       Result.Categories := (others => False);
@@ -417,8 +409,9 @@ package body Ada_Semantic_Tree is
          --  construct.
 
          if (Get_File (Item) = Get_File (Entity)
-             and then To_Construct_Tree_Iterator (Item) =
-               To_Construct_Tree_Iterator (Entity))
+             and then
+               To_Construct_Tree_Iterator (Item)
+               = To_Construct_Tree_Iterator (Entity))
            or else Are_Same_Entity (Item, Entity)
          then
             return True;
@@ -446,8 +439,10 @@ package body Ada_Semantic_Tree is
    -----------
 
    procedure Unref (Stack : in out Excluded_Stack_Type) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Excluded_Stack_Type_Record, Excluded_Stack_Type);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Excluded_Stack_Type_Record,
+           Excluded_Stack_Type);
    begin
       if Stack /= null then
          Stack.Refs := Stack.Refs - 1;
@@ -467,19 +462,18 @@ package body Ada_Semantic_Tree is
      (Buffer            : access constant UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Multiple_Operands : Boolean := False)
-      return Parsed_Expression
+      Multiple_Operands : Boolean := False) return Parsed_Expression
    is
       use Token_List;
 
-      Result    : Parsed_Expression;
-      Expression_Depth : Natural := 0;
-      Expression_Token : Token_Record;
-      Last_Token : Token_Record := Null_Token;
+      Result               : Parsed_Expression;
+      Expression_Depth     : Natural := 0;
+      Expression_Token     : Token_Record;
+      Last_Token           : Token_Record := Null_Token;
       Last_Non_Blank_Token : Token_Record := Null_Token;
-      In_Found : Boolean := False;
-      All_Found : Boolean := False;
-      With_Token_Found : Token_Record := Null_Token;
+      In_Found             : Boolean := False;
+      All_Found            : Boolean := False;
+      With_Token_Found     : Token_Record := Null_Token;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
 
@@ -503,9 +497,11 @@ package body Ada_Semantic_Tree is
                   case Token.Tok_Type is
                      when Tok_Limited | Tok_Private =>
                         return;
-                     when Tok_Semicolon =>
+
+                     when Tok_Semicolon             =>
                         null;
-                     when others =>
+
+                     when others                    =>
                         With_Token_Found.Tok_Type := Tok_Aspect;
                   end case;
                   Prepend (Result.Tokens, With_Token_Found);
@@ -549,16 +545,14 @@ package body Ada_Semantic_Tree is
             end if;
 
             case Token.Tok_Type is
-               when Tok_Use
-                  | Tok_Pragma
-                  | Tok_Colon
-                  | Tok_Accept
-                  | Tok_Raise =>
+               when Tok_Use | Tok_Pragma | Tok_Colon | Tok_Accept | Tok_Raise
+               =>
 
                   Prepend (Result.Tokens, Token);
                   Stop := True;
 
-               when Tok_Identifier =>
+               when Tok_Identifier
+               =>
                   if Last_Non_Blank_Token.Tok_Type = Tok_Identifier then
                      Stop := not Multiple_Operands;
                   elsif Result.Tokens.Is_Empty
@@ -569,20 +563,22 @@ package body Ada_Semantic_Tree is
                      Prepend (Result.Tokens, Token);
                   end if;
 
-               when Tok_With =>
+               when Tok_With
+               =>
                   With_Token_Found := Token;
 
-               when Tok_Tick
-                  | Tok_Arrow
-                  | Tok_Dot =>
+               when Tok_Tick | Tok_Arrow | Tok_Dot
+               =>
 
                   Prepend (Result.Tokens, Token);
 
-               when Tok_All =>
+               when Tok_All
+               =>
                   All_Found := True;
                   Prepend (Result.Tokens, Token);
 
-               when Tok_Close_Parenthesis =>
+               when Tok_Close_Parenthesis
+               =>
                   if Last_Non_Blank_Token.Tok_Type = Tok_In then
                      --  We're on e.g. for X in A, don't get more things
 
@@ -597,7 +593,8 @@ package body Ada_Semantic_Tree is
                   Expression_Depth := 1;
                   Expression_Token.Tok_Type := Tok_Expression;
 
-               when Tok_Comma =>
+               when Tok_Comma
+               =>
                   if Last_Non_Blank_Token = Null_Token then
                      Expression_Depth := 1;
                      Expression_Token.Tok_Type := Tok_Expression;
@@ -605,14 +602,16 @@ package body Ada_Semantic_Tree is
                      Stop := True;
                   end if;
 
-               when Tok_Open_Parenthesis =>
+               when Tok_Open_Parenthesis
+               =>
                   if Last_Non_Blank_Token = Null_Token then
                      Prepend (Result.Tokens, Token);
                   else
                      Stop := True;
                   end if;
 
-               when Tok_In =>
+               when Tok_In
+               =>
                   --  In declaration, e.g. A : in B. Ignore the
                   --  modifier keywords, but store it to see later if we're
                   --  actually in a case like 'for A in B'.
@@ -624,14 +623,16 @@ package body Ada_Semantic_Tree is
                   | Tok_Constant
                   | Tok_Null
                   | Tok_Not
-                  | Tok_Out =>
+                  | Tok_Out
+               =>
 
                   --  In declaration, e.g. A : constant B. Ignore the
                   --  modifier keywords
 
                   null;
 
-               when Tok_Blank =>
+               when Tok_Blank
+               =>
                   null;
 
                when Tok_Operator
@@ -639,12 +640,13 @@ package body Ada_Semantic_Tree is
                   | Tok_Mod
                   | Tok_Or
                   | Tok_Rem
-                  | Tok_Xor =>
+                  | Tok_Xor
+               =>
 
                   Stop := not Multiple_Operands;
 
-               when Tok_Then
-                  | Tok_Else =>
+               when Tok_Then | Tok_Else
+               =>
 
                   --  ??? We should probably be smarter here, and work the
                   --  "or else" and "and then" things, but doesn't seems to
@@ -653,7 +655,8 @@ package body Ada_Semantic_Tree is
 
                   Stop := not Multiple_Operands;
 
-               when others =>
+               when others
+               =>
                   Stop := True;
 
             end case;
@@ -698,7 +701,7 @@ package body Ada_Semantic_Tree is
       Result.Original_Buffer := Buffer;
 
       Ada_Lang.Parse_Tokens_Backwards
-         (Buffer      => Buffer.all,
+        (Buffer       => Buffer.all,
          Start_Offset => Start_Offset,
          End_Offset   => End_Offset,
          Callback     => Handle_Token'Access);
@@ -716,12 +719,12 @@ package body Ada_Semantic_Tree is
    -------------------------------
 
    function Parse_Expression_Backward
-     (Buffer : access constant UTF8_String) return Parsed_Expression
-   is
+     (Buffer : access constant UTF8_String) return Parsed_Expression is
    begin
       if Buffer /= null then
-         return Parse_Expression_Backward
-           (Buffer, String_Index_Type (Buffer'Last), 0);
+         return
+           Parse_Expression_Backward
+             (Buffer, String_Index_Type (Buffer'Last), 0);
       else
          return Null_Parsed_Expression;
       end if;
@@ -735,50 +738,51 @@ package body Ada_Semantic_Tree is
      (Expression : Parsed_Expression; Token : Token_Record) return String is
    begin
       case Ada_Token'(Token.Tok_Type) is
-         when No_Token =>
+         when No_Token              =>
             return "";
 
-         when Tok_Dot =>
+         when Tok_Dot               =>
             return ".";
 
-         when Tok_Open_Parenthesis =>
+         when Tok_Open_Parenthesis  =>
             return "(";
 
          when Tok_Close_Parenthesis =>
             return ")";
 
-         when Tok_Colon =>
+         when Tok_Colon             =>
             return " : ";
 
-         when Tok_Arrow =>
+         when Tok_Arrow             =>
             return "=>";
 
          when Tok_Identifier
             | Tok_Expression
             | Tok_Operator
             | Tok_String
-            | Ada_Reserved_Token =>
+            | Ada_Reserved_Token    =>
 
             if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
-               return Expression.Original_Buffer
-              (Natural (Token.Token_First) .. Natural (Token.Token_Last));
+               return
+                 Expression.Original_Buffer
+                   (Natural (Token.Token_First) .. Natural (Token.Token_Last));
             else
                return "";
             end if;
 
-         when Tok_Tick =>
+         when Tok_Tick              =>
             return "'";
 
-         when Tok_Comma =>
+         when Tok_Comma             =>
             return ", ";
 
-         when Tok_Semicolon =>
+         when Tok_Semicolon         =>
             return ";";
 
-         when Tok_Blank =>
+         when Tok_Blank             =>
             return "";
 
-         when Tok_Dot_Dot =>
+         when Tok_Dot_Dot           =>
             return "..";
 
       end case;

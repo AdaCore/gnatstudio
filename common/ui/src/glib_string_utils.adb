@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with String_Utils;             use String_Utils;
+with String_Utils; use String_Utils;
 
 package body Glib_String_Utils is
 

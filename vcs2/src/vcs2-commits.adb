@@ -15,67 +15,68 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with GNAT.Strings;                use GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
 
 with VSS.Strings;
 
-with Glib.Object;                 use Glib.Object;
-with Glib.Values;                 use Glib.Values;
-with Glib_Values_Utils;           use Glib_Values_Utils;
-with Glib;                        use Glib;
-with Glib.Convert;                use Glib.Convert;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Convert;      use Glib.Convert;
 
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.Rectangle;               use Gdk.Rectangle;
-with Gdk.RGBA;                    use Gdk.RGBA;
+with Gdk.Event;     use Gdk.Event;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.RGBA;      use Gdk.RGBA;
 
-with Gtkada.Dialogs;              use Gtkada.Dialogs;
-with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
-with Gtkada.Style;                use Gtkada.Style;
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;    use Gtk.Cell_Renderer_Toggle;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Gesture_Long_Press;      use Gtk.Gesture_Long_Press;
-with Gtk.Gesture_Multi_Press;     use Gtk.Gesture_Multi_Press;
-with Gtk.Label;                   use Gtk.Label;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Multi_Paned;       use Gtkada.Multi_Paned;
+with Gtkada.Style;             use Gtkada.Style;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Gesture_Long_Press;   use Gtk.Gesture_Long_Press;
+with Gtk.Gesture_Multi_Press;  use Gtk.Gesture_Multi_Press;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Label.VSS_Utils;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Text_Tag;                use Gtk.Text_Tag;
-with Gtk.Text_View;               use Gtk.Text_View;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Tree_View;            use Gtkada.Tree_View;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
-with GNATCOLL.Projects;           use GNATCOLL.Projects;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 
 with Basic_Types;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Default_Preferences;         use Default_Preferences;
-with Generic_Views;               use Generic_Views;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
-with GPS.Properties;              use GPS.Properties;
-with GPS.Search;                  use GPS.Search;
-with GPS.VCS;                     use GPS.VCS;
-with GUI_Utils;                   use GUI_Utils;
-with Tooltips;                    use Tooltips;
-with VCS2.Engines;                use VCS2.Engines;
-with VCS2.Views;                  use VCS2.Views;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;    use Default_Preferences;
+with Generic_Views;          use Generic_Views;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
+with GPS.Properties;         use GPS.Properties;
+with GPS.Search;             use GPS.Search;
+with GPS.VCS;                use GPS.VCS;
+with GUI_Utils;              use GUI_Utils;
+with Tooltips;               use Tooltips;
+with VCS2.Engines;           use VCS2.Engines;
+with VCS2.Views;             use VCS2.Views;
 
 package body VCS2.Commits is
    Me : constant Trace_Handle := Create ("GPS.VCS.COMMITS");
@@ -89,10 +90,10 @@ package body VCS2.Commits is
    Column_Foreground    : constant := 6;
    subtype All_Columns is Gint range Column_File .. Column_Foreground;
 
-   Show_Untracked_Files   : Boolean_Preference;
-   Relative_Names         : Boolean_Preference;
-   Group_By_Category      : Boolean_Preference;
-   Hide_Other_VCS         : Boolean_Preference;
+   Show_Untracked_Files : Boolean_Preference;
+   Relative_Names       : Boolean_Preference;
+   Group_By_Category    : Boolean_Preference;
+   Hide_Other_VCS       : Boolean_Preference;
 
    type Commit_View_Config is record
       Hidden_Files_Pattern : Unbounded_String;
@@ -108,20 +109,22 @@ package body VCS2.Commits is
       User_Filter : GPS.Search.Search_Pattern_Access;
    end record;
    type Commit_Tree_View is access all Commit_Tree_Record'Class;
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Commit_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    function Get_File_From_Node
-     (Self : not null access Tree_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Virtual_File
-     is (Get_File (Self.Model, Iter, Column_File));
+     (Self : not null access Tree_View_Record'Class; Iter : Gtk_Tree_Iter)
+      return Virtual_File
+   is (Get_File (Self.Model, Iter, Column_File));
 
-   package Expansion is new Expansion_Support
-     (Tree_Record    => Tree_View_Record,
-      Id             => Virtual_File,
-      Get_Id         => Get_File_From_Node,
-      Hash           => GNATCOLL.VFS.Full_Name_Hash);
+   package Expansion is new
+     Expansion_Support
+       (Tree_Record => Tree_View_Record,
+        Id          => Virtual_File,
+        Get_Id      => Get_File_From_Node,
+        Hash        => GNATCOLL.VFS.Full_Name_Hash);
 
    type Commit_View_Record is new Base_VCS_View_Record with record
       Computing_File_Status : Boolean := False;
@@ -135,30 +138,32 @@ package body VCS2.Commits is
       Category_Untracked : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       --  The nodes for the categories (if they are displayed)
 
-      Multipress  : Gtk_Gesture_Multi_Press;
-      Longpress   : Gtk_Gesture_Long_Press;
+      Multipress : Gtk_Gesture_Multi_Press;
+      Longpress  : Gtk_Gesture_Long_Press;
 
-      Config      : Commit_View_Config;
-      Commit      : Gtk_Text_View;
+      Config : Commit_View_Config;
+      Commit : Gtk_Text_View;
    end record;
-   overriding procedure Create_Menu
-     (View    : not null access Commit_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure On_Create
-     (Self    : not null access Commit_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Create_Menu
+     (View : not null access Commit_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure On_Create
+     (Self  : not null access Commit_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Commit_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
-   overriding procedure On_Preferences_Changed
-     (Self    : not null access Commit_View_Record;
-      Pref    : Preference);
-   overriding procedure Refresh
-     (Self : not null access Commit_View_Record);
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access Commit_View_Record; Pref : Preference);
+   overriding
+   procedure Refresh (Self : not null access Commit_View_Record);
 
    procedure Refresh
-     (Self      : not null access Commit_View_Record'Class;
-      From_User : Boolean);
+     (Self : not null access Commit_View_Record'Class; From_User : Boolean);
    --  Internal implementation for Refresh, which indicates whether the
    --  action comes from the user pressing the 'Reload' button.
 
@@ -173,27 +178,28 @@ package body VCS2.Commits is
       VCS          : not null access VCS_Engine'Class;
       Select_Nodes : Boolean := False);
    function Create_Category_Node
-     (Self         : not null access Commit_View_Record'Class;
-      Name         : String) return Gtk_Tree_Iter;
+     (Self : not null access Commit_View_Record'Class; Name : String)
+      return Gtk_Tree_Iter;
    --  Add one or more new nodes in the tree.
 
    type Commit_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Commit_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
-   package Commit_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Commits",
-      View_Name          => "Commits",
-      Formal_View_Record => Commit_View_Record,
-      Formal_MDI_Child   => Commit_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Both,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+   package Commit_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Commits",
+        View_Name          => "Commits",
+        Formal_View_Record => Commit_View_Record,
+        Formal_MDI_Child   => Commit_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Both,
+        Position           => Position_Right,
+        Initialize         => Initialize);
    use Commit_Views;
    subtype Commit_View is Commit_Views.View_Access;
 
@@ -202,97 +208,110 @@ package body VCS2.Commits is
       N_Press : Gint;
       X, Y    : Gdouble);
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble);
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble);
    --  Called every time a row is clicked with specific gesture
 
    type On_All_Files_Available_In_Cache is new Task_Visitor with record
       Kernel : Kernel_Handle;
    end record;
-   overriding procedure On_Terminate
+   overriding
+   procedure On_Terminate
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class);
 
    type Commit_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
       View : access Commit_View_Record'Class;
    end record;
-   overriding function Create_Contents
-     (Self     : not null access Commit_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   overriding
+   function Create_Contents
+     (Self   : not null access Commit_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    type Is_Staged_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Staged_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Staged_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if the file is at least partially staged (i.e. there could still
    --  be some unstaged changes)
 
    type Is_Unstaged_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Unstaged_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Unstaged_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if the file is at least partially unstaged and modified (i.e.
    --  there could still be some staged changes).
 
-   type Toggle_Stage_Selected_Files is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Toggle_Stage_Selected_Files is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Toggle_Stage_Selected_Files;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Stage_File is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Stage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Stage_File; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Stage for commit the file described in the context.
 
    type Unstage_File is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Unstage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Unstage_File; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Unstage the file described in the context.
 
    type Reload_Status is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Reload_Status;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Reload_Status; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Commit is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Commit;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Commit; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Discard_Changes is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Discard_Changes;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Discard_Changes; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Commit_Visitor is new Task_Visitor with null record;
-   overriding procedure On_Success
-      (Self   : not null access Commit_Visitor;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure On_Success
+     (Self   : not null access Commit_Visitor;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a commit has been completed
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_Before_Commit is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Before_Commit;
       Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean);
 
    function On_Commit_Focus_Out
-     (View  : access GObject_Record'Class;
-      Event : Gdk_Event_Focus) return Boolean;
+     (View : access GObject_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean;
    --  Called when the focus moves out of the Commit message.
    --  Used to save it in the properties.
 
@@ -301,39 +320,39 @@ package body VCS2.Commits is
    --  Save the commit message in the properties
 
    procedure On_Staged_Toggled
-     (Self : access GObject_Record'Class;
-      Path : String);
+     (Self : access GObject_Record'Class; Path : String);
    --  Called when the user clicks on one of the checkboxes
 
    procedure On_Destroyed (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
    function Get_Commit_Message_From_Properties
-     (VCS    : not null access VCS_Engine'Class) return String;
+     (VCS : not null access VCS_Engine'Class) return String;
    procedure Set_Commit_Message
-     (VCS    : not null access VCS_Engine'Class;
-      Msg    : String);
+     (VCS : not null access VCS_Engine'Class; Msg : String);
    --  The commit message saved for the given VCS
 
    type On_VCS_File_Status_Changed is new Vcs_File_Status_Hooks_Function
-     with null record;
-   overriding procedure Execute
-     (Self          : On_VCS_File_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : Basic_Types.File_Sets.Set;
-      Props         : VCS_File_Properties);
+   with null record;
+   overriding
+   procedure Execute
+     (Self   : On_VCS_File_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : Basic_Types.File_Sets.Set;
+      Props  : VCS_File_Properties);
 
    -------------------
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Commit_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
-      T : constant Commit_View := Commit_Views.View_From_Child (Self);
+      T           : constant Commit_View :=
+        Commit_Views.View_From_Child (Self);
       Filter_Iter : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.Tree, Event);
       Iter        : Gtk_Tree_Iter;
@@ -343,8 +362,7 @@ package body VCS2.Commits is
       if Filter_Iter /= Null_Iter then
          Iter := T.Tree.Convert_To_Store_Iter (Filter_Iter);
          Set_File_Information
-           (Context,
-            Files   => (1 => Get_File_From_Node (T.Tree, Iter)));
+           (Context, Files => (1 => Get_File_From_Node (T.Tree, Iter)));
       end if;
 
       return Context;
@@ -354,10 +372,11 @@ package body VCS2.Commits is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Self     : not null access Commit_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Self   : not null access Commit_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       use type VSS.Strings.Virtual_String;
 
@@ -379,8 +398,7 @@ package body VCS2.Commits is
                -("Click on the checkbox to stage the file, so that it is part"
                  & " of the next commit")
                & Get_Tooltip_For_File
-                 (Kernel       => Self.View.Kernel,
-                  File         => File));
+                   (Kernel => Self.View.Kernel, File => File));
             Label.Set_Use_Markup (True);
          end if;
       end if;
@@ -391,9 +409,10 @@ package body VCS2.Commits is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Commit_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   overriding
+   procedure Create_Menu
+     (View : not null access Commit_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       K : constant Kernel_Handle := View.Kernel;
    begin
@@ -427,8 +446,8 @@ package body VCS2.Commits is
       --  Actual node creation
 
       procedure Internal (Parent : Gtk_Tree_Iter := Null_Iter) is
-         Iter      : Gtk_Tree_Iter;
-         V         : Glib.Values.GValue_Array (All_Columns);
+         Iter : Gtk_Tree_Iter;
+         V    : Glib.Values.GValue_Array (All_Columns);
       begin
          Self.Tree.Model.Append (Iter, Parent => Parent);
 
@@ -444,8 +463,7 @@ package body VCS2.Commits is
                Escape_Text (+File.Relative_Path (VCS.Working_Directory)));
          else
             Init_Set_String
-              (V (Column_Name),
-               Escape_Text (File.Display_Full_Name));
+              (V (Column_Name), Escape_Text (File.Display_Full_Name));
          end if;
 
          Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
@@ -480,15 +498,17 @@ package body VCS2.Commits is
       In_Untracked : Boolean;
 
    begin
-      In_Staged := (Props.Status and Mask_Staged) /= 0
-        and then Show;
-      In_Modified := (Props.Status and Mask_Modified_Unstaged) /= 0
+      In_Staged := (Props.Status and Mask_Staged) /= 0 and then Show;
+      In_Modified :=
+        (Props.Status and Mask_Modified_Unstaged) /= 0
         and then (not In_Staged or else Self.Config.Group_By_Category)
         and then Show;
-      In_Untracked := Self.Config.Show_Untracked_Files
+      In_Untracked :=
+        Self.Config.Show_Untracked_Files
         and then (Props.Status and Mask_Untracked) /= 0
-        and then (not (In_Staged or In_Modified)
-                 or else Self.Config.Group_By_Category)
+        and then
+          (not (In_Staged or In_Modified)
+           or else Self.Config.Group_By_Category)
         and then not Self.Kernel.Is_Hidden (File);
 
       --  A file could be in multiple categories
@@ -496,22 +516,22 @@ package body VCS2.Commits is
       if In_Untracked then
          Internal
            ((if Self.Category_Untracked = Null_Gtk_Tree_Path
-            then Null_Iter
-            else Self.Tree.Model.Get_Iter (Self.Category_Untracked)));
+             then Null_Iter
+             else Self.Tree.Model.Get_Iter (Self.Category_Untracked)));
       end if;
 
       if In_Staged then
          Internal
            ((if Self.Category_Staged = Null_Gtk_Tree_Path
-            then Null_Iter
-            else Self.Tree.Model.Get_Iter (Self.Category_Staged)));
+             then Null_Iter
+             else Self.Tree.Model.Get_Iter (Self.Category_Staged)));
       end if;
 
       if In_Modified then
          Internal
            ((if Self.Category_Modified = Null_Gtk_Tree_Path
-            then Null_Iter
-            else Self.Tree.Model.Get_Iter (Self.Category_Modified)));
+             then Null_Iter
+             else Self.Tree.Model.Get_Iter (Self.Category_Modified)));
       end if;
    end Create_Nodes;
 
@@ -520,11 +540,11 @@ package body VCS2.Commits is
    --------------------------
 
    function Create_Category_Node
-     (Self         : not null access Commit_View_Record'Class;
-      Name         : String) return Gtk_Tree_Iter
+     (Self : not null access Commit_View_Record'Class; Name : String)
+      return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
-      V        : Glib.Values.GValue_Array (All_Columns);
+      V    : Glib.Values.GValue_Array (All_Columns);
 
    begin
       Self.Tree.Model.Append (Iter, Parent => Null_Iter);
@@ -536,13 +556,9 @@ package body VCS2.Commits is
       Init_Set_Boolean (V (Column_Inconsistent), False);
       Init_Set_Boolean (V (Column_Check_Visible), False);
       Init_Set_String (V (Column_Name), Escape_Text (Name));
-      Init_Set_String
-        (V (Column_Icon),
-         "gps-emblem-directory-open");
+      Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value
-        (V (Column_Foreground),
-         Self.Get_Section_Title_Color);
+      Gdk.RGBA.Set_Value (V (Column_Foreground), Self.Get_Section_Title_Color);
 
       Self.Tree.Model.Set (Iter, V);
 
@@ -553,9 +569,9 @@ package body VCS2.Commits is
    -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferences_Changed
-     (Self    : not null access Commit_View_Record;
-      Pref    : Preference)
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access Commit_View_Record; Pref : Preference)
    is
       Config : Commit_View_Config;
    begin
@@ -582,17 +598,16 @@ package body VCS2.Commits is
    ----------------------------------------
 
    function Get_Commit_Message_From_Properties
-     (VCS    : not null access VCS_Engine'Class)
-      return String
+     (VCS : not null access VCS_Engine'Class) return String
    is
       P     : String_Property;
       Found : Boolean;
    begin
       Get_Property
         (P,
-         Key      => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
-         Name     => "commit_msg",
-         Found    => Found);
+         Key   => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+         Name  => "commit_msg",
+         Found => Found);
       if Found and then P.Value /= null then
          return P.Value.all;
       else
@@ -605,8 +620,7 @@ package body VCS2.Commits is
    ------------------------
 
    procedure Set_Commit_Message
-     (VCS : not null access VCS_Engine'Class;
-      Msg : String) is
+     (VCS : not null access VCS_Engine'Class; Msg : String) is
    begin
       Set_Property
         (VCS.Kernel,
@@ -621,7 +635,8 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean)
@@ -638,8 +653,8 @@ package body VCS2.Commits is
    -- Refresh --
    -------------
 
-   overriding procedure Refresh
-     (Self : not null access Commit_View_Record) is
+   overriding
+   procedure Refresh (Self : not null access Commit_View_Record) is
    begin
       Refresh (Self, From_User => False);
    end Refresh;
@@ -649,8 +664,7 @@ package body VCS2.Commits is
    -------------
 
    procedure Refresh
-     (Self : not null access Commit_View_Record'Class;
-      From_User : Boolean)
+     (Self : not null access Commit_View_Record'Class; From_User : Boolean)
    is
       VCS : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
    begin
@@ -672,8 +686,9 @@ package body VCS2.Commits is
       Self.Computing_File_Status := True;
       Ensure_Status_For_All_Files_In_All_Engines
         (Self.Kernel,
-         Visitor => new On_All_Files_Available_In_Cache'
-           (Task_Visitor with Kernel => Self.Kernel),
+         Visitor   =>
+           new On_All_Files_Available_In_Cache'
+             (Task_Visitor with Kernel => Self.Kernel),
          From_User => From_User);
    end Refresh;
 
@@ -681,12 +696,13 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      V    : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
+      V : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
       if V /= null then
          Refresh (V);
@@ -697,7 +713,8 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Before_Commit;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -756,8 +773,8 @@ package body VCS2.Commits is
    -------------------------
 
    function On_Commit_Focus_Out
-     (View  : access GObject_Record'Class;
-      Event : Gdk_Event_Focus) return Boolean
+     (View : access GObject_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean
    is
       pragma Unreferenced (Event);
    begin
@@ -770,8 +787,7 @@ package body VCS2.Commits is
    -----------------------
 
    procedure On_Staged_Toggled
-     (Self : access GObject_Record'Class;
-      Path : String)
+     (Self : access GObject_Record'Class; Path : String)
    is
       View        : constant Commit_View := Commit_View (Self);
       Filter_Path : constant Gtk_Tree_Path :=
@@ -794,7 +810,8 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Toggle_Stage_Selected_Files;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -805,17 +822,14 @@ package body VCS2.Commits is
       Staged : Boolean;
 
       procedure On_Selection
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter);
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter);
       procedure On_Selection
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter)
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
       is
          pragma Unreferenced (Model, Path);
-         F : constant Virtual_File := Get_File_From_Node
-           (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
+         F : constant Virtual_File :=
+           Get_File_From_Node
+             (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
       begin
          if F /= No_File then
             Append (Files, F);
@@ -841,28 +855,26 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Discard_Changes;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Discard_Changes; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View   : constant Commit_View :=
+      View  : constant Commit_View :=
         Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Files  : File_Array_Access;
-      Names  : Unbounded_String;
+      Files : File_Array_Access;
+      Names : Unbounded_String;
 
       procedure On_Selection
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter);
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter);
       procedure On_Selection
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter)
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
       is
          pragma Unreferenced (Model, Path);
-         F : constant Virtual_File := Get_File_From_Node
-           (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
+         F : constant Virtual_File :=
+           Get_File_From_Node
+             (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
       begin
          if F /= No_File then
             Append (Files, F);
@@ -880,15 +892,17 @@ package body VCS2.Commits is
             end loop;
 
             if GPS_Message_Dialog
-              ("Discard local changes ?" & ASCII.LF
-               & "This operation cannot be undone. "
-               & "It will affect the following files: "
-               & To_String (Names),
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No,
-               Default_Button => Button_No,
-               Title          => -"Confirm discard",
-               Parent         => Get_Main_Window (View.Kernel)) = Button_Yes
+                 ("Discard local changes ?"
+                  & ASCII.LF
+                  & "This operation cannot be undone. "
+                  & "It will affect the following files: "
+                  & To_String (Names),
+                  Dialog_Type    => Confirmation,
+                  Buttons        => Button_Yes or Button_No,
+                  Default_Button => Button_No,
+                  Title          => -"Confirm discard",
+                  Parent         => Get_Main_Window (View.Kernel))
+              = Button_Yes
             then
                Active_VCS (View.Kernel).Queue_Discard_Local_Changes
                  (Files   => Files,  --  freed by Queue_Discard_Local_Changes
@@ -903,9 +917,10 @@ package body VCS2.Commits is
    -- On_Success --
    ----------------
 
-   overriding procedure On_Success
-      (Self   : not null access Commit_Visitor;
-       Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure On_Success
+     (Self   : not null access Commit_Visitor;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
@@ -926,9 +941,10 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Commit;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Commit; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -949,8 +965,7 @@ package body VCS2.Commits is
             if Msg /= "" then
                Vcs_Before_Commit_Hook.Run (Kernel);
                VCS.Queue_Commit_Staged_Files
-                 (Message => Msg,
-                  Visitor => new Commit_Visitor);
+                 (Message => Msg, Visitor => new Commit_Visitor);
             else
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;
@@ -967,8 +982,7 @@ package body VCS2.Commits is
    ------------------
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble)
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble)
    is
       View           : constant Commit_View := Commit_View (Self);
       Filter_Path    : Gtk_Tree_Path;
@@ -977,15 +991,14 @@ package body VCS2.Commits is
       Cell_X, Cell_Y : Gint;
    begin
       View.Tree.Get_Path_At_Pos
-        (Gint (X), Gint (Y), Filter_Path,
-         Col, Cell_X, Cell_Y, Success);
+        (Gint (X), Gint (Y), Filter_Path, Col, Cell_X, Cell_Y, Success);
       if Success then
          --  Select the row
          View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
 
-         Success := Execute_Action
-            (View.Kernel,
-             Action => "diff against head for file");
+         Success :=
+           Execute_Action
+             (View.Kernel, Action => "diff against head for file");
 
          Path_Free (Filter_Path);
          View.Longpress.Set_State (Event_Sequence_Claimed);
@@ -1010,14 +1023,14 @@ package body VCS2.Commits is
    begin
       if N_Press = 2 then
          View.Tree.Get_Path_At_Pos
-           (Gint (X), Gint (Y), Filter_Path,
-            Column, Cell_X, Cell_Y, Success);
+           (Gint (X), Gint (Y), Filter_Path, Column, Cell_X, Cell_Y, Success);
          if Success then
             --  Select the row that was clicked
             View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
-            File := Get_File_From_Node
-              (View.Tree,
-               View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
+            File :=
+              Get_File_From_Node
+                (View.Tree,
+                 View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
             if File /= No_File then
                Open_File_Action_Hook.Run
                  (View.Kernel,
@@ -1064,8 +1077,7 @@ package body VCS2.Commits is
 
       Gtk_New (Scrolled2);
       Scrolled2.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Paned.Add_Child
-        (Scrolled2, Orientation => Orientation_Vertical);
+      Paned.Add_Child (Scrolled2, Orientation => Orientation_Vertical);
       Paned.Set_Size (Scrolled2, Height => 10);
 
       Gtk_New (Self.Commit);
@@ -1085,16 +1097,17 @@ package body VCS2.Commits is
          Orientation => Orientation_Vertical);
 
       Self.Tree := new Commit_Tree_Record;
-      Initialize (Self.Tree,
-                  (Column_File          => Get_Virtual_File_Type,
-                   Column_Name          => GType_String,
-                   Column_Icon          => GType_String,
-                   Column_Inconsistent  => GType_Boolean,
-                   Column_Foreground    => Gdk.RGBA.Get_Type,
-                   Column_Check_Visible => GType_Boolean,
-                   Column_Staged        => GType_Boolean),
-                  Capability_Type  => Filtered,
-                  Set_Visible_Func => True);
+      Initialize
+        (Self.Tree,
+         (Column_File          => Get_Virtual_File_Type,
+          Column_Name          => GType_String,
+          Column_Icon          => GType_String,
+          Column_Inconsistent  => GType_Boolean,
+          Column_Foreground    => Gdk.RGBA.Get_Type,
+          Column_Check_Visible => GType_Boolean,
+          Column_Staged        => GType_Boolean),
+         Capability_Type  => Filtered,
+         Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
       Scrolled.Add (Self.Tree);
@@ -1112,9 +1125,9 @@ package body VCS2.Commits is
       Dummy := Self.Tree.Append_Column (Col);
 
       Col.Pack_Start (Check, False);
-      Col.Add_Attribute (Check, "active",       Column_Staged);
+      Col.Add_Attribute (Check, "active", Column_Staged);
       Col.Add_Attribute (Check, "inconsistent", Column_Inconsistent);
-      Col.Add_Attribute (Check, "visible",      Column_Check_Visible);
+      Col.Add_Attribute (Check, "visible", Column_Check_Visible);
 
       Col.Pack_Start (Pixbuf, False);
       Col.Add_Attribute (Pixbuf, "icon-name", Column_Icon);
@@ -1126,8 +1139,9 @@ package body VCS2.Commits is
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Commit_Tooltip_Handler'
-        (Tooltips.Tooltip_Handler with View => Self);
+      Tooltip :=
+        new Commit_Tooltip_Handler'
+          (Tooltips.Tooltip_Handler with View => Self);
       Tooltip.Associate_To_Widget (Self.Tree);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
@@ -1147,9 +1161,10 @@ package body VCS2.Commits is
    -- On_Create --
    ---------------
 
-   overriding procedure On_Create
-     (Self    : not null access Commit_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class) is
+   overriding
+   procedure On_Create
+     (Self  : not null access Commit_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class) is
    begin
       Base_VCS_View_Record (Self.all).On_Create (Child);   --  inherited
 
@@ -1164,12 +1179,13 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self          : On_VCS_File_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : Basic_Types.File_Sets.Set;
-      Props         : VCS_File_Properties)
+   overriding
+   procedure Execute
+     (Self   : On_VCS_File_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : Basic_Types.File_Sets.Set;
+      Props  : VCS_File_Properties)
    is
       pragma Unreferenced (Self);
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
@@ -1231,10 +1247,10 @@ package body VCS2.Commits is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Commit_View_Record;
-      Pattern : in out GPS.Search.Search_Pattern_Access)
-   is
+      Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
       GPS.Search.Free (Commit_Tree_View (Self.Tree).User_Filter);
       Commit_Tree_View (Self.Tree).User_Filter := Pattern;
@@ -1245,7 +1261,8 @@ package body VCS2.Commits is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Commit_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
@@ -1256,8 +1273,8 @@ package body VCS2.Commits is
       elsif Self.User_Filter = null then
          return True;   --  no filter
       else
-         return Self.User_Filter.Start
-           (F.Display_Base_Name) /= GPS.Search.No_Match;
+         return
+           Self.User_Filter.Start (F.Display_Base_Name) /= GPS.Search.No_Match;
       end if;
    end Is_Visible;
 
@@ -1265,7 +1282,8 @@ package body VCS2.Commits is
    -- On_Terminate --
    ------------------
 
-   overriding procedure On_Terminate
+   overriding
+   procedure On_Terminate
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class)
    is
@@ -1345,8 +1363,8 @@ package body VCS2.Commits is
             Path_Free (View.Category_Staged);
             Path_Free (View.Category_Modified);
             Path_Free (View.Category_Untracked);
-            View.Category_Modified  := Gtk_Tree_Path_New_From_String ("0");
-            View.Category_Staged    := Gtk_Tree_Path_New_From_String ("1");
+            View.Category_Modified := Gtk_Tree_Path_New_From_String ("0");
+            View.Category_Staged := Gtk_Tree_Path_New_From_String ("1");
             View.Category_Untracked := Gtk_Tree_Path_New_From_String ("2");
          end if;
 
@@ -1371,9 +1389,10 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Reload_Status;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Reload_Status; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -1387,9 +1406,10 @@ package body VCS2.Commits is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Staged_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Staged_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
       File       : constant Virtual_File := File_Information (Context);
@@ -1399,8 +1419,8 @@ package body VCS2.Commits is
       Props      : VCS_File_Properties;
    begin
       if File /= No_File and then VCS /= null then
-         VCS_Engine := VCS_Engine_Access
-           (VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS_Engine :=
+           VCS_Engine_Access (VCS.Guess_VCS_For_Directory (File.Dir));
          Props := VCS_Engine.File_Properties_From_Cache (File);
          return (Props.Status and Mask_Staged) /= 0;
       end if;
@@ -1411,9 +1431,10 @@ package body VCS2.Commits is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Unstaged_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Unstaged_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
       File   : constant Virtual_File := File_Information (Context);
@@ -1422,11 +1443,12 @@ package body VCS2.Commits is
       Props  : VCS_File_Properties;
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          Props := VCS.File_Properties_From_Cache (File);
-         return (Props.Status and Mask_Modified_Unstaged) /= 0
-           or else (Props.Status  and Mask_Untracked) /= 0;
+         return
+           (Props.Status and Mask_Modified_Unstaged) /= 0
+           or else (Props.Status and Mask_Untracked) /= 0;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -1435,9 +1457,10 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Stage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Stage_File; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       File   : constant Virtual_File := File_Information (Context.Context);
@@ -1445,8 +1468,8 @@ package body VCS2.Commits is
       VCS    : VCS_Engine_Access;
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          VCS.Stage_Or_Unstage_Files ((1 => File), Stage => True);
       end if;
       return Success;
@@ -1456,9 +1479,10 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Unstage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Unstage_File; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       File   : constant Virtual_File := File_Information (Context.Context);
@@ -1466,8 +1490,8 @@ package body VCS2.Commits is
       VCS    : VCS_Engine_Access;
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          VCS.Stage_Or_Unstage_Files ((1 => File), Stage => False);
       end if;
       return Success;
@@ -1485,35 +1509,41 @@ package body VCS2.Commits is
    begin
       Commit_Views.Register_Module (Kernel);
 
-      Show_Untracked_Files := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("commit-view-show-untracked-files",
-         Default => True,
-         Label   => -"Show untracked files");
+      Show_Untracked_Files :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("commit-view-show-untracked-files",
+           Default => True,
+           Label   => -"Show untracked files");
 
-      Relative_Names := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("commit-view-relative-names",
-         Default => True,
-         Label   => -"Names relative to working directory");
+      Relative_Names :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("commit-view-relative-names",
+           Default => True,
+           Label   => -"Names relative to working directory");
 
-      Group_By_Category := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("commit-view-group-by-category",
-         Default  => True,
-         Label    => -"Group by category (staged, modified, untracked)");
+      Group_By_Category :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("commit-view-group-by-category",
+           Default => True,
+           Label   => -"Group by category (staged, modified, untracked)");
 
-      Hide_Other_VCS := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("commit-view-hide-other-vcs",
-         Default  => False,
-         Label    => -"Hide files from VCS other than the active one");
+      Hide_Other_VCS :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("commit-view-hide-other-vcs",
+           Default => False,
+           Label   => -"Hide files from VCS other than the active one");
 
       Register_Action
-        (Kernel, "vcs commit staged files",
+        (Kernel,
+         "vcs commit staged files",
          Description => -"Commit all staged files",
          Command     => new Commit,
          Category    => "VCS2",
          Icon_Name   => "github-commit-symbolic");
 
       Register_Action
-        (Kernel, "vcs toggle stage selected files",
+        (Kernel,
+         "vcs toggle stage selected files",
          Description =>
            -("Stage or unstage the selected file, so that it is part of the"
              & " next commit"),
@@ -1523,7 +1553,8 @@ package body VCS2.Commits is
          Icon_Name   => "github-check-symbolic");
 
       Register_Action
-        (Kernel, "vcs stage file",
+        (Kernel,
+         "vcs stage file",
          Description =>
            -"Stage the current file so that it is part of the next commit",
          Command     => new Stage_File,
@@ -1531,7 +1562,8 @@ package body VCS2.Commits is
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs unstage file",
+        (Kernel,
+         "vcs unstage file",
          Description =>
            -("Unstage the current file so that it is not part of the"
              & " next commit"),
@@ -1540,31 +1572,34 @@ package body VCS2.Commits is
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs discard local changes",
+        (Kernel,
+         "vcs discard local changes",
          Command     => new Discard_Changes,
          Description =>
-            -("Undo all local changes in the selected files, and revert "
-              & "to the latest commit on the current branch"),
+           -("Undo all local changes in the selected files, and revert "
+             & "to the latest commit on the current branch"),
          Icon_Name   => "vcs-discard-changes-symbolic",
          Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
 
       Register_Contextual_Menu
         (Kernel,
-         Action      => "vcs stage file",
-         Label       => "Version Control/Stage for commit",
-         Group    => VCS_Contextual_Group);
+         Action => "vcs stage file",
+         Label  => "Version Control/Stage for commit",
+         Group  => VCS_Contextual_Group);
       Register_Contextual_Menu
         (Kernel,
-         Action      => "vcs unstage file",
-         Label       => "Version Control/Unstage from commit",
-         Group       => VCS_Contextual_Group);
+         Action => "vcs unstage file",
+         Label  => "Version Control/Unstage from commit",
+         Group  => VCS_Contextual_Group);
 
       Register_Action
-        (Kernel, "vcs reload status",
+        (Kernel,
+         "vcs reload status",
          Description =>
-           -("Reload the status of all files from the disk." & ASCII.LF
-           & "Use if you have performed operations outside of GNAT Studio."),
+           -("Reload the status of all files from the disk."
+             & ASCII.LF
+             & "Use if you have performed operations outside of GNAT Studio."),
          Command     => new Reload_Status,
          Category    => "VCS2",
          Icon_Name   => "gps-refresh-symbolic");

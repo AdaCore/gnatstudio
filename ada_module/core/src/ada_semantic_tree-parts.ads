@@ -31,8 +31,7 @@ package Ada_Semantic_Tree.Parts is
    --  Return the assistant responsible of doing the parts analysis.
 
    procedure Analyze_Unit
-     (Assistant : Database_Assistant_Access;
-      Unit      : Unit_Access);
+     (Assistant : Database_Assistant_Access; Unit : Unit_Access);
    --  Perform a full parts analysis on the unit given in parameter if needed.
    --  This is usually done automatically when calling the queries of this
    --  package, except for the ones marked as Unchecked.
@@ -66,8 +65,8 @@ package Ada_Semantic_Tree.Parts is
    --  Return true if E1 and E2 are two parts of the same entity.
 
    function Unchecked_Are_Same_Entity
-     (Assistant   : Database_Assistant_Access;
-      Left, Right : Entity_Access) return Boolean;
+     (Assistant : Database_Assistant_Access; Left, Right : Entity_Access)
+      return Boolean;
    --  Same as before, but doesn't ensure that the units are up to date and
    --  doesn't do assistant resolution (which is why it has to be given in
    --  parameter).
@@ -80,9 +79,9 @@ package Ada_Semantic_Tree.Parts is
    --  & offset given in parameter.
 
    function Unchecked_Is_In_Scope
-     (Assistant   : Database_Assistant_Access;
-      Scope       : Entity_Access;
-      Entity      : Entity_Access) return Boolean;
+     (Assistant : Database_Assistant_Access;
+      Scope     : Entity_Access;
+      Entity    : Entity_Access) return Boolean;
    --  Return true if Entity is within Scope, taking into account body / spec
    --  information.
    --  For performances purpose, function does not ensures that the information

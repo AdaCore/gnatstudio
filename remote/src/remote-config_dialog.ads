@@ -22,8 +22,7 @@ with GPS.Kernel;
 package Remote.Config_Dialog is
 
    procedure Configure_Server_List
-     (Kernel         : GPS.Kernel.Kernel_Handle;
-      Default_Server : String := "");
+     (Kernel : GPS.Kernel.Kernel_Handle; Default_Server : String := "");
    --  Runs the server list editor dialog
 
 end Remote.Config_Dialog;

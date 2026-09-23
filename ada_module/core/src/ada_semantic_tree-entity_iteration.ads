@@ -21,9 +21,9 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
-with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+with Ada_Semantic_Tree.Units;      use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Generics;   use Ada_Semantic_Tree.Generics;
 
 private package Ada_Semantic_Tree.Entity_Iteration is
 
@@ -62,8 +62,8 @@ private package Ada_Semantic_Tree.Entity_Iteration is
    --  This type is used to keep track of references to break, for example to
    --  avoid to propose all to a access type that is already dereferenced.
 
-   type References_To_Follow_Array is array
-     (References_To_Follow_Type) of Boolean;
+   type References_To_Follow_Array is
+     array (References_To_Follow_Type) of Boolean;
 
    All_References : References_To_Follow_Array := (others => True);
 
@@ -73,8 +73,7 @@ private package Ada_Semantic_Tree.Entity_Iteration is
       References_To_Follow : References_To_Follow_Array := All_References;
       Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack;
       Ignored_Expressions  : Expressions_List.List :=
-        Expressions_List.Empty_List)
-      return Semantic_Tree_Iterator;
+        Expressions_List.Empty_List) return Semantic_Tree_Iterator;
    --  Create a new iterator.
    --  If Follow_Referenced_Entities is true, then the contents of the
    --  potential referenced entity (e.g. the type of a variable, the parent
@@ -118,8 +117,8 @@ private
    type Semantic_Tree_Iterator_Access is access all Semantic_Tree_Iterator;
 
    type Semantic_Tree_Iterator is record
-      Step : Semantic_Tree_Iterator_Step;
-      Db   : Construct_Database_Access;
+      Step                 : Semantic_Tree_Iterator_Step;
+      Db                   : Construct_Database_Access;
       References_To_Follow : References_To_Follow_Array := All_References;
 
       Root_Entity : Semantic_Information;
@@ -164,9 +163,9 @@ private
 
       Body_Entity      : Construct_Tree_Iterator :=
         Null_Construct_Tree_Iterator;
-      Body_File : Structured_File_Access;
-      Body_Tree : Construct_Tree;
-      Package_Relation  : Location_Relation := Full_Spec_Hierarchy;
+      Body_File        : Structured_File_Access;
+      Body_Tree        : Construct_Tree;
+      Package_Relation : Location_Relation := Full_Spec_Hierarchy;
 
       --  for Child_Packages step
 
@@ -174,11 +173,11 @@ private
 
       --  for Tagged_Type_Contents step
 
-      Parents        : Entity_Array_Access;
-      Parent_It      : Integer;
-      Parent_Entity  : Entity_Access;
-      Parent_Field   : Construct_Tree_Iterator;
-      Parent_File    : Structured_File_Access;
+      Parents       : Entity_Array_Access;
+      Parent_It     : Integer;
+      Parent_Entity : Entity_Access;
+      Parent_Field  : Construct_Tree_Iterator;
+      Parent_File   : Structured_File_Access;
 
       Dotted_Subprograms       : Entity_Persistent_Array_Access;
       Dotted_Subprograms_Index : Integer;
@@ -186,8 +185,10 @@ private
       Generic_Context : Instance_Info;
    end record;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Semantic_Tree_Iterator, Semantic_Tree_Iterator_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Semantic_Tree_Iterator,
+        Semantic_Tree_Iterator_Access);
 
    Null_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator :=
      (Step => Finished, others => <>);

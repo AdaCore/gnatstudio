@@ -20,17 +20,18 @@
 
 package GPS.Kernel.Commands is
 
-   type File_Callback is access procedure
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File);
+   type File_Callback is
+     access procedure
+       (Kernel : access Kernel_Handle_Record'Class;
+        File   : GNATCOLL.VFS.Virtual_File);
 
    procedure Do_On_Each_File
-     (Handle            : access Kernel_Handle_Record'Class;
-      Callback          : File_Callback;
-      Chunk_Size        : Positive := 1;
-      Queue_Name        : String := "";
-      Operation_Name    : String := "";
-      Files             : File_Array_Access := null);
+     (Handle         : access Kernel_Handle_Record'Class;
+      Callback       : File_Callback;
+      Chunk_Size     : Positive := 1;
+      Queue_Name     : String := "";
+      Operation_Name : String := "";
+      Files          : File_Array_Access := null);
    --  This procedure will launch a GNAT Studio command wich will call the
    --  given callback sequentially on each file given in parameter It's
    --  possible to change the number of files analyzed per iteration by

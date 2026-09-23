@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 package body Commands.Socket is
 
@@ -31,18 +31,19 @@ package body Commands.Socket is
       Shell   : String := GPS.Kernel.Scripts.GPS_Shell_Name;
       Stream  : Stream_Access) is
    begin
-      Item         := new Socket_Command;
-      Item.Kernel  := Kernel;
+      Item := new Socket_Command;
+      Item.Kernel := Kernel;
       Item.Command := new String'(Command);
-      Item.Shell   := new String'(Shell);
-      Item.Stream  := Stream;
+      Item.Shell := new String'(Shell);
+      Item.Stream := Stream;
    end Create;
 
    --------------------
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (X : in out Socket_Command) is
+   overriding
+   procedure Primitive_Free (X : in out Socket_Command) is
    begin
       Free (X.Command);
       Free (X.Shell);
@@ -52,24 +53,29 @@ package body Commands.Socket is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Socket_Command) return Command_Return_Type
    is
       Errors : aliased Boolean;
       Script : Scripting_Language;
    begin
       if Command.Command /= null then
-         Script := Command.Kernel.Scripts.Lookup_Scripting_Language
-           (Command.Shell.all);
+         Script :=
+           Command.Kernel.Scripts.Lookup_Scripting_Language
+             (Command.Shell.all);
          String'Write
            (Command.Stream,
             Execute_Command
               (Script,
                Parse_String
                  (Command.Command.all, Command_Line_Treatment (Script)),
-               null, True, True,
-               Errors'Unchecked_Access) &
-            ASCII.LF & "GPS>> ");
+               null,
+               True,
+               True,
+               Errors'Unchecked_Access)
+            & ASCII.LF
+            & "GPS>> ");
       end if;
 
       return Success;

@@ -16,28 +16,28 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.Expect.TTY;
 with GNAT.Expect;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
 with VSS.Characters.Latin;           use VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;          use VSS.Strings.Templates;
 
-with Glib;                       use Glib;
-with XML_Utils;                  use XML_Utils;
+with Glib;      use Glib;
+with XML_Utils; use XML_Utils;
 
 with Gtkada.Dialogs;
 
@@ -45,19 +45,19 @@ with Spawn.Processes;
 
 with CodePeer;
 with Commands, Commands.Interactive; use Commands, Commands.Interactive;
-with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Customizable_Modules;       use GPS.Customizable_Modules;
+with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
-with GUI_Utils;                  use GUI_Utils;
-with Toolchains;                 use Toolchains;
+with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
+with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
+with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Custom;              use GPS.Kernel.Custom;
+with GUI_Utils;                      use GUI_Utils;
+with Toolchains;                     use Toolchains;
 with XML_Parsers;
 with Config;
 with GPS_Vectors;
@@ -67,24 +67,22 @@ package body Help_Module is
    Me        : constant Trace_Handle := Create ("GPS.KERNEL.HELP", Off);
    Shell_Doc : constant Trace_Handle := Create ("GPS.KERNEL.SHELL_DOC", Off);
 
-   Template_Index   : constant Filesystem_String := "help_index.html";
-   Index_File       : constant Filesystem_String := "gnatstudio_index.xml";
-   Help_Class_Name  : constant String := "Help";
+   Template_Index  : constant Filesystem_String := "help_index.html";
+   Index_File      : constant Filesystem_String := "gnatstudio_index.xml";
+   Help_Class_Name : constant String := "Help";
 
-   Url_Cst          : aliased constant String := "URL";
-   Anchor_Cst       : aliased constant String := "anchor";
-   Dir_Cst          : aliased constant String := "directory";
-   Name_Cst         : aliased constant String := "name";
-   Navigation_Cst   : aliased constant String := "navigation";
+   Url_Cst        : aliased constant String := "URL";
+   Anchor_Cst     : aliased constant String := "anchor";
+   Dir_Cst        : aliased constant String := "directory";
+   Name_Cst       : aliased constant String := "name";
+   Navigation_Cst : aliased constant String := "navigation";
 
    Browse_Cmd_Parameters  : constant Cst_Argument_List :=
-                              (1 => Url_Cst'Access,
-                               2 => Anchor_Cst'Access,
-                               3 => Navigation_Cst'Access);
+     (1 => Url_Cst'Access, 2 => Anchor_Cst'Access, 3 => Navigation_Cst'Access);
    Add_Doc_Cmd_Parameters : constant Cst_Argument_List :=
-                              (1 => Dir_Cst'Access);
+     (1 => Dir_Cst'Access);
    Getdoc_Parameters      : constant Cst_Argument_List :=
-                              (1 => Name_Cst'Access);
+     (1 => Name_Cst'Access);
 
    type Help_File_Record is record
       URL        : GNAT.Strings.String_Access;
@@ -97,7 +95,8 @@ package body Help_Module is
       XML : Node_Ptr;
    end record;
    type XML_Property_Access is access all XML_Property'Class;
-   overriding procedure Destroy (Property : in out XML_Property);
+   overriding
+   procedure Destroy (Property : in out XML_Property);
    --  See inherited documentation
 
    procedure Free (Data : in out Help_File_Record);
@@ -118,15 +117,17 @@ package body Help_Module is
       Categories : Help_Category_List.Vector;
       --  The registered help files
 
-      Doc_Path   : File_Array_Access;
+      Doc_Path : File_Array_Access;
 
       Html_Class : Class_Type;
       Help_Class : Class_Type;
    end record;
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
-   overriding procedure Destroy (Module : in out Help_Module_ID_Record);
-   overriding procedure Customize
+   overriding
+   procedure Destroy (Module : in out Help_Module_ID_Record);
+   overriding
+   procedure Customize
      (Module : access Help_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -134,8 +135,7 @@ package body Help_Module is
    --  See inherited documentation
 
    procedure Add_Doc_Directory
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Virtual_File);
+     (Kernel : access Kernel_Handle_Record'Class; Directory : Virtual_File);
    --  Add a new directory to the documentation path
 
    procedure Add_Doc_Path_From_Env
@@ -147,7 +147,8 @@ package body Help_Module is
    Help_Module_Name : constant String := "Help_Viewer";
 
    type On_Open_Html is new Html_Hooks_Function with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self              : On_Open_Html;
       Kernel            : not null access Kernel_Handle_Record'Class;
       Url_Or_File       : String;
@@ -161,9 +162,9 @@ package body Help_Module is
       Process : Spawn.Processes.Process;
    end record;
 
-   overriding procedure Error_Occurred
-    (Self          : in out Process_Listener;
-     Process_Error : Integer);
+   overriding
+   procedure Error_Occurred
+     (Self : in out Process_Listener; Process_Error : Integer);
    --  Log launch failure in the trace
 
    pragma Warnings (Off);
@@ -171,27 +172,28 @@ package body Help_Module is
    pragma Warnings (On);
 
    procedure Display_Help
-     (Kernel : access Kernel_Handle_Record'Class;
-      URL    : String);
+     (Kernel : access Kernel_Handle_Record'Class; URL : String);
    --  Display HTML Help file
 
    procedure Display_Help
-     (Kernel : access Kernel_Handle_Record'Class;
-      URL    : String) is separate;
+     (Kernel : access Kernel_Handle_Record'Class; URL : String)
+   is separate;
 
    type Display_Doc_Command is new Interactive_Command with record
       URL        : Unbounded_String;
       Shell      : Unbounded_String;
       Shell_Lang : Unbounded_String;
    end record;
-   overriding function Execute
-     (Self : access Display_Doc_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Display_Doc_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Display HTML documentation
 
    type Display_Contents_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Display_Contents_Command;
+   overriding
+   function Execute
+     (Self    : access Display_Contents_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create and load the index of all help contents
 
@@ -220,14 +222,15 @@ package body Help_Module is
    --  Handler for HTML commands
 
    type About_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access About_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access About_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  "about gnatstudio" action
 
    function Create_URL
-     (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String;
+     (Name : Glib.UTF8_String; Kernel : access Kernel_Handle_Record'Class)
+      return Glib.UTF8_String;
    --  Filename can be an url, a full name or a base name, and can include
    --  ancors (e.g "foo.html#anchor").
 
@@ -235,8 +238,7 @@ package body Help_Module is
    --  Finds a doc file from base name on disc by looking in doc places
 
    procedure Parse_Index_File
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Virtual_File);
+     (Kernel : access Kernel_Handle_Record'Class; Directory : Virtual_File);
    --  Parse the index file for one specific directory
 
    function Get_Shell_Documentation
@@ -255,8 +257,8 @@ package body Help_Module is
    ----------------
 
    function Create_URL
-     (Name   : Glib.UTF8_String;
-      Kernel : access Kernel_Handle_Record'Class) return Glib.UTF8_String
+     (Name : Glib.UTF8_String; Kernel : access Kernel_Handle_Record'Class)
+      return Glib.UTF8_String
    is
       --  We still pass Kernel as a parameter so that we can easily one day
       --  query the module from the kernel instead of keeping a global
@@ -291,8 +293,9 @@ package body Help_Module is
       end if;
 
       if Is_Absolute_Path (Name) then
-         return "file://" &
-           To_Slashes (Normalize_Pathname (Name, Resolve_Links => True));
+         return
+           "file://"
+           & To_Slashes (Normalize_Pathname (Name, Resolve_Links => True));
       end if;
 
       if Anchor = 0 then
@@ -312,9 +315,9 @@ package body Help_Module is
    -- Error_Occurred --
    --------------------
 
-   overriding procedure Error_Occurred
-    (Self          : in out Process_Listener;
-     Process_Error : Integer) is
+   overriding
+   procedure Error_Occurred
+     (Self : in out Process_Listener; Process_Error : Integer) is
    begin
       Insert (Self.Kernel, -"Couldn't  start HTML browser", Mode => Error);
       Trace (Me, "Couldn't start browser:" & Process_Error'Image);
@@ -331,8 +334,8 @@ package body Help_Module is
          return Create (Name);
       end if;
 
-      Full := Locate_Regular_File
-        (Name, To_Path (Help_Module_ID.Doc_Path.all));
+      Full :=
+        Locate_Regular_File (Name, To_Path (Help_Module_ID.Doc_Path.all));
 
       if Full = null then
          return GNATCOLL.VFS.No_File;
@@ -351,7 +354,8 @@ package body Help_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Help_Module_ID_Record) is
+   overriding
+   procedure Destroy (Module : in out Help_Module_ID_Record) is
    begin
       Module.Categories.Clear;
       Unchecked_Free (Module.Doc_Path);
@@ -373,52 +377,59 @@ package body Help_Module is
    begin
       while Tmp /= null loop
          if Tmp.Tag.all = "shell_doc"
-           and then (Get_Attribute_S (Tmp, "name", "") = Full_Name
-                     or else Get_Attribute_S (Tmp, "real_name", "")
-                               = Full_Name)
+           and then
+             (Get_Attribute_S (Tmp, "name", "") = Full_Name
+              or else Get_Attribute_S (Tmp, "real_name", "") = Full_Name)
          then
-            Child       := Tmp.Child;
+            Child := Tmp.Child;
             Obsolescent := Null_Unbounded_String;
 
             while Child /= null loop
                if Child.Tag.all = "description" then
                   if HTML_Format then
-                     Descr := Descr & "<tr><td colspan='3'>"
-                       & XML_Utils.Protect (Child.Value.all) & "</td></tr>";
+                     Descr :=
+                       Descr
+                       & "<tr><td colspan='3'>"
+                       & XML_Utils.Protect (Child.Value.all)
+                       & "</td></tr>";
                   else
                      Descr := Descr & Child.Value.all;
                   end if;
 
                elsif Child.Tag.all = "obsolescent" then
                   if HTML_Format then
-                     Obsolescent := To_Unbounded_String
-                       ("<tr><td colspan='3' class='obsolescent'>"
-                        & "This is obsolescent</td></tr>");
+                     Obsolescent :=
+                       To_Unbounded_String
+                         ("<tr><td colspan='3' class='obsolescent'>"
+                          & "This is obsolescent</td></tr>");
                   end if;
 
                elsif Child.Tag.all = "param" then
                   if HTML_Format then
-                     Params := Params
+                     Params :=
+                       Params
                        & "<tr><td class=""name"">"
-                       & XML_Utils.Protect
-                          (Get_Attribute_S (Child, "name")) & "</td>";
+                       & XML_Utils.Protect (Get_Attribute_S (Child, "name"))
+                       & "</td>";
                   else
                      if Params /= Null_Unbounded_String then
                         Params := Params & ASCII.LF;
                      end if;
-                     Params := Params
-                       & Get_Attribute_S (Child, "name") & ASCII.HT;
+                     Params :=
+                       Params & Get_Attribute_S (Child, "name") & ASCII.HT;
                   end if;
 
                   declare
-                     Default : constant String := Get_Attribute_S
-                       (Child, "default", "@@");
+                     Default : constant String :=
+                       Get_Attribute_S (Child, "default", "@@");
                   begin
                      if Default /= "@@" then
                         if HTML_Format then
-                           Params := Params
+                           Params :=
+                             Params
                              & "<td class='default'>(default="""
-                             & XML_Utils.Protect (Default) & """)</td>";
+                             & XML_Utils.Protect (Default)
+                             & """)</td>";
                         else
                            Params := Params & Default & ASCII.HT;
                         end if;
@@ -430,7 +441,9 @@ package body Help_Module is
 
                   if HTML_Format then
                      Params :=
-                       Params & "<td>" & XML_Utils.Protect (Child.Value.all)
+                       Params
+                       & "<td>"
+                       & XML_Utils.Protect (Child.Value.all)
                        & "</td></tr>";
                   else
                      Params := Params & Child.Value.all;
@@ -438,11 +451,12 @@ package body Help_Module is
 
                elsif Child.Tag.all = "return" then
                   if HTML_Format then
-                     Returns := To_Unbounded_String
-                       ("</tr><td class=""return"">Returns</td>"
-                        & "<td colspan='2' class=""descr"">"
-                        & XML_Utils.Protect (Child.Value.all)
-                        & "</td></tr>");
+                     Returns :=
+                       To_Unbounded_String
+                         ("</tr><td class=""return"">Returns</td>"
+                          & "<td colspan='2' class=""descr"">"
+                          & XML_Utils.Protect (Child.Value.all)
+                          & "</td></tr>");
                   else
                      Returns :=
                        To_Unbounded_String ("Returns " & Child.Value.all);
@@ -450,21 +464,24 @@ package body Help_Module is
 
                elsif Child.Tag.all = "see_also" then
                   if HTML_Format then
-                     See_Also := See_Also
+                     See_Also :=
+                       See_Also
                        & "<tr><td class='header'>See also</td>"
                        & "<td class='seeAlso' colspan='2'>"
                        & XML_Utils.Protect
-                          (Get_Attribute_S (Child, "name", ""))
+                           (Get_Attribute_S (Child, "name", ""))
                        & "</td></tr>";
                   end if;
 
                elsif Child.Tag.all = "example" then
                   if Equal
-                    (Get_Attribute_S (Child, "lang", GPS_Shell_Name),
-                     Language, False)
+                       (Get_Attribute_S (Child, "lang", GPS_Shell_Name),
+                        Language,
+                        False)
                   then
                      if HTML_Format then
-                        Descr := Descr
+                        Descr :=
+                          Descr
                           & "<tr><td colspan='3' class='example'>"
                           & XML_Utils.Protect (Child.Value.all)
                           & "</td></tr>";
@@ -478,16 +495,21 @@ package body Help_Module is
             end loop;
 
             if HTML_Format then
-               return To_String
-                 (Obsolescent & Params & Returns & Descr & Example & See_Also);
+               return
+                 To_String
+                   (Obsolescent
+                    & Params
+                    & Returns
+                    & Descr
+                    & Example
+                    & See_Also);
 
             else
                declare
                   Result : Unbounded_String := Params & ASCII.LF;
 
                   procedure Append
-                    (Value   : Unbounded_String;
-                     Spacing : Positive := 1);
+                    (Value : Unbounded_String; Spacing : Positive := 1);
                   pragma Inline (Append);
                   --  Append Value & (spacing * ASCII.LF) if Values not empty
 
@@ -496,8 +518,7 @@ package body Help_Module is
                   ------------
 
                   procedure Append
-                    (Value   : Unbounded_String;
-                     Spacing : Positive := 1) is
+                    (Value : Unbounded_String; Spacing : Positive := 1) is
                   begin
                      if Value /= Null_Unbounded_String then
                         Result := Result & Value & (1 .. Spacing => ASCII.LF);
@@ -529,14 +550,12 @@ package body Help_Module is
    is
       Error : GNAT.Strings.String_Access;
       Tmp   : XML_Utils.Node_Ptr;
-      File  : constant Virtual_File := Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gnatstudio/shell_commands.xml");
+      File  : constant Virtual_File :=
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "share/gnatstudio/shell_commands.xml");
    begin
       Trace (Me, "Parsing XML file " & File.Display_Full_Name);
-      XML_Parsers.Parse
-        (File  => File,
-         Tree  => Tmp,
-         Error => Error);
+      XML_Parsers.Parse (File => File, Tree => Tmp, Error => Error);
 
       if Error /= null then
          Kernel.Insert (Error.all, Mode => GPS.Kernel.Error);
@@ -549,7 +568,8 @@ package body Help_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Property : in out XML_Property) is
+   overriding
+   procedure Destroy (Property : in out XML_Property) is
    begin
       if Property.XML /= null then
          Trace (Me, "Freeing XML file");
@@ -568,9 +588,7 @@ package body Help_Module is
       Inst   : Class_Instance;
       XML    : Node_Ptr;
    begin
-      if Command = Constructor_Method
-        or else Command = "reset"
-      then
+      if Command = Constructor_Method or else Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          Set_Data (Inst, Help_Class_Name, XML_Property'(XML => null));
 
@@ -578,27 +596,29 @@ package body Help_Module is
          Name_Parameters (Data, Getdoc_Parameters);
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
 
-         XML := XML_Property_Access
-           (Instance_Property'(Get_Data (Inst, Help_Class_Name))).XML;
+         XML :=
+           XML_Property_Access
+             (Instance_Property'(Get_Data (Inst, Help_Class_Name)))
+             .XML;
          if XML = null then
             XML := Initialize_XML_Doc (Kernel);
-            Set_Data
-              (Inst, Help_Class_Name, XML_Property'(XML => XML));
+            Set_Data (Inst, Help_Class_Name, XML_Property'(XML => XML));
          end if;
 
          declare
-            Doc : constant String := Get_Shell_Documentation
-              (XML,
-               Get_Name (Get_Script (Data)), Nth_Arg (Data, 2),
-               HTML_Format => Nth_Arg (Data, 3, False));
+            Doc : constant String :=
+              Get_Shell_Documentation
+                (XML,
+                 Get_Name (Get_Script (Data)),
+                 Nth_Arg (Data, 2),
+                 HTML_Format => Nth_Arg (Data, 3, False));
          begin
             if Doc /= "" then
                Set_Return_Value (Data, Doc);
             else
                declare
                   Error : constant String :=
-                            "No documentation for "
-                              & Nth_Arg (Data, 2) & ASCII.LF;
+                    "No documentation for " & Nth_Arg (Data, 2) & ASCII.LF;
                begin
                   Set_Error_Msg (Data, Error);
                   Trace (Shell_Doc, Error);
@@ -610,27 +630,23 @@ package body Help_Module is
          --  ??? We should return a Virtual_File instead
          Set_Return_Value
            (Data,
-            +Get_System_Dir (Kernel).Full_Name &
-            "share/gnatstudio/shell_commands.xml");
+            +Get_System_Dir (Kernel).Full_Name
+            & "share/gnatstudio/shell_commands.xml");
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);
          declare
             URL    : constant String :=
-                       Create_URL (Nth_Arg (Data, 1), Get_Kernel (Data));
+              Create_URL (Nth_Arg (Data, 1), Get_Kernel (Data));
             Anchor : constant String := Nth_Arg (Data, 2, Default => "");
          begin
-            Open_HTML_File
-              (Get_Kernel (Data),
-               URL    => URL,
-               Anchor => Anchor);
+            Open_HTML_File (Get_Kernel (Data), URL => URL, Anchor => Anchor);
          end;
 
       elsif Command = "add_doc_directory" then
          --  ??? We should add directly the Virtual_File, instead of its
          --  full_name.
-         Add_Doc_Directory
-           (Get_Kernel (Data), Create (+Nth_Arg (Data, 1)));
+         Add_Doc_Directory (Get_Kernel (Data), Create (+Nth_Arg (Data, 1)));
       end if;
    end Command_Handler;
 
@@ -639,18 +655,18 @@ package body Help_Module is
    -----------------------
 
    procedure Add_Doc_Directory
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Virtual_File)
+     (Kernel : access Kernel_Handle_Record'Class; Directory : Virtual_File)
    is
-      Dir  : Virtual_File;
+      Dir : Virtual_File;
 
    begin
       if not Is_Directory (Directory) then
-         Dir := Create
-           (Normalize_Pathname
-              (Directory.Full_Name,
-               Get_System_Dir (Kernel).Full_Name,
-               Resolve_Links => False));
+         Dir :=
+           Create
+             (Normalize_Pathname
+                (Directory.Full_Name,
+                 Get_System_Dir (Kernel).Full_Name,
+                 Resolve_Links => False));
       else
          Dir := Directory;
       end if;
@@ -663,8 +679,9 @@ package body Help_Module is
                end if;
             end loop;
 
-            Trace (Me, "Adding " & Dir.Display_Full_Name
-                   & " to GNATSTUDIO_DOC_PATH");
+            Trace
+              (Me,
+               "Adding " & Dir.Display_Full_Name & " to GNATSTUDIO_DOC_PATH");
 
             GNATCOLL.VFS.Append (Help_Module_ID.Doc_Path, Dir);
          else
@@ -692,8 +709,10 @@ package body Help_Module is
    ----------
 
    procedure Free (Data : in out Help_Category_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Help_Category_Record, Help_Category_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Help_Category_Record,
+           Help_Category_Access);
    begin
       Free (Data.Name);
       Data.Files.Clear;
@@ -704,9 +723,10 @@ package body Help_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Display_Doc_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Display_Doc_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
@@ -718,16 +738,18 @@ package body Help_Module is
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
-            Script : constant Scripting_Language := Lookup_Scripting_Language
-              (Kernel.Scripts, To_String (Self.Shell_Lang));
-            File   : constant String := Execute_Command
-              (Script      => Script,
-               CL          => Parse_String
-                 (To_String (Self.Shell),
-                  Command_Line_Treatment (Script)),
-               Console     => null,
-               Hide_Output => False,
-               Errors      => Errors'Unchecked_Access);
+            Script : constant Scripting_Language :=
+              Lookup_Scripting_Language
+                (Kernel.Scripts, To_String (Self.Shell_Lang));
+            File   : constant String :=
+              Execute_Command
+                (Script      => Script,
+                 CL          =>
+                   Parse_String
+                     (To_String (Self.Shell), Command_Line_Treatment (Script)),
+                 Console     => null,
+                 Hide_Output => False,
+                 Errors      => Errors'Unchecked_Access);
          begin
             if Errors then
                Insert
@@ -764,28 +786,39 @@ package body Help_Module is
       Node    : Help_Category_List.Std_Vectors.Cursor;
       Cat     : Help_Category_Access;
    begin
-      Command := new Display_Doc_Command'
-        (Interactive_Command with
-           URL      => To_Unbounded_String (URL),
-         Shell      => To_Unbounded_String (Shell_Cmd),
-         Shell_Lang => To_Unbounded_String (Shell_Lang));
+      Command :=
+        new Display_Doc_Command'
+          (Interactive_Command
+           with
+             URL        => To_Unbounded_String (URL),
+             Shell      => To_Unbounded_String (Shell_Cmd),
+             Shell_Lang => To_Unbounded_String (Shell_Lang));
 
       Register_Action
-        (Kernel, "display documentation " & Descr, Command,
-         -"Load the documentation for '" & Descr
+        (Kernel,
+         "display documentation " & Descr,
+         Command,
+         -"Load the documentation for '"
+         & Descr
          & "' into an external web browser",
          Category => "");
 
       if Menu_Path /= "" then
          if Menu_Before /= "" then
             Register_Menu
-              (Kernel, Menu_Path, Action => "display documentation " & Descr,
-               Ref_Item => Menu_Before, Before_Ref_Item => True);
+              (Kernel,
+               Menu_Path,
+               Action          => "display documentation " & Descr,
+               Ref_Item        => Menu_Before,
+               Before_Ref_Item => True);
 
          elsif Menu_After /= "" then
             Register_Menu
-              (Kernel, Menu_Path, Action => "display documentation " & Descr,
-               Ref_Item => Menu_After, Before_Ref_Item => False);
+              (Kernel,
+               Menu_Path,
+               Action          => "display documentation " & Descr,
+               Ref_Item        => Menu_After,
+               Before_Ref_Item => False);
          else
             Register_Menu
               (Kernel, Menu_Path, Action => "display documentation " & Descr);
@@ -800,9 +833,10 @@ package body Help_Module is
       end loop;
 
       if not Has_Element (Node) then
-         Cat := new Help_Category_Record'
-           (Name  => new String'(Category),
-            Files => Help_File_List.Empty_Vector);
+         Cat :=
+           new Help_Category_Record'
+             (Name  => new String'(Category),
+              Files => Help_File_List.Empty_Vector);
          Append (Help_Module_ID.Categories, Cat);
       end if;
 
@@ -821,8 +855,7 @@ package body Help_Module is
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
       URL    : String;
-      Anchor : String := "")
-   is
+      Anchor : String := "") is
    begin
       Trace (Me, "Open_HTML_File " & URL & "#" & Anchor);
 
@@ -837,7 +870,8 @@ package body Help_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self              : On_Open_Html;
       Kernel            : not null access Kernel_Handle_Record'Class;
       Url_Or_File       : String;
@@ -858,40 +892,39 @@ package body Help_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self : access About_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access About_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       use ASCII;
 
-      Ignore              : Gtkada.Dialogs.Message_Dialog_Buttons;
+      Ignore : Gtkada.Dialogs.Message_Dialog_Buttons;
       pragma Unreferenced (Self, Ignore);
 
       Kernel              : constant Kernel_Handle :=
-                              Get_Kernel (Context.Context);
+        Get_Kernel (Context.Context);
       Target              : constant String := Get_Target (Kernel);
       Version_Arg         : aliased String := "--version";
       Compiler_Target_Arg : aliased String := "-dumpmachine";
       Compiler_Exe        : constant Virtual_File :=
-                              Locate_On_Path
-                                (+(if Target = "" then
-                                    "gcc"
-                                 else Target & "-gcc"));
+        Locate_On_Path (+(if Target = "" then "gcc" else Target & "-gcc"));
       Tools               : constant Virtual_File_Array :=
         (1 =>
            (if CodePeer.Is_GNATSAS
             then Locate_On_Path ("gnatsas")
             else Locate_On_Path ("codepeer")),
          2 => Locate_On_Path ("gnatprove"));
-      About_File          : constant Virtual_File := Create_From_Dir
-        (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
+      About_File          : constant Virtual_File :=
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
       Contents            : GNAT.Strings.String_Access;
       About_Text          : VSS.Strings.Virtual_String;
       Tc                  : Toolchains.Toolchain;
 
       function Get_Output
-        (Exe  : Virtual_File;
-         Args : GNAT.OS_Lib.Argument_List) return Unbounded_String;
+        (Exe : Virtual_File; Args : GNAT.OS_Lib.Argument_List)
+         return Unbounded_String;
       --  Run the given command line and return the output.
 
       ----------------
@@ -899,8 +932,8 @@ package body Help_Module is
       ----------------
 
       function Get_Output
-        (Exe : Virtual_File;
-         Args    : GNAT.OS_Lib.Argument_List) return Unbounded_String is
+        (Exe : Virtual_File; Args : GNAT.OS_Lib.Argument_List)
+         return Unbounded_String is
       begin
          if Exe = No_File then
             return Null_Unbounded_String;
@@ -912,14 +945,15 @@ package body Help_Module is
             M      : GNAT.Expect.Expect_Match;
          begin
             GNAT.Expect.Non_Blocking_Spawn
-              (Descriptor  => Fd,
-               Command     => Exe.Display_Full_Name,
-               Args        => Args,
-               Err_To_Out  => True);
-            GNAT.Expect.TTY.Expect (Descriptor  => Fd,
-                                    Result      => M,
-                                    Regexp      => ".+",
-                                    Timeout     => 1_000);
+              (Descriptor => Fd,
+               Command    => Exe.Display_Full_Name,
+               Args       => Args,
+               Err_To_Out => True);
+            GNAT.Expect.TTY.Expect
+              (Descriptor => Fd,
+               Result     => M,
+               Regexp     => ".+",
+               Timeout    => 1_000);
             Append (Output, GNAT.Expect.TTY.Expect_Out (Fd));
             GNAT.Expect.TTY.Close (Fd);
 
@@ -952,9 +986,7 @@ package body Help_Module is
                 (Exe  => Compiler_Exe,
                  Args => (1 => Compiler_Target_Arg'Unrestricted_Access)));
          Simple_Template : constant Virtual_String_Template :=
-           -("GNAT Studio {} ({}) hosted on {}"
-             & Line_Feed
-             & "GNAT {}");
+           -("GNAT Studio {} ({}) hosted on {}" & Line_Feed & "GNAT {}");
          Target_Template : constant Virtual_String_Template :=
            -("GNAT Studio {} ({}) hosted on {}"
              & Line_Feed
@@ -985,9 +1017,10 @@ package body Help_Module is
 
       for Tool_Exe of Tools loop
          declare
-            Output : constant Unbounded_String := Get_Output
-              (Exe  => Tool_Exe,
-               Args => (1 => Version_Arg'Unrestricted_Access));
+            Output : constant Unbounded_String :=
+              Get_Output
+                (Exe  => Tool_Exe,
+                 Args => (1 => Version_Arg'Unrestricted_Access));
          begin
             if Output /= Null_Unbounded_String then
                About_Text.Append (Line_Feed);
@@ -1000,8 +1033,10 @@ package body Help_Module is
       --  Display information about the active toolchain when it's a non-native
       --  one.
 
-      Tc := Get_Toolchain
-        (Kernel.Get_Toolchains_Manager, Kernel.Get_Project_Tree.Root_Project);
+      Tc :=
+        Get_Toolchain
+          (Kernel.Get_Toolchains_Manager,
+           Kernel.Get_Project_Tree.Root_Project);
 
       if not Is_Native (Tc) then
          declare
@@ -1044,8 +1079,7 @@ package body Help_Module is
                          (if Contents.all /= ""
                           then Contents.all & LF
                           else "")),
-                    Image
-                      (Config.Current_Year))),
+                    Image (Config.Current_Year))),
               Buttons => Gtkada.Dialogs.Button_OK,
               Title   => -"About...",
               Parent  => GPS.Kernel.MDI.Get_Current_Window (Kernel));
@@ -1060,7 +1094,8 @@ package body Help_Module is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Help_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -1068,7 +1103,7 @@ package body Help_Module is
    is
       pragma Unreferenced (Level);
       Kernel                 : constant Kernel_Handle :=
-                                 Get_Kernel (Module.all);
+        Get_Kernel (Module.all);
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang      : GNAT.Strings.String_Access;
       Field                  : Node_Ptr;
@@ -1077,10 +1112,10 @@ package body Help_Module is
          Add_Doc_Directory (Kernel, Create (+Node.Value.all));
 
       elsif Node.Tag.all = "documentation_file" then
-         Name  := null;
+         Name := null;
          Descr := null;
-         Menu  := null;
-         Cat   := null;
+         Menu := null;
+         Cat := null;
          Shell := null;
          Shell_Lang := null;
 
@@ -1100,23 +1135,26 @@ package body Help_Module is
 
             elsif Field.Tag.all = "shell" then
                Shell := new String'(Field.Value.all);
-               Shell_Lang := new String'
-                 (Get_Attribute_S (Field, "lang", "shell"));
+               Shell_Lang :=
+                 new String'(Get_Attribute_S (Field, "lang", "shell"));
 
             else
                Insert
                  (Kernel,
                   -"Invalid node in customization file "
-                  & Display_Full_Name (File) & ": " & Field.Tag.all);
+                  & Display_Full_Name (File)
+                  & ": "
+                  & Field.Tag.all);
             end if;
 
             Field := Field.Next;
          end loop;
 
          if Menu = null then
-            Insert (Kernel,
-                    -"<documentation_file> must have a <menu> child",
-                    Mode => Error);
+            Insert
+              (Kernel,
+               -"<documentation_file> must have a <menu> child",
+               Mode => Error);
 
          elsif Descr = null then
             Kernel.Insert
@@ -1128,8 +1166,9 @@ package body Help_Module is
                URL : constant String := Create_URL (Name.Value.all, Kernel);
             begin
                if URL = "" then
-                  Trace (Me, "Not adding " & Name.Value.all
-                         & " since file not found");
+                  Trace
+                    (Me,
+                     "Not adding " & Name.Value.all & " since file not found");
                else
                   Trace
                     (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
@@ -1176,11 +1215,10 @@ package body Help_Module is
    ----------------------
 
    procedure Parse_Index_File
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Virtual_File)
+     (Kernel : access Kernel_Handle_Record'Class; Directory : Virtual_File)
    is
       Full    : constant Virtual_File :=
-                  Create_From_Dir (Directory, Index_File);
+        Create_From_Dir (Directory, Index_File);
       Node, N : Node_Ptr;
       Err     : GNAT.Strings.String_Access;
    begin
@@ -1208,16 +1246,16 @@ package body Help_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self : access Display_Contents_Command;
+   overriding
+   function Execute
+     (Self    : access Display_Contents_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel          : constant Kernel_Handle := Get_Kernel (Context.Context);
       Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
       Output          : constant Virtual_File :=
-                          Create_From_Dir (Get_Home_Dir (Kernel),
-                                           "help_index.html");
+        Create_From_Dir (Get_Home_Dir (Kernel), "help_index.html");
       File            : constant Virtual_File := Find_File (Template_Index);
       Buffer          : GNAT.Strings.String_Access := Read_File (File);
       Index           : Natural;
@@ -1230,16 +1268,19 @@ package body Help_Module is
       if Buffer /= null then
          Index := Buffer'First;
          while Index + Contents_Marker'Length - 1 <= Buffer'Last
-           and then Buffer (Index .. Index + Contents_Marker'Length - 1) /=
-           Contents_Marker
+           and then
+             Buffer (Index .. Index + Contents_Marker'Length - 1)
+             /= Contents_Marker
          loop
             Index := Index + 1;
          end loop;
 
          Str := To_Unbounded_String (Buffer (Buffer'First .. Index - 1));
 
-         Append (Str, "<table cellspacing=""0"" width=""100%"" border=""2"""
-                 & "cellpadding=""6"">");
+         Append
+           (Str,
+            "<table cellspacing=""0"" width=""100%"" border=""2"""
+            & "cellpadding=""6"">");
 
          for Item of Help_Module_ID.Categories loop
             In_Category := Null_Unbounded_String;
@@ -1249,24 +1290,25 @@ package body Help_Module is
                   Append (In_Category, "<tr><td><a href=""");
                   --  ??? need url here
                   Append (In_Category, File.URL.all);
-                  Append (In_Category, """>" & File.Descr.all
-                          & "</a></td></tr>");
+                  Append
+                    (In_Category, """>" & File.Descr.all & "</a></td></tr>");
                end if;
             end loop;
 
             if In_Category /= Null_Unbounded_String then
-               Append (Str,
-                       "<tr><td bgcolor=""#006db6"">"
-                       & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
-                       & Item.Name.all
-                       & "</font></td> </tr>" & ASCII.LF);
+               Append
+                 (Str,
+                  "<tr><td bgcolor=""#006db6"">"
+                  & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
+                  & Item.Name.all
+                  & "</font></td> </tr>"
+                  & ASCII.LF);
                Append (Str, In_Category);
             end if;
          end loop;
 
          Append (Str, "</table>");
-         Append
-           (Str, Buffer (Index + Contents_Marker'Length .. Buffer'Last));
+         Append (Str, Buffer (Index + Contents_Marker'Length .. Buffer'Last));
 
          Output_Write := Write_File (Output);
          Write (Output_Write, To_String (Str));
@@ -1283,10 +1325,9 @@ package body Help_Module is
    -- Add_Doc_Path_From_Env --
    ---------------------------
 
-   procedure Add_Doc_Path_From_Env
-     (Kernel : access Kernel_Handle_Record'Class)
+   procedure Add_Doc_Path_From_Env (Kernel : access Kernel_Handle_Record'Class)
    is
-      Custom_Path   : constant File_Array := Get_Custom_Path;
+      Custom_Path : constant File_Array := Get_Custom_Path;
 
       Doc_Path      : constant VSS.Strings.Virtual_String :=
         Getenv_With_Fallback ("GNATSTUDIO_DOC_PATH", "GPS_DOC_PATH");
@@ -1301,8 +1342,7 @@ package body Help_Module is
       Add_Doc_Directory
         (Kernel,
          Create_From_Dir
-           (Get_System_Dir (Kernel),
-            "share/doc/gnatstudio/html/"));
+           (Get_System_Dir (Kernel), "share/doc/gnatstudio/html/"));
 
       --  We add the custom path here to make sure that the node parsed by
       --  the custom module will be able to find the documentation.
@@ -1320,10 +1360,10 @@ package body Help_Module is
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
-        (Module       => Module_ID (Help_Module_ID),
-         Kernel       => Kernel,
-         Module_Name  => Help_Module_Name,
-         Priority     => GPS.Kernel.Modules.Default_Priority - 20);
+        (Module      => Module_ID (Help_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => Help_Module_Name,
+         Priority    => GPS.Kernel.Modules.Default_Priority - 20);
       Html_Action_Hook.Add (new On_Open_Html);
 
       --  Register commands
@@ -1372,7 +1412,9 @@ package body Help_Module is
          Handler       => Command_Handler'Access);
 
       Register_Action
-        (Kernel, "display help contents", new Display_Contents_Command,
+        (Kernel,
+         "display help contents",
+         new Display_Contents_Command,
          -("Display a HTML page with a pointer to all documentation known"
            & " to GNAT Studio"));
 

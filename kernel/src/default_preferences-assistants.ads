@@ -21,16 +21,15 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 
-with GPS.Kernel;            use GPS.Kernel;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GPS.Kernel;      use GPS.Kernel;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package Default_Preferences.Assistants is
 
    Auto_Run_Assistant : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.AUTO_RUN_ASSISTANT",
-             GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.AUTO_RUN_ASSISTANT", GNATCOLL.Traces.Off);
 
    type Preferences_Assistant_Page is tagged private;
    type Preferences_Assistant_Page_Array is
@@ -67,10 +66,10 @@ private
       Pref_Page : Preferences_Page;
       --  The preferences page displayed in the center area
 
-      Label     : Unbounded_String;
+      Label : Unbounded_String;
       --  The label used for the page's title displayed at the top
 
-      Message   : Unbounded_String;
+      Message : Unbounded_String;
       --  The message displayed at the bottom
    end record;
 

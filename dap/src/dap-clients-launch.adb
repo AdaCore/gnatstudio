@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 
-with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;             use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Launch;
 
 package body DAP.Clients.Launch is
 
-   type Launch_Request is
-     new DAP.Requests.Launch.Launch_DAP_Request with null record;
+   type Launch_Request is new DAP.Requests.Launch.Launch_DAP_Request
+   with null record;
    type Launch_Request_Access is access all Launch_Request'Class;
 
    function Create
      (Kernel            : not null Kernel_Handle;
       Executable        : GNATCOLL.VFS.Virtual_File;
       Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
-      Stop_At_Beginning : Boolean := False)
-      return Launch_Request_Access;
+      Stop_At_Beginning : Boolean := False) return Launch_Request_Access;
    --  Create a new DAP 'launch' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Launch_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
@@ -46,7 +46,8 @@ package body DAP.Clients.Launch is
    --  gdb 17.x send the answer after the configurationDone request when the
    --  executable has been started.
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Launch_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
@@ -59,13 +60,13 @@ package body DAP.Clients.Launch is
      (Kernel            : not null Kernel_Handle;
       Executable        : GNATCOLL.VFS.Virtual_File;
       Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
-      Stop_At_Beginning : Boolean := False)
-      return Launch_Request_Access
+      Stop_At_Beginning : Boolean := False) return Launch_Request_Access
    is
       Self : constant Launch_Request_Access := new Launch_Request (Kernel);
    begin
-      Self.Parameters.arguments.program := VSS.Strings.Conversions.
-        To_Virtual_String (Executable.Display_Full_Name);
+      Self.Parameters.arguments.program :=
+        VSS.Strings.Conversions.To_Virtual_String
+          (Executable.Display_Full_Name);
       Self.Parameters.arguments.args := Executable_Args;
       Self.Parameters.arguments.stopAtBeginningOfMainSubprogram :=
         Stop_At_Beginning;
@@ -77,18 +78,17 @@ package body DAP.Clients.Launch is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Launch_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
-        ("[Debug]:" &
-           VSS.Strings.Conversions.To_UTF_8_String (Message));
+        ("[Debug]:" & VSS.Strings.Conversions.To_UTF_8_String (Message));
 
       DAP.Requests.Launch.On_Error_Message
-        (DAP.Requests.Launch.Launch_DAP_Request (Self),
-         Client, Message);
+        (DAP.Requests.Launch.Launch_DAP_Request (Self), Client, Message);
    end On_Error_Message;
 
    -------------------------
@@ -101,11 +101,12 @@ package body DAP.Clients.Launch is
       Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
       Stop_At_Beginning : Boolean := False)
    is
-      Launch_Req : Launch_Request_Access := DAP.Clients.Launch.Create
-        (Kernel            => Client.Kernel,
-         Executable        => Executable,
-         Executable_Args   => Executable_Args,
-         Stop_At_Beginning => Stop_At_Beginning);
+      Launch_Req : Launch_Request_Access :=
+        DAP.Clients.Launch.Create
+          (Kernel            => Client.Kernel,
+           Executable        => Executable,
+           Executable_Args   => Executable_Args,
+           Stop_At_Beginning => Stop_At_Beginning);
    begin
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Launch_Req));
 
@@ -118,7 +119,8 @@ package body DAP.Clients.Launch is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Launch_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;

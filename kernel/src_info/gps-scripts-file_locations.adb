@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Core_Kernels;        use GPS.Core_Kernels;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 with GPS.Scripts.Files;
-with Basic_Types;             use Basic_Types;
+with Basic_Types;      use Basic_Types;
 
 package body GPS.Scripts.File_Locations is
 
@@ -27,14 +27,12 @@ package body GPS.Scripts.File_Locations is
 
    File_Location_Class_Name : constant String := "FileLocation";
 
-   Filename_Cst   : aliased constant String := "filename";
-   Line_Cst       : aliased constant String := "line";
-   Col_Cst        : aliased constant String := "column";
+   Filename_Cst : aliased constant String := "filename";
+   Line_Cst     : aliased constant String := "line";
+   Col_Cst      : aliased constant String := "column";
 
-   Location_Cmd_Parameters  : constant Cst_Argument_List :=
-                                (1 => Filename_Cst'Access,
-                                 2 => Line_Cst'Access,
-                                 3 => Col_Cst'Access);
+   Location_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access, 2 => Line_Cst'Access, 3 => Col_Cst'Access);
 
    procedure Set_Data
      (Instance : Class_Instance; Location : File_Location_Info);
@@ -51,13 +49,13 @@ package body GPS.Scripts.File_Locations is
      (Script : access Scripting_Language_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type)
-      return Class_Instance
+      Column : Basic_Types.Visible_Column_Type) return Class_Instance
    is
-      Instance : constant Class_Instance := New_Instance
-        (Script,
-         New_Class (Get_Repository (Script), File_Location_Class_Name));
-      Info : constant File_Location_Info := (File, Line, Column);
+      Instance : constant Class_Instance :=
+        New_Instance
+          (Script,
+           New_Class (Get_Repository (Script), File_Location_Class_Name));
+      Info     : constant File_Location_Info := (File, Line, Column);
    begin
       Set_Data (Instance, Info);
       return Instance;
@@ -68,8 +66,7 @@ package body GPS.Scripts.File_Locations is
    ----------------
 
    function Get_Column
-     (Location : File_Location_Info)
-      return Basic_Types.Visible_Column_Type is
+     (Location : File_Location_Info) return Basic_Types.Visible_Column_Type is
    begin
       return Location.Column;
    end Get_Column;
@@ -79,14 +76,11 @@ package body GPS.Scripts.File_Locations is
    --------------
 
    function Get_Data
-     (Data : Callback_Data'Class;
-      N : Positive)
-      return File_Location_Info
+     (Data : Callback_Data'Class; N : Positive) return File_Location_Info
    is
       Class : constant Class_Type :=
-                Get_File_Location_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance :=
-                Nth_Arg (Data, N, Class);
+        Get_File_Location_Class (Get_Kernel (Data));
+      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
       D     : Instance_Property;
    begin
       if Inst /= No_Class_Instance then
@@ -145,11 +139,11 @@ package body GPS.Scripts.File_Locations is
          Name_Parameters (Data, Location_Cmd_Parameters);
 
          declare
-            File     : constant Class_Instance  :=
-                         Nth_Arg (Data, 2, Files.Get_File_Class (Kernel));
+            File     : constant Class_Instance :=
+              Nth_Arg (Data, 2, Files.Get_File_Class (Kernel));
             L        : constant Integer := Nth_Arg (Data, 3);
             C        : constant Visible_Column_Type :=
-                         Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
+              Visible_Column_Type (Nth_Arg (Data, 4, Default => 1));
             Instance : constant Class_Instance :=
               Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
          begin
@@ -171,8 +165,7 @@ package body GPS.Scripts.File_Locations is
          Set_Return_Value
            (Data,
             GPS.Scripts.Files.Create_File
-              (Get_Script (Data),
-               Get_File (Location)));
+              (Get_Script (Data), Get_File (Location)));
       end if;
    end Location_Command_Handler;
 
@@ -184,23 +177,27 @@ package body GPS.Scripts.File_Locations is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class) is
    begin
       Register_Command
-        (Kernel.Scripts, Constructor_Method,
+        (Kernel.Scripts,
+         Constructor_Method,
          Minimum_Args => 3,
          Maximum_Args => 3,
          Class        => Get_File_Location_Class (Kernel),
          Handler      => Location_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "line",
-         Class         => Get_File_Location_Class (Kernel),
-         Handler       => Location_Command_Handler'Access);
+        (Kernel.Scripts,
+         "line",
+         Class   => Get_File_Location_Class (Kernel),
+         Handler => Location_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "column",
-         Class         => Get_File_Location_Class (Kernel),
-         Handler       => Location_Command_Handler'Access);
+        (Kernel.Scripts,
+         "column",
+         Class   => Get_File_Location_Class (Kernel),
+         Handler => Location_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "file",
-         Class        => Get_File_Location_Class (Kernel),
-         Handler      => Location_Command_Handler'Access);
+        (Kernel.Scripts,
+         "file",
+         Class   => Get_File_Location_Class (Kernel),
+         Handler => Location_Command_Handler'Access);
    end Register_Commands;
 
    --------------
@@ -215,7 +212,8 @@ package body GPS.Scripts.File_Locations is
       end if;
 
       Set_Data
-        (Instance, File_Location_Class_Name,
+        (Instance,
+         File_Location_Class_Name,
          Location_Properties_Record'(Location => Location));
    end Set_Data;
 

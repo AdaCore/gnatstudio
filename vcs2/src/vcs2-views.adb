@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -37,7 +37,8 @@ package body VCS2.Views is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : access Base_VCS_View_Record'Class;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -50,17 +51,19 @@ package body VCS2.Views is
    --  If no VCS engine was found when creating the view, inform the user
 
    type Refresh_On_Terminate_Visitor is new Task_Visitor with record
-      Kernel    : Kernel_Handle;
+      Kernel : Kernel_Handle;
    end record;
-   overriding procedure On_Terminate
-     (Self     : not null access Refresh_On_Terminate_Visitor;
-      VCS      : access VCS_Engine'Class);
+   overriding
+   procedure On_Terminate
+     (Self : not null access Refresh_On_Terminate_Visitor;
+      VCS  : access VCS_Engine'Class);
    --  Refreshes all VCS views on terminate
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with record
       View : Base_VCS_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
@@ -121,10 +124,10 @@ package body VCS2.Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class)
-   is
+      Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Hide_Or_Show_No_VCS_Label (Kernel, Self.View);
    end Execute;
@@ -133,15 +136,15 @@ package body VCS2.Views is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Base_VCS_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,
-         Hist_Prefix => Histories.History_Key
-           (To_String (View.Filter_Hist_Prefix)),
+         Hist_Prefix =>
+           Histories.History_Key (To_String (View.Filter_Hist_Prefix)),
          Tooltip     => -"Filter the contents",
          Placeholder => -"filter",
          Options     => View.Filter_Options);
@@ -152,9 +155,7 @@ package body VCS2.Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Self    : not null access Base_VCS_View_Record;
-      Pref    : Preference)
-   is
+     (Self : not null access Base_VCS_View_Record; Pref : Preference) is
    begin
       Set_Font_And_Colors (Self.Tree, Fixed_Font => True, Pref => Pref);
 
@@ -167,7 +168,8 @@ package body VCS2.Views is
            (Self.Text_Render,
             Gtk.Cell_Renderer_Text.Ellipsize_Property,
             (if Show_Ellipsis.Get_Pref
-             then Ellipsize_Middle else Ellipsize_None));
+             then Ellipsize_Middle
+             else Ellipsize_None));
          Self.Queue_Resize;
          Self.Tree.Queue_Draw;
       end if;
@@ -177,7 +179,8 @@ package body VCS2.Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -197,9 +200,7 @@ package body VCS2.Views is
       Child : constant MDI_Child := Find_MDI_Child_From_Widget (View);
    begin
       --  Might be null during refresh
-      if Child /= null
-        and then Child = MDI.Get_Focus_Child
-      then
+      if Child /= null and then Child = MDI.Get_Focus_Child then
          View.Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
       end if;
    end On_Selection_Changed;
@@ -208,8 +209,7 @@ package body VCS2.Views is
    -- No_VCS_Help --
    -----------------
 
-   procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class)
-   is
+   procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class) is
       Label : Gtk_Label;
       Vbox  : Gtk_Vbox;
 
@@ -238,7 +238,8 @@ package body VCS2.Views is
    -- On_Create --
    ---------------
 
-   overriding procedure On_Create
+   overriding
+   procedure On_Create
      (Self  : not null access Base_VCS_View_Record;
       Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
    is
@@ -250,8 +251,8 @@ package body VCS2.Views is
 
       No_VCS_Help (Self);
       Vcs_Active_Changed_Hook.Add
-        (new On_Active_VCS_Changed'(Hook_Function
-         with View => Base_VCS_View (Self)),
+        (new On_Active_VCS_Changed'
+           (Hook_Function with View => Base_VCS_View (Self)),
          Watch => Self);
 
       if Self.Tree /= null then
@@ -282,9 +283,10 @@ package body VCS2.Views is
    -- On_Terminate --
    ------------------
 
-   overriding procedure On_Terminate
-     (Self     : not null access Refresh_On_Terminate_Visitor;
-      VCS      : access VCS_Engine'Class)
+   overriding
+   procedure On_Terminate
+     (Self : not null access Refresh_On_Terminate_Visitor;
+      VCS  : access VCS_Engine'Class)
    is
       pragma Unreferenced (VCS);
    begin
@@ -298,13 +300,12 @@ package body VCS2.Views is
    --------------------------
 
    function Refresh_On_Terminate
-      (Kernel    : not null access Kernel_Handle_Record'Class)
-       return not null access Task_Visitor'Class
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null access Task_Visitor'Class
    is
       Aux : constant not null Task_Visitor_Access :=
-              new Refresh_On_Terminate_Visitor'
-                (Task_Visitor with
-                 Kernel => Kernel_Handle (Kernel));
+        new Refresh_On_Terminate_Visitor'
+          (Task_Visitor with Kernel => Kernel_Handle (Kernel));
 
    begin
       return Aux;

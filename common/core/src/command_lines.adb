@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;
-with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Scripts.Utils; use GNATCOLL.Scripts.Utils;
 with Ada.Containers.Ordered_Sets;
 
 package body Command_Lines is
@@ -74,8 +74,7 @@ package body Command_Lines is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Command_Line_Configuration'Class)
-                 return Boolean
+   function "=" (Left, Right : Command_Line_Configuration'Class) return Boolean
    is
       Empty : Configuration;
    begin
@@ -100,8 +99,8 @@ package body Command_Lines is
       elsif Right.Sections.Is_Null then
          return Left.Is_Empty;
       else
-         return Left.Sections.Unchecked_Get.all =
-           Right.Sections.Unchecked_Get.all;
+         return
+           Left.Sections.Unchecked_Get.all = Right.Sections.Unchecked_Get.all;
       end if;
    end "=";
 
@@ -110,8 +109,7 @@ package body Command_Lines is
    --------------------
 
    procedure Define_Section
-     (Config  : in out Command_Line_Configuration;
-      Section : String)
+     (Config : in out Command_Line_Configuration; Section : String)
    is
       Name : constant Unbounded_String := To_Unbounded_String (Section);
    begin
@@ -132,14 +130,15 @@ package body Command_Lines is
       Expanded : String;
       Section  : String := "")
    is
-      package Unbounded_String_Sets is new Ada.Containers.Ordered_Sets
-        (Element_Type => Unbounded_String,
-         "<"          => "<");
+      package Unbounded_String_Sets is new
+        Ada.Containers.Ordered_Sets
+          (Element_Type => Unbounded_String,
+           "<"          => "<");
 
       procedure Process_Switch (Item : Command_Lines.Switch);
       --  Append prefixed switch to ordered set
 
-      Set   : Unbounded_String_Sets.Set;
+      Set : Unbounded_String_Sets.Set;
 
       --------------------
       -- Process_Switch --
@@ -188,8 +187,7 @@ package body Command_Lines is
       --  Expanded unordered we won't be able to match it
       Parse_Switch
         (Config  => Config,
-         Item    => (Switch => Long,
-                     Parameter => Null_Argument),
+         Item    => (Switch => Long, Parameter => Null_Argument),
          Section => Name,
          Prefix  => Prefix);
 
@@ -202,7 +200,7 @@ package body Command_Lines is
       end if;
 
       declare
-         Value  : Section_Configuration renames Conf.Sections (Name);
+         Value : Section_Configuration renames Conf.Sections (Name);
       begin
          Value.Aliases.Include (Short, Long);
          Value.Expanded.Include (Long, Short);
@@ -214,8 +212,7 @@ package body Command_Lines is
    -------------------
 
    procedure Define_Prefix
-     (Config : in out Command_Line_Configuration;
-      Prefix : String)
+     (Config : in out Command_Line_Configuration; Prefix : String)
    is
       Value : constant Unbounded_String := To_Unbounded_String (Prefix);
    begin
@@ -231,13 +228,13 @@ package body Command_Lines is
    -------------------
 
    procedure Define_Switch
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "")
+     (Config  : in out Command_Line_Configuration;
+      Switch  : String;
+      Section : String := "")
    is
-      Key   : constant Unbounded_String := To_Unbounded_String (Switch);
-      Name  : constant Unbounded_String := To_Unbounded_String (Section);
-      Conf  : Configuration_References.Element_Access;
+      Key  : constant Unbounded_String := To_Unbounded_String (Switch);
+      Name : constant Unbounded_String := To_Unbounded_String (Section);
+      Conf : Configuration_References.Element_Access;
    begin
       Make_Default_Section (Config);
       Conf := Config.Unchecked_Get;
@@ -251,9 +248,7 @@ package body Command_Lines is
       begin
          if not Value.Switches.Contains (Key) then
             Value.Switches.Insert
-              (Key,
-               (Switch    => Key,
-                Parameter => (Is_Set => False)));
+              (Key, (Switch => Key, Parameter => (Is_Set => False)));
          end if;
       end;
    end Define_Switch;
@@ -263,14 +258,14 @@ package body Command_Lines is
    ----------------------------------
 
    procedure Define_Switch_With_Parameter
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "";
-      Optional    : Boolean := False)
+     (Config   : in out Command_Line_Configuration;
+      Switch   : String;
+      Section  : String := "";
+      Optional : Boolean := False)
    is
-      Key   : constant Unbounded_String := To_Unbounded_String (Switch);
-      Name  : constant Unbounded_String := To_Unbounded_String (Section);
-      Conf  : Configuration_References.Element_Access;
+      Key  : constant Unbounded_String := To_Unbounded_String (Switch);
+      Name : constant Unbounded_String := To_Unbounded_String (Section);
+      Conf : Configuration_References.Element_Access;
    begin
       Make_Default_Section (Config);
       Conf := Config.Unchecked_Get;
@@ -286,9 +281,10 @@ package body Command_Lines is
             Value.Switches.Insert
               (Key,
                (Switch    => Key,
-                Parameter => (Is_Set => True,
-                              Optional => Optional,
-                              Separator => (Is_Set => False))));
+                Parameter =>
+                  (Is_Set    => True,
+                   Optional  => Optional,
+                   Separator => (Is_Set => False))));
          end if;
       end;
    end Define_Switch_With_Parameter;
@@ -298,15 +294,15 @@ package body Command_Lines is
    ----------------------------------
 
    procedure Define_Switch_With_Parameter
-     (Config      : in out Command_Line_Configuration;
-      Switch      : String;
-      Section     : String := "";
-      Separator   : String;
-      Optional    : Boolean := False)
+     (Config    : in out Command_Line_Configuration;
+      Switch    : String;
+      Section   : String := "";
+      Separator : String;
+      Optional  : Boolean := False)
    is
-      Key   : constant Unbounded_String := To_Unbounded_String (Switch);
-      Name  : constant Unbounded_String := To_Unbounded_String (Section);
-      Conf  : Configuration_References.Element_Access;
+      Key  : constant Unbounded_String := To_Unbounded_String (Switch);
+      Name : constant Unbounded_String := To_Unbounded_String (Section);
+      Conf : Configuration_References.Element_Access;
    begin
       Make_Default_Section (Config);
       Conf := Config.Unchecked_Get;
@@ -322,12 +318,12 @@ package body Command_Lines is
             Value.Switches.Insert
               (Key,
                (Switch    => Key,
-                Parameter => (Is_Set => True,
-                              Optional => Optional,
-                              Separator => (Is_Set => True,
-                                            Value  =>
-                                              To_Unbounded_String (Separator)
-                                           ))));
+                Parameter =>
+                  (Is_Set    => True,
+                   Optional  => Optional,
+                   Separator =>
+                     (Is_Set => True,
+                      Value  => To_Unbounded_String (Separator)))));
          end if;
       end;
    end Define_Switch_With_Parameter;
@@ -372,8 +368,7 @@ package body Command_Lines is
    -----------------------
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line'Class;
-      Config : Command_Line_Configuration) is
+     (Cmd : in out Command_Line'Class; Config : Command_Line_Configuration) is
    begin
       Cmd.Configuration := Config;
       Make_Default_Section (Cmd.Configuration);
@@ -403,10 +398,7 @@ package body Command_Lines is
    -- Set_Command_Line --
    ----------------------
 
-   procedure Set_Command_Line
-     (Cmd      : in out Command_Line;
-      Switches : String)
-   is
+   procedure Set_Command_Line (Cmd : in out Command_Line; Switches : String) is
       --  Do not use GNAT.OS_Lib.Argument_String_To_List, since it doesn't
       --  properly handle quotes in arguments. For instance,
       --     %python("foo")  becomes    1=> %python("foo" , 2 => ")"
@@ -423,8 +415,7 @@ package body Command_Lines is
    ---------------------
 
    procedure Append_Switches
-     (Cmd  : in out Command_Line;
-      List : GNAT.Strings.String_List)
+     (Cmd : in out Command_Line; List : GNAT.Strings.String_List)
    is
       function Is_Section (Name : String) return Boolean;
       --  Search for section with given Name
@@ -476,12 +467,12 @@ package body Command_Lines is
 
          while Switch_Configuration_Maps.Has_Element (Pos) loop
             Current := Switch_Configuration_Maps.Element (Pos);
-            Length  := Ada.Strings.Unbounded.Length (Current.Switch);
+            Length := Ada.Strings.Unbounded.Length (Current.Switch);
 
             --  Check if argument exectly matches switch
             if Current.Switch = Switch then
                Result := Current;
-               Found  := True;
+               Found := True;
                return;
 
             --  Otherwise check if switch has parameter embedded in argument
@@ -499,7 +490,7 @@ package body Command_Lines is
 
                else
                   Result := Current;
-                  Found  := True;
+                  Found := True;
                end if;
             end if;
 
@@ -540,14 +531,13 @@ package body Command_Lines is
                   and then Switch_Conf.Parameter.Is_Set
                   and then Switch_Conf.Parameter.Separator.Is_Set
                   and then
-                  To_String (Switch_Conf.Parameter.Separator.Value) = " ");
+                    To_String (Switch_Conf.Parameter.Separator.Value) = " ");
 
                if Is_Parameter then
                   Item.Parameter :=
                     (Is_Set    => True,
                      Separator => Switch_Conf.Parameter.Separator,
-                     Value     => To_Unbounded_String
-                       (List (J + 1).all),
+                     Value     => To_Unbounded_String (List (J + 1).all),
                      Key       => Null_Unbounded_String);
                end if;
 
@@ -562,8 +552,12 @@ package body Command_Lines is
                   Item.Parameter :=
                     (Is_Set    => True,
                      Separator => Switch_Conf.Parameter.Separator,
-                     Value     => To_Unbounded_String
-                       (Arg (Arg'First + Length (Item.Switch) + 1
+                     Value     =>
+                       To_Unbounded_String
+                         (Arg
+                            (Arg'First
+                             + Length (Item.Switch)
+                             + 1
                              .. Arg'Last)),
                      Key       => Switch_Conf.Switch);
 
@@ -572,8 +566,9 @@ package body Command_Lines is
                   Item.Parameter :=
                     (Is_Set    => True,
                      Separator => (Is_Set => False),
-                     Value     => To_Unbounded_String
-                       (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)),
+                     Value     =>
+                       To_Unbounded_String
+                         (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)),
                      Key       => Switch_Conf.Switch);
 
                end if;
@@ -590,7 +585,8 @@ package body Command_Lines is
 
    function Starts_With (Value, Prefix : Unbounded_String) return Boolean is
    begin
-      return Length (Prefix) <= Length (Value)
+      return
+        Length (Prefix) <= Length (Value)
         and then Prefix = Head (Value, Length (Prefix));
    end Starts_With;
 
@@ -615,10 +611,7 @@ package body Command_Lines is
    -- Append --
    ------------
 
-   procedure Append
-     (Cmd   : in out Command_Line;
-      Value : Command_Line'Class)
-   is
+   procedure Append (Cmd : in out Command_Line; Value : Command_Line'Class) is
       List : GNAT.Strings.String_List_Access :=
         Value.To_String_List (Expanded => False);
    begin
@@ -629,8 +622,7 @@ package body Command_Lines is
          for J of Value.Configuration.Unchecked_Get.Sections loop
             if not Cmd.Configuration.Unchecked_Get.Sections.Contains (J.Name)
             then
-               Cmd.Configuration.Unchecked_Get.Sections.Insert
-                 (J.Name, J);
+               Cmd.Configuration.Unchecked_Get.Sections.Insert (J.Name, J);
             end if;
          end loop;
       end if;
@@ -644,8 +636,8 @@ package body Command_Lines is
    ------------
 
    function Append
-     (Cmd   : Command_Line'Class;
-      Value : Command_Line'Class) return Command_Line is
+     (Cmd : Command_Line'Class; Value : Command_Line'Class) return Command_Line
+   is
    begin
       return Result : Command_Line do
          Result.Set_Configuration (Cmd.Get_Configuration);
@@ -670,14 +662,12 @@ package body Command_Lines is
       Prefix  : out Unbounded_String)
    is
       function Find_Parameter
-        (Switch : Unbounded_String;
-         Prefix : Unbounded_String;
-         Pos    : Positive) return Unbounded_String;
+        (Switch : Unbounded_String; Prefix : Unbounded_String; Pos : Positive)
+         return Unbounded_String;
       --  Lookup for switch argument in Item.Switch starting from Pos
 
       function Find_Switch
-        (Prefix : Unbounded_String;
-         Pos    : Positive) return Unbounded_String;
+        (Prefix : Unbounded_String; Pos : Positive) return Unbounded_String;
       --  Lookup for switch in Item.Switch starting from Pos
 
       Conf : constant Configuration_References.Element_Access :=
@@ -689,15 +679,13 @@ package body Command_Lines is
       --------------------
 
       function Find_Parameter
-        (Switch : Unbounded_String;
-         Prefix : Unbounded_String;
-         Pos    : Positive) return Unbounded_String
+        (Switch : Unbounded_String; Prefix : Unbounded_String; Pos : Positive)
+         return Unbounded_String
       is
          Result : Unbounded_String;
          Param  : Parameter_Configuration;
       begin
-         if Sect.Switches.Contains (Switch)
-           and Pos <= Length (Item.Switch)
+         if Sect.Switches.Contains (Switch) and Pos <= Length (Item.Switch)
          then
             Param := Sect.Switches (Switch).Parameter;
 
@@ -707,7 +695,7 @@ package body Command_Lines is
                --  Look for first switch after Pos
                for J in Pos .. Length (Item.Switch) loop
                   if Find_Switch (Prefix, J)
-                       not in Null_Unbounded_String | Prefix
+                     not in Null_Unbounded_String | Prefix
                   then
                      Result := Unbounded_Slice (Item.Switch, Pos, J - 1);
                      exit;
@@ -724,22 +712,22 @@ package body Command_Lines is
       -----------------
 
       function Find_Switch
-        (Prefix : Unbounded_String;
-         Pos    : Positive) return Unbounded_String
+        (Prefix : Unbounded_String; Pos : Positive) return Unbounded_String
       is
          Switch : constant Unbounded_String :=
            Prefix & Delete (Item.Switch, 1, Pos - 1);
          Cursor : Switch_Configuration_Maps.Cursor :=
            Sect.Switches.Ceiling (Switch);
       begin
-         if Switch_Configuration_Maps.Has_Element (Cursor) and then
-           Switch_Configuration_Maps.Key (Cursor) /= Switch
+         if Switch_Configuration_Maps.Has_Element (Cursor)
+           and then Switch_Configuration_Maps.Key (Cursor) /= Switch
          then
             Switch_Configuration_Maps.Previous (Cursor);
          end if;
 
-         if Switch_Configuration_Maps.Has_Element (Cursor) and then
-           Starts_With (Switch, Switch_Configuration_Maps.Key (Cursor))
+         if Switch_Configuration_Maps.Has_Element (Cursor)
+           and then
+             Starts_With (Switch, Switch_Configuration_Maps.Key (Cursor))
          then
             return Switch_Configuration_Maps.Key (Cursor);
          else
@@ -764,8 +752,7 @@ package body Command_Lines is
       end if;
 
       --  Keep switches with parameters with separators outside of prefix group
-      if not Item.Parameter.Is_Set
-        or else not Item.Parameter.Separator.Is_Set
+      if not Item.Parameter.Is_Set or else not Item.Parameter.Separator.Is_Set
       then
          Prefix := Find_Prefix (Conf, Item.Switch);
       end if;
@@ -785,10 +772,11 @@ package body Command_Lines is
             if Arg /= "" then
                Process_Switch
                  ((Switch    => Prefix,
-                   Parameter => (Is_Set    => True,
-                                 Separator => (Is_Set => False),
-                                 Value     => Arg,
-                                 Key       => Null_Unbounded_String)));
+                   Parameter =>
+                     (Is_Set    => True,
+                      Separator => (Is_Set => False),
+                      Value     => Arg,
+                      Key       => Null_Unbounded_String)));
             end if;
          end if;
 
@@ -807,15 +795,17 @@ package body Command_Lines is
             if Arg /= "" then
                Process_Switch
                  ((Switch,
-                  Parameter => (Is_Set    => True,
-                                Separator => (Is_Set => False),
-                                Value     => Arg,
-                                Key       => Null_Unbounded_String)));
+                   Parameter =>
+                     (Is_Set    => True,
+                      Separator => (Is_Set => False),
+                      Value     => Arg,
+                      Key       => Null_Unbounded_String)));
             elsif Count (Switch, "=") /= Count (Item.Switch, "=") then
                --  Avoid infinite recursion between --foo=a and --foo
                --  (value defined vs default value)
                exit;
-            elsif Switch /= Item.Switch then  --  Avoid infinite recursion
+            elsif Switch /= Item.Switch then
+               --  Avoid infinite recursion
                Process_Switch ((Switch, Parameter => Null_Argument));
             end if;
          end loop;
@@ -854,19 +844,19 @@ package body Command_Lines is
       begin
          if Prefix /= "" then
             if not Section.Prefixes.Contains (Prefix) then
-               Section.Prefixes.Insert
-                 (Prefix, Argument_Lists.Empty_List);
+               Section.Prefixes.Insert (Prefix, Argument_Lists.Empty_List);
             end if;
             if Item.Parameter.Is_Set then
-               Include (Section.Prefixes (Prefix),
-                        (Is_Set    => True,
-                         Separator => Item.Parameter.Separator,
-                         Value     => Item.Parameter.Value,
-                         Key       => Item.Switch));
+               Include
+                 (Section.Prefixes (Prefix),
+                  (Is_Set    => True,
+                   Separator => Item.Parameter.Separator,
+                   Value     => Item.Parameter.Value,
+                   Key       => Item.Switch));
             else
-               Include (Section.Prefixes (Prefix),
-                        (Is_Set    => False,
-                         Key       => Item.Switch));
+               Include
+                 (Section.Prefixes (Prefix),
+                  (Is_Set => False, Key => Item.Switch));
             end if;
 
          elsif Add_Before then
@@ -911,9 +901,9 @@ package body Command_Lines is
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String  := "";
-      Separator  : String  := "";
-      Section    : String  := "";
+      Parameter  : String := "";
+      Separator  : String := "";
+      Section    : String := "";
       Add_Before : Boolean := False)
    is
       Success : Boolean;
@@ -929,9 +919,9 @@ package body Command_Lines is
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String  := "";
-      Separator  : String  := "";
-      Section    : String  := "";
+      Parameter  : String := "";
+      Separator  : String := "";
+      Section    : String := "";
       Add_Before : Boolean := False;
       Success    : out Boolean)
    is
@@ -954,8 +944,7 @@ package body Command_Lines is
 
          if Separator /= "" then
             Item.Parameter.Separator :=
-              (Is_Set => True,
-               Value  => To_Unbounded_String (Separator));
+              (Is_Set => True, Value => To_Unbounded_String (Separator));
          end if;
       end if;
 
@@ -971,7 +960,7 @@ package body Command_Lines is
      (Cmd           : in out Command_Line;
       Switch        : String;
       Has_Parameter : Triboolean := False;
-      Section       : String     := "")
+      Section       : String := "")
    is
       Success : Boolean;
    begin
@@ -986,7 +975,7 @@ package body Command_Lines is
      (Cmd           : in out Command_Line;
       Switch        : String;
       Has_Parameter : Triboolean := False;
-      Section       : String     := "";
+      Section       : String := "";
       Success       : out Boolean) is
    begin
       Remove_Switch
@@ -1009,18 +998,16 @@ package body Command_Lines is
       Success       : out Boolean)
    is
       procedure Remove_From_Section
-        (Section : in out Command_Lines.Section;
-         Prefix  : Unbounded_String);
+        (Section : in out Command_Lines.Section; Prefix : Unbounded_String);
       --  Remove Item from Section taking switch Prefix into account
 
       procedure Remove_Recursive (Item : Command_Lines.Switch);
       --  Call Remove_Switch for given Item. Set Removed to True
 
-      Removed  : Boolean := False;
+      Removed : Boolean := False;
 
       procedure Remove_From_Section
-        (Section : in out Command_Lines.Section;
-         Prefix  : Unbounded_String)
+        (Section : in out Command_Lines.Section; Prefix : Unbounded_String)
       is
          Pos : Switch_Vectors.Cursor := Section.Switches.First;
       begin
@@ -1032,8 +1019,9 @@ package body Command_Lines is
                begin
                   if Next.Switch = Switch
                     and then
-                      (Has_Parameter = Indeterminate or else
-                       Next.Parameter.Is_Set = To_Boolean (Has_Parameter))
+                      (Has_Parameter = Indeterminate
+                       or else
+                         Next.Parameter.Is_Set = To_Boolean (Has_Parameter))
                   then
                      Section.Switches.Delete (Pos);
                      Success := True;
@@ -1100,8 +1088,7 @@ package body Command_Lines is
       else
          Parse_Switch
            (Cmd.Configuration,
-            (Switch => Switch,
-             Parameter => Null_Argument),
+            (Switch => Switch, Parameter => Null_Argument),
             Section,
             Prefix);
       end if;
@@ -1142,9 +1129,8 @@ package body Command_Lines is
    ----------------
 
    function Has_Switch
-     (Cmd     : Command_Line;
-      Switch  : String;
-      Section : String  := "") return Boolean is
+     (Cmd : Command_Line; Switch : String; Section : String := "")
+      return Boolean is
    begin
       for Expanded in Boolean loop
          declare
@@ -1172,9 +1158,8 @@ package body Command_Lines is
    -------------------
 
    function Get_Parameter
-     (Cmd     : Command_Line;
-      Switch  : String;
-      Section : String  := "") return Argument is
+     (Cmd : Command_Line; Switch : String; Section : String := "")
+      return Argument is
    begin
       for Expanded in Boolean loop
          declare
@@ -1250,8 +1235,9 @@ package body Command_Lines is
          return Switch_Vectors.Element (Iter.Switch);
       elsif Iter.Expanded and then Argument_Lists.Has_Element (Iter.Argument)
       then
-         return (Argument_Lists.Element (Iter.Argument).Key,
-                 Argument_Lists.Element (Iter.Argument));
+         return
+           (Argument_Lists.Element (Iter.Argument).Key,
+            Argument_Lists.Element (Iter.Argument));
       else
          --  Collect all prefixed switches into one single switch
          declare
@@ -1448,8 +1434,8 @@ package body Command_Lines is
    --------------------
 
    function To_String_List
-     (Cmd      : Command_Line;
-      Expanded : Boolean) return GNAT.Strings.String_List_Access
+     (Cmd : Command_Line; Expanded : Boolean)
+      return GNAT.Strings.String_List_Access
    is
       Result : GNAT.Strings.String_List_Access;
       Iter   : Command_Line_Iterator;
@@ -1485,10 +1471,11 @@ package body Command_Lines is
 
          if Current_Separator (Iter) /= " " then
             if Current_Parameter (Iter) /= "" then
-               Result (Count) := new String'
-                 (Current_Switch (Iter)
-                  & Current_Separator (Iter)
-                  & Current_Parameter (Iter));
+               Result (Count) :=
+                 new String'
+                   (Current_Switch (Iter)
+                    & Current_Separator (Iter)
+                    & Current_Parameter (Iter));
 
             else
                Result (Count) := new String'(Current_Switch (Iter));
@@ -1554,10 +1541,11 @@ package body Command_Lines is
 
    function Map
      (Cmd    : Command_Line;
-      Update : access procedure
-        (Switch    : in out Unbounded_String;
-         Section   : in out Unbounded_String;
-         Parameter : in out Argument)) return Command_Line
+      Update :
+        access procedure
+          (Switch    : in out Unbounded_String;
+           Section   : in out Unbounded_String;
+           Parameter : in out Argument)) return Command_Line
    is
       Result : Command_Line;
       Iter   : Command_Line_Iterator;
@@ -1587,11 +1575,10 @@ package body Command_Lines is
 
    function Filter
      (Cmd    : Command_Line;
-      Delete : access function
-        (Switch    : String;
-         Section   : String;
-         Parameter : Argument) return Boolean)
-      return Command_Line
+      Delete :
+        access function
+          (Switch : String; Section : String; Parameter : Argument)
+           return Boolean) return Command_Line
    is
       Result : Command_Line;
       Iter   : Command_Line_Iterator;
@@ -1605,9 +1592,7 @@ package body Command_Lines is
             Item    : constant Switch := Current_Switch (Iter);
             Section : constant String := Current_Section (Iter);
          begin
-            if not Delete (To_String (Item.Switch),
-                           Section,
-                           Item.Parameter)
+            if not Delete (To_String (Item.Switch), Section, Item.Parameter)
             then
                Append (Result, Item, To_Unbounded_String (Section));
             end if;
@@ -1623,8 +1608,7 @@ package body Command_Lines is
    -- Include --
    -------------
 
-   procedure Include (Arg_List : in out Argument_Lists.List; Arg : Argument)
-   is
+   procedure Include (Arg_List : in out Argument_Lists.List; Arg : Argument) is
    begin
       Delete (Arg_List, Arg.Key);
       Arg_List.Append (Arg);
@@ -1635,8 +1619,7 @@ package body Command_Lines is
    --------------
 
    function Contains
-     (Arg_List : Argument_Lists.List; Key : Unbounded_String) return Boolean
-   is
+     (Arg_List : Argument_Lists.List; Key : Unbounded_String) return Boolean is
    begin
       for A of Arg_List loop
          if A.Key = Key then

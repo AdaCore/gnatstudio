@@ -15,40 +15,42 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada, Ada.Exceptions;
+with Ada.Exceptions;
+use Ada, Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Expect;                use GNAT.Expect;
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+with GNAT.Expect;            use GNAT.Expect;
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (Off, ".*is an internal GNAT unit");
-with GNAT.Expect.TTY.Remote;     use GNAT.Expect.TTY.Remote;
+with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On, ".*is an internal GNAT unit");
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 
-with Glib;                       use Glib;
-with Glib.Main;                  use Glib.Main;
-with Glib.Object;                use Glib.Object;
+with Glib;        use Glib;
+with Glib.Main;   use Glib.Main;
+with Glib.Object; use Glib.Object;
 
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Properties;             use GPS.Properties;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Properties;         use GPS.Properties;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 
-with Interactive_Consoles;       use Interactive_Consoles;
-with Toolchains_Old;             use Toolchains_Old;
-with UTF8_Utils;                 use UTF8_Utils;
+with Interactive_Consoles; use Interactive_Consoles;
+with Toolchains_Old;       use Toolchains_Old;
+with UTF8_Utils;           use UTF8_Utils;
 
-with Gexpect.Db;                 use Gexpect, Gexpect.Db;
+with Gexpect.Db;
+use Gexpect, Gexpect.Db;
 
 package body GPS.Kernel.Remote is
 
@@ -94,14 +96,15 @@ package body GPS.Kernel.Remote is
       Servers : Servers_Config;
    end record;
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Servers_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Property : in out Servers_Property;
-      Value    : GNATCOLL.JSON.JSON_Value);
-   overriding procedure Destroy
-     (Property : in out Servers_Property);
+   overriding
+   procedure Load
+     (Property : in out Servers_Property; Value : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Destroy (Property : in out Servers_Property);
 
    ----------------------------
    -- Project load utilities --
@@ -112,8 +115,8 @@ package body GPS.Kernel.Remote is
       Kernel : Kernel_Handle;
    end record;
 
-   package Reload_Timeout is new Glib.Main.Generic_Sources
-     (Reload_Callback_Data);
+   package Reload_Timeout is new
+     Glib.Main.Generic_Sources (Reload_Callback_Data);
 
    function Reload_Prj_Cb (Data : Reload_Callback_Data) return Boolean;
    --  Callback used to reload the project when build_server changed
@@ -122,8 +125,10 @@ package body GPS.Kernel.Remote is
    -- Utility methods --
    ---------------------
 
-   procedure Simple_Free is new Ada.Unchecked_Deallocation
-     (Object => Argument_List, Name => Argument_List_Access);
+   procedure Simple_Free is new
+     Ada.Unchecked_Deallocation
+       (Object => Argument_List,
+        Name   => Argument_List_Access);
    --  Frees the pointer without freeing internal strings
 
    ---------------
@@ -131,7 +136,8 @@ package body GPS.Kernel.Remote is
    ---------------
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
@@ -154,8 +160,7 @@ package body GPS.Kernel.Remote is
    -----------------------------
 
    procedure Remote_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Server : Server_Type;
    begin
@@ -197,7 +202,8 @@ package body GPS.Kernel.Remote is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Servers_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -224,9 +230,9 @@ package body GPS.Kernel.Remote is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Property : in out Servers_Property;
-      Value    : GNATCOLL.JSON.JSON_Value)
+   overriding
+   procedure Load
+     (Property : in out Servers_Property; Value : GNATCOLL.JSON.JSON_Value)
    is
       use GNATCOLL.JSON;
 
@@ -242,8 +248,7 @@ package body GPS.Kernel.Remote is
          for J in Property.Servers'Range loop
             Free (Property.Servers (J).Nickname);
             Property.Servers (J) :=
-              (Is_Local => True,
-               Nickname => new String'(Local_Nickname));
+              (Is_Local => True, Nickname => new String'(Local_Nickname));
          end loop;
       else
          for J in Property.Servers'Range loop
@@ -274,7 +279,8 @@ package body GPS.Kernel.Remote is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
@@ -301,11 +307,12 @@ package body GPS.Kernel.Remote is
 
       --  Get servers associated with this file
 
-      Trace (Me, "Loading servers_config property for file " &
-             Local_File.Display_Full_Name);
+      Trace
+        (Me,
+         "Loading servers_config property for file "
+         & Local_File.Display_Full_Name);
       Get_Property
-        (Property, Local_File,
-         Name => "servers_config", Found => Success);
+        (Property, Local_File, Name => "servers_config", Found => Success);
 
       --  If no previous property exist, create it
       if not Success then
@@ -314,23 +321,20 @@ package body GPS.Kernel.Remote is
          if not Is_Local (File) then
             for J in Property.Servers'Range loop
                Property.Servers (J) :=
-                 (Is_Local => False,
-                  Nickname => new String'(Get_Host (File)));
+                 (Is_Local => False, Nickname => new String'(Get_Host (File)));
             end loop;
 
          else
             for J in Property.Servers'Range loop
                Property.Servers (J) :=
-                 (Is_Local => True,
-                  Nickname => new String'(Local_Nickname));
+                 (Is_Local => True, Nickname => new String'(Local_Nickname));
             end loop;
          end if;
 
          --  Set the property for loaded project
          Prop := new Servers_Property'(Property);
-         Set_Property (Kernel,
-                       Local_File, "servers_config", Prop,
-                       Persistent => True);
+         Set_Property
+           (Kernel, Local_File, "servers_config", Prop, Persistent => True);
       end if;
 
       --  Assign servers following property values
@@ -343,20 +347,15 @@ package body GPS.Kernel.Remote is
          then
             Assign (J, Local_Nickname);
             Server_Config_Hook.Run
-               (Kernel   => Kernel,
-                Server   => J,
-                Nickname => Local_Nickname);
+              (Kernel => Kernel, Server => J, Nickname => Local_Nickname);
 
          elsif Property.Servers (J).Nickname.all /= Get_Nickname (J) then
             declare
-               Nickname  : constant String :=
-                             Property.Servers (J).Nickname.all;
+               Nickname : constant String := Property.Servers (J).Nickname.all;
             begin
                Assign (J, Nickname);
                Server_Config_Hook.Run
-                  (Kernel   => Kernel,
-                   Server   => J,
-                   Nickname => Nickname);
+                 (Kernel => Kernel, Server => J, Nickname => Nickname);
             end;
          end if;
       end loop;
@@ -368,11 +367,12 @@ package body GPS.Kernel.Remote is
         and then Get_Host (File) /= Get_Nickname (Build_Server)
       then
          Trace (Me, "Assign build server: project loaded from remote host");
-         Assign (Kernel_Handle (Kernel),
-                 Build_Server,
-                 Get_Host (File),
-                 Local_File,
-                 Reload_Prj => False);
+         Assign
+           (Kernel_Handle (Kernel),
+            Build_Server,
+            Get_Host (File),
+            Local_File,
+            Reload_Prj => False);
       end if;
 
       --  If project is loaded from distant host then synchronize all dirs to
@@ -381,7 +381,9 @@ package body GPS.Kernel.Remote is
       if not Is_Local (File) then
          Trace (Me, "Start synchronization of build_server");
          Synchronize
-           (Kernel_Handle (Kernel), Build_Server, GPS_Server,
+           (Kernel_Handle (Kernel),
+            Build_Server,
+            GPS_Server,
             Blocking      => True,
             Print_Command => False,
             Print_Output  => False,
@@ -406,7 +408,8 @@ package body GPS.Kernel.Remote is
       return False;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          return False;
    end Reload_Prj_Cb;
 
@@ -438,12 +441,14 @@ package body GPS.Kernel.Remote is
 
       else
          for J in Distant_Server_Type'Range loop
-            if  Property.Servers (J).Nickname.all /= Get_Printable_Nickname (J)
+            if Property.Servers (J).Nickname.all /= Get_Printable_Nickname (J)
               and then Property.Servers (J).Nickname.all /= Get_Nickname (J)
             then
                Trace
-                 (Me, "server " & Server_Type'Image (J) &
-                  " is changed from property");
+                 (Me,
+                  "server "
+                  & Server_Type'Image (J)
+                  & " is changed from property");
                return False;
             end if;
          end loop;
@@ -499,7 +504,10 @@ package body GPS.Kernel.Remote is
       Prop := new Servers_Property'(Property);
       Set_Property
         (Remote_Module.Kernel,
-         The_File, "servers_config", Prop, Persistent => True);
+         The_File,
+         "servers_config",
+         Prop,
+         Persistent => True);
    end Set_Default_Remote_Settings;
 
    ------------
@@ -529,8 +537,11 @@ package body GPS.Kernel.Remote is
       if not Is_Configured (Nickname) then
          Insert
            (Kernel,
-            -"Error: The Server " & Nickname & (-" is not configured, and " &
-              "cannot be used as remote server for ") & Server'Img,
+            -"Error: The Server "
+            & Nickname
+            & (-" is not configured, and "
+               & "cannot be used as remote server for ")
+            & Server'Img,
             Mode => Error);
          return;
       end if;
@@ -543,40 +554,44 @@ package body GPS.Kernel.Remote is
          Load_Data.Kernel := Kernel;
 
          if Prj_File = GNATCOLL.VFS.No_File then
-            Load_Data.File := To_Remote
-              (Get_Project (Kernel).Project_Path,
-               Get_Nickname (Build_Server));
+            Load_Data.File :=
+              To_Remote
+                (Get_Project (Kernel).Project_Path,
+                 Get_Nickname (Build_Server));
          else
-            Load_Data.File := To_Remote
-              (Prj_File,
-               Get_Nickname (Build_Server));
+            Load_Data.File :=
+              To_Remote (Prj_File, Get_Nickname (Build_Server));
          end if;
 
          if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
             Insert
               (Kernel,
-               -"Error: the project " &
-               Display_Full_Name (Load_Data.File) &
-               (-" has no path equivalence on remote machine ") &
-               Get_Nickname (Build_Server) & ASCII.LF &
-               (-("Verify that the 'Path translation' setting is configured " &
-               ("in your Server setting dialog"))));
+               -"Error: the project "
+               & Display_Full_Name (Load_Data.File)
+               & (-" has no path equivalence on remote machine ")
+               & Get_Nickname (Build_Server)
+               & ASCII.LF
+               & (-("Verify that the 'Path translation' setting is configured "
+                    & ("in your Server setting dialog"))));
          else
             Trace (Me, "Asking project reload");
-            Id := Reload_Timeout.Timeout_Add
-              (Timeout, Reload_Prj_Cb'Access, Load_Data);
+            Id :=
+              Reload_Timeout.Timeout_Add
+                (Timeout, Reload_Prj_Cb'Access, Load_Data);
          end if;
       end if;
 
       if Active (Me) then
-         Trace (Me, "run server_changed hook for " &
-                Server_Type'Image (Server) & " => " & Nickname);
+         Trace
+           (Me,
+            "run server_changed hook for "
+            & Server_Type'Image (Server)
+            & " => "
+            & Nickname);
       end if;
 
       Server_Config_Hook.Run
-         (Kernel   => Kernel,
-          Server   => Server,
-          Nickname => Nickname);
+        (Kernel => Kernel, Server => Server, Nickname => Nickname);
    end Assign;
 
    ----------------------
@@ -602,7 +617,7 @@ package body GPS.Kernel.Remote is
       Print_Command : Boolean;
       Print_Output  : Boolean;
       Force         : Boolean;
-      Queue_Id      : String  := "";
+      Queue_Id      : String := "";
       File          : Virtual_File := No_File)
    is
       Machine        : Machine_Access;
@@ -636,8 +651,9 @@ package body GPS.Kernel.Remote is
 
          if not Gexpect.Db.Is_Configured (To) then
             Kernel.Insert
-              (-"Sync files failure: " &
-               To & (-" is not correctly configured"),
+              (-"Sync files failure: "
+               & To
+               & (-" is not correctly configured"),
                Mode => Error);
             return;
          end if;
@@ -648,8 +664,9 @@ package body GPS.Kernel.Remote is
       elsif To = Local_Nickname then
          if not Gexpect.Db.Is_Configured (From) then
             Kernel.Insert
-              (-"Sync files failure: " &
-               From & (-" is not correctly configured"),
+              (-"Sync files failure: "
+               & From
+               & (-" is not correctly configured"),
                Mode => Error);
             return;
          end if;
@@ -658,8 +675,12 @@ package body GPS.Kernel.Remote is
          Machine := Get_Server (From);
 
       else
-         Trace (Me, "ERROR: cannot synchronize two remote servers: " &
-                From & " - " & To);
+         Trace
+           (Me,
+            "ERROR: cannot synchronize two remote servers: "
+            & From
+            & " - "
+            & To);
          return;
       end if;
 
@@ -677,24 +698,25 @@ package body GPS.Kernel.Remote is
       Trace (Me, "run sync hook for " & Machine.Nickname);
 
       if not Rsync_Action_Hook.Run
-         (Kernel        => Kernel,
-          Tool_Name     => Machine.Sync_Tool,
-          Host_Name     => Machine.Nickname,
-          To_Remote     => Remote_Is_Dest,
-          Queue_Id      => The_Queue_Id,
-          Synchronous   => Blocking,
-          Print_Output  => Print_Output,
-          Print_Command => Print_Command,
-          Force         => Force,
-          File          => File)
+               (Kernel        => Kernel,
+                Tool_Name     => Machine.Sync_Tool,
+                Host_Name     => Machine.Nickname,
+                To_Remote     => Remote_Is_Dest,
+                Queue_Id      => The_Queue_Id,
+                Synchronous   => Blocking,
+                Print_Output  => Print_Output,
+                Print_Command => Print_Command,
+                Force         => Force,
+                File          => File)
       then
          Kernel.Insert
-           (Machine.Sync_Tool & (-" failure: ") &
-            (-"Please verify your network configuration"),
+           (Machine.Sync_Tool
+            & (-" failure: ")
+            & (-"Please verify your network configuration"),
             Mode => Error);
 
-         Trace (Me, "No remote sync was registered or errors during" &
-                " calls");
+         Trace
+           (Me, "No remote sync was registered or errors during" & " calls");
          return;
       end if;
    end Synchronize;
@@ -711,7 +733,7 @@ package body GPS.Kernel.Remote is
       Print_Command : Boolean;
       Print_Output  : Boolean;
       Force         : Boolean;
-      Queue_Id      : String  := "";
+      Queue_Id      : String := "";
       File          : Virtual_File := No_File) is
    begin
       Synchronize
@@ -730,10 +752,7 @@ package body GPS.Kernel.Remote is
    -- Check_Exec --
    ----------------
 
-   function Check_Exec
-     (Server : Server_Type;
-      Exec   : String) return String
-   is
+   function Check_Exec (Server : Server_Type; Exec : String) return String is
       Full_Exec : Virtual_File;
    begin
       if Server = Build_Server then
@@ -799,8 +818,8 @@ package body GPS.Kernel.Remote is
             if E'Length = 0 then
                Insert
                  (Kernel,
-                  -"Could not locate executable on path: " &
-                    Unknown_To_UTF8 (Command),
+                  -"Could not locate executable on path: "
+                  & Unknown_To_UTF8 (Command),
                   Mode => Error);
                return;
             end if;
@@ -808,9 +827,9 @@ package body GPS.Kernel.Remote is
             Exec := new String'(E);
          end;
 
-         Args := new Argument_List'
-           ((1 => Exec) &
-             To_List (Arguments, Include_Command => False));
+         Args :=
+           new Argument_List'
+             ((1 => Exec) & To_List (Arguments, Include_Command => False));
       else
          Args := new Argument_List'(To_List (Arguments, True));
       end if;
@@ -818,14 +837,11 @@ package body GPS.Kernel.Remote is
       if Console /= null and then Show_Command then
          if Is_Local (Server) then
             Insert_With_Links
-              (Console,
-               To_Display_String (Arguments),
-               Add_LF => True);
+              (Console, To_Display_String (Arguments), Add_LF => True);
          else
             Insert_With_Links
               (Console,
-               Get_Nickname (Server) & "> " &
-                 To_Display_String (Arguments),
+               Get_Nickname (Server) & "> " & To_Display_String (Arguments),
                Add_LF => True);
          end if;
       end if;
@@ -842,8 +858,9 @@ package body GPS.Kernel.Remote is
                Tmp_Args_1 : Argument_List_Access := Args;
                Tmp_Args_2 : Argument_List_Access;
             begin
-               Tmp_Args_2 := Argument_String_To_List
-                 (GPS.Kernel.Preferences.Execute_Command.Get_Pref);
+               Tmp_Args_2 :=
+                 Argument_String_To_List
+                   (GPS.Kernel.Preferences.Execute_Command.Get_Pref);
                Args := new Argument_List'(Tmp_Args_2.all & Tmp_Args_1.all);
                Simple_Free (Tmp_Args_1);
                Simple_Free (Tmp_Args_2);
@@ -853,8 +870,8 @@ package body GPS.Kernel.Remote is
          if Directory /= No_File then
             Old_Dir := Get_Current_Dir;
             Change_Dir (Directory);
-            Trace (Me, "Switching to directory "
-                   & Directory.Display_Full_Name);
+            Trace
+              (Me, "Switching to directory " & Directory.Display_Full_Name);
          end if;
 
          if Active (Me) then
@@ -884,8 +901,7 @@ package body GPS.Kernel.Remote is
                      +To_Path ((1 => Get_Compiler_Search_Path) & Oldpath));
                else
                   Setenv
-                    ("PATH",
-                     +To_Path ((1 => Get_Tool_Search_Path) & Oldpath));
+                    ("PATH", +To_Path ((1 => Get_Tool_Search_Path) & Oldpath));
                end if;
 
                if Active (Me) then
@@ -950,8 +966,10 @@ package body GPS.Kernel.Remote is
          Success := False;
          Insert
            (Kernel,
-            -"Error while trying to execute " & Args (Args'First).all & ": " &
-            Exception_Message (E),
+            -"Error while trying to execute "
+            & Args (Args'First).all
+            & ": "
+            & Exception_Message (E),
             Mode => Error);
 
       when E : others =>

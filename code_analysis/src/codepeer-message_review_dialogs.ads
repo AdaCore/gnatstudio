@@ -19,14 +19,15 @@
 
 with Glib;
 
-with GPS.Dialogs;       use GPS.Dialogs;
+with GPS.Dialogs; use GPS.Dialogs;
 
 package CodePeer.Message_Review_Dialogs is
 
-   type Message_Review_Dialog_Record is
-      abstract new GPS_Dialog_Record with null record;
+   type Message_Review_Dialog_Record is abstract new GPS_Dialog_Record
+   with null record;
 
-   not overriding function Get_Messages
+   not overriding
+   function Get_Messages
      (Self : not null access constant Message_Review_Dialog_Record)
       return CodePeer.Message_Vectors.Vector is abstract;
    --  Returns set of reviewed messages.

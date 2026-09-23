@@ -29,17 +29,17 @@ package body Project_Templates.Script_Objects is
    -------------------------
 
    procedure Build_Python_Object
-      (Self          : in out Script_Object;
-       Python_Script : Virtual_File;
-       Kernel        : not null Core_Kernel)
+     (Self          : in out Script_Object;
+      Python_Script : Virtual_File;
+      Kernel        : not null Core_Kernel)
    is
-      Lock        : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
-      Base_Name   : constant String :=
-         String (Python_Script.Base_Name);
+      Lock        : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
+      Base_Name   : constant String := String (Python_Script.Base_Name);
       Script_Name : constant String :=
         Base_Name (Base_Name'First .. Base_Name'Last - 3);
       Python      : constant Scripting_Language :=
-         Kernel.Scripts.Lookup_Scripting_Language ("python");
+        Kernel.Scripts.Lookup_Scripting_Language ("python");
       Method_Name : constant String := To_String (Self.Get_Object);
       Module      : PyObject;
 
@@ -50,8 +50,8 @@ package body Project_Templates.Script_Objects is
 
       Module := PyImport_ImportModule (Script_Name);
 
-      if PyDict_Contains (PyModule_GetDict (Module),
-                          PyString_FromString (Method_Name))
+      if PyDict_Contains
+           (PyModule_GetDict (Module), PyString_FromString (Method_Name))
       then
          Self.Object := PyObject_CallMethod (Module, Method_Name);
       end if;
@@ -63,34 +63,34 @@ package body Project_Templates.Script_Objects is
    ---------------
 
    function Add_Pages
-      (Self      : in out Script_Object;
-       Assistant : in out Gtk_Assistant) return Gint
+     (Self : in out Script_Object; Assistant : in out Gtk_Assistant)
+      return Gint
    is
-      function Widget_From_PyObject (Object : PyObject)
-         return System.Address;
+      function Widget_From_PyObject (Object : PyObject) return System.Address;
       pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
 
-      Lock            : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
-      Get_Pages       : constant String := To_String (Self.Get_Pages);
-      Nb_Added_Pages  : Gint := 0;
-      Widget_List     : PyObject;
-      Stub            : GObject_Record;
-      Page_Number     : Gint;
+      Lock           : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
+      Get_Pages      : constant String := To_String (Self.Get_Pages);
+      Nb_Added_Pages : Gint := 0;
+      Widget_List    : PyObject;
+      Stub           : GObject_Record;
+      Page_Number    : Gint;
       --  Capture the return value of the C function call, unused.
       pragma Unreferenced (Page_Number);
 
    begin
-      if Self.Has_Method (Get_Pages)
-      then
-         Widget_List
-            := PyObject_CallMethod (Self.Object, Get_Pages);
+      if Self.Has_Method (Get_Pages) then
+         Widget_List := PyObject_CallMethod (Self.Object, Get_Pages);
          for I in reverse 0 .. PyObject_Size (Widget_List) - 1 loop
             declare
-               Widget : constant Gtk_Widget := Gtk_Widget
-            (Get_User_Data
-               (Obj  => Widget_From_PyObject
-                        (PyObject_GetItem (Widget_List, I)),
-                Stub => Stub));
+               Widget : constant Gtk_Widget :=
+                 Gtk_Widget
+                   (Get_User_Data
+                      (Obj  =>
+                         Widget_From_PyObject
+                           (PyObject_GetItem (Widget_List, I)),
+                       Stub => Stub));
 
             begin
                Page_Number := Append_Page (Assistant, Widget);
@@ -109,7 +109,8 @@ package body Project_Templates.Script_Objects is
    -----------
 
    procedure Apply (Self : in out Script_Object) is
-      Lock          : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Lock          : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
       On_Apply      : constant String := To_String (Self.On_Apply);
       Return_Object : PyObject;
       --  Captures the return value of the Python function, unused.
@@ -126,10 +127,10 @@ package body Project_Templates.Script_Objects is
    ----------------
 
    function Has_Method
-      (Self        : in out Script_Object;
-       Method_Name : String) return Boolean
+     (Self : in out Script_Object; Method_Name : String) return Boolean
    is
-      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
 
    begin
       return PyObject_HasAttrString (Self.Object, Method_Name);

@@ -17,11 +17,11 @@
 
 --  This package provides low level support for event recording and replay.
 
-with Glib;         use Glib;
-with Gdk.Device;   use Gdk.Device;
+with Glib;       use Glib;
+with Gdk.Device; use Gdk.Device;
 with Gdk.Event;
 with Gdk.Types;
-with Gtk.Widget;   use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 with GNAT.Strings;
 with Ada.Text_IO;
 
@@ -84,7 +84,8 @@ package Gtkada.Macro is
    function Play_Event
      (Item           : Macro_Item;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
-      Default_Widget : Gtk_Widget := null) return Boolean is abstract;
+      Default_Widget : Gtk_Widget := null) return Boolean
+   is abstract;
    --  Play the event stored in item.
    --  Default_Widget is the default widget, if any, where the event should be
    --  replayed if it can't be retrieved automatically.
@@ -101,9 +102,7 @@ package Gtkada.Macro is
    --  Return whether the items could be saved successfully.
 
    procedure Load_List
-     (Buffer  : String;
-      Item    : out Macro_Item_Access;
-      Success : out Boolean);
+     (Buffer : String; Item : out Macro_Item_Access; Success : out Boolean);
    --  Load a list of events from buffer.
 
    procedure Save_To_Disk (File : Ada.Text_IO.File_Type; Item : Macro_Item);
@@ -126,19 +125,22 @@ package Gtkada.Macro is
    type Macro_Item_Mouse_Access is access all Macro_Item_Mouse'Class;
 
    function Create_Item
-     (Event     : Gdk.Event.Gdk_Event_Button;
-      Prev_Time : Guint32 := 0) return Macro_Item_Mouse_Access;
+     (Event : Gdk.Event.Gdk_Event_Button; Prev_Time : Guint32 := 0)
+      return Macro_Item_Mouse_Access;
    --  Create a mouse item corresponding to Event.
    --  Prev_Time must be the time of the previous event recorded, if any so
    --  that Item.Time can be computed properly.
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Mouse;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-   overriding procedure Save_To_Disk
+   overriding
+   procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Mouse);
-   overriding procedure Load_Macro
+   overriding
+   procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Mouse);
 
    --------------------
@@ -154,43 +156,44 @@ package Gtkada.Macro is
    type Macro_Item_Key_Access is access all Macro_Item_Key'Class;
 
    function Create_Item
-     (Event     : Gdk.Event.Gdk_Event_Key;
-      Prev_Time : Guint32 := 0) return Macro_Item_Key_Access;
+     (Event : Gdk.Event.Gdk_Event_Key; Prev_Time : Guint32 := 0)
+      return Macro_Item_Key_Access;
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Key;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Key);
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Key);
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Key);
+   overriding
+   procedure Load_Macro (File : access File_Buffer; Item : out Macro_Item_Key);
 
    -----------------------
    -- Macro_Item_Motion --
    -----------------------
 
    type Macro_Item_Motion is new Macro_Item with record
-      State  : Gdk.Types.Gdk_Modifier_Type;
+      State : Gdk.Types.Gdk_Modifier_Type;
    end record;
    type Macro_Item_Motion_Access is access all Macro_Item_Motion'Class;
 
    function Create_Item
-     (Event     : Gdk.Event.Gdk_Event_Motion;
-      Prev_Time : Guint32 := 0) return Macro_Item_Motion_Access;
+     (Event : Gdk.Event.Gdk_Event_Motion; Prev_Time : Guint32 := 0)
+      return Macro_Item_Motion_Access;
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Motion;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Motion);
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Motion);
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Motion);
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Motion);
 
    -------------------------
    -- Macro_Item_Crossing --
@@ -204,19 +207,20 @@ package Gtkada.Macro is
    type Macro_Item_Crossing_Access is access all Macro_Item_Crossing'Class;
 
    function Create_Item
-     (Event     : Gdk.Event.Gdk_Event_Crossing;
-      Prev_Time : Guint32 := 0) return Macro_Item_Crossing_Access;
+     (Event : Gdk.Event.Gdk_Event_Crossing; Prev_Time : Guint32 := 0)
+      return Macro_Item_Crossing_Access;
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Crossing;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Crossing);
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Crossing);
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Crossing);
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Crossing);
 
    -----------------------
    -- Macro_Item_Scroll --
@@ -229,16 +233,19 @@ package Gtkada.Macro is
    type Macro_Item_Scroll_Access is access all Macro_Item_Scroll'Class;
 
    function Create_Item
-     (Event     : Gdk.Event.Gdk_Event_Scroll;
-      Prev_Time : Guint32 := 0) return Macro_Item_Scroll_Access;
+     (Event : Gdk.Event.Gdk_Event_Scroll; Prev_Time : Guint32 := 0)
+      return Macro_Item_Scroll_Access;
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Scroll;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-   overriding procedure Save_To_Disk
+   overriding
+   procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Scroll);
-   overriding procedure Load_Macro
+   overriding
+   procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Scroll);
 
 end Gtkada.Macro;

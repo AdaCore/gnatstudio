@@ -15,21 +15,22 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Window;          use Gdk, Gdk.Window;
-with Gdk.Rectangle, Glib; use Glib, Gdk.Rectangle;
+with Gdk.Window;
+use Gdk, Gdk.Window;
+with Gdk.Rectangle, Glib;
+use Glib, Gdk.Rectangle;
 
-with GPS.Intl;            use GPS.Intl;
+with GPS.Intl; use GPS.Intl;
 
-with Gtk.Main;            use Gtk.Main;
-with Gtk.Style_Context;   use Gtk.Style_Context;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtk.Main;          use Gtk.Main;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.Handlers;   use Gtkada.Handlers;
 
 package body Gtkada.Search_Entry is
 
    procedure On_Clear_Entry
-      (Self : access Gtk_Entry_Record'Class;
-       Pos  : Gtk_Entry_Icon_Position);
+     (Self : access Gtk_Entry_Record'Class; Pos : Gtk_Entry_Icon_Position);
    --  Called when the user presses the "clear" icon
 
    procedure On_Changed (Self : access Gtk_Widget_Record'Class);
@@ -40,8 +41,8 @@ package body Gtkada.Search_Entry is
    -----------------------
 
    function Get_Icon_Position
-     (Self   : access Gtkada_Search_Entry_Record'Class;
-      Event  : Gdk_Event) return Gtk_Entry_Icon_Position
+     (Self : access Gtkada_Search_Entry_Record'Class; Event : Gdk_Event)
+      return Gtk_Entry_Icon_Position
    is
       Alloc : Gtk_Allocation;
       Rect  : Gdk_Rectangle;
@@ -64,13 +65,12 @@ package body Gtkada.Search_Entry is
    --------------------
 
    procedure On_Clear_Entry
-      (Self : access Gtk_Entry_Record'Class;
-       Pos  : Gtk_Entry_Icon_Position)
+     (Self : access Gtk_Entry_Record'Class; Pos : Gtk_Entry_Icon_Position)
    is
       pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
    begin
-      if Gtkada_Search_Entry (Self).Get_Icon_Position (Get_Current_Event) =
-        Gtk_Entry_Icon_Secondary
+      if Gtkada_Search_Entry (Self).Get_Icon_Position (Get_Current_Event)
+        = Gtk_Entry_Icon_Secondary
       then
          Self.Set_Text ("");
 
@@ -84,15 +84,14 @@ package body Gtkada.Search_Entry is
    ----------------
 
    procedure On_Changed (Self : access Gtk_Widget_Record'Class) is
-      S  : constant Gtkada_Search_Entry := Gtkada_Search_Entry (Self);
+      S : constant Gtkada_Search_Entry := Gtkada_Search_Entry (Self);
    begin
       if S.Get_Text /= "" then
          S.Set_Icon_From_Icon_Name
-           (Gtk_Entry_Icon_Secondary,
-            "gps-clear-entry-symbolic");
+           (Gtk_Entry_Icon_Secondary, "gps-clear-entry-symbolic");
          S.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, True);
          S.Set_Icon_Tooltip_Text
-            (Gtk_Entry_Icon_Secondary, -"Clear the pattern");
+           (Gtk_Entry_Icon_Secondary, -"Clear the pattern");
       else
          S.Set_Icon_From_Icon_Name (Gtk_Entry_Icon_Secondary, "");
          S.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, False);
@@ -104,8 +103,7 @@ package body Gtkada.Search_Entry is
    -------------
 
    procedure Gtk_New
-      (Self        : out Gtkada_Search_Entry;
-       Placeholder : String := "") is
+     (Self : out Gtkada_Search_Entry; Placeholder : String := "") is
    begin
       Self := new Gtkada_Search_Entry_Record;
       Gtk.Search_Entry.Initialize (Self);

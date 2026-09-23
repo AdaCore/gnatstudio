@@ -32,26 +32,26 @@ package GPS.Kernel.Scripts.Hooks is
    --  We do not check the number of parameters or their types, since
    --  python does not support this in any case. So this wrapper can be
    --  used for any type of hook.
-   overriding procedure Destroy (Self : in out Python_Hook_Function);
+   overriding
+   procedure Destroy (Self : in out Python_Hook_Function);
 
    function Get_Hook_Class
-      (Kernel : not null access Kernel_Handle_Record'Class)
-      return Class_Type;
+     (Kernel : not null access Kernel_Handle_Record'Class) return Class_Type;
    --  Return the "GPS.Hook" class
 
    function Get_Hook
-      (Data : Callback_Data'Class; Param : Positive)
+     (Data : Callback_Data'Class; Param : Positive)
       return access Hook_Types'Class;
    --  Return the hook associated with the class instance as the
    --  Param-th argument in data.
 
    procedure Register_Module
-      (Kernel : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Add python support for the Hook class.
 
    function Get_Hook
-      (Kernel : not null access Kernel_Handle_Record'Class;
-       Name   : String) return access Hook_Types'Class;
+     (Kernel : not null access Kernel_Handle_Record'Class; Name : String)
+      return access Hook_Types'Class;
    --  Fetch a hook by name
 
 end GPS.Kernel.Scripts.Hooks;

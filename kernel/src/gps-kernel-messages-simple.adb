@@ -24,21 +24,20 @@ package body GPS.Kernel.Messages.Simple is
    use XML_Utils;
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr);
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr);
    --  Saves additional data in the XML node
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access;
    --  Loads additional data from the XML node and creates primary simple
@@ -57,16 +56,16 @@ package body GPS.Kernel.Messages.Simple is
    --  message.
 
    function Create_Simple_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : VSS.Strings.Virtual_String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access;
    --  Internal create subprogram
@@ -87,19 +86,26 @@ package body GPS.Kernel.Messages.Simple is
    ---------------------------
 
    procedure Create_Simple_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : VSS.Strings.Virtual_String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
    is
       Aux : constant Simple_Message_Access :=
         Create_Simple_Message
-          (Container, Category, File, Line, Column, Text, Importance, Flags,
+          (Container,
+           Category,
+           File,
+           Line,
+           Column,
+           Text,
+           Importance,
+           Flags,
            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       pragma Unreferenced (Aux);
 
@@ -112,14 +118,14 @@ package body GPS.Kernel.Messages.Simple is
    ---------------------------
 
    function Create_Simple_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : VSS.Strings.Virtual_String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access is
    begin
@@ -143,17 +149,17 @@ package body GPS.Kernel.Messages.Simple is
    ----------------
 
    procedure Initialize
-     (Message       : not null access Simple_Message'Class;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : VSS.Strings.Virtual_String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Message                  : not null access Simple_Message'Class;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True) is
    begin
       Message.Text := Text;
@@ -177,16 +183,16 @@ package body GPS.Kernel.Messages.Simple is
    ---------------------------
 
    function Create_Simple_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : VSS.Strings.Virtual_String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : VSS.Strings.Virtual_String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access
    is
@@ -222,15 +228,9 @@ package body GPS.Kernel.Messages.Simple is
       Text   : VSS.Strings.Virtual_String;
       Flags  : Message_Flags) return Simple_Message_Access is
    begin
-      return Create_Simple_Message
-        (Parent,
-         File,
-         Line,
-         Column,
-         Text,
-         Line,
-         Integer (Column),
-         Flags);
+      return
+        Create_Simple_Message
+          (Parent, File, Line, Column, Text, Line, Integer (Column), Flags);
    end Create_Simple_Message;
 
    ---------------------------
@@ -254,7 +254,13 @@ package body GPS.Kernel.Messages.Simple is
       Result.Text := Text;
 
       Initialize
-        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column,
+        (Result,
+         Parent,
+         File,
+         Line,
+         Column,
+         Actual_Line,
+         Actual_Column,
          Flags);
 
       return Result;
@@ -275,25 +281,19 @@ package body GPS.Kernel.Messages.Simple is
       Dummy : Simple_Message_Access;
 
    begin
-      Dummy := Create_Simple_Message
-        (Parent,
-         File,
-         Line,
-         Column,
-         Text,
-         Line,
-         Integer (Column),
-         Flags);
+      Dummy :=
+        Create_Simple_Message
+          (Parent, File, Line, Column, Text, Line, Integer (Column), Flags);
    end Create_Simple_Message;
 
    ----------------
    -- Get_Markup --
    ----------------
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Simple_Message)
-      return Ada.Strings.Unbounded.Unbounded_String
-   is
+      return Ada.Strings.Unbounded.Unbounded_String is
    begin
       return
         VSS.Strings.Conversions.To_Unbounded_UTF_8_String
@@ -304,7 +304,8 @@ package body GPS.Kernel.Messages.Simple is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Simple_Message)
       return Ada.Strings.Unbounded.Unbounded_String is
    begin
@@ -316,16 +317,16 @@ package body GPS.Kernel.Messages.Simple is
    ----------
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access
    is
@@ -336,17 +337,17 @@ package body GPS.Kernel.Messages.Simple is
       return
         Message_Access
           (Create_Simple_Message
-               (Container,
-                Category,
-                File,
-                Line,
-                Column,
-                Text,
-                Importance,
-                Actual_Line,
-                Actual_Column,
-                Flags,
-                Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
+             (Container,
+              Category,
+              File,
+              Line,
+              Column,
+              Text,
+              Importance,
+              Actual_Line,
+              Actual_Column,
+              Flags,
+              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
    end Load;
 
    ----------
@@ -368,15 +369,16 @@ package body GPS.Kernel.Messages.Simple is
       Dummy : Simple_Message_Access;
 
    begin
-      Dummy := Create_Simple_Message
-        (Parent,
-         File,
-         Line,
-         Column,
-         Text,
-         Actual_Line,
-         Actual_Column,
-         Flags);
+      Dummy :=
+        Create_Simple_Message
+          (Parent,
+           File,
+           Line,
+           Column,
+           Text,
+           Actual_Line,
+           Actual_Column,
+           Flags);
    end Load;
 
    --------------
@@ -394,11 +396,10 @@ package body GPS.Kernel.Messages.Simple is
    ----------
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr)
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr)
    is
       Self : constant Simple_Message_Access :=
-               Simple_Message_Access (Message_Node);
+        Simple_Message_Access (Message_Node);
 
    begin
       Set_Attribute (XML_Node, "text", Self.Text);

@@ -43,12 +43,12 @@ with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_Status_Bar; use Src_Editor_Status_Bar;
 with Src_Editor_View;
 with Xref;
-with Gtk.Window; use Gtk.Window;
+with Gtk.Window;            use Gtk.Window;
 
 package Src_Editor_Box is
 
-   type Source_Editor_Box_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
-     with private;
+   type Source_Editor_Box_Record is
+     new Gtk.Event_Box.Gtk_Event_Box_Record with private;
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
@@ -57,7 +57,7 @@ package Src_Editor_Box is
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : GNATCOLL.VFS.Virtual_File;
       Is_Load_Desktop : Boolean := False)
-     with Pre => not Filename.Is_Directory;
+   with Pre => not Filename.Is_Directory;
    procedure Initialize
      (Box             : access Source_Editor_Box_Record'Class;
       Project         : GNATCOLL.Projects.Project_Type;
@@ -100,11 +100,13 @@ package Src_Editor_Box is
      (Box : access Source_Editor_Box_Record) return GPS.Kernel.Kernel_Handle;
    --  Accessor to the Kernel field
 
-   function Get_View (Editor : access Source_Editor_Box_Record)
+   function Get_View
+     (Editor : access Source_Editor_Box_Record)
       return Src_Editor_View.Source_View;
    --  Return the source view associated with the box
 
-   function Get_Buffer (Editor : access Source_Editor_Box_Record)
+   function Get_Buffer
+     (Editor : access Source_Editor_Box_Record)
       return Src_Editor_Buffer.Source_Buffer;
    --  Return the source buffer associated with the box
 
@@ -208,31 +210,31 @@ package Src_Editor_Box is
    --  Return the number of the last line in the file
 
    function Get_Block_Start
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural;
    --  Return the line number where block enclosing Line starts. Returns 0
    --  if Line is not in a block.
 
    function Get_Block_End
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural;
    --  Return the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
    function Get_Block_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String;
    --  Return the name for the block enclosing Line
 
    function Get_Block_Type
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String;
    --  Return the type for block enclosing Line. Returns 0 if Line is not
    --  in a block.
 
    function Get_Block_Level
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural;
    --  Return the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
@@ -251,14 +253,13 @@ package Src_Editor_Box is
    --  Return the Status_Bar in the Source_Editor_Box
 
    procedure Set_Writable
-     (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean);
+     (Editor : access Source_Editor_Box_Record; Writable : Boolean);
    --  Change the writable status of the editor (the underlying buffer
    --  actually).
 
    function Get_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String;
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String;
    --  Return the name for the subprogram enclosing Line.
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
@@ -277,8 +278,7 @@ package Src_Editor_Box is
    --  See GPS.Kernel.Modules for more information
 
    procedure Remove_Line_Information_Column
-     (Editor     : access Source_Editor_Box_Record;
-      Identifier : String);
+     (Editor : access Source_Editor_Box_Record; Identifier : String);
    --  See GPS.Kernel.Modules for more information
 
    procedure Undo (Editor : access Source_Editor_Box_Record);
@@ -286,8 +286,8 @@ package Src_Editor_Box is
    --  Undo/Redo last edit command
 
    function Needs_To_Be_Saved
-     (Box    : not null access Source_Editor_Box_Record;
-      Single : Boolean) return Boolean;
+     (Box : not null access Source_Editor_Box_Record; Single : Boolean)
+      return Boolean;
    --  Return True in case the underlying buffer needs to be saved and there is
    --  either only one view or Single is False and the box is the last that had
    --  the focus. False is returned otherwise.
@@ -330,8 +330,7 @@ package Src_Editor_Box is
    --  editor. Used to remember the location before Xref navigation.
 
    procedure Set_Is_Locked
-     (Box    : not null access Source_Editor_Box_Record;
-      Locked : Boolean);
+     (Box : not null access Source_Editor_Box_Record; Locked : Boolean);
    --  Lock or unlock the given editor.
    --  Locked editors are insesitive to external 'jump to code' events such
    --  as 'goto declaration', clicking on a mesage etc.
@@ -356,9 +355,7 @@ package Src_Editor_Box is
 
 private
 
-   function To_Box_Line
-     (B    : Source_Buffer;
-      Line : Glib.Gint) return Natural;
+   function To_Box_Line (B : Source_Buffer; Line : Glib.Gint) return Natural;
    pragma Inline (To_Box_Line);
    --  Convert a line number in the Source Buffer to a line number in the
    --  Source Box. This conversion is necessary because line numbers start
@@ -370,29 +367,28 @@ private
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
 
-   type Source_Editor_Box_Record is new
-     Gtk.Event_Box.Gtk_Event_Box_Record
+   type Source_Editor_Box_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
    with record
-      Box                  : Gtk.Box.Gtk_Box;
-      Kernel               : GPS.Kernel.Kernel_Handle;
+      Box    : Gtk.Box.Gtk_Box;
+      Kernel : GPS.Kernel.Kernel_Handle;
 
-      Source_View          : Src_Editor_View.Source_View;
-      Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
+      Source_View   : Src_Editor_View.Source_View;
+      Source_Buffer : Src_Editor_Buffer.Source_Buffer;
 
-      Status_Bar           : Source_Editor_Status_Bar;
+      Status_Bar : Source_Editor_Status_Bar;
       --  The status bar
 
       --  The non graphical attributes
 
-      Status_Handler       : Gtk.Handlers.Handler_Id;
+      Status_Handler : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "status_changed"
       --  from the source buffer.
 
-      Progress_Bar         : GUI_Utils.Activity_Progress_Bar;
+      Progress_Bar : GUI_Utils.Activity_Progress_Bar;
       --  An activity progress bar. Useful to warn users that messages are
       --  being processed.
 
-      Locked               : Boolean := False;
+      Locked : Boolean := False;
       --  Used to know if the editor is locked or unlocked. Locked editors
       --  can be used to maintain a given position in an editor. This is
       --  done by making editors insensitive to 'jump to code' events such as

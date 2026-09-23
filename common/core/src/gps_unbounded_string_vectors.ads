@@ -17,8 +17,8 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
-package GPS_Unbounded_String_Vectors is
-  new Ada.Containers.Vectors
+package GPS_Unbounded_String_Vectors is new
+  Ada.Containers.Vectors
     (Index_Type   => Positive,
      Element_Type => Ada.Strings.Unbounded.Unbounded_String,
      "="          => Ada.Strings.Unbounded."=");

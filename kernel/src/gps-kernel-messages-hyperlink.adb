@@ -19,7 +19,7 @@ with Ada.Strings.Fixed;
 
 with Glib.Convert;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Gtkada.Style; use Gtkada.Style;
+with Gtkada.Style;           use Gtkada.Style;
 
 package body GPS.Kernel.Messages.Hyperlink is
 
@@ -30,8 +30,7 @@ package body GPS.Kernel.Messages.Hyperlink is
    use XML_Utils;
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr);
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr);
 
    procedure Load
      (XML_Node      : not null Node_Ptr;
@@ -101,15 +100,21 @@ package body GPS.Kernel.Messages.Hyperlink is
    is
       Offset : constant Natural := Text'First - 1;
       Result : constant not null Hyperlink_Message_Access :=
-                 new Hyperlink_Message;
+        new Hyperlink_Message;
 
    begin
-      Result.Text  := To_Unbounded_String (Text);
+      Result.Text := To_Unbounded_String (Text);
       Result.First := First - Offset;
-      Result.Last  := Last - Offset;
+      Result.Last := Last - Offset;
 
       Initialize
-        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column,
+        (Result,
+         Parent,
+         File,
+         Line,
+         Column,
+         Actual_Line,
+         Actual_Column,
          Flags);
    end Create_Hyperlink_Message;
 
@@ -117,10 +122,10 @@ package body GPS.Kernel.Messages.Hyperlink is
    -- Get_Markup --
    ----------------
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Hyperlink_Message)
-      return Ada.Strings.Unbounded.Unbounded_String
-   is
+      return Ada.Strings.Unbounded.Unbounded_String is
    begin
       if Self.First > Self.Last then
          return To_Unbounded_String (Escape_Text (To_String (Self.Text)));
@@ -130,11 +135,12 @@ package body GPS.Kernel.Messages.Hyperlink is
            To_Unbounded_String
              (Escape_Text (Slice (Self.Text, 1, Self.First - 1))
               & "<span color="""
-              & To_Hex (Hyper_Links_Style.Get_Pref_Fg) & """><u>"
+              & To_Hex (Hyper_Links_Style.Get_Pref_Fg)
+              & """><u>"
               & Escape_Text (Slice (Self.Text, Self.First, Self.Last))
               & "</u></span>"
               & Escape_Text
-                (Slice (Self.Text, Self.Last + 1, Length (Self.Text))));
+                  (Slice (Self.Text, Self.Last + 1, Length (Self.Text))));
       end if;
    end Get_Markup;
 
@@ -142,7 +148,8 @@ package body GPS.Kernel.Messages.Hyperlink is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Hyperlink_Message)
       return Ada.Strings.Unbounded.Unbounded_String is
    begin
@@ -165,9 +172,9 @@ package body GPS.Kernel.Messages.Hyperlink is
    is
       Text  : constant String := Get_Attribute_S (XML_Node, "text", "");
       First : constant Positive :=
-                Positive'Value (Get_Attribute_S (XML_Node, "first", "1"));
+        Positive'Value (Get_Attribute_S (XML_Node, "first", "1"));
       Last  : constant Natural :=
-                Natural'Value (Get_Attribute_S (XML_Node, "last", "0"));
+        Natural'Value (Get_Attribute_S (XML_Node, "last", "0"));
 
    begin
       Create_Hyperlink_Message
@@ -198,18 +205,15 @@ package body GPS.Kernel.Messages.Hyperlink is
    ----------
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr)
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr)
    is
       Self : constant Hyperlink_Message_Access :=
-               Hyperlink_Message_Access (Message_Node);
+        Hyperlink_Message_Access (Message_Node);
 
    begin
       Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
 
-      if Self.Level = Secondary
-        and then Self.First <= Self.Last
-      then
+      if Self.Level = Secondary and then Self.First <= Self.Last then
          Set_Attribute_S
            (XML_Node, "first", Trim (Integer'Image (Self.First), Both));
          Set_Attribute_S

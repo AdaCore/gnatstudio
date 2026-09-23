@@ -22,8 +22,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with GNATCOLL.IO;               use GNATCOLL.IO;
-with Glib.Values;               use Glib, Glib.Values;
+with GNATCOLL.IO; use GNATCOLL.IO;
+with Glib.Values;
+use Glib, Glib.Values;
 with System;
 
 package body GNATCOLL.VFS.GtkAda is
@@ -42,16 +43,16 @@ package body GNATCOLL.VFS.GtkAda is
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
-   function To_Contents_Access is new Ada.Unchecked_Conversion
-     (System.Address, GNATCOLL.IO.File_Access);
+   function To_Contents_Access is new
+     Ada.Unchecked_Conversion (System.Address, GNATCOLL.IO.File_Access);
    pragma Warnings (On);
 
    --------------
    -- Set_File --
    --------------
 
-   procedure Set_File
-     (Value : in out Glib.Values.GValue; File : Virtual_File) is
+   procedure Set_File (Value : in out Glib.Values.GValue; File : Virtual_File)
+   is
    begin
       if File.Value = null then
          Set_Boxed (Value, System.Null_Address);
@@ -85,9 +86,11 @@ package body GNATCOLL.VFS.GtkAda is
    function Get_Virtual_File_Type return Glib.GType is
    begin
       if Virtual_File_Type = Glib.GType_None then
-         Virtual_File_Type := Glib.Boxed_Type_Register_Static
-           ("Virtual_File", Virtual_File_Boxed_Copy'Access,
-            Virtual_File_Boxed_Free'Access);
+         Virtual_File_Type :=
+           Glib.Boxed_Type_Register_Static
+             ("Virtual_File",
+              Virtual_File_Boxed_Copy'Access,
+              Virtual_File_Boxed_Free'Access);
       end if;
 
       return Virtual_File_Type;
@@ -165,8 +168,7 @@ package body GNATCOLL.VFS.GtkAda is
    function Get_File
      (Tree_Model : access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column     : Glib.Gint) return Virtual_File
-   is
+      Column     : Glib.Gint) return Virtual_File is
    begin
       return Get_File (Gtk.Tree_Model.To_Interface (Tree_Model), Iter, Column);
    end Get_File;
@@ -192,12 +194,12 @@ package body GNATCOLL.VFS.GtkAda is
    end Get_File;
 
    function Get_File
-     (Store      : access Gtk.List_Store.Gtk_List_Store_Record'Class;
-      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column     : Glib.Gint) return Virtual_File is
+     (Store  : access Gtk.List_Store.Gtk_List_Store_Record'Class;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : Glib.Gint) return Virtual_File is
    begin
-      return Get_File
-        (Gtk.Tree_Model.Gtk_Root_Tree_Model (Store), Iter, Column);
+      return
+        Get_File (Gtk.Tree_Model.Gtk_Root_Tree_Model (Store), Iter, Column);
    end Get_File;
 
 end GNATCOLL.VFS.GtkAda;

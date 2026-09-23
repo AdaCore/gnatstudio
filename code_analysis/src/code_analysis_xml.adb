@@ -15,17 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with Code_Coverage;           use Code_Coverage;
+with Code_Coverage; use Code_Coverage;
 with Projects.Views;
-with UTF8_Utils;              use UTF8_Utils;
+with UTF8_Utils;    use UTF8_Utils;
 
 package body Code_Analysis_XML is
 
-   procedure Dump_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr);
+   procedure Dump_Project (Prj_Node : Project_Access; Parent : Node_Ptr);
 
    procedure Dump_File
      (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr);
@@ -35,26 +33,21 @@ package body Code_Analysis_XML is
 
    procedure Dump_Line (Line_Node : Code_Analysis.Line; Parent : Node_Ptr);
 
-   procedure Parse_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr);
+   procedure Parse_Project (Prj_Node : Project_Access; Parent : Node_Ptr);
 
    procedure Parse_File
-     (File_Node : Code_Analysis.File_Access;
-      Parent    : Node_Ptr);
+     (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr);
 
    -------------------
    -- Dump_Full_XML --
    -------------------
 
-   procedure Dump_Full_XML
-     (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr)
+   procedure Dump_Full_XML (Projects : Code_Analysis_Tree; Parent : Node_Ptr)
    is
       use Project_Maps;
 
-      Prj_Cur   : Project_Maps.Cursor := Projects.First;
-      Sort_Arr  : Code_Analysis.Project_Array (1 .. Integer (Projects.Length));
+      Prj_Cur  : Project_Maps.Cursor := Projects.First;
+      Sort_Arr : Code_Analysis.Project_Array (1 .. Integer (Projects.Length));
 
    begin
       for J in Sort_Arr'Range loop
@@ -78,17 +71,18 @@ package body Code_Analysis_XML is
       Tree   : Code_Analysis_Tree;
       Child  : in out Node_Ptr)
    is
-      Prj_Node  : Project_Access;
+      Prj_Node : Project_Access;
 
    begin
       while Child /= null loop
          if Child.Tag.all = "Project" then
-            Prj_Node := Get_Or_Create
-              (Tree,
-               Projects.Views.Create_Project_View_Reference
-                 (Kernel,
-                  Kernel.Get_Project_Tree.Project_From_Name
-                    (Get_Attribute_S (Child, "name"))));
+            Prj_Node :=
+              Get_Or_Create
+                (Tree,
+                 Projects.Views.Create_Project_View_Reference
+                   (Kernel,
+                    Kernel.Get_Project_Tree.Project_From_Name
+                      (Get_Attribute_S (Child, "name"))));
             Parse_Project (Prj_Node, Child);
          end if;
 
@@ -100,15 +94,12 @@ package body Code_Analysis_XML is
    -- Dump_Project --
    ------------------
 
-   procedure Dump_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr)
-   is
+   procedure Dump_Project (Prj_Node : Project_Access; Parent : Node_Ptr) is
       use File_Maps;
       Loc      : constant Node_Ptr := new XML_Utils.Node;
       Map_Cur  : Cursor := Prj_Node.Files.First;
-      Sort_Arr : Code_Analysis.File_Array
-        (1 .. Integer (Prj_Node.Files.Length));
+      Sort_Arr :
+        Code_Analysis.File_Array (1 .. Integer (Prj_Node.Files.Length));
    begin
       Loc.Tag := new String'("Project");
       Add_Child (Parent, Loc, True);
@@ -131,10 +122,7 @@ package body Code_Analysis_XML is
    -- Parse_Project --
    -------------------
 
-   procedure Parse_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr)
-   is
+   procedure Parse_Project (Prj_Node : Project_Access; Parent : Node_Ptr) is
       File_Node : Code_Analysis.File_Access;
       Child     : Node_Ptr;
    begin
@@ -144,13 +132,17 @@ package body Code_Analysis_XML is
          Child := Parent.Child;
          while Child /= null loop
             if Child.Tag.all = "File" then
-               File_Node := Get_Or_Create
-                 (Prj_Node, Get_File_Child (Child, "name"));
+               File_Node :=
+                 Get_Or_Create (Prj_Node, Get_File_Child (Child, "name"));
                --  Create a Line_Array with exactly the same number of elements
                --  than to the number of code lines in the original src code
                --  file. It will contain the lines with analysis information.
-               File_Node.Lines := new Line_Array
-                 (1 .. Positive'Value (Get_Attribute_S (Child, "line_count")));
+               File_Node.Lines :=
+                 new Line_Array
+                       (1
+                        ..
+                          Positive'Value
+                            (Get_Attribute_S (Child, "line_count")));
                File_Node.Lines.all := (others => Null_Line);
                Parse_File (File_Node, Child);
             end if;
@@ -168,10 +160,10 @@ package body Code_Analysis_XML is
      (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr)
    is
       use Subprogram_Maps;
-      Loc       : constant Node_Ptr := new XML_Utils.Node;
-      Map_Cur   : Cursor := File_Node.Subprograms.First;
-      Sort_Arr  : Subprogram_Array
-        (1 .. Integer (File_Node.Subprograms.Length));
+      Loc      : constant Node_Ptr := new XML_Utils.Node;
+      Map_Cur  : Cursor := File_Node.Subprograms.First;
+      Sort_Arr :
+        Subprogram_Array (1 .. Integer (File_Node.Subprograms.Length));
    begin
       Loc.Tag := new String'("File");
       Add_Child (Parent, Loc, True);
@@ -202,10 +194,9 @@ package body Code_Analysis_XML is
    ----------------
 
    procedure Parse_File
-     (File_Node : Code_Analysis.File_Access;
-      Parent    : Node_Ptr)
+     (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr)
    is
-      Child     : Node_Ptr;
+      Child : Node_Ptr;
    begin
       XML_Parse_Coverage (File_Node.Analysis_Data.Coverage_Data, Parent);
 
@@ -218,8 +209,8 @@ package body Code_Analysis_XML is
                declare
                   Subp_Node : Subprogram_Access;
                begin
-                  Subp_Node := Get_Or_Create
-                    (File_Node, Get_Attribute_S (Child, "name"));
+                  Subp_Node :=
+                    Get_Or_Create (File_Node, Get_Attribute_S (Child, "name"));
                   Subp_Node.Name :=
                     new String'(Get_Attribute_S (Child, "name"));
                   Subp_Node.Line :=
@@ -236,14 +227,14 @@ package body Code_Analysis_XML is
             elsif Child.Tag.all = "Line" then
                --  We parse a line node
                declare
-                  Line_Node : Line;
-                  Line_Num  : Natural;
+                  Line_Node     : Line;
+                  Line_Num      : Natural;
                   Line_Contents : constant String :=
-                                    Get_Attribute_S (Child, "contents");
+                    Get_Attribute_S (Child, "contents");
                begin
                   Line_Num :=
                     Natural'Value (Get_Attribute_S (Child, "number"));
-                  Line_Node.Number  := Line_Num;
+                  Line_Node.Number := Line_Num;
 
                   if Line_Contents /= "" then
                      Line_Node.Contents := new String'(Line_Contents);
@@ -264,8 +255,7 @@ package body Code_Analysis_XML is
    -- Dump_Subprogram --
    ---------------------
 
-   procedure Dump_Subprogram
-     (Subp_Node : Subprogram_Access; Parent : Node_Ptr)
+   procedure Dump_Subprogram (Subp_Node : Subprogram_Access; Parent : Node_Ptr)
    is
       Loc : constant Node_Ptr := new XML_Utils.Node;
 
@@ -297,7 +287,8 @@ package body Code_Analysis_XML is
 
          if Line_Node.Contents /= null then
             Set_Attribute_S
-              (Loc, "contents",
+              (Loc,
+               "contents",
                Unknown_To_UTF8 (Line_Node.Contents.all, Dummy'Access));
          end if;
       end if;

@@ -24,9 +24,8 @@ package body Virtual_Lists.Extensive is
    -- To_Extensive_List --
    -----------------------
 
-   function To_Extensive_List (L : Extensive_List_Pckg.Vector)
-      return Extensive_List_Component
-   is
+   function To_Extensive_List
+     (L : Extensive_List_Pckg.Vector) return Extensive_List_Component is
    begin
       return Extensive_List_Component'(Content => L);
    end To_Extensive_List;
@@ -35,9 +34,10 @@ package body Virtual_Lists.Extensive is
    -- First --
    -----------
 
-   overriding function First (List : Extensive_List_Component)
-      return Virtual_List_Component_Iterator'Class
-   is
+   overriding
+   function First
+     (List : Extensive_List_Component)
+      return Virtual_List_Component_Iterator'Class is
    begin
       return Extensive_List_Iterator'(It => First (List.Content));
    end First;
@@ -46,7 +46,8 @@ package body Virtual_Lists.Extensive is
    -- At_End --
    ------------
 
-   overriding function At_End (It : Extensive_List_Iterator) return Boolean is
+   overriding
+   function At_End (It : Extensive_List_Iterator) return Boolean is
    begin
       return not Has_Element (It.It);
    end At_End;
@@ -55,7 +56,8 @@ package body Virtual_Lists.Extensive is
    -- Next --
    ----------
 
-   overriding procedure Next (It : in out Extensive_List_Iterator) is
+   overriding
+   procedure Next (It : in out Extensive_List_Iterator) is
    begin
       It.It := Next (It.It);
    end Next;
@@ -64,9 +66,8 @@ package body Virtual_Lists.Extensive is
    -- Get --
    ---------
 
-   overriding function Get
-     (It : in out Extensive_List_Iterator) return Data_Type
-   is
+   overriding
+   function Get (It : in out Extensive_List_Iterator) return Data_Type is
       Result : Data_Type := Element (It.It);
    begin
       Copy_On_Get (Result);
@@ -78,7 +79,8 @@ package body Virtual_Lists.Extensive is
    -- Free --
    ----------
 
-   overriding procedure Free (List : in out Extensive_List_Component) is
+   overriding
+   procedure Free (List : in out Extensive_List_Component) is
    begin
       List.Content.Clear;
    end Free;

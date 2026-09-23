@@ -87,7 +87,8 @@ package Gtkada.Tree_View is
    --    sorted on its columns. Sorting on columns can be enabled via the
    --    Gtk.Tree_View_column.Sort_Column_Id procedure.
 
-   overriding procedure Expand_All (Self : not null access Tree_View_Record);
+   overriding
+   procedure Expand_All (Self : not null access Tree_View_Record);
 
    procedure Gtk_New
      (Widget           : out Tree_View;
@@ -122,20 +123,21 @@ package Gtkada.Tree_View is
 
    function Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Store
-     with Inline;
+   with Inline;
    --  The data model.
 
    function Filter
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
-     with Inline;
+   with Inline;
    --  Optional view filter
 
    function Sortable_Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Sort
-     with Inline;
+   with Inline;
    --  Optional sortable model
 
-   overriding procedure Scroll_To_Cell
+   overriding
+   procedure Scroll_To_Cell
      (Self      : not null access Tree_View_Record;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       Column    : access Gtk_Tree_View_Column_Record'Class;
@@ -156,16 +158,18 @@ package Gtkada.Tree_View is
       type Tree_Record is new Tree_View_Record with private;
       type Id (<>) is private;
 
-      with function Get_Id
-        (Self : not null access Tree_Record'Class;
-         Row  : Gtk_Tree_Iter) return Id;
+      with
+        function Get_Id
+          (Self : not null access Tree_Record'Class; Row : Gtk_Tree_Iter)
+           return Id;
       --  Given a row in the tree, returns a unique id for it, which remains
       --  valid when the model is updated
 
       with function Hash (Element : Id) return Ada.Containers.Hash_Type;
       with function "=" (Left, Right : Id) return Boolean is <>;
 
-   package Expansion_Support is
+   package Expansion_Support
+   is
 
       type Expansion_Status is private;
 
@@ -176,8 +180,8 @@ package Gtkada.Tree_View is
          Status         : out Expansion_Status;
          Save_Scrolling : Boolean := True);
       procedure Set_Expansion_Status
-        (Self   : not null access Tree_Record'Class;
-         Status : Expansion_Status;
+        (Self               : not null access Tree_Record'Class;
+         Status             : Expansion_Status;
          Collapse_All_First : Boolean := True);
       --  Retrieve, in the opaque Expansion_Status structure, the list of
       --  expanded nodes, and apply it again later on.
@@ -200,13 +204,14 @@ package Gtkada.Tree_View is
       --  scrolling, and selection are restored. Is used when getting/filling
       --  data asynchronous.
 
-      type Detached_Model is new Ada.Finalization.Limited_Controlled
-         with private;
+      type Detached_Model is
+        new Ada.Finalization.Limited_Controlled with private;
       type Detached_Model_Access is access all Detached_Model'Class;
-      overriding procedure Finalize (Self : in out Detached_Model);
+      overriding
+      procedure Finalize (Self : in out Detached_Model);
 
       function Tree (Self : Detached_Model) return access Tree_Record'Class
-        with Inline;
+      with Inline;
       --  Return the tree associated with Self.
       --  It returns null if the tree has been destroyed in between
 
@@ -215,11 +220,10 @@ package Gtkada.Tree_View is
       --  separately in code. Use this method.
 
       function Detach_Model_From_View
-         (Self           : not null access Tree_Record'Class;
-          Freeze         : Boolean := True;
-          Save_Expansion : Boolean := True;
-          Save_Scrolling : Boolean := True)
-         return Detached_Model;
+        (Self           : not null access Tree_Record'Class;
+         Freeze         : Boolean := True;
+         Save_Expansion : Boolean := True;
+         Save_Scrolling : Boolean := True) return Detached_Model;
       --  Temporarily detach the model from the view.
       --  This results in significant performance improvement when adding lots
       --  of rows. When the resulting object goes out of scope, the view is
@@ -238,62 +242,61 @@ package Gtkada.Tree_View is
       --  it will simply never be reattached.
 
       procedure Set_Expanded
-        (Status    : in out Expansion_Status;
-         Row       : Id;
-         Expanded  : Boolean := True);
+        (Status   : in out Expansion_Status;
+         Row      : Id;
+         Expanded : Boolean := True);
       procedure Set_Expanded
-        (Status    : in out Detached_Model;
-         Row       : Id;
-         Expanded  : Boolean := True);
+        (Status : in out Detached_Model; Row : Id; Expanded : Boolean := True);
       --  Force a saved expansion status for a row.
       --  This doesn't impact the actual tree, only when Set_Expansion_Status
       --  is called.
       --  The row doesn't have to exist.
 
    private
-      package Id_Sets is new Ada.Containers.Indefinite_Hashed_Sets
-        (Element_Type        => Id,
-         Hash                => Hash,
-         Equivalent_Elements => "=",
-         "="                 => "=");
+      package Id_Sets is new
+        Ada.Containers.Indefinite_Hashed_Sets
+          (Element_Type        => Id,
+           Hash                => Hash,
+           Equivalent_Elements => "=",
+           "="                 => "=");
 
       type Expansion_Status is record
-         Expanded      : Id_Sets.Set;
-         Selection     : Id_Sets.Set;
+         Expanded  : Id_Sets.Set;
+         Selection : Id_Sets.Set;
 
          Has_Scroll_Info : Boolean := False;
-         Scroll_Y : Gtk_Tree_Path;
+         Scroll_Y        : Gtk_Tree_Path;
          --  Top visible row
       end record;
 
-      No_Expansion : constant Expansion_Status := Expansion_Status'
-        (Expanded        => <>,
-         Selection       => <>,
-         Has_Scroll_Info => False,
-         Scroll_Y        => Null_Gtk_Tree_Path);
+      No_Expansion : constant Expansion_Status :=
+        Expansion_Status'
+          (Expanded        => <>,
+           Selection       => <>,
+           Has_Scroll_Info => False,
+           Scroll_Y        => Null_Gtk_Tree_Path);
 
       type Detached_Data is record
-         Tree           : access Tree_Record'Class;
-         Was_Detached   : Boolean := True;
-         Sort_Col       : Gint := -1;
+         Tree         : access Tree_Record'Class;
+         Was_Detached : Boolean := True;
+         Sort_Col     : Gint := -1;
 
          Save_Expansion : Boolean := False;
          Expansion      : Expansion_Status;
       end record;
       type Detached_Data_Access is access Detached_Data;
 
-      type Detached_Model is new Ada.Finalization.Limited_Controlled with
-         record
-            Data : Detached_Data_Access;
-         end record
+      type Detached_Model is new Ada.Finalization.Limited_Controlled
+      with record
+         Data : Detached_Data_Access;
+      end record
       with Warnings => Off;  --  avoid warnings on unused instances
 
       function Tree (Self : Detached_Model) return access Tree_Record'Class
-        is (if Self.Data = null then null else Self.Data.Tree);
+      is (if Self.Data = null then null else Self.Data.Tree);
 
       procedure On_Tree_Destroyed
-        (Data   : System.Address;
-         Tree   : System.Address);
+        (Data : System.Address; Tree : System.Address);
       pragma Convention (C, On_Tree_Destroyed);
       On_Tree_Destroyed_Access : constant Glib.Object.Weak_Notify :=
         On_Tree_Destroyed'Access;
@@ -307,8 +310,8 @@ package Gtkada.Tree_View is
    -------------
 
    procedure Refilter
-     (Self    : not null access Tree_View_Record'Class;
-      Iter    : Gtk_Tree_Iter := Null_Iter);
+     (Self : not null access Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter := Null_Iter);
    --  Calls Self.Is_Visible to check whether if the given row should be made
    --  visible. The parent rows are automatically made visible as well.
    --
@@ -320,8 +323,7 @@ package Gtkada.Tree_View is
    --  a filter pattern is currently applied to the view.
 
    procedure Set_Propagate_Filtered_Status
-     (Self      : not null access Tree_View_Record;
-      Propagate : Boolean := True);
+     (Self : not null access Tree_View_Record; Propagate : Boolean := True);
    --  By default, filtering is done by calling Is_Visible on each child node,
    --  and if any of them is kept visible, then the parent is also kept
    --  visible. But this propagation to the parent might be slow depending on
@@ -335,7 +337,8 @@ package Gtkada.Tree_View is
 
    function Is_Visible
      (Self       : not null access Tree_View_Record;
-      Dummy_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is (True);
+      Dummy_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is (True);
    --  Whether the given row in the model should be made visible (along with
    --  its parents)
    --  Iter applies to Self.Model
@@ -345,8 +348,8 @@ package Gtkada.Tree_View is
    -------------------
 
    procedure Set_Might_Have_Children
-     (Self    : not null access Tree_View_Record'Class;
-      Iter    : Gtk.Tree_Model.Gtk_Tree_Iter);
+     (Self : not null access Tree_View_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Indicates that the row might have children, so can be expanded by the
    --  user. When it is actually expanded, Add_Children_Lazily will be called
    --  to insert the actual children.
@@ -355,7 +358,8 @@ package Gtkada.Tree_View is
 
    procedure Add_Children
      (Self       : not null access Tree_View_Record;
-      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is null;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is null;
    --  This procedure is called automatically when a row for which
    --  Set_Might_Have_Children was called is opened.
    --  It will often be a good idea to use Detach_Model_From_View when
@@ -377,9 +381,9 @@ package Gtkada.Tree_View is
    --  instead (or let Add_Children be called automatically.
 
    procedure Get_First_Selected
-     (Self   : not null access Tree_View_Record'Class;
-      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter);
+     (Self  : not null access Tree_View_Record'Class;
+      Model : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : out Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Returns the first selected element with Selection_Multiple.
 
    -------------
@@ -393,7 +397,8 @@ package Gtkada.Tree_View is
      (Self        : not null access Tree_View_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
-      Text        : String) is null;
+      Text        : String)
+   is null;
    --  Called when interactive editing finishes.
    --  The column is provided as a way to distinguish when multiple cells are
    --  editable in a given row.
@@ -422,13 +427,12 @@ package Gtkada.Tree_View is
 
    function Convert_To_Store_Iter
      (Self : access Tree_View_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Converts model filter or sortable iter into model store iter
 
    function Convert_To_Filter_Iter
-     (Self        : access Tree_View_Record'Class;
-      Store_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Converts model store iter into filter store iter
 
@@ -480,12 +484,13 @@ private
       Col_Align : Gfloat;
    end record;
 
-   Null_Scroll_Data : constant User_Scroll_Data_Type := User_Scroll_Data_Type'
-     (Path      => Null_Gtk_Tree_Row_Reference,
-      Column    => null,
-      Use_Align => False,
-      Row_Align => 0.0,
-      Col_Align => 0.0);
+   Null_Scroll_Data : constant User_Scroll_Data_Type :=
+     User_Scroll_Data_Type'
+       (Path      => Null_Gtk_Tree_Row_Reference,
+        Column    => null,
+        Use_Align => False,
+        Row_Align => 0.0,
+        Col_Align => 0.0);
 
    type Tree_View_Record is new Gtk_Tree_View_Record with record
       Model : Gtk_Tree_Store;
@@ -510,7 +515,7 @@ private
       --  Used when delaying scrolling requests via the overrided
       --  Scroll_To_Cell procedure.
 
-      Lock  : Boolean := False;
+      Lock : Boolean := False;
       --  Whether the expand callbacks should do anything.
       --  It's useful to set this lock to True when the user wants to
       --  control expansion himself.
@@ -530,15 +535,12 @@ private
 
    function Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Store
-   is
-     (Self.Model);
+   is (Self.Model);
    function Filter
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
-   is
-     (Self.Filter);
+   is (Self.Filter);
    function Sortable_Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Sort
-   is
-     (Self.Sortable_Model);
+   is (Self.Sortable_Model);
 
 end Gtkada.Tree_View;

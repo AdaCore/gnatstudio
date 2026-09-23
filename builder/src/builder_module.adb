@@ -15,42 +15,44 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with GNATCOLL.Projects;    use GNATCOLL.Projects;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.MDI;           use Gtkada.MDI;
 
-with Commands.Interactive;       use Commands, Commands.Interactive;
-with Commands.Builder;           use Commands.Builder;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Commands.Builder;        use Commands.Builder;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 with Builder_Facility_Module;
-with Build_Command_Utils;        use Build_Command_Utils;
-with Interactive_Consoles;       use Interactive_Consoles;
+with Build_Command_Utils;  use Build_Command_Utils;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package body Builder_Module is
 
    type Interrupt_Tool_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Interrupt_Tool_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Run_Export_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Run_Export_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure Compile_Command
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the "compile" command
 
    ---------------------
@@ -58,36 +60,37 @@ package body Builder_Module is
    ---------------------
 
    procedure Compile_Command
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Data);
    begin
       if Command = "compute_xref" then
          Launch_Target
            (Builder_Facility_Module.Builder,
-            "Build All", "default",
+            "Build All",
+            "default",
             GNATCOLL.VFS.No_File,
-            Extra_Args  => null,
-            Quiet       => True,
-            Synchronous => True,
-            Dialog      => Build_Command_Utils.Force_No_Dialog,
-            Via_Menu    => False,
-            Background  => False,
-            Main        => GNATCOLL.VFS.No_File,
+            Extra_Args   => null,
+            Quiet        => True,
+            Synchronous  => True,
+            Dialog       => Build_Command_Utils.Force_No_Dialog,
+            Via_Menu     => False,
+            Background   => False,
+            Main         => GNATCOLL.VFS.No_File,
             Main_Project => GNATCOLL.Projects.No_Project);
 
       elsif Command = "compute_xref_bg" then
          Launch_Target
            (Builder_Facility_Module.Builder,
-            "Build All", "default",
+            "Build All",
+            "default",
             GNATCOLL.VFS.No_File,
-            Extra_Args  => null,
-            Quiet       => True,
-            Synchronous => False,
-            Background  => False,
-            Dialog      => Build_Command_Utils.Force_No_Dialog,
-            Via_Menu    => False,
+            Extra_Args   => null,
+            Quiet        => True,
+            Synchronous  => False,
+            Background   => False,
+            Dialog       => Build_Command_Utils.Force_No_Dialog,
+            Via_Menu     => False,
             Main         => GNATCOLL.VFS.No_File,
             Main_Project => GNATCOLL.Projects.No_Project);
       end if;
@@ -97,13 +100,14 @@ package body Builder_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Interrupt_Tool_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Check whether the current MDI child can handle interrupt on its own
 
@@ -121,7 +125,8 @@ package body Builder_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Run_Export_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -141,8 +146,8 @@ package body Builder_Module is
             declare
                F : constant Virtual_File :=
                  Select_File
-                   (Title             => -"Select File to Export from " &
-                    Child.Get_Title,
+                   (Title             =>
+                      -"Select File to Export from " & Child.Get_Title,
                     File_Pattern      => +("*.txt"),
                     Pattern_Name      => -"Text files",
                     Default_Name      => +"content.txt",
@@ -169,24 +174,26 @@ package body Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Action
-        (Kernel, "Interrupt", new Interrupt_Tool_Command,
+        (Kernel,
+         "Interrupt",
+         new Interrupt_Tool_Command,
          Description  =>
            -"Interrupt the tasks performed in the background by GNAT Studio",
          Icon_Name    => "gps-stop-symbolic",
          For_Learning => True);
 
       Register_Action
-        (Kernel, "export console to file", new Run_Export_Command,
+        (Kernel,
+         "export console to file",
+         new Run_Export_Command,
          -"Export the output of run to a text file",
          Icon_Name => "gps-save-symbolic",
-         Category => -"Run");
+         Category  => -"Run");
 
       Register_Command
-        (Kernel, "compute_xref",
-         Handler => Compile_Command'Access);
+        (Kernel, "compute_xref", Handler => Compile_Command'Access);
       Register_Command
-        (Kernel, "compute_xref_bg",
-         Handler => Compile_Command'Access);
+        (Kernel, "compute_xref_bg", Handler => Compile_Command'Access);
    end Register_Module;
 
 end Builder_Module;

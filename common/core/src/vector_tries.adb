@@ -17,21 +17,21 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
 package body Vector_Tries is
 
    function Get_Or_Create_List
      (Trie    : access Vector_Trie;
       Symbols : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
-      Name    : String)
-      return Data_List_Access;
+      Name    : String) return Data_List_Access;
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear (Trie : in out Vector_Trie) is
+   overriding
+   procedure Clear (Trie : in out Vector_Trie) is
    begin
       Clear (Vector_Trie_Trees.Trie_Tree (Trie));
    end Clear;
@@ -44,7 +44,7 @@ package body Vector_Tries is
      (Trie : access Vector_Trie; Prefix : String; Is_Partial : Boolean)
       return Vector_Trie_Iterator
    is
-      It : Vector_Trie_Iterator;
+      It           : Vector_Trie_Iterator;
       Lower_Prefix : constant String := To_Lower (Prefix);
    begin
       It.Is_Partial := Is_Partial;
@@ -117,9 +117,7 @@ package body Vector_Tries is
    -- Get --
    ---------
 
-   function Get
-     (It : Vector_Trie_Iterator) return Data_Type
-   is
+   function Get (It : Vector_Trie_Iterator) return Data_Type is
    begin
       return Get (It.It_Vector);
    end Get;
@@ -149,10 +147,9 @@ package body Vector_Tries is
    function Get_Or_Create_List
      (Trie    : access Vector_Trie;
       Symbols : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
-      Name    : String)
-      return Data_List_Access
+      Name    : String) return Data_List_Access
    is
-      List  : Data_List_Access := Get (Trie, Name);
+      List : Data_List_Access := Get (Trie, Name);
    begin
       --  We add only named constructs in the database, and we dismiss some
       --  categories.
@@ -160,8 +157,7 @@ package body Vector_Tries is
       if List = null then
          List := new Data_List;
          List.Name := Symbols.Find (Name);
-         List.Data :=
-           new Data_Vector.Lazy_Vector_Record;
+         List.Data := new Data_Vector.Lazy_Vector_Record;
          Insert (Trie.all, List);
       end if;
 
@@ -185,10 +181,7 @@ package body Vector_Tries is
       List       : constant Data_List_Access :=
         Get_Or_Create_List (Trie, Symbols, Lower_Name);
    begin
-      Insert
-        (List.Data,
-         Element,
-         Index.It);
+      Insert (List.Data, Element, Index.It);
 
       Index.Name := List.Name;
    end Insert;
@@ -197,9 +190,7 @@ package body Vector_Tries is
    -- Delete --
    ------------
 
-   procedure Delete
-     (Trie : in out Vector_Trie; Index : Vector_Trie_Index)
-   is
+   procedure Delete (Trie : in out Vector_Trie; Index : Vector_Trie_Index) is
       pragma Unreferenced (Trie);
    begin
       if Index.It /= Data_Vector.Null_Iterator then
@@ -226,8 +217,7 @@ package body Vector_Tries is
    --------------
 
    function Get_Name
-     (Node : Data_List_Access)
-      return GNATCOLL.Utils.Cst_String_Access is
+     (Node : Data_List_Access) return GNATCOLL.Utils.Cst_String_Access is
    begin
       if Node /= null then
          return Get (Node.Name);
@@ -241,8 +231,8 @@ package body Vector_Tries is
    ----------
 
    procedure Free (Node : in out Data_List_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Data_List, Data_List_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation (Data_List, Data_List_Access);
    begin
       if Node /= null then
          Free (Node.Data);
@@ -255,11 +245,11 @@ package body Vector_Tries is
    --------------------
 
    function Get_Name_Index
-     (Trie : access Vector_Trie;
+     (Trie    : access Vector_Trie;
       Symbols : not null access Symbol_Table_Record'Class;
-      Name : String) return Symbol
+      Name    : String) return Symbol
    is
-      List   : constant Data_List_Access :=
+      List : constant Data_List_Access :=
         Get_Or_Create_List (Trie, Symbols, To_Lower (Name));
       --  ??? This To_Lower should depend on some casing property.
    begin

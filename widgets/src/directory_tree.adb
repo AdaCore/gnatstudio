@@ -18,45 +18,45 @@
 with Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 
-with Cairo;                     use Cairo;
+with Cairo; use Cairo;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Glib_Values_Utils;         use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gtk.Arrow;                 use Gtk.Arrow;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gdk.Event;                 use Gdk.Event;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtk.Arrow;                use Gtk.Arrow;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gdk.Event;                use Gdk.Event;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Hbutton_Box;          use Gtk.Hbutton_Box;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with GUI_Utils;                 use GUI_Utils;
-with OS_Utils;                  use OS_Utils;
-with UTF8_Utils;                use UTF8_Utils;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GUI_Utils;       use GUI_Utils;
+with OS_Utils;        use OS_Utils;
+with UTF8_Utils;      use UTF8_Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Directory_Tree is
    Me : constant Trace_Handle := Create ("GPS.WIDGETS.DIRECTORY_TREE");
@@ -65,11 +65,11 @@ package body Directory_Tree is
    Base_Name_Column : constant := 1;
    File_Column      : constant := 2;
 
-   Open_Directory_Node : constant String := "gps-emblem-directory-open";
+   Open_Directory_Node   : constant String := "gps-emblem-directory-open";
    Closed_Directory_Node : constant String := "gps-emblem-directory-closed";
 
-   package Widget_Menus is new GUI_Utils.User_Contextual_Menus
-     (User_Data => Directory_Selector);
+   package Widget_Menus is new
+     GUI_Utils.User_Contextual_Menus (User_Data => Directory_Selector);
    --  Used to register contextual menus with a user data
 
    function Columns_Types return GType_Array;
@@ -117,7 +117,7 @@ package body Directory_Tree is
       Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : Virtual_File  := No_File;
+      Append_To_Dir : Virtual_File := No_File;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True);
    --  Add to the file view the directory Dir, at node given by Iter.
@@ -133,8 +133,8 @@ package body Directory_Tree is
    --  node if they are not there already.
 
    function Expose_Event_Cb
-     (Explorer : access Gtk_Widget_Record'Class;
-      Cr       : Cairo_Context) return Boolean;
+     (Explorer : access Gtk_Widget_Record'Class; Cr : Cairo_Context)
+      return Boolean;
    --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
@@ -145,11 +145,10 @@ package body Directory_Tree is
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+      Params   : Glib.Values.GValues);
    --  Callback for the "destroy" event on the file view
 
-   procedure File_Remove_Idle_Calls
-     (Explorer : access Dir_Tree_Record'Class);
+   procedure File_Remove_Idle_Calls (Explorer : access Dir_Tree_Record'Class);
    --  Remove the idle calls for filling the file view
 
    function On_Button_Press
@@ -163,13 +162,11 @@ package body Directory_Tree is
    --  by this call.
 
    function File_Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Explorer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "button_press" event on the file view
 
-   procedure Free_Children
-     (T    : Dir_Tree;
-      Iter : Gtk_Tree_Iter);
+   procedure Free_Children (T : Dir_Tree; Iter : Gtk_Tree_Iter);
    --  Free all the children of iter Iter in the file view
 
    function Read_Directory
@@ -178,18 +175,14 @@ package body Directory_Tree is
    --  Called by File_Append_Directory.
 
    procedure Refresh
-     (Explorer : access Dir_Tree_Record'Class;
-      Dir      : Virtual_File);
+     (Explorer : access Dir_Tree_Record'Class; Dir : Virtual_File);
    --  Refresh the contents of the explorer.
    --  Show directory Dir.
 
-   procedure Append_Dummy_Iter
-     (Model : Gtk_Tree_Store;
-      Base  : Gtk_Tree_Iter);
+   procedure Append_Dummy_Iter (Model : Gtk_Tree_Store; Base : Gtk_Tree_Iter);
    --  Append an empty iter to Base
 
-   procedure Create_Directory_Cb
-     (W : access Gtk_Widget_Record'Class);
+   procedure Create_Directory_Cb (W : access Gtk_Widget_Record'Class);
    --  Create a new subdirectory of the selected directory
 
    procedure Add_Directory
@@ -223,27 +216,26 @@ package body Directory_Tree is
    --  doesn't remove children of the directory.
 
    function Find_Directory_In_Selection
-     (Selector : access Directory_Selector_Record'Class;
-      File     : Virtual_File)
+     (Selector : access Directory_Selector_Record'Class; File : Virtual_File)
       return Gtk_Tree_Iter;
    --  -1 if Name is not a source directory for the project defined in Wiz.
    --  Otherwise, the index of Name in the list is returned.
 
    function Tree_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu;
    --  Return the contextual menu to use when the user clicks in the directory
    --  tree.
 
    function List_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu;
    --  Return the contextual menu to use when the user clicks in the list of
    --  selected directories
 
    function Single_List_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu;
    --  Return the contextual menu to use for a single directory selector
 
    function Get_First_Selected
@@ -251,20 +243,17 @@ package body Directory_Tree is
    --  Return the first selected item, or Null_Iter;
 
    function Filter
-     (Tree     : access Dir_Tree_Record'Class;
-      Dir_Name : String) return Boolean;
+     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean;
    --  Should return True if Dir_Name should be displayed in the tree.
    --  Dir_Name is the last part of the full path, ie shouldn't include its
    --  parent's name.
 
    procedure On_Tree_Select_Row
-     (Object : access GObject_Record'Class;
-      Params : GValues);
+     (Object : access GObject_Record'Class; Params : GValues);
    --  Callback for a change in the directory selection
 
    procedure On_Tree_Size_Allocate
-     (Object : access GObject_Record'Class;
-      Params : GValues);
+     (Object : access GObject_Record'Class; Params : GValues);
    --  Callback for a change in the directory tree size
 
    ----------
@@ -272,8 +261,10 @@ package body Directory_Tree is
    ----------
 
    procedure Free (Data : in out Append_Directory_Idle_Data_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
+      procedure Unchecked_Free is new
+        Unchecked_Deallocation
+          (Append_Directory_Idle_Data,
+           Append_Directory_Idle_Data_Access);
    begin
       Data.Dirs.Clear;
       Unchecked_Free (Data);
@@ -284,13 +275,12 @@ package body Directory_Tree is
    ---------------------------
 
    procedure On_Tree_Size_Allocate
-     (Object : access GObject_Record'Class;
-      Params : GValues)
+     (Object : access GObject_Record'Class; Params : GValues)
    is
       pragma Unreferenced (Params);
-      Tree  : constant Dir_Tree := Dir_Tree (Object);
-      Path  : Gtk_Tree_Path;
-      Col   : Gtk_Tree_View_Column;
+      Tree : constant Dir_Tree := Dir_Tree (Object);
+      Path : Gtk_Tree_Path;
+      Col  : Gtk_Tree_View_Column;
 
    begin
       Get_Cursor (Tree.File_Tree, Path, Col);
@@ -303,8 +293,7 @@ package body Directory_Tree is
    ------------------------
 
    procedure On_Tree_Select_Row
-     (Object : access GObject_Record'Class;
-      Params : GValues)
+     (Object : access GObject_Record'Class; Params : GValues)
    is
       Tree  : constant Dir_Tree := Dir_Tree (Object);
       Iter  : Gtk_Tree_Iter;
@@ -323,14 +312,12 @@ package body Directory_Tree is
    ------------
 
    function Filter
-     (Tree : access Dir_Tree_Record'Class; Dir_Name : String)
-      return Boolean
+     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean
    is
       pragma Unreferenced (Tree);
    begin
-      return Dir_Name /= "."
-        and then Dir_Name /= ".."
-        and then Dir_Name /= "CVS";
+      return
+        Dir_Name /= "." and then Dir_Name /= ".." and then Dir_Name /= "CVS";
    end Filter;
 
    -----------------
@@ -440,11 +427,10 @@ package body Directory_Tree is
    ---------------------------------
 
    function Find_Directory_In_Selection
-     (Selector : access Directory_Selector_Record'Class;
-      File     : Virtual_File)
+     (Selector : access Directory_Selector_Record'Class; File : Virtual_File)
       return Gtk_Tree_Iter
    is
-      Iter  : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_First (Selector.List_Model);
 
@@ -468,7 +454,7 @@ package body Directory_Tree is
       Dir       : Virtual_File;
       Recursive : Boolean)
    is
-      Row     : Gtk_Tree_Iter;
+      Row : Gtk_Tree_Iter;
 
    begin
       Row := Find_Directory_In_Selection (Selector, Dir);
@@ -476,8 +462,10 @@ package body Directory_Tree is
       if Row = Null_Iter then
          Append (Selector.List_Model, Row, Null_Iter);
          Set_Columns
-           (Selector.List_Model, Row,
-            Unknown_To_UTF8 (+Base_Dir_Name (Dir)), Dir);
+           (Selector.List_Model,
+            Row,
+            Unknown_To_UTF8 (+Base_Dir_Name (Dir)),
+            Dir);
       end if;
 
       if Recursive then
@@ -487,8 +475,7 @@ package body Directory_Tree is
             for F in Files'Range loop
                if Is_Directory (Files (F))
                  and then not Is_Symbolic_Link (Files (F))
-                 and then Filter (Selector.Directory,
-                                  +Full_Name (Files (F)))
+                 and then Filter (Selector.Directory, +Full_Name (Files (F)))
                then
                   Add_Directory (Selector, Files (F), True);
                end if;
@@ -506,8 +493,7 @@ package body Directory_Tree is
    -------------------
 
    function Get_Selection
-     (Tree : access Dir_Tree_Record)
-     return GNATCOLL.VFS.Virtual_File is
+     (Tree : access Dir_Tree_Record) return GNATCOLL.VFS.Virtual_File is
    begin
       if Tree.Current_Dir = No_File then
          return No_File;
@@ -551,7 +537,8 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Add_Directory_Cb;
 
    ----------------------
@@ -570,7 +557,7 @@ package body Directory_Tree is
 
          if Recursive then
             declare
-               Dir   : Virtual_File;
+               Dir : Virtual_File;
             begin
                Dir := Get_File (Selector.List_Model, Iter, File_Column);
 
@@ -581,8 +568,8 @@ package body Directory_Tree is
                      Iter_Dir    : Virtual_File;
                      Delete_Iter : Gtk_Tree_Iter;
                   begin
-                     Iter_Dir := Get_File
-                       (Selector.List_Model, Iter, File_Column);
+                     Iter_Dir :=
+                       Get_File (Selector.List_Model, Iter, File_Column);
 
                      if Is_Parent (Dir, Iter_Dir) then
                         Delete_Iter := Iter;
@@ -610,7 +597,8 @@ package body Directory_Tree is
       Remove_Directory (Selector, Recursive => True);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Remove_Directory_Cb;
 
    -----------------------------
@@ -641,23 +629,28 @@ package body Directory_Tree is
    --------------------------
 
    function Tree_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu
    is
-      Item         : Gtk_Menu_Item;
-      Is_Valid     : Boolean := False;
-      Menu         : Gtk_Menu;
+      Item     : Gtk_Menu_Item;
+      Is_Valid : Boolean := False;
+      Menu     : Gtk_Menu;
 
-      Path         : Gtk_Tree_Path;
-      Column       : Gtk_Tree_View_Column;
+      Path           : Gtk_Tree_Path;
+      Column         : Gtk_Tree_View_Column;
       Cell_X, Cell_Y : Gint;
 
    begin
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.Directory.File_Tree,
-            Gint (Event.Button.X), Gint (Event.Button.Y),
-            Path, Column, Cell_X, Cell_Y, Is_Valid);
+            Gint (Event.Button.X),
+            Gint (Event.Button.Y),
+            Path,
+            Column,
+            Cell_X,
+            Cell_Y,
+            Is_Valid);
       end if;
 
       if Is_Valid then
@@ -666,21 +659,27 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, "Add directory recursive");
          Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Add_Directory_Cb'Access, Selector);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Add_Directory_Cb'Access,
+            Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Add directory");
          Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Add_Single_Directory_Cb'Access, Selector);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Add_Single_Directory_Cb'Access,
+            Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Create new subdirectory");
          Append (Menu, Item);
          Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Create_Directory_Cb'Access, Selector);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Create_Directory_Cb'Access,
+            Selector);
 
          return Menu;
       end if;
@@ -692,8 +691,7 @@ package body Directory_Tree is
    -- Remove_Single_Directory_Cb --
    --------------------------------
 
-   procedure Remove_Single_Directory_Cb
-     (W : access Gtk_Widget_Record'Class) is
+   procedure Remove_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
    begin
       Remove_Directory (Directory_Selector (W), Recursive => False);
    end Remove_Single_Directory_Cb;
@@ -703,12 +701,12 @@ package body Directory_Tree is
    --------------------------
 
    function List_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu
    is
-      Item        : Gtk_Menu_Item;
-      Is_Valid    : Boolean := False;
-      Menu        : Gtk_Menu;
+      Item     : Gtk_Menu_Item;
+      Is_Valid : Boolean := False;
+      Menu     : Gtk_Menu;
 
       Path           : Gtk_Tree_Path;
       Column         : Gtk_Tree_View_Column;
@@ -717,13 +715,17 @@ package body Directory_Tree is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.List_Tree,
-            Gint (Event.Button.X), Gint (Event.Button.Y),
-            Path, Column, Cell_X, Cell_Y, Is_Valid);
+            Gint (Event.Button.X),
+            Gint (Event.Button.Y),
+            Path,
+            Column,
+            Cell_X,
+            Cell_Y,
+            Is_Valid);
       end if;
 
       if Is_Valid then
-         if not Path_Is_Selected
-           (Get_Selection (Selector.List_Tree), Path)
+         if not Path_Is_Selected (Get_Selection (Selector.List_Tree), Path)
          then
             Set_Cursor (Selector.List_Tree, Path, null, False);
          end if;
@@ -731,14 +733,18 @@ package body Directory_Tree is
          Gtk_New (Menu);
          Gtk_New (Item, "Remove directory recursive");
          Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Remove_Directory_Cb'Access, Selector);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Remove_Directory_Cb'Access,
+            Selector);
          Append (Menu, Item);
 
          Gtk_New (Item, "Remove directory");
          Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Remove_Single_Directory_Cb'Access, Selector);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Remove_Single_Directory_Cb'Access,
+            Selector);
          Append (Menu, Item);
       end if;
 
@@ -749,12 +755,10 @@ package body Directory_Tree is
    -- Create_Directory_Cb --
    -------------------------
 
-   procedure Create_Directory_Cb
-     (W : access Gtk_Widget_Record'Class)
-   is
+   procedure Create_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector    : constant Directory_Selector := Directory_Selector (W);
       Current_Dir : constant Virtual_File :=
-                     Get_Selection (Selector.Directory);
+        Get_Selection (Selector.Directory);
       Dialog      : Gtk_Dialog;
       Label       : Gtk_Label;
       Ent         : Gtk_Entry;
@@ -762,10 +766,11 @@ package body Directory_Tree is
       pragma Unreferenced (Ignore);
 
    begin
-      Gtk_New (Dialog,
-               Title  => "Create directory",
-               Parent => Gtk_Window (Get_Toplevel (W)),
-               Flags  => Modal or Destroy_With_Parent);
+      Gtk_New
+        (Dialog,
+         Title  => "Create directory",
+         Parent => Gtk_Window (Get_Toplevel (W)),
+         Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (Label, "Directory Name:");
       Pack_Start
@@ -798,8 +803,7 @@ package body Directory_Tree is
 
             Path := Get_Path (Selector.Directory.File_Model, Iter);
 
-            Make_Dir_Recursive
-              (Create_From_UTF8 (Get_Text (Ent)));
+            Make_Dir_Recursive (Create_From_UTF8 (Get_Text (Ent)));
 
             Ignore := Collapse_Row (Selector.Directory.File_Tree, Path);
             Ignore := Expand_Row (Selector.Directory.File_Tree, Path, False);
@@ -815,7 +819,8 @@ package body Directory_Tree is
       Destroy (Dialog);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Create_Directory_Cb;
 
    ---------------------------------
@@ -823,8 +828,8 @@ package body Directory_Tree is
    ---------------------------------
 
    function Single_List_Contextual_Menu
-     (Selector : Directory_Selector;
-      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
+     (Selector : Directory_Selector; Event : Gdk.Event.Gdk_Event)
+      return Gtk_Menu
    is
       pragma Unreferenced (Event);
       Menu : Gtk_Menu;
@@ -834,8 +839,10 @@ package body Directory_Tree is
       Gtk_New (Item, "Create new subdirectory");
       Append (Menu, Item);
       Widget_Callback.Object_Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
-         Create_Directory_Cb'Access, Selector);
+        (Item,
+         Gtk.Menu_Item.Signal_Activate,
+         Create_Directory_Cb'Access,
+         Selector);
 
       return Menu;
    end Single_List_Contextual_Menu;
@@ -896,17 +903,20 @@ package body Directory_Tree is
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, Gtk.Button.Signal_Clicked,
-            Add_Single_Directory_Cb'Access, Selector);
+           (Button,
+            Gtk.Button.Signal_Clicked,
+            Add_Single_Directory_Cb'Access,
+            Selector);
 
          Gtk_New (Button);
-         Gtk_New (Arrow,
-                  Arrow_Up, Shadow_In);
+         Gtk_New (Arrow, Arrow_Up, Shadow_In);
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, Gtk.Button.Signal_Clicked,
-            Remove_Single_Directory_Cb'Access, Selector);
+           (Button,
+            Gtk.Button.Signal_Clicked,
+            Remove_Single_Directory_Cb'Access,
+            Selector);
 
          Gtk_New (Scrolled);
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -921,7 +931,8 @@ package body Directory_Tree is
 
          Set_Mode (Get_Selection (Selector.List_Tree), Selection_Multiple);
          Widget_Menus.Register_Contextual_Menu
-           (Selector.List_Tree, Directory_Selector (Selector),
+           (Selector.List_Tree,
+            Directory_Selector (Selector),
             List_Contextual_Menu'Access);
 
          for J in Initial_Selection'Range loop
@@ -929,14 +940,16 @@ package body Directory_Tree is
 
             Ensure_Directory (Initial_Selection (J));
             Set_Columns
-              (Selector.List_Model, Iter,
+              (Selector.List_Model,
+               Iter,
                Initial_Selection (J).Display_Base_Dir_Name,
                Initial_Selection (J));
          end loop;
 
       else
          Widget_Menus.Register_Contextual_Menu
-           (Selector.Directory, Directory_Selector (Selector),
+           (Selector.Directory,
+            Directory_Selector (Selector),
             Single_List_Contextual_Menu'Access);
       end if;
    end Initialize;
@@ -968,9 +981,9 @@ package body Directory_Tree is
    --------------------------
 
    function Get_Single_Selection
-     (Selector  : access Directory_Selector_Record'Class) return Virtual_File
+     (Selector : access Directory_Selector_Record'Class) return Virtual_File
    is
-      Iter  : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter;
    begin
       Iter := Get_First_Selected (Directory_Selector (Selector));
 
@@ -1020,9 +1033,7 @@ package body Directory_Tree is
    -- Append_Dummy_Iter --
    -----------------------
 
-   procedure Append_Dummy_Iter
-     (Model : Gtk_Tree_Store;
-      Base  : Gtk_Tree_Iter)
+   procedure Append_Dummy_Iter (Model : Gtk_Tree_Store; Base : Gtk_Tree_Iter)
    is
       Iter : Gtk_Tree_Iter;
    begin
@@ -1048,7 +1059,8 @@ package body Directory_Tree is
 
          if D.Physical_Read then
             Set_Columns
-              (D.Explorer.File_Model, Iter,
+              (D.Explorer.File_Model,
+               Iter,
                Icon => Open_Directory_Node,
                Base => Display_Base_Dir_Name (D.Norm_Dir),
                File => D.Norm_Dir);
@@ -1059,7 +1071,8 @@ package body Directory_Tree is
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set_Columns
-              (D.Explorer.File_Model, Iter,
+              (D.Explorer.File_Model,
+               Iter,
                Icon => Closed_Directory_Node,
                Base => Display_Base_Dir_Name (D.Norm_Dir),
                File => D.Norm_Dir);
@@ -1068,16 +1081,14 @@ package body Directory_Tree is
 
       else
          declare
-            Path    : constant Gtk_Tree_Path :=
+            Path      : constant Gtk_Tree_Path :=
               Get_Path (D.Explorer.File_Model, D.Base);
-            Success : Boolean;
+            Success   : Boolean;
             Expanding : constant Boolean := D.Explorer.Expanding;
             pragma Unreferenced (Success);
          begin
             D.Explorer.Expanding := True;
-            Success := Expand_Row
-              (D.Explorer.File_Tree,
-               Path, False);
+            Success := Expand_Row (D.Explorer.File_Tree, Path, False);
             D.Explorer.Expanding := Expanding;
             Path_Free (Path);
          end;
@@ -1110,12 +1121,13 @@ package body Directory_Tree is
 
       while not Is_Empty (D.Dirs) loop
          declare
-            Dir   : constant Virtual_File := D.Dirs.First_Element;
+            Dir : constant Virtual_File := D.Dirs.First_Element;
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
 
             Set_Columns
-              (D.Explorer.File_Model, Iter,
+              (D.Explorer.File_Model,
+               Iter,
                Base => Display_Base_Dir_Name (Dir),
                File => Dir);
 
@@ -1125,13 +1137,11 @@ package body Directory_Tree is
 
             --  Are we on the path to the target directory ?
 
-            if not Path_Found
-              and then Is_Parent (Dir, D.Norm_Dest)
-            then
+            if not Path_Found and then Is_Parent (Dir, D.Norm_Dest) then
                Path_Found := True;
 
                declare
-                  Success   : Boolean;
+                  Success : Boolean;
                   pragma Unreferenced (Success);
 
                   Path      : Gtk_Tree_Path;
@@ -1153,7 +1163,7 @@ package body Directory_Tree is
 
                if D.Norm_Dest = Dir then
                   declare
-                     Success   : Boolean;
+                     Success : Boolean;
                      pragma Unreferenced (Success);
 
                      Expanding : constant Boolean := D.Explorer.Expanding;
@@ -1168,9 +1178,9 @@ package body Directory_Tree is
                        (D.Explorer, Dir, Iter, D.Depth, D.Norm_Dest, False);
 
                      D.Explorer.Expanding := True;
-                     Success := Expand_Row
-                       (D.Explorer.File_Tree,
-                        D.Explorer.Path, False);
+                     Success :=
+                       Expand_Row
+                         (D.Explorer.File_Tree, D.Explorer.Path, False);
                      D.Explorer.Expanding := Expanding;
 
                      D.Explorer.File_Model.Set
@@ -1180,9 +1190,12 @@ package body Directory_Tree is
 
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Draw,
+                         (D.Explorer.File_Tree,
+                          Signal_Draw,
                           Gtkada.Handlers.Return_Callback.To_Marshaller
-                            (Expose_Event_Cb'Access), D.Explorer, True);
+                            (Expose_Event_Cb'Access),
+                          D.Explorer,
+                          True);
                   end;
 
                else
@@ -1235,12 +1248,12 @@ package body Directory_Tree is
    begin
       Ensure_Directory (Dir);
       Ensure_Directory (Append_To_Dir);
-      D.Norm_Dir      := Dir;
-      D.Norm_Dest     := Append_To_Dir;
-      D.Depth         := Depth;
-      D.Base          := Base;
-      D.Explorer      := Dir_Tree (Explorer);
-      D.Idle          := Idle;
+      D.Norm_Dir := Dir;
+      D.Norm_Dest := Append_To_Dir;
+      D.Depth := Depth;
+      D.Base := Base;
+      D.Explorer := Dir_Tree (Explorer);
+      D.Idle := Idle;
       D.Physical_Read := Physical_Read;
 
       if Idle then
@@ -1248,8 +1261,9 @@ package body Directory_Tree is
          --  Necessary for preserving order in drive names.
 
          if Read_Directory (D) then
-            Timeout_Id := File_Append_Directory_Timeout.Timeout_Add
-              (1, Read_Directory'Access, D, Notify => Free'Access);
+            Timeout_Id :=
+              File_Append_Directory_Timeout.Timeout_Add
+                (1, Read_Directory'Access, D, Notify => Free'Access);
             Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
          else
             Free (D);
@@ -1267,10 +1281,10 @@ package body Directory_Tree is
    ----------------------
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View) is
-      Col           : Gtk_Tree_View_Column;
-      Text_Rend     : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Dummy         : Gint;
+      Col         : Gtk_Tree_View_Column;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
@@ -1299,11 +1313,10 @@ package body Directory_Tree is
       File  : Virtual_File) is
    begin
       Set_And_Clear
-        (Model, Iter,
+        (Model,
+         Iter,
          (Icon_Column, Base_Name_Column, File_Column),
-         (As_String (Icon),
-          As_String (Base),
-          As_File   (File)));
+         (As_String (Icon), As_String (Base), As_File (File)));
    end Set_Columns;
 
    -----------------
@@ -1317,10 +1330,10 @@ package body Directory_Tree is
       File  : Virtual_File) is
    begin
       Set_And_Clear
-        (Model, Iter,
+        (Model,
+         Iter,
          (Base_Name_Column, File_Column),
-         (As_String (Base),
-          As_File   (File)));
+         (As_String (Base), As_File (File)));
    end Set_Columns;
 
    -------------------
@@ -1329,19 +1342,19 @@ package body Directory_Tree is
 
    function Columns_Types return GType_Array is
    begin
-      return GType_Array'
-        (Icon_Column      => GType_String,
-         File_Column      => GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type,
-         Base_Name_Column => GType_String);
+      return
+        GType_Array'
+          (Icon_Column      => GType_String,
+           File_Column      => GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type,
+           Base_Name_Column => GType_String);
    end Columns_Types;
 
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Tree    : out Dir_Tree;
-      Initial : Virtual_File := No_File) is
+   procedure Gtk_New (Tree : out Dir_Tree; Initial : Virtual_File := No_File)
+   is
    begin
       Tree := new Dir_Tree_Record;
       Directory_Tree.Initialize (Tree, Initial);
@@ -1352,9 +1365,7 @@ package body Directory_Tree is
    ----------------
 
    procedure Initialize
-     (Tree    : access Dir_Tree_Record'Class;
-      Initial : Virtual_File)
-   is
+     (Tree : access Dir_Tree_Record'Class; Initial : Virtual_File) is
    begin
       Gtk.Scrolled_Window.Initialize (Tree);
       Set_Policy (Tree, Policy_Automatic, Policy_Automatic);
@@ -1380,7 +1391,8 @@ package body Directory_Tree is
       Set_Column_Types (Tree.File_Tree);
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, Signal_Row_Expanded,
+        (Tree.File_Tree,
+         Signal_Row_Expanded,
          Widget_Callback.To_Marshaller (File_Tree_Expand_Row_Cb'Access),
          Tree,
          False);
@@ -1393,8 +1405,7 @@ package body Directory_Tree is
          False);
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, Signal_Destroy,
-         On_File_Destroy'Access, Tree, False);
+        (Tree.File_Tree, Signal_Destroy, On_File_Destroy'Access, Tree, False);
 
       declare
          Initial_Dir : Virtual_File;
@@ -1416,15 +1427,15 @@ package body Directory_Tree is
          Signal_Changed,
          On_Tree_Select_Row'Access,
          Slot_Object => Tree,
-         After => True);
+         After       => True);
    end Initialize;
 
    ----------------------------
    -- File_Remove_Idle_Calls --
    ----------------------------
 
-   procedure File_Remove_Idle_Calls
-     (Explorer : access Dir_Tree_Record'Class) is
+   procedure File_Remove_Idle_Calls (Explorer : access Dir_Tree_Record'Class)
+   is
    begin
       while not Explorer.Fill_Timeout_Ids.Is_Empty loop
          Glib.Main.Remove (Explorer.Fill_Timeout_Ids.First_Element);
@@ -1438,7 +1449,7 @@ package body Directory_Tree is
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+      Params   : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
       E : constant Dir_Tree := Dir_Tree (Explorer);
@@ -1474,7 +1485,8 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -1482,8 +1494,8 @@ package body Directory_Tree is
    ---------------------
 
    function Expose_Event_Cb
-     (Explorer : access Gtk_Widget_Record'Class;
-      Cr       : Cairo_Context) return Boolean
+     (Explorer : access Gtk_Widget_Record'Class; Cr : Cairo_Context)
+      return Boolean
    is
       pragma Unreferenced (Cr);
       T : constant Dir_Tree := Dir_Tree (Explorer);
@@ -1512,7 +1524,7 @@ package body Directory_Tree is
          Signal_Size_Allocate,
          On_Tree_Size_Allocate'Access,
          Slot_Object => T,
-         After => True);
+         After       => True);
 
       return True;
 
@@ -1555,15 +1567,13 @@ package body Directory_Tree is
       Ignore := Expand_Row (T.File_Tree, Path, False);
       Set_Cursor (T.File_Tree, Path, null, False);
 
-      Scroll_To_Cell
-        (T.File_Tree,
-         Path, null, True,
-         0.1, 0.1);
+      Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
 
       T.Expanding := False;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end File_Tree_Expand_Row_Cb;
 
    ---------------------
@@ -1576,7 +1586,7 @@ package body Directory_Tree is
       Event     : Gdk_Event;
       Add_Dummy : Boolean) return Boolean
    is
-      Iter         : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (Tree, Event);
 
@@ -1617,17 +1627,16 @@ package body Directory_Tree is
    -----------------------
 
    function File_Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (Explorer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      T    : constant Dir_Tree :=
-        Dir_Tree (Explorer);
+      T : constant Dir_Tree := Dir_Tree (Explorer);
    begin
-      return On_Button_Press
-        (T.File_Tree, T.File_Model, Event, True);
+      return On_Button_Press (T.File_Tree, T.File_Model, Event, True);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          return False;
    end File_Button_Press;
 
@@ -1636,12 +1645,10 @@ package body Directory_Tree is
    -------------
 
    procedure Refresh
-     (Explorer : access Dir_Tree_Record'Class;
-      Dir      : Virtual_File)
+     (Explorer : access Dir_Tree_Record'Class; Dir : Virtual_File)
    is
       Dir_Inserted : Boolean := False;
-      Drives       : File_Array_Access :=
-                       Get_Logical_Drives (Dir.Get_Host);
+      Drives       : File_Array_Access := Get_Logical_Drives (Dir.Get_Host);
 
    begin
       File_Remove_Idle_Calls (Explorer);
@@ -1671,21 +1678,19 @@ package body Directory_Tree is
 
       if not Dir_Inserted then
          File_Append_Directory
-           (Explorer, Get_Root (Dir),
-            Null_Iter, 0, No_File, False, False);
+           (Explorer, Get_Root (Dir), Null_Iter, 0, No_File, False, False);
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Refresh;
 
    -------------------
    -- Free_Children --
    -------------------
 
-   procedure Free_Children
-     (T    : Dir_Tree;
-      Iter : Gtk_Tree_Iter) is
+   procedure Free_Children (T : Dir_Tree; Iter : Gtk_Tree_Iter) is
    begin
       Remove_Child_Nodes (T.File_Model, Iter);
    end Free_Children;

@@ -19,12 +19,12 @@
 --  This package provides a user level code coverage API
 --  </description>
 
-with GNAT.Strings;                    use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
-with Gtk.Tree_Store;                  use Gtk.Tree_Store;
-with Gtk.Tree_Model;                  use Gtk.Tree_Model;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 
 with Code_Analysis;                   use Code_Analysis;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
@@ -77,8 +77,7 @@ package Code_Coverage is
    --  This procedure handles all the Coverage_Access'Class
 
    procedure XML_Parse_Coverage
-     (Coverage : in out Coverage_Access;
-      Loc      : Node_Ptr);
+     (Coverage : in out Coverage_Access; Loc : Node_Ptr);
    --  Get from Loc the coverage attributes that Coverage should contain
    --  This procedure handles all the Coverage_Access'Class
 

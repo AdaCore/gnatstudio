@@ -35,8 +35,8 @@ package body CodePeer.Generic_Criteria_Editors is
    --  Converts external tag to Glib compatible form.
 
    procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Criteria_Editor);
    --  Called on click on the list's item
@@ -58,29 +58,31 @@ package body CodePeer.Generic_Criteria_Editors is
      (Self : not null access Criteria_Editor_Record'Class);
    --  Updates state of 'select/unselect all' toggle
 
-   package Cell_Renderer_Toggle_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
-            Criteria_Editor);
+   package Cell_Renderer_Toggle_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
+        Criteria_Editor);
 
-   package Cell_Renderer_Toggle_Callbacks_Marshallers is
-     new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-           (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
+   package Cell_Renderer_Toggle_Callbacks_Marshallers is new
+     Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
+       (Gtkada.Types.Chars_Ptr,
+        Glib.Values.Get_Chars);
 
-   package Tree_View_Column_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
-            Criteria_Editor);
+   package Tree_View_Column_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
+        Criteria_Editor);
 
-   package Message_Categories_Criteria_Editor_Callbacks is
-     new Gtk.Handlers.Callback (Criteria_Editor_Record);
+   package Message_Categories_Criteria_Editor_Callbacks is new
+     Gtk.Handlers.Callback (Criteria_Editor_Record);
 
-   package Message_Categories_Criteria_Model_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Criteria_Models.Criteria_Model_Record, Criteria_Editor);
+   package Message_Categories_Criteria_Model_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Criteria_Models.Criteria_Model_Record,
+        Criteria_Editor);
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
@@ -166,11 +168,11 @@ package body CodePeer.Generic_Criteria_Editors is
 
    begin
       Glib.Object.Initialize_Class_Record
-        (Ancestor      => Gtk.Scrolled_Window.Get_Type,
-         Signals       => Signals,
-         Class_Record  => Class_Record,
-         Type_Name     => Glib_Class_Name (Criteria_Editor_Record'Tag),
-         Parameters    => Signal_Parameters);
+        (Ancestor     => Gtk.Scrolled_Window.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => Glib_Class_Name (Criteria_Editor_Record'Tag),
+         Parameters   => Signal_Parameters);
       Glib.Object.G_New (Self, Class_Record);
 
       Message_Categories_Criteria_Editor_Callbacks.Connect
@@ -208,17 +210,15 @@ package body CodePeer.Generic_Criteria_Editors is
            (On_Select_All_Toggled'Access),
          Criteria_Editor (Self));
       Gtk.Check_Button.Gtk_New (Self.Toggle, "");
-         Self.Toggle.Set_Inconsistent (False);
-         Self.Toggle.Set_Active (True);
+      Self.Toggle.Set_Inconsistent (False);
+      Self.Toggle.Set_Active (True);
       Self.Update_Toggle_State;
       Self.Toggle.Show;
       Column.Set_Widget (Self.Toggle);
       Gtk.Cell_Renderer_Toggle.Gtk_New (Toggle_Renderer);
       Column.Pack_End (Toggle_Renderer, False);
       Column.Add_Attribute
-        (Toggle_Renderer,
-         "active",
-         Criteria_Models.Active_Column);
+        (Toggle_Renderer, "active", Criteria_Models.Active_Column);
       Dummy := Self.View.Append_Column (Column);
       Cell_Renderer_Toggle_Callbacks.Connect
         (Toggle_Renderer,
@@ -233,9 +233,7 @@ package body CodePeer.Generic_Criteria_Editors is
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         Criteria_Models.Name_Column);
+        (Text_Renderer, "text", Criteria_Models.Name_Column);
       Dummy := Self.View.Append_Column (Column);
    end Initialize;
 
@@ -292,15 +290,14 @@ package body CodePeer.Generic_Criteria_Editors is
    -----------------------------------
 
    procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Chars_Ptr;
       Self   : Criteria_Editor)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
-          (Gtk.Tree_Model.To_Interface (Self.Model),
-           Value (Path));
+          (Gtk.Tree_Model.To_Interface (Self.Model), Value (Path));
 
    begin
       if Object.Get_Active then

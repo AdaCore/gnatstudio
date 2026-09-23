@@ -111,7 +111,6 @@ private
    end record;
 
    Empty_Project_View_Reference : constant Project_View_Reference :=
-                                    (Kernel => null,
-                                     File   => GNATCOLL.VFS.No_File);
+     (Kernel => null, File => GNATCOLL.VFS.No_File);
 
 end Projects.Views;

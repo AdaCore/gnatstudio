@@ -20,34 +20,34 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
-with Gdk.Event;               use Gdk.Event;
-with Gdk.RGBA;                use Gdk.RGBA;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Gdk.Window;              use Gdk.Window;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Window;              use Gtk.Window;
-with Pango.Enums;             use Pango.Enums;
-with Pango.Font;              use Pango.Font;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Window;        use Gdk.Window;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Gtkada.Handlers;   use Gtkada.Handlers;
+with Gtkada.MDI;        use Gtkada.MDI;
+with Gtk.Accel_Group;   use Gtk.Accel_Group;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Gtk.Text_View;     use Gtk.Text_View;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtk.Window;        use Gtk.Window;
+with Pango.Enums;       use Pango.Enums;
+with Pango.Font;        use Pango.Font;
 
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel;              use GPS.Kernel;
-with GUI_Utils;               use GUI_Utils;
-with KeyManager_Module;       use KeyManager_Module;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with GUI_Utils;              use GUI_Utils;
+with KeyManager_Module;      use KeyManager_Module;
 
 package body Command_Window is
    Me : constant Trace_Handle := Create ("GPS.KEY_MANAGER.COMMAND");
@@ -68,8 +68,8 @@ package body Command_Window is
       On_Cancel         : Subprogram_Type;
       Close_On_Activate : Boolean;
 
-      Parent            : Gtk_Window;
-      Parent_Geometry   : Rectangle;
+      Parent          : Gtk_Window;
+      Parent_Geometry : Rectangle;
    end record;
    type Command_Window is access all Command_Window_Record'Class;
 
@@ -154,12 +154,9 @@ package body Command_Window is
      (Window : not null access Command_Window_Record'Class;
       Color  : Gdk.RGBA.Gdk_RGBA) is
    begin
-      Window.Line.Override_Background_Color
-        (Gtk_State_Flag_Normal, Color);
-      Window.Line.Override_Background_Color
-        (Gtk_State_Flag_Active, Color);
-      Window.Line.Override_Background_Color
-        (Gtk_State_Flag_Selected, Color);
+      Window.Line.Override_Background_Color (Gtk_State_Flag_Normal, Color);
+      Window.Line.Override_Background_Color (Gtk_State_Flag_Active, Color);
+      Window.Line.Override_Background_Color (Gtk_State_Flag_Selected, Color);
    end Set_Background_Color;
 
    --------------
@@ -189,7 +186,7 @@ package body Command_Window is
       Key    : constant Gdk_Key_Type := Get_Key_Val (Event);
       Button : constant Guint := Get_Button (Event);
       Modif  : constant Gdk_Modifier_Type :=
-                Get_State (Event) and Get_Default_Mod_Mask;
+        Get_State (Event) and Get_Default_Mod_Mask;
    begin
       --  Ignore when the key is just one of the modifier. No binding can
       --  be associated to them anyway, so this is slightly more efficient,
@@ -206,9 +203,7 @@ package body Command_Window is
       --  If the user has pressed Enter, we activate the Command_Window and
       --  close it automatically
 
-      if Modif = 0
-        and then (Key = GDK_Return or Key = GDK_ISO_Enter)
-      then
+      if Modif = 0 and then (Key = GDK_Return or Key = GDK_ISO_Enter) then
          declare
             Str         : constant String := Get_Text (Win);
             On_Activate : Subprogram_Type := Win.On_Activate;
@@ -225,7 +220,7 @@ package body Command_Window is
 
             if On_Activate /= null then
                declare
-                  C : Callback_Data'Class :=
+                  C   : Callback_Data'Class :=
                     Create (Get_Script (On_Activate.all), 1);
                   Tmp : Boolean;
                   pragma Unreferenced (Tmp);
@@ -252,12 +247,15 @@ package body Command_Window is
 
       if Win.On_Key /= null then
          declare
-            C : Callback_Data'Class := Create (Get_Script (Win.On_Key.all), 3);
-            Tmp : Boolean;
+            C      : Callback_Data'Class :=
+              Create (Get_Script (Win.On_Key.all), 3);
+            Tmp    : Boolean;
             Cursor : Gtk_Text_Iter;
          begin
-            Get_Iter_At_Mark (Get_Buffer (Win.Line), Cursor,
-                              Get_Insert (Get_Buffer (Win.Line)));
+            Get_Iter_At_Mark
+              (Get_Buffer (Win.Line),
+               Cursor,
+               Get_Insert (Get_Buffer (Win.Line)));
 
             Set_Nth_Arg (C, 1, Get_Text (Win));
             Set_Nth_Arg (C, 2, Image (Key, Button, Modif));
@@ -309,14 +307,16 @@ package body Command_Window is
    begin
       if Win.On_Changed /= null then
          declare
-            C : Callback_Data'Class :=
+            C      : Callback_Data'Class :=
               Create (Get_Script (Win.On_Changed.all), 2);
-            Tmp : Boolean;
+            Tmp    : Boolean;
             pragma Unreferenced (Tmp);
             Cursor : Gtk_Text_Iter;
          begin
-            Get_Iter_At_Mark (Get_Buffer (Win.Line), Cursor,
-                              Get_Insert (Get_Buffer (Win.Line)));
+            Get_Iter_At_Mark
+              (Get_Buffer (Win.Line),
+               Cursor,
+               Get_Insert (Get_Buffer (Win.Line)));
             Set_Nth_Arg (C, 1, Get_Text (Win));
             Set_Nth_Arg (C, 2, Integer (Get_Offset (Cursor)));
             Tmp := Execute (Win.On_Changed, C);
@@ -337,7 +337,7 @@ package body Command_Window is
 
       if Win.On_Cancel /= null then
          declare
-            C : Callback_Data'Class :=
+            C   : Callback_Data'Class :=
               Create (Get_Script (Win.On_Cancel.all), 1);
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
@@ -369,7 +369,8 @@ package body Command_Window is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Destroy;
 
    ------------------
@@ -377,8 +378,7 @@ package body Command_Window is
    ------------------
 
    function On_Focus_Out
-     (Window : access Gtk_Widget_Record'Class) return Boolean
-   is
+     (Window : access Gtk_Widget_Record'Class) return Boolean is
    begin
       --  Cancel the search. This will happen mostly when the window manager
       --  has switched the current desktop, and has thus cancelled the key
@@ -426,9 +426,8 @@ package body Command_Window is
       X, Y             : Gint;
       Applies_To       : Gtk_Widget;
       Min_H, Natural_H : Gint;
-      Current_Editor   : constant MDI_Child := Get_File_Editor
-        (Kernel,
-         File => GNATCOLL.VFS.No_File);
+      Current_Editor   : constant MDI_Child :=
+        Get_File_Editor (Kernel, File => GNATCOLL.VFS.No_File);
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -440,8 +439,8 @@ package body Command_Window is
       Window := new Command_Window_Record;
 
       --  Not Window_Popup, since otherwise it never gains the focus
-      Gtk.Window.Initialize   (Window, Window_Toplevel);
-      Set_Decorated           (Window, False);
+      Gtk.Window.Initialize (Window, Window_Toplevel);
+      Set_Decorated (Window, False);
       Set_Destroy_With_Parent (Window, True);
 
       Window.Kernel := Kernel_Handle (Kernel);
@@ -450,11 +449,7 @@ package body Command_Window is
       Window.Add (Window.Box);
 
       Gtk_New (Window.Prompt, Prompt);
-      Pack_Start
-        (Window.Box,
-         Window.Prompt,
-         Expand  => False,
-         Padding => 10);
+      Pack_Start (Window.Box, Window.Prompt, Expand => False, Padding => 10);
       Set_Alignment (Window.Prompt, 0.0, 0.5);
       Modify_Font (Window.Prompt, Default_Font.Get_Pref);
 
@@ -468,25 +463,29 @@ package body Command_Window is
       Modify_Font (Window.Line, View_Fixed_Font.Get_Pref);
 
       Return_Callback.Object_Connect
-        (Window.Line, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (On_Key_Press'Access), Window);
+        (Window.Line,
+         Signal_Key_Press_Event,
+         Return_Callback.To_Marshaller (On_Key_Press'Access),
+         Window);
       Return_Callback.Object_Connect
-        (Window, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (On_Key_Press_After'Access), Window,
+        (Window,
+         Signal_Key_Press_Event,
+         Return_Callback.To_Marshaller (On_Key_Press_After'Access),
+         Window,
          After => True);
       Widget_Callback.Connect
         (Window, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Object_Connect
-        (Get_Buffer (Window.Line), Signal_Changed,
-         On_Changed'Access, Window, After => True);
+        (Get_Buffer (Window.Line),
+         Signal_Changed,
+         On_Changed'Access,
+         Window,
+         After => True);
       Return_Callback.Object_Connect
-        (Window.Line, Signal_Focus_Out_Event,
-         On_Focus_Out'Access, Window);
+        (Window.Line, Signal_Focus_Out_Event, On_Focus_Out'Access, Window);
 
       --  Compute size and placement of the window
-      if Applies_To_Global
-        or else Current_Editor = null
-      then
+      if Applies_To_Global or else Current_Editor = null then
          Applies_To := Gtk_Widget (Get_Main_Window (Kernel));
          Set_Transient_For (Window, Gtk_Window (Applies_To));
       else
@@ -510,9 +509,9 @@ package body Command_Window is
 
       Get_Origin (Get_Window (Applies_To), X, Y);
       Window.Set_Size_Request
-        (Width  => Get_Allocated_Width (Applies_To), Height => Min_H);
-      Move (Window,
-            X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
+        (Width => Get_Allocated_Width (Applies_To), Height => Min_H);
+      Move
+        (Window, X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
 
       Window.Show_All;  --  Now realize Window.Line so that we know its size
 
@@ -520,16 +519,18 @@ package body Command_Window is
         (Window.Line, Applies_To.Get_Allocated_Width, Min_H, Natural_H);
 
       Window.Set_Size_Request
-        (Width  => Get_Allocated_Width (Applies_To), Height => Min_H);
-      Move (Window,
-            X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
+        (Width => Get_Allocated_Width (Applies_To), Height => Min_H);
+      Move
+        (Window, X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
 
       Return_Callback.Object_Connect
-        (Window.Parent, Signal_Configure_Event,
-         On_Parent_Configure'Access, Window);
+        (Window.Parent,
+         Signal_Configure_Event,
+         On_Parent_Configure'Access,
+         Window);
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 
@@ -540,8 +541,7 @@ package body Command_Window is
       --  Set the default background color of the command window from the
       --  associated preference.
       Set_Background_Color
-        (Window,
-         Color => Command_Windows_Bg_Color.Get_Pref);
+        (Window, Color => Command_Windows_Bg_Color.Get_Pref);
 
    exception
       when E : others =>
@@ -563,7 +563,8 @@ package body Command_Window is
             when Button_Press =>
                Destroy (CW_Module.Window);
                return True;
-            when others =>
+
+            when others       =>
                return False;
          end case;
       end if;
@@ -578,47 +579,52 @@ package body Command_Window is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Class   : constant Class_Type :=
-                  New_Class (Get_Kernel (Data), "CommandWindow");
+        New_Class (Get_Kernel (Data), "CommandWindow");
       Inst    : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Window  : Command_Window;
       Color   : Gdk.RGBA.Gdk_RGBA;
       Success : Boolean;
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, ( --  1 => Self,
-                                 2 => Prompt_Cst'Access,
-                                 3 => Global_Cst'Access,
-                                 4 => On_Changed_Cst'Access,
-                                 5 => On_Activate_Cst'Access,
-                                 6 => On_Cancel_Cst'Access,
-                                 7 => On_Key_Cst'Access,
-                                 8 => Close_On_Activate_Cst'Access));
+         Name_Parameters
+           (Data,
+            ( --  1 => Self,
+             2 => Prompt_Cst'Access,
+             3 => Global_Cst'Access,
+             4 => On_Changed_Cst'Access,
+             5 => On_Activate_Cst'Access,
+             6 => On_Cancel_Cst'Access,
+             7 => On_Key_Cst'Access,
+             8 => Close_On_Activate_Cst'Access));
          if CW_Module.Window /= null then
             Set_Error_Msg (Data, "A command window is already in use");
          else
             Gtk_New
-              (CW_Module.Window, Get_Kernel (Data),
+              (CW_Module.Window,
+               Get_Kernel (Data),
                Prompt            => Nth_Arg (Data, 2, ""),
                Applies_To_Global => Nth_Arg (Data, 3, False));
 
             Set_Data (Inst, Widget => GObject (CW_Module.Window));
             CW_Module.Window.Inst := Inst;
-            CW_Module.Window.On_Changed  := Nth_Arg (Data, 4, null);
+            CW_Module.Window.On_Changed := Nth_Arg (Data, 4, null);
             CW_Module.Window.On_Activate := Nth_Arg (Data, 5, null);
-            CW_Module.Window.On_Cancel   := Nth_Arg (Data, 6, null);
-            CW_Module.Window.On_Key      := Nth_Arg (Data, 7, null);
+            CW_Module.Window.On_Cancel := Nth_Arg (Data, 6, null);
+            CW_Module.Window.On_Key := Nth_Arg (Data, 7, null);
             CW_Module.Window.Close_On_Activate := Nth_Arg (Data, 8, True);
          end if;
 
       elsif Command = "write" then
-         Name_Parameters (Data, ( --  1 => Self,
-                                 2 => Text_Cst'Access,
-                                 3 => Cursor_Cst'Access));
+         Name_Parameters
+           (Data,
+            ( --  1 => Self,
+             2 => Text_Cst'Access,
+             3 => Cursor_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
             declare
-               Buffer : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
-               Loc    : constant Gint := Gint (Nth_Arg (Data, 3, -1));
+               Buffer   : constant Gtk_Text_Buffer := Get_Buffer (Window.Line);
+               Loc      : constant Gint := Gint (Nth_Arg (Data, 3, -1));
                From, To : Gtk_Text_Iter;
             begin
                Get_Start_Iter (Buffer, From);
@@ -642,8 +648,10 @@ package body Command_Window is
          end if;
 
       elsif Command = "set_prompt" then
-         Name_Parameters (Data, ( --  1 => Self,
-                                 2 => Prompt_Cst'Access));
+         Name_Parameters
+           (Data,
+            ( --  1 => Self,
+             2 => Prompt_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
             declare
@@ -661,8 +669,10 @@ package body Command_Window is
          end if;
 
       elsif Command = "set_background" then
-         Name_Parameters (Data, ( --  1 => Self,
-                                 2 => Color_Cst'Access));
+         Name_Parameters
+           (Data,
+            ( --  1 => Self,
+             2 => Color_Cst'Access));
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
             if Nth_Arg (Data, 2, "") = "" then
@@ -682,26 +692,46 @@ package body Command_Window is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Class : constant Class_Type := New_Class
-        (Kernel, "CommandWindow", Get_GUI_Class (Kernel));
+      Class : constant Class_Type :=
+        New_Class (Kernel, "CommandWindow", Get_GUI_Class (Kernel));
    begin
       CW_Module := new CW_Module_Record;
       Register_Module (CW_Module, Kernel, "Command_Window");
 
       Register_Command
-        (Kernel, Constructor_Method, 0, 7, Class => Class,
+        (Kernel,
+         Constructor_Method,
+         0,
+         7,
+         Class   => Class,
          Handler => Command_Handler'Access);
       Register_Command
-        (Kernel, "write", 1, 2, Class => Class,
+        (Kernel,
+         "write",
+         1,
+         2,
+         Class   => Class,
          Handler => Command_Handler'Access);
       Register_Command
-        (Kernel, "read", 0, 0, Class => Class,
+        (Kernel,
+         "read",
+         0,
+         0,
+         Class   => Class,
          Handler => Command_Handler'Access);
       Register_Command
-        (Kernel, "set_background", 0, 1, Class => Class,
+        (Kernel,
+         "set_background",
+         0,
+         1,
+         Class   => Class,
          Handler => Command_Handler'Access);
       Register_Command
-        (Kernel, "set_prompt", 1, 1, Class => Class,
+        (Kernel,
+         "set_prompt",
+         1,
+         1,
+         Class   => Class,
          Handler => Command_Handler'Access);
    end Register_Module;
 

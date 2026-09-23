@@ -32,16 +32,15 @@ package body GPS.Kernel.Command_API is
    -- Command_Cmds --
    ------------------
 
-   procedure Command_Cmds
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Command_Cmds (Data : in out Callback_Data'Class; Command : String)
    is
       Cmd : Scheduled_Command_Access;
    begin
       if Command = "list" then
          declare
-            Commands : constant Command_Array := Get_Scheduled_Commands
-                (GPS.Kernel.Task_Manager.Get_Task_Manager
-                     (Get_Kernel (Data)));
+            Commands : constant Command_Array :=
+              Get_Scheduled_Commands
+                (GPS.Kernel.Task_Manager.Get_Task_Manager (Get_Kernel (Data)));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -54,9 +53,9 @@ package body GPS.Kernel.Command_API is
          end;
       elsif Command = "get" then
          declare
-            Commands : constant Command_Array := Get_Scheduled_Commands
-              (GPS.Kernel.Task_Manager.Get_Task_Manager
-                 (Get_Kernel (Data)));
+            Commands      : constant Command_Array :=
+              Get_Scheduled_Commands
+                (GPS.Kernel.Task_Manager.Get_Task_Manager (Get_Kernel (Data)));
             Expected_Name : constant String := Nth_Arg (Data, 1, "");
          begin
             Set_Return_Value_As_List (Data);
@@ -84,7 +83,7 @@ package body GPS.Kernel.Command_API is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Command_Class  : constant Class_Type := New_Class (Kernel, "Command");
+      Command_Class : constant Class_Type := New_Class (Kernel, "Command");
    begin
       Register_Command
         (Kernel, "list", 0, 0, Command_Cmds'Access, Command_Class, True);

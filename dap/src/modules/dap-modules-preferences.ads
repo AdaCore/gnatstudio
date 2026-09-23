@@ -29,42 +29,42 @@ package DAP.Modules.Preferences is
    --  Register all the preferences relative to GVD, and their default
    --  values. This doesn't override existing values of the preferences.
 
-   DAP_Adapter                   : String_Preference;
+   DAP_Adapter : String_Preference;
 
    -- General --
-   Break_On_Exception            : Boolean_Preference;
-   Preserve_State_On_Exit        : Boolean_Preference;
-   Execution_Window              : Boolean_Preference;
-   Auto_Start_Debuggee           : Debuggee_Start_Preferences.Preference;
+   Break_On_Exception     : Boolean_Preference;
+   Preserve_State_On_Exit : Boolean_Preference;
+   Execution_Window       : Boolean_Preference;
+   Auto_Start_Debuggee    : Debuggee_Start_Preferences.Preference;
 
    -- Source Window --
-   Continue_To_Line_Buttons      : Boolean_Preference;
+   Continue_To_Line_Buttons : Boolean_Preference;
 
    -- Breakpoints --
    Breakpoints_For_All_Debuggers : Boolean_Preference;
    Pending_Breakpoints           : Boolean_Preference;
 
    -- Console --
-   Debugger_Console_Console      : Boolean_Preference;
-   Debugger_Console_In_Out       : Boolean_Preference;
+   Debugger_Console_Console : Boolean_Preference;
+   Debugger_Console_In_Out  : Boolean_Preference;
 
    --  Call stack
-   Frames_Limit                  : Integer_Preference;
+   Frames_Limit : Integer_Preference;
    --  How many frames will be fetched at one time
 
    -- Assembly Window --
-   Assembly_Range_Size           : Integer_Preference;
-   Asm_Show_Addresses            : Boolean_Preference;
-   Asm_Show_Offset               : Boolean_Preference;
-   Asm_Show_Opcodes              : Boolean_Preference;
+   Assembly_Range_Size : Integer_Preference;
+   Asm_Show_Addresses  : Boolean_Preference;
+   Asm_Show_Offset     : Boolean_Preference;
+   Asm_Show_Opcodes    : Boolean_Preference;
 
    -- Memory Window --
-   Memory_View_Color             : Color_Preference;
-   Memory_Highlighted_Color      : Color_Preference;
-   Memory_Selected_Color         : Color_Preference;
-   Memory_Auto_Refresh           : Boolean_Preference;
+   Memory_View_Color        : Color_Preference;
+   Memory_Highlighted_Color : Color_Preference;
+   Memory_Selected_Color    : Color_Preference;
+   Memory_Auto_Refresh      : Boolean_Preference;
 
    -- Registers view --
-   Registers_Type                : Boolean_Preference;
+   Registers_Type : Boolean_Preference;
 
 end DAP.Modules.Preferences;

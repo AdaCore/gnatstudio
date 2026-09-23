@@ -22,7 +22,7 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 
 with GPS.Editors.GtkAda;
@@ -30,8 +30,8 @@ with GPS.Location_View;
 
 package body CodePeer.Race_Condition_Reports is
 
-   package Race_Condition_Report_Callbacks is
-     new Gtk.Handlers.Callback (Race_Condition_Report_Record);
+   package Race_Condition_Report_Callbacks is new
+     Gtk.Handlers.Callback (Race_Condition_Report_Record);
 
    procedure On_Summary_Activated
      (Self   : access Race_Condition_Report_Record'Class;
@@ -45,8 +45,8 @@ package body CodePeer.Race_Condition_Reports is
       Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column);
    --  Handles click on details view
 
-   package Message_Conversions is
-     new System.Address_To_Access_Conversions
+   package Message_Conversions is new
+     System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
 
    -----------------
@@ -55,8 +55,7 @@ package body CodePeer.Race_Condition_Reports is
 
    function Get_Message
      (Self : not null access Race_Condition_Report_Record'Class;
-      Iter : Gtk_Tree_Iter)
-      return GPS.Kernel.Messages.Message_Access
+      Iter : Gtk_Tree_Iter) return GPS.Kernel.Messages.Message_Access
    is
       Message : GPS.Kernel.Messages.Message_Access;
       Value   : Glib.Values.GValue;
@@ -66,8 +65,7 @@ package body CodePeer.Race_Condition_Reports is
         (Iter, CodePeer.Race_Summary_Models.Message_Column, Value);
       Message :=
         GPS.Kernel.Messages.Message_Access
-          (Message_Conversions.To_Pointer
-             (Glib.Values.Get_Address (Value)));
+          (Message_Conversions.To_Pointer (Glib.Values.Get_Address (Value)));
       Glib.Values.Unset (Value);
 
       return Message;
@@ -186,8 +184,8 @@ package body CodePeer.Race_Condition_Reports is
    is
       pragma Unreferenced (Column);
 
-      Iter    : Gtk_Tree_Iter;
-      Value   : Glib.Values.GValue;
+      Iter  : Gtk_Tree_Iter;
+      Value : Glib.Values.GValue;
 
    begin
       Iter := Self.Details_Model.Get_Iter (Path);
@@ -224,8 +222,7 @@ package body CodePeer.Race_Condition_Reports is
 
    begin
       Iter := Self.Summary_Model.Get_Iter (Path);
-      Self.Details_Model.Set
-        (Self.Summary_Model.Get_Entry_Points (Iter));
+      Self.Details_Model.Set (Self.Summary_Model.Get_Entry_Points (Iter));
 
       Message := Self.Get_Message (Iter);
 

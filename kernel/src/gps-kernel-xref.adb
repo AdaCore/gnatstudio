@@ -18,41 +18,42 @@
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-with Commands.Generic_Asynchronous;  use Commands;
-with Commands;                       use Commands;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
-with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with Commands.Generic_Asynchronous;
+use Commands;
+with Commands;                use Commands;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.SQL.Exec;       use GNATCOLL.SQL.Exec;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;
-with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
-with GPS.Main_Window;                use GPS.Main_Window;
-with GPS.Dialogs;                    use GPS.Dialogs;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Main_Window;         use GPS.Main_Window;
+with GPS.Dialogs;             use GPS.Dialogs;
 
-with Glib.Convert;                   use Glib.Convert;
-with Glib.Object;                    use Glib.Object;
-with Glib_Values_Utils;              use Glib_Values_Utils;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with GUI_Utils;                      use GUI_Utils;
-with Gtk.Box;                        use Gtk.Box;
-with Gtk.Dialog;                     use Gtk.Dialog;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Scrolled_Window;            use Gtk.Scrolled_Window;
-with Gtk.Label;                      use Gtk.Label;
-with Gtk.Tree_Model;                 use Gtk.Tree_Model;
-with Gtk.Tree_Selection;             use Gtk.Tree_Selection;
-with Gtk.Tree_Store;                 use Gtk.Tree_Store;
-with Gtk.Tree_View;                  use Gtk.Tree_View;
-with Gtk.Widget;                     use Gtk.Widget;
-with Gtkada.Handlers;                use Gtkada.Handlers;
-with Gtkada.Stock_Labels;            use Gtkada.Stock_Labels;
-with Gtkada.Style;                   use Gtkada.Style;
-with System;                         use System;
+with GUI_Utils;           use GUI_Utils;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
+with Gtk.Tree_Selection;  use Gtk.Tree_Selection;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.Stock_Labels; use Gtkada.Stock_Labels;
+with Gtkada.Style;        use Gtkada.Style;
+with System;              use System;
 with Tooltips;
 
 package body GPS.Kernel.Xref is
@@ -72,18 +73,20 @@ package body GPS.Kernel.Xref is
    end record;
    type Examine_Callback_Access is access Examine_Callback;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Commands_User_Data_Record'Class, Commands_User_Data);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Examine_Callback, Examine_Callback_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Examine_Callback_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Commands_User_Data_Record'Class,
+        Commands_User_Data);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Examine_Callback, Examine_Callback_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Examine_Callback_Access);
 
    procedure Destroy_Idle (Data : in out Examine_Callback_Access);
    --  Called when the idle loop is destroyed.
 
-   package Ancestor_Commands is new Generic_Asynchronous
-     (Examine_Callback_Access, Destroy_Idle);
+   package Ancestor_Commands is new
+     Generic_Asynchronous (Examine_Callback_Access, Destroy_Idle);
 
    procedure Examine_Ancestors_Idle
      (Data    : in out Examine_Callback_Access;
@@ -105,7 +108,8 @@ package body GPS.Kernel.Xref is
       Warned_About_Corruption : Boolean := False;
       --  Used to avoid duplicate messages about corrupted database
    end record;
-   overriding procedure On_Database_Corrupted
+   overriding
+   procedure On_Database_Corrupted
      (Self       : in out SQL_Error_Reporter;
       Connection : access Database_Connection_Record'Class);
 
@@ -114,11 +118,13 @@ package body GPS.Kernel.Xref is
    --  Handler for the default commands
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Hooks
@@ -136,7 +142,8 @@ package body GPS.Kernel.Xref is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
@@ -149,7 +156,8 @@ package body GPS.Kernel.Xref is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
@@ -172,15 +180,11 @@ package body GPS.Kernel.Xref is
    -- On_Error --
    --------------
 
-   overriding procedure On_Error
-     (Self  : GPS_Xref_Database;
-      Error : String)
-   is
+   overriding
+   procedure On_Error (Self : GPS_Xref_Database; Error : String) is
    begin
       Self.Kernel.Insert
-        (Text   => Error,
-         Add_LF => True,
-         Mode   => GPS.Kernel.Error);
+        (Text => Error, Add_LF => True, Mode => GPS.Kernel.Error);
    end On_Error;
 
    -------------------------------------
@@ -201,11 +205,11 @@ package body GPS.Kernel.Xref is
 
    procedure Destroy_Idle (Data : in out Examine_Callback_Access) is
    begin
-      if not Data.Cancelled
-        and then Data.Watch /= null
-      then
-         Weak_Unref (Data.Watch, Watch_Destroyed_While_Computing'Access,
-                     Data.all'Address);
+      if not Data.Cancelled and then Data.Watch /= null then
+         Weak_Unref
+           (Data.Watch,
+            Watch_Destroyed_While_Computing'Access,
+            Data.all'Address);
       end if;
 
       Destroy (Data.Data.all, Data.Cancelled);
@@ -257,15 +261,15 @@ package body GPS.Kernel.Xref is
                declare
                   Parent : Root_Entity'Class := Get_Caller (Ref);
                begin
-                  if Parent /= No_Root_Entity
-                    and then Ref.Show_In_Callgraph
+                  if Parent /= No_Root_Entity and then Ref.Show_In_Callgraph
                   then
                      loop
                         declare
-                           New_Parent : constant Root_Entity'Class
-                             := Caller_At_Declaration (Parent);
+                           New_Parent : constant Root_Entity'Class :=
+                             Caller_At_Declaration (Parent);
                         begin
-                           exit when New_Parent = No_Root_Entity
+                           exit when
+                             New_Parent = No_Root_Entity
                              or else Is_Container (Parent);
                            Parent := New_Parent;
                         end;
@@ -279,10 +283,12 @@ package body GPS.Kernel.Xref is
                         if Get_Entity (Iter_Ref) /= Data.Entity.Element then
                            if Ref.Is_Dispatching_Call then
                               if not On_Entity_Found
-                                (Data.Data, Get_Entity (Iter_Ref),
-                                 Parent, Ref,
-                                 Through_Dispatching => True,
-                                 Is_Renaming         => False)
+                                       (Data.Data,
+                                        Get_Entity (Iter_Ref),
+                                        Parent,
+                                        Ref,
+                                        Through_Dispatching => True,
+                                        Is_Renaming         => False)
                               then
                                  Result := Failure;
                               end if;
@@ -290,9 +296,12 @@ package body GPS.Kernel.Xref is
 
                         else
                            if not On_Entity_Found
-                             (Data.Data, Data.Entity.Element, Parent, Ref,
-                              Through_Dispatching    => False,
-                              Is_Renaming            => False)
+                                    (Data.Data,
+                                     Data.Entity.Element,
+                                     Parent,
+                                     Ref,
+                                     Through_Dispatching => False,
+                                     Is_Renaming         => False)
                            then
                               Result := Failure;
                            end if;
@@ -337,16 +346,17 @@ package body GPS.Kernel.Xref is
       C      : Ancestor_Commands.Generic_Asynchronous_Command_Access;
       Result : Command_Return_Type;
    begin
-      Cb := new Examine_Callback'
-        (Kernel            => Kernel_Handle (Kernel),
-         Data              => Commands_User_Data (User_Data),
-         Entity            => To_Holder (Entity),
-         Watch             => Watch,
-         Cancelled         => False,
-         Dispatching_Calls => Dispatching_Calls,
-         Iter              =>
-           Root_Reference_Iterator_Refs.To_Holder
-             (Find_All_References
+      Cb :=
+        new Examine_Callback'
+          (Kernel            => Kernel_Handle (Kernel),
+           Data              => Commands_User_Data (User_Data),
+           Entity            => To_Holder (Entity),
+           Watch             => Watch,
+           Cancelled         => False,
+           Dispatching_Calls => Dispatching_Calls,
+           Iter              =>
+             Root_Reference_Iterator_Refs.To_Holder
+               (Find_All_References
                   (Entity             => Entity,
                    Include_Overridden => Dispatching_Calls)));
 
@@ -357,9 +367,12 @@ package body GPS.Kernel.Xref is
       begin
          if Rename /= No_Root_Entity then
             if not On_Entity_Found
-              (User_Data, Entity, Rename, No_Root_Entity_Reference,
-               Through_Dispatching => False,
-               Is_Renaming         => True)
+                     (User_Data,
+                      Entity,
+                      Rename,
+                      No_Root_Entity_Reference,
+                      Through_Dispatching => False,
+                      Is_Renaming         => True)
             then
                Destroy_Idle (Cb);
                return;
@@ -369,9 +382,7 @@ package body GPS.Kernel.Xref is
 
       if Watch /= null then
          Weak_Ref
-           (Watch,
-            Watch_Destroyed_While_Computing'Access,
-            Cb.all'Address);
+           (Watch, Watch_Destroyed_While_Computing'Access, Cb.all'Address);
       end if;
 
       if Background_Mode then
@@ -406,10 +417,10 @@ package body GPS.Kernel.Xref is
       Get_All_Refs      : Boolean;
       Dispatching_Calls : Boolean)
    is
-      Calls       : Calls_Iterator;
-      Called_E_Decl : General_Location;
-      Data        : Commands_User_Data;
-      Is_First    : Boolean;
+      Calls               : Calls_Iterator;
+      Called_E_Decl       : General_Location;
+      Data                : Commands_User_Data;
+      Is_First            : Boolean;
       Through_Dispatching : Boolean;
    begin
       if Entity = No_Root_Entity then
@@ -422,17 +433,13 @@ package body GPS.Kernel.Xref is
          Calls : Abstract_Entities_Cursor'Class :=
            Get_All_Called_Entities (Entity);
       begin
-         For_Each_Entity :
-         while not At_End (Calls) loop
+         For_Each_Entity : while not At_End (Calls) loop
             declare
                Called_E : constant Root_Entity'Class := Get (Calls);
-               Refs        : Root_Reference_Iterator'Class :=
-                 Find_All_References
-                   (Entity   => Called_E,
-                    In_Scope => Entity);
+               Refs     : Root_Reference_Iterator'Class :=
+                 Find_All_References (Entity => Called_E, In_Scope => Entity);
             begin
-               if Called_E /= No_Root_Entity
-                 and then Called_E.Is_Subprogram
+               if Called_E /= No_Root_Entity and then Called_E.Is_Subprogram
                then
                   Called_E_Decl := Called_E.Get_Declaration.Loc;
 
@@ -467,35 +474,37 @@ package body GPS.Kernel.Xref is
                                    or else not Through_Dispatching
                                  then
                                     if not On_Entity_Found
-                                      (User_Data,
-                                       Entity         => Get_Entity (Refs),
-                                       Parent              => Entity,
-                                       Ref                 => Ref,
-                                       Through_Dispatching =>
-                                         Through_Dispatching,
-                                       Is_Renaming         => False)
+                                             (User_Data,
+                                              Entity              =>
+                                                Get_Entity (Refs),
+                                              Parent              => Entity,
+                                              Ref                 => Ref,
+                                              Through_Dispatching =>
+                                                Through_Dispatching,
+                                              Is_Renaming         => False)
                                     then
                                        exit For_Each_Entity;
                                     end if;
                                  end if;
 
-                                 --  Else we only want to report the callee
-                                 --  once, ie on its first reference. We still
-                                 --  have to examine all references through to
-                                 --  solve dispatching calls.
+                              --  Else we only want to report the callee
+                              --  once, ie on its first reference. We still
+                              --  have to examine all references through to
+                              --  solve dispatching calls.
 
                               elsif Is_First
                                 and then not Ref.Is_Dispatching_Call
                               then
                                  Is_First := False;
                                  if not On_Entity_Found
-                                   (User_Data,
-                                    Entity              => Get_Entity (Refs),
-                                    Parent              => Entity,
-                                    Ref                 =>
-                                      No_Root_Entity_Reference,
-                                    Through_Dispatching => False,
-                                    Is_Renaming         => False)
+                                          (User_Data,
+                                           Entity              =>
+                                             Get_Entity (Refs),
+                                           Parent              => Entity,
+                                           Ref                 =>
+                                             No_Root_Entity_Reference,
+                                           Through_Dispatching => False,
+                                           Is_Renaming         => False)
                                  then
                                     exit For_Each_Entity;
                                  end if;
@@ -506,23 +515,22 @@ package body GPS.Kernel.Xref is
 
                               if Dispatching_Calls then
                                  declare
-                                    Stop      : Boolean := False;
+                                    Stop : Boolean := False;
                                     function On_Callee
                                       (Callee : Root_Entity'Class)
                                        return Boolean;
 
                                     function On_Callee
                                       (Callee : Root_Entity'Class)
-                                       return Boolean
-                                    is
+                                       return Boolean is
                                     begin
                                        if not On_Entity_Found
-                                         (User_Data,
-                                          Entity              => Callee,
-                                          Parent              => Entity,
-                                          Ref                 => Ref,
-                                          Through_Dispatching => True,
-                                          Is_Renaming         => False)
+                                                (User_Data,
+                                                 Entity              => Callee,
+                                                 Parent              => Entity,
+                                                 Ref                 => Ref,
+                                                 Through_Dispatching => True,
+                                                 Is_Renaming         => False)
                                        then
                                           Stop := True;
                                           return False;
@@ -557,12 +565,12 @@ package body GPS.Kernel.Xref is
                      Destroy (Refs);
                   else
                      if not On_Entity_Found
-                       (User_Data,
-                        Entity              => Called_E,
-                        Parent              => Entity,
-                        Ref                 => No_Root_Entity_Reference,
-                        Through_Dispatching => False,
-                        Is_Renaming         => False)
+                              (User_Data,
+                               Entity              => Called_E,
+                               Parent              => Entity,
+                               Ref                 => No_Root_Entity_Reference,
+                               Through_Dispatching => False,
+                               Is_Renaming         => False)
                      then
                         exit For_Each_Entity;
                      end if;
@@ -594,7 +602,8 @@ package body GPS.Kernel.Xref is
    -- On_Database_Corrupted --
    ---------------------------
 
-   overriding procedure On_Database_Corrupted
+   overriding
+   procedure On_Database_Corrupted
      (Self       : in out SQL_Error_Reporter;
       Connection : access Database_Connection_Record'Class)
    is
@@ -604,7 +613,8 @@ package body GPS.Kernel.Xref is
          Self.Warned_About_Corruption := True;
          Insert
            (Self.Kernel,
-            "Cross-reference database appears to be corrupted." & ASCII.LF
+            "Cross-reference database appears to be corrupted."
+            & ASCII.LF
             & "Please exit GNAT Studio, delete the file '"
             & Xref_Database_Location (Self.Kernel.Databases).Display_Full_Name
             & "' and restart GNAT Studio",
@@ -621,9 +631,9 @@ package body GPS.Kernel.Xref is
       Result : out Standard.Xref.General_Xref_Database)
    is
       Errors : constant not null GNATCOLL.SQL.Exec.Error_Reporter_Access :=
-        new SQL_Error_Reporter'(GNATCOLL.SQL.Exec.Error_Reporter with
-                                  Kernel => Kernel,
-                                  others => <>);
+        new SQL_Error_Reporter'
+          (GNATCOLL.SQL.Exec.Error_Reporter
+           with Kernel => Kernel, others => <>);
 
    begin
       if Kernel.Databases = null then
@@ -636,8 +646,7 @@ package body GPS.Kernel.Xref is
 
       if Result.Xref = null then
          Result.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
-         GPS_Xref_Database (Result.Xref.all).Kernel :=
-           Kernel_Handle (Kernel);
+         GPS_Xref_Database (Result.Xref.all).Kernel := Kernel_Handle (Kernel);
       end if;
 
       Result.Initialize
@@ -651,7 +660,8 @@ package body GPS.Kernel.Xref is
    -- Select_Entity_Declaration --
    -------------------------------
 
-   overriding function Select_Entity_Declaration
+   overriding
+   function Select_Entity_Declaration
      (Self    : access GPS_General_Xref_Database_Record;
       File    : Virtual_File;
       Project : Project_Type;
@@ -671,28 +681,26 @@ package body GPS.Kernel.Xref is
 
       Name : constant String := Entity.Get_Name;
 
-      Iter      : Entities_In_File_Cursor;
-      Button    : Gtk_Widget;
-      OK_Button : Gtk_Widget;
-      Count     : Natural := 0;
-      Label     : Gtk_Label;
-      Model     : Gtk_Tree_Store;
-      M         : Gtk_Tree_Model;
-      Dialog    : GPS_Dialog;
-      It        : Gtk_Tree_Iter;
-      Scrolled  : Gtk_Scrolled_Window;
-      View      : Gtk_Tree_View;
-      Col_Num   : Gint;
+      Iter           : Entities_In_File_Cursor;
+      Button         : Gtk_Widget;
+      OK_Button      : Gtk_Widget;
+      Count          : Natural := 0;
+      Label          : Gtk_Label;
+      Model          : Gtk_Tree_Store;
+      M              : Gtk_Tree_Model;
+      Dialog         : GPS_Dialog;
+      It             : Gtk_Tree_Iter;
+      Scrolled       : Gtk_Scrolled_Window;
+      View           : Gtk_Tree_View;
+      Col_Num        : Gint;
       Candidate_Decl : General_Entity_Declaration;
       pragma Unreferenced (Button, Col_Num);
 
       Number_Selected : Natural := 0;
 
    begin
-      Iter := Self.Entities_In_File
-        (File    => File,
-         Project => Project,
-         Name    => Name);
+      Iter :=
+        Self.Entities_In_File (File => File, Project => Project, Name => Name);
 
       while not At_End (Iter) loop
          Count := Count + 1;
@@ -702,12 +710,13 @@ package body GPS.Kernel.Xref is
             Candidate_Decl := Candidate.Get_Declaration;
 
             if Count = 1 then
-               Gtk_New (Dialog,
-                        Title  => -"Select the declaration",
-                        Kernel => Self.Kernel,
-                        Flags  => Modal);
+               Gtk_New
+                 (Dialog,
+                  Title  => -"Select the declaration",
+                  Kernel => Self.Kernel,
+                  Flags  => Modal);
                Set_Default_Size_From_History
-                  (Dialog, "xref", Self.Kernel, 500, 500);
+                 (Dialog, "xref", Self.Kernel, 500, 500);
 
                Gtk_New (Label, -"This entity is overloaded.");
                Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);
@@ -720,13 +729,14 @@ package body GPS.Kernel.Xref is
                Pack_Start (Dialog.Get_Action_Area, Scrolled);
 
                OK_Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-               Button := Add_Button
-                 (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+               Button :=
+                 Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
-               View := Create_Tree_View
-                 (Column_Types       => Column_Types,
-                  Column_Names       => Column_Names,
-                  Initial_Sort_On    => 1);
+               View :=
+                 Create_Tree_View
+                   (Column_Types    => Column_Types,
+                    Column_Names    => Column_Names,
+                    Initial_Sort_On => 1);
                Add (Scrolled, View);
                Model := -Get_Model (View);
 
@@ -737,12 +747,13 @@ package body GPS.Kernel.Xref is
             Append (Model, It, Null_Iter);
 
             Set_And_Clear
-              (Model, It,
+              (Model,
+               It,
                (0 => As_String (+Candidate_Decl.Loc.File.Base_Name),
-                1 => As_Int    (Gint (Candidate_Decl.Loc.Line)),
-                2 => As_Int    (Gint (Candidate_Decl.Loc.Column)),
+                1 => As_Int (Gint (Candidate_Decl.Loc.Line)),
+                2 => As_Int (Gint (Candidate_Decl.Loc.Column)),
                 3 => As_String (Candidate.Get_Name),
-                4 => As_Int    (Gint (Count))));
+                4 => As_Int (Gint (Count))));
 
             if Candidate = Entity then
                Select_Iter (Get_Selection (View), It);
@@ -761,10 +772,9 @@ package body GPS.Kernel.Xref is
             Get_Selected (Get_Selection (View), M, It);
             Number_Selected := Natural (Get_Int (M, It, 4));
 
-            Iter := Self.Entities_In_File
-              (File    => File,
-               Project => Project,
-               Name    => Name);
+            Iter :=
+              Self.Entities_In_File
+                (File => File, Project => Project, Name => Name);
 
             Count := 0;
 
@@ -867,7 +877,8 @@ package body GPS.Kernel.Xref is
    -- Add_Generic_Parameter --
    ---------------------------
 
-   overriding procedure Add_Generic_Parameter
+   overriding
+   procedure Add_Generic_Parameter
      (Self    : access HTML_Profile_Formater;
       Name    : String;
       Mode    : String;
@@ -881,7 +892,8 @@ package body GPS.Kernel.Xref is
    -- Add_Parameter --
    -------------------
 
-   overriding procedure Add_Parameter
+   overriding
+   procedure Add_Parameter
      (Self    : access HTML_Profile_Formater;
       Name    : String;
       Mode    : String;
@@ -895,10 +907,9 @@ package body GPS.Kernel.Xref is
    -- Add_Result --
    ----------------
 
-   overriding procedure Add_Result
-     (Self    : access HTML_Profile_Formater;
-      Mode    : String;
-      Of_Type : String)
+   overriding
+   procedure Add_Result
+     (Self : access HTML_Profile_Formater; Mode : String; Of_Type : String)
    is
       use Ada.Strings.Unbounded;
    begin
@@ -919,10 +930,9 @@ package body GPS.Kernel.Xref is
    -- Add_Variable --
    ------------------
 
-   overriding procedure Add_Variable
-     (Self    : access HTML_Profile_Formater;
-      Mode    : String;
-      Of_Type : String)
+   overriding
+   procedure Add_Variable
+     (Self : access HTML_Profile_Formater; Mode : String; Of_Type : String)
    is
       use Ada.Strings.Unbounded;
    begin
@@ -936,9 +946,8 @@ package body GPS.Kernel.Xref is
    -- Add_Aspects --
    -----------------
 
-   overriding procedure Add_Aspects
-     (Self : access HTML_Profile_Formater;
-      Text : String)
+   overriding
+   procedure Add_Aspects (Self : access HTML_Profile_Formater; Text : String)
    is
       use Ada.Strings.Unbounded;
    begin
@@ -959,9 +968,8 @@ package body GPS.Kernel.Xref is
    -- Add_Comments --
    ------------------
 
-   overriding procedure Add_Comments
-     (Self : access HTML_Profile_Formater;
-      Text : String)
+   overriding
+   procedure Add_Comments (Self : access HTML_Profile_Formater; Text : String)
    is
       use Ada.Strings.Unbounded;
    begin
@@ -980,9 +988,8 @@ package body GPS.Kernel.Xref is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
-     (Self : access HTML_Profile_Formater) return String
-   is
+   overriding
+   function Get_Text (Self : access HTML_Profile_Formater) return String is
       use Ada.Strings.Unbounded;
    begin
       if Self.Has_Parameter then
@@ -1012,12 +1019,12 @@ package body GPS.Kernel.Xref is
    -------------------
 
    function Documentation
-     (Self             : General_Xref_Database;
-      Handler          : Language_Handlers.Language_Handler;
-      Entity           : Root_Entity'Class;
+     (Self                     : General_Xref_Database;
+      Handler                  : Language_Handlers.Language_Handler;
+      Entity                   : Root_Entity'Class;
       Color_For_Optional_Param : String := "#555555";
-      Raw_Format       : Boolean := False;
-      Check_Constructs : Boolean := True) return String
+      Raw_Format               : Boolean := False;
+      Check_Constructs         : Boolean := True) return String
    is
       pragma Unreferenced (Self);
       use Ada.Strings.Unbounded;
@@ -1083,8 +1090,7 @@ package body GPS.Kernel.Xref is
       pragma Unreferenced (Entity);
    begin
       For_Each_Dispatching_Call
-        (Ref       => Get_Closest_Ref (Context),
-         On_Callee => On_Callee'Access);
+        (Ref => Get_Closest_Ref (Context), On_Callee => On_Callee'Access);
 
       return Count > 1;
    end Is_Dispatching;
@@ -1094,8 +1100,7 @@ package body GPS.Kernel.Xref is
    -----------------------------
 
    procedure Default_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
@@ -1126,11 +1131,9 @@ package body GPS.Kernel.Xref is
       Standard.Xref.Project_Changed (Kernel.Databases);
 
       Register_Command
-        (Kernel, "reset_xref_db",
-         Handler => Default_Command_Handler'Access);
+        (Kernel, "reset_xref_db", Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, "xref_db",
-         Handler      => Default_Command_Handler'Access);
+        (Kernel, "xref_db", Handler => Default_Command_Handler'Access);
 
       Project_Changed_Hook.Add (new On_Project_Changed);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);

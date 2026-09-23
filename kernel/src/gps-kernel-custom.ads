@@ -139,9 +139,9 @@ package GPS.Kernel.Custom is
    --  Save the file $HOME/.gnatstudio/startup.xml
 
    procedure Override_Startup_Script
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Base_Name      : String;
-      Load           : Boolean);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Base_Name : String;
+      Load      : Boolean);
    --  Override the attributes of startup.xml for this specific script. This
    --  new value will automatically be saved in startup.xml at the end of the
    --  session.
@@ -150,9 +150,9 @@ package GPS.Kernel.Custom is
    --  ownership of Kernel
 
    function Load_File_At_Startup
-     (Kernel         : access Kernel_Handle_Record'Class;
-      File           : GNATCOLL.VFS.Virtual_File;
-      Default        : Boolean) return Boolean;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Default : Boolean) return Boolean;
    --  Whether File should be loaded at startup, based on the contents of
    --  the file $HOME/.gnatstudio/startup.xml
    --  This function also registers File as a startup script, so that
@@ -160,12 +160,13 @@ package GPS.Kernel.Custom is
    --  For python modules, the File should be the name of the directory.
 
    procedure For_All_Startup_Scripts
-     (Kernel : access Kernel_Handle_Record'Class;
-      Callback : not null access procedure
-        (Name     : String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Loaded   : Boolean;
-         Explicit : Boolean));
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Callback :
+        not null access procedure
+          (Name     : String;
+           File     : GNATCOLL.VFS.Virtual_File;
+           Loaded   : Boolean;
+           Explicit : Boolean));
    --  Iterate over all known startup scripts.
    --  This only include those scripts that user can choose to explicitly
    --  enable or disable, not the mandatory support scripts.
@@ -190,9 +191,9 @@ private
       Explicit_Off); --  explicitly disabled
 
    type Script_Description is record
-      Mode           : Load_Mode := Automatic;  --  Whether to load this plugin
-      Loaded         : Boolean := False;
-      File           : GNATCOLL.VFS.Virtual_File;
+      Mode   : Load_Mode := Automatic;  --  Whether to load this plugin
+      Loaded : Boolean := False;
+      File   : GNATCOLL.VFS.Virtual_File;
    end record;
    type Script_Description_Access is access all Script_Description;
    --  File is set to No_File to indicate that no source file was found for the
@@ -201,18 +202,19 @@ private
    --  Loaded indicates whether the script was loaded
 
    function Get_Script_From_Base_Name
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Base_Name : String) return Script_Description_Access;
+     (Kernel : not null access Kernel_Handle_Record'Class; Base_Name : String)
+      return Script_Description_Access;
    --  Return the script description for the given Base_Name, or null if not
    --  Found.
 
    procedure Free (File : in out Script_Description_Access);
    --  Free the memory occupied by File
 
-   package Scripts_Hash is new String_Hash
-     (Data_Type      => Script_Description_Access,
-      Free_Data      => Free,
-      Null_Ptr       => null,
-      Case_Sensitive => GNATCOLL.VFS_Utils.Local_Host_Is_Case_Sensitive);
+   package Scripts_Hash is new
+     String_Hash
+       (Data_Type      => Script_Description_Access,
+        Free_Data      => Free,
+        Null_Ptr       => null,
+        Case_Sensitive => GNATCOLL.VFS_Utils.Local_Host_Is_Case_Sensitive);
 
 end GPS.Kernel.Custom;

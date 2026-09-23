@@ -30,9 +30,7 @@ package body GPS.Markers is
    -- Save --
    ----------
 
-   procedure Save
-     (Self  : Location_Marker;
-      Value : out JSON_Value) is
+   procedure Save (Self : Location_Marker; Value : out JSON_Value) is
    begin
       if Self /= No_Marker then
          Self.Unchecked_Get.Save (Value);

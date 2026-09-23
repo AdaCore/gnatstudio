@@ -20,7 +20,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Basic_Types;           use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 package Codefix is
 
@@ -39,27 +39,20 @@ package Codefix is
    --  String used to insert an end of line.
 
    function To_Char_Index
-     (Index     : Visible_Column_Type;
-      Str       : String;
-      Tab_Width : Integer)
+     (Index : Visible_Column_Type; Str : String; Tab_Width : Integer)
       return String_Index_Type
-     with Post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
+   with Post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
    function To_Char_Index
-     (Index     : Visible_Column_Type;
-      Str       : Unbounded_String;
-      Tab_Width : Integer) return String_Index_Type;
+     (Index : Visible_Column_Type; Str : Unbounded_String; Tab_Width : Integer)
+      return String_Index_Type;
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
    function To_Column_Index
-     (Index     : String_Index_Type;
-      Str       : String;
-      Tab_Width : Integer)
+     (Index : String_Index_Type; Str : String; Tab_Width : Integer)
       return Visible_Column_Type;
    function To_Column_Index
-     (Index     : String_Index_Type;
-      Str       : Unbounded_String;
-      Tab_Width : Integer)
+     (Index : String_Index_Type; Str : Unbounded_String; Tab_Width : Integer)
       return Visible_Column_Type;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tabulations.
@@ -68,8 +61,7 @@ package Codefix is
      (Column     : Visible_Column_Type;
       Str        : String;
       From_Width : Natural;
-      To_Width   : Natural)
-      return Visible_Column_Type;
+      To_Width   : Natural) return Visible_Column_Type;
    --  Convert column based on From_Width for one tab to column based on
    --  To_Width Needed to convert GCC columns to GS columns because GCC uses
    --  8 spaces for one tab but GS tab's width depends on user preferences.
@@ -91,8 +83,8 @@ package Codefix is
    Comment_Entity          : constant Useless_Entity_Operations;
 
    function Is_Set
-     (Mask : Useless_Entity_Operations;
-      Flag : Useless_Entity_Operations) return Boolean;
+     (Mask : Useless_Entity_Operations; Flag : Useless_Entity_Operations)
+      return Boolean;
    --  Returns true if the Flag is contained in the Mask.
 
    type Codefix_Remove_Policy is

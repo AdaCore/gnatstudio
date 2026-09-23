@@ -50,8 +50,9 @@ package BT is
    end record;
 
    type Vn_Values_Seq_Index is new Positive;
-   package Vn_Values_Seqs is new Ada.Containers.Vectors
-     (Element_Type => Vn_Values,
-      Index_Type   => Vn_Values_Seq_Index);
+   package Vn_Values_Seqs is new
+     Ada.Containers.Vectors
+       (Element_Type => Vn_Values,
+        Index_Type   => Vn_Values_Seq_Index);
 
 end BT;

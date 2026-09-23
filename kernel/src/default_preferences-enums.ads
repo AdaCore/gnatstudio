@@ -26,14 +26,13 @@ package Default_Preferences.Enums is
    type Choice_Preference is access all Choice_Preference_Record'Class;
 
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Choices                   : VSS.String_Vectors.Virtual_String_Vector;
-      Default                   : VSS.Strings.Virtual_String;
-      Priority                  : Integer := -1;
-      Combo_Threshold           : Integer := 3)
-      return Choice_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Choices          : VSS.String_Vectors.Virtual_String_Vector;
+      Default          : VSS.Strings.Virtual_String;
+      Priority         : Integer := -1;
+      Combo_Threshold  : Integer := 3) return Choice_Preference;
    --  Create a new preference whose values are among Choices.
    --  Combo_Threshold can be set to -1 to force a combobox and not use radio
    --  buttons.
@@ -49,23 +48,19 @@ package Default_Preferences.Enums is
       type Preference is access all Preference_Record'Class;
 
       function Create
-        (Manager                   : access Preferences_Manager_Record'Class;
-         Path                      : Preference_Path;
-         Name, Label, Doc          : String;
-         Default                   : Enumeration;
-         Priority                  : Integer := -1;
-         Combo_Threshold           : Integer := 3)
-         return Preference;
+        (Manager          : access Preferences_Manager_Record'Class;
+         Path             : Preference_Path;
+         Name, Label, Doc : String;
+         Default          : Enumeration;
+         Priority         : Integer := -1;
+         Combo_Threshold  : Integer := 3) return Preference;
       --  Create a new preference whose possibles values are given by
       --  Enumeration
 
-      function Get_Pref
-        (Pref : access Preference_Record) return Enumeration;
+      function Get_Pref (Pref : access Preference_Record) return Enumeration;
       --  Return the value of the enumeration
 
-      procedure Hide
-        (Pref  : access Preference_Record;
-         Value : Enumeration);
+      procedure Hide (Pref : access Preference_Record; Value : Enumeration);
       --  The Value will be invisible in GUI for users
 
    private
@@ -75,20 +70,24 @@ package Default_Preferences.Enums is
          Hidden : Hidden_Set.Set;
       end record;
 
-      overriding function Edit
-        (Pref               : access Preference_Record;
-         Manager            : access Preferences_Manager_Record'Class)
+      overriding
+      function Edit
+        (Pref    : access Preference_Record;
+         Manager : access Preferences_Manager_Record'Class)
          return Gtk.Widget.Gtk_Widget;
-      overriding function Get_Pref
-        (Pref : access Preference_Record) return String;
-      overriding procedure Set_Pref
+      overriding
+      function Get_Pref (Pref : access Preference_Record) return String;
+      overriding
+      procedure Set_Pref
         (Pref    : access Preference_Record;
          Manager : access Preferences_Manager_Record'Class;
          Value   : String);
-      overriding procedure Update_On_Pref_Changed
+      overriding
+      procedure Update_On_Pref_Changed
         (Pref   : access Preference_Record;
          Widget : access GObject_Record'Class);
-      overriding function Editor_Needs_Label
+      overriding
+      function Editor_Needs_Label
         (Pref : not null access Preference_Record) return Boolean;
    end Generics;
 
@@ -99,24 +98,30 @@ private
       Choices         : VSS.String_Vectors.Virtual_String_Vector;
       Combo_Threshold : Integer;
    end record;
-   overriding function Edit
-     (Pref               : access Choice_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Choice_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding function Get_Pref
-     (Pref : access Choice_Preference_Record) return String;
-   overriding procedure Set_Pref
+   overriding
+   function Get_Pref (Pref : access Choice_Preference_Record) return String;
+   overriding
+   procedure Set_Pref
      (Pref    : access Choice_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
-   overriding function Is_Default
+   overriding
+   function Is_Default
      (Self : not null access Choice_Preference_Record) return Boolean
    is (To_Lowercase.Transform (Self.Current_Choice)
        = To_Lowercase.Transform (Self.Default_Choice));
-   overriding procedure Free (Pref : in out Choice_Preference_Record);
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Free (Pref : in out Choice_Preference_Record);
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Choice_Preference_Record;
       Widget : access GObject_Record'Class);
-   overriding function Editor_Needs_Label
+   overriding
+   function Editor_Needs_Label
      (Pref : not null access Choice_Preference_Record) return Boolean;
 end Default_Preferences.Enums;

@@ -17,8 +17,8 @@
 
 --  This package provides wraper for shell command.
 
-with Basic_Types;   use Basic_Types;
-with GPS.Editors;   use GPS.Editors;
+with Basic_Types;                  use Basic_Types;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package Vdiff2_Module.Utils.Shell_Command is
@@ -34,8 +34,8 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Return corresponding Mark.
 
    procedure Edit
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : Virtual_File);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Open editor for File
    pragma Inline (Edit);
 
@@ -76,7 +76,7 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Highlight_Line);
 
    procedure Highlight_Range
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       File    : Virtual_File;
       Style   : String;
       Line    : Natural := 0;

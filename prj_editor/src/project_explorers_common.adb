@@ -17,32 +17,32 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with GNATCOLL.VFS.GtkAda;   use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Symbols;    use GNATCOLL.Symbols;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 
-with Gdk.Drag_Contexts;     use Gdk.Drag_Contexts;
-with Gdk.Rectangle;         use Gdk.Rectangle;
-with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
-with Glib.Convert;          use Glib.Convert;
-with Gdk.Dnd;               use Gdk.Dnd;
-with Gtk.Dnd;               use Gtk.Dnd;
-with Gtk.Label;             use Gtk.Label;
+with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
+with Gdk.Rectangle;        use Gdk.Rectangle;
+with Gdk.Types.Keysyms;    use Gdk.Types.Keysyms;
+with Glib.Convert;         use Glib.Convert;
+with Gdk.Dnd;              use Gdk.Dnd;
+with Gtk.Dnd;              use Gtk.Dnd;
+with Gtk.Label;            use Gtk.Label;
 with Gtk.Label.VSS_Utils;
-with Gtk.Selection_Data;    use Gtk.Selection_Data;
+with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Target_List;
-with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with File_Utils;
-with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules.UI;
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with GUI_Utils;             use GUI_Utils;
-with Language.Icons;        use Language.Icons;
-with Projects;              use Projects;
-with String_Utils;          use String_Utils;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GUI_Utils;           use GUI_Utils;
+with Language.Icons;      use Language.Icons;
+with Projects;            use Projects;
+with String_Utils;        use String_Utils;
 with URIs;
 
 package body Project_Explorers_Common is
@@ -74,10 +74,10 @@ package body Project_Explorers_Common is
    --  If Kind not in Category_Node .. Entity_Node then add data for icon.
 
    procedure Add_Column_Icon
-     (Name     : String;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint);
+     (Name    : String;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint);
    --  Increase Last and set Icon value and column index on Last's position.
 
    procedure Set
@@ -94,13 +94,15 @@ package body Project_Explorers_Common is
      (Dummy_Selection   : not null access Gtk_Tree_Selection_Record'Class;
       Dummy_Model       : Gtk.Tree_Model.Gtk_Tree_Model;
       Dummy_Path        : Gtk.Tree_Model.Gtk_Tree_Path;
-      Dummy_Is_Selected : Boolean) return Boolean is (False);
+      Dummy_Is_Selected : Boolean) return Boolean
+   is (False);
 
    function Thaw_Selection
      (Dummy_Selection   : not null access Gtk_Tree_Selection_Record'Class;
       Dummy_Model       : Gtk.Tree_Model.Gtk_Tree_Model;
       Dummy_Path        : Gtk.Tree_Model.Gtk_Tree_Path;
-      Dummy_Is_Selected : Boolean) return Boolean is (True);
+      Dummy_Is_Selected : Boolean) return Boolean
+   is (True);
 
    ---------------------
    -- Add_Column_File --
@@ -123,10 +125,10 @@ package body Project_Explorers_Common is
    ---------------------
 
    procedure Add_Column_Icon
-     (Name     : String;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint) is
+     (Name    : String;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint) is
    begin
       Last := Last + 1;
       Columns (Integer (Last)) := Icon_Column;
@@ -170,7 +172,9 @@ package body Project_Explorers_Common is
         ((if Icon_Name /= ""
           then Icon_Name
           else Stock_For_Node (Kind, Expanded => Expanded)),
-         Columns, Values, Last);
+         Columns,
+         Values,
+         Last);
    end Add_Column_Type_Icon;
 
    -------------------
@@ -179,11 +183,12 @@ package body Project_Explorers_Common is
 
    function Columns_Types return GType_Array is
    begin
-      return GType_Array'
-        (Icon_Column         => GType_String,
-         File_Column         => Get_Virtual_File_Type,
-         Display_Name_Column => GType_String,
-         Node_Type_Column    => GType_Int);
+      return
+        GType_Array'
+          (Icon_Column         => GType_String,
+           File_Column         => Get_Virtual_File_Type,
+           Display_Name_Column => GType_String,
+           Node_Type_Column    => GType_Int);
    end Columns_Types;
 
    --------------------
@@ -191,8 +196,7 @@ package body Project_Explorers_Common is
    --------------------
 
    function Stock_For_Node
-     (Node : Node_Types; Expanded : Boolean) return String
-   is
+     (Node : Node_Types; Expanded : Boolean) return String is
    begin
       case Node is
          when Project_Node | Extends_Project_Node =>
@@ -202,56 +206,56 @@ package body Project_Explorers_Common is
                return "gps-emblem-project-closed";
             end if;
 
-         when Root_Project_Node =>
+         when Root_Project_Node                   =>
             if Expanded then
                return "gps-emblem-project-root-open";
             else
                return "gps-emblem-project-root-closed";
             end if;
 
-         when Runtime_Node =>
+         when Runtime_Node                        =>
             if Expanded then
                return "gps-emblem-project-runtime-open";
             else
                return "gps-emblem-project-runtime-closed";
             end if;
 
-         when Modified_Project_Node =>
+         when Modified_Project_Node               =>
             if Expanded then
                return "gps-emblem-project-modified-open";
             else
                return "gps-emblem-project-modified-closed";
             end if;
 
-         when Directory_Node =>
+         when Directory_Node                      =>
             if Expanded then
                return "gps-emblem-directory-open";
             else
                return "gps-emblem-directory-closed";
             end if;
 
-         when Obj_Directory_Node =>
+         when Obj_Directory_Node                  =>
             if Expanded then
                return "gps-emblem-objdir-open";
             else
                return "gps-emblem-objdir-closed";
             end if;
 
-         when Lib_Directory_Node =>
+         when Lib_Directory_Node                  =>
             if Expanded then
                return "gps-emblem-libdir-open";
             else
                return "gps-emblem-libdir-closed";
             end if;
 
-         when Exec_Directory_Node =>
+         when Exec_Directory_Node                 =>
             if Expanded then
                return "gps-emblem-execdir-open";
             else
                return "gps-emblem-execdir-closed";
             end if;
 
-         when File_Node_Types =>
+         when File_Node_Types                     =>
             return "gps-emblem-file-unmodified";
       end case;
    end Stock_For_Node;
@@ -281,7 +285,7 @@ package body Project_Explorers_Common is
       ------------
 
       function Escape return String is
-         C : Character;
+         C   : Character;
          Str : constant Cst_String_Access := Get (Construct.Info.Name);
       begin
          if Str.all = "" then
@@ -301,9 +305,11 @@ package body Project_Explorers_Common is
 
    begin
       if Show_Profiles and then Construct.Info.Profile /= No_Symbol then
-         return Name & " <span foreground=""#A0A0A0"">"
+         return
+           Name
+           & " <span foreground=""#A0A0A0"">"
            & Escape_Text
-              (Reduce (Get (Construct.Info.Profile).all, Max_Profile_Length))
+               (Reduce (Get (Construct.Info.Profile).all, Max_Profile_Length))
            & "</span>";
       else
          return Name;
@@ -314,18 +320,17 @@ package body Project_Explorers_Common is
    -- Entity_Icon_Of --
    --------------------
 
-   function Entity_Icon_Of
-     (Construct : Construct_Information) return String
-     is (Entity_Icon_Of (Construct.Info));
+   function Entity_Icon_Of (Construct : Construct_Information) return String
+   is (Entity_Icon_Of (Construct.Info));
 
    function Entity_Icon_Of
-     (Construct : Simple_Construct_Information) return String
-   is
+     (Construct : Simple_Construct_Information) return String is
    begin
-      return Stock_From_Category
-        (Is_Declaration => Construct.Is_Declaration,
-         Visibility     => Construct.Visibility,
-         Category       => Construct.Category);
+      return
+        Stock_From_Category
+          (Is_Declaration => Construct.Is_Declaration,
+           Visibility     => Construct.Visibility,
+           Category       => Construct.Category);
    end Entity_Icon_Of;
    -----------------
    -- Create_Node --
@@ -371,8 +376,8 @@ package body Project_Explorers_Common is
       while Iter /= Null_Iter loop
          T := Self.Get_Node_Type (Iter);
          if (T = Kind
-             or else (Kind in Project_Node_Types
-                      and then T in Project_Node_Types))
+             or else
+               (Kind in Project_Node_Types and then T in Project_Node_Types))
            and then Get_File (M, Iter, File_Column) = File
          then
             if T /= Kind then
@@ -395,15 +400,16 @@ package body Project_Explorers_Common is
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Dir       : Gtk_Tree_Iter;
       File      : Virtual_File;
-      Icon_Name : String := "gps-emblem-file-unmodified")
-      return Gtk_Tree_Iter is
+      Icon_Name : String := "gps-emblem-file-unmodified") return Gtk_Tree_Iter
+   is
    begin
-      return Self.Create_Node
-        (Parent    => Dir,
-         Kind      => Self.Get_File_Node_Type (File),
-         File      => File,
-         Name      => File.Display_Base_Name,
-         Icon_Name => Icon_Name);
+      return
+        Self.Create_Node
+          (Parent    => Dir,
+           Kind      => Self.Get_File_Node_Type (File),
+           File      => File,
+           Name      => File.Display_Base_Name,
+           Icon_Name => Icon_Name);
    end Create_File;
 
    -------------------------
@@ -411,8 +417,8 @@ package body Project_Explorers_Common is
    -------------------------
 
    procedure Append_Runtime_Info
-     (Self      : not null access Base_Explorer_Tree_Record'Class;
-      Node      : Gtk_Tree_Iter)
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter)
    is
       Dir, Dummy : Gtk_Tree_Iter;
       Previous   : Virtual_File;
@@ -423,28 +429,30 @@ package body Project_Explorers_Common is
          --  minor optimization to reuse previous dir if possible
          if Previous /= Files (F).Dir then
             Previous := Files (F).Dir;
-            Dir := Self.Create_Or_Reuse_Node
-              (Parent => Node,
-               Kind   => Directory_Node,
-               File   => Previous,
-               Name   => Previous.Display_Full_Name);
+            Dir :=
+              Self.Create_Or_Reuse_Node
+                (Parent => Node,
+                 Kind   => Directory_Node,
+                 File   => Previous,
+                 Name   => Previous.Display_Full_Name);
          end if;
 
          declare
             Ext : constant String := +(File_Extension (Files (F)));
          begin
-            Dummy := Self.Create_Node
-              (Parent    => Dir,
-               Kind      =>
+            Dummy :=
+              Self.Create_Node
+                (Parent    => Dir,
+                 Kind      =>
                  --  Runtime files have predifined extension for files
-                 (if Ext = ".ads" or else Ext = ".h"
-                  then Specification_File_Node
-                  elsif Ext = ".adb" or else Ext = ".c"
-                  then Body_File_Node
-                  else Other_File_Node),
-               File      => Files (F),
-               Name      => Files (F).Display_Base_Name,
-               Icon_Name => "gps-emblem-file-unmodified");
+                   (if Ext = ".ads" or else Ext = ".h"
+                    then Specification_File_Node
+                    elsif Ext = ".adb" or else Ext = ".c"
+                    then Body_File_Node
+                    else Other_File_Node),
+                 File      => Files (F),
+                 Name      => Files (F).Display_Base_Name,
+                 Icon_Name => "gps-emblem-file-unmodified");
          end;
       end loop;
    end Append_Runtime_Info;
@@ -466,7 +474,7 @@ package body Project_Explorers_Common is
       then
          return Cat_Unknown;
 
-         --  All subprograms are grouped together
+      --  All subprograms are grouped together
 
       elsif Category in Subprogram_Explorer_Category then
          return Cat_Procedure;
@@ -483,7 +491,8 @@ package body Project_Explorers_Common is
    -- Dnd_Data --
    --------------
 
-   overriding function Dnd_Data
+   overriding
+   function Dnd_Data
      (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
       return Gtkada.MDI.MDI_Child
    is
@@ -495,9 +504,10 @@ package body Project_Explorers_Common is
 
       else
          if Copy then
-            C := Find_MDI_Child_By_Name
-              (Get_MDI (Child.Kernel),
-               Display_Full_Name (Child.Dnd_From_File));
+            C :=
+              Find_MDI_Child_By_Name
+                (Get_MDI (Child.Kernel),
+                 Display_Full_Name (Child.Dnd_From_File));
          end if;
 
          if Copy and then C /= null then
@@ -519,8 +529,8 @@ package body Project_Explorers_Common is
    -- Child_Drag_Finished --
    -------------------------
 
-   overriding procedure Child_Drag_Finished
-     (Child : access MDI_Explorer_Child_Record) is
+   overriding
+   procedure Child_Drag_Finished (Child : access MDI_Explorer_Child_Record) is
    begin
       --  So that we can also move the explorer itself
       Child.Dnd_From_File := GNATCOLL.VFS.No_File;
@@ -532,9 +542,9 @@ package body Project_Explorers_Common is
    ---------------------
 
    function On_Button_Press
-     (Child     : access MDI_Explorer_Child_Record'Class;
-      Tree      : not null access Base_Explorer_Tree_Record'Class;
-      Event     : Gdk_Event_Button) return Boolean
+     (Child : access MDI_Explorer_Child_Record'Class;
+      Tree  : not null access Base_Explorer_Tree_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
    is
       Iter           : Gtk_Tree_Iter;  --  applies to Model
       Filter_Path    : Gtk_Tree_Path;
@@ -559,9 +569,7 @@ package body Project_Explorers_Common is
          end;
 
          case Tree.Get_Node_Type (Iter) is
-            when Directory_Node_Types
-               | Project_Node_Types
-               | Runtime_Node =>
+            when Directory_Node_Types | Project_Node_Types | Runtime_Node =>
 
                Cancel_Child_Drag (Child);
 
@@ -583,10 +591,10 @@ package body Project_Explorers_Common is
                end if;
                return False;
 
-            when File_Node_Types =>
-               File    := Get_File (Tree.Model, Iter, File_Column);
-               Project := Tree.Get_Project_From_Node
-                 (Iter, Importing => False);
+            when File_Node_Types                                          =>
+               File := Get_File (Tree.Model, Iter, File_Column);
+               Project :=
+                 Tree.Get_Project_From_Node (Iter, Importing => False);
 
                if Event.The_Type = Gdk_2button_Press
                  or else Event.The_Type = Gdk_3button_Press
@@ -634,9 +642,7 @@ package body Project_Explorers_Common is
                      Cell_Y,
                      Row_Found);
                   Tree.Get_Cell_Area
-                    (Path   => Filter_Path,
-                     Column => Col,
-                     Rect   => Rect);
+                    (Path => Filter_Path, Column => Col, Rect => Rect);
 
                   --  Intercept mouse clicks on selected items so that we can
                   --  drag multiple items without the click selecting only one
@@ -655,8 +661,8 @@ package body Project_Explorers_Common is
                   --  ... he clicked on the file name
 
                   declare
-                     X : constant Gtk.Target_List.Gtk_Target_List
-                       := Gtk.Dnd.Source_Get_Target_List (Tree);
+                     X : constant Gtk.Target_List.Gtk_Target_List :=
+                       Gtk.Dnd.Source_Get_Target_List (Tree);
 
                   begin
                      --  If Tree provides drag&drop source, then use it
@@ -670,13 +676,13 @@ package body Project_Explorers_Common is
                   --  Drag-and-drop does not work on floating MDI children
 
                   if Get_State (Child) /= Gtkada.MDI.Floating then
-                     Child.Kernel        := Tree.Kernel;
+                     Child.Kernel := Tree.Kernel;
                      Child.Dnd_From_File := File;
                      Child.Dnd_From_Project := Project;
 
                      Child_Drag_Begin
-                       (Child, Event,
-                        Areas => Central_Only);  --  editors
+                       (Child, Event, Areas => Central_Only);  --  editors
+
                   end if;
                   return False;
 
@@ -694,8 +700,8 @@ package body Project_Explorers_Common is
    ------------------
 
    function On_Key_Press
-     (Tree   : not null access Base_Explorer_Tree_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Tree  : not null access Base_Explorer_Tree_Record'Class;
+      Event : Gdk_Event) return Boolean
    is
       use type Gdk.Types.Gdk_Key_Type;
       use Gtk_Tree_Path_List;
@@ -722,20 +728,20 @@ package body Project_Explorers_Common is
 
          if Iter /= Null_Iter then
             case Tree.Get_Node_Type (Iter) is
-            when File_Node_Types =>
-               File := Tree.Get_File_From_Node (Iter);
-               Project := Tree.Get_Project_From_Node
-                 (Iter, Importing => False);
+               when File_Node_Types =>
+                  File := Tree.Get_File_From_Node (Iter);
+                  Project :=
+                    Tree.Get_Project_From_Node (Iter, Importing => False);
 
-               Open_File_Action_Hook.Run
-                 (Tree.Kernel,
-                  File,
-                  Project => Project,
-                  Line    => 0,
-                  Column  => 0);
+                  Open_File_Action_Hook.Run
+                    (Tree.Kernel,
+                     File,
+                     Project => Project,
+                     Line    => 0,
+                     Column  => 0);
 
-            when others =>
-               null;
+               when others          =>
+                  null;
             end case;
          end if;
 
@@ -751,11 +757,10 @@ package body Project_Explorers_Common is
    -------------------
 
    function Get_Node_Type
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Node_Types is
+     (Model : Gtk_Tree_Store; Node : Gtk_Tree_Iter) return Node_Types is
    begin
-      return Node_Types'Val
-        (Integer (Get_Int (Model, Node, Node_Type_Column)));
+      return
+        Node_Types'Val (Integer (Get_Int (Model, Node, Node_Type_Column)));
    end Get_Node_Type;
 
    -------------------
@@ -787,8 +792,8 @@ package body Project_Explorers_Common is
    ------------------------
 
    function Get_File_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File is
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File is
    begin
       return Get_File (Self.Model, Node, File_Column);
    end Get_File_From_Node;
@@ -798,8 +803,8 @@ package body Project_Explorers_Common is
    ------------------------
 
    function Get_Icon_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return String is
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return String is
    begin
       return Get_String (Self.Model, Node, Icon_Column);
    end Get_Icon_From_Node;
@@ -823,8 +828,11 @@ package body Project_Explorers_Common is
       function Get_Type (Part : Unit_Parts) return Node_Types is
       begin
          case Part is
-            when Unit_Spec => return Specification_File_Node;
-            when Unit_Body | Unit_Separate => return Body_File_Node;
+            when Unit_Spec                 =>
+               return Specification_File_Node;
+
+            when Unit_Body | Unit_Separate =>
+               return Body_File_Node;
          end case;
       end Get_Type;
 
@@ -851,8 +859,8 @@ package body Project_Explorers_Common is
    -----------------------------
 
    function Get_Directory_From_Node
-     (Self  : not null access Base_Explorer_Tree_Record'Class;
-      Node  : Gtk_Tree_Iter) return Virtual_File
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Node : Gtk_Tree_Iter) return Virtual_File
    is
       F : constant Virtual_File := Get_File (Self.Model, Node, File_Column);
    begin
@@ -1006,17 +1014,18 @@ package body Project_Explorers_Common is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Self     : not null access Explorer_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Self   : not null access Explorer_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-      Filter_Iter, Iter  : Gtk_Tree_Iter;
-      Node_Type          : Node_Types;
-      File               : Virtual_File;
-      Area               : Gdk_Rectangle;
-      Label              : Gtk_Label;
+      Filter_Iter, Iter : Gtk_Tree_Iter;
+      Node_Type         : Node_Types;
+      File              : Virtual_File;
+      Area              : Gdk_Rectangle;
+      Label             : Gtk_Label;
    begin
       Initialize_Tooltips (Self.Tree, X, Y, Area, Filter_Iter);
       Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
@@ -1029,7 +1038,7 @@ package body Project_Explorers_Common is
          Node_Type := Self.Tree.Get_Node_Type (Iter);
 
          case Node_Type is
-            when Project_Node_Types =>
+            when Project_Node_Types   =>
                --  Project or extended project full pathname
                File := Get_File (Self.Tree.Model, Iter, File_Column);
                Gtk_New (Label, File.Display_Full_Name);
@@ -1039,23 +1048,25 @@ package body Project_Explorers_Common is
                  (Label,
                   Get_Tooltip_For_Directory
                     (Kernel    => Self.Tree.Kernel,
-                     Directory => Get_File
-                       (Self.Tree.Model, Iter, File_Column),
-                     Project   => Self.Tree.Get_Project_From_Node
-                       (Iter, Importing => False)));
+                     Directory =>
+                       Get_File (Self.Tree.Model, Iter, File_Column),
+                     Project   =>
+                       Self.Tree.Get_Project_From_Node
+                         (Iter, Importing => False)));
                Label.Set_Use_Markup (True);
 
-            when File_Node_Types =>
+            when File_Node_Types      =>
                Gtk.Label.VSS_Utils.Gtk_New
                  (Label,
                   Get_Tooltip_For_File
-                    (Kernel    => Self.Tree.Kernel,
-                     File      => Self.Tree.Get_File_From_Node (Iter),
-                     Project   => Self.Tree.Get_Project_From_Node
-                       (Iter, Importing => False)));
+                    (Kernel  => Self.Tree.Kernel,
+                     File    => Self.Tree.Get_File_From_Node (Iter),
+                     Project =>
+                       Self.Tree.Get_Project_From_Node
+                         (Iter, Importing => False)));
                Label.Set_Use_Markup (True);
 
-            when others =>
+            when others               =>
                null;
          end case;
       end if;
@@ -1067,19 +1078,19 @@ package body Project_Explorers_Common is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self          : On_VCS_Status_Changed;
-      Kernel        : not null access Kernel_Handle_Record'Class;
-      Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : Basic_Types.File_Sets.Set;
-      Props         : VCS_File_Properties)
+   overriding
+   procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : Basic_Types.File_Sets.Set;
+      Props  : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
 
       function On_Node
-        (M     : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean;
+        (M : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean;
       --  A file might occur at multiple places.
       --  Even when using a Flat view, it could belong to multiple aggregated
       --  projects (and possibly different VCS engine for each)
@@ -1089,9 +1100,8 @@ package body Project_Explorers_Common is
       -------------
 
       function On_Node
-        (M     : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean
+        (M : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean
       is
          pragma Unreferenced (M, Path);
       begin
@@ -1099,9 +1109,10 @@ package body Project_Explorers_Common is
            and then Files.Contains (Self.Tree.Get_File_From_Node (Iter))
          then
             Self.Tree.Model.Set
-              (Iter, Icon_Column,
-               UTF8_String'(To_String
-                 (Vcs.Get_Display (Props.Status).Icon_Name)));
+              (Iter,
+               Icon_Column,
+               UTF8_String'
+                 (To_String (Vcs.Get_Display (Props.Status).Icon_Name)));
          end if;
          return False;  --  continue traversing
       end On_Node;
@@ -1120,15 +1131,14 @@ package body Project_Explorers_Common is
    ------------
 
    function Get_Id
-      (Self   : not null access Base_Explorer_Tree_Record'Class;
-       Row    : Gtk_Tree_Iter) return Node_Id
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Row  : Gtk_Tree_Iter) return Node_Id
    is
       P     : constant Gtk_Tree_Path := Self.Model.Get_Path (Row);
       Depth : constant Gint := Get_Depth (P);
    begin
       Path_Free (P);
-      return (File  => Self.Get_File_From_Node (Row),
-              Depth => Integer (Depth));
+      return (File => Self.Get_File_From_Node (Row), Depth => Integer (Depth));
    end Get_Id;
 
    ----------
@@ -1138,8 +1148,9 @@ package body Project_Explorers_Common is
    function Hash (Self : Node_Id) return Ada.Containers.Hash_Type is
       use Ada.Containers;
    begin
-      return (GNATCOLL.VFS.Full_Name_Hash (Self.File) + Hash_Type (Self.Depth))
-         mod Hash_Type'Last;
+      return
+        (GNATCOLL.VFS.Full_Name_Hash (Self.File) + Hash_Type (Self.Depth))
+        mod Hash_Type'Last;
    end Hash;
 
    -------------------
@@ -1176,26 +1187,29 @@ package body Project_Explorers_Common is
 
          if Iter /= Null_Iter then
             case Tree.Get_Node_Type (Iter) is
-            when File_Node_Types =>
-               File := Get_File (M, Iter, File_Column);
-               begin
-                  if not File.Is_Readable then
-                     Kernel.Get_Messages_Window.Insert_Error
-                       ("File """ & (+(File.Base_Name)) &
-                          """ is not readable" & ASCII.LF);
-                  else
-                     Append (Data_String,
-                             URIs.Conversions.From_File (+File.Full_Name)
-                             & ASCII.LF);
-                  end if;
+               when File_Node_Types =>
+                  File := Get_File (M, Iter, File_Column);
+                  begin
+                     if not File.Is_Readable then
+                        Kernel.Get_Messages_Window.Insert_Error
+                          ("File """
+                           & (+(File.Base_Name))
+                           & """ is not readable"
+                           & ASCII.LF);
+                     else
+                        Append
+                          (Data_String,
+                           URIs.Conversions.From_File (+File.Full_Name)
+                           & ASCII.LF);
+                     end if;
 
-               exception
-                  when others =>
-                     null;
-               end;
+                  exception
+                     when others =>
+                        null;
+                  end;
 
-            when others =>
-               null;
+               when others          =>
+                  null;
             end case;
          end if;
 
@@ -1204,7 +1218,9 @@ package body Project_Explorers_Common is
 
       Free_Path_List (List);
       Gtk.Selection_Data.Selection_Data_Set
-        (Data, Gtk.Selection_Data.Get_Target (Data), 8,
+        (Data,
+         Gtk.Selection_Data.Get_Target (Data),
+         8,
          To_String (Data_String));
    end Drag_Data_Get;
 
@@ -1220,11 +1236,11 @@ package body Project_Explorers_Common is
       Tree    : constant Base_Explorer_Tree := Base_Explorer_Tree (Object);
       Model   : constant Gtk_Tree_Store := Tree.Model;
       Context : constant Drag_Context :=
-                  Drag_Context (Get_Object (Nth (Args, 1)));
+        Drag_Context (Get_Object (Nth (Args, 1)));
       X       : constant Gint := Get_Int (Nth (Args, 2));
       Y       : constant Gint := Get_Int (Nth (Args, 3));
       Data    : constant Gtk_Selection_Data :=
-                  From_Object (Get_Address (Nth (Args, 4)));
+        From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
       Action  : constant Drag_Action := Get_Selected_Action (Context);
       Iter    : Gtk_Tree_Iter;
@@ -1245,18 +1261,13 @@ package body Project_Explorers_Common is
    begin
       --  Retrieve the destination directory iter
       declare
-         Path      : Gtk_Tree_Path;
-         Buffer_X  : Gint;
-         Buffer_Y  : Gint;
-         Column    : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+         Path     : Gtk_Tree_Path;
+         Buffer_X : Gint;
+         Buffer_Y : Gint;
+         Column   : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       begin
          Get_Path_At_Pos
-           (Tree, X, Y,
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Success);
+           (Tree, X, Y, Path, Column, Buffer_X, Buffer_Y, Success);
 
          if not Success or Path = Null_Gtk_Tree_Path then
             Iter := Null_Iter;
@@ -1281,11 +1292,10 @@ package body Project_Explorers_Common is
             Source  : Virtual_File;
             Target  : Virtual_File;
             Node    : constant Virtual_File :=
-                        Get_File (Model, Iter, File_Column);
+              Get_File (Model, Iter, File_Column);
             Dir     : constant Virtual_File := Node.Dir;
             Sources : constant File_Array_Access :=
-                        File_Utils.URL_List_To_Files
-                          (Get_Data_As_String (Data));
+              File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
             Src_Dir : Virtual_File;
          begin
             if Sources = null then
@@ -1296,25 +1306,24 @@ package body Project_Explorers_Common is
                   Target := Dir.Create_From_Dir (Source.Base_Name);
 
                   if not Dir.Is_Writable then
-                     Fail ("Target directory " & (+(Dir.Full_Name)) &
-                             " is not writable");
+                     Fail
+                       ("Target directory "
+                        & (+(Dir.Full_Name))
+                        & " is not writable");
                      Gtk.Dnd.Finish
-                       (Context,
-                        Success => False,
-                        Del     => False,
-                        Time    => Time);
+                       (Context, Success => False, Del => False, Time => Time);
                      return;
                   end if;
 
                   if Source = Target then
                      Success := False;
 
-                  elsif Action = Action_Move
-                    or else Action = Action_Any
-                  then
+                  elsif Action = Action_Move or else Action = Action_Any then
                      if not Source.Is_Writable then
-                        Fail ("Source " & (+(Source.Base_Name)) &
-                                " is not writable");
+                        Fail
+                          ("Source "
+                           & (+(Source.Base_Name))
+                           & " is not writable");
                      end if;
 
                      Src_Dir := Sources (Ix).Get_Parent;
@@ -1322,8 +1331,10 @@ package body Project_Explorers_Common is
                         Fail ("Source directory is unavailable");
 
                      elsif not Src_Dir.Is_Writable then
-                        Fail ("Source directory " & (+(Src_Dir.Full_Name)) &
-                                " is not writable");
+                        Fail
+                          ("Source directory "
+                           & (+(Src_Dir.Full_Name))
+                           & " is not writable");
                      end if;
 
                      Source.Rename (Target, Success);

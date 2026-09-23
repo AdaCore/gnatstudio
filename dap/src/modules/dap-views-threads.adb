@@ -17,30 +17,30 @@
 
 with GNAT.Strings;
 
-with Glib;                       use Glib;
+with Glib;              use Glib;
 with Glib.Object;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
+with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Tree_View_Column;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
+with Gtk.Widget;          use Gtk.Widget;
 
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.MDI; use Gtkada.MDI;
 
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 
-with DAP.Types;                  use DAP.Types;
-with DAP.Tools;                  use DAP.Tools;
-with DAP.Requests;               use DAP.Requests;
-with DAP.Requests.Threads;       use DAP.Requests.Threads;
-with DAP.Utils;                  use DAP.Utils;
+with DAP.Types;            use DAP.Types;
+with DAP.Tools;            use DAP.Tools;
+with DAP.Requests;         use DAP.Requests;
+with DAP.Requests.Threads; use DAP.Requests.Threads;
+with DAP.Utils;            use DAP.Utils;
 
-with GUI_Utils;                  use GUI_Utils;
+with GUI_Utils; use GUI_Utils;
 
 package body DAP.Views.Threads is
 
@@ -48,42 +48,42 @@ package body DAP.Views.Threads is
    Name_Column : constant := 1;
 
    Column_Types : constant GType_Array :=
-     (Num_Column  => GType_String,
-      Name_Column => GType_String);
+     (Num_Column => GType_String, Name_Column => GType_String);
 
    Titles : constant GNAT.Strings.String_List :=
      (new String'("Num"), new String'("Name"));
 
-   type Thread_View_Record is new View_Record with
-      record
-         Scrolled : Gtk_Scrolled_Window;
-         Tree     : Gtk.Tree_View.Gtk_Tree_View;
-      end record;
+   type Thread_View_Record is new View_Record with record
+      Scrolled : Gtk_Scrolled_Window;
+      Tree     : Gtk.Tree_View.Gtk_Tree_View;
+   end record;
    type Thread_View is access all Thread_View_Record'Class;
 
-   overriding procedure On_Process_Terminated
-     (View : not null access Thread_View_Record);
-   overriding procedure Update
-     (View : not null access Thread_View_Record);
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Process_Terminated (View : not null access Thread_View_Record);
+   overriding
+   procedure Update (View : not null access Thread_View_Record);
+   overriding
+   procedure On_Status_Changed
      (View   : not null access Thread_View_Record;
       Status : GPS.Debuggers.Debugger_State);
 
    function Initialize
      (View : access Thread_View_Record'Class) return Gtk_Widget;
 
-   package Thread_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Thread_View",
-      View_Name                       => "Threads",
-      Formal_View_Record              => Thread_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => True,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
+   package Thread_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Thread_View",
+        View_Name                       => "Threads",
+        Formal_View_Record              => Thread_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => True,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
    subtype Thread_MDI is Thread_MDI_Views.View_Access;
    use type Thread_MDI;
 
@@ -91,15 +91,17 @@ package body DAP.Views.Threads is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Thread_View_Record'Class;
 
-   package Thread_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Thread_MDI_Views,
-      Formal_View_Record => Thread_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Thread_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Thread_MDI_Views,
+        Formal_View_Record => Thread_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    type Request is new Threads_DAP_Request with null record;
    type Request_Access is access all Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ThreadsResponse;
@@ -108,8 +110,9 @@ package body DAP.Views.Threads is
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
+      Column :
+        not null access
+          Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
 
    function Image (I : Integer) return String;
    function Value (Str : String) return Integer;
@@ -160,9 +163,9 @@ package body DAP.Views.Threads is
       View.Pack_Start (View.Scrolled, Expand => True, Fill => True);
       View.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      View.Tree := Create_Tree_View
-        (Column_Types => Column_Types,
-         Column_Names => Titles);
+      View.Tree :=
+        Create_Tree_View
+          (Column_Types => Column_Types, Column_Names => Titles);
 
       View.Scrolled.Add (View.Tree);
       View.Tree.Show_All;
@@ -180,8 +183,8 @@ package body DAP.Views.Threads is
    procedure On_Clicked
      (Self   : access Glib.Object.GObject_Record'Class;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : not null
-      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
+      Column :
+        not null access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
    is
       pragma Unreferenced (Column);
       View  : constant Thread_View := Thread_View (Self);
@@ -200,8 +203,9 @@ package body DAP.Views.Threads is
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
-     (View : not null access Thread_View_Record) is
+   overriding
+   procedure On_Process_Terminated (View : not null access Thread_View_Record)
+   is
    begin
       Clear (-Get_Model (View.Tree));
    end On_Process_Terminated;
@@ -210,7 +214,8 @@ package body DAP.Views.Threads is
    -- On_Status_Changed --
    -----------------------
 
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Status_Changed
      (View   : not null access Thread_View_Record;
       Status : GPS.Debuggers.Debugger_State)
    is
@@ -226,7 +231,9 @@ package body DAP.Views.Threads is
          Append (-Get_Model (View.Tree), Iter, Null_Iter);
 
          Set_And_Clear
-           (-Get_Model (View.Tree), Iter, (Num_Column, Name_Column),
+           (-Get_Model (View.Tree),
+            Iter,
+            (Num_Column, Name_Column),
             (1 => As_String (String'("0")),
              2 => As_String (String'("Running..."))));
       else
@@ -238,7 +245,8 @@ package body DAP.Views.Threads is
    -- Update --
    ------------
 
-   overriding procedure Update (View : not null access Thread_View_Record) is
+   overriding
+   procedure Update (View : not null access Thread_View_Record) is
       use DAP.Clients;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
@@ -258,7 +266,8 @@ package body DAP.Views.Threads is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ThreadsResponse;
@@ -275,8 +284,8 @@ package body DAP.Views.Threads is
 
       --  Get sorted list
       for Index in 1 .. Length (Result.a_body.threads) loop
-         Set.Include (Get_Thread_Variable_Reference
-                      (Result.a_body.threads, Index).id);
+         Set.Include
+           (Get_Thread_Variable_Reference (Result.a_body.threads, Index).id);
       end loop;
 
       Clear (-Get_Model (View.Tree));
@@ -286,18 +295,20 @@ package body DAP.Views.Threads is
          Th : for Index in 1 .. Length (Result.a_body.threads) loop
             declare
                Thread : constant Thread_Variable_Reference :=
-                 Get_Thread_Variable_Reference
-                   (Result.a_body.threads, Index);
+                 Get_Thread_Variable_Reference (Result.a_body.threads, Index);
             begin
                if Thread.id = Id then
                   Append (-Get_Model (View.Tree), Iter, Null_Iter);
                   Set_All_And_Clear
-                    (-Get_Model (View.Tree), Iter,
+                    (-Get_Model (View.Tree),
+                     Iter,
                      --  Num
-                     (Num_Column  => As_String
+                     (Num_Column  =>
+                        As_String
                           ((if Client.Get_Current_Thread = Thread.id
-                           then "* "
-                           else "") & Image (Thread.id)),
+                            then "* "
+                            else "")
+                           & Image (Thread.id)),
                       --  Name
                       Name_Column => As_String (To_UTF8 (Thread.name))));
                   exit Th;

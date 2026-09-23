@@ -26,8 +26,8 @@ package body DAP.Modules.Variables.Items.Commands is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Self : Command_Item_Info) return Virtual_String is
+   overriding
+   function Get_Name (Self : Command_Item_Info) return Virtual_String is
    begin
       return Self.Cmd;
    end Get_Name;
@@ -36,8 +36,8 @@ package body DAP.Modules.Variables.Items.Commands is
    -- Get_Full_Name --
    -------------------
 
-   overriding function Get_Full_Name
-     (Self : Command_Item_Info) return Virtual_String is
+   overriding
+   function Get_Full_Name (Self : Command_Item_Info) return Virtual_String is
    begin
       return Self.Cmd;
    end Get_Full_Name;
@@ -46,7 +46,8 @@ package body DAP.Modules.Variables.Items.Commands is
    -- Is_Command --
    ----------------
 
-   overriding function Is_Command (Info : Command_Item_Info) return Boolean is
+   overriding
+   function Is_Command (Info : Command_Item_Info) return Boolean is
    begin
       return True;
    end Is_Command;
@@ -55,7 +56,8 @@ package body DAP.Modules.Variables.Items.Commands is
    -- Find_DAP_Item --
    -------------------
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Command_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean)
@@ -70,9 +72,9 @@ package body DAP.Modules.Variables.Items.Commands is
    -- Store --
    -----------
 
-   overriding procedure Store
-     (Info  : Command_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Store
+     (Info : Command_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
       Value.Set_Field ("tag", "cmd");
       Value.Set_Field ("value", DAP.Utils.To_UTF8 (Info.Cmd));
@@ -85,10 +87,12 @@ package body DAP.Modules.Variables.Items.Commands is
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class is
    begin
-      return Create
-        (Command     => VSS.Strings.Conversions.To_Virtual_String
-           (String'(Value.Get ("value"))),
-         Split_Lines => Value.Get ("split"));
+      return
+        Create
+          (Command     =>
+             VSS.Strings.Conversions.To_Virtual_String
+               (String'(Value.Get ("value"))),
+           Split_Lines => Value.Get ("split"));
    end Load;
 
    ------------
@@ -98,15 +102,15 @@ package body DAP.Modules.Variables.Items.Commands is
    function Create
      (Command     : VSS.Strings.Virtual_String;
       Split_Lines : Boolean;
-      Format      : DAP.Tools.ValueFormat)
-      return Item_Info'Class is
+      Format      : DAP.Tools.ValueFormat) return Item_Info'Class is
    begin
-      return Item_Info'Class
-        (Command_Item_Info'
-           (Cmd         => Command,
-            Split_Lines => Split_Lines,
-            Format      => Format,
-            others      => <>));
+      return
+        Item_Info'Class
+          (Command_Item_Info'
+             (Cmd         => Command,
+              Split_Lines => Split_Lines,
+              Format      => Format,
+              others      => <>));
    end Create;
 
 end DAP.Modules.Variables.Items.Commands;

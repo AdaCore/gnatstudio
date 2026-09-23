@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -36,8 +36,8 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Gtkada.Stock_Labels;
 
-with Commands;                   use Commands;
-with Xref;                       use Xref;
+with Commands; use Commands;
+with Xref;     use Xref;
 
 package body Refactoring.Rename is
    Me : constant Trace_Handle := Create ("GPS.REFACTORING.RENAME");
@@ -50,12 +50,13 @@ package body Refactoring.Rename is
    Auto_Save_Cst          : aliased constant String := "auto_save";
 
    type Renaming_Performer_Record is new Refactor_Performer_Record with record
-       Auto_Save   : Boolean;
-       Old_Name    : Unbounded_String;
-       New_Name    : Unbounded_String;
+      Auto_Save : Boolean;
+      Old_Name  : Unbounded_String;
+      New_Name  : Unbounded_String;
    end record;
    type Renaming_Performer is access all Renaming_Performer_Record'Class;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Root_Entity'Class;
@@ -72,7 +73,8 @@ package body Refactoring.Rename is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Root_Entity'Class;
@@ -90,8 +92,7 @@ package body Refactoring.Rename is
       --  Add a message when renaming a location
 
       procedure Process_Locations
-        (File : Virtual_File;
-         Locs : Location_Arrays.List);
+        (File : Virtual_File; Locs : Location_Arrays.List);
       --  Process a list of locations that are in the same file
 
       --------------------
@@ -104,8 +105,10 @@ package body Refactoring.Rename is
            (Container  => Get_Messages_Container (Kernel),
             Category   =>
               VSS.Strings.Conversions.To_Virtual_String
-                ((-"Refactoring - rename ") & To_String (Factory.Old_Name)
-                    & (-" to ") & To_String (Factory.New_Name)),
+                ((-"Refactoring - rename ")
+                 & To_String (Factory.Old_Name)
+                 & (-" to ")
+                 & To_String (Factory.New_Name)),
             File       => Loc.File,
             Line       => Loc.Line,
             Column     => Loc.Column,
@@ -119,12 +122,12 @@ package body Refactoring.Rename is
       -----------------------
 
       procedure Process_Locations
-        (File : Virtual_File;
-         Locs : Location_Arrays.List)
+        (File : Virtual_File; Locs : Location_Arrays.List)
       is
-         Was_Open : constant Boolean := Buffer_Factory.Get
-           (File  => File,
-            Force => False, Open_View => False) /= Nil_Editor_Buffer;
+         Was_Open : constant Boolean :=
+           Buffer_Factory.Get
+             (File => File, Force => False, Open_View => False)
+           /= Nil_Editor_Buffer;
          Buffer   : constant Editor_Buffer'Class := Buffer_Factory.Get (File);
          G        : constant Group_Block := Buffer.New_Undo_Group;
          Writable : constant Boolean := File.Is_Writable;
@@ -134,14 +137,14 @@ package body Refactoring.Rename is
                Rename_Message (Loc, -"error, file not writable");
                Errors.Include (Loc.File);
             elsif not Insert_Text
-              (Kernel.Refactoring_Context,
-               Loc.File,
-               Loc.Line,
-               Loc.Column,
-               To_String (Factory.New_Name),
-               Indent            => False,
-               Replaced_Length   => Name'Length,
-               Only_If_Replacing => To_String (Factory.Old_Name))
+                        (Kernel.Refactoring_Context,
+                         Loc.File,
+                         Loc.Line,
+                         Loc.Column,
+                         To_String (Factory.New_Name),
+                         Indent            => False,
+                         Replaced_Length   => Name'Length,
+                         Only_If_Replacing => To_String (Factory.Old_Name))
             then
                Rename_Message (Loc, -"error, failed to rename entity");
                Errors.Include (Loc.File);
@@ -159,9 +162,9 @@ package body Refactoring.Rename is
          end if;
       end Process_Locations;
 
-      C : Location_Arrays.Cursor;
-      Current_File : Virtual_File := No_File;
-      Current_Loc  : General_Location;
+      C                         : Location_Arrays.Cursor;
+      Current_File              : Virtual_File := No_File;
+      Current_Loc               : General_Location;
       Locations_In_Current_File : Location_Arrays.List;
 
    begin
@@ -184,9 +187,7 @@ package body Refactoring.Rename is
                null;
             else
                --  Do we have a new file?
-               if Current_File = No_File
-                 or else Current_File /= Loc.File
-               then
+               if Current_File = No_File or else Current_File /= Loc.File then
                   if Current_File /= No_File then
                      --  We had a file before: process all locations on this
                      --  previous current file
@@ -218,14 +219,14 @@ package body Refactoring.Rename is
 
       if not Errors.Is_Empty then
          if not Dialog
-           (Kernel,
-            Title         => -"References not replaced",
-            Msg           =>
-            -("Some references could not be replaced because one or more files"
-              & " were already modified"),
-            Files         => Errors,
-            Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
-            Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)
+                  (Kernel,
+                   Title         => -"References not replaced",
+                   Msg           =>
+                     -("Some references could not be replaced because one or more files"
+                       & " were already modified"),
+                   Files         => Errors,
+                   Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
+                   Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)
          then
             declare
                Filenames   : File_Array (1 .. Integer (Refs.Length));
@@ -234,9 +235,7 @@ package body Refactoring.Rename is
                The_File    : Virtual_File := No_File;
             begin
                for Loc of Refs loop
-                  if The_File = No_File
-                     or else The_File /= Loc.File
-                  then
+                  if The_File = No_File or else The_File /= Loc.File then
                      The_File := Loc.File;
 
                      --  We do not want to undo with No_File, since the
@@ -298,16 +297,16 @@ package body Refactoring.Rename is
          return;
       end if;
 
-      if Kernel.Databases.Is_Up_To_Date
-        (File_Information (Context.Context))
+      if Kernel.Databases.Is_Up_To_Date (File_Information (Context.Context))
       then
          declare
             Refactor : constant Renaming_Performer :=
               new Renaming_Performer_Record'
-                (Refactor_Performer_Record with
-                 Old_Name  => Old_Name,
-                 New_Name  => New_Name,
-                 Auto_Save => Auto_Save);
+                (Refactor_Performer_Record
+                 with
+                   Old_Name  => Old_Name,
+                   New_Name  => New_Name,
+                   Auto_Save => Auto_Save);
          begin
             Get_All_Locations
               (Kernel        => Kernel,
@@ -345,23 +344,26 @@ package body Refactoring.Rename is
      (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "rename" then
-         Name_Parameters (Data, (1 => Name_Cst'Access,
-                                 2 => Include_Overriding_Cst'Access,
-                                 3 => Make_Writable_Cst'Access,
-                                 4 => Auto_Save_Cst'Access));
+         Name_Parameters
+           (Data,
+            (1 => Name_Cst'Access,
+             2 => Include_Overriding_Cst'Access,
+             3 => Make_Writable_Cst'Access,
+             4 => Auto_Save_Cst'Access));
          declare
-            Entity         : constant Root_Entity'Class := Get_Data (Data, 1);
+            Entity              : constant Root_Entity'Class :=
+              Get_Data (Data, 1);
             Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
             Make_Writable       : constant Boolean := Nth_Arg (Data, 4, False);
             Auto_Save           : constant Boolean := Nth_Arg (Data, 5, False);
             Refactor            : constant Renaming_Performer :=
               new Renaming_Performer_Record'
-                (Refactor_Performer_Record with
-                 New_Name        => To_Unbounded_String
-                   (String'(Nth_Arg (Data, 2))),
-                 Old_Name        => To_Unbounded_String
-                   (Get_Name (Entity)),
-                 Auto_Save       => Auto_Save);
+                (Refactor_Performer_Record
+                 with
+                   New_Name  =>
+                     To_Unbounded_String (String'(Nth_Arg (Data, 2))),
+                   Old_Name  => To_Unbounded_String (Get_Name (Entity)),
+                   Auto_Save => Auto_Save);
          begin
             Get_All_Locations
               (Get_Kernel (Data),
@@ -379,11 +381,14 @@ package body Refactoring.Rename is
    -- Register_Refactoring --
    --------------------------
 
-   procedure Register_Refactoring
-     (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Register_Refactoring (Kernel : access Kernel_Handle_Record'Class)
+   is
    begin
       Kernel.Scripts.Register_Command
-        ("rename", 1, 4, Entity_Command_Handler'Access,
+        ("rename",
+         1,
+         4,
+         Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 

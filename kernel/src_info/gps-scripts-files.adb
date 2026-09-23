@@ -15,18 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
-with OS_Utils;                use OS_Utils;
-with Remote;                  use Remote;
-with GPS.Core_Kernels;        use GPS.Core_Kernels;
-with GPS.Scripts.Entities;    use GPS.Scripts.Entities;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with OS_Utils;                   use OS_Utils;
+with Remote;                     use Remote;
+with GPS.Core_Kernels;           use GPS.Core_Kernels;
+with GPS.Scripts.Entities;       use GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations; use GPS.Scripts.File_Locations;
-with Language_Handlers;       use Language_Handlers;
-with Xref;                    use Xref;
+with Language_Handlers;          use Language_Handlers;
+with Xref;                       use Xref;
 
-with GNATCOLL.Scripts.Files;  use GNATCOLL.Scripts.Files;
+with GNATCOLL.Scripts.Files; use GNATCOLL.Scripts.Files;
 
 package body GPS.Scripts.Files is
 
@@ -34,17 +34,16 @@ package body GPS.Scripts.Files is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "File" commands
 
-   Name_Cst       : aliased constant String := "name";
-   Local_Cst      : aliased constant String := "local";
-   Server_Cst     : aliased constant String := "remote_server";
+   Name_Cst   : aliased constant String := "name";
+   Local_Cst  : aliased constant String := "local";
+   Server_Cst : aliased constant String := "remote_server";
 
-   File_Cmd_Parameters   : constant Cst_Argument_List :=
-                                (1 => Name_Cst'Access,
-                                 2 => Local_Cst'Access);
-   File_Entities_Parameters  : constant Cst_Argument_List :=
-                                (1 => Local_Cst'Access);
-   File_Name_Parameters  : constant Cst_Argument_List :=
-                                (1 => Server_Cst'Access);
+   File_Cmd_Parameters      : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access, 2 => Local_Cst'Access);
+   File_Entities_Parameters : constant Cst_Argument_List :=
+     (1 => Local_Cst'Access);
+   File_Name_Parameters     : constant Cst_Argument_List :=
+     (1 => Server_Cst'Access);
 
    --------------------------
    -- File_Command_Handler --
@@ -53,15 +52,15 @@ package body GPS.Scripts.Files is
    procedure File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel  : constant Core_Kernel := Get_Kernel (Data);
-      Info    : Virtual_File;
+      Kernel : constant Core_Kernel := Get_Kernel (Data);
+      Info   : Virtual_File;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
 
          declare
             Instance : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Get_File_Class (Data));
+              Nth_Arg (Data, 1, Get_File_Class (Data));
             Name     : constant Filesystem_String := Nth_Arg (Data, 2);
             File     : Virtual_File;
          begin
@@ -90,8 +89,7 @@ package body GPS.Scripts.Files is
                begin
                   if From_Current then
                      Set_Data
-                       (Instance,
-                        Create_From_Dir (Get_Current_Dir, Name));
+                       (Instance, Create_From_Dir (Get_Current_Dir, Name));
                      return;
                   end if;
                end;
@@ -100,8 +98,7 @@ package body GPS.Scripts.Files is
             --  Kernel's Create_From_Base will override File if needed
 
             File := Create_From_Base (Name);
-            Set_Data
-              (Instance, Kernel.Create_From_Base (Full_Name (File)));
+            Set_Data (Instance, Kernel.Create_From_Base (Full_Name (File)));
          end;
 
       elsif Command = "name" then
@@ -123,8 +120,7 @@ package body GPS.Scripts.Files is
                Set_Return_Value (Data, Full_Name (Info));
             else
                Set_Return_Value
-                 (Data,
-                  Full_Name (To_Remote (Info, Get_Nickname (Server))));
+                 (Data, Full_Name (To_Remote (Info, Get_Nickname (Server))));
             end if;
          end;
 
@@ -135,26 +131,26 @@ package body GPS.Scripts.Files is
       elsif Command = "language" then
          Info := Nth_Arg (Data, 1);
          Set_Return_Value
-           (Data, Get_Language_From_File
-              (Kernel.Lang_Handler, Info));
+           (Data, Get_Language_From_File (Kernel.Lang_Handler, Info));
 
       elsif Command = "references" then
          Info := Nth_Arg (Data, 1);
          declare
             Kind   : constant String := Nth_Arg (Data, 2, "");
-            Sortby : constant Integer := Nth_Arg
-               (Data, 3, References_Sort'Pos (References_Sort'First));
+            Sortby : constant Integer :=
+              Nth_Arg (Data, 3, References_Sort'Pos (References_Sort'First));
             Sort   : constant References_Sort := References_Sort'Val (Sortby);
             Result : List_Instance'Class := New_List (Get_Script (Data));
             F      : constant Class_Instance :=
               Nth_Arg
-                (Data, 1, Get_File_Class (Kernel),
-                 Default => No_Class_Instance, Allow_Null => True);
+                (Data,
+                 1,
+                 Get_File_Class (Kernel),
+                 Default    => No_Class_Instance,
+                 Allow_Null => True);
             Refs   : Root_Reference_Iterator'Class :=
               Kernel.Databases.Find_All_References
-                (File   => Info,
-                 Kind   => Kind,
-                 Sort   => Sort);
+                (File => Info, Kind => Kind, Sort => Sort);
          begin
 
             while not At_End (Refs) loop
@@ -163,13 +159,16 @@ package body GPS.Scripts.Files is
                   Loc : constant General_Location := Get_Location (R);
                   L   : List_Instance'Class := New_List (Get_Script (Data));
                begin
-                  L.Set_Nth_Arg (Natural'Last, Create_Entity
-                     (Get_Script (Data), Get_Entity (Refs)));
-                  L.Set_Nth_Arg (Natural'Last, Create_File_Location
-                     (Script => Get_Script (Data),
-                      File   => Get_Data (F),
-                      Line   => Loc.Line,
-                      Column => Loc.Column));
+                  L.Set_Nth_Arg
+                    (Natural'Last,
+                     Create_Entity (Get_Script (Data), Get_Entity (Refs)));
+                  L.Set_Nth_Arg
+                    (Natural'Last,
+                     Create_File_Location
+                       (Script => Get_Script (Data),
+                        File   => Get_Data (F),
+                        Line   => Loc.Line,
+                        Column => Loc.Column));
                   Result.Set_Nth_Arg (Natural'Last, L);
                   Free (L);  --  refcount has been increased above
                end;
@@ -185,7 +184,7 @@ package body GPS.Scripts.Files is
          Name_Parameters (Data, File_Entities_Parameters);
          Info := Nth_Arg (Data, 1);
          declare
-            Iter   : Entities_In_File_Cursor;
+            Iter            : Entities_In_File_Cursor;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
          begin
             Set_Return_Value_As_List (Data);
@@ -194,10 +193,9 @@ package body GPS.Scripts.Files is
                  File_Info'Class
                    (Kernel.Registry.Tree.Info_Set (Info).First_Element);
             begin
-               Iter := Kernel.Databases.Entities_In_File
-                 (File    => Info,
-                  Project => F_Info.Project,
-                  Name    => "");
+               Iter :=
+                 Kernel.Databases.Entities_In_File
+                   (File => Info, Project => F_Info.Project, Name => "");
             end;
 
             while not At_End (Iter) loop
@@ -208,7 +206,8 @@ package body GPS.Scripts.Files is
                     or else Get_Declaration (Ent).Loc.File = Info
                   then
                      Set_Return_Value
-                       (Data, GPS.Scripts.Entities.Create_Entity
+                       (Data,
+                        GPS.Scripts.Entities.Create_Entity
                           (Get_Script (Data), Ent));
                   end if;
                end;
@@ -235,43 +234,49 @@ package body GPS.Scripts.Files is
    -----------------------
 
    procedure Register_Commands
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-   is
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class) is
    begin
       GNATCOLL.Scripts.Files.Register_Commands (Kernel.Scripts);
 
       --  Add support of Cygwin path not available in GNATCOLL
       Override_Command
-        (Kernel.Scripts, Constructor_Method,
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
+        (Kernel.Scripts,
+         Constructor_Method,
+         Class   => Get_File_Class (Kernel),
+         Handler => File_Command_Handler'Access);
 
       --  Add support of remote server not available in GNATCOLL
       Override_Command
-        (Kernel.Scripts, "name",
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
+        (Kernel.Scripts,
+         "name",
+         Class   => Get_File_Class (Kernel),
+         Handler => File_Command_Handler'Access);
 
       Register_Command
-        (Kernel.Scripts, "base_name",
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
+        (Kernel.Scripts,
+         "base_name",
+         Class   => Get_File_Class (Kernel),
+         Handler => File_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "language",
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
+        (Kernel.Scripts,
+         "language",
+         Class   => Get_File_Class (Kernel),
+         Handler => File_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "entities",
+        (Kernel.Scripts,
+         "entities",
          Minimum_Args => 0,
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "references",
+        (Kernel.Scripts,
+         "references",
          Class   => Get_File_Class (Kernel),
          Handler => File_Command_Handler'Access,
-         Params  => (2 => Param ("kind", Optional => True),
-                     3 => Param ("sortby", Optional => True)));
+         Params  =>
+           (2 => Param ("kind", Optional => True),
+            3 => Param ("sortby", Optional => True)));
    end Register_Commands;
 
 end GPS.Scripts.Files;

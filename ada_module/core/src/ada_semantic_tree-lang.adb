@@ -28,7 +28,7 @@ with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
 with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
 
-with String_Utils;            use String_Utils;
+with String_Utils; use String_Utils;
 
 package body Ada_Semantic_Tree.Lang is
 
@@ -45,20 +45,20 @@ package body Ada_Semantic_Tree.Lang is
    ------------------
 
    function Is_Enum_Type
-     (Tree : Construct_Tree;
-      It   : Construct_Tree_Iterator) return Boolean
-   is
+     (Tree : Construct_Tree; It : Construct_Tree_Iterator) return Boolean is
    begin
-      return Get_Construct (It).Category = Cat_Type
-        and then Get_Construct
-          (Next (Tree, It, Jump_Into)).Category = Cat_Literal;
+      return
+        Get_Construct (It).Category = Cat_Type
+        and then
+          Get_Construct (Next (Tree, It, Jump_Into)).Category = Cat_Literal;
    end Is_Enum_Type;
 
    ------------------
    -- Get_Language --
    ------------------
 
-   overriding function Get_Language
+   overriding
+   function Get_Language
      (Tree : access Ada_Tree_Language) return Language_Access
    is
       pragma Unreferenced (Tree);
@@ -70,7 +70,8 @@ package body Ada_Semantic_Tree.Lang is
    -- Get_Name_Index --
    --------------------
 
-   overriding function Get_Name_Index
+   overriding
+   function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol
    is
@@ -88,17 +89,19 @@ package body Ada_Semantic_Tree.Lang is
 
          declare
             Id : constant Composite_Identifier :=
-                   To_Composite_Identifier (Get (Construct.Name).all);
+              To_Composite_Identifier (Get (Construct.Name).all);
          begin
-            return Get_Language (Lang).Symbols.Find
-              (To_Lower (Get_Item (Id, Length (Id))));
+            return
+              Get_Language (Lang).Symbols.Find
+                (To_Lower (Get_Item (Id, Length (Id))));
          end;
       else
          --  ??? Inefficient, we should compute and keep the lower-cased
          --  version somewhere if we really needed it
 
-         return Get_Language (Lang).Symbols.Find
-           (To_Lower (Get (Construct.Name).all));
+         return
+           Get_Language (Lang).Symbols.Find
+             (To_Lower (Get (Construct.Name).all));
       end if;
    end Get_Name_Index;
 
@@ -106,39 +109,38 @@ package body Ada_Semantic_Tree.Lang is
    -- Get_Profile --
    -----------------
 
-   overriding procedure Get_Profile
-     (Lang       : access Ada_Tree_Language;
-      Entity     : Entity_Access;
-      Formater   : access Profile_Formater'Class;
+   overriding
+   procedure Get_Profile
+     (Lang         : access Ada_Tree_Language;
+      Entity       : Entity_Access;
+      Formater     : access Profile_Formater'Class;
       With_Aspects : Boolean := False)
    is
-      Tree                 : constant Construct_Tree :=
-                               Get_Tree (Get_File (Entity));
-      Buffer               : constant GNAT.Strings.String_Access :=
-                               Get_Buffer (Get_File (Entity));
-      Node                 : constant Construct_Tree_Iterator :=
-                               To_Construct_Tree_Iterator (Entity);
-      Language             : constant Language_Access :=
-                               Get_Language
-                                 (Tree_Language'Class (Lang.all)'Access);
+      Tree     : constant Construct_Tree := Get_Tree (Get_File (Entity));
+      Buffer   : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Entity));
+      Node     : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+      Language : constant Language_Access :=
+        Get_Language (Tree_Language'Class (Lang.all)'Access);
 
       Longest_Decoration : Integer := 0;
 
       function Attribute_Decoration
-        (Construct  : Simple_Construct_Information;
-         Default_In : Boolean) return Unbounded_String;
+        (Construct : Simple_Construct_Information; Default_In : Boolean)
+         return Unbounded_String;
       --  Return the extra qualifiers for the parameter (its mode,
       --  whether it is constant,...). Blanks will be added to use at least
       --  Longest_Decoration characters.
 
       function Default_Value
-        (Construct  : Simple_Construct_Information;
-         Max_Length : Integer := 30) return Unbounded_String;
+        (Construct : Simple_Construct_Information; Max_Length : Integer := 30)
+         return Unbounded_String;
       --  Return the default initialization expression.
       --  At most Max_Length characters of the default expression are appended.
 
       function Get_Type
-        (Construct  : Simple_Construct_Information) return Unbounded_String;
+        (Construct : Simple_Construct_Information) return Unbounded_String;
       --  Return the type of construct
 
       function Filter_Aspects (Start_Index, End_Index : Natural) return String;
@@ -156,17 +158,18 @@ package body Ada_Semantic_Tree.Lang is
       --------------------------
 
       function Attribute_Decoration
-        (Construct  : Simple_Construct_Information;
-         Default_In : Boolean) return Unbounded_String
+        (Construct : Simple_Construct_Information; Default_In : Boolean)
+         return Unbounded_String
       is
          Len    : Natural := 0;
          Result : Unbounded_String;
       begin
          if Construct.Attributes (Ada_In_Attribute)
            or else
-             (Default_In and then not
-                  (Construct.Attributes (Ada_Out_Attribute)
-                   or else Construct.Attributes (Ada_Access_Attribute)))
+             (Default_In
+              and then
+                not (Construct.Attributes (Ada_Out_Attribute)
+                     or else Construct.Attributes (Ada_Access_Attribute)))
          then
             Append (Result, "in ");
             Len := Len + 3;
@@ -209,8 +212,8 @@ package body Ada_Semantic_Tree.Lang is
       -------------------
 
       function Default_Value
-        (Construct  : Simple_Construct_Information;
-         Max_Length : Integer := 30) return Unbounded_String
+        (Construct : Simple_Construct_Information; Max_Length : Integer := 30)
+         return Unbounded_String
       is
          Result        : Unbounded_String;
          Length        : Natural := 0;
@@ -239,15 +242,23 @@ package body Ada_Semantic_Tree.Lang is
             elsif Length + Str'Length > Max_Length then
                Append
                  (Result,
-                  Str (Str'First .. Str'First - 4 +
-                      Integer'Min (Str'Length, Max_Length - Length)));
+                  Str
+                    (Str'First
+                     ..
+                       Str'First
+                       - 4
+                       + Integer'Min (Str'Length, Max_Length - Length)));
                Append (Result, "...");
 
             else
                Append
                  (Result,
-                  Str (Str'First .. Str'First - 1 +
-                      Integer'Min (Str'Length, Max_Length - Length)));
+                  Str
+                    (Str'First
+                     ..
+                       Str'First
+                       - 1
+                       + Integer'Min (Str'Length, Max_Length - Length)));
             end if;
 
             Length := Length + Str'Length;
@@ -266,13 +277,13 @@ package body Ada_Semantic_Tree.Lang is
             pragma Unreferenced (Partial_Entity);
 
             Text : constant String :=
-                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
+              Buffer (Sloc_Start.Index .. Sloc_End.Index);
          begin
             if Entity = Operator_Text and then Text = ";" then
                return True;
             end if;
 
-            if not Extract_Value  then
+            if not Extract_Value then
                if Entity = Operator_Text and then Text = ":=" then
                   Extract_Value := True;
                end if;
@@ -381,23 +392,19 @@ package body Ada_Semantic_Tree.Lang is
       --------------
 
       function Get_Type
-        (Construct  : Simple_Construct_Information) return Unbounded_String
+        (Construct : Simple_Construct_Information) return Unbounded_String
       is
          Type_Start, Type_End : Source_Location;
          Success              : Boolean;
          Result               : Unbounded_String;
       begin
          Get_Referenced_Entity
-           (Language,
-            Buffer.all,
-            Construct,
-            Type_Start,
-            Type_End,
-            Success);
+           (Language, Buffer.all, Construct, Type_Start, Type_End, Success);
 
          if Success then
-            Append (Result, Remove_Blanks
-                              (Buffer (Type_Start.Index .. Type_End.Index)));
+            Append
+              (Result,
+               Remove_Blanks (Buffer (Type_Start.Index .. Type_End.Index)));
 
             if Construct.Attributes (Ada_Class_Attribute) then
                Append (Result, "'Class");
@@ -428,7 +435,8 @@ package body Ada_Semantic_Tree.Lang is
    begin
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
-            Sub_Iter : Construct_Tree_Iterator := Next (Tree, Node, Jump_Into);
+            Sub_Iter                     : Construct_Tree_Iterator :=
+              Next (Tree, Node, Jump_Into);
             Longest_Param                : Integer := 0;
             Biggest_Affected_Type_Length : Integer := 0;
             Current_Affected_Type_Length : Integer := 0;
@@ -442,19 +450,18 @@ package body Ada_Semantic_Tree.Lang is
                       (Longest_Param,
                        Get (Get_Construct (Sub_Iter).Name)'Length);
 
-                  Decoration := Attribute_Decoration
-                    (Get_Construct (Sub_Iter).all, True);
+                  Decoration :=
+                    Attribute_Decoration (Get_Construct (Sub_Iter).all, True);
                   Longest_Decoration :=
                     Integer'Max (Longest_Decoration, Length (Decoration));
 
-                  if Get_Construct (Sub_Iter).Attributes
-                    (Ada_Assign_Attribute)
+                  if Get_Construct (Sub_Iter).Attributes (Ada_Assign_Attribute)
                   then
                      Type_Image := Get_Type (Get_Construct (Sub_Iter).all);
                      Current_Affected_Type_Length := Length (Type_Image);
 
                      if Current_Affected_Type_Length
-                         > Biggest_Affected_Type_Length
+                       > Biggest_Affected_Type_Length
                      then
                         Biggest_Affected_Type_Length :=
                           Current_Affected_Type_Length;
@@ -470,7 +477,7 @@ package body Ada_Semantic_Tree.Lang is
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   declare
-                     Name : constant String :=
+                     Name        : constant String :=
                        Get (Get_Construct (Sub_Iter).Name).all;
                      Padded_Name : constant String :=
                        Name & ((Longest_Param - Name'Length) * ' ');
@@ -478,8 +485,9 @@ package body Ada_Semantic_Tree.Lang is
                        Get_Type (Get_Construct (Sub_Iter).all);
                      Default     : Unbounded_String;
                   begin
-                     Decoration := Attribute_Decoration
-                       (Get_Construct (Sub_Iter).all, True);
+                     Decoration :=
+                       Attribute_Decoration
+                         (Get_Construct (Sub_Iter).all, True);
 
                      if Type_Image = "" then
                         Append (Type_Image, "???");
@@ -488,12 +496,14 @@ package body Ada_Semantic_Tree.Lang is
                      Current_Affected_Type_Length := Length (Type_Image);
 
                      if Get_Construct (Sub_Iter).Attributes
-                       (Ada_Assign_Attribute)
+                          (Ada_Assign_Attribute)
                      then
                         Append
                           (Type_Image,
-                           (1 .. Biggest_Affected_Type_Length -
-                                Current_Affected_Type_Length => ' '));
+                           (1
+                            ..
+                              Biggest_Affected_Type_Length
+                              - Current_Affected_Type_Length => ' '));
 
                         Default :=
                           Default_Value (Get_Construct (Sub_Iter).all);
@@ -526,8 +536,8 @@ package body Ada_Semantic_Tree.Lang is
          begin
             if Type_Image /= "" then
                Longest_Decoration := 0;
-               Decoration := Attribute_Decoration
-                 (Get_Construct (Node).all, False);
+               Decoration :=
+                 Attribute_Decoration (Get_Construct (Node).all, False);
 
                Formater.Add_Result
                  (Mode    => To_String (Decoration),
@@ -543,8 +553,8 @@ package body Ada_Semantic_Tree.Lang is
          begin
             if Type_Image /= "" then
                Longest_Decoration := 0;
-               Decoration := Attribute_Decoration
-                 (Get_Construct (Node).all, False);
+               Decoration :=
+                 Attribute_Decoration (Get_Construct (Node).all, False);
 
                Formater.Add_Variable
                  (Mode    => To_String (Decoration),
@@ -556,8 +566,9 @@ package body Ada_Semantic_Tree.Lang is
       --  Append aspects to the output
 
       if With_Aspects
-        and then Get_Construct (Node).Category
-                   in Type_Category | Data_Category | Subprogram_Category
+        and then
+          Get_Construct (Node).Category
+          in Type_Category | Data_Category | Subprogram_Category
       then
          declare
             Sub_Iter  : Construct_Tree_Iterator :=
@@ -603,7 +614,8 @@ package body Ada_Semantic_Tree.Lang is
    -- Diff --
    ----------
 
-   overriding procedure Diff
+   overriding
+   procedure Diff
      (Lang               : access Ada_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback)
@@ -621,8 +633,7 @@ package body Ada_Semantic_Tree.Lang is
          Tree        : Construct_Tree;
       end record;
 
-      function Smart_Equal
-        (I_1, I_2 : Construct_Tree_Iterator) return Boolean;
+      function Smart_Equal (I_1, I_2 : Construct_Tree_Iterator) return Boolean;
       function Length (C : Container) return Integer;
       function First (C : Container) return Iterator;
       function Last (C : Container) return Iterator;
@@ -635,13 +646,12 @@ package body Ada_Semantic_Tree.Lang is
       -- Smart_Equal --
       -----------------
 
-      function Smart_Equal
-        (I_1, I_2 : Construct_Tree_Iterator) return Boolean
+      function Smart_Equal (I_1, I_2 : Construct_Tree_Iterator) return Boolean
       is
          Construct_1 : constant access Simple_Construct_Information :=
-                         Get_Construct (I_1);
+           Get_Construct (I_1);
          Construct_2 : constant access Simple_Construct_Information :=
-                         Get_Construct (I_2);
+           Get_Construct (I_2);
       begin
          if Construct_1.Category /= Construct_2.Category
            or else Construct_1.Is_Declaration /= Construct_2.Is_Declaration
@@ -652,13 +662,14 @@ package body Ada_Semantic_Tree.Lang is
 
          case Construct_1.Category is
             when Cat_Function | Cat_Procedure | Cat_Entry =>
-               return Same_Profile
-                 (Left_Tree    => Old_Tree,
-                  Left_Sb      => I_1,
-                  Right_Tree   => New_Tree,
-                  Right_Sb     => I_2);
+               return
+                 Same_Profile
+                   (Left_Tree  => Old_Tree,
+                    Left_Sb    => I_1,
+                    Right_Tree => New_Tree,
+                    Right_Sb   => I_2);
 
-            when others =>
+            when others                                   =>
                return True;
          end case;
       end Smart_Equal;
@@ -740,7 +751,8 @@ package body Ada_Semantic_Tree.Lang is
 
       function At_End (I : Iterator) return Boolean is
       begin
-         return I.It = Null_Construct_Tree_Iterator
+         return
+           I.It = Null_Construct_Tree_Iterator
            or else Get_Index (I.It) < I.First
            or else Get_Index (I.It) > I.Last;
       end At_End;
@@ -754,25 +766,25 @@ package body Ada_Semantic_Tree.Lang is
          return I.It;
       end Get;
 
-      package Tree_Diff is new Diffing
-        (Object      => Construct_Tree_Iterator,
-         Container   => Container,
-         Iterator    => Iterator,
-         Null_Object => Null_Construct_Tree_Iterator,
-         "="         => Smart_Equal,
-         Length      => Length,
-         First       => First,
-         Last        => Last,
-         Next        => Next,
-         Prev        => Prev,
-         At_End      => At_End,
-         Get         => Get);
+      package Tree_Diff is new
+        Diffing
+          (Object      => Construct_Tree_Iterator,
+           Container   => Container,
+           Iterator    => Iterator,
+           Null_Object => Null_Construct_Tree_Iterator,
+           "="         => Smart_Equal,
+           Length      => Length,
+           First       => First,
+           Last        => Last,
+           Next        => Next,
+           Prev        => Prev,
+           At_End      => At_End,
+           Get         => Get);
 
       use Tree_Diff;
 
       procedure Tree_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator;
-         State            : Diff_State);
+        (Old_Obj, New_Obj : Construct_Tree_Iterator; State : Diff_State);
 
       function To_Container
         (Tree : Construct_Tree; Scope : Construct_Tree_Iterator)
@@ -823,14 +835,13 @@ package body Ada_Semantic_Tree.Lang is
       -------------------
 
       procedure Tree_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator;
-         State            : Diff_State)
+        (Old_Obj, New_Obj : Construct_Tree_Iterator; State : Diff_State)
       is
          It     : Construct_Tree_Iterator;
          It_End : Construct_Tree_Iterator;
       begin
          case State is
-            when Equal =>
+            when Equal   =>
                Callback (Old_Obj, New_Obj, Preserved);
 
                Tree_Diff.Diff
@@ -838,7 +849,7 @@ package body Ada_Semantic_Tree.Lang is
                   To_Container (New_Tree, New_Obj),
                   Tree_Callback'Access);
 
-            when Added =>
+            when Added   =>
                Callback (Old_Obj, New_Obj, Added);
 
                It := Next (New_Tree, New_Obj, Jump_Into);
@@ -876,9 +887,10 @@ package body Ada_Semantic_Tree.Lang is
    -- Get_Declaration --
    ---------------------
 
-   overriding function Get_Declaration
-     (Lang   : access Ada_Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+   overriding
+   function Get_Declaration
+     (Lang : access Ada_Tree_Language; Entity : Entity_Access)
+      return Entity_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -889,10 +901,11 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_Reference_Details --
    ----------------------------
 
-   overriding function Find_Reference_Details
-     (Lang     : access Ada_Tree_Language;
-      File     : Structured_File_Access;
-      Index    : String_Index_Type) return Entity_Reference_Details
+   overriding
+   function Find_Reference_Details
+     (Lang  : access Ada_Tree_Language;
+      File  : Structured_File_Access;
+      Index : String_Index_Type) return Entity_Reference_Details
    is
       pragma Unreferenced (Lang);
       Str    : constant GNAT.Strings.String_Access := Get_Buffer (File);
@@ -930,13 +943,13 @@ package body Ada_Semantic_Tree.Lang is
             return False;
          else
             case Entity is
-               when  Annotated_Keyword_Text
+               when Annotated_Keyword_Text
                   | Comment_Text
                   | Annotated_Comment_Text =>
 
                   return False;
 
-               when others =>
+               when others                 =>
                   if Str (Sloc_Start.Index .. Sloc_End.Index) = "=>" then
                      Result.Is_Named_Parameter := True;
                   elsif Str (Sloc_Start.Index .. Sloc_End.Index) = "(" then
@@ -962,11 +975,12 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_Declaration --
    ----------------------
 
-   overriding function Find_Declaration
-     (Lang     : access Ada_Tree_Language;
-      File     : Structured_File_Access;
-      Line     : Integer;
-      Column   : String_Index_Type) return Entity_Access
+   overriding
+   function Find_Declaration
+     (Lang   : access Ada_Tree_Language;
+      File   : Structured_File_Access;
+      Line   : Integer;
+      Column : String_Index_Type) return Entity_Access
    is
       Ref : Entity_Reference_Details;
 
@@ -984,18 +998,15 @@ package body Ada_Semantic_Tree.Lang is
       --  names if any) match the formal parameters of the entity
 
       function Actual_Structure_Matches (E : Entity_Access) return Boolean is
-         Formal_Profile : constant List_Profile := Get_List_Profile
-           (E, Null_Visibility_Context);
+         Formal_Profile : constant List_Profile :=
+           Get_List_Profile (E, Null_Visibility_Context);
          Actual_Call    : Actual_Parameter_Resolver :=
            Get_Actual_Parameter_Resolver (Formal_Profile);
-         Success : Boolean := True;
+         Success        : Boolean := True;
       begin
          if Ref.Parenthesis_Loc /= 0 then
             Append_Actuals
-              (Actual_Call,
-               Get_Buffer (File),
-               Ref.Parenthesis_Loc,
-               Success);
+              (Actual_Call, Get_Buffer (File), Ref.Parenthesis_Loc, Success);
          end if;
 
          if Success and then Is_Complete (Actual_Call) then
@@ -1008,23 +1019,24 @@ package body Ada_Semantic_Tree.Lang is
    begin
       --  First, check if we're already on a declaration
 
-      Decl_Construct := Get_Iterator_At
-        (Tree      => Get_Tree (File),
-         Location  => To_Location (Line, Column),
-         From_Type => Start_Name);
+      Decl_Construct :=
+        Get_Iterator_At
+          (Tree      => Get_Tree (File),
+           Location  => To_Location (Line, Column),
+           From_Type => Start_Name);
 
       if Decl_Construct /= Null_Construct_Tree_Iterator
         and then
-          Get_Construct (Decl_Construct).Category
-            in Cat_Package .. Cat_Literal
+          Get_Construct (Decl_Construct).Category in Cat_Package .. Cat_Literal
       then
          return Lang.Get_Declaration (To_Entity_Access (File, Decl_Construct));
       end if;
 
       --  Otherwise, we're on a reference. Launch a use-sensitive search
 
-      Ref := Find_Reference_Details
-        (Lang, File, Get_Offset_Of_Line (File, Line) + Column - 1);
+      Ref :=
+        Find_Reference_Details
+          (Lang, File, Get_Offset_Of_Line (File, Line) + Column - 1);
 
       if Ref.Is_Named_Parameter then
          --  If there is an arrow, we assume that we're working on a call and
@@ -1035,8 +1047,7 @@ package body Ada_Semantic_Tree.Lang is
 
             Analyzed_Expression : Parsed_Expression :=
               Parse_Expression_Backward
-                (Buffer            => Get_Buffer (File),
-                 Start_Offset      => Ref.Index_End);
+                (Buffer => Get_Buffer (File), Start_Offset => Ref.Index_End);
 
             Enclosing_Call : Parsed_Expression;
 
@@ -1045,7 +1056,7 @@ package body Ada_Semantic_Tree.Lang is
             Call_Index  : String_Index_Type := 0;
             Call_Entity : Entity_Access;
 
-            Call_Node   : Token_List.Cursor;
+            Call_Node : Token_List.Cursor;
          begin
             if not Analyzed_Expression.Tokens.Is_Empty then
                Call_Node := Analyzed_Expression.Tokens.First;
@@ -1068,9 +1079,10 @@ package body Ada_Semantic_Tree.Lang is
                if Call_Node = Token_List.No_Element then
                   Enclosing_Call :=
                     Parse_Expression_Backward
-                      (Buffer            => Get_Buffer (File),
-                       Start_Offset      => Element
-                         (Analyzed_Expression.Tokens.First).Token_First - 1);
+                      (Buffer       => Get_Buffer (File),
+                       Start_Offset =>
+                         Element (Analyzed_Expression.Tokens.First).Token_First
+                         - 1);
 
                   Call_Node := Token_List.First (Enclosing_Call.Tokens);
                end if;
@@ -1096,23 +1108,24 @@ package body Ada_Semantic_Tree.Lang is
                   Line                 => Call_Line,
                   Column               => Call_Column);
 
-               Call_Index := To_Line_String_Index
-                 (File, Call_Line, Call_Column);
+               Call_Index :=
+                 To_Line_String_Index (File, Call_Line, Call_Column);
 
-               Call_Entity := Lang.Find_Declaration
-                 (File, Call_Line, Call_Index);
+               Call_Entity :=
+                 Lang.Find_Declaration (File, Call_Line, Call_Index);
 
                if Call_Entity /= Null_Entity_Access then
                   declare
-                     Profile : constant List_Profile :=
+                     Profile     : constant List_Profile :=
                        Get_List_Profile (Call_Entity, Null_Visibility_Context);
-                     Formals : constant Entity_Array := Get_Formals (Profile);
+                     Formals     : constant Entity_Array :=
+                       Get_Formals (Profile);
                      Looked_Name : constant String :=
                        To_Lower
                          (Get_Name
-                              (Analyzed_Expression,
-                               Element (Analyzed_Expression.Tokens.Last)));
-                     Id : Normalized_Symbol;
+                            (Analyzed_Expression,
+                             Element (Analyzed_Expression.Tokens.Last)));
+                     Id          : Normalized_Symbol;
                   begin
                      for J in Formals'Range loop
                         Id := Get_Identifier (Formals (J));
@@ -1130,10 +1143,11 @@ package body Ada_Semantic_Tree.Lang is
          end;
       end if;
 
-      List := Find_Declarations
-        (Context         =>
-           (From_File, Null_Instance_Info, File, Ref.Index_End),
-         From_Visibility => (File, Ref.Index_End, Everything, Use_Visible));
+      List :=
+        Find_Declarations
+          (Context         =>
+             (From_File, Null_Instance_Info, File, Ref.Index_End),
+           From_Visibility => (File, Ref.Index_End, Everything, Use_Visible));
 
       It := First (List);
 
@@ -1154,11 +1168,11 @@ package body Ada_Semantic_Tree.Lang is
                --  subprograms, check if we can resolve the ambiguity. In all
                --  other cases, we just exit without a result.
 
-               if Get_Construct (Get_Entity (View)).Category not in
-                 Subprogram_Category
-                 or else Get_Construct
-                   (Get_Entity (Prev_Matching_View)).Category not in
-                 Subprogram_Category
+               if Get_Construct (Get_Entity (View)).Category
+                  not in Subprogram_Category
+                 or else
+                   Get_Construct (Get_Entity (Prev_Matching_View)).Category
+                   not in Subprogram_Category
                then
                   Free (View);
                   Free (Prev_Matching_View);
@@ -1167,8 +1181,7 @@ package body Ada_Semantic_Tree.Lang is
                end if;
 
                if Actual_Structure_Matches (Get_Entity (View)) then
-                  if Actual_Structure_Matches
-                    (Get_Entity (Prev_Matching_View))
+                  if Actual_Structure_Matches (Get_Entity (Prev_Matching_View))
                   then
                      --  The two view match the actual structure given, we
                      --  can't decide which one is OK, so don't offer a result.
@@ -1215,9 +1228,10 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_First_Part --
    ---------------------
 
-   overriding function Find_First_Part
-     (Lang   : access Ada_Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+   overriding
+   function Find_First_Part
+     (Lang : access Ada_Tree_Language; Entity : Entity_Access)
+      return Entity_Access
    is
       pragma Unreferenced (Lang);
    begin
@@ -1228,17 +1242,18 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_Next_Part --
    --------------------
 
-   overriding function Find_Next_Part
-     (Lang   : access Ada_Tree_Language;
-      Entity : Entity_Access) return Entity_Access
+   overriding
+   function Find_Next_Part
+     (Lang : access Ada_Tree_Language; Entity : Entity_Access)
+      return Entity_Access
    is
       pragma Unreferenced (Lang);
 
       First, Second, Third : Entity_Access;
    begin
-      First  := Get_First_Occurence (Entity);
+      First := Get_First_Occurence (Entity);
       Second := Get_Second_Occurence (Entity);
-      Third  := Get_Third_Occurence (Entity);
+      Third := Get_Third_Occurence (Entity);
 
       if Entity = First then
          if Second /= Null_Entity_Access then
@@ -1262,11 +1277,10 @@ package body Ada_Semantic_Tree.Lang is
    ------------------
 
    function Same_Profile
-     (Left_Tree    : Construct_Tree;
-      Left_Sb      : Construct_Tree_Iterator;
-      Right_Tree   : Construct_Tree;
-      Right_Sb     : Construct_Tree_Iterator)
-      return Boolean
+     (Left_Tree  : Construct_Tree;
+      Left_Sb    : Construct_Tree_Iterator;
+      Right_Tree : Construct_Tree;
+      Right_Sb   : Construct_Tree_Iterator) return Boolean
    is
       Left_Param_It, Right_Param_It : Construct_Tree_Iterator;
 
@@ -1279,10 +1293,10 @@ package body Ada_Semantic_Tree.Lang is
       ------------------------------
 
       function Test_Relevant_Attributes
-        (Left, Right : Construct_Attribute_Map) return Boolean
-      is
+        (Left, Right : Construct_Attribute_Map) return Boolean is
       begin
-         return Left (Ada_Access_Attribute) = Right (Ada_Access_Attribute)
+         return
+           Left (Ada_Access_Attribute) = Right (Ada_Access_Attribute)
            and then Left (Ada_In_Attribute) = Right (Ada_In_Attribute)
            and then Left (Ada_Out_Attribute) = Right (Ada_Out_Attribute)
            and then Left (Ada_Class_Attribute) = Right (Ada_Class_Attribute);
@@ -1294,13 +1308,12 @@ package body Ada_Semantic_Tree.Lang is
 
       while Is_Parent_Scope (Left_Sb, Left_Param_It)
         and then Is_Parent_Scope (Right_Sb, Right_Param_It)
-        and then Get_Construct (Left_Param_It).Category
-        = Cat_Parameter
-        and then Get_Construct (Right_Param_It).Category
-        = Cat_Parameter
-        and then Test_Relevant_Attributes
-          (Get_Construct (Left_Param_It).Attributes,
-           Get_Construct (Right_Param_It).Attributes)
+        and then Get_Construct (Left_Param_It).Category = Cat_Parameter
+        and then Get_Construct (Right_Param_It).Category = Cat_Parameter
+        and then
+          Test_Relevant_Attributes
+            (Get_Construct (Left_Param_It).Attributes,
+             Get_Construct (Right_Param_It).Attributes)
       loop
          --  Check the type of the two parameters
 
@@ -1310,10 +1323,8 @@ package body Ada_Semantic_Tree.Lang is
             return False;
          end if;
 
-         Left_Param_It := Next
-           (Left_Tree, Left_Param_It, Jump_Over);
-         Right_Param_It := Next
-           (Right_Tree, Right_Param_It, Jump_Over);
+         Left_Param_It := Next (Left_Tree, Left_Param_It, Jump_Over);
+         Right_Param_It := Next (Right_Tree, Right_Param_It, Jump_Over);
       end loop;
 
       if Get_Construct (Left_Sb).Category = Cat_Function then
@@ -1321,8 +1332,8 @@ package body Ada_Semantic_Tree.Lang is
          --  we can make the test here.
 
          if not Test_Relevant_Attributes
-           (Get_Construct (Left_Sb).Attributes,
-            Get_Construct (Right_Sb).Attributes)
+                  (Get_Construct (Left_Sb).Attributes,
+                   Get_Construct (Right_Sb).Attributes)
          then
             return False;
          end if;
@@ -1337,27 +1348,26 @@ package body Ada_Semantic_Tree.Lang is
       --  If there's still one parameter to be analyzed on one
       --  side or the other, return false, otherwise return true.
 
-      return not
-        ((Is_Parent_Scope (Left_Sb, Left_Param_It)
-          and then Get_Construct (Left_Param_It).Category
-          = Cat_Parameter)
-         or else
-           (Is_Parent_Scope (Right_Sb, Right_Param_It)
-            and then Get_Construct (Right_Param_It).Category
-            = Cat_Parameter));
+      return
+        not ((Is_Parent_Scope (Left_Sb, Left_Param_It)
+              and then Get_Construct (Left_Param_It).Category = Cat_Parameter)
+             or else
+               (Is_Parent_Scope (Right_Sb, Right_Param_It)
+                and then
+                  Get_Construct (Right_Param_It).Category = Cat_Parameter));
    end Same_Profile;
 
    -------------------------
    -- Is_Compilation_Unit --
    -------------------------
 
-   function Is_Compilation_Unit
-     (It : Construct_Tree_Iterator) return Boolean
+   function Is_Compilation_Unit (It : Construct_Tree_Iterator) return Boolean
    is
       Construct : constant access Simple_Construct_Information :=
-                    Get_Construct (It);
+        Get_Construct (It);
    begin
-      return Get_Parent_Index (It) = 0
+      return
+        Get_Parent_Index (It) = 0
         and then
           (Construct.Category = Cat_Package
            or else Construct.Category = Cat_Procedure
@@ -1373,8 +1383,7 @@ package body Ada_Semantic_Tree.Lang is
 
       Key : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all, Key);
+      Get_Annotation_Key (Get_Construct_Annotation_Key_Registry (Db).all, Key);
 
       Register_Assistant
         (Db,
@@ -1391,7 +1400,7 @@ package body Ada_Semantic_Tree.Lang is
       return Construct_Annotations_Pckg.Annotation_Key
    is
       Assistant : constant Database_Assistant_Access :=
-                    Get_Assistant (Db, Ada_Assistant_Id);
+        Get_Assistant (Db, Ada_Assistant_Id);
 
    begin
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
@@ -1401,7 +1410,8 @@ package body Ada_Semantic_Tree.Lang is
    -- Get_Language_From_File --
    ----------------------------
 
-   overriding function Get_Language_From_File
+   overriding
+   function Get_Language_From_File
      (Handler           : access Ada_Language_Handler;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language_Access
@@ -1415,11 +1425,11 @@ package body Ada_Semantic_Tree.Lang is
    -- Get_Tree_Language_From_File --
    ---------------------------------
 
-   overriding function Get_Tree_Language_From_File
+   overriding
+   function Get_Tree_Language_From_File
      (Handler           : access Ada_Language_Handler;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
-      From_Project_Only : Boolean := False)
-      return Tree_Language_Access
+      From_Project_Only : Boolean := False) return Tree_Language_Access
    is
       pragma Unreferenced (Handler, Source_Filename, From_Project_Only);
    begin

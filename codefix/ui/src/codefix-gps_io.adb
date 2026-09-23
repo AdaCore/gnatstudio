@@ -29,9 +29,10 @@ package body Codefix.GPS_Io is
    -- Get_New_Mark --
    ------------------
 
-   overriding function Get_New_Mark
-     (Current_Text : Console_Interface;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class
+   overriding
+   function Get_New_Mark
+     (Current_Text : Console_Interface; Cursor : File_Cursor'Class)
+      return Mark_Abstr'Class
    is
       Result : GPS_Mark;
    begin
@@ -48,9 +49,10 @@ package body Codefix.GPS_Io is
    -- Get_Current_Cursor --
    ------------------------
 
-   overriding function Get_Current_Cursor
-     (Current_Text : Console_Interface;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class
+   overriding
+   function Get_Current_Cursor
+     (Current_Text : Console_Interface; Mark : Mark_Abstr'Class)
+      return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
    begin
@@ -64,9 +66,12 @@ package body Codefix.GPS_Io is
 
       exception
          when Constraint_Error =>
-            Trace (Me, "unexpected result from get_column/line: "
-                   & GPS_Mark'Class (Mark).Mark.Element.Line'Img & ":"
-                   & GPS_Mark'Class (Mark).Mark.Element.Column'Img);
+            Trace
+              (Me,
+               "unexpected result from get_column/line: "
+               & GPS_Mark'Class (Mark).Mark.Element.Line'Img
+               & ":"
+               & GPS_Mark'Class (Mark).Mark.Element.Column'Img);
       end;
 
       return New_Cursor;
@@ -76,7 +81,8 @@ package body Codefix.GPS_Io is
    -- Undo --
    ----------
 
-   overriding procedure Undo (This : in out Console_Interface) is
+   overriding
+   procedure Undo (This : in out Console_Interface) is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (This.Get_File_Name);
    begin
@@ -87,28 +93,27 @@ package body Codefix.GPS_Io is
    -- Get --
    ---------
 
-   overriding function Get
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class;
-      Len    : Natural) return String
+   overriding
+   function Get
+     (This : Console_Interface; Cursor : Text_Cursor'Class; Len : Natural)
+      return String
    is
-      Line : constant String := Get_Line (This, Cursor, 1);
-      Char_Ind : constant String_Index_Type := To_Char_Index
-        (Get_Column (Cursor), Line, This.Tab_Width);
+      Line     : constant String := Get_Line (This, Cursor, 1);
+      Char_Ind : constant String_Index_Type :=
+        To_Char_Index (Get_Column (Cursor), Line, This.Tab_Width);
    begin
-      return Line
-        (Natural (Char_Ind) .. Natural (Char_Ind) + Len - 1);
+      return Line (Natural (Char_Ind) .. Natural (Char_Ind) + Len - 1);
    end Get;
 
    ---------
    -- Get --
    ---------
 
-   overriding function Get
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class) return Character
+   overriding
+   function Get
+     (This : Console_Interface; Cursor : Text_Cursor'Class) return Character
    is
-      Line : constant String := Get_Line (This, Cursor, 1);
+      Line     : constant String := Get_Line (This, Cursor, 1);
       Char_Ind : constant String_Index_Type :=
         To_Char_Index (Get_Column (Cursor), Line, This.Tab_Width);
    begin
@@ -119,21 +124,20 @@ package body Codefix.GPS_Io is
    -- Get_Line --
    --------------
 
-   overriding function Get_Line
+   overriding
+   function Get_Line
      (This      : Console_Interface;
       Cursor    : Text_Cursor'Class;
       Start_Col : Visible_Column_Type := 0) return String
    is
-      Editor : constant Editor_Buffer'Class :=
+      Editor    : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get
-          (This.Get_File_Name,
-           Open_View   => False,
-           Open_Buffer => True);
+          (This.Get_File_Name, Open_View => False, Open_Buffer => True);
       Loc_Start : constant Editor_Location'CLass :=
         Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
       Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
 
-      Line : constant String := Editor.Get_Chars_S (Loc_Start, Loc_End);
+      Line     : constant String := Editor.Get_Chars_S (Loc_Start, Loc_End);
       Char_Ind : String_Index_Type;
 
       Last_Ind : Integer := Line'Last;
@@ -144,8 +148,8 @@ package body Codefix.GPS_Io is
          if Get_Column (Cursor) > 1 then
             --  The cursor is not at the beginning of the line, so may
             --  contains tabulators
-            Char_Ind := To_Char_Index
-              (Get_Column (Cursor), Line, This.Tab_Width);
+            Char_Ind :=
+              To_Char_Index (Get_Column (Cursor), Line, This.Tab_Width);
          else
             --  At the beginning of the line
             Char_Ind := 1;
@@ -171,7 +175,8 @@ package body Codefix.GPS_Io is
    -- Replace --
    -------------
 
-   overriding procedure Replace
+   overriding
+   procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
@@ -180,7 +185,7 @@ package body Codefix.GPS_Io is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
 
-      Actual_Start_Line : Integer;
+      Actual_Start_Line   : Integer;
       Actual_Start_Column : Visible_Column_Type;
    begin
       Text_Has_Changed (This);
@@ -195,8 +200,7 @@ package body Codefix.GPS_Io is
 
       declare
          Loc_Start : constant Editor_Location'Class :=
-           Editor.New_Location
-             (Actual_Start_Line, Actual_Start_Column);
+           Editor.New_Location (Actual_Start_Line, Actual_Start_Column);
       begin
          if Len /= 0 then
             declare
@@ -215,26 +219,24 @@ package body Codefix.GPS_Io is
    -- Replace --
    -------------
 
-   overriding procedure Replace
+   overriding
+   procedure Replace
      (This         : in out Console_Interface;
       Start_Cursor : Text_Cursor'Class;
       End_Cursor   : Text_Cursor'Class;
       New_Value    : String)
    is
-      Editor : constant Editor_Buffer'Class :=
+      Editor    : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location
-          (Start_Cursor.Get_Line, Start_Cursor.Get_Column);
-      Loc_End : constant Editor_Location'Class :=
-        Editor.New_Location
-          (End_Cursor.Get_Line, End_Cursor.Get_Column);
+        Editor.New_Location (Start_Cursor.Get_Line, Start_Cursor.Get_Column);
+      Loc_End   : constant Editor_Location'Class :=
+        Editor.New_Location (End_Cursor.Get_Line, End_Cursor.Get_Column);
    begin
-      if not
-        (Loc_Start.Line > Loc_End.Line
-         or else
-           (Loc_Start.Line = Loc_End.Line
-            and then Loc_Start.Column > Loc_End.Column))
+      if not (Loc_Start.Line > Loc_End.Line
+              or else
+                (Loc_Start.Line = Loc_End.Line
+                 and then Loc_Start.Column > Loc_End.Column))
       then
          --  Loc start must be after Loc end, we don't delete null ranges.
 
@@ -249,7 +251,8 @@ package body Codefix.GPS_Io is
    -- Add_Line --
    --------------
 
-   overriding procedure Add_Line
+   overriding
+   procedure Add_Line
      (This     : in out Console_Interface;
       Cursor   : Text_Cursor'Class;
       New_Line : String;
@@ -271,9 +274,8 @@ package body Codefix.GPS_Io is
               (Insert_Position,
                Get_Line (Insert_Position),
                To_Column_Index
-                 (String_Index_Type (Line_Str'Last),
-                  Line_Str,
-                  This.Tab_Width) + 1);
+                 (String_Index_Type (Line_Str'Last), Line_Str, This.Tab_Width)
+               + 1);
             Replace (This, Insert_Position, 0, EOL_Str & New_Line);
          end;
       end if;
@@ -282,8 +284,7 @@ package body Codefix.GPS_Io is
          declare
             Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
          begin
-            Line_Cursor.Set_Location
-              (Line_Cursor.Get_Line + 1, 1);
+            Line_Cursor.Set_Location (Line_Cursor.Get_Line + 1, 1);
 
             This.Indent_Line (Line_Cursor);
          end;
@@ -294,15 +295,15 @@ package body Codefix.GPS_Io is
    -- Delete_Line --
    -----------------
 
-   overriding procedure Delete_Line
-     (This   : in out Console_Interface;
-      Cursor : Text_Cursor'Class)
+   overriding
+   procedure Delete_Line
+     (This : in out Console_Interface; Cursor : Text_Cursor'Class)
    is
-      Editor : constant Editor_Buffer'Class :=
+      Editor    : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
         Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
-      Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
+      Loc_End   : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
       Editor.Delete (Loc_Start, Loc_End);
       Text_Has_Changed (This);
@@ -312,13 +313,13 @@ package body Codefix.GPS_Io is
    -- Indent_Line --
    -----------------
 
-   overriding procedure Indent_Line
-     (This : in out Console_Interface;
-      Cursor : Text_Cursor'Class)
+   overriding
+   procedure Indent_Line
+     (This : in out Console_Interface; Cursor : Text_Cursor'Class)
    is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
-      Loc : constant Editor_Location'Class :=
+      Loc    : constant Editor_Location'Class :=
         Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
    begin
       Editor.Indent (Loc, Loc);
@@ -329,10 +330,9 @@ package body Codefix.GPS_Io is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
-     (This : in out Console_Interface;
-      Path : GNATCOLL.VFS.Virtual_File)
-   is
+   overriding
+   procedure Initialize
+     (This : in out Console_Interface; Path : GNATCOLL.VFS.Virtual_File) is
    begin
       Initialize (Text_Interface (This), Path);
    end Initialize;
@@ -341,14 +341,11 @@ package body Codefix.GPS_Io is
    -- Read_File --
    ---------------
 
-   overriding function Read_File
-     (This : Console_Interface) return Unbounded_String
-   is
+   overriding
+   function Read_File (This : Console_Interface) return Unbounded_String is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get
-          (Get_File_Name (This),
-           Open_View   => False,
-           Open_Buffer => True);
+          (Get_File_Name (This), Open_View => False, Open_Buffer => True);
 
    begin
       return Editor.Get_Chars_U;
@@ -358,12 +355,11 @@ package body Codefix.GPS_Io is
    -- Line_Max --
    --------------
 
-   overriding function Line_Max (This : Console_Interface) return Natural is
+   overriding
+   function Line_Max (This : Console_Interface) return Natural is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get
-          (Get_File_Name (This),
-           Open_View   => False,
-           Open_Buffer => True);
+          (Get_File_Name (This), Open_View => False, Open_Buffer => True);
    begin
       return Natural (Editor.Lines_Count);
    end Line_Max;
@@ -376,9 +372,7 @@ package body Codefix.GPS_Io is
    function Tab_Width (This : Console_Interface) return Natural is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get
-          (Get_File_Name (This),
-           Open_View   => False,
-           Open_Buffer => True);
+          (Get_File_Name (This), Open_View => False, Open_Buffer => True);
    begin
       if Editor.Get_Language /= null then
          return Editor.Get_Language.Get_Indentation_Level;
@@ -401,7 +395,8 @@ package body Codefix.GPS_Io is
    -- Constrain_Update --
    ----------------------
 
-   overriding procedure Constrain_Update (This : in out Console_Interface) is
+   overriding
+   procedure Constrain_Update (This : in out Console_Interface) is
    begin
       null;
    end Constrain_Update;

@@ -27,7 +27,8 @@ generic
    No_Data : Data_Type;
    --  Null value for the data in the three
 
-package Vector_Tries is
+package Vector_Tries
+is
 
    type Vector_Trie is private;
    --  This type is a container storing elements by their name. Several
@@ -70,8 +71,7 @@ package Vector_Tries is
    --  contains a valid value. This should be the case if the iteration is
    --  done in a single task, without modifications of the trie tree.
 
-   function Get
-     (It : Vector_Trie_Iterator) return Data_Type;
+   function Get (It : Vector_Trie_Iterator) return Data_Type;
    --  Return the data contained in the cell pointed by the iterator.
 
    function Get_Index (It : Vector_Trie_Iterator) return String;
@@ -83,30 +83,28 @@ package Vector_Tries is
    --  order to preven memory leaks.
 
    procedure Insert
-     (Trie         : access Vector_Trie;
-      Symbols      : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
-      Element      : Data_Type;
-      Name         : String;
-      Index        : out Vector_Trie_Index);
+     (Trie    : access Vector_Trie;
+      Symbols : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Element : Data_Type;
+      Name    : String;
+      Index   : out Vector_Trie_Index);
    --  Insert an object into the trie tree, associated with a given Data. The
    --  returned index can be used to access / replace / remove this object
    --  afterwards.
 
-   procedure Delete
-     (Trie : in out Vector_Trie; Index : Vector_Trie_Index);
+   procedure Delete (Trie : in out Vector_Trie; Index : Vector_Trie_Index);
    --  Delete the object stored at the index given in parameter.
 
    procedure Replace
-     (Trie             : access Vector_Trie;
-      Index            : Vector_Trie_Index;
-      New_Value        : Data_Type);
+     (Trie      : access Vector_Trie;
+      Index     : Vector_Trie_Index;
+      New_Value : Data_Type);
    --  Replace the object pointed by the iterator.
 
    function Get_Name_Index
      (Trie    : access Vector_Trie;
       Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class;
-      Name    : String)
-      return GNATCOLL.Symbols.Symbol;
+      Name    : String) return GNATCOLL.Symbols.Symbol;
    --  Return the unique string access corresponding to the name given in
    --  parameter. If none, will create one.
 
@@ -127,13 +125,12 @@ private
      (Data_Vector.Null_Lazy_Vector, GNATCOLL.Symbols.No_Symbol);
 
    function Get_Name
-     (Node : Data_List_Access)
-      return GNATCOLL.Utils.Cst_String_Access;
+     (Node : Data_List_Access) return GNATCOLL.Utils.Cst_String_Access;
 
    procedure Free (Node : in out Data_List_Access);
 
-   package Vector_Trie_Trees is new Tries
-     (Data_List_Access, null, Get_Name, Free);
+   package Vector_Trie_Trees is new
+     Tries (Data_List_Access, null, Get_Name, Free);
 
    use Vector_Trie_Trees;
 
@@ -154,9 +151,7 @@ private
    end record;
 
    Null_Vector_Trie_Iterator : constant Vector_Trie_Iterator :=
-     (False,
-      Data_Vector.Null_Iterator,
-      Vector_Trie_Trees.Null_Iterator);
+     (False, Data_Vector.Null_Iterator, Vector_Trie_Trees.Null_Iterator);
 
    type Vector_Trie_Index is record
       It   : Data_Vector.Iterator;

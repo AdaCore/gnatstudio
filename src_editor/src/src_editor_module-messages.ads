@@ -30,7 +30,7 @@ package Src_Editor_Module.Messages is
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class);
    --  Creates and registers highlighting manager
 
-   procedure Unregister (Kernel  : not null access Kernel_Handle_Record'Class);
+   procedure Unregister (Kernel : not null access Kernel_Handle_Record'Class);
    --  Unregister and destroys highlighting manager
 
 private
@@ -38,12 +38,11 @@ private
    --  ??? Do we need all this? Why not create styles once and for
    --  all in the Style_Manager?
 
-   function Hash
-     (Item : Style_Access) return Ada.Containers.Hash_Type;
+   function Hash (Item : Style_Access) return Ada.Containers.Hash_Type;
    --  Returns hash value constructed from style's name
 
-   package Style_Sets is
-     new Ada.Containers.Hashed_Sets (Style_Access, Hash, "=");
+   package Style_Sets is new
+     Ada.Containers.Hashed_Sets (Style_Access, Hash, "=");
 
    type Style_Set_Access is access all Style_Sets.Set;
 
@@ -55,13 +54,12 @@ private
    function Hash (Item : Key) return Ada.Containers.Hash_Type;
    --  Returns has value constructed from the category's and file's name
 
-   package Style_Maps is
-     new Ada.Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
+   package Style_Maps is new
+     Ada.Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
 
    type Highlighting_Manager
      (Kernel : not null access Kernel_Handle_Record'Class)
-     is new Abstract_Listener
-   with record
+   is new Abstract_Listener with record
       Map : Style_Maps.Map;
    end record;
    --  I826-008 workaround: we manage the set of all styles used per file per
@@ -73,21 +71,25 @@ private
      (Self : not null access Highlighting_Manager;
       File : GNATCOLL.VFS.Virtual_File);
 
-   overriding procedure File_Removed
+   overriding
+   procedure File_Removed
      (Self     : not null access Highlighting_Manager;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
-   overriding procedure Message_Property_Changed
+   overriding
+   procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;
       Message  : not null access Abstract_Message'Class;
       Property : Message_Property_Type);
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class);
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class);
 

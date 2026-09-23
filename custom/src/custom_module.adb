@@ -15,47 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Python;           use GNATCOLL.Python;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Python;         use GNATCOLL.Python;
 with GNATCOLL.Python.State;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python;   use GNATCOLL.Scripts.Python;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Handlers;  use Gtk.Handlers;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Menu;      use Gtk.Menu;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Widget;    use Gtk.Widget;
 
-with Commands.Custom;           use Commands.Custom;
-with Commands.Interactive;      use Commands.Interactive;
-with Commands;                  use Commands;
+with Commands.Custom;          use Commands.Custom;
+with Commands.Interactive;     use Commands.Interactive;
+with Commands;                 use Commands;
 with Custom_Timeout;
 with Expect_Interface;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GUI_Utils;                 use GUI_Utils;
-with Language.Custom;           use Language.Custom;
-with Language_Handlers;         use Language_Handlers;
-with String_Utils;              use String_Utils;
-with Switches_Chooser;          use Switches_Chooser;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GUI_Utils;                use GUI_Utils;
+with Language.Custom;          use Language.Custom;
+with Language_Handlers;        use Language_Handlers;
+with String_Utils;             use String_Utils;
+with Switches_Chooser;         use Switches_Chooser;
 with XML_Viewer;
 
 with Switches_Parser;
-with XML_Utils;                 use XML_Utils;
-with XML_Utils.GtkAda;          use XML_Utils.GtkAda;
+with XML_Utils;        use XML_Utils;
+with XML_Utils.GtkAda; use XML_Utils.GtkAda;
 with Language.Shell;
 
 package body Custom_Module is
@@ -64,21 +64,21 @@ package body Custom_Module is
 
    type Custom_Module_ID_Record is new Module_ID_Record with null record;
 
-   Path_Cst          : aliased constant String := "path";
-   On_Activate_Cst   : aliased constant String := "on_activate";
-   Add_Before_Cst    : aliased constant String := "add_before";
-   Ref_Cst           : aliased constant String := "ref";
-   Name_Cst          : aliased constant String := "name";
-   Label_Cst         : aliased constant String := "label";
-   Filter_Cst        : aliased constant String := "filter";
-   Factory_Cst       : aliased constant String := "factory";
-   Group_Cst         : aliased constant String := "group";
+   Path_Cst              : aliased constant String := "path";
+   On_Activate_Cst       : aliased constant String := "on_activate";
+   Add_Before_Cst        : aliased constant String := "add_before";
+   Ref_Cst               : aliased constant String := "ref";
+   Name_Cst              : aliased constant String := "name";
+   Label_Cst             : aliased constant String := "label";
+   Filter_Cst            : aliased constant String := "filter";
+   Factory_Cst           : aliased constant String := "factory";
+   Group_Cst             : aliased constant String := "group";
    Visibility_Filter_Cst : aliased constant String := "visibility_filter";
-   Key_Cst           : aliased constant String := "key";
+   Key_Cst               : aliased constant String := "key";
 
-   Menu_Get_Params : constant Cst_Argument_List :=
+   Menu_Get_Params                  : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
-   Contextual_Constructor_Params : constant Cst_Argument_List :=
+   Contextual_Constructor_Params    : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
      (1 => Factory_Cst'Access,
@@ -93,19 +93,22 @@ package body Custom_Module is
    type Action_Filter_Wrapper is new Action_Filter_Record with record
       Filter : Subprogram_Type;
    end record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Action_Filter_Wrapper;
-      Context : Selection_Context) return Boolean;
-   overriding procedure Customize
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Action_Filter_Wrapper; Context : Selection_Context)
+      return Boolean;
+   overriding
+   procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
-   overriding procedure Free (Filter : in out Action_Filter_Wrapper);
-   overriding function Get_Debug_Name
-     (Self : access Action_Filter_Wrapper) return String
-     is ("python filter: " & Self.Filter.Get_Name);
+   overriding
+   procedure Free (Filter : in out Action_Filter_Wrapper);
+   overriding
+   function Get_Debug_Name (Self : access Action_Filter_Wrapper) return String
+   is ("python filter: " & Self.Filter.Get_Name);
    --  A filter that executes a shell subprogram
 
    procedure Menu_Handler
@@ -124,26 +127,30 @@ package body Custom_Module is
       Pass_Context : Boolean := True;
       --  Whether the context should be passed as Arg to On_Activate
 
-      On_Activate  : Subprogram_Type;
+      On_Activate : Subprogram_Type;
    end record;
-   overriding procedure Primitive_Free
-     (Cmd : in out Subprogram_Command_Record);
-   overriding function Execute
+   overriding
+   procedure Primitive_Free (Cmd : in out Subprogram_Command_Record);
+   overriding
+   function Execute
      (Command : access Subprogram_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Type used to define contextual menus from a scripting language
 
    type Subprogram_Filter_Record is new Action_Filter_Record with record
-      Filter     : Subprogram_Type;
+      Filter : Subprogram_Type;
    end record;
    type Subprogram_Filter is access all Subprogram_Filter_Record'Class;
-   overriding function Get_Debug_Name
+   overriding
+   function Get_Debug_Name
      (Self : access Subprogram_Filter_Record) return String
-     is ("python subprogram: " & Self.Filter.Get_Name);
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Filter_Record;
-      Context : Selection_Context) return Boolean;
-   overriding procedure Free (Filter : in out Subprogram_Filter_Record);
+   is ("python subprogram: " & Self.Filter.Get_Name);
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Subprogram_Filter_Record; Context : Selection_Context)
+      return Boolean;
+   overriding
+   procedure Free (Filter : in out Subprogram_Filter_Record);
    --  Type used to define contextual menus from a scripting language
 
    type Subprogram_Label_Record is new Contextual_Menu_Label_Creator_Record
@@ -152,29 +159,30 @@ package body Custom_Module is
       Path  : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    type Subprogram_Label is access all Subprogram_Label_Record'Class;
-   overriding function Get_Label
-     (Creator : access Subprogram_Label_Record;
-      Context : Selection_Context) return String;
-   --  Type used to define contextual menus from a scripting language
-   overriding function Get_Path
-     (Creator : access Subprogram_Label_Record)
+   overriding
+   function Get_Label
+     (Creator : access Subprogram_Label_Record; Context : Selection_Context)
       return String;
-   overriding procedure Primitive_Free
-     (Creator : in out Subprogram_Label_Record);
+   --  Type used to define contextual menus from a scripting language
+   overriding
+   function Get_Path (Creator : access Subprogram_Label_Record) return String;
+   overriding
+   procedure Primitive_Free (Creator : in out Subprogram_Label_Record);
 
    type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
       On_Activate : Subprogram_Type;
       Factory     : Subprogram_Type;
    end record;
-   type Create_Dynamic_Contextual_Access is access all
-     Create_Dynamic_Contextual'Class;
-   overriding procedure Append_To_Menu
+   type Create_Dynamic_Contextual_Access is
+     access all Create_Dynamic_Contextual'Class;
+   overriding
+   procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
-   overriding procedure Primitive_Free
-     (Factory : in out Create_Dynamic_Contextual);
+   overriding
+   procedure Primitive_Free (Factory : in out Create_Dynamic_Contextual);
 
    type Python_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Index : Natural;
@@ -187,13 +195,13 @@ package body Custom_Module is
       Context    : Class_Instance;
    end record;
 
-   package Factory_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Gtk.Menu_Item.Gtk_Menu_Item_Record,
-      User_Type   => Dynamic_Context);
+   package Factory_Callback is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Gtk.Menu_Item.Gtk_Menu_Item_Record,
+        User_Type   => Dynamic_Context);
 
    procedure On_Dynamic_Menu_Activate
-     (Item    : access Gtk_Menu_Item_Record'Class;
-      Factory : Dynamic_Context);
+     (Item : access Gtk_Menu_Item_Record'Class; Factory : Dynamic_Context);
    --  Called when an entry is a dynamic contextual menu created through a
    --  scripting language was activated.
 
@@ -205,8 +213,7 @@ package body Custom_Module is
    --  Parse a <switches> node, and returns the corresponding configuration
 
    function Filter_From_Argument
-     (Data   : Callback_Data'Class;
-      Nth    : Integer) return Action_Filter;
+     (Data : Callback_Data'Class; Nth : Integer) return Action_Filter;
    --  Convert one of the arguments of Data into a filter. This argument can be
    --  specified either as a string referencing a predefined filter, or as a
    --  subprogram callback
@@ -215,7 +222,8 @@ package body Custom_Module is
    -- Free --
    ----------
 
-   overriding procedure Free (Filter : in out Subprogram_Filter_Record) is
+   overriding
+   procedure Free (Filter : in out Subprogram_Filter_Record) is
    begin
       Free (Filter.Filter);
    end Free;
@@ -224,8 +232,8 @@ package body Custom_Module is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (Cmd : in out Subprogram_Command_Record) is
+   overriding
+   procedure Primitive_Free (Cmd : in out Subprogram_Command_Record) is
    begin
       Free (Cmd.On_Activate);
    end Primitive_Free;
@@ -234,7 +242,8 @@ package body Custom_Module is
    -- Free --
    ----------
 
-   overriding procedure Free (Filter : in out Action_Filter_Wrapper) is
+   overriding
+   procedure Free (Filter : in out Action_Filter_Wrapper) is
    begin
       Free (Filter.Filter);
       Action_Filter_Record (Filter).Free;
@@ -277,7 +286,9 @@ package body Custom_Module is
          Insert
            (Kernel,
             (-("Error when parsing file "))
-            & Display_Full_Name (File) & ":" & ASCII.LF
+            & Display_Full_Name (File)
+            & ":"
+            & ASCII.LF
             & To_String (M),
             Mode => Error);
       end if;
@@ -288,13 +299,12 @@ package body Custom_Module is
    ------------------------------
 
    procedure On_Dynamic_Menu_Activate
-     (Item    : access Gtk_Menu_Item_Record'Class;
-      Factory : Dynamic_Context)
+     (Item : access Gtk_Menu_Item_Record'Class; Factory : Dynamic_Context)
    is
       Script : constant Scripting_Language :=
         Get_Script (Factory.Contextual.On_Activate.all);
-      C : Callback_Data'Class := Create (Script, Arguments_Count => 3);
-      Tmp : Boolean;
+      C      : Callback_Data'Class := Create (Script, Arguments_Count => 3);
+      Tmp    : Boolean;
       pragma Unreferenced (Tmp);
    begin
       Set_Nth_Arg (C, 1, Factory.Context);
@@ -304,22 +314,24 @@ package body Custom_Module is
       Free (C);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Dynamic_Menu_Activate;
 
    --------------------
    -- Append_To_Menu --
    --------------------
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Script : constant Scripting_Language :=
         Get_Script (Factory.On_Activate.all);
-      C : Callback_Data'Class := Create (Script, Arguments_Count => 1);
-      Item : Python_Menu_Item;
+      C      : Callback_Data'Class := Create (Script, Arguments_Count => 1);
+      Item   : Python_Menu_Item;
    begin
       Set_Nth_Arg (C, 1, Create_Context (Script, Context));
 
@@ -329,18 +341,21 @@ package body Custom_Module is
          for L in List'Range loop
             if List (L) /= null then
                Item := new Python_Menu_Item_Record;
-               Item := Python_Menu_Item
-                 (Find_Or_Create_Menu_Tree
-                    (Menu_Bar      => null,
-                     Menu          => Gtk_Menu (Menu),
-                     Path          => Escape_Underscore (List (L).all),
-                     Accelerators  =>
-                       Get_Default_Accelerators (Get_Kernel (Script)),
-                     New_Item      => Gtk_Menu_Item (Item)));
+               Item :=
+                 Python_Menu_Item
+                   (Find_Or_Create_Menu_Tree
+                      (Menu_Bar     => null,
+                       Menu         => Gtk_Menu (Menu),
+                       Path         => Escape_Underscore (List (L).all),
+                       Accelerators =>
+                         Get_Default_Accelerators (Get_Kernel (Script)),
+                       New_Item     => Gtk_Menu_Item (Item)));
 
                Item.Index := L - List'First;
                Factory_Callback.Connect
-                 (Item, Signal_Activate, On_Dynamic_Menu_Activate'Access,
+                 (Item,
+                  Signal_Activate,
+                  On_Dynamic_Menu_Activate'Access,
                   User_Data =>
                     (Contextual => Create_Dynamic_Contextual_Access (Factory),
                      Context    => Create_Context (Script, Context)));
@@ -358,8 +373,8 @@ package body Custom_Module is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (Factory : in out Create_Dynamic_Contextual) is
+   overriding
+   procedure Primitive_Free (Factory : in out Create_Dynamic_Contextual) is
    begin
       Free (Factory.On_Activate);
       Free (Factory.Factory);
@@ -369,7 +384,8 @@ package body Custom_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Subprogram_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -380,14 +396,17 @@ package body Custom_Module is
       end if;
 
       declare
-         C : Callback_Data'Class := Create
-           (Get_Script (Command.On_Activate.all), Arguments_Count => Count);
+         C   : Callback_Data'Class :=
+           Create
+             (Get_Script (Command.On_Activate.all), Arguments_Count => Count);
          Tmp : Boolean;
          pragma Unreferenced (Tmp);
       begin
          if Command.Pass_Context then
             Set_Nth_Arg
-              (C, 1, Create_Context
+              (C,
+               1,
+               Create_Context
                  (Get_Script (Command.On_Activate.all), Context.Context));
          end if;
 
@@ -402,12 +421,13 @@ package body Custom_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Filter_Record;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Subprogram_Filter_Record; Context : Selection_Context)
+      return Boolean
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Filter.Filter.all), Arguments_Count => 1);
+      C   : Callback_Data'Class :=
+        Create (Get_Script (Filter.Filter.all), Arguments_Count => 1);
       Tmp : Boolean;
    begin
       Set_Nth_Arg
@@ -421,22 +441,24 @@ package body Custom_Module is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
-     (Creator : access Subprogram_Label_Record;
-      Context : Selection_Context) return String
+   overriding
+   function Get_Label
+     (Creator : access Subprogram_Label_Record; Context : Selection_Context)
+      return String
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Creator.Label.all), Arguments_Count => 1);
+      C : Callback_Data'Class :=
+        Create (Get_Script (Creator.Label.all), Arguments_Count => 1);
    begin
       Set_Nth_Arg
         (C, 1, Create_Context (Get_Script (Creator.Label.all), Context));
       declare
          --  Replace the Python '\\' escaping by the one used for the Ada
          --  layer (simple '\').
-         Str : constant String := GNATCOLL.Utils.Replace
-           (S           => Execute (Creator.Label, C),
-            Pattern     => "\\",
-            Replacement => "\");
+         Str : constant String :=
+           GNATCOLL.Utils.Replace
+             (S           => Execute (Creator.Label, C),
+              Pattern     => "\\",
+              Replacement => "\");
       begin
          Free (C);
          return Str;
@@ -447,9 +469,9 @@ package body Custom_Module is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
-     (Creator : access Subprogram_Label_Record)
-      return String is
+   overriding
+   function Get_Path (Creator : access Subprogram_Label_Record) return String
+   is
    begin
       return Ada.Strings.Unbounded.To_String (Creator.Path);
    end Get_Path;
@@ -458,8 +480,8 @@ package body Custom_Module is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (Creator : in out Subprogram_Label_Record) is
+   overriding
+   procedure Primitive_Free (Creator : in out Subprogram_Label_Record) is
    begin
       Free (Creator.Label);
    end Primitive_Free;
@@ -468,7 +490,8 @@ package body Custom_Module is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -479,17 +502,15 @@ package body Custom_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
 
-      procedure Add_Child
-        (Parent_Path  : String;
-         Current_Node : Node_Ptr);
+      procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr);
       --  Add a menuitem or submenu to the Parent_Path, according to
       --  what Current_Node contains.
 
       Current_Menu_Section : Natural := 0;
-      function Section_Name return String is
-          (if Current_Menu_Section = 0
-           then ""
-           else "--section" & Current_Menu_Section'Img);
+      function Section_Name return String
+      is (if Current_Menu_Section = 0
+          then ""
+          else "--section" & Current_Menu_Section'Img);
       --  Return the label for a separator menu item (which is translated to
       --  a section in the menu model)
 
@@ -501,8 +522,8 @@ package body Custom_Module is
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       procedure Parse_Submenu_Node
         (Node : Node_Ptr; Parent_Path : UTF8_String);
-      function Parse_Filter_Node (Node : Node_Ptr;
-                                  Name : String) return Action_Filter;
+      function Parse_Filter_Node
+        (Node : Node_Ptr; Name : String) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
 
       ---------------------------
@@ -510,13 +531,13 @@ package body Custom_Module is
       ---------------------------
 
       procedure Parse_Contextual_Node (Node : Node_Ptr) is
-         Action  : constant String := Get_Attribute_S (Node, "action");
-         Before  : constant String := Get_Attribute_S (Node, "before", "");
-         After   : constant String := Get_Attribute_S (Node, "after", "");
-         Group   : Integer := Default_Contextual_Group;
-         Child   : Node_Ptr;
-         Title   : GNAT.OS_Lib.String_Access;
-         Filter  : Action_Filter := null;
+         Action : constant String := Get_Attribute_S (Node, "action");
+         Before : constant String := Get_Attribute_S (Node, "before", "");
+         After  : constant String := Get_Attribute_S (Node, "after", "");
+         Group  : Integer := Default_Contextual_Group;
+         Child  : Node_Ptr;
+         Title  : GNAT.OS_Lib.String_Access;
+         Filter : Action_Filter := null;
       begin
          Title := new String'(Action);
 
@@ -545,9 +566,10 @@ package body Custom_Module is
                   if Id /= "" then
                      Filter := Lookup_Filter (Kernel, Id);
                      if Filter = null then
-                        Insert (Kernel,
-                                -"Invalid filter name: " & Id,
-                                Mode => Error);
+                        Insert
+                          (Kernel,
+                           -"Invalid filter name: " & Id,
+                           Mode => Error);
                      end if;
                   end if;
                end;
@@ -590,11 +612,11 @@ package body Custom_Module is
          else
             Register_Contextual_Menu
               (Kernel,
-               Name    => Title.all,
-               Label   => Title.all,
-               Action  => Action,
-               Group   => Group,
-               Filter  => Filter);
+               Name   => Title.all,
+               Label  => Title.all,
+               Action => Action,
+               Group  => Group,
+               Filter => Filter);
          end if;
 
          Free (Title);
@@ -607,32 +629,32 @@ package body Custom_Module is
       procedure Parse_Tool_Node (Node : Node_Ptr) is
          Name      : constant String := Get_Attribute_S (Node, "name");
          Pack      : constant String :=
-                       Get_Attribute_S (Node, "package", Ide_Package);
+           Get_Attribute_S (Node, "package", Ide_Package);
          Index     : constant String :=
-                       To_Lower (Get_Attribute_S (Node, "index", Name));
+           To_Lower (Get_Attribute_S (Node, "index", Name));
          Attribute : constant String :=
-                       Get_Attribute_S (Node, "attribute", "default_switches");
+           Get_Attribute_S (Node, "attribute", "default_switches");
          Override  : constant Boolean :=
-                       (To_Lower (Get_Attribute_S (Node, "override", "false"))
-                        = "true");
+           (To_Lower (Get_Attribute_S (Node, "override", "false")) = "true");
          N         : Node_Ptr := Node.Child;
          Tool      : Tool_Properties;
 
       begin
          if Name = "" then
-            Insert (Kernel,
-                    -"Invalid <tool> node, it must have a name attribute",
-                    Mode => Error);
+            Insert
+              (Kernel,
+               -"Invalid <tool> node, it must have a name attribute",
+               Mode => Error);
             pragma Assert (False);
             return;
          end if;
 
          Tool := new Tool_Properties_Record;
-         Tool.Tool_Name         := To_Unbounded_String (Name);
-         Tool.Project_Package   := To_Unbounded_String (Pack);
+         Tool.Tool_Name := To_Unbounded_String (Name);
+         Tool.Project_Package := To_Unbounded_String (Pack);
          Tool.Project_Attribute := To_Unbounded_String (Attribute);
-         Tool.Project_Index     := To_Unbounded_String (Index);
-         Tool.Override          := Override;
+         Tool.Project_Index := To_Unbounded_String (Index);
+         Tool.Override := Override;
 
          while N /= null loop
             if N.Tag.all = "initial-cmd-line" then
@@ -649,9 +671,10 @@ package body Custom_Module is
                   Node         => N);
 
             else
-               Insert (Kernel,
-                       -"Unsupport child tag for <tool>: " & N.Tag.all,
-                       Mode => Error);
+               Insert
+                 (Kernel,
+                  -"Unsupport child tag for <tool>: " & N.Tag.all,
+                  Mode => Error);
             end if;
 
             N := N.Next;
@@ -664,21 +687,23 @@ package body Custom_Module is
       -- Parse_Filter_Node --
       -----------------------
 
-      function Parse_Filter_Node (Node : Node_Ptr;
-                                  Name : String) return Action_Filter is
+      function Parse_Filter_Node
+        (Node : Node_Ptr; Name : String) return Action_Filter
+      is
          Filter, Filter_Tmp : Action_Filter;
-         Child  : Node_Ptr;
+         Child              : Node_Ptr;
       begin
          if Node.Tag.all = "filter" then
             declare
-               Lang    : constant String  :=
+               Lang       : constant String :=
                  Get_Attribute_S (Node, "language");
-               Shell   : constant String  :=
+               Shell      : constant String :=
                  Get_Attribute_S (Node, "shell_cmd");
                Shell_Lang : constant String :=
                  Get_Attribute_S (Node, "shell_lang", GPS_Shell_Name);
-               Module  : constant String := Get_Attribute_S (Node, "module");
-               Id      : constant String := Get_Attribute_S (Node, "id");
+               Module     : constant String :=
+                 Get_Attribute_S (Node, "module");
+               Id         : constant String := Get_Attribute_S (Node, "id");
             begin
                if Id /= "" then
                   Filter := Lookup_Filter (Kernel, Id);
@@ -690,36 +715,43 @@ package body Custom_Module is
                      return Filter;
                   end if;
 
-                  if Lang /= "" or
-                    Shell /= "" or
-                    Shell_Lang /= GPS_Shell_Name or
-                    Module /= ""
+                  if Lang /= ""
+                    or Shell /= ""
+                    or Shell_Lang /= GPS_Shell_Name
+                    or Module /= ""
                   then
                      Insert
                        (Kernel,
-                        -"Filter " & Name & ": Id shall be the only " &
-                        "attribute when defined.",
+                        -"Filter "
+                        & Name
+                        & ": Id shall be the only "
+                        & "attribute when defined.",
                         Mode => Error);
                      if Lang /= "" then
-                        Insert (Kernel,
-                                -" Attribute language=" & Lang & " ignored.",
-                                Mode => Error);
+                        Insert
+                          (Kernel,
+                           -" Attribute language=" & Lang & " ignored.",
+                           Mode => Error);
                      end if;
                      if Shell /= "" then
-                        Insert (Kernel,
-                                -" Attribute shell_cmd=" & Shell & " ignored.",
-                                Mode => Error);
+                        Insert
+                          (Kernel,
+                           -" Attribute shell_cmd=" & Shell & " ignored.",
+                           Mode => Error);
                      end if;
                      if Shell_Lang /= GPS_Shell_Name then
-                        Insert (Kernel,
-                                -" Attribute shell_lang=" & Shell_Lang &
-                                " ignored.",
-                                Mode => Error);
+                        Insert
+                          (Kernel,
+                           -" Attribute shell_lang="
+                           & Shell_Lang
+                           & " ignored.",
+                           Mode => Error);
                      end if;
                      if Module /= "" then
-                        Insert (Kernel,
-                                -" Attribute module=" & Module & " ignored.",
-                                Mode => Error);
+                        Insert
+                          (Kernel,
+                           -" Attribute module=" & Module & " ignored.",
+                           Mode => Error);
                      end if;
                   end if;
                else
@@ -770,7 +802,7 @@ package body Custom_Module is
       procedure Parse_Action_Node (Node : Node_Ptr) is
          Name            : constant String := Get_Attribute_S (Node, "name");
          Category        : constant String :=
-                             Get_Attribute_S (Node, "category", "General");
+           Get_Attribute_S (Node, "category", "General");
          Child           : Node_Ptr;
          Command         : Custom_Command_Access;
          Description     : GNAT.OS_Lib.String_Access := new String'("");
@@ -822,20 +854,21 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         Create (Command,
-                 Name                 => Name,
-                 Kernel               => Kernel,
-                 Command              => Node.Child,
-                 Active               =>
-                   To_Lower
-                     (Get_Attribute_S (Node, "active-execution", "true"))
-                        = "true",
-                 Default_Output       => Get_Attribute_S
-                   (Node, "output", Console_Output),
-                 Show_In_Task_Manager => To_Lower
-                   (Get_Attribute_S (Node, "show-task-manager")) = "true",
-                 Show_Command         => To_Lower
-                   (Get_Attribute_S (Node, "show-command", "true")) = "true");
+         Create
+           (Command,
+            Name                 => Name,
+            Kernel               => Kernel,
+            Command              => Node.Child,
+            Active               =>
+              To_Lower (Get_Attribute_S (Node, "active-execution", "true"))
+              = "true",
+            Default_Output       =>
+              Get_Attribute_S (Node, "output", Console_Output),
+            Show_In_Task_Manager =>
+              To_Lower (Get_Attribute_S (Node, "show-task-manager")) = "true",
+            Show_Command         =>
+              To_Lower (Get_Attribute_S (Node, "show-command", "true"))
+              = "true");
 
          Implicit_Filter := Create_Filter (Kernel, Node.Child);
 
@@ -870,11 +903,11 @@ package body Custom_Module is
       -----------------------
 
       procedure Parse_Button_Node (Node : Node_Ptr) is
-         Action  : constant String := Get_Attribute_S (Node, "action");
-         Icon    : constant String := Get_Attribute_S (Node, "iconname");
+         Action : constant String := Get_Attribute_S (Node, "action");
+         Icon   : constant String := Get_Attribute_S (Node, "iconname");
          --  For back compability support stock='icon' attribute
-         Stock   : constant String := Get_Attribute_S (Node, "stock");
-         Child   : Node_Ptr;
+         Stock  : constant String := Get_Attribute_S (Node, "stock");
+         Child  : Node_Ptr;
 
       begin
          Child := Node.Child;
@@ -884,15 +917,20 @@ package body Custom_Module is
                Insert
                  (Kernel,
                   -("The <button> node now ignores its 'title' child (for"
-                    & " action '") & Action & "'");
+                    & " action '")
+                  & Action
+                  & "'");
             elsif To_Lower (Child.Tag.all) = "pixmap" then
                Insert
                  (Kernel,
                   -("The <button> node now ignores its 'pixmap' child (for"
-                    & " action '") & Action & "'");
+                    & " action '")
+                  & Action
+                  & "'");
             else
                Insert
-                 (Kernel, -"Invalid child node for <button> tag",
+                 (Kernel,
+                  -"Invalid child node for <button> tag",
                   Mode => Error);
                return;
             end if;
@@ -901,8 +939,10 @@ package body Custom_Module is
          end loop;
 
          if Action = "" then
-            Insert (Kernel, -"<button> nodes must have an action attribute",
-                    Mode => Error);
+            Insert
+              (Kernel,
+               -"<button> nodes must have an action attribute",
+               Mode => Error);
             return;
          end if;
 
@@ -940,9 +980,16 @@ package body Custom_Module is
          CL := Create ("Toolbar");
          Execute_GPS_Shell_Command (Kernel, CL);
 
-         CL := Parse_String ("Toolbar.append %1 """
-              & Id & """ """ & Label & """ """
-              & Get_Attribute_S (Node, "on-changed") & """", Separate_Args);
+         CL :=
+           Parse_String
+             ("Toolbar.append %1 """
+              & Id
+              & """ """
+              & Label
+              & """ """
+              & Get_Attribute_S (Node, "on-changed")
+              & """",
+              Separate_Args);
          Execute_GPS_Shell_Command (Kernel, CL);
 
          --  Parse the child nodes
@@ -959,18 +1006,28 @@ package body Custom_Module is
                   if On_Selected /= "" then
                      CL := Create ("Toolbar");
                      Execute_GPS_Shell_Command (Kernel, CL);
-                     CL := Parse_String
-                       ("Toolbar.entry %1 """ & Id
-                        & """; ToolbarEntry.add %1 """ & Child.Value.all
-                        & """ """ & On_Selected & """", Separate_Args);
+                     CL :=
+                       Parse_String
+                         ("Toolbar.entry %1 """
+                          & Id
+                          & """; ToolbarEntry.add %1 """
+                          & Child.Value.all
+                          & """ """
+                          & On_Selected
+                          & """",
+                          Separate_Args);
                      Execute_GPS_Shell_Command (Kernel, CL);
                   else
                      CL := Create ("Toolbar");
                      Execute_GPS_Shell_Command (Kernel, CL);
-                     CL := Parse_String
-                       ("Toolbar.entry %1 """ & Id
-                        & """; ToolbarEntry.add %1 """ & Child.Value.all
-                        & """", Separate_Args);
+                     CL :=
+                       Parse_String
+                         ("Toolbar.entry %1 """
+                          & Id
+                          & """; ToolbarEntry.add %1 """
+                          & Child.Value.all
+                          & """",
+                          Separate_Args);
                      Execute_GPS_Shell_Command (Kernel, CL);
                   end if;
                end;
@@ -989,19 +1046,19 @@ package body Custom_Module is
       -- Parse_Submenu_Node --
       ------------------------
 
-      procedure Parse_Submenu_Node
-        (Node : Node_Ptr; Parent_Path : UTF8_String)
+      procedure Parse_Submenu_Node (Node : Node_Ptr; Parent_Path : UTF8_String)
       is
-         Child  : Node_Ptr := Node.Child;
-         Title  : GNAT.OS_Lib.String_Access := new String'("");
+         Child : Node_Ptr := Node.Child;
+         Title : GNAT.OS_Lib.String_Access := new String'("");
       begin
          --  First look for the title of the submenu
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
                if Title.all /= "" then
-                  Insert (Kernel,
-                          -"Only one <title> node allowed in <submenu>",
-                          Mode => Error);
+                  Insert
+                    (Kernel,
+                     -"Only one <title> node allowed in <submenu>",
+                     Mode => Error);
                   pragma Assert (False);
                   return;
                end if;
@@ -1024,10 +1081,10 @@ package body Custom_Module is
                Parse_Menu_Node
                  (Child, Create_Menu_Path (Parent_Path, Title.all));
             else
-               Insert (Kernel,
-                       -"Invalid child node for <submenu>: "
-                       & Child.Tag.all,
-                       Mode => Error);
+               Insert
+                 (Kernel,
+                  -"Invalid child node for <submenu>: " & Child.Tag.all,
+                  Mode => Error);
                pragma Assert (False);
                return;
             end if;
@@ -1043,16 +1100,13 @@ package body Custom_Module is
       ---------------------
 
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
-         Action  : constant String := Get_Attribute_S (Node, "action");
-         Before  : constant String := Get_Attribute_S (Node, "before");
-         After_Attribute   : constant String :=
-           Get_Attribute_S (Node, "after");
-         After   : constant String :=
-            (if After_Attribute /= ""
-             then After_Attribute
-             else Section_Name);
-         Child   : Node_Ptr;
-         Title   : GNAT.OS_Lib.String_Access := new String'("");
+         Action          : constant String := Get_Attribute_S (Node, "action");
+         Before          : constant String := Get_Attribute_S (Node, "before");
+         After_Attribute : constant String := Get_Attribute_S (Node, "after");
+         After           : constant String :=
+           (if After_Attribute /= "" then After_Attribute else Section_Name);
+         Child           : Node_Ptr;
+         Title           : GNAT.OS_Lib.String_Access := new String'("");
 
       begin
          Child := Node.Child;
@@ -1070,25 +1124,25 @@ package body Custom_Module is
          end loop;
 
          --  Special case to allow separators
-         if Action = ""
-           and then Title.all /= ""
-         then
-            Insert (Kernel, -"<menu> nodes must have an action attribute",
-                    Mode => Error);
+         if Action = "" and then Title.all /= "" then
+            Insert
+              (Kernel,
+               -"<menu> nodes must have an action attribute",
+               Mode => Error);
 
          elsif Title.all = "" then
             Current_Menu_Section := Current_Menu_Section + 1;
             Register_Menu
-               (Kernel,
-                Create_Menu_Path (Parent_Path, Section_Name),
-                Action => "");
+              (Kernel,
+               Create_Menu_Path (Parent_Path, Section_Name),
+               Action => "");
          else
             if Before /= "" then
                Register_Menu
                  (Kernel,
                   Create_Menu_Path (Parent_Path, Title.all),
-                  Action => Action,
-                  Ref_Item    => Before);
+                  Action   => Action,
+                  Ref_Item => Before);
             elsif After /= "" then
                Register_Menu
                  (Kernel,
@@ -1112,9 +1166,7 @@ package body Custom_Module is
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
       begin
-         if Current_Node = null
-           or else Current_Node.Tag = null
-         then
+         if Current_Node = null or else Current_Node.Tag = null then
             return;
          end if;
 
@@ -1145,7 +1197,7 @@ package body Custom_Module is
          then
             declare
                Name   : constant String :=
-                          Get_Attribute_S (Current_Node, "name");
+                 Get_Attribute_S (Current_Node, "name");
                Filter : Action_Filter;
             begin
                if Name = "" then
@@ -1167,9 +1219,7 @@ package body Custom_Module is
             Parse_Tool_Node (Current_Node);
 
          elsif To_Lower (Current_Node.Tag.all) = "stock" then
-            Insert
-              (Kernel,
-               -"<stock> no longer supported in customization");
+            Insert (Kernel, -"<stock> no longer supported in customization");
 
          elsif To_Lower (Current_Node.Tag.all) = "entry" then
             Parse_Entry_Node (Current_Node);
@@ -1181,19 +1231,21 @@ package body Custom_Module is
       Add_Child ("/", Node);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Customize;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Action_Filter_Wrapper;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Action_Filter_Wrapper; Context : Selection_Context)
+      return Boolean
    is
       C      : Callback_Data'Class :=
-                 Create (Get_Script (Filter.Filter.all), 1);
+        Create (Get_Script (Filter.Filter.all), 1);
       Result : Boolean;
    begin
       Set_Nth_Arg
@@ -1207,16 +1259,16 @@ package body Custom_Module is
    -- Menu_Handler --
    ------------------
 
-   procedure Menu_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Menu_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Menu_Class : constant Class_Type := New_Class (Kernel, "Menu");
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
-           (Data, -("Cannot build instances of GPS.Menu directly."
-                    & " Use GPS.Menu.get() or GPS.Menu.create() instead"));
+           (Data,
+            -("Cannot build instances of GPS.Menu directly."
+              & " Use GPS.Menu.get() or GPS.Menu.create() instead"));
 
       elsif Command = "get" then
          Name_Parameters (Data, Menu_Get_Params);
@@ -1231,10 +1283,11 @@ package body Custom_Module is
 
       elsif Command = "action" then
          declare
-            Inst  : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            Path  : constant String := Get_Data (Inst, Menu_Class);
-            Action : constant String := Action_From_Menu (Kernel, Path);
-            Result : Class_Instance;
+            Inst         : constant Class_Instance :=
+              Nth_Arg (Data, 1, Menu_Class);
+            Path         : constant String := Get_Data (Inst, Menu_Class);
+            Action       : constant String := Action_From_Menu (Kernel, Path);
+            Result       : Class_Instance;
             Action_Class : constant Class_Type := New_Class (Kernel, "Action");
          begin
             Result := New_Instance (Data.Get_Script, Action_Class);
@@ -1253,7 +1306,7 @@ package body Custom_Module is
    is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       Contextual_Class : constant Class_Type :=
-                           New_Class (Kernel, "Contextual");
+        New_Class (Kernel, "Contextual");
       Inst             : Class_Instance;
       Filter           : Subprogram_Filter;
       The_Filter       : access Action_Filter_Record'Class;
@@ -1265,8 +1318,8 @@ package body Custom_Module is
       if Command = Constructor_Method then
          Name_Parameters (Data, Contextual_Constructor_Params);
          Inst := Nth_Arg (Data, 1, Contextual_Class);
-         Set_Data (Inst, Contextual_Class,
-                   Value => String'(Nth_Arg (Data, 2)));
+         Set_Data
+           (Inst, Contextual_Class, Value => String'(Nth_Arg (Data, 2)));
 
       elsif Command = "show" then
          Inst := Nth_Arg (Data, 1, Contextual_Class);
@@ -1295,30 +1348,33 @@ package body Custom_Module is
 
          Subp := Nth_Arg (Data, 5, null);
          if Subp /= null then
-            Filter  := new Subprogram_Filter_Record'
-              (Action_Filter_Record with Filter => Subp);
+            Filter :=
+              new Subprogram_Filter_Record'
+                (Action_Filter_Record with Filter => Subp);
             The_Filter := Action_Filter (Filter);
          end if;
 
          Subp := Nth_Arg (Data, 9, null);
          if Subp /= null then
-            Filter  := new Subprogram_Filter_Record'
-              (Action_Filter_Record with Filter => Subp);
+            Filter :=
+              new Subprogram_Filter_Record'
+                (Action_Filter_Record with Filter => Subp);
             Enable_Filter := Action_Filter (Filter);
          end if;
 
          Register_Contextual_Submenu
            (Kernel,
-            Name              => Get_Data (Inst, Contextual_Class),
-            Filter            => The_Filter,
-            Enable_Filter     => Enable_Filter,
-            Label             => Nth_Arg (Data, 4, ""),
-            Submenu           => new Create_Dynamic_Contextual'
-              (Factory     => Nth_Arg (Data, 2),
-               On_Activate => Nth_Arg (Data, 3)),
-            Ref_Item          => Nth_Arg (Data, 6, ""),
-            Add_Before        => Nth_Arg (Data, 7, True),
-            Group             => Nth_Arg (Data, 8, Default_Contextual_Group));
+            Name          => Get_Data (Inst, Contextual_Class),
+            Filter        => The_Filter,
+            Enable_Filter => Enable_Filter,
+            Label         => Nth_Arg (Data, 4, ""),
+            Submenu       =>
+              new Create_Dynamic_Contextual'
+                (Factory     => Nth_Arg (Data, 2),
+                 On_Activate => Nth_Arg (Data, 3)),
+            Ref_Item      => Nth_Arg (Data, 6, ""),
+            Add_Before    => Nth_Arg (Data, 7, True),
+            Group         => Nth_Arg (Data, 8, Default_Contextual_Group));
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
@@ -1337,7 +1393,8 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Contextual_Handler;
 
    --------------------------
@@ -1345,10 +1402,10 @@ package body Custom_Module is
    --------------------------
 
    function Filter_From_Argument
-     (Data   : Callback_Data'Class;
-      Nth    : Integer) return Action_Filter
+     (Data : Callback_Data'Class; Nth : Integer) return Action_Filter
    is
-      Lock      : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Lock      : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
       Filter    : Action_Filter;
       Filter_Cb : Subprogram_Type;
       Success   : Boolean;
@@ -1359,8 +1416,7 @@ package body Custom_Module is
       --  scripts, though, so we need to test whether such a predefined
       --  filter exists)
 
-      Get_Param (Python_Callback_Data'Class (Data),
-                 Nth, Item, Success);
+      Get_Param (Python_Callback_Data'Class (Data), Nth, Item, Success);
       if not Success then
          return null;
 
@@ -1378,9 +1434,10 @@ package body Custom_Module is
                if Filter /= null then
                   return Filter;
                else
-                  Insert (Get_Kernel (Data),
-                          -"Invalid filter name: " & Name,
-                          Mode => Error);
+                  Insert
+                    (Get_Kernel (Data),
+                     -"Invalid filter name: " & Name,
+                     Mode => Error);
                   return null;
                end if;
             end;
@@ -1404,9 +1461,9 @@ package body Custom_Module is
       begin
          Filter := Get_Kernel (Data).Lookup_Filter (N);
          if Filter = null then
-            Filter := new Subprogram_Filter_Record'
-              (Action_Filter_Record with
-               Filter     => Filter_Cb);
+            Filter :=
+              new Subprogram_Filter_Record'
+                (Action_Filter_Record with Filter => Filter_Cb);
             Get_Kernel (Data).Register_Filter (Filter, N);
          end if;
          return Filter;
@@ -1422,8 +1479,8 @@ package body Custom_Module is
    is
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
       Action_Class : constant Class_Type := New_Class (Kernel, "Action");
-      Menu_Class   : constant Class_Type := New_Class
-        (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
+      Menu_Class   : constant Class_Type :=
+        New_Class (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
       Inst         : Class_Instance;
 
    begin
@@ -1436,8 +1493,8 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
          Data.Set_Return_Value
            (Lookup_Action
-              (Kernel,
-               Name => String'(Get_Data (Inst, Action_Class))) /= null);
+              (Kernel, Name => String'(Get_Data (Inst, Action_Class)))
+            /= null);
 
       elsif Command = "create" then
          Inst := Nth_Arg (Data, 1, Action_Class);
@@ -1445,10 +1502,11 @@ package body Custom_Module is
            (Kernel       => Kernel,
             Name         => String'(Get_Data (Inst, Action_Class)),
             Command      =>
-               new Subprogram_Command_Record'
-              (Interactive_Command with
-               Pass_Context => False,
-               On_Activate  => Data.Nth_Arg (2)),  --  Freed with Command
+              new Subprogram_Command_Record'
+                (Interactive_Command
+                 with
+                   Pass_Context => False,
+                   On_Activate  => Data.Nth_Arg (2)),  --  Freed with Command
             Filter       => Filter_From_Argument (Data, 3),
             Category     => Data.Nth_Arg (4, "General"),
             Description  => Data.Nth_Arg (5, ""),
@@ -1461,10 +1519,7 @@ package body Custom_Module is
             Disabled : constant Boolean := Nth_Arg (Data, 2, True);
             Action   : constant String := Get_Data (Inst, Action_Class);
          begin
-            Set_Action_Disabled
-              (Kernel,
-               Name     => Action,
-               Disabled => Disabled);
+            Set_Action_Disabled (Kernel, Name => Action, Disabled => Disabled);
          end;
 
       elsif Command = "unregister" then
@@ -1495,8 +1550,8 @@ package body Custom_Module is
       elsif Command = "can_execute" then
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
-            A : constant Action_Access := Lookup_Action
-              (Kernel, Get_Data (Inst, Action_Class));
+            A : constant Action_Access :=
+              Lookup_Action (Kernel, Get_Data (Inst, Action_Class));
          begin
             Data.Set_Return_Value
               (A /= null
@@ -1506,26 +1561,30 @@ package body Custom_Module is
       elsif Command = "execute_if_possible" then
          Inst := Data.Nth_Arg (1, Action_Class);
          Data.Set_Return_Value
-            (Execute_Action
-               (Kernel,
-                String'(Get_Data (Inst, Action_Class)),
-                Error_Msg_In_Console => False,
-                Synchronous          => True));
+           (Execute_Action
+              (Kernel,
+               String'(Get_Data (Inst, Action_Class)),
+               Error_Msg_In_Console => False,
+               Synchronous          => True));
 
       elsif Command = "menu" then
-         Name_Parameters (Data, (1 => Path_Cst'Access,
-                                 2 => Ref_Cst'Access,
-                                 3 => Add_Before_Cst'Access));
+         Name_Parameters
+           (Data,
+            (1 => Path_Cst'Access,
+             2 => Ref_Cst'Access,
+             3 => Add_Before_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
-            Path   : constant String  := Nth_Arg (Data, 2);
-            Ref    : constant String  := Nth_Arg (Data, 3, "");
+            Path   : constant String := Nth_Arg (Data, 2);
+            Ref    : constant String := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
             Action : constant String := Get_Data (Inst, Action_Class);
          begin
             Register_Menu
-              (Kernel, Path, Action,
+              (Kernel,
+               Path,
+               Action,
                Ref_Item        => Ref,
                Before_Ref_Item => Before);
             Inst := New_Instance (Get_Script (Data), Menu_Class);
@@ -1537,7 +1596,7 @@ package body Custom_Module is
          Inst := Data.Nth_Arg (1, Action_Class);
          declare
             Action_Name      : constant String :=
-                                 Get_Data (Inst, Action_Class);
+              Get_Data (Inst, Action_Class);
             Toolbar_Name     : constant String := Data.Nth_Arg (2, "main");
             Section_Name     : constant String := Data.Nth_Arg (3, "");
             Group_Name       : constant String := Data.Nth_Arg (4, "");
@@ -1545,10 +1604,9 @@ package body Custom_Module is
             Icon_Name        : constant String := Data.Nth_Arg (6, "");
             Hide             : constant Boolean := Data.Nth_Arg (7, False);
             Actual_Icon_Name : constant String :=
-                                 (if Icon_Name /= "" then Icon_Name
-                                  else
-                                     Get_Icon_Name
-                                    (Lookup_Action (Kernel, Action_Name)));
+              (if Icon_Name /= ""
+               then Icon_Name
+               else Get_Icon_Name (Lookup_Action (Kernel, Action_Name)));
          begin
             Inst := Data.Nth_Arg (1);
             Register_Button
@@ -1565,37 +1623,36 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
-            Lock   : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
-            Ref    : constant String  := Nth_Arg (Data, 3, "");
-            Before : constant Boolean := Nth_Arg (Data, 4, True);
-            Action : constant String := Get_Data (Inst, Action_Class);
-            Group  : constant Integer := Nth_Arg (Data, 5, 0);
-            Label  : Subprogram_Label;
-            Subp   : Subprogram_Type;
-            Item   : PyObject;
+            Lock    : GNATCOLL.Python.State.Ada_GIL_Lock
+            with Unreferenced;
+            Ref     : constant String := Nth_Arg (Data, 3, "");
+            Before  : constant Boolean := Nth_Arg (Data, 4, True);
+            Action  : constant String := Get_Data (Inst, Action_Class);
+            Group   : constant Integer := Nth_Arg (Data, 5, 0);
+            Label   : Subprogram_Label;
+            Subp    : Subprogram_Type;
+            Item    : PyObject;
             Success : Boolean;
          begin
             --  Check whether param 2 is a string
-            Get_Param (Python_Callback_Data'Class (Data),
-                       2, Item, Success);
-            if Success
-              and then PyString_Check (Item)
-            then
+            Get_Param (Python_Callback_Data'Class (Data), 2, Item, Success);
+            if Success and then PyString_Check (Item) then
                declare
                   --  Replace the Python '\\' escaping by the one used for the
                   --  Ada layer (simple '\').
-                  Str : constant String := GNATCOLL.Utils.Replace
-                    (S           => Data.Nth_Arg (2),
-                     Pattern     => "\\",
-                     Replacement => "\");
+                  Str : constant String :=
+                    GNATCOLL.Utils.Replace
+                      (S           => Data.Nth_Arg (2),
+                       Pattern     => "\\",
+                       Replacement => "\");
                begin
                   Register_Contextual_Menu
                     (Kernel,
-                     Label       => Str,
-                     Ref_Item    => Ref,
-                     Add_Before  => Before,
-                     Group       => Group,
-                     Action      => Action);
+                     Label      => Str,
+                     Ref_Item   => Ref,
+                     Add_Before => Before,
+                     Group      => Group,
+                     Action     => Action);
                end;
             else
                --  Assume that the full path is a function.
@@ -1603,21 +1660,23 @@ package body Custom_Module is
                --  layer (simple '\').
 
                Subp := Nth_Arg (Data, 2, null);
-               Label := new Subprogram_Label_Record'
-                 (Label => Subp,
-                  Path  => Ada.Strings.Unbounded.To_Unbounded_String
-                    (GNATCOLL.Utils.Replace
-                         (S           => Nth_Arg (Data, 6, ""),
-                          Pattern     => "\\",
-                          Replacement => "\")));
+               Label :=
+                 new Subprogram_Label_Record'
+                   (Label => Subp,
+                    Path  =>
+                      Ada.Strings.Unbounded.To_Unbounded_String
+                        (GNATCOLL.Utils.Replace
+                           (S           => Nth_Arg (Data, 6, ""),
+                            Pattern     => "\\",
+                            Replacement => "\")));
                Register_Contextual_Menu
                  (Kernel,
-                  Name        => Action,
-                  Label       => Label,
-                  Ref_Item    => Ref,
-                  Add_Before  => Before,
-                  Action      => Action,
-                  Group       => Group);
+                  Name       => Action,
+                  Label      => Label,
+                  Ref_Item   => Ref,
+                  Add_Before => Before,
+                  Action     => Action,
+                  Group      => Group);
             end if;
          end;
 
@@ -1632,14 +1691,15 @@ package body Custom_Module is
             if Action = null then
                Set_Return_Value (Data, String'(""));
             else
-               Set_Return_Value (Data,
-                                 Get_Full_Description
-                                   (Action           => Action,
-                                    Kernel           => Kernel,
-                                    Use_Markup       => False,
-                                    Include_Name     => False,
-                                    Include_Category => False,
-                                    Include_Menus    => False));
+               Set_Return_Value
+                 (Data,
+                  Get_Full_Description
+                    (Action           => Action,
+                     Kernel           => Kernel,
+                     Use_Markup       => False,
+                     Include_Name     => False,
+                     Include_Category => False,
+                     Include_Menus    => False));
             end if;
          end;
       end if;
@@ -1652,10 +1712,10 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Class : constant Class_Type := New_Class (Kernel, "Menu");
-      Action_Class : constant Class_Type := New_Class (Kernel, "Action");
-      Contextual_Class : constant Class_Type := New_Class
-        (Kernel, "Contextual");
+      Menu_Class       : constant Class_Type := New_Class (Kernel, "Menu");
+      Action_Class     : constant Class_Type := New_Class (Kernel, "Action");
+      Contextual_Class : constant Class_Type :=
+        New_Class (Kernel, "Contextual");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -1669,122 +1729,121 @@ package body Custom_Module is
       XML_Viewer.Register_Commands (Kernel);
 
       Register_Command
-        (Kernel, Constructor_Method,
-         Class         => Action_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Action_Handler'Access);
+        (Kernel,
+         Constructor_Method,
+         Class        => Action_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Action_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("exists",
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
+        ("exists", Class => Action_Class, Handler => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create",
-         Class         => Action_Class,
-         Params        => (1 => Param ("on_activate"),
-                           2 => Param ("filter", Optional => True),
-                           3 => Param ("category", Optional => True),
-                           4 => Param ("description", Optional => True),
-                           5 => Param ("icon",        Optional => True),
-                           6 => Param ("for_learning", Optional => True)),
-         Handler       => Action_Handler'Access);
+         Class   => Action_Class,
+         Params  =>
+           (1 => Param ("on_activate"),
+            2 => Param ("filter", Optional => True),
+            3 => Param ("category", Optional => True),
+            4 => Param ("description", Optional => True),
+            5 => Param ("icon", Optional => True),
+            6 => Param ("for_learning", Optional => True)),
+         Handler => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("disable",
-         Params        => (1 => Param ("disabled", Optional => True)),
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("unregister",
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("destroy_ui",
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("can_execute",
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("__doc__",
-         Class         => Action_Class,
-         Getter        => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("execute_if_possible",
-         Class         => Action_Class,
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("key",
-         Class         => Action_Class,
-         Params        => (2 => Param ("key"),
-                           3 => Param ("exclusive", Optional => True)),
-         Handler       => Action_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("get_keys",
+         Params  => (1 => Param ("disabled", Optional => True)),
          Class   => Action_Class,
          Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("unregister",
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("destroy_ui",
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("can_execute",
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("__doc__", Class => Action_Class, Getter => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("execute_if_possible",
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("key",
+         Class   => Action_Class,
+         Params  =>
+           (2 => Param ("key"), 3 => Param ("exclusive", Optional => True)),
+         Handler => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_keys", Class => Action_Class, Handler => Action_Handler'Access);
       Register_Command
-        (Kernel, "menu",
-         Class         => Action_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 3,
-         Handler       => Action_Handler'Access);
+        (Kernel,
+         "menu",
+         Class        => Action_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 3,
+         Handler      => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("contextual",
-         Class         => Action_Class,
-         Params        => (2 => Param ("path"),
-                           3 => Param ("ref",         Optional => True),
-                           4 => Param ("add_before",  Optional => True),
-                           5 => Param ("group",       Optional => True),
-                           6 => Param ("static_path", Optional => True)),
-         Handler       => Action_Handler'Access);
+         Class   => Action_Class,
+         Params  =>
+           (2 => Param ("path"),
+            3 => Param ("ref", Optional => True),
+            4 => Param ("add_before", Optional => True),
+            5 => Param ("group", Optional => True),
+            6 => Param ("static_path", Optional => True)),
+         Handler => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("button",
-         Params  => (1 => Param ("toolbar", Optional => True),
-                     2 => Param ("section", Optional => True),
-                     3 => Param ("group",   Optional => True),
-                     4 => Param ("label",   Optional => True),
-                     5 => Param ("icon",    Optional => True),
-                     6 => Param ("hide",    Optional => True)),
+         Params  =>
+           (1 => Param ("toolbar", Optional => True),
+            2 => Param ("section", Optional => True),
+            3 => Param ("group", Optional => True),
+            4 => Param ("label", Optional => True),
+            5 => Param ("icon", Optional => True),
+            6 => Param ("hide", Optional => True)),
          Class   => Action_Class,
          Handler => Action_Handler'Access);
 
       Register_Command
-        (Kernel, Constructor_Method,
-         Class        => Menu_Class,
-         Handler      => Menu_Handler'Access);
+        (Kernel,
+         Constructor_Method,
+         Class   => Menu_Class,
+         Handler => Menu_Handler'Access);
       Register_Command
-        (Kernel, "get",
+        (Kernel,
+         "get",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Menu_Class,
          Static_Method => True,
          Handler       => Menu_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("action",
-         Class         => Menu_Class,
-         Getter        => Menu_Handler'Access);
+        ("action", Class => Menu_Class, Getter => Menu_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class   => Contextual_Class,
+         Class        => Contextual_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler => Contextual_Handler'Access);
+         Handler      => Contextual_Handler'Access);
       Kernel.Scripts.Register_Command
         ("show",
-         Class => Contextual_Class,
+         Class   => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Kernel.Scripts.Register_Command
         ("hide",
-         Class => Contextual_Class,
+         Class   => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_sensitive",
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Class => Contextual_Class,
-         Handler => Contextual_Handler'Access);
+         Class        => Contextual_Class,
+         Handler      => Contextual_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create_dynamic",
          Minimum_Args => 2,
@@ -1798,8 +1857,8 @@ package body Custom_Module is
          Handler       => Contextual_Handler'Access);
       Kernel.Scripts.Register_Property
         ("name",
-         Class         => Contextual_Class,
-         Getter        => Contextual_Handler'Access);
+         Class  => Contextual_Class,
+         Getter => Contextual_Handler'Access);
 
       Language.Shell.Setup (Kernel_Handle (Kernel));
    end Register_Module;

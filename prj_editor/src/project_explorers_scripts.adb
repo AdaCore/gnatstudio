@@ -24,11 +24,12 @@ with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body Project_Explorers_Scripts is
 
-   package Python_Filters_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Subprogram_Type,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Python_Filters_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Subprogram_Type,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
    Project_View_Filters : Python_Filters_Maps.Map;
 
@@ -37,8 +38,7 @@ package body Project_Explorers_Scripts is
    List_Filters_Method_Cst  : constant String := "list_filters";
 
    procedure Project_View_Filter_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
 
    procedure Add_Python_Filter
      (Filters : in out Python_Filters_Maps.Map;
@@ -48,8 +48,7 @@ package body Project_Explorers_Scripts is
    --  and store it using its Id
 
    procedure Remove_Python_Filter
-     (Filters : in out Python_Filters_Maps.Map;
-      Id      : String);
+     (Filters : in out Python_Filters_Maps.Map; Id : String);
    --  Remove the filter related to Id
 
    -----------------------
@@ -70,8 +69,7 @@ package body Project_Explorers_Scripts is
    --------------------------
 
    procedure Remove_Python_Filter
-     (Filters : in out Python_Filters_Maps.Map;
-      Id      : String) is
+     (Filters : in out Python_Filters_Maps.Map; Id : String) is
    begin
       if Filters.Contains (Id) then
          declare
@@ -105,8 +103,8 @@ package body Project_Explorers_Scripts is
    begin
       for Subp of Project_View_Filters loop
          declare
-            Args   : Callback_Data'Class := Create
-              (Script, Arguments_Count => 1);
+            Args   : Callback_Data'Class :=
+              Create (Script, Arguments_Count => 1);
             Result : Boolean;
          begin
             Set_Nth_Arg (Args, 1, File);
@@ -129,8 +127,7 @@ package body Project_Explorers_Scripts is
    ---------------------------------
 
    procedure Project_View_Filter_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String) is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Add_Filter_Method_Cst then
          declare

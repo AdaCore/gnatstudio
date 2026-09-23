@@ -31,8 +31,8 @@ package GPS.Default_Styles is
    -- Editor --
    ------------
 
-   type Language_Styles_Array is array
-     (Standout_Language_Entity) of Style_Access;
+   type Language_Styles_Array is
+     array (Standout_Language_Entity) of Style_Access;
 
    Language_Styles : Language_Styles_Array;
    --  Style corresponding to language elements, used for syntax highlighting

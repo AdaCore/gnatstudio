@@ -17,21 +17,21 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Commands.Builder;            use Commands.Builder;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
-with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;          use GPS.Kernel.Project;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Intl;                    use GPS.Intl;
-with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
+with Commands.Builder;       use Commands.Builder;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Macros;      use GPS.Kernel.Macros;
+with GPS.Kernel.Messages;    use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Intl;               use GPS.Intl;
+with GNATCOLL.Any_Types;     use GNATCOLL.Any_Types;
 
-with Gtk.Text_View;               use Gtk.Text_View;
+with Gtk.Text_View; use Gtk.Text_View;
 
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
-with GPS.Kernel.Interactive;      use GPS.Kernel.Interactive;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Interactive; use GPS.Kernel.Interactive;
 
 package body Build_Command_Manager is
 
@@ -42,20 +42,23 @@ package body Build_Command_Manager is
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
-   overriding function Get_Last_Main_For_Background_Target
-     (Adapter : Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File;
+   overriding
+   function Get_Last_Main_For_Background_Target
+     (Adapter : Build_Command_Adapter; Target : Target_Access)
+      return Virtual_File;
    --  Return the Main to use for building Target as a background build.
    --  This is either the last main that was used, if it exists, or the first
    --  main defined for this target, if it exists.
    --  The full path to the target is returned.
    --  If the target is not found, "" is returned.
 
-   overriding function Get_Background_Project_Full_Name
+   overriding
+   function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String;
 
-   overriding function Substitute
-     (Adapter : Build_Command_Adapter;
+   overriding
+   function Substitute
+     (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
@@ -63,40 +66,45 @@ package body Build_Command_Manager is
       For_Shell : Boolean := False) return String;
    --  Wrapper around GPS.Kernel.Macros.Substitute
 
-   overriding procedure Console_Insert
+   overriding
+   procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Message_Type := Info);
+      Text    : String;
+      Add_LF  : Boolean := True;
+      Mode    : Message_Type := Info);
    --  Wrapper around GPS.Kernel.Console.Insert
 
-   overriding procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Build_Command_Adapter;
-      File     : Virtual_File);
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter; File : Virtual_File);
    --  Removes all messages for specified file in the error category.
    --  Do nothing when there is no such category or file.
 
-   overriding function Get_Background_Environment_File
+   overriding
+   function Get_Background_Environment_File
      (Adapter : Build_Command_Adapter) return Virtual_File;
 
-   overriding function Get_Scenario_Variables
+   overriding
+   function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
-   overriding function Get_Untyped_Variables
+   overriding
+   function Get_Untyped_Variables
      (Adapter : Build_Command_Adapter) return Untyped_Variable_Array;
 
    -----------------------------------------
    -- Get_Last_Main_For_Background_Target --
    -----------------------------------------
 
-   overriding function Get_Last_Main_For_Background_Target
-     (Adapter : Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File
+   overriding
+   function Get_Last_Main_For_Background_Target
+     (Adapter : Build_Command_Adapter; Target : Target_Access)
+      return Virtual_File
    is
       Kernel : constant GPS.Kernel.Kernel_Handle :=
         GPS.Kernel.Kernel_Handle (Adapter.Builder.Kernel);
-      Last : constant Virtual_File := Get_Last_Main
-        (Adapter.Builder, Get_Name (Target));
+      Last   : constant Virtual_File :=
+        Get_Last_Main (Adapter.Builder, Get_Name (Target));
    begin
       if Last = No_File then
          --  There is no last-launched main: compute the list of
@@ -105,9 +113,9 @@ package body Build_Command_Manager is
          declare
             Targets : constant Unbounded_String :=
               Get_Properties (Target).Target_Type;
-            Mains  : constant Any_Type := Compute_Build_Targets_Hook.Run
-               (Kernel   => Kernel,
-                Str      => To_String (Targets));
+            Mains   : constant Any_Type :=
+              Compute_Build_Targets_Hook.Run
+                (Kernel => Kernel, Str => To_String (Targets));
          begin
             if Mains.Length = 0 then
                return No_File;
@@ -115,8 +123,7 @@ package body Build_Command_Manager is
 
             declare
                The_Main : constant Virtual_File :=
-                            GNATCOLL.VFS.Create
-                              (+Mains.List (1).Tuple (2).Str);
+                 GNATCOLL.VFS.Create (+Mains.List (1).Tuple (2).Str);
             begin
                Set_Last_Main (Adapter.Builder, Get_Name (Target), The_Main);
                return The_Main;
@@ -164,8 +171,9 @@ package body Build_Command_Manager is
    -- Substitute --
    ----------------
 
-   overriding function Substitute
-     (Adapter : Build_Command_Adapter;
+   overriding
+   function Substitute
+     (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
@@ -174,15 +182,17 @@ package body Build_Command_Manager is
    is
       pragma Unreferenced (For_Shell);
    begin
-      return GPS.Kernel.Macros.Substitute
-        (Param, Adapter.Context, Quoted, Done, Server);
+      return
+        GPS.Kernel.Macros.Substitute
+          (Param, Adapter.Context, Quoted, Done, Server);
    end Substitute;
 
    --------------------
    -- Console_Insert --
    --------------------
 
-   overriding procedure Console_Insert
+   overriding
+   procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
       Text    : String;
       Add_LF  : Boolean := True;
@@ -195,9 +205,9 @@ package body Build_Command_Manager is
    -- Remove_Error_Builder_Message_From_File --
    --------------------------------------------
 
-   overriding procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Build_Command_Adapter;
-      File     : Virtual_File)
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter; File : Virtual_File)
    is
       Build : Build_Information := Adapter.Builder.Get_Last_Build;
    begin
@@ -207,9 +217,9 @@ package body Build_Command_Manager is
          Adapter.Builder.Set_Last_Build (Build);
       end if;
 
-      Get_Messages_Container
-        (Kernel_Handle (Adapter.Builder.Kernel)).Remove_File
-          (Commands.Builder.Error_Category, File, Builder_Message_Flags);
+      Get_Messages_Container (Kernel_Handle (Adapter.Builder.Kernel))
+        .Remove_File
+           (Commands.Builder.Error_Category, File, Builder_Message_Flags);
    end Remove_Error_Builder_Message_From_File;
 
    -------------------------------------
@@ -223,8 +233,10 @@ package body Build_Command_Manager is
       return Get_File (Adapter.Background_Env);
    end Get_Background_Environment_File;
 
-   procedure Free_Adapter is new Ada.Unchecked_Deallocation
-     (Build_Command_Adapter, Build_Command_Adapter_Access);
+   procedure Free_Adapter is new
+     Ada.Unchecked_Deallocation
+       (Build_Command_Adapter,
+        Build_Command_Adapter_Access);
 
    -------------------------
    -- Expand_Command_Line --
@@ -264,15 +276,19 @@ package body Build_Command_Manager is
          GPS.Kernel.Preferences.Execute_Command.Get_Pref,
          Multi_Language_Builder.Get_Pref);
 
-      Res := Expand_Command_Line
-        (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File,
-         Main              => Main,
-         Main_Project      => Main_Project,
-         Subdir            => Subdir,
-         Background        => Background,
-         Simulate          => Simulate,
-         Explicit_Scenario => Explicit_Scenario);
+      Res :=
+        Expand_Command_Line
+          (Abstract_Build_Command_Adapter_Access (Adapter),
+           CL,
+           Target,
+           Server,
+           Force_File,
+           Main              => Main,
+           Main_Project      => Main_Project,
+           Subdir            => Subdir,
+           Background        => Background,
+           Simulate          => Simulate,
+           Explicit_Scenario => Explicit_Scenario);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
@@ -281,9 +297,10 @@ package body Build_Command_Manager is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Build_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type is
+   overriding
+   function Execute
+     (Command : access Build_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type is
    begin
       Launch_Target
         (Target_Name  => To_String (Command.Target_Name),
@@ -306,13 +323,13 @@ package body Build_Command_Manager is
    ------------
 
    procedure Create
-     (Item        : out Build_Command_Access;
-      Builder     : Builder_Context;
-      Target_Name : String;
-      Main        : Virtual_File;
+     (Item         : out Build_Command_Access;
+      Builder      : Builder_Context;
+      Target_Name  : String;
+      Main         : Virtual_File;
       Main_Project : Project_Type;
-      Quiet       : Boolean;
-      Dialog      : Dialog_Mode) is
+      Quiet        : Boolean;
+      Dialog       : Dialog_Mode) is
    begin
       Item := new Build_Command;
       Item.Builder := Builder;
@@ -335,33 +352,39 @@ package body Build_Command_Manager is
       Target_Type : constant String := To_String (Command.Target_Type);
       Kernel      : constant Kernel_Handle :=
         Kernel_Handle (Command.Builder.Kernel);
-      Mains       : Any_Type := Compute_Build_Targets_Hook.Run
-         (Kernel => Kernel,
-          Str    => Target_Type);
+      Mains       : Any_Type :=
+        Compute_Build_Targets_Hook.Run (Kernel => Kernel, Str => Target_Type);
    begin
       if Mains.T /= List_Type then
          Insert
            (Kernel,
-            (-"The command for determining the target type of target " &
-             Target_Type & (-" returned a ") & Mains.T'Img
-               & (-("but should return a LIST_TYPE "
-               & " (containing a pair display_name/full_name)"))),
-             Mode => Error);
+            (-"The command for determining the target type of target "
+             & Target_Type
+             & (-" returned a ")
+             & Mains.T'Img
+             & (-("but should return a LIST_TYPE "
+                  & " (containing a pair display_name/full_name)"))),
+            Mode => Error);
 
          Free (Mains);
          return Failure;
       end if;
 
       if Command.Main not in Mains.List'Range then
-         Insert (Kernel_Handle (Command.Builder.Kernel),
-                 (-"This project does not contain") & Command.Main'Img
-                 & " " & Target_Type & (-" targets"), Mode => Error);
+         Insert
+           (Kernel_Handle (Command.Builder.Kernel),
+            (-"This project does not contain")
+            & Command.Main'Img
+            & " "
+            & Target_Type
+            & (-" targets"),
+            Mode => Error);
          Free (Mains);
          return Failure;
       end if;
 
       Launch_Target
-        (Target_Name => To_String (Command.Target_Name),
+        (Target_Name  => To_String (Command.Target_Name),
          Mode_Name    => "",
          Force_File   => No_File,
          Extra_Args   => null,
@@ -391,8 +414,7 @@ package body Build_Command_Manager is
       Target_Type : String;
       Main        : Natural;
       Quiet       : Boolean;
-      Dialog      : Dialog_Mode)
-   is
+      Dialog      : Dialog_Mode) is
    begin
       Item := new Build_Main_Command;
       Item.Builder := Builder;
@@ -418,16 +440,17 @@ package body Build_Command_Manager is
       Console : Interactive_Console;
    begin
       if New_Console_Name /= "" then
-         Console := Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => New_Console_Name,
-            History             => "interactive",
-            Create_If_Not_Exist => True,
-            Module              => null,
-            Force_Create        => False,
-            ANSI_Support        => True,
-            Accept_Input        => True,
-            Toolbar_Name        => Toolbar_Name);
+         Console :=
+           Create_Interactive_Console
+             (Kernel              => Kernel,
+              Title               => New_Console_Name,
+              History             => "interactive",
+              Create_If_Not_Exist => True,
+              Module              => null,
+              Force_Create        => False,
+              ANSI_Support        => True,
+              Accept_Input        => True,
+              Toolbar_Name        => Toolbar_Name);
 
          Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
 
@@ -435,27 +458,29 @@ package body Build_Command_Manager is
       end if;
 
       if Background then
-         return Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => -"Background Builds",
-            History             => "interactive",
-            Create_If_Not_Exist => Create_If_Not_Exist,
-            Module              => null,
-            Force_Create        => False,
-            Accept_Input        => False);
+         return
+           Create_Interactive_Console
+             (Kernel              => Kernel,
+              Title               => -"Background Builds",
+              History             => "interactive",
+              Create_If_Not_Exist => Create_If_Not_Exist,
+              Module              => null,
+              Force_Create        => False,
+              Accept_Input        => False);
 
       elsif Shadow then
-         return Create_Interactive_Console
-           (Kernel              => Kernel,
-            Title               => -"Auxiliary Builds",
-            History             => "interactive",
-            Create_If_Not_Exist => Create_If_Not_Exist,
-            Module              => null,
-            Force_Create        => False,
-            Accept_Input        => False);
+         return
+           Create_Interactive_Console
+             (Kernel              => Kernel,
+              Title               => -"Auxiliary Builds",
+              History             => "interactive",
+              Create_If_Not_Exist => Create_If_Not_Exist,
+              Module              => null,
+              Force_Create        => False,
+              Accept_Input        => False);
       else
-         return Get_Console
-            (Kernel, Create_If_Not_Exist => Create_If_Not_Exist);
+         return
+           Get_Console (Kernel, Create_If_Not_Exist => Create_If_Not_Exist);
       end if;
    end Get_Build_Console;
 

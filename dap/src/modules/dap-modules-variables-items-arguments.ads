@@ -19,23 +19,24 @@ package DAP.Modules.Variables.Items.Arguments is
 
    type Arguments_Item_Info is new Item_Info with null record;
 
-   overriding function Get_Special_Kind
-     (Info : Arguments_Item_Info) return Variable_Kind;
+   overriding
+   function Get_Special_Kind (Info : Arguments_Item_Info) return Variable_Kind;
 
-   overriding function Get_Name
-     (Self : Arguments_Item_Info) return Virtual_String;
+   overriding
+   function Get_Name (Self : Arguments_Item_Info) return Virtual_String;
 
-   overriding function Get_Full_Name
-     (Self : Arguments_Item_Info) return Virtual_String;
+   overriding
+   function Get_Full_Name (Self : Arguments_Item_Info) return Virtual_String;
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Arguments_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean);
 
-   overriding procedure Store
-     (Info  : Arguments_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Store
+     (Info : Arguments_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value);
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
 

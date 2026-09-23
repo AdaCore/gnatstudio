@@ -31,9 +31,7 @@ package Ada_Semantic_Tree.Generics is
 
    Null_Instance_Info : constant Instance_Info;
 
-   function "&"
-     (Left, Right : Instance_Info)
-      return Instance_Info;
+   function "&" (Left, Right : Instance_Info) return Instance_Info;
    --  Return a new generic instance information resulting of the concatenation
    --  of the parameters. If one of the two parameters is null, then the other
    --  one will be returned without modifications.
@@ -44,8 +42,7 @@ package Ada_Semantic_Tree.Generics is
    procedure Unref (This : in out Instance_Info);
    --  Removes 1 from the reference counter. Frees the instance when reaches 0.
 
-   type Generic_Instance_Array is array
-     (Integer range <>) of Instance_Info;
+   type Generic_Instance_Array is array (Integer range <>) of Instance_Info;
 
    function Is_Generic_Instance (Entity : Entity_Access) return Boolean;
    --  Return true if the entity given in parameter is a generic instance
@@ -67,7 +64,7 @@ package Ada_Semantic_Tree.Generics is
    --  Return true if the entity is declared in a generic entity.
 
    function Get_Actual_For_Generic_Param
-     (Info   : Instance_Info; Formal : Entity_Access) return Entity_Access;
+     (Info : Instance_Info; Formal : Entity_Access) return Entity_Access;
    --  Return the actual entity for this formal, according to the generic
    --  instance information
 
@@ -93,8 +90,7 @@ package Ada_Semantic_Tree.Generics is
      (Instance : Persistent_Instance_Info) return Instance_Info;
    --  Generate an active generic information from a persistent one.
 
-   function Is_Up_To_Date
-     (This : Persistent_Instance_Info) return Boolean;
+   function Is_Up_To_Date (This : Persistent_Instance_Info) return Boolean;
    --  Return true if the information is up to date, false if it points to
    --  certain entites that doesn't exist anymore.
 
@@ -106,13 +102,11 @@ private
    type Instance_Info_Record;
    type Persistent_Instance_Info_Record;
 
-   type Instance_Info is
-     access all Instance_Info_Record;
-   type Persistent_Instance_Info is
-     access all Persistent_Instance_Info_Record;
+   type Instance_Info is access all Instance_Info_Record;
+   type Persistent_Instance_Info is access all Persistent_Instance_Info_Record;
 
-   package Generic_Info_List is new Ada.Containers.Doubly_Linked_Lists
-     (Instance_Info);
+   package Generic_Info_List is new
+     Ada.Containers.Doubly_Linked_Lists (Instance_Info);
    package Persistent_Generic_Info_List is new
      Ada.Containers.Doubly_Linked_Lists (Persistent_Instance_Info);
 
@@ -134,8 +128,7 @@ private
       Post_Contexts : Persistent_Generic_Info_List.List;
    end record;
 
-   Null_Instance_Info : constant Instance_Info :=
-     null;
+   Null_Instance_Info : constant Instance_Info := null;
 
    Null_Persistent_Instance_Info : constant Persistent_Instance_Info := null;
 

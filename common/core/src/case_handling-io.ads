@@ -28,9 +28,7 @@ package Case_Handling.IO is
    --  Load case exceptions file and set the in memory container
 
    procedure Save_Exceptions
-     (C        : Casing_Exceptions;
-      Filename : Virtual_File;
-      Success  : out Boolean);
+     (C : Casing_Exceptions; Filename : Virtual_File; Success : out Boolean);
    --  Save the case exceptions container into Filename. The container still
    --  remains in memory. The read-only case exceptions are not saved.
 

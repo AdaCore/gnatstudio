@@ -31,8 +31,8 @@ with Src_Editor_View;   use Src_Editor_View;
 package Src_Editor_Status_Bar is
 
    type Source_Editor_Status_Bar_Record is new Gtk_Box_Record with private;
-   type Source_Editor_Status_Bar is access all
-     Source_Editor_Status_Bar_Record'Class;
+   type Source_Editor_Status_Bar is
+     access all Source_Editor_Status_Bar_Record'Class;
 
    procedure Gtk_New
      (Bar    : out Source_Editor_Status_Bar;
@@ -43,7 +43,7 @@ package Src_Editor_Status_Bar is
    --  Box is in fact the containing Source_Editor_Box
 
    procedure Update_Status
-     (Bar    : not null access Source_Editor_Status_Bar_Record'Class);
+     (Bar : not null access Source_Editor_Status_Bar_Record'Class);
    --  Update the status icon showing the state Saved/Unsaved for the editor,
    --  as well as the writable/read-only status
 
@@ -57,22 +57,22 @@ private
    type Frames_Array_Access is access Frames_Array;
 
    type Source_Editor_Status_Bar_Record is new Gtk_Box_Record with record
-      View          : Src_Editor_View.Source_View;
-      Buffer        : Src_Editor_Buffer.Source_Buffer;
-      Box           : Gtk_Event_Box;   --  Source_Editor_Box
+      View   : Src_Editor_View.Source_View;
+      Buffer : Src_Editor_Buffer.Source_Buffer;
+      Box    : Gtk_Event_Box;   --  Source_Editor_Box
 
-      Buffer_Info_Frames   : Frames_Array_Access := null;
+      Buffer_Info_Frames : Frames_Array_Access := null;
       --  Extra information displayed in the status bar, like the VCS-version1
       --  status.
 
-      Function_Label       : Gtk.Label.Gtk_Label;
-      Read_Only            : Gtk_Tool_Button;
-      Cursor_Loc           : Gtk_Tool_Button;
-      VCS_Status           : Gtk_Tool_Button;
-      Modified_Status      : Gtk_Tool_Button;
-      Toolbar              : Gtk_Toolbar;
+      Function_Label  : Gtk.Label.Gtk_Label;
+      Read_Only       : Gtk_Tool_Button;
+      Cursor_Loc      : Gtk_Tool_Button;
+      VCS_Status      : Gtk_Tool_Button;
+      Modified_Status : Gtk_Tool_Button;
+      Toolbar         : Gtk_Toolbar;
 
-      Current_Line         : Editable_Line_Type := 1;
+      Current_Line : Editable_Line_Type := 1;
       --  Cache for the current line
 
    end record;

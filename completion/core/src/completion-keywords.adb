@@ -25,17 +25,18 @@ package body Completion.Keywords is
    -- Get_Completion_Root --
    -------------------------
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access Completion_Keywords;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List)
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access Completion_Keywords;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
    is
       Proposal : Simple_Completion_Proposal;
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Keywords : constant String_List := Language.Keywords (Context.Lang);
-      Word     : UTF8_String
-        (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
+      Word     :
+        UTF8_String (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
           Context.Buffer
             (Natural (Offset) + 1 .. Natural (Context.End_Offset));
    begin
@@ -50,9 +51,10 @@ package body Completion.Keywords is
             if K'Length >= Word'Length
               and then K (K'First .. K'First + Word'Length - 1) = Word
             then
-               Proposal := (Resolver => Resolver,
-                            Name     => Keywords (J),
-                            Category => Cat_Unknown);
+               Proposal :=
+                 (Resolver => Resolver,
+                  Name     => Keywords (J),
+                  Category => Cat_Unknown);
 
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);
@@ -68,10 +70,8 @@ package body Completion.Keywords is
    -- Get_Id --
    ------------
 
-   overriding function Get_Id
-     (Resolver : Completion_Keywords)
-      return String
-   is
+   overriding
+   function Get_Id (Resolver : Completion_Keywords) return String is
       pragma Unreferenced (Resolver);
    begin
       return Resolver_ID;

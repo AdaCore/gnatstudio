@@ -47,34 +47,34 @@ package body CodePeer.Reports is
    procedure Bump_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Dummy : Boolean;
    begin
-      Dummy := GPS.Kernel.Actions.Execute_Action
-        (Report (Rec).Kernel, CodePeer.Package_Name & " bump");
+      Dummy :=
+        GPS.Kernel.Actions.Execute_Action
+          (Report (Rec).Kernel, CodePeer.Package_Name & " bump");
    end Bump_Clicked;
 
    ---------------------
    -- Replace_Clicked --
    ---------------------
 
-   procedure Replace_Clicked
-     (Rec : access Gtk.Widget.Gtk_Widget_Record'Class)
+   procedure Replace_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Dummy : Boolean;
    begin
-      Dummy := GPS.Kernel.Actions.Execute_Action
-        (Report (Rec).Kernel, CodePeer.Package_Name & " baseline replace");
+      Dummy :=
+        GPS.Kernel.Actions.Execute_Action
+          (Report (Rec).Kernel, CodePeer.Package_Name & " baseline replace");
    end Replace_Clicked;
 
    -----------------
    -- Set_Clicked --
    -----------------
 
-   procedure Set_Clicked
-     (Rec : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
+   procedure Set_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Dummy : Boolean;
    begin
-      Dummy := GPS.Kernel.Actions.Execute_Action
-        (Report (Rec).Kernel, CodePeer.Package_Name & " baseline set");
+      Dummy :=
+        GPS.Kernel.Actions.Execute_Action
+          (Report (Rec).Kernel, CodePeer.Package_Name & " baseline set");
    end Set_Clicked;
 
    -------------
@@ -112,9 +112,9 @@ package body CodePeer.Reports is
       Project_Data        : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-            (Tree,
-             GPS.Kernel.Project.Get_Root_Project_View
-               (Kernel)).Analysis_Data.CodePeer_Data.all);
+             (Tree, GPS.Kernel.Project.Get_Root_Project_View (Kernel))
+             .Analysis_Data
+             .CodePeer_Data.all);
 
       procedure Add_Run (Name, Label, Main, Switches : String);
       --  Add information about report generation
@@ -126,8 +126,7 @@ package body CodePeer.Reports is
       -- Add_Run --
       -------------
 
-      procedure Add_Run (Name, Label, Main, Switches : String)
-      is
+      procedure Add_Run (Name, Label, Main, Switches : String) is
          Inspection : Gtk.Label.Gtk_Label;
       begin
          Gtk.Box.Gtk_New_Hbox (Box, True);
@@ -137,20 +136,18 @@ package body CodePeer.Reports is
          Gtk.Label.Gtk_New (Inspection, Name);
          Inspection.Set_Alignment (0.0, 0.0);
          Inspection.Set_Label
-           ("   " & Label
-            & Ada.Characters.Latin_1.LF & "      " & Main
-            & (if Switches /= "" then
-                   " " & Switches
-              else
-                 "")
+           ("   "
+            & Label
             & Ada.Characters.Latin_1.LF
-           );
+            & "      "
+            & Main
+            & (if Switches /= "" then " " & Switches else "")
+            & Ada.Characters.Latin_1.LF);
          Inspection.Set_Tooltip_Text
            (Main
-            & (if Switches /= "" then
-                   Ada.Characters.Latin_1.LF & Switches
-              else
-                 ""));
+            & (if Switches /= ""
+               then Ada.Characters.Latin_1.LF & Switches
+               else ""));
          Box.Pack_End (Inspection);
       end Add_Run;
 
@@ -158,8 +155,7 @@ package body CodePeer.Reports is
       -- Time_Span --
       ---------------
 
-      function Time_Span (From : Ada.Calendar.Time) return String
-      is
+      function Time_Span (From : Ada.Calendar.Time) return String is
          use Ada.Calendar;
          use Ada.Calendar.Formatting;
 
@@ -176,8 +172,11 @@ package body CodePeer.Reports is
             return Pr & " 1 second";
 
          elsif Spent > Day_Duration'Last then
-            return Pr & Integer'Image
-              (Integer (Spent / Day_Duration'Last)) & " day" & Sf;
+            return
+              Pr
+              & Integer'Image (Integer (Spent / Day_Duration'Last))
+              & " day"
+              & Sf;
 
          else
             Split (Spent, Hour, Minute, Second, Sub_Second);
@@ -208,49 +207,56 @@ package body CodePeer.Reports is
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Bump baseline");
-      Button.Set_Tooltip_Text ("Bump the Baseline of current timeline to the"
-                               & " current Run.");
+      Button.Set_Tooltip_Text
+        ("Bump the Baseline of current timeline to the" & " current Run.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Bump_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Set baseline");
-      Button.Set_Tooltip_Text ("Select a Run (SAM file) that will become the"
-                               & " new Baseline for the current timeline.");
+      Button.Set_Tooltip_Text
+        ("Select a Run (SAM file) that will become the"
+         & " new Baseline for the current timeline.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Set_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Replace current run");
-      Button.Set_Tooltip_Text ("Select a Run (SAM file) that will replace the"
-                               & " current Run.");
+      Button.Set_Tooltip_Text
+        ("Select a Run (SAM file) that will replace the" & " current Run.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Replace_Clicked'Access, Self);
 
       Add_Run
         (Name     => "baseline",
-         Label    => (if Is_GNATSAS then "Baseline: "
-                      else "Base run #")
-         & To_String (Project_Data.Baseline.Inspection)
-         & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
-           else " " & Ada.Calendar.Formatting.Image
-             (Project_Data.Baseline.Timestamp)
-              & Time_Span (Project_Data.Baseline.Timestamp)),
+         Label    =>
+           (if Is_GNATSAS then "Baseline: " else "Base run #")
+           & To_String (Project_Data.Baseline.Inspection)
+           & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp
+              then ""
+              else
+                " "
+                & Ada.Calendar.Formatting.Image
+                    (Project_Data.Baseline.Timestamp)
+                & Time_Span (Project_Data.Baseline.Timestamp)),
          Main     => To_String (Project_Data.Baseline.Main),
          Switches => To_String (Project_Data.Baseline.Switches));
 
       Add_Run
         (Name     => "current",
-         Label    => (if Is_GNATSAS then "Current run: "
-                      else "Current run #")
-         & To_String (Project_Data.Current.Inspection)
-         & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
-           else " " & Ada.Calendar.Formatting.Image
-             (Project_Data.Current.Timestamp)
-              & Time_Span (Project_Data.Current.Timestamp)),
+         Label    =>
+           (if Is_GNATSAS then "Current run: " else "Current run #")
+           & To_String (Project_Data.Current.Inspection)
+           & (if Project_Data.Current.Timestamp = Unknown_Timestamp
+              then ""
+              else
+                " "
+                & Ada.Calendar.Formatting.Image
+                    (Project_Data.Current.Timestamp)
+                & Time_Span (Project_Data.Current.Timestamp)),
          Main     => To_String (Project_Data.Current.Main),
          Switches => To_String (Project_Data.Current.Switches));
 
@@ -274,17 +280,13 @@ package body CodePeer.Reports is
       --  Messages report tab
 
       CodePeer.Messages_Reports.Gtk_New
-        (Self.Messages_Report,
-         Kernel,
-         Version,
-         Tree);
+        (Self.Messages_Report, Kernel, Version, Tree);
       Notebook.Append_Page (Self.Messages_Report);
       Notebook.Set_Tab_Label_Text (Self.Messages_Report, "Messages");
 
       --  Race condition report tab
 
-      CodePeer.Race_Condition_Reports.Gtk_New
-        (Self.Race_Report, Kernel, Tree);
+      CodePeer.Race_Condition_Reports.Gtk_New (Self.Race_Report, Kernel, Tree);
       Notebook.Append_Page (Self.Race_Report);
       Notebook.Set_Tab_Label_Text (Self.Race_Report, "Race conditions");
    end Initialize;
@@ -294,12 +296,11 @@ package body CodePeer.Reports is
    -------------------
 
    function Build_Context
-     (Self  : not null access Report_Record'Class;
-      Event : Gdk.Event.Gdk_Event)
+     (Self : not null access Report_Record'Class; Event : Gdk.Event.Gdk_Event)
       return GPS.Kernel.Selection_Context is
    begin
-      return CodePeer.Messages_Reports.Build_Context
-        (Self.Messages_Report, Event);
+      return
+        CodePeer.Messages_Reports.Build_Context (Self.Messages_Report, Event);
    end Build_Context;
 
    ---------------------

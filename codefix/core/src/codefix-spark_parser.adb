@@ -66,23 +66,30 @@ package body Codefix.SPARK_Parser is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (This : in out Unexpected_Tilde_Or_Percent)
-   is
+   overriding
+   procedure Initialize (This : in out Unexpected_Tilde_Or_Percent) is
    begin
       This.Matcher :=
-        (1 => new Pattern_Matcher'
-            (Compile ("Tilde, in a function return annotation, may " &
-                      "only be applied to an external variable of mode IN")),
-         2 => new Pattern_Matcher'
-            (Compile ("Tilde or Percent may only be applied to variables")),
-         3 => new Pattern_Matcher'
-            (Compile ("Tilde may only be applied to a variable which " &
-                      "is both imported and exported")),
-         4 => new Pattern_Matcher'
-            (Compile ("Tilde may not appear in pre-conditions")));
+        (1 =>
+           new Pattern_Matcher'
+             (Compile
+                ("Tilde, in a function return annotation, may "
+                 & "only be applied to an external variable of mode IN")),
+         2 =>
+           new Pattern_Matcher'
+             (Compile ("Tilde or Percent may only be applied to variables")),
+         3 =>
+           new Pattern_Matcher'
+             (Compile
+                ("Tilde may only be applied to a variable which "
+                 & "is both imported and exported")),
+         4 =>
+           new Pattern_Matcher'
+             (Compile ("Tilde may not appear in pre-conditions")));
    end Initialize;
 
-   overriding procedure Fix
+   overriding
+   procedure Fix
      (This         : Unexpected_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : Error_Message_Iterator;
@@ -106,16 +113,19 @@ package body Codefix.SPARK_Parser is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (This : in out Misplaced_Tilde_Or_Percent)
-   is
+   overriding
+   procedure Initialize (This : in out Misplaced_Tilde_Or_Percent) is
    begin
       This.Matcher :=
-        (1 => new Pattern_Matcher'
-            (Compile ("Tilde or Percent may only be applied to an " &
-                      "entire variable")));
+        (1 =>
+           new Pattern_Matcher'
+             (Compile
+                ("Tilde or Percent may only be applied to an "
+                 & "entire variable")));
    end Initialize;
 
-   overriding procedure Fix
+   overriding
+   procedure Fix
      (This         : Misplaced_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : Error_Message_Iterator;

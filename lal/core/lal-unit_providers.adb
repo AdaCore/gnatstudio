@@ -40,11 +40,11 @@ package body LAL.Unit_Providers is
       Kind : Libadalang.Common.Analysis_Unit_Kind)
       return GNATCOLL.VFS.Filesystem_String
    is
-      Map : constant array (Libadalang.Common.Analysis_Unit_Kind) of
-        GNATCOLL.Projects.Unit_Parts :=
-          (Libadalang.Common.Unit_Specification =>
-             GNATCOLL.Projects.Unit_Spec,
-           Libadalang.Common.Unit_Body =>
+      Map :
+        constant array (Libadalang.Common.Analysis_Unit_Kind)
+        of GNATCOLL.Projects.Unit_Parts :=
+          (Libadalang.Common.Unit_Specification => GNATCOLL.Projects.Unit_Spec,
+           Libadalang.Common.Unit_Body          =>
              GNATCOLL.Projects.Unit_Body);
 
       Unit_Name : constant String :=
@@ -52,9 +52,7 @@ package body LAL.Unit_Providers is
 
       File : constant GNATCOLL.VFS.Filesystem_String :=
         Self.Kernel.Get_Project_Tree.Root_Project.File_From_Unit
-          (Unit_Name => Unit_Name,
-           Part      => Map (Kind),
-           Language  => "Ada");
+          (Unit_Name => Unit_Name, Part => Map (Kind), Language => "Ada");
    begin
       if File'Length = 0 then
          return "";
@@ -67,7 +65,8 @@ package body LAL.Unit_Providers is
    -- Get_Unit_Filename --
    -----------------------
 
-   overriding function Get_Unit_Filename
+   overriding
+   function Get_Unit_Filename
      (Self : Unit_Provider;
       Name : Wide_Wide_String;
       Kind : Libadalang.Common.Analysis_Unit_Kind) return String
@@ -82,7 +81,8 @@ package body LAL.Unit_Providers is
    -- Get_Unit --
    --------------
 
-   overriding function Get_Unit
+   overriding
+   function Get_Unit
      (Self    : Unit_Provider;
       Context : Libadalang.Analysis.Analysis_Context'Class;
       Name    : Wide_Wide_String;
@@ -102,28 +102,28 @@ package body LAL.Unit_Providers is
 
       Result : Libadalang.Analysis.Analysis_Unit;
    begin
-      if not Reparse
-        and then Context.Has_Unit (String (File))
-      then
+      if not Reparse and then Context.Has_Unit (String (File)) then
          --  If we don't want to reparse and we already have a unit
          --  for this file, simply return it. Faster performance, and
          --  avoids an infinite recursion.
-         return Libadalang.Analysis.Get_With_Error
-           (Context, String (File), "");
+         return
+           Libadalang.Analysis.Get_With_Error (Context, String (File), "");
       end if;
 
       if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
-         Result := Libadalang.Analysis.Get_From_File
-           (Context     => Context,
-            Filename    => String (File),
-            Charset     => Charset,
-            Reparse     => Reparse);
+         Result :=
+           Libadalang.Analysis.Get_From_File
+             (Context  => Context,
+              Filename => String (File),
+              Charset  => Charset,
+              Reparse  => Reparse);
       else
-         Result := Libadalang.Analysis.Get_From_Buffer
-           (Context  => Context,
-            Filename => String (File),
-            Buffer   => Buffer.Get_Chars_U,
-            Charset  => "UTF-8");
+         Result :=
+           Libadalang.Analysis.Get_From_Buffer
+             (Context  => Context,
+              Filename => String (File),
+              Buffer   => Buffer.Get_Chars_U,
+              Charset  => "UTF-8");
       end if;
 
       return Result;
@@ -134,8 +134,8 @@ package body LAL.Unit_Providers is
    ----------------
 
    procedure Initialize
-     (Self   : in out Unit_Provider'Class;
-      Kernel : GPS.Core_Kernels.Core_Kernel) is
+     (Self : in out Unit_Provider'Class; Kernel : GPS.Core_Kernels.Core_Kernel)
+   is
    begin
       Self.Kernel := Kernel;
    end Initialize;

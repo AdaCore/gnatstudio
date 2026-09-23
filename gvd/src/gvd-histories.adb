@@ -23,10 +23,7 @@ package body GVD.Histories is
    -- Append --
    ------------
 
-   procedure Append
-     (History : in out History_List;
-      Data    : Data_Type)
-   is
+   procedure Append (History : in out History_List; Data : Data_Type) is
       Element : Hlist_Link;
    begin
       if History.First = null then
@@ -65,8 +62,7 @@ package body GVD.Histories is
 
    function Get_Current (History : History_List) return Data_Type is
    begin
-      if History.Current /= null
-        and then History.Position = Inside_History
+      if History.Current /= null and then History.Position = Inside_History
       then
          return History.Current.Data.all;
       else
@@ -82,8 +78,7 @@ package body GVD.Histories is
       procedure Free_Data_Pointer is new
         Ada.Unchecked_Deallocation (Data_Type, Data_Pointer);
    begin
-      if History.Current /= null
-        and then History.Position = Inside_History
+      if History.Current /= null and then History.Position = Inside_History
       then
          Free_Data_Pointer (History.Current.Data);
          History.Current.Data := new Data_Type'(Data);

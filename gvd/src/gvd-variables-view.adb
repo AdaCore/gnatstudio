@@ -16,61 +16,61 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 
 with GNAT.Decode_UTF8_String;
-with GNAT.Regpat;                 use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
-with System.Storage_Elements;     use System.Storage_Elements;
+with System.Storage_Elements; use System.Storage_Elements;
 with System;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
-with Glib.Object;                 use Glib.Object;
-with Glib.Values;                 use Glib.Values;
-with Glib;                        use Glib;
-with Glib_Values_Utils;           use Glib_Values_Utils;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib;              use Glib;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Dnd;                     use Gdk.Dnd;
-with Gdk.Drag_Contexts;           use Gdk.Drag_Contexts;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.RGBA;                    use Gdk.RGBA;
+with Gdk.Dnd;           use Gdk.Dnd;
+with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.RGBA;          use Gdk.RGBA;
 
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Dnd;                     use Gtk.Dnd;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
-with Gtk.Tree_Store;              use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Dnd;                  use Gtk.Dnd;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
 
 with Gtkada.File_Selector;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Tree_View;            use Gtkada.Tree_View;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GPS.Debuggers;               use GPS.Debuggers;
-with GPS.Dialogs;                 use GPS.Dialogs;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Properties;              use GPS.Properties;
-with GPS.Search;                  use GPS.Search;
+with GPS.Debuggers;          use GPS.Debuggers;
+with GPS.Dialogs;            use GPS.Dialogs;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Properties;         use GPS.Properties;
+with GPS.Search;             use GPS.Search;
 
 with GVD.Contexts;                use GVD.Contexts;
 with GVD.Generic_View;            use GVD.Generic_View;
@@ -83,18 +83,19 @@ with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
 with GVD.Variables.Types;         use GVD.Variables.Types;
 with GVD_Module;                  use GVD_Module;
 
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Debugger;                    use Debugger;
-with Default_Preferences;         use Default_Preferences;
-with Filter_Panels;               use Filter_Panels;
-with Generic_Views;               use Generic_Views;
-with GUI_Utils;                   use GUI_Utils;
-with Language.Icons;              use Language.Icons;
-with Language;                    use Language;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Debugger;            use Debugger;
+with Default_Preferences; use Default_Preferences;
+with Filter_Panels;       use Filter_Panels;
+with Generic_Views;       use Generic_Views;
+with GUI_Utils;           use GUI_Utils;
+with Language.Icons;      use Language.Icons;
+with Language;            use Language;
 with VSS.Strings;
 with VSS.Strings.Conversions;
 with VSS.String_Vectors;
-with XML_Utils;                   use XML_Utils;
+with XML_Utils;           use XML_Utils;
 
 package body GVD.Variables.View is
 
@@ -109,8 +110,8 @@ package body GVD.Variables.View is
    type Item_ID is new Natural;
    Unknown_Id : constant Item_ID := Item_ID'First;
    type Item is record
-      Id    : Item_ID;   --  unique id
-      Info  : Item_Info;
+      Id   : Item_ID;   --  unique id
+      Info : Item_Info;
 
       Nested : Boolean := False;
       --  True if this is a nested item, as opposed to one that appears as a
@@ -119,33 +120,36 @@ package body GVD.Variables.View is
       Is_Local_Variable : Boolean := False;
       --  Represent local variable if True
    end record;
-   No_Item : constant Item := (Unknown_Id, No_Item_Info, False, False);
+   No_Item    : constant Item := (Unknown_Id, No_Item_Info, False, False);
 
    package Item_Vectors is new Ada.Containers.Vectors (Positive, Item);
 
    function Deep_Copy (X : Item_Vectors.Vector) return Item_Vectors.Vector;
    --  Make a deep copy of X
 
-   type Variable_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record with
-      record
-         Process      : Visual_Debugger;
-         Pattern      : Search_Pattern_Access;
-         Items        : Item_Vectors.Vector;
-         Types_Column : Gtk_Tree_View_Column;
-         Text         : Gtk_Cell_Renderer_Text;
+   type Variable_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record
+   with record
+      Process      : Visual_Debugger;
+      Pattern      : Search_Pattern_Access;
+      Items        : Item_Vectors.Vector;
+      Types_Column : Gtk_Tree_View_Column;
+      Text         : Gtk_Cell_Renderer_Text;
 
-         Ids          : Item_ID := Unknown_Id;
-         --  to compute unique ids for items
-      end record;
+      Ids : Item_ID := Unknown_Id;
+      --  to compute unique ids for items
+   end record;
    type Variable_Tree_View is access all Variable_Tree_View_Record'Class;
 
-   overriding function Is_Visible
-     (Self   : not null access Variable_Tree_View_Record;
-      Iter   : Gtk_Tree_Iter) return Boolean;
-   overriding procedure Add_Children
+   overriding
+   function Is_Visible
+     (Self : not null access Variable_Tree_View_Record; Iter : Gtk_Tree_Iter)
+      return Boolean;
+   overriding
+   procedure Add_Children
      (Self       : not null access Variable_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter);
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Variable_Tree_View_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
@@ -159,8 +163,12 @@ package body GVD.Variables.View is
      (Self : not null access Variable_Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter) return GVD_Type_Holder;
    function Hash (Element : GVD_Type_Holder) return Ada.Containers.Hash_Type;
-   package Expansions is new Expansion_Support
-     (Variable_Tree_View_Record, GVD_Type_Holder, Get_Id, Hash);
+   package Expansions is new
+     Expansion_Support
+       (Variable_Tree_View_Record,
+        GVD_Type_Holder,
+        Get_Id,
+        Hash);
    --  An Id that uniquely identifies each row of the tree view
 
    type GVD_Variable_View_Record is new Process_View_Record with record
@@ -169,7 +177,7 @@ package body GVD.Variables.View is
    type GVD_Variable_View_Access is access all GVD_Variable_View_Record;
 
    function Initialize
-     (Self   : access GVD_Variable_View_Record'Class) return Gtk_Widget;
+     (Self : access GVD_Variable_View_Record'Class) return Gtk_Widget;
    procedure Set_View
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access GVD_Variable_View_Record'Class := null);
@@ -181,72 +189,81 @@ package body GVD.Variables.View is
    procedure Clear (Self : not null access GVD_Variable_View_Record'Class);
    --  Clear the contents of Self
 
-   overriding procedure Update
-     (Self : not null access GVD_Variable_View_Record);
-   overriding procedure Frame_Changed
-     (Self : not null access GVD_Variable_View_Record);
-   overriding procedure On_Attach
+   overriding
+   procedure Update (Self : not null access GVD_Variable_View_Record);
+   overriding
+   procedure Frame_Changed (Self : not null access GVD_Variable_View_Record);
+   overriding
+   procedure On_Attach
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class);
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class);
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (Self    : not null access GVD_Variable_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access GVD_Variable_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Create_Menu
+     (View : not null access GVD_Variable_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access GVD_Variable_View_Record;
       Pattern : in out Search_Pattern_Access);
 
    type Variables_Property_Record is new Property_Record with record
       Items : Item_Vectors.Vector;
    end record;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Variables_Property_Record;
       Value : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
+   overriding
+   procedure Load
      (Self  : in out Variables_Property_Record;
       Value : GNATCOLL.JSON.JSON_Value);
    --  Saving and loading which variables are displayed for a given executable
 
    type Variable_MDI_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Variable_MDI_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return GPS.Kernel.Selection_Context;
 
-   package Variable_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Debugger_Variables",
-      View_Name                       => -"Variables",
-      Formal_View_Record              => GVD_Variable_View_Record,
-      Formal_MDI_Child                => Variable_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Local_Toolbar                   => True,
-      Local_Config                    => True,
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Position                        => Position_Right,
-      Initialize                      => Initialize);
-   package Variable_Views is new GVD.Generic_View.Simple_Views
-     (Formal_View_Record => GVD_Variable_View_Record,
-      Formal_MDI_Child   => Variable_MDI_Child_Record,
-      Views              => Variable_MDI_Views,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+   package Variable_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Debugger_Variables",
+        View_Name                       => -"Variables",
+        Formal_View_Record              => GVD_Variable_View_Record,
+        Formal_MDI_Child                => Variable_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Local_Toolbar                   => True,
+        Local_Config                    => True,
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Position                        => Position_Right,
+        Initialize                      => Initialize);
+   package Variable_Views is new
+     GVD.Generic_View.Simple_Views
+       (Formal_View_Record => GVD_Variable_View_Record,
+        Formal_MDI_Child   => Variable_MDI_Child_Record,
+        Views              => Variable_MDI_Views,
+        Get_View           => Get_View,
+        Set_View           => Set_View);
    use type Variable_MDI_Views.View_Access;
    subtype GVD_Variable_View is Variable_MDI_Views.View_Access;
 
    procedure Execute_In_Debugger
-     (Context : Interactive_Command_Context;
-      Cmd     : String);
+     (Context : Interactive_Command_Context; Cmd : String);
    --  Execute a command in the debugger
 
    type On_Command is new Debugger_String_Hooks_Function with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : On_Command;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Process : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -254,79 +271,89 @@ package body GVD.Variables.View is
    --  Parse and process a "tree print" or "tree display" commands
 
    type Tree_Display_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Display_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Tree_Undisplay_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Undisplay_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Tree_Clear_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Clear_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Tree_Local_Vars_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Local_Vars_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Tree_Arguments_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Arguments_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Tree_Expression_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Expression_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Set_Format_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Format_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Export_Variables_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Export_Variables_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Saves the contents of the view in a file
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
 
-   Tree_Cmd_Format : constant Pattern_Matcher := Compile
-     ("(tree|graph)\s+"
-      & "((?:un)?display)\s+"    --  paren 1: type of command
-      & "(?:"
-      &   "`([^`]+)`"            --  paren 2: `command`
-      &   "\s*(split)?"          --  paren 3: whether to split
-      &   "|"
-      &   "(\S+)"                --  paren 4: varname
-      & ")",
-      Case_Insensitive);
---   Tree_Cmd_Prefix       : constant := 1;
-   Tree_Cmd_Display      : constant := 2;
-   Tree_Cmd_Command      : constant := 3;
-   Tree_Cmd_Split        : constant := 4;
-   Tree_Cmd_Varname      : constant := 5;
-   Tree_Cmd_Max_Paren    : constant := 5;   --  number of parenthesis
+   Tree_Cmd_Format    : constant Pattern_Matcher :=
+     Compile
+       ("(tree|graph)\s+"
+        & "((?:un)?display)\s+"    --  paren 1: type of command
+        & "(?:"
+        & "`([^`]+)`"            --  paren 2: `command`
+        & "\s*(split)?"          --  paren 3: whether to split
+        & "|"
+        & "(\S+)"                --  paren 4: varname
+        & ")",
+        Case_Insensitive);
+   --   Tree_Cmd_Prefix       : constant := 1;
+   Tree_Cmd_Display   : constant := 2;
+   Tree_Cmd_Command   : constant := 3;
+   Tree_Cmd_Split     : constant := 4;
+   Tree_Cmd_Varname   : constant := 5;
+   Tree_Cmd_Max_Paren : constant := 5;   --  number of parenthesis
 
-   Column_Name           : constant := 0;
-   Column_Value          : constant := 1;
-   Column_Type           : constant := 2;
-   Column_Icon           : constant := 3;
-   Column_Id             : constant := 4;   --  integer id for the variable
-   Column_Name_Fg        : constant := 5;
-   Column_Value_Fg       : constant := 6;
-   Column_Type_Fg        : constant := 7;
-   Column_Generic_Type   : constant := 8;   --  address of Generic_Type'Class
-   Column_Full_Name      : constant := 9;
+   Column_Name         : constant := 0;
+   Column_Value        : constant := 1;
+   Column_Type         : constant := 2;
+   Column_Icon         : constant := 3;
+   Column_Id           : constant := 4;   --  integer id for the variable
+   Column_Name_Fg      : constant := 5;
+   Column_Value_Fg     : constant := 6;
+   Column_Type_Fg      : constant := 7;
+   Column_Generic_Type : constant := 8;   --  address of Generic_Type'Class
+   Column_Full_Name    : constant := 9;
 
    procedure Item_From_Iter
      (Self        : not null access Variable_Tree_View_Record'Class;
@@ -338,8 +365,7 @@ package body GVD.Variables.View is
 
    function Item_From_Iter
      (Self       : not null access Variable_Tree_View_Record'Class;
-      Store_Iter : Gtk_Tree_Iter)
-      return Item;
+      Store_Iter : Gtk_Tree_Iter) return Item;
    --  Return a row in the variables view converted into an item
 
    procedure Add_Row
@@ -354,65 +380,67 @@ package body GVD.Variables.View is
    --  Add a new row in the tree to represent a variable
 
    function Get_Item_Info
-     (Self : not null access Variable_Tree_View_Record'Class;
-      Name : String)
+     (Self : not null access Variable_Tree_View_Record'Class; Name : String)
       return Item_Info;
 
-   type Is_Variable_Editable_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Variable_Editable_Filter;
-      Context : Selection_Context) return Boolean;
+   type Is_Variable_Editable_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Variable_Editable_Filter; Context : Selection_Context)
+      return Boolean;
 
-   type Access_Variable_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context) return Boolean;
+   type Access_Variable_Filter is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Access_Variable_Filter; Context : Selection_Context)
+      return Boolean;
 
-   type Is_Variables_View_Focused_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   type Is_Variables_View_Focused_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Is_Variables_View_Focused_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Variable_Single_Selection is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Variable_Single_Selection;
-      Context : Selection_Context) return Boolean;
+   type Variable_Single_Selection is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Variable_Single_Selection; Context : Selection_Context)
+      return Boolean;
    --  True if only one row is selected.
 
-   function Display_Value_Select_Dialog is
-     new Display_Select_Dialog (Debugger.Value_Format);
+   function Display_Value_Select_Dialog is new
+     Display_Select_Dialog (Debugger.Value_Format);
 
-   function Cmd_Name
-     (Debugger : Debugger_Access;
-      Cmd      : String)
-      return String;
+   function Cmd_Name (Debugger : Debugger_Access; Cmd : String) return String;
    --  Returns name for command which will be used as a header in the view
 
    type Print_Variable_Command is new Interactive_Command with record
       Dereference : Boolean := False;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Print_Variable_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Set_Value_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Variables_Collapse_Or_Expand_Command
-     (Command : Expansion_Command_Type) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     (Command : Expansion_Command_Type)
+   is new Interactive_Command with null record;
+   overriding
+   function Execute
      (Command : access Variables_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Expand_Next_Layer_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Expand_Next_Layer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  This action should only be called when a single row is selected
@@ -433,11 +461,11 @@ package body GVD.Variables.View is
       Args   : Glib.Values.GValues;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      Tree    : constant Variable_Tree_View := Variable_Tree_View (Object);
-      Model   : constant Gtk_Tree_Store := Tree.Model;
+      Tree        : constant Variable_Tree_View := Variable_Tree_View (Object);
+      Model       : constant Gtk_Tree_Store := Tree.Model;
       pragma Unreferenced (Model);
       Dnd_Context : constant Drag_Context :=
-                  Drag_Context (Get_Object (Nth (Args, 1)));
+        Drag_Context (Get_Object (Nth (Args, 1)));
    begin
       --  Do nothing when the DnD comes from the Variables view
 
@@ -453,13 +481,9 @@ package body GVD.Variables.View is
       declare
          Success : Boolean;
       begin
-         Success := Execute_Action
-           (Kernel,
-            Action  => "debug tree display variable");
-         Gtk.Dnd.Finish
-              (Dnd_Context,
-               Success => Success,
-               Del     => False);
+         Success :=
+           Execute_Action (Kernel, Action => "debug tree display variable");
+         Gtk.Dnd.Finish (Dnd_Context, Success => Success, Del => False);
       end;
    end On_Drag_Data_Received;
 
@@ -467,16 +491,16 @@ package body GVD.Variables.View is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Variable_Editable_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Variable_Editable_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
 
       View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View
-          (Get_Kernel (Context),
-           Visible_Only => True);
+          (Get_Kernel (Context), Visible_Only => True);
    begin
       if View /= null
         and then GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
@@ -498,9 +522,10 @@ package body GVD.Variables.View is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Access_Variable_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
    begin
@@ -511,8 +536,9 @@ package body GVD.Variables.View is
          declare
             Info : constant Item_Info := Get_Variable (Context);
          begin
-            return Info.Cmd = "" and then
-              Info.Entity.Get_Type.all in GVD_Access_Type'Class;
+            return
+              Info.Cmd = ""
+              and then Info.Entity.Get_Type.all in GVD_Access_Type'Class;
          end;
       end if;
 
@@ -523,22 +549,22 @@ package body GVD.Variables.View is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Is_Variables_View_Focused_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
       View : constant GVD_Variable_View :=
-               Variable_MDI_Views.Retrieve_View
-                 (Get_Kernel (Context),
-                  Visible_Only => True);
+        Variable_MDI_Views.Retrieve_View
+          (Get_Kernel (Context), Visible_Only => True);
    begin
       if View /= null then
          declare
             Focus_Child : constant MDI_Child :=
-                            Get_Focus_Child (Get_MDI (View.Kernel));
+              Get_Focus_Child (Get_MDI (View.Kernel));
             View_Child  : constant MDI_Child :=
-                            Variable_MDI_Views.Child_From_View (View);
+              Variable_MDI_Views.Child_From_View (View);
          begin
             return Focus_Child = View_Child;
          end;
@@ -551,16 +577,16 @@ package body GVD.Variables.View is
    -- Filter_MAtches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Variable_Single_Selection;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Variable_Single_Selection; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       View : constant GVD_Variable_View :=
-               Variable_MDI_Views.Retrieve_View
-                 (Get_Kernel (Context),
-                  Visible_Only => True);
-      Res  : Boolean                    := False;
+        Variable_MDI_Views.Retrieve_View
+          (Get_Kernel (Context), Visible_Only => True);
+      Res  : Boolean := False;
    begin
       if View /= null then
          declare
@@ -595,8 +621,7 @@ package body GVD.Variables.View is
    -------------------
 
    function Get_Item_Info
-     (Self : not null access Variable_Tree_View_Record'Class;
-      Name : String)
+     (Self : not null access Variable_Tree_View_Record'Class; Name : String)
       return Item_Info is
    begin
       for It of Self.Items loop
@@ -614,15 +639,17 @@ package body GVD.Variables.View is
 
    function Hash (Element : GVD_Type_Holder) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Containers.Hash_Type
-        (Element.Id mod Integer_Address (Ada.Containers.Hash_Type'Last));
+      return
+        Ada.Containers.Hash_Type
+          (Element.Id mod Integer_Address (Ada.Containers.Hash_Type'Last));
    end Hash;
 
    ----------
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Variables_Property_Record;
       Value : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -630,18 +657,18 @@ package body GVD.Variables.View is
 
       Values : JSON_Array;
    begin
-      Trace (Me, "Saving variable view to JSON, has items ?"
-             & Self.Items.Length'Img);
+      Trace
+        (Me,
+         "Saving variable view to JSON, has items ?" & Self.Items.Length'Img);
 
       for Item of Self.Items loop
-         if not Item.Nested
-           and then not Item.Is_Local_Variable
-         --  or else Item.Info.Format /= Default_Format
-         --  Restore old functionality before
-         --  Change-Id: Ice1f6b4459aae94bf381b626e5e8d462cc3652a5
-         --  Keep commented until we have situation when several items have
-         --  access to one 'type' item and one of them can deallocate
-         --  'type' item, this causes the attempt of double deallocation
+         if not Item.Nested and then not Item.Is_Local_Variable
+           --  or else Item.Info.Format /= Default_Format
+           --  Restore old functionality before
+           --  Change-Id: Ice1f6b4459aae94bf381b626e5e8d462cc3652a5
+           --  Keep commented until we have situation when several items have
+           --  access to one 'type' item and one of them can deallocate
+           --  'type' item, this causes the attempt of double deallocation
          then
             declare
                Value : constant JSON_Value := Create_Object;
@@ -669,7 +696,8 @@ package body GVD.Variables.View is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding
+   procedure Load
      (Self  : in out Variables_Property_Record;
       Value : GNATCOLL.JSON.JSON_Value)
    is
@@ -678,8 +706,10 @@ package body GVD.Variables.View is
       It     : Item;
       Values : constant JSON_Array := Value.Get ("value");
    begin
-      Trace (Me, "Loading variable view from JSON, has items ?"
-             &  Boolean'Image (Length (Values) > 0));
+      Trace
+        (Me,
+         "Loading variable view from JSON, has items ?"
+         & Boolean'Image (Length (Values) > 0));
 
       for Index in 1 .. Length (Values) loop
          declare
@@ -687,9 +717,9 @@ package body GVD.Variables.View is
          begin
             if String'(V.Get ("tag")) = "cmd" then
                It :=
-                 (Info              => Wrap_Debugger_Command
-                    (V.Get ("value"),
-                     Split_Lines => V.Get ("split")),
+                 (Info              =>
+                    Wrap_Debugger_Command
+                      (V.Get ("value"), Split_Lines => V.Get ("split")),
                   Nested            => Boolean'Value (V.Get ("nested")),
                   Is_Local_Variable => False,
                   Id                => Unknown_Id);
@@ -697,9 +727,10 @@ package body GVD.Variables.View is
 
             elsif String'(V.Get ("tag")) = "variable" then
                It :=
-                 (Info              => Wrap_Variable
-                    (V.Get ("value"),
-                     Debugger.Value_Format'Value (V.Get ("format"))),
+                 (Info              =>
+                    Wrap_Variable
+                      (V.Get ("value"),
+                       Debugger.Value_Format'Value (V.Get ("format"))),
                   Nested            => Boolean'Value (V.Get ("nested")),
                   Is_Local_Variable => False,
                   Id                => Unknown_Id);
@@ -714,10 +745,9 @@ package body GVD.Variables.View is
    -------------------------
 
    procedure Execute_In_Debugger
-     (Context : Interactive_Command_Context;
-      Cmd     : String)
+     (Context : Interactive_Command_Context; Cmd : String)
    is
-      Process  : constant Visual_Debugger :=
+      Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
    begin
       if Process /= null then
@@ -729,7 +759,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Display_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -747,7 +778,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Clear_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -765,7 +797,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Undisplay_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -821,7 +854,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Local_Vars_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -836,21 +870,23 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Expression_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
       Is_Var     : aliased Boolean;
-      Expression : constant String := Display_Text_Input_Dialog
-        (Kernel        => Kernel,
-         Title         => -"Display the value of an expression",
-         Message       => -"Enter an expression to display:",
-         Key           => "gvd_display_expression_dialog",
-         Check_Msg     => -"Uncheck to evaluate as a command",
-         Key_Check     => "expression_subprogram_debugger",
-         Button_Active => Is_Var'Unchecked_Access);
+      Expression : constant String :=
+        Display_Text_Input_Dialog
+          (Kernel        => Kernel,
+           Title         => -"Display the value of an expression",
+           Message       => -"Enter an expression to display:",
+           Key           => "gvd_display_expression_dialog",
+           Check_Msg     => -"Uncheck to evaluate as a command",
+           Key_Check     => "expression_subprogram_debugger",
+           Button_Active => Is_Var'Unchecked_Access);
    begin
       if Expression /= "" & ASCII.NUL then
          if Is_Var then
@@ -866,12 +902,13 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Tree_Arguments_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Process  : constant Visual_Debugger :=
+      Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
    begin
       Execute_In_Debugger
@@ -883,7 +920,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : On_Command;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Process : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -895,13 +933,14 @@ package body GVD.Variables.View is
       View : GVD_Variable_View;
 
       function Extract (Paren : Natural) return String
-         is (Command (M (Paren).First .. M (Paren).Last));
+      is (Command (M (Paren).First .. M (Paren).Last));
       --  Extract one of the named grouped from the regexp
 
    begin
-      if Process = null or else
-        (not Starts_With (Command, "tree ")
-         and then not Starts_With (Command, "graph "))
+      if Process = null
+        or else
+          (not Starts_With (Command, "tree ")
+           and then not Starts_With (Command, "graph "))
       then
          return "";
       end if;
@@ -916,9 +955,10 @@ package body GVD.Variables.View is
       View := Get_View (Process);
 
       if M (Tree_Cmd_Command) /= GNAT.Regpat.No_Match then
-         It.Info := Wrap_Debugger_Command
-           (Extract (Tree_Cmd_Command),
-            Split_Lines => M (Tree_Cmd_Split) /= GNAT.Regpat.No_Match);
+         It.Info :=
+           Wrap_Debugger_Command
+             (Extract (Tree_Cmd_Command),
+              Split_Lines => M (Tree_Cmd_Split) /= GNAT.Regpat.No_Match);
 
       elsif M (Tree_Cmd_Varname) /= GNAT.Regpat.No_Match then
          It.Info := Wrap_Variable (Extract (Tree_Cmd_Varname));
@@ -935,7 +975,7 @@ package body GVD.Variables.View is
          if Cmd = "display" then
             --  Do not send debugger quit command
             if Visual_Debugger (Process).Debugger.Is_Quit_Command
-              (To_String (It.Info.Cmd))
+                 (To_String (It.Info.Cmd))
             then
                return Command_Intercepted;
             end if;
@@ -949,7 +989,7 @@ package body GVD.Variables.View is
                Visual_Debugger (Process));
 
             View.Tree.Ids := View.Tree.Ids + 1;
-            It.Id         := View.Tree.Ids;
+            It.Id := View.Tree.Ids;
             View.Tree.Items.Append (It);
 
          elsif Cmd = "undisplay" then
@@ -981,10 +1021,8 @@ package body GVD.Variables.View is
    -- Cmd_Name --
    --------------
 
-   function Cmd_Name
-     (Debugger : Debugger_Access;
-      Cmd      : String)
-      return String is
+   function Cmd_Name (Debugger : Debugger_Access; Cmd : String) return String
+   is
    begin
       if Debugger = null then
          return "";
@@ -1005,11 +1043,12 @@ package body GVD.Variables.View is
    -- On_Attach --
    ---------------
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
-      V : constant Visual_Debugger := Visual_Debugger (Process);
+      V        : constant Visual_Debugger := Visual_Debugger (Process);
       Found    : Boolean;
       Property : Variables_Property_Record;
    begin
@@ -1026,7 +1065,7 @@ package body GVD.Variables.View is
 
             for It of Self.Tree.Items loop
                Self.Tree.Ids := Self.Tree.Ids + 1;
-               It.Id         := Self.Tree.Ids;
+               It.Id := Self.Tree.Ids;
             end loop;
 
             Update (Self);
@@ -1057,7 +1096,8 @@ package body GVD.Variables.View is
    -- On_Detach --
    ---------------
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
@@ -1070,8 +1110,8 @@ package body GVD.Variables.View is
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
             Name       => "debugger_variables",
             Property   =>
-               new Variables_Property_Record'
-                 (Items => Deep_Copy (Self.Tree.Items)),
+              new Variables_Property_Record'
+                (Items => Deep_Copy (Self.Tree.Items)),
             Persistent => True);
       end if;
 
@@ -1097,7 +1137,8 @@ package body GVD.Variables.View is
    -- Add_Children --
    ------------------
 
-   overriding procedure Add_Children
+   overriding
+   procedure Add_Children
      (Self       : not null access Variable_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter)
    is
@@ -1155,7 +1196,8 @@ package body GVD.Variables.View is
    -- On_Edited --
    ---------------
 
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Variable_Tree_View_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
@@ -1164,9 +1206,7 @@ package body GVD.Variables.View is
    is
       It : Item;
    begin
-      if Store_Iter /= Null_Iter
-        and then View_Column = Column_Value
-      then
+      if Store_Iter /= Null_Iter and then View_Column = Column_Value then
          It := Item_From_Iter (Self, Store_Iter);
 
          if Self.Process /= null
@@ -1175,13 +1215,12 @@ package body GVD.Variables.View is
          then
             if It.Info.Cmd /= Null_Unbounded_String then
                Self.Process.Debugger.Set_Variable
-                 (Var_Name => Name (It.Info),
-                  Value    => Text);
+                 (Var_Name => Name (It.Info), Value => Text);
 
             elsif It.Info.Varname /= Null_Unbounded_String then
                Self.Process.Debugger.Set_Variable
-                 (Var_Name => Self.Model.Get_String
-                    (Store_Iter, Column_Full_Name),
+                 (Var_Name =>
+                    Self.Model.Get_String (Store_Iter, Column_Full_Name),
                   Value    => Text);
             end if;
          end if;
@@ -1206,10 +1245,12 @@ package body GVD.Variables.View is
       Dummy : Boolean;
       Child : Gtk_Tree_Iter;
 
-      Fg       : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Fg : constant String := To_String (Default_Style.Get_Pref_Fg);
 
-      function Display_Type_Name return String with Inline;
-      function Display_Name return String with Inline;
+      function Display_Type_Name return String
+      with Inline;
+      function Display_Name return String
+      with Inline;
       --  Return the display name or type name
 
       function Validate_UTF_8 (S : String) return String;
@@ -1226,12 +1267,16 @@ package body GVD.Variables.View is
             declare
                Info : constant Item_Info := Get_Item_Info (Self, Name);
             begin
-               return "<b>" & XML_Utils.Protect (Remove_Dot (Name)) & "</b>"
+               return
+                 "<b>"
+                 & XML_Utils.Protect (Remove_Dot (Name))
+                 & "</b>"
                  & (if Info = No_Item_Info
                     then ""
-                    else (if Info.Format = Default_Format
-                      then ""
-                      else " (" & Info.Format'Img & ")"));
+                    else
+                      (if Info.Format = Default_Format
+                       then ""
+                       else " (" & Info.Format'Img & ")"));
             end;
          end if;
       end Display_Name;
@@ -1255,9 +1300,7 @@ package body GVD.Variables.View is
 
       function Remove_Dot (Value : String) return String is
       begin
-         if Value /= ""
-           and then Value (Value'First) = '.'
-         then
+         if Value /= "" and then Value (Value'First) = '.' then
             return Value (Value'First + 1 .. Value'Last);
          else
             return Value;
@@ -1268,8 +1311,7 @@ package body GVD.Variables.View is
       -- Validate_UTF_8 --
       --------------------
 
-      function Validate_UTF_8 (S : String) return String
-      is
+      function Validate_UTF_8 (S : String) return String is
          Ptr : Natural := S'First;
       begin
          begin
@@ -1287,10 +1329,11 @@ package body GVD.Variables.View is
 
       Var_Name  : constant String := Display_Name;
       Value     : constant String :=
-                    (if Entity = Empty_GVD_Type_Holder
-                     then ""
-                     else XML_Utils.Protect
-                       (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
+        (if Entity = Empty_GVD_Type_Holder
+         then ""
+         else
+           XML_Utils.Protect
+             (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
       Type_Name : constant String := Display_Type_Name;
       Printable : Boolean := True;
    begin
@@ -1307,8 +1350,8 @@ package body GVD.Variables.View is
          begin
             Printable := False;
             while not Iter.At_End loop
-               if Num < GVD_Class_Type_Access
-                 (Entity.Get_Type).Get_Num_Ancestors
+               if Num
+                 < GVD_Class_Type_Access (Entity.Get_Type).Get_Num_Ancestors
                then
                   Num := Num + 1;
                else
@@ -1330,37 +1373,42 @@ package body GVD.Variables.View is
               (Column_Name         => As_String (Var_Name),
                Column_Value        => As_String (Value),
                Column_Type         => As_String (Type_Name),
-               Column_Icon         => As_String
-                 (if Parent = Null_Iter
-                  then Stock_From_Category
-                    (Is_Declaration => False,
-                     Visibility     => Language.Visibility_Public,
-                     Category       => Language.Cat_Function)
-                  else ""),
+               Column_Icon         =>
+                 As_String
+                   (if Parent = Null_Iter
+                    then
+                      Stock_From_Category
+                        (Is_Declaration => False,
+                         Visibility     => Language.Visibility_Public,
+                         Category       => Language.Cat_Function)
+                    else ""),
                Column_Id           => As_Int (Gint (Id)),
                Column_Generic_Type => As_GVD_Type_Holder (Entity),
                Column_Name_Fg      => As_String (Fg),
-               Column_Value_Fg     => As_String
-                 (if Entity /= Empty_GVD_Type_Holder
-                  and then Entity.Get_Type.Is_Changed
-                  then To_String (Numbers_Style.Get_Pref_Fg) else Fg),
-               Column_Type_Fg      => As_String
-                 (To_String (Types_Style.Get_Pref_Fg)),
+               Column_Value_Fg     =>
+                 As_String
+                   (if Entity /= Empty_GVD_Type_Holder
+                      and then Entity.Get_Type.Is_Changed
+                    then To_String (Numbers_Style.Get_Pref_Fg)
+                    else Fg),
+               Column_Type_Fg      =>
+                 As_String (To_String (Types_Style.Get_Pref_Fg)),
                Column_Full_Name    => As_String (Full_Name)));
       end if;
 
       if Entity /= Empty_GVD_Type_Holder then
          declare
             Iter : Generic_Iterator'Class := Entity.Get_Type.Start;
-            Flat : constant Boolean := Flat_View.Get_Pref
+            Flat : constant Boolean :=
+              Flat_View.Get_Pref
               and then Entity.Get_Type.all in GVD_Class_Type'Class;
 
          begin
             if Flat then
                declare
                   Num           : Natural := 0;
-                  Num_Ancestors : constant Natural := GVD_Class_Type_Access
-                    (Entity.Get_Type).Get_Num_Ancestors;
+                  Num_Ancestors : constant Natural :=
+                    GVD_Class_Type_Access (Entity.Get_Type).Get_Num_Ancestors;
 
                begin
                   while not Iter.At_End loop
@@ -1376,8 +1424,7 @@ package body GVD.Variables.View is
                               Entity    => Ent,
                               Name      => Iter.Field_Name (Lang, ""),
                               Full_Name => Iter.Field_Name (Lang, Full_Name),
-                              Parent    =>
-                                (if Recurse then Parent else Row),
+                              Parent    => (if Recurse then Parent else Row),
                               Row       => Child,
                               Id        => Unknown_Id,
                               Lang      => Lang,
@@ -1435,9 +1482,8 @@ package body GVD.Variables.View is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (Self : not null access GVD_Variable_View_Record)
-   is
+   overriding
+   procedure Update (Self : not null access GVD_Variable_View_Record) is
       Process    : constant Visual_Debugger :=
         Visual_Debugger (Get_Process (Self));
       Lang       : Language.Language_Access;
@@ -1463,8 +1509,9 @@ package body GVD.Variables.View is
             begin
                if not I.Nested then
                   if I.Info.Cmd_Name = "<>" then
-                     I.Info.Cmd_Name := To_Unbounded_String
-                       (Cmd_Name (Process.Debugger, To_String (I.Info.Cmd)));
+                     I.Info.Cmd_Name :=
+                       To_Unbounded_String
+                         (Cmd_Name (Process.Debugger, To_String (I.Info.Cmd)));
                   end if;
 
                   if I.Info.Auto_Refresh then
@@ -1485,17 +1532,13 @@ package body GVD.Variables.View is
 
       --  Now display them, and preserve the expansion of items
 
-      if Process.Debugger /= null
-        and then not Self.Tree.Items.Is_Empty
-      then
+      if Process.Debugger /= null and then not Self.Tree.Items.Is_Empty then
          Expansions.Get_Expansion_Status (Self.Tree, Expansion);
       end if;
 
       Self.Tree.Model.Clear;
 
-      if Process.Debugger /= null
-        and then not Self.Tree.Items.Is_Empty
-      then
+      if Process.Debugger /= null and then not Self.Tree.Items.Is_Empty then
          for It of Self.Tree.Items loop
             if not It.Nested then
                Self.Tree.Add_Row
@@ -1528,7 +1571,7 @@ package body GVD.Variables.View is
          Expansions.Set_Expansion_Status (Self.Tree, Expansion);
 
          if Expand /= Null_Iter then
-            Path  := Self.Tree.Model.Get_Path (Expand);
+            Path := Self.Tree.Model.Get_Path (Expand);
             Dummy := Self.Tree.Expand_Row (Path, False);
             Path_Free (Path);
          end if;
@@ -1580,8 +1623,10 @@ package body GVD.Variables.View is
             I : Item := Self.Items.Element (Index);
          begin
             if I.Is_Local_Variable
-              and then not Has_Variable
-                (VSS.Strings.Conversions.To_Virtual_String (I.Info.Varname))
+              and then
+                not Has_Variable
+                      (VSS.Strings.Conversions.To_Virtual_String
+                         (I.Info.Varname))
             then
                --  Delete variable that we don't have anymore
                Item_Vectors.Delete (Self.Items, Index);
@@ -1598,11 +1643,11 @@ package body GVD.Variables.View is
          declare
             I : Item;
          begin
-            I.Info              := Wrap_Variable
-              (VSS.Strings.Conversions.To_UTF_8_String (Name));
-            Self.Ids            := Self.Ids + 1;
-            I.Id                := Self.Ids;
-            I.Nested            := True;
+            I.Info :=
+              Wrap_Variable (VSS.Strings.Conversions.To_UTF_8_String (Name));
+            Self.Ids := Self.Ids + 1;
+            I.Id := Self.Ids;
+            I.Nested := True;
             I.Is_Local_Variable := True;
 
             Update (I.Info, Process);
@@ -1615,8 +1660,8 @@ package body GVD.Variables.View is
    -- Frame_Changed --
    -------------------
 
-   overriding procedure Frame_Changed
-     (Self : not null access GVD_Variable_View_Record) is
+   overriding
+   procedure Frame_Changed (Self : not null access GVD_Variable_View_Record) is
    begin
       Self.Update;
    end Frame_Changed;
@@ -1626,7 +1671,7 @@ package body GVD.Variables.View is
    ----------------
 
    function Initialize
-     (Self   : access GVD_Variable_View_Record'Class) return Gtk_Widget
+     (Self : access GVD_Variable_View_Record'Class) return Gtk_Widget
    is
       Scrolled : Gtk_Scrolled_Window;
       Col      : Gtk_Tree_View_Column;
@@ -1645,16 +1690,17 @@ package body GVD.Variables.View is
       Self.Tree := new Variable_Tree_View_Record;
       Initialize
         (Self.Tree,
-         Column_Types     => (Column_Name         => GType_String,
-                              Column_Value        => GType_String,
-                              Column_Type         => GType_String,
-                              Column_Icon         => GType_String,
-                              Column_Id           => GType_Int,
-                              Column_Name_Fg      => GType_String,
-                              Column_Value_Fg     => GType_String,
-                              Column_Type_Fg      => GType_String,
-                              Column_Generic_Type => Get_GVD_Type_Holder_GType,
-                              Column_Full_Name    => GType_String),
+         Column_Types     =>
+           (Column_Name         => GType_String,
+            Column_Value        => GType_String,
+            Column_Type         => GType_String,
+            Column_Icon         => GType_String,
+            Column_Id           => GType_Int,
+            Column_Name_Fg      => GType_String,
+            Column_Value_Fg     => GType_String,
+            Column_Type_Fg      => GType_String,
+            Column_Generic_Type => Get_GVD_Type_Holder_GType,
+            Column_Full_Name    => GType_String),
          Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Set_Name (Self.Tree, "Variables Tree");  --  For testsuite
@@ -1793,8 +1839,7 @@ package body GVD.Variables.View is
 
    function Item_From_Iter
      (Self       : not null access Variable_Tree_View_Record'Class;
-      Store_Iter : Gtk_Tree_Iter)
-      return Item
+      Store_Iter : Gtk_Tree_Iter) return Item
    is
       Id       : Item_ID;
       Parent   : Gtk_Tree_Iter;
@@ -1822,15 +1867,15 @@ package body GVD.Variables.View is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Variable_MDI_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return GPS.Kernel.Selection_Context
    is
-      View : constant GVD_Variable_View :=
+      View        : constant GVD_Variable_View :=
         Variable_MDI_Views.View_From_Child (Self);
-      Context : Selection_Context;
-      It      : Item;
+      Context     : Selection_Context;
+      It          : Item;
       Filter_Iter : Gtk_Tree_Iter;
    begin
       Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
@@ -1864,16 +1909,15 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
       View : constant GVD_Variable_View :=
-        Variable_MDI_Views.Retrieve_View
-          (Kernel,
-           Visible_Only => False);
+        Variable_MDI_Views.Retrieve_View (Kernel, Visible_Only => False);
    begin
       if View /= null then
          Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
@@ -1890,7 +1934,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Print_Variable_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1905,8 +1950,7 @@ package body GVD.Variables.View is
             Info : constant Item_Info := Get_Variable (Context.Context);
          begin
             if Info.Cmd /= "" then
-               Debugger.Send
-                 (To_String (Info.Cmd), Mode => GVD.Types.Visible);
+               Debugger.Send (To_String (Info.Cmd), Mode => GVD.Types.Visible);
 
                return Commands.Success;
             end if;
@@ -1925,7 +1969,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1935,8 +1980,7 @@ package body GVD.Variables.View is
    begin
       if View /= null then
          View.Tree.Start_Editing
-           (Render      => View.Tree.Text,
-            View_Column => Column_Value);
+           (Render => View.Tree.Text, View_Column => Column_Value);
       end if;
       return Commands.Success;
    end Execute;
@@ -1945,7 +1989,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Format_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1961,19 +2006,16 @@ package body GVD.Variables.View is
 
       Format : Debugger.Value_Format;
    begin
-      if View /= null
-        and then Info.Cmd = ""
-        and then Name /= ""
-      then
+      if View /= null and then Info.Cmd = "" and then Name /= "" then
          for Item of View.Tree.Items loop
             if Item.Info.Varname = Name then
                Format := Item.Info.Format;
                if Display_Value_Select_Dialog
-                 (Get_Kernel (Context.Context),
-                  "Set format",
-                  "Format for "
-                    & VSS.Strings.Conversions.To_Virtual_String (Name),
-                  Format)
+                    (Get_Kernel (Context.Context),
+                     "Set format",
+                     "Format for "
+                     & VSS.Strings.Conversions.To_Virtual_String (Name),
+                     Format)
                then
                   Item.Info.Format := Format;
                   View.Update;
@@ -1990,7 +2032,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Variables_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1999,8 +2042,7 @@ package body GVD.Variables.View is
    begin
       if View /= null then
          Expand_Or_Collapse_Selected_Rows
-           (Tree    => View.Tree,
-            Command => Command.Command);
+           (Tree => View.Tree, Command => Command.Command);
       end if;
 
       return Commands.Success;
@@ -2010,7 +2052,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Expand_Next_Layer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2025,8 +2068,7 @@ package body GVD.Variables.View is
 
       procedure Expand_Children (Parent : Gtk_Tree_Iter);
 
-      procedure Expand_Children (Parent : Gtk_Tree_Iter)
-      is
+      procedure Expand_Children (Parent : Gtk_Tree_Iter) is
          Cur : Gtk_Tree_Iter := Children (Model, Parent);
       begin
          Dummy := Expand_Row (View.Tree, Get_Path (Model, Parent), False);
@@ -2062,7 +2104,8 @@ package body GVD.Variables.View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Export_Variables_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2071,25 +2114,26 @@ package body GVD.Variables.View is
 
       pragma Unreferenced (Self);
 
-      View   : constant GVD_Variable_View :=
+      View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
 
-      File   : constant Virtual_File :=
+      File : constant Virtual_File :=
         Select_File
           (Title             => -"Save variables as",
            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
            Kind              => Save_File,
-           Parent            => Get_Current_Window
-             (Get_Kernel (Context.Context)),
-           History           => Get_History
-             (Get_Kernel (Context.Context)));
+           Parent            =>
+             Get_Current_Window (Get_Kernel (Context.Context)),
+           History           => Get_History (Get_Kernel (Context.Context)));
 
-      package Unbounded_String_Vectors is new Ada.Containers.Vectors
-        (Positive, Ada.Strings.Unbounded.Unbounded_String);
+      package Unbounded_String_Vectors is new
+        Ada.Containers.Vectors
+          (Positive,
+           Ada.Strings.Unbounded.Unbounded_String);
 
-      Names      : Unbounded_String_Vectors.Vector;
-      Values     : Unbounded_String_Vectors.Vector;
-      Types      : Unbounded_String_Vectors.Vector;
+      Names  : Unbounded_String_Vectors.Vector;
+      Values : Unbounded_String_Vectors.Vector;
+      Types  : Unbounded_String_Vectors.Vector;
 
       Max_Names  : Integer := 0;
       Max_Values : Integer := 0;
@@ -2104,16 +2148,14 @@ package body GVD.Variables.View is
          WF : Writable_File;
 
          procedure Process
-           (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-            Prefix : String);
+           (Iter : Gtk.Tree_Model.Gtk_Tree_Iter; Prefix : String);
 
          -------------
          -- Process --
          -------------
 
          procedure Process
-           (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-            Prefix : String)
+           (Iter : Gtk.Tree_Model.Gtk_Tree_Iter; Prefix : String)
          is
             I     : Gtk.Tree_Model.Gtk_Tree_Iter := Iter;
             Value : Glib.Values.GValue;
@@ -2126,8 +2168,8 @@ package body GVD.Variables.View is
                begin
                   Names.Append
                     (To_Unbounded_String
-                       (Prefix &
-                        (if Type_Of (Value) = GType_String
+                       (Prefix
+                        & (if Type_Of (Value) = GType_String
                            then Name (Name'First + 3 .. Name'Last - 4)
                            else "")));
                end;
@@ -2136,8 +2178,8 @@ package body GVD.Variables.View is
                View.Tree.Model.Get_Value (I, Column_Value, Value);
                Values.Append
                  (To_Unbounded_String
-                    (Prefix &
-                     (if Type_Of (Value) = GType_String
+                    (Prefix
+                     & (if Type_Of (Value) = GType_String
                         then XML_Utils.Translate (Get_String (Value))
                         else "")));
 
@@ -2146,8 +2188,8 @@ package body GVD.Variables.View is
                   View.Tree.Model.Get_Value (I, Column_Type, Value);
                   Types.Append
                     (To_Unbounded_String
-                       (Prefix &
-                        (if Type_Of (Value) = GType_String
+                       (Prefix
+                        & (if Type_Of (Value) = GType_String
                            then XML_Utils.Translate (Get_String (Value))
                            else "")));
                end if;
@@ -2165,30 +2207,32 @@ package body GVD.Variables.View is
          Process (View.Tree.Model.Get_Iter_First, "");
 
          for Index in 1 .. Natural (Names.Length) loop
-            Max_Names := Natural'Max
-              (Max_Names, Length (Names.Element (Index)));
+            Max_Names :=
+              Natural'Max (Max_Names, Length (Names.Element (Index)));
 
             if Show_Types.Get_Pref then
-               Max_Values := Natural'Max
-                 (Max_Values, Length (Values.Element (Index)));
+               Max_Values :=
+                 Natural'Max (Max_Values, Length (Values.Element (Index)));
 
-               Max_Types := Natural'Max
-                 (Max_Types, Length (Types.Element (Index)));
+               Max_Types :=
+                 Natural'Max (Max_Types, Length (Types.Element (Index)));
             end if;
          end loop;
 
          WF := File.Write_File;
          for Index in 1 .. Natural (Names.Length) loop
             Write
-              (WF, To_String (Names.Element (Index)) &
-               ((Max_Names - Length (Names.Element (Index)) + 1) * ' ') &
-                 " | ");
+              (WF,
+               To_String (Names.Element (Index))
+               & ((Max_Names - Length (Names.Element (Index)) + 1) * ' ')
+               & " | ");
 
             Write
-              (WF, To_String (Values.Element (Index)) &
-               (if Show_Types.Get_Pref
-                  then ((Max_Values - Length
-                    (Values.Element (Index)) + 1) * ' ')
+              (WF,
+               To_String (Values.Element (Index))
+               & (if Show_Types.Get_Pref
+                  then
+                    ((Max_Values - Length (Values.Element (Index)) + 1) * ' ')
                   else ""));
 
             if Show_Types.Get_Pref then
@@ -2207,9 +2251,10 @@ package body GVD.Variables.View is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access GVD_Variable_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access GVD_Variable_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Show_Types);
       Append_Menu (Menu, View.Kernel, Flat_View);
@@ -2219,7 +2264,8 @@ package body GVD.Variables.View is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (Self    : not null access GVD_Variable_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -2236,27 +2282,30 @@ package body GVD.Variables.View is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
-     (Self   : not null access Variable_Tree_View_Record;
-      Iter   : Gtk_Tree_Iter) return Boolean is
+   overriding
+   function Is_Visible
+     (Self : not null access Variable_Tree_View_Record; Iter : Gtk_Tree_Iter)
+      return Boolean is
    begin
-      return Self.Pattern = null
-        or else Self.Pattern.Start
-          (Self.Model.Get_String
-             (Iter, Column_Name)) /= GPS.Search.No_Match
-          or else Self.Pattern.Start
-            (Self.Model.Get_String
-               (Iter, Column_Value)) /= GPS.Search.No_Match
-            or else Self.Pattern.Start
-              (Self.Model.Get_String
-                 (Iter, Column_Type)) /= GPS.Search.No_Match;
+      return
+        Self.Pattern = null
+        or else
+          Self.Pattern.Start (Self.Model.Get_String (Iter, Column_Name))
+          /= GPS.Search.No_Match
+        or else
+          Self.Pattern.Start (Self.Model.Get_String (Iter, Column_Value))
+          /= GPS.Search.No_Match
+        or else
+          Self.Pattern.Start (Self.Model.Get_String (Iter, Column_Type))
+          /= GPS.Search.No_Match;
    end Is_Visible;
 
    --------------------
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access GVD_Variable_View_Record;
       Pattern : in out Search_Pattern_Access) is
    begin
@@ -2290,58 +2339,62 @@ package body GVD.Variables.View is
       Debugger_Command_Action_Hook.Add (new On_Command);
 
       Debugger_Stopped_Filter := Kernel.Lookup_Filter ("Debugger stopped");
-      Printable_Var_Filter    := Kernel.Lookup_Filter
-        ("Debugger printable variable");
-      Not_Connamd_Filter := Kernel.Lookup_Filter
-        ("Debugger not command variable");
+      Printable_Var_Filter :=
+        Kernel.Lookup_Filter ("Debugger printable variable");
+      Not_Connamd_Filter :=
+        Kernel.Lookup_Filter ("Debugger not command variable");
 
       Access_Filter := new Access_Variable_Filter;
-      Register_Filter
-        (Kernel, Access_Filter, "Debugger variable is access");
+      Register_Filter (Kernel, Access_Filter, "Debugger variable is access");
 
       Register_Action
-        (Kernel, "debug tree display variable",
-         Command => new Tree_Display_Command,
+        (Kernel,
+         "debug tree display variable",
+         Command     => new Tree_Display_Command,
          Description =>
            -"Display the value of the variable in the Variables view",
-         Filter      => Debugger_Stopped_Filter and Not_Connamd_Filter and
-           Printable_Var_Filter,
+         Filter      =>
+           Debugger_Stopped_Filter
+           and Not_Connamd_Filter
+           and Printable_Var_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Debug/Display %S in Variables view",
-         Action      => "debug tree display variable",
-         Group       => GVD_Variables_Contextual_Group);
+         Label  => -"Debug/Display %S in Variables view",
+         Action => "debug tree display variable",
+         Group  => GVD_Variables_Contextual_Group);
 
       Is_Editable_Filter := new Is_Variable_Editable_Filter;
       Register_Filter
         (Kernel, Is_Editable_Filter, "Debugger is variable editable");
 
       Register_Action
-        (Kernel, "debug set variable format",
-         Command => new Set_Format_Command,
-         Description =>
-           -"Set format for the variable in the Variables view",
-         Filter      => Kernel.Lookup_Filter
-           ("Debugger inactive or stopped") and Is_Editable_Filter,
+        (Kernel,
+         "debug set variable format",
+         Command     => new Set_Format_Command,
+         Description => -"Set format for the variable in the Variables view",
+         Filter      =>
+           Kernel.Lookup_Filter ("Debugger inactive or stopped")
+           and Is_Editable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Debug/Set format for %S",
-         Action      => "debug set variable format",
-         Group       => GVD_Variables_Contextual_Group);
+         Label  => -"Debug/Set format for %S",
+         Action => "debug set variable format",
+         Group  => GVD_Variables_Contextual_Group);
 
       Register_Action
-        (Kernel, "debug tree display local variables",
-         Command => new Tree_Local_Vars_Command,
-         Description =>
-           -"Display the local variables in the Variables view",
+        (Kernel,
+         "debug tree display local variables",
+         Command     => new Tree_Local_Vars_Command,
+         Description => -"Display the local variables in the Variables view",
          Filter      => Debugger_Stopped_Filter,
          Icon_Name   => "gps-debugger-local-vars-symbolic",
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug tree display arguments",
+        (Kernel,
+         "debug tree display arguments",
          Command     => new Tree_Arguments_Command,
          Description =>
            -("Display the arguments of the current subprogram in the"
@@ -2351,7 +2404,8 @@ package body GVD.Variables.View is
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug tree display expression",
+        (Kernel,
+         "debug tree display expression",
          Command     => new Tree_Expression_Command,
          Description =>
            -"Display the value of any expression in the Variables view",
@@ -2360,7 +2414,8 @@ package body GVD.Variables.View is
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug tree undisplay",
+        (Kernel,
+         "debug tree undisplay",
          Command     => new Tree_Undisplay_Command,
          Description =>
            -"Remove the display of the selected variables"
@@ -2371,7 +2426,8 @@ package body GVD.Variables.View is
 
       View_Focused_Filter := new Is_Variables_View_Focused_Filter;
       Register_Action
-        (Kernel, "debug tree remove selected variables",
+        (Kernel,
+         "debug tree remove selected variables",
          Command     => new Tree_Undisplay_Command,
          Description =>
            -"Remove the display of the selected variables"
@@ -2381,7 +2437,8 @@ package body GVD.Variables.View is
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug tree clear",
+        (Kernel,
+         "debug tree clear",
          Command     => new Tree_Clear_Command,
          Description =>
            -"Remove the display of all variables in the Variables view",
@@ -2391,7 +2448,8 @@ package body GVD.Variables.View is
 
       Command := new Print_Variable_Command;
       Register_Action
-        (Kernel, "debug print variable",
+        (Kernel,
+         "debug print variable",
          Command     => Command,
          Description =>
            "Print the value of the variable in the debugger console",
@@ -2406,52 +2464,55 @@ package body GVD.Variables.View is
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Dereference := True;
       Register_Action
-        (Kernel, "debug print dereferenced variable",
+        (Kernel,
+         "debug print dereferenced variable",
          Command     => Command,
          Description =>
            "Print the value pointed to by the variable in the debugger"
            & " console",
-         Filter    => Debugger_Stopped_Filter and Access_Filter and
-           Printable_Var_Filter,
-         Category  => "Debug");
+         Filter      =>
+           Debugger_Stopped_Filter and Access_Filter and Printable_Var_Filter,
+         Category    => "Debug");
 
       Command := new Set_Value_Command;
       Register_Action
-        (Kernel, "debug tree set value",
+        (Kernel,
+         "debug tree set value",
          Command     => Command,
-         Description =>
-           "Set a new value for the selected variable.",
+         Description => "Set a new value for the selected variable.",
          Icon_Name   => "gps-rename-symbolic",
          Category    => "Debug");
 
       Register_Action
-        (Kernel, "debug export variables",
+        (Kernel,
+         "debug export variables",
          Command     => new Export_Variables_Command,
-         Description =>
-           -"Save variables to a file",
+         Description => -"Save variables to a file",
          Icon_Name   => "gps-save-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Stopped_Filter);
 
       Register_Action
-        (Kernel, "variables view collapse selected",
-         Command     => new Variables_Collapse_Or_Expand_Command
-           (Collapse_Rows),
+        (Kernel,
+         "variables view collapse selected",
+         Command     =>
+           new Variables_Collapse_Or_Expand_Command (Collapse_Rows),
          Description => -"Collapse the selected nodes in the variables tree",
          Icon_Name   => "gps-collapse-all-symbolic",
          Category    => "Debug");
 
       Register_Action
-        (Kernel, "variables view expand selected",
-         Command     => new Variables_Collapse_Or_Expand_Command
-           (Expand_Rows),
+        (Kernel,
+         "variables view expand selected",
+         Command     => new Variables_Collapse_Or_Expand_Command (Expand_Rows),
          Description => -"Expand the selected nodes in the variables tree",
          Icon_Name   => "gps-expand-all-symbolic",
          Category    => "Debug");
 
       Selection_Filter := new Variable_Single_Selection;
       Register_Action
-        (Kernel, "variables view expand next layer",
+        (Kernel,
+         "variables view expand next layer",
          Command     => new Expand_Next_Layer_Command,
          Description =>
            -"Expand one time all the children of the selected node",
@@ -2459,12 +2520,16 @@ package body GVD.Variables.View is
          Category    => "Debug",
          Filter      => Selection_Filter);
 
-      Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debugger-variables-show-types", True, Label => -"Show types");
+      Show_Types :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debugger-variables-show-types", True, Label => -"Show types");
 
-      Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debugger-variables-flat-view", False, Label => -"Flat view",
-         Doc => "Show all ancestors in flat mode.");
+      Flat_View :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("debugger-variables-flat-view",
+           False,
+           Label => -"Flat view",
+           Doc   => "Show all ancestors in flat mode.");
    end Register_Module;
 
 end GVD.Variables.View;

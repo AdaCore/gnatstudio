@@ -45,17 +45,17 @@
 --  * Allowed chars in a word are found in g-regpat.ads.
 
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings;
 
 with Gtk.Combo_Box_Text;
 with Gtk.Widget;
 
-with Basic_Types;                        use Basic_Types;
+with Basic_Types;        use Basic_Types;
 with GPS.Kernel;
-with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
-with GPS.Search;                         use GPS.Search;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Search;         use GPS.Search;
 
 package Find_Utils is
 
@@ -66,7 +66,7 @@ package Find_Utils is
    --  search both constant strings and regular expressions.
 
    type Root_Search_Context is abstract tagged limited record
-      Pattern        : GPS.Search.Search_Pattern_Access;
+      Pattern : GPS.Search.Search_Pattern_Access;
       --  The pattern matcher
 
       End_Notif_Done : Boolean := False;
@@ -101,8 +101,7 @@ package Find_Utils is
    --  string. If context is a regular expression, return the original regexp
    --  string if any, "" otherwise.
 
-   function Context_Look_In
-     (Self : Root_Search_Context) return String;
+   function Context_Look_In (Self : Root_Search_Context) return String;
    --  Describe the current context (what files are searched,...)
    --  This is intended for display to the user.
    --  The returned string should start with a lower case, and continue a
@@ -120,8 +119,7 @@ package Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Natural;
-      End_Index   : Natural)
-      return GPS.Search.Search_Context;
+      End_Index   : Natural) return GPS.Search.Search_Context;
    --  Check if Context matches Buffer (Start_Index .. End_Index), and return
    --  the index of the first match, or -1 if there is no match.
    --  It is important that Buffer contains the whole file,
@@ -133,16 +131,16 @@ package Find_Utils is
    type Operation_Kind is (Replace, Search);
 
    function Get_Terminate_Message
-     (Context : access Root_Search_Context;
-      Kind    : Operation_Kind) return String;
+     (Context : access Root_Search_Context; Kind : Operation_Kind)
+      return String;
    --  The implementer of this function is supposed to return a message that
    --  will be displayed once the search or replace is done. By default, it
    --  return "".
    --  ??? Currently, only the Replace kind is taken into account.
 
-   type Scan_Callback is access function
-     (Match : GPS.Search.Search_Context;
-      Text  : String) return Boolean;
+   type Scan_Callback is
+     access function
+       (Match : GPS.Search.Search_Context; Text : String) return Boolean;
    --  Callback for a match in a buffer.
    --  Text is the full line that contains the matched text, where the latter
    --  has been highlighted. This is suitable for displaying in the Locations
@@ -191,12 +189,14 @@ package Find_Utils is
    --  Raised when trying to access the components in Search_Context
 
    function Get_Current_Progress
-     (Context : access Root_Search_Context) return Integer is (0);
+     (Context : access Root_Search_Context) return Integer
+   is (0);
    --  Return the current progress level in Context (ex: the number of file
    --  being searched. By default, return 0.
 
    function Get_Total_Progress
-     (Context : access Root_Search_Context) return Integer is (1);
+     (Context : access Root_Search_Context) return Integer
+   is (1);
    --  Return the total progress level in Context (ex: the total number of
    --  files being searched). By default, return 1.
 
@@ -217,7 +217,7 @@ package Find_Utils is
    function Is_Equal
      (Left  : not null access Search_Occurrence_Record;
       Right : not null access Search_Occurrence_Record) return Boolean
-      is abstract;
+   is abstract;
    --  Return true when the given search occurrences are equal.
 
    procedure Initialize
@@ -242,8 +242,8 @@ package Find_Utils is
       Give_Focus           : Boolean;
       Found                : out Boolean;
       Continue             : out Boolean;
-      Display_Matched_Only : Boolean := False)
-      return Search_Occurrence is abstract;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence
+   is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --
    --  Found tells whether an occurrence of the context was found.
@@ -306,17 +306,18 @@ package Find_Utils is
 
    function Get_Scope_Combo
      (Selector : not null access Scope_Selector_Interface)
-      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text is abstract;
+      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
+   is abstract;
    --  Return the Selector's scope combo widget
 
    function Get_Optional_Widget
      (Selector : not null access Scope_Selector_Interface)
-      return Gtk.Widget.Gtk_Widget is abstract;
+      return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the Selector's optional widget container
 
    type Search_Module_Type is abstract tagged private;
-   type Search_Module is
-     access all Search_Module_Type'Class;
+   type Search_Module is access all Search_Module_Type'Class;
    --  Type used to represent modules that can be used for searching and/or
    --  replacing purposes.
 
@@ -366,8 +367,8 @@ package Find_Utils is
      (Module          : not null access Search_Module_Type;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access is abstract;
+      Selector        : Scope_Selector) return Root_Search_Context_Access
+   is abstract;
    --  Function called to create the search context.
    --
    --  It should return null if it couldn't create the context, and thus if the
@@ -387,13 +388,11 @@ package Find_Utils is
    --  occurrences stack..
 
    function Pop_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence;
+     (Module : not null access Search_Module_Type) return Search_Occurrence;
    --  Pop the top element of the search module's search occurrences stack.
 
    function Get_Last_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence;
+     (Module : not null access Search_Module_Type) return Search_Occurrence;
    --  Get the last search occurrence pushed into the module's search
    --  occurrences stack, without popping it.
 
@@ -403,7 +402,8 @@ package Find_Utils is
 
    procedure Highlight_Occurrence
      (Module     : not null access Search_Module_Type;
-      Occurrence : not null access Search_Occurrence_Record'Class) is null;
+      Occurrence : not null access Search_Occurrence_Record'Class)
+   is null;
    --  Highlight the given search occurrence.
    --  This procedure needs to be overridden by any search module that is able
    --  to display a particular search occurrence (i.e: highlight the given
@@ -411,7 +411,8 @@ package Find_Utils is
 
    procedure Give_Focus_To_Occurrence
      (Module     : not null access Search_Module_Type;
-      Occurrence : not null access Search_Occurrence_Record'Class) is null;
+      Occurrence : not null access Search_Occurrence_Record'Class)
+   is null;
    --  Give the focus to the given search occcurrence.
    --  This procedure needs to be overridden by any search module that is able
    --  to give the focus to a particular search occurrence (i.e: give the focus
@@ -432,8 +433,8 @@ package Find_Utils is
    --  Getters
 
    function Get_Search_Category_Name
-     (Look_For    : String;
-      Interactive : Boolean) return VSS.Strings.Virtual_String;
+     (Look_For : String; Interactive : Boolean)
+      return VSS.Strings.Virtual_String;
    --  Return the name of the category to use in the Locations window.
 
 private
@@ -443,13 +444,13 @@ private
       --  The search pattern used to match this occurrence
    end record;
 
-   package Search_Occurrences_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Search_Occurrence, "=");
+   package Search_Occurrences_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Search_Occurrence, "=");
 
    type Search_Module_Type is abstract tagged record
-      Mask         : Search_Options_Mask;
+      Mask : Search_Options_Mask;
 
-      Selector     : Scope_Selector;
+      Selector : Scope_Selector;
       --  Store the scope selector, which holds a reference to the scope
       --  selection widgets.
       --  We could have factories instead, but that means it would be harder

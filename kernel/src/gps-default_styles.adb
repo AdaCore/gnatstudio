@@ -15,28 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Gdk.RGBA;
 
-with GPS.Intl;                  use GPS.Intl;
-with Default_Preferences;       use Default_Preferences;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with LSP.Enumerations;          use LSP.Enumerations;
+with GPS.Intl;               use GPS.Intl;
+with Default_Preferences;    use Default_Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with LSP.Enumerations;       use LSP.Enumerations;
 
 package body GPS.Default_Styles is
 
    Me : constant Trace_Handle := Create ("GPS.Default_Styles", Off);
 
-   type Entity_To_Pref_Array is array
-     (Standout_Language_Entity) of Variant_Preference;
+   type Entity_To_Pref_Array is
+     array (Standout_Language_Entity) of Variant_Preference;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
@@ -61,7 +62,7 @@ package body GPS.Default_Styles is
    -------------------------------
 
    procedure Initialize_Default_Styles (Kernel : Kernel_Handle) is
-      M       : constant Style_Manager_Access := Get_Style_Manager (Kernel);
+      M : constant Style_Manager_Access := Get_Style_Manager (Kernel);
 
       procedure Init
         (Style     : out Style_Access;
@@ -97,8 +98,9 @@ package body GPS.Default_Styles is
          Bg        : Color_Preference := null;
          Speedbar  : Boolean := False) is
       begin
-         Style := M.Create_From_Preferences
-           (Key => Name, Fg_Pref => Fg, Bg_Pref => Bg);
+         Style :=
+           M.Create_From_Preferences
+             (Key => Name, Fg_Pref => Fg, Bg_Pref => Bg);
 
          if Speedbar then
             Set_In_Speedbar (Style, True);
@@ -127,178 +129,206 @@ package body GPS.Default_Styles is
 
    begin
       All_Styles :=
-        ((To_Unbounded_String ("type"),    Types_Style),
+        ((To_Unbounded_String ("type"), Types_Style),
          (To_Unbounded_String ("keyword"), Keywords_Style),
          (To_Unbounded_String ("comment"), Comments_Style),
-         (To_Unbounded_String ("string"),  Strings_Style),
-         (To_Unbounded_String ("number"),  Numbers_Style));
+         (To_Unbounded_String ("string"), Strings_Style),
+         (To_Unbounded_String ("number"), Numbers_Style));
 
-      Dummy := M.Create_From_Preferences
-        (Key     => "aspect_block",
-         Style   => Default_Style,
-         Variant => Aspects_Blocks_Style);
+      Dummy :=
+        M.Create_From_Preferences
+          (Key     => "aspect_block",
+           Style   => Default_Style,
+           Variant => Aspects_Blocks_Style);
 
-      Dummy := M.Create_From_Preferences
-        (Key     => "aspect_type",
-         Style   => Default_Style,
-         Variant => Aspects_Types_Style);
+      Dummy :=
+        M.Create_From_Preferences
+          (Key     => "aspect_type",
+           Style   => Default_Style,
+           Variant => Aspects_Types_Style);
 
-      Dummy := M.Create_From_Preferences
-        (Key     => "aspect_string",
-         Style   => Default_Style,
-         Variant => Aspects_Strings_Style);
+      Dummy :=
+        M.Create_From_Preferences
+          (Key     => "aspect_string",
+           Style   => Default_Style,
+           Variant => Aspects_Strings_Style);
 
-      Dummy := M.Create_From_Preferences
-        (Key     => "aspect_number",
-         Style   => Default_Style,
-         Variant => Aspects_Numbers_Style);
+      Dummy :=
+        M.Create_From_Preferences
+          (Key     => "aspect_number",
+           Style   => Default_Style,
+           Variant => Aspects_Numbers_Style);
 
       ------------
       -- Editor --
       ------------
 
       for E in Standout_Language_Entity'Range loop
-         Language_Styles (E) := M.Create_From_Preferences
-           (Key     => To_Name (E),
-            Style   => Default_Style,
-            Variant => Entity_To_Pref (E));
+         Language_Styles (E) :=
+           M.Create_From_Preferences
+             (Key     => To_Name (E),
+              Style   => Default_Style,
+              Variant => Entity_To_Pref (E));
       end loop;
 
-      Editor_Code_Annotations_Style := M.Create_From_Preferences
-        (Key     => "Editor code annotations",
-         Style   => Default_Style,
-         Variant => Code_Annotations_Style);
+      Editor_Code_Annotations_Style :=
+        M.Create_From_Preferences
+          (Key     => "Editor code annotations",
+           Style   => Default_Style,
+           Variant => Code_Annotations_Style);
 
-      Editor_Default_Style := M.Create_From_Preferences
-        (Key   => "Editor default",
-         Style => Default_Style);
+      Editor_Default_Style :=
+        M.Create_From_Preferences
+          (Key => "Editor default", Style => Default_Style);
 
-      Editor_Ephemeral_Highlighting_Smart := M.Create_From_Preferences
-        (Key     => "Editor ephemeral highlighting smart",
-         Style   => Default_Style,
-         Variant => Ephemeral_Highlighting_Smart);
+      Editor_Ephemeral_Highlighting_Smart :=
+        M.Create_From_Preferences
+          (Key     => "Editor ephemeral highlighting smart",
+           Style   => Default_Style,
+           Variant => Ephemeral_Highlighting_Smart);
       Set_In_Speedbar (Editor_Ephemeral_Highlighting_Smart, True);
 
-      Editor_Ephemeral_Highlighting_Simple := M.Create_From_Preferences
-        (Key     => "Editor ephemeral highlighting simple",
-         Style   => Default_Style,
-         Variant => Ephemeral_Highlighting_Simple);
+      Editor_Ephemeral_Highlighting_Simple :=
+        M.Create_From_Preferences
+          (Key     => "Editor ephemeral highlighting simple",
+           Style   => Default_Style,
+           Variant => Ephemeral_Highlighting_Simple);
       Set_In_Speedbar (Editor_Ephemeral_Highlighting_Simple, True);
 
-      Hyper_Links_Default_Style := M.Create_From_Preferences
-        (Key     => "Hyper links default style",
-         Style   => Default_Style,
-         Variant => Hyper_Links_Style);
+      Hyper_Links_Default_Style :=
+        M.Create_From_Preferences
+          (Key     => "Hyper links default style",
+           Style   => Default_Style,
+           Variant => Hyper_Links_Style);
 
-      Init (Bookmark_Default_Style,
-            -"Editor bookmarks",
-            Icon_Name => "gps-goto-symbolic",
-            Bg        => Bookmark_Color,
-            Speedbar  => True);
+      Init
+        (Bookmark_Default_Style,
+         -"Editor bookmarks",
+         Icon_Name => "gps-goto-symbolic",
+         Bg        => Bookmark_Color,
+         Speedbar  => True);
 
       --  LSP aspect styles
       for T in SemanticTokenTypes'Range loop
          case T is
-            when keyword =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "keyword-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Keywords_Style);
+            when keyword                 =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "keyword-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Keywords_Style);
 
-            when comment =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "comment-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Comments_Style);
+            when comment                 =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "comment-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Comments_Style);
 
-            when a_type =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "type-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Types_Style);
+            when a_type                  =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "type-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Types_Style);
 
             when LSP.Enumerations.string =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "string-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Strings_Style);
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "string-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Strings_Style);
 
-            when number =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "number-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Numbers_Style);
+            when number                  =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "number-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Numbers_Style);
 
-            when a_function =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "function-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Style);
+            when a_function              =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "function-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Style);
 
-            when an_interface =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => "interface-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Style);
+            when an_interface            =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     => "interface-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Style);
 
             --  Use Aspects_Style preference for all others semantic tokens
             --  to create `token-documentation` style to highlight aspects.
-            when others =>
-               Dummy := M.Create_From_Preferences
-                 (Key     => Ada.Characters.Handling.To_Lower (T'Img) &
-                    "-documentation",
-                  Style   => Default_Style,
-                  Variant => Aspects_Style);
+
+            when others                  =>
+               Dummy :=
+                 M.Create_From_Preferences
+                   (Key     =>
+                      Ada.Characters.Handling.To_Lower (T'Img)
+                      & "-documentation",
+                    Style   => Default_Style,
+                    Variant => Aspects_Style);
          end case;
       end loop;
 
-      Dummy := M.Create_From_Preferences
-        (Key     => "variable-declaration-documentation",
-         Style   => Default_Style,
-         Variant => Aspects_Style);
+      Dummy :=
+        M.Create_From_Preferences
+          (Key     => "variable-declaration-documentation",
+           Style   => Default_Style,
+           Variant => Aspects_Style);
 
       ------------
       -- Search --
       ------------
 
-      Init (Search_Results_Style,
-            -"Search results",
-            "",
-            Bg => Search_Src_Highlight, Speedbar => True);
+      Init
+        (Search_Results_Style,
+         -"Search results",
+         "",
+         Bg       => Search_Src_Highlight,
+         Speedbar => True);
 
       --------------------
       -- Error Messages --
       --------------------
 
-      Init (Error_Msg_Style,
-            -"Error messages",
-            "",
-            Fg       => Message_Highlight,
-            Speedbar => True);
+      Init
+        (Error_Msg_Style,
+         -"Error messages",
+         "",
+         Fg       => Message_Highlight,
+         Speedbar => True);
 
       --------------
       -- Debugger --
       --------------
 
-      Init (Debugger_Current_Line_Style,
-            -"Debugger current line",
-            Bg       => Debugger_Current_Line_Color,
-            Speedbar => True);
-      Init (Debugger_Breakpoint_Style,
-            -"Lines with breakpoints",
-            Icon_Name => "gps-emblem-debugger-breakpoint",
-            Bg        => Breakpoint_Color,
-            Speedbar  => True);
-      Init (Debugger_Conditional_Breakpoint_Style,
-            -"Lines with conditional breakpoints",
-            Icon_Name => "gps-emblem-debugger-conditional-breakpoint",
-            Bg        => Conditional_Breakpoint_Color,
-            Speedbar  => True);
-      Init (Debugger_Disabled_Breakpoint_Style,
-            -"Lines with disabled breakpoints",
-            Icon_Name => "gps-emblem-debugger-disabled-breakpoint",
-            Bg        => Disabled_Breakpoint_Color,
-            Speedbar  => True);
+      Init
+        (Debugger_Current_Line_Style,
+         -"Debugger current line",
+         Bg       => Debugger_Current_Line_Color,
+         Speedbar => True);
+      Init
+        (Debugger_Breakpoint_Style,
+         -"Lines with breakpoints",
+         Icon_Name => "gps-emblem-debugger-breakpoint",
+         Bg        => Breakpoint_Color,
+         Speedbar  => True);
+      Init
+        (Debugger_Conditional_Breakpoint_Style,
+         -"Lines with conditional breakpoints",
+         Icon_Name => "gps-emblem-debugger-conditional-breakpoint",
+         Bg        => Conditional_Breakpoint_Color,
+         Speedbar  => True);
+      Init
+        (Debugger_Disabled_Breakpoint_Style,
+         -"Lines with disabled breakpoints",
+         Icon_Name => "gps-emblem-debugger-disabled-breakpoint",
+         Bg        => Disabled_Breakpoint_Color,
+         Speedbar  => True);
 
       --------------------
       -- Analysis Tools --
@@ -308,40 +338,45 @@ package body GPS.Default_Styles is
       --  set to Unspecified since it's the default.
       Messages_Styles (Unspecified) := No_Style;
 
-      Init (Messages_Styles (Annotation),
-            Name      => -"Annotation messages",
-            Bg        => Annotation_Messages_Highlight,
-            Speedbar  => True);
+      Init
+        (Messages_Styles (Annotation),
+         Name     => -"Annotation messages",
+         Bg       => Annotation_Messages_Highlight,
+         Speedbar => True);
 
-      Init (Messages_Styles (Informational),
-            Name      => -"Compiler info",
-            Bg        => Info_Messages_Highlight,
-            Speedbar  => True);
+      Init
+        (Messages_Styles (Informational),
+         Name     => -"Compiler info",
+         Bg       => Info_Messages_Highlight,
+         Speedbar => True);
 
-      Init (Messages_Styles (High),
-            Name      => -"Builder results",
-            Bg        => High_Messages_Highlight,
-            Speedbar  => True);
+      Init
+        (Messages_Styles (High),
+         Name     => -"Builder results",
+         Bg       => High_Messages_Highlight,
+         Speedbar => True);
 
-      Init (Messages_Styles (Medium),
-            Name      => -"Builder warnings",
-            Bg        => Medium_Messages_Highlight,
-            Speedbar  => True);
+      Init
+        (Messages_Styles (Medium),
+         Name     => -"Builder warnings",
+         Bg       => Medium_Messages_Highlight,
+         Speedbar => True);
 
-      Init (Messages_Styles (Low),
-            Name      => -"Style errors",
-            Bg        => Low_Messages_Highlight,
-            Speedbar  => True);
+      Init
+        (Messages_Styles (Low),
+         Name     => -"Style errors",
+         Bg       => Low_Messages_Highlight,
+         Speedbar => True);
 
-      Preferences_Changed_Hook.Add
-        (Obj => new On_Pref_Changed);
+      Preferences_Changed_Hook.Add (Obj => new On_Pref_Changed);
    end Initialize_Default_Styles;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -380,16 +415,22 @@ package body GPS.Default_Styles is
    procedure Trace (Style : Style_Access) is
    begin
       Trace
-        (Me, Style.Get_Name &
-           " font:" & Style.Get_Variant'Img &
-           " foreground:" & Gdk.RGBA.To_String (Style.Get_Foreground) &
-           " background:" & Gdk.RGBA.To_String (Style.Get_Background) &
-           " underline:" & Style.Get_Underline'Img &
-           " underline color:" & Gdk.RGBA.To_String
-           (Style.Get_Underline_Color) &
-           " strikethrough: " & Style.Get_Strikethrough'Img &
-           " strikethrough color: " & Gdk.RGBA.To_String
-           (Style.Get_Strikethrough_Color));
+        (Me,
+         Style.Get_Name
+         & " font:"
+         & Style.Get_Variant'Img
+         & " foreground:"
+         & Gdk.RGBA.To_String (Style.Get_Foreground)
+         & " background:"
+         & Gdk.RGBA.To_String (Style.Get_Background)
+         & " underline:"
+         & Style.Get_Underline'Img
+         & " underline color:"
+         & Gdk.RGBA.To_String (Style.Get_Underline_Color)
+         & " strikethrough: "
+         & Style.Get_Strikethrough'Img
+         & " strikethrough color: "
+         & Gdk.RGBA.To_String (Style.Get_Strikethrough_Color));
    end Trace;
 
 end GPS.Default_Styles;

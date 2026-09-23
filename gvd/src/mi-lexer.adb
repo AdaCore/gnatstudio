@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Streams;                use Ada.Streams;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Streams;             use Ada.Streams;
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with System;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body MI.Lexer is
 
@@ -52,15 +52,15 @@ package body MI.Lexer is
       --  It's a buffer of character using the Index type as range value
       --  type.
 
-      type Input_Handler (Str : String_Access) is new Controlled
-        with record
+      type Input_Handler (Str : String_Access) is new Controlled with record
          Line   : Natural := 1;
          Column : Natural := 1;
          Index  : Natural := 0;
       end record;
       --  Abstract type input handler.
 
-      overriding procedure Initialize (Sh : in out Input_Handler);
+      overriding
+      procedure Initialize (Sh : in out Input_Handler);
       --  Ctor of the Stream_Handler object.
 
       function Look_Ahead (Sh : Input_Handler) return Character;
@@ -69,24 +69,19 @@ package body MI.Lexer is
       procedure Eat (Sh : in out Input_Handler);
       --  Consume the current token in the stream.
 
-      procedure Read_Number
-        (Sh     : in out Input_Handler;
-         Number : out Integer);
+      procedure Read_Number (Sh : in out Input_Handler; Number : out Integer);
       --  Read the longest number from the stream and return it.
 
       procedure Handle_Escape_Char
-        (Sh         : in out Input_Handler;
-         Str        : in out Unbounded_String);
+        (Sh : in out Input_Handler; Str : in out Unbounded_String);
       --  handle '\' when reading identifier or C string
 
       procedure Read_Identifier
-        (Sh         : in out Input_Handler;
-         Identifier : out String_Access);
+        (Sh : in out Input_Handler; Identifier : out String_Access);
       --  Read the longest identifier from the stream and return it.
 
       procedure Read_C_String
-        (Sh       : in out Input_Handler;
-         C_String : out String_Access);
+        (Sh : in out Input_Handler; C_String : out String_Access);
       --  Read the longest C string from the stream and return it.
 
       procedure Flush (Sh : in out Input_Handler);
@@ -94,8 +89,8 @@ package body MI.Lexer is
       --  new data.
 
       type Stream_Handler (Stream : Stream_Access) is new Input_Handler (null)
-        with record
-         Buffer : Buffer_Type   := (others => ASCII.NUL);
+      with record
+         Buffer : Buffer_Type := (others => ASCII.NUL);
          Offset : Buffer_Offset := Buffer_Offset'First;
       end record;
       --  Tagged type stream handler.
@@ -103,13 +98,16 @@ package body MI.Lexer is
       --  from the string, and an index indicating the current read cursor
       --  in the buffer.
 
-      overriding function Look_Ahead (Sh : Stream_Handler) return Character;
+      overriding
+      function Look_Ahead (Sh : Stream_Handler) return Character;
       --  Return the next token in the stream, without consuming it.
 
-      overriding procedure Eat (Sh : in out Stream_Handler);
+      overriding
+      procedure Eat (Sh : in out Stream_Handler);
       --  Consume the current token in the stream.
 
-      overriding procedure Flush (Sh : in out Stream_Handler);
+      overriding
+      procedure Flush (Sh : in out Stream_Handler);
       --  Update the handler by flushing current buffer and rebuffering
       --  new data.
 
@@ -136,7 +134,8 @@ package body MI.Lexer is
       -- Initialize --
       ----------------
 
-      overriding procedure Initialize (Sh : in out Input_Handler) is
+      overriding
+      procedure Initialize (Sh : in out Input_Handler) is
       begin
          Sh.Flush;
       end Initialize;
@@ -154,7 +153,8 @@ package body MI.Lexer is
          end if;
       end Look_Ahead;
 
-      overriding function Look_Ahead (Sh : Stream_Handler) return Character is
+      overriding
+      function Look_Ahead (Sh : Stream_Handler) return Character is
       begin
          return Sh.Buffer (Sh.Offset);
       end Look_Ahead;
@@ -169,7 +169,8 @@ package body MI.Lexer is
          Sh.Column := Sh.Column + 1;
       end Eat;
 
-      overriding procedure Eat (Sh : in out Stream_Handler) is
+      overriding
+      procedure Eat (Sh : in out Stream_Handler) is
       begin
          if Sh.Offset = Buffer_Offset'Last then
             Sh.Flush;
@@ -189,15 +190,16 @@ package body MI.Lexer is
          Sh.Index := Sh.Str'First;
       end Flush;
 
-      overriding procedure Flush (Sh : in out Stream_Handler) is
+      overriding
+      procedure Flush (Sh : in out Stream_Handler) is
          Buffer_Size : constant Stream_Element_Offset :=
            Buffer_Type'Object_Size / Stream_Element'Size;
 
          type SEA_Pointer is
            access all Stream_Element_Array (1 .. Buffer_Size);
 
-         function As_SEA_Pointer is
-           new Ada.Unchecked_Conversion (System.Address, SEA_Pointer);
+         function As_SEA_Pointer is new
+           Ada.Unchecked_Conversion (System.Address, SEA_Pointer);
 
          Offset        : Stream_Element_Offset;
          Buffer_Access : constant SEA_Pointer :=
@@ -219,11 +221,9 @@ package body MI.Lexer is
       -- Read_Number --
       -----------------
 
-      procedure Read_Number
-        (Sh     : in out Input_Handler;
-         Number : out Integer)
+      procedure Read_Number (Sh : in out Input_Handler; Number : out Integer)
       is
-         C      : Character;
+         C : Character;
       begin
          Number := 0;
 
@@ -231,8 +231,7 @@ package body MI.Lexer is
             C := Sh.Look_Ahead;
             exit when not Is_Digit (C);
             Sh.Eat;
-            Number := Number * 10 + (Character'Pos (C)
-                                     - Character'Pos ('0'));
+            Number := Number * 10 + (Character'Pos (C) - Character'Pos ('0'));
          end loop;
       end Read_Number;
 
@@ -240,8 +239,7 @@ package body MI.Lexer is
       -- Is_Valid_Identifier_Character --
       -----------------------------------
 
-      function Is_Valid_Identifier_Character
-        (C : Character) return Boolean is
+      function Is_Valid_Identifier_Character (C : Character) return Boolean is
       begin
          return Is_Alphanumeric (C) or else C = '-' or else C = '_';
       end Is_Valid_Identifier_Character;
@@ -251,10 +249,9 @@ package body MI.Lexer is
       ------------------------
 
       procedure Handle_Escape_Char
-        (Sh         : in out Input_Handler;
-         Str        : in out Unbounded_String)
+        (Sh : in out Input_Handler; Str : in out Unbounded_String)
       is
-         C          : Character;
+         C : Character;
       begin
          pragma Assert (Sh.Look_Ahead = '\');
          Sh.Eat;
@@ -264,26 +261,35 @@ package body MI.Lexer is
             C := Sh.Look_Ahead;
          end if;
          case C is
-            when ASCII.LF =>
+            when ASCII.LF              =>
                Sh.Line := Sh.Line + 1;
                Sh.Column := 1;
+
             when ''' | '"' | '\' | '/' =>
                Append (Str, C);
-            when 'n' =>
+
+            when 'n'                   =>
                Append (Str, ASCII.LF);
-            when 'r' =>
+
+            when 'r'                   =>
                Append (Str, ASCII.CR);
-            when 't' =>
+
+            when 't'                   =>
                Append (Str, ASCII.HT);
-            when 'b' =>
+
+            when 'b'                   =>
                Append (Str, ASCII.BS);
-            when 'f' =>
+
+            when 'f'                   =>
                Append (Str, ASCII.FF);
-            when 'v' =>
+
+            when 'v'                   =>
                Append (Str, ASCII.VT);
-            when '0' =>
+
+            when '0'                   =>
                Append (Str, ASCII.NUL);
-            when others =>
+
+            when others                =>
                Append (Str, '\');
                Append (Str, C);
          end case;
@@ -296,11 +302,10 @@ package body MI.Lexer is
       ---------------------
 
       procedure Read_Identifier
-        (Sh         : in out Input_Handler;
-         Identifier : out String_Access)
+        (Sh : in out Input_Handler; Identifier : out String_Access)
       is
-         C          : Character;
-         Str        : Unbounded_String;
+         C   : Character;
+         Str : Unbounded_String;
       begin
          loop
             C := Sh.Look_Ahead;
@@ -321,11 +326,10 @@ package body MI.Lexer is
       -------------------
 
       procedure Read_C_String
-        (Sh            : in out Input_Handler;
-         C_String      : out String_Access)
+        (Sh : in out Input_Handler; C_String : out String_Access)
       is
-         Current_Char  : Character := ASCII.NUL;
-         Str           : Unbounded_String;
+         Current_Char : Character := ASCII.NUL;
+         Str          : Unbounded_String;
       begin
          pragma Assert (Sh.Look_Ahead = '"');
          Sh.Eat;  -- Eats the starting quotation char.
@@ -357,20 +361,24 @@ package body MI.Lexer is
    -- Token_Type comparison function "=" implementation --
    -------------------------------------------------------
 
-   overriding function "=" (Left, Right : Token_Type) return Boolean is
+   overriding
+   function "=" (Left, Right : Token_Type) return Boolean is
    begin
-      if Left.Code /= Right.Code or else Left.Line /= Right.Line or else
-         Left.Column /= Right.Column
+      if Left.Code /= Right.Code
+        or else Left.Line /= Right.Line
+        or else Left.Column /= Right.Column
       then
          return False;
       end if;
 
       case Left.Code is
-         when Token_No =>
+         when Token_No              =>
             return Left.Value = Right.Value;
+
          when Identifier | C_String =>
             return Left.Text = Right.Text;
-         when others =>
+
+         when others                =>
             return True;
       end case;
    end "=";
@@ -380,8 +388,8 @@ package body MI.Lexer is
    -----------------
 
    procedure Clear_Token (Token : in out Token_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (String, String_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (String, String_Access);
    begin
       case Token.Code is
          when Identifier | C_String =>
@@ -390,7 +398,7 @@ package body MI.Lexer is
                Token.Text := null;
             end if;
 
-         when others =>
+         when others                =>
             null;  --  Nothing to do here.
       end case;
    end Clear_Token;
@@ -414,7 +422,8 @@ package body MI.Lexer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (This : in out Token_List_Controller) is
+   overriding
+   procedure Finalize (This : in out Token_List_Controller) is
    begin
       Clear_Token_List (This.List);
    end Finalize;
@@ -433,8 +442,7 @@ package body MI.Lexer is
       Word            : Unbounded_String;        --  A single word
 
    begin
-      Main_Loop :
-      loop
+      Main_Loop : loop
          C := Sh.Look_Ahead;
 
          exit Main_Loop when C = ASCII.NUL;
@@ -447,79 +455,98 @@ package body MI.Lexer is
          --  else, read the longest identifier possible.
 
          case C is
-            when ASCII.LF =>
-               List.Append (Token_Type'(Code => Newline, Line => Sh.Line,
-                                        Column => Sh.Column));
+            when ASCII.LF       =>
+               List.Append
+                 (Token_Type'
+                    (Code => Newline, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
                Sh.Column := 1;
                Sh.Line := Sh.Line + 1;
-            when '&' =>
-               List.Append (Token_Type'(Code   => Ampersand,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '&'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Ampersand, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '@' =>
-               List.Append (Token_Type'(Code   => At_Sign,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '@'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => At_Sign, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '~' =>
-               List.Append (Token_Type'(Code   => Tilde,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '~'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Tilde, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when ',' =>
-               List.Append (Token_Type'(Code   => Comma,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when ','            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Comma, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '*' =>
-               List.Append (Token_Type'(Code   => Asterisk,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '*'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Asterisk, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '+' =>
-               List.Append (Token_Type'(Code   => Plus_Sign,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '+'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Plus_Sign, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '=' =>
-               List.Append (Token_Type'(Code   => Equal_Sign,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '='            =>
+               List.Append
+                 (Token_Type'
+                    (Code   => Equal_Sign,
+                     Line   => Sh.Line,
+                     Column => Sh.Column));
                Sh.Eat;
-            when '^' =>
-               List.Append (Token_Type'(Code   => Caret,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '^'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => Caret, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '[' =>
-               List.Append (Token_Type'(Code   => L_Bracket,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '['            =>
+               List.Append
+                 (Token_Type'
+                    (Code => L_Bracket, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when ']' =>
-               List.Append (Token_Type'(Code   => R_Bracket,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when ']'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => R_Bracket, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '{' =>
-               List.Append (Token_Type'(Code   => L_Brace,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '{'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => L_Brace, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '}' =>
-               List.Append (Token_Type'(Code   => R_Brace,
-                                        Line => Sh.Line,
-                                        Column => Sh.Column));
+
+            when '}'            =>
+               List.Append
+                 (Token_Type'
+                    (Code => R_Brace, Line => Sh.Line, Column => Sh.Column));
                Sh.Eat;
-            when '"' =>
+
+            when '"'            =>
                Sh.Read_C_String (C_String_Access);
-               List.Append (Token_Type'(Code   => C_String,
-                                        Text   => C_String_Access,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
-            when '(' =>
+               List.Append
+                 (Token_Type'
+                    (Code   => C_String,
+                     Text   => C_String_Access,
+                     Line   => Sh.Line,
+                     Column => Sh.Column));
+
+            when '('            =>
                Sh.Eat;
                Word := To_Unbounded_String ("");
 
@@ -538,18 +565,23 @@ package body MI.Lexer is
 
                --  `(gdb)' is the only token using parentheses...
                if Word = "gdb" then
-                  List.Append (Token_Type'(Code   => Gdb_Prompt,
-                                           Line   => Sh.Line,
-                                           Column => Sh.Column));
-               else  -- ...anything else is an invalid token.
+                  List.Append
+                    (Token_Type'
+                       (Code   => Gdb_Prompt,
+                        Line   => Sh.Line,
+                        Column => Sh.Column));
+               else
+                  -- ...anything else is an invalid token.
                   Clear_Token_List (List);
 
                   raise Lexer_Error
-                    with "Unexpected token `("
+                    with
+                      "Unexpected token `("
                       & To_String (Word)
                       & ")', expected (gdb)";
                end if;
-            when '\' =>
+
+            when '\'            =>
 
                --  ignore '\' at EOL
                Sh.Eat;
@@ -562,28 +594,43 @@ package body MI.Lexer is
                   Sh.Eat;
                else
                   Clear_Token_List (List);
-                  raise Lexer_Error with
-                    ("Invalid token `" & C & "' at "
-                     & "line" & Natural'Image (Sh.Line)
-                     & " column" & Natural'Image (Sh.Column));
+                  raise Lexer_Error
+                    with
+                      ("Invalid token `"
+                       & C
+                       & "' at "
+                       & "line"
+                       & Natural'Image (Sh.Line)
+                       & " column"
+                       & Natural'Image (Sh.Column));
                end if;
+
             when ' ' | ASCII.CR =>
                Sh.Eat;
-            when '0' .. '9' =>
+
+            when '0' .. '9'     =>
                Sh.Read_Number (Number);
-               List.Append (Token_Type'(Code   => Token_No,
-                                        Value  => Number,
-                                        Line   => Sh.Line,
-                                        Column => Sh.Column));
-            when others =>
+               List.Append
+                 (Token_Type'
+                    (Code   => Token_No,
+                     Value  => Number,
+                     Line   => Sh.Line,
+                     Column => Sh.Column));
+
+            when others         =>
                Sh.Read_Identifier (C_String_Access);
 
                if C_String_Access.all = "" then
                   Clear_Token_List (List);
-                  raise Lexer_Error with
-                    ("Invalid token `" & C & "' at "
-                     & "line" & Natural'Image (Sh.Line)
-                     & " column" & Natural'Image (Sh.Column));
+                  raise Lexer_Error
+                    with
+                      ("Invalid token `"
+                       & C
+                       & "' at "
+                       & "line"
+                       & Natural'Image (Sh.Line)
+                       & " column"
+                       & Natural'Image (Sh.Column));
                end if;
 
                List.Append
@@ -599,9 +646,7 @@ package body MI.Lexer is
 
       List.Append
         (Token_Type'
-           (Code   => End_Of_File,
-            Line   => Sh.Line,
-            Column => Sh.Column));
+           (Code => End_Of_File, Line => Sh.Line, Column => Sh.Column));
 
       return List;
    end Build_Tokens;
@@ -630,61 +675,61 @@ package body MI.Lexer is
    function Image (Item : Token_Type) return String is
    begin
       case Item.Code is
-         when Token_No =>
+         when Token_No    =>
             return Item.Value'Img;
 
-         when Identifier =>
+         when Identifier  =>
             return Item.Text.all;
 
-         when Newline =>
+         when Newline     =>
             return "\n";
 
-         when Ampersand =>
+         when Ampersand   =>
             return "&";
 
-         when At_Sign =>
+         when At_Sign     =>
             return "@";
 
-         when Tilde =>
+         when Tilde       =>
             return "~";
 
-         when Comma =>
+         when Comma       =>
             return ",";
 
-         when Asterisk =>
+         when Asterisk    =>
             return "*";
 
-         when Plus_Sign =>
+         when Plus_Sign   =>
             return "+";
 
-         when Equal_Sign =>
+         when Equal_Sign  =>
             return "=";
 
-         when Caret =>
+         when Caret       =>
             return "^";
 
-         when L_Bracket =>
+         when L_Bracket   =>
             return "[";
 
-         when R_Bracket =>
+         when R_Bracket   =>
             return "]";
 
-         when L_Brace =>
+         when L_Brace     =>
             return "{";
 
-         when R_Brace =>
+         when R_Brace     =>
             return "}";
 
-         when C_String =>
+         when C_String    =>
             return Item.Text.all;
 
-         when Gdb_Prompt =>
+         when Gdb_Prompt  =>
             return "(gdb)";
 
          when End_Of_File =>
             return "EOF";
 
-         when Unknown =>
+         when Unknown     =>
             return "Unknown";
       end case;
    end Image;

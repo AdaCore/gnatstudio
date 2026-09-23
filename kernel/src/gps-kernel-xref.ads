@@ -18,11 +18,11 @@
 --  This package provides utilities for creating and maintaining
 --  a GNATCOLL Xref database for the kernel.
 
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
-with GNATCOLL.Xref; use GNATCOLL.Xref;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Xref;              use GNATCOLL.Xref;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with Gtk.Widget;
-with Xref;              use Xref;
+with Xref;                       use Xref;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
 
 package GPS.Kernel.Xref is
@@ -34,19 +34,19 @@ package GPS.Kernel.Xref is
    type GPS_Xref_Database is new Extended_Xref_Database with private;
    type GPS_Xref_Database_Access is access all GPS_Xref_Database'Class;
 
-   overriding procedure On_Error
-     (Self  : GPS_Xref_Database;
-      Error : String);
+   overriding
+   procedure On_Error (Self : GPS_Xref_Database; Error : String);
    --  Handler for an error
 
    -------------------------------
    -- GPS_General_Xref_Database --
    -------------------------------
 
-   type GPS_General_Xref_Database_Record is new General_Xref_Database_Record
-       with private;
+   type GPS_General_Xref_Database_Record is
+     new General_Xref_Database_Record with private;
 
-   overriding function Select_Entity_Declaration
+   overriding
+   function Select_Entity_Declaration
      (Self    : access GPS_General_Xref_Database_Record;
       File    : Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
@@ -82,7 +82,8 @@ package GPS.Kernel.Xref is
       Parent              : Root_Entity'Class;
       Ref                 : Root_Entity_Reference'Class;
       Through_Dispatching : Boolean;
-      Is_Renaming         : Boolean) return Boolean is abstract;
+      Is_Renaming         : Boolean) return Boolean
+   is abstract;
    --  If Parent is a renaming of the original Entity, Is_Renaming is set to
    --  true, and Ref is set to No_Entity_Reference.
    --  Entity is the entity that was searched initially.
@@ -137,12 +138,12 @@ package GPS.Kernel.Xref is
    --  Return True if the given context is on a dispatching call.
 
    function Documentation
-     (Self             : General_Xref_Database;
-      Handler          : Language_Handlers.Language_Handler;
-      Entity           : Root_Entity'Class;
+     (Self                     : General_Xref_Database;
+      Handler                  : Language_Handlers.Language_Handler;
+      Entity                   : Root_Entity'Class;
       Color_For_Optional_Param : String := "#555555";
-      Raw_Format       : Boolean := False;
-      Check_Constructs : Boolean := True) return String;
+      Raw_Format               : Boolean := False;
+      Check_Constructs         : Boolean := True) return String;
    --  Return the documentation (tooltips,...) for the entity.
    --  If Raw_Format is False, the documentation is formated in HTML (using
    --  Color_For_Optional_Param to highlight optional parameters).
@@ -173,33 +174,31 @@ private
       Color_For_Optional_Param : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   overriding procedure Add_Parameter
+   overriding
+   procedure Add_Parameter
      (Self    : access HTML_Profile_Formater;
       Name    : String;
       Mode    : String;
       Of_Type : String;
       Default : String);
-   overriding procedure Add_Result
-     (Self    : access HTML_Profile_Formater;
-      Mode    : String;
-      Of_Type : String);
-   overriding procedure Add_Variable
-     (Self    : access HTML_Profile_Formater;
-      Mode    : String;
-      Of_Type : String);
-   overriding procedure Add_Aspects
-     (Self : access HTML_Profile_Formater;
-      Text : String);
-   overriding procedure Add_Comments
-     (Self : access HTML_Profile_Formater;
-      Text : String);
-   overriding procedure Add_Generic_Parameter
+   overriding
+   procedure Add_Result
+     (Self : access HTML_Profile_Formater; Mode : String; Of_Type : String);
+   overriding
+   procedure Add_Variable
+     (Self : access HTML_Profile_Formater; Mode : String; Of_Type : String);
+   overriding
+   procedure Add_Aspects (Self : access HTML_Profile_Formater; Text : String);
+   overriding
+   procedure Add_Comments (Self : access HTML_Profile_Formater; Text : String);
+   overriding
+   procedure Add_Generic_Parameter
      (Self    : access HTML_Profile_Formater;
       Name    : String;
       Mode    : String;
       Of_Type : String;
       Default : String);
-   overriding function Get_Text
-     (Self : access HTML_Profile_Formater) return String;
+   overriding
+   function Get_Text (Self : access HTML_Profile_Formater) return String;
 
 end GPS.Kernel.Xref;

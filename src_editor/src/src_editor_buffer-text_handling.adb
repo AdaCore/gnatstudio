@@ -17,17 +17,17 @@
 
 with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 
-with Glib.Unicode;               use Glib.Unicode;
+with Glib.Unicode; use Glib.Unicode;
 
 with VSS.Characters.Latin;
 
-with Casing_Exceptions;          use Casing_Exceptions;
-with Commands.Editor;            use Commands.Editor;
-with Language;                   use Language;
+with Casing_Exceptions; use Casing_Exceptions;
+with Commands.Editor;   use Commands.Editor;
+with Language;          use Language;
 
-with GPS.Kernel;                 use GPS.Kernel;
-with Src_Editor_Buffer.Cursors;  use Src_Editor_Buffer.Cursors;
-with GNAT.Regpat;                use GNAT.Regpat;
+with GPS.Kernel;                use GPS.Kernel;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with GNAT.Regpat;               use GNAT.Regpat;
 with Language.Ada;
 
 package body Src_Editor_Buffer.Text_Handling is
@@ -78,11 +78,11 @@ package body Src_Editor_Buffer.Text_Handling is
 
    begin
       if not Valid_Location then
-         Valid        := False;
-         Line_Begin   := Editable_Line_Type'First;
+         Valid := False;
+         Line_Begin := Editable_Line_Type'First;
          Column_Begin := Character_Index'First;
-         Line_End     := Editable_Line_Type'First;
-         Column_End   := Character_Index'First;
+         Line_End := Editable_Line_Type'First;
+         Column_End := Character_Index'First;
 
          return;
       end if;
@@ -125,7 +125,7 @@ package body Src_Editor_Buffer.Text_Handling is
          Forward_Char (Iter, Result);
 
          if Result and then Line_End < Buffer.Last_Editable_Line then
-            Line_End   := Line_End + 1;
+            Line_End := Line_End + 1;
             Column_End := 1;
          end if;
 
@@ -187,8 +187,13 @@ package body Src_Editor_Buffer.Text_Handling is
       C : Editor_Replace_Slice;
    begin
       Create
-        (C, Source_Buffer (Buffer),
-         Line_Begin, Column_Begin, Line_End, Column_End, Text);
+        (C,
+         Source_Buffer (Buffer),
+         Line_Begin,
+         Column_Begin,
+         Line_End,
+         Column_End,
+         Text);
       Enqueue (Buffer, Command_Access (C), External);
    end Replace_Slice;
 
@@ -215,38 +220,48 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
 
          if Has_Selection then
-            return To_String
-              (Get_Text
-                 (Source_Buffer (Buffer),
-                  Get_Line (Start_Iter),
-                  Get_Line_Offset (Start_Iter),
-                  Get_Line (End_Iter),
-                  Get_Line_Offset (End_Iter)));
+            return
+              To_String
+                (Get_Text
+                   (Source_Buffer (Buffer),
+                    Get_Line (Start_Iter),
+                    Get_Line_Offset (Start_Iter),
+                    Get_Line (End_Iter),
+                    Get_Line_Offset (End_Iter)));
          else
             return "";
          end if;
 
       else
          Get_Location
-           (Buffer, Line, Column, Before, After,
-            Line_Begin, Column_Begin, Line_End, Column_End, Valid);
+           (Buffer,
+            Line,
+            Column,
+            Before,
+            After,
+            Line_Begin,
+            Column_Begin,
+            Line_End,
+            Column_End,
+            Valid);
 
          if not Valid then
             Insert
               (Buffer.Get_Kernel,
-               Text   => "Invalid location, cannot get chars",
-               Mode   => Error);
+               Text => "Invalid location, cannot get chars",
+               Mode => Error);
             return "";
          end if;
 
-         return To_String
-           (Get_Text
-              (Buffer,
-               Line_Begin,
-               Column_Begin,
-               Line_End,
-               As_Optional (Column_End),
-               Include_Hidden_Chars));
+         return
+           To_String
+             (Get_Text
+                (Buffer,
+                 Line_Begin,
+                 Column_Begin,
+                 Line_End,
+                 As_Optional (Column_End),
+                 Include_Hidden_Chars));
       end if;
    end Get_Chars;
 
@@ -271,8 +286,15 @@ package body Src_Editor_Buffer.Text_Handling is
       end if;
 
       Get_Location
-        (Buffer, Line, Column, Before, After,
-         Line_Begin, Column_Begin, Line_End, Column_End,
+        (Buffer,
+         Line,
+         Column,
+         Before,
+         After,
+         Line_Begin,
+         Column_Begin,
+         Line_End,
+         Column_End,
          Valid);
 
       if Valid then
@@ -281,8 +303,8 @@ package body Src_Editor_Buffer.Text_Handling is
       else
          Insert
            (Buffer.Get_Kernel,
-            Text   => "Invalid location, cannot replace",
-            Mode   => Error);
+            Text => "Invalid location, cannot replace",
+            Mode => Error);
       end if;
    end Replace_Slice;
 
@@ -322,10 +344,9 @@ package body Src_Editor_Buffer.Text_Handling is
       -- Is_In_Comment --
       -------------------
 
-      function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean
-      is
+      function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean is
          Pos, Line_Start : Gtk_Text_Iter;
-         Success : Boolean;
+         Success         : Boolean;
       begin
          Copy (Iter, Pos);
 
@@ -339,7 +360,7 @@ package body Src_Editor_Buffer.Text_Handling is
             Copy (Pos, Line_Start);
             Set_Line_Offset (Line_Start, 0);
             declare
-               Ret : Boolean;
+               Ret  : Boolean;
                Text : constant String :=
                  To_String
                    (Get_Text
@@ -359,8 +380,7 @@ package body Src_Editor_Buffer.Text_Handling is
       end Is_In_Comment;
 
       procedure Replace_Text
-        (Ln, F, L : Natural;
-         Replace  : Basic_Types.UTF8_String);
+        (Ln, F, L : Natural; Replace : Basic_Types.UTF8_String);
       --  Replace text callback. Note that we do not use Ln, F, L here as these
       --  are values from the parsed buffer which is a single word here. We use
       --  instead the Line, First and Last variable below which represent the
@@ -381,15 +401,14 @@ package body Src_Editor_Buffer.Text_Handling is
       --  right place in On_The_Fly mode while inserting a character inside a
       --  word. This is needed as the mark of the cursor will be replaced.
 
-      Char_Set          : Wide_Wide_Character_Set;
+      Char_Set : Wide_Wide_Character_Set;
 
       ------------------
       -- Replace_Text --
       ------------------
 
       procedure Replace_Text
-        (Ln, F, L : Natural;
-         Replace  : Basic_Types.UTF8_String)
+        (Ln, F, L : Natural; Replace : Basic_Types.UTF8_String)
       is
          pragma Unreferenced (Ln);
          Length : constant Natural := Natural (UTF8_Strlen (Replace));
@@ -403,17 +422,23 @@ package body Src_Editor_Buffer.Text_Handling is
             --  Replace only if the relacement is actually different
 
             if Get_Text
-              (Buffer, Line, First,
-               Line,
-               As_Optional (First + Character_Index'Base (Length)))
+                 (Buffer,
+                  Line,
+                  First,
+                  Line,
+                  As_Optional (First + Character_Index'Base (Length)))
               /= Replace
             then
                declare
                   G : Group_Block := Current_Group (Buffer.Queue);
                begin
                   Replace_Slice
-                    (Buffer, Replace, Line, As_Optional (First),
-                     Before => 0, After => Length);
+                    (Buffer,
+                     Replace,
+                     Line,
+                     As_Optional (First),
+                     Before => 0,
+                     After  => Length);
                   Text_Replaced := True;
                end;
             end if;
@@ -442,8 +467,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Char := Get_Char (W_End);
 
-         if Char = VSS.Characters.Latin.Line_Feed
-           and then not Is_Start (W_End)
+         if Char = VSS.Characters.Latin.Line_Feed and then not Is_Start (W_End)
          then
             Backward_Char (W_End, Result);
          end if;
@@ -451,19 +475,23 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy not in End_Of_Line .. On_The_Fly
-           or else (Indent_Params.Reserved_Casing = Unchanged
-                      and then Indent_Params.Identifier_Casing = Unchanged)
-           or else (In_Completion (Source_Buffer (Buffer))
-                     and then Casing = On_The_Fly)
-           or else (Indent_Params.Casing_Policy = End_Of_Word
-                    and then Casing = On_The_Fly)
+           or else
+             (Indent_Params.Reserved_Casing = Unchanged
+              and then Indent_Params.Identifier_Casing = Unchanged)
+           or else
+             (In_Completion (Source_Buffer (Buffer))
+              and then Casing = On_The_Fly)
+           or else
+             (Indent_Params.Casing_Policy = End_Of_Word
+              and then Casing = On_The_Fly)
            or else Get_Language_Context (Lang).Case_Sensitive
            or else Is_In_Comment (W_End)
-           or else Is_In_String
-             (Buffer              => Source_Buffer (Buffer),
-              Iter                => W_End,
-              Added_Character     => Character,
-              Check_Interpolation => True)
+           or else
+             Is_In_String
+               (Buffer              => Source_Buffer (Buffer),
+                Iter                => W_End,
+                Added_Character     => Character,
+                Check_Interpolation => True)
            or else Is_In_String (Source_Buffer (Buffer), W_End)
            --  The two Is_In_String checks are complementary. The first
            --  (with Added_Character) handles most cases, including typing a
@@ -498,8 +526,8 @@ package body Src_Editor_Buffer.Text_Handling is
                end if;
 
                Forward_Char (W_End, Result);
-               exit Look_For_End_Of_Word
-                 when not Result or else Is_End (W_End);
+               exit Look_For_End_Of_Word when
+                 not Result or else Is_End (W_End);
                Forward_Moves := Forward_Moves + 1;
             end loop Look_For_End_Of_Word;
          end if;
@@ -516,8 +544,8 @@ package body Src_Editor_Buffer.Text_Handling is
       --  separated by a single quote.
 
       First := Column;
-      Char  := ' ';
-      Prev  := ' ';
+      Char := ' ';
+      Prev := ' ';
       PPrev := ' ';
 
       Char_Set := Lang.Word_Character_Set or To_Set ('#');
@@ -546,10 +574,11 @@ package body Src_Editor_Buffer.Text_Handling is
             exit Look_For_Start_Of_Word;
          end if;
 
-         exit Look_For_Start_Of_Word when not Result
-           or else (Char /= '''
-                    and then not Is_In
-                      (Wide_Wide_Character (Char), Char_Set));
+         exit Look_For_Start_Of_Word when
+           not Result
+           or else
+             (Char /= '''
+              and then not Is_In (Wide_Wide_Character (Char), Char_Set));
 
          First := First - 1;
          exit Look_For_Start_Of_Word when Is_Start (W_Start);
@@ -566,7 +595,7 @@ package body Src_Editor_Buffer.Text_Handling is
          declare
             W : constant Basic_Types.UTF8_String := Get_Slice (W_Start, W_End);
             B : constant Basic_Types.UTF8_String :=
-                  Get_Typed_Chars (Buffer, Integer (Column - First));
+              Get_Typed_Chars (Buffer, Integer (Column - First));
          begin
             if UTF8_Strdown (W) = UTF8_Strdown (B) then
                --  If typed chars and current buffer differ only on the casing

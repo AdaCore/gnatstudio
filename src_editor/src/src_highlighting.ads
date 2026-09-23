@@ -27,8 +27,8 @@ with Language;
 
 package Src_Highlighting is
 
-   type Highlighting_Tags is array (Language.Standout_Language_Entity)
-     of Gtk.Text_Tag.Gtk_Text_Tag;
+   type Highlighting_Tags is
+     array (Language.Standout_Language_Entity) of Gtk.Text_Tag.Gtk_Text_Tag;
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
 

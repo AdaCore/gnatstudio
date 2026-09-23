@@ -19,7 +19,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;                   use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 with GNAT.Strings;
@@ -71,36 +71,25 @@ package GVD.Types is
    --  Return a string representation of Address.
 
    function Set_Offset
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type;
+     (Address : Address_Type; Offset : Integer) return Address_Type;
 
    function Add_Address
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type;
+     (Address : Address_Type; Offset : Integer) return Address_Type;
 
    function Address_To_Integer
      (Address : Address_Type) return Long_Long_Integer;
 
-   overriding function "="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+   overriding
+   function "="
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function ">"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function ">="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function "<"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    function "<="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean;
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean;
    --  Arithmetic on addresses
 
    -----------------
@@ -116,8 +105,8 @@ package GVD.Types is
    --  How breakpoints are identified. Currently, the debuggers supported
    --  by gvd all associate numbers with breakpoints.
 
-   package Breakpoint_Identifier_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
+   package Breakpoint_Identifier_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
    --  This type is used when doing the same debugger action on a list of
    --  breakpoints (delete/enable/disable).
 
@@ -200,11 +189,15 @@ package GVD.Types is
      (Hexadecimal, Octal, Binary, Decimal, Raw, Naturals);
    --  Format for representing registers values
 
-   package Strings_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, String);
+   package Strings_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, String);
 
-   package String_To_String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-       (String, String, Ada.Strings.Hash, "=");
+   package String_To_String_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        String,
+        Ada.Strings.Hash,
+        "=");
 
 private
    subtype Address_Range is Integer range 0 .. 20;
@@ -213,19 +206,16 @@ private
       Address_String : String (1 .. Last);
       --  The string representing the address
 
-      Length         : Natural := 0;
+      Length : Natural := 0;
       --  This is the length of the remaining string once the "0x" prefix as
       --  well as all the following zeros have been stripped.
       --  The meaningful part of Address_String is therefore the one in
       --  the Last - Length + 1 .. Last range.
 
-      Offset         : Integer := 0;
+      Offset : Integer := 0;
       --  Offset used when the address is used to query the debugger.
    end record;
 
    Invalid_Address : constant Address_Type :=
-                       (Address_String => "",
-                        Last           => 0,
-                        Length         => 0,
-                        Offset         => 0);
+     (Address_String => "", Last => 0, Length => 0, Offset => 0);
 end GVD.Types;

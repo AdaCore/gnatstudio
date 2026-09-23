@@ -31,15 +31,15 @@ package body GPS.Kernel.Interactive is
    --------------------------------
 
    function Create_Interactive_Console
-     (Kernel              : access Kernel_Handle_Record'Class;
-      Title               : String := "";
-      History             : History_Key := "interactive";
-      Create_If_Not_Exist : Boolean := True;
-      Module              : GPS.Kernel.Abstract_Module_ID := null;
-      Force_Create        : Boolean := False;
-      Accept_Input        : Boolean := True;
-      ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True;
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Title                : String := "";
+      History              : History_Key := "interactive";
+      Create_If_Not_Exist  : Boolean := True;
+      Module               : GPS.Kernel.Abstract_Module_ID := null;
+      Force_Create         : Boolean := False;
+      Accept_Input         : Boolean := True;
+      ANSI_Support         : Boolean := False;
+      Manage_Prompt        : Boolean := True;
       Toolbar_Name         : String := "";
       Give_Focus_On_Create : Boolean := True) return Interactive_Console
    is
@@ -55,15 +55,19 @@ package body GPS.Kernel.Interactive is
       Create := Force_Create;
       if not Create then
          Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);
-         Create := (Child = null
-                    or else Get_Widget (Child).all not in
-                      Interactive_Console_Record'Class)
+         Create :=
+           (Child = null
+            or else
+              Get_Widget (Child).all not in Interactive_Console_Record'Class)
            and then Create_If_Not_Exist;
       end if;
 
       if Create then
          Gtk_New
-           (Console, Kernel, "", null,
+           (Console,
+            Kernel,
+            "",
+            null,
             System.Null_Address,
             History_List  => Get_History (Kernel),
             Key           => History,
@@ -72,14 +76,15 @@ package body GPS.Kernel.Interactive is
             ANSI_Support  => ANSI_Support,
             Toolbar_Name  => Toolbar_Name);
          Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
-         Set_Max_Length   (Get_History (Kernel).all, 100, History);
+         Set_Max_Length (Get_History (Kernel).all, 100, History);
          Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
          NChild := new GPS_Console_MDI_Child_Record;
 
          if Module /= null then
             GPS.Kernel.MDI.Initialize
-              (NChild, Console,
+              (NChild,
+               Console,
                Kernel              => Kernel,
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
@@ -89,7 +94,8 @@ package body GPS.Kernel.Interactive is
 
          else
             GPS.Kernel.MDI.Initialize
-              (NChild, Console,
+              (NChild,
+               Console,
                Kernel              => Kernel,
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
@@ -99,8 +105,7 @@ package body GPS.Kernel.Interactive is
 
          NChild.Set_Toolbar (Console.Get_Toolbar);
          Set_Title (NChild, Title, Title);
-         Put
-           (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
+         Put (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
 
          if Give_Focus_On_Create then
             Raise_Child (NChild);

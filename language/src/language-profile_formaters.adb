@@ -25,8 +25,7 @@ package body Language.Profile_Formaters is
    ---------------
 
    procedure Configure
-     (Self : in out Text_Profile_Formater;
-      Show_Param_Names : Boolean := True)
+     (Self : in out Text_Profile_Formater; Show_Param_Names : Boolean := True)
    is
    begin
       Self.Show_Param_Names := Show_Param_Names;
@@ -36,7 +35,8 @@ package body Language.Profile_Formaters is
    -- Add_Generic_Parameter --
    ---------------------------
 
-   overriding procedure Add_Generic_Parameter
+   overriding
+   procedure Add_Generic_Parameter
      (Self    : access Text_Profile_Formater;
       Name    : String;
       Mode    : String;
@@ -50,7 +50,8 @@ package body Language.Profile_Formaters is
    -- Add_Parameter --
    -------------------
 
-   overriding procedure Add_Parameter
+   overriding
+   procedure Add_Parameter
      (Self    : access Text_Profile_Formater;
       Name    : String;
       Mode    : String;
@@ -78,8 +79,7 @@ package body Language.Profile_Formaters is
          --  Do not display "in" when also hiding parameter names, since the
          --  goal is to save as much space as possible
          if Mode_Image /= ""
-           and then (Self.Show_Param_Names
-                     or else Mode_Image /= "in")
+           and then (Self.Show_Param_Names or else Mode_Image /= "in")
          then
             Append (Self.Text, Mode_Image);
             Append (Self.Text, " ");
@@ -98,11 +98,9 @@ package body Language.Profile_Formaters is
    -- Add_Result --
    ----------------
 
-   overriding procedure Add_Result
-     (Self    : access Text_Profile_Formater;
-      Mode    : String;
-      Of_Type : String)
-   is
+   overriding
+   procedure Add_Result
+     (Self : access Text_Profile_Formater; Mode : String; Of_Type : String) is
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");
@@ -117,10 +115,9 @@ package body Language.Profile_Formaters is
    -- Add_Variable --
    ------------------
 
-   overriding procedure Add_Variable
-     (Self    : access Text_Profile_Formater;
-      Mode    : String;
-      Of_Type : String) is
+   overriding
+   procedure Add_Variable
+     (Self : access Text_Profile_Formater; Mode : String; Of_Type : String) is
    begin
       Append (Self.Text, " ");
       Append (Self.Text, Mode);
@@ -131,9 +128,9 @@ package body Language.Profile_Formaters is
    -- Add_Aspects --
    -----------------
 
-   overriding procedure Add_Aspects
-     (Self : access Text_Profile_Formater;
-      Text : String) is
+   overriding
+   procedure Add_Aspects (Self : access Text_Profile_Formater; Text : String)
+   is
    begin
       --  No aspects in text format for now
       null;
@@ -143,9 +140,9 @@ package body Language.Profile_Formaters is
    -- Add_Comments --
    ------------------
 
-   overriding procedure Add_Comments
-     (Self : access Text_Profile_Formater;
-      Text : String) is
+   overriding
+   procedure Add_Comments (Self : access Text_Profile_Formater; Text : String)
+   is
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");
@@ -162,9 +159,8 @@ package body Language.Profile_Formaters is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
-     (Self : access Text_Profile_Formater) return String
-   is
+   overriding
+   function Get_Text (Self : access Text_Profile_Formater) return String is
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");

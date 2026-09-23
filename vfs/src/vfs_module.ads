@@ -17,7 +17,7 @@
 
 --  The Virtual File System module
 
-with GPS.Kernel;   use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.VFS;
 
 package VFS_Module is
@@ -59,8 +59,7 @@ package VFS_Module is
    --  If Display_Confirm_Dialogs is True, confimation dialogs will be
    --  displayed when the renamed file (or directory) belongs to the project.
 
-   procedure Register_Module
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Module (Kernel : access Kernel_Handle_Record'Class);
    --  Register the VFS module in the list
 
 end VFS_Module;

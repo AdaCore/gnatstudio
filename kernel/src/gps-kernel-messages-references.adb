@@ -21,8 +21,8 @@ package body GPS.Kernel.Messages.References is
    -- Create --
    ------------
 
-   function Create
-     (Message : not null Message_Access) return Message_Reference is
+   function Create (Message : not null Message_Access) return Message_Reference
+   is
    begin
       return Self : Message_Reference do
          Self.Set (Message);
@@ -51,7 +51,8 @@ package body GPS.Kernel.Messages.References is
    -- Set --
    ---------
 
-   overriding procedure Set
+   overriding
+   procedure Set
      (Self : in out Message_Reference; Message : not null Message_Access) is
    begin
       Abstract_Reference (Self).Set (Message);
@@ -61,7 +62,8 @@ package body GPS.Kernel.Messages.References is
    -- Unset --
    -----------
 
-   overriding procedure Unset (Self : in out Message_Reference) is
+   overriding
+   procedure Unset (Self : in out Message_Reference) is
    begin
       Abstract_Reference (Self).Unset;
    end Unset;

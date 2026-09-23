@@ -18,10 +18,10 @@
 with Ada.Exceptions;
 with Ada.Float_Text_IO;
 
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with Gdk.RGBA;
 with Glib.Convert;             use Glib.Convert;
@@ -42,16 +42,16 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 
-with GNAThub.Messages;         use GNAThub.Messages;
-with GNAThub.Module;           use GNAThub.Module;
+with GNAThub.Messages; use GNAThub.Messages;
+with GNAThub.Module;   use GNAThub.Module;
 
-with Default_Preferences;      use Default_Preferences;
-with GPS.Default_Styles;       use GPS.Default_Styles;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Location_View;        use GPS.Location_View;
-with String_Utils;             use String_Utils;
-with Language.Icons;           use Language.Icons;
+with Default_Preferences; use Default_Preferences;
+with GPS.Default_Styles;  use GPS.Default_Styles;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Location_View;   use GPS.Location_View;
+with String_Utils;        use String_Utils;
+with Language.Icons;      use Language.Icons;
 
 package body GNAThub.Reports.Messages is
 
@@ -61,8 +61,7 @@ package body GNAThub.Reports.Messages is
      (Total_Kind, Project_Kind, Dir_Kind, File_Kind, Subprogram_Kind);
    --  The different kind of rows displayed in the tree view
 
-   type Update_Action_Type is
-     (Message_Added, Message_Removed, Metric_Added);
+   type Update_Action_Type is (Message_Added, Message_Removed, Metric_Added);
    --  The different kind of actions that can update the tree view
 
    Total_Row_Name : constant String := "Total nb messages:";
@@ -71,32 +70,32 @@ package body GNAThub.Reports.Messages is
    Entity_Name_Column_Min_Width : constant := 250;
    --  The entity name column minimum width
 
-   Prj_Pixbuf_Cst   : constant String := "gps-emblem-project-closed";
+   Prj_Pixbuf_Cst : constant String := "gps-emblem-project-closed";
    --  Name of the icon used for project nodes in the analysis report
 
-   Dir_Pixbuf_Cst   : constant String := "gps-emblem-directory-closed";
+   Dir_Pixbuf_Cst : constant String := "gps-emblem-directory-closed";
    --  Name of the icon used for directory nodes in the analysis report
 
-   File_Pixbuf_Cst  : constant String := "gps-emblem-file-unmodified";
+   File_Pixbuf_Cst : constant String := "gps-emblem-file-unmodified";
    --  Name of the icon used for file nodes in the analysis report
 
-   Unknown_Name     : constant String := "<others>";
+   Unknown_Name : constant String := "<others>";
    --  Name of the node containing the files outside of the project.
 
-   Entity_Icon_Column    : constant := 0;
+   Entity_Icon_Column : constant := 0;
    --  Column containing the name of the entity icon to display.
 
-   Entity_ID_Column      : constant := 1;
+   Entity_ID_Column : constant := 1;
    --  Column containing the entity's unique ID.
 
-   Entity_Name_Column    : constant := 2;
+   Entity_Name_Column : constant := 2;
    --  Column containing the name of the entity.
 
-   Total_Column          : constant := 3;
+   Total_Column : constant := 3;
    --  Column displaying the number of messages per entity.
 
-   package Sorting_Functions is new Gtk.Tree_Sortable.Set_Sort_Func_User_Data
-     (GNAThub_Report_Tree_View);
+   package Sorting_Functions is new
+     Gtk.Tree_Sortable.Set_Sort_Func_User_Data (GNAThub_Report_Tree_View);
 
    function Get_Column_Types
      (Self : not null access GNAThub_Report_Messages_Record'Class)
@@ -116,7 +115,8 @@ package body GNAThub.Reports.Messages is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : GNAThub_Report_Messages;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
@@ -124,15 +124,15 @@ package body GNAThub.Reports.Messages is
    --  Update the severity columns background color if needed.
 
    procedure Create_Row
-     (Self            : not null access GNAThub_Report_Messages_Record'Class;
-      Iter            : out Gtk_Tree_Iter;
-      Parent          : Gtk_Tree_Iter;
-      Kind            : Row_Kind_Type;
-      Name            : String;
-      ID              : String;
-      Info            : Semantic_Node_Info;
-      Update_Action   : Update_Action_Type;
-      Column          : Gint);
+     (Self          : not null access GNAThub_Report_Messages_Record'Class;
+      Iter          : out Gtk_Tree_Iter;
+      Parent        : Gtk_Tree_Iter;
+      Kind          : Row_Kind_Type;
+      Name          : String;
+      ID            : String;
+      Info          : Semantic_Node_Info;
+      Update_Action : Update_Action_Type;
+      Column        : Gint);
    --  Create and initialize a row in the tree.
 
    procedure Set_Row_Colors
@@ -158,8 +158,7 @@ package body GNAThub.Reports.Messages is
    --  counters when a message is being added etc.);
 
    function Get_New_Value_For_Severity
-     (Current_Value : String;
-      Value_To_Add  : Gint) return String;
+     (Current_Value : String; Value_To_Add : Gint) return String;
    --  Return a suitable string value for the severity total columns.
    --  Return an empty string when the new value is 0.
 
@@ -185,15 +184,15 @@ package body GNAThub.Reports.Messages is
       Row  : Gtk_Tree_Iter) return String;
    --  Return the ID for the given iter
 
-   procedure Show_Messages
-     (Kernel : not null Kernel_Handle;
-      ID     : String);
+   procedure Show_Messages (Kernel : not null Kernel_Handle; ID : String);
    --  Filter the Locations view to only show the message related to ID
 
-   package Selection_Changed_Callbacks is new Gtk.Handlers.User_Callback
-     (Gtk_Tree_Selection_Record, GNAThub_Report_Tree_View);
-   package On_Scroll_Callbacks is new Gtk.Handlers.User_Callback
-     (Gtk_Adjustment_Record, Gtk_Scrolled_Window);
+   package Selection_Changed_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk_Tree_Selection_Record,
+        GNAThub_Report_Tree_View);
+   package On_Scroll_Callbacks is new
+     Gtk.Handlers.User_Callback (Gtk_Adjustment_Record, Gtk_Scrolled_Window);
 
    procedure On_Selection_Changed
      (Self      : access Gtk_Tree_Selection_Record'Class;
@@ -216,13 +215,10 @@ package body GNAThub.Reports.Messages is
    --------------------------------
 
    function Get_New_Value_For_Severity
-     (Current_Value : String;
-      Value_To_Add  : Gint) return String
+     (Current_Value : String; Value_To_Add : Gint) return String
    is
-      Current_Int_Value : constant Gint := (if Current_Value = "" then
-                                               0
-                                            else
-                                               Gint'Value (Current_Value));
+      Current_Int_Value : constant Gint :=
+        (if Current_Value = "" then 0 else Gint'Value (Current_Value));
       New_Int_Value     : constant Gint := Current_Int_Value + Value_To_Add;
    begin
       if New_Int_Value <= 0 then
@@ -346,14 +342,13 @@ package body GNAThub.Reports.Messages is
             Value         : Glib.Values.GValue;
          begin
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
-            Gdk.RGBA.Set_Value
-              (Value, Background (Severity.Style));
+            Gdk.RGBA.Set_Value (Value, Background (Severity.Style));
 
             Set_Value
-              (Tree_Store  => Model,
-               Iter        => Iter,
-               Column      => Columns_Infos.Color_Col,
-               Value       => Value);
+              (Tree_Store => Model,
+               Iter       => Iter,
+               Column     => Columns_Infos.Color_Col,
+               Value      => Value);
          end;
       end loop;
    end Set_Row_Colors;
@@ -370,9 +365,7 @@ package body GNAThub.Reports.Messages is
    begin
       --  Iterate over al the columns to alternate their background color
       --  (make things more visible when there are a lot of columns).
-      for Idx in
-        0 .. Gint (Self.Metric_Rules_Column_IDs.Length) - 1
-      loop
+      for Idx in 0 .. Gint (Self.Metric_Rules_Column_IDs.Length) - 1 loop
          Tree_Column := Self.Report_Tree.Get_Column (Idx);
 
          if Tree_Column.Get_Visible then
@@ -416,25 +409,25 @@ package body GNAThub.Reports.Messages is
       Model : constant Gtk_Tree_Store := Self.Entities_Tree.Model;
       Value : constant Gint :=
         (case Update_Action is
-            when Message_Added   => 1,
-            when Message_Removed => -1,
-            when others          => 0);
+           when Message_Added   => 1,
+           when Message_Removed => -1,
+           when others          => 0);
 
       -------------------
       -- Get_Icon_Name --
       -------------------
 
       function Get_Icon_Name (Row_Kind : Row_Kind_Type) return String
-      is
-        (case Row_Kind is
+      is (case Row_Kind is
             when Total_Kind      => "",
             when Project_Kind    => Prj_Pixbuf_Cst,
             when Dir_Kind        => Dir_Pixbuf_Cst,
             when File_Kind       => File_Pixbuf_Cst,
             when Subprogram_Kind =>
-               Stock_From_Category (Is_Declaration => Info.Is_Decl,
-                                    Visibility     => Info.Visibility,
-                                    Category       => Info.Category));
+              Stock_From_Category
+                (Is_Declaration => Info.Is_Decl,
+                 Visibility     => Info.Visibility,
+                 Category       => Info.Category));
 
    begin
       Model.Append (Iter, Parent);
@@ -454,11 +447,11 @@ package body GNAThub.Reports.Messages is
                Model.Set
                  (Iter   => Iter,
                   Column => Column,
-                  Value  => Get_New_Value_For_Severity
-                    (Current_Value => "",
-                     Value_To_Add  => Value));
+                  Value  =>
+                    Get_New_Value_For_Severity
+                      (Current_Value => "", Value_To_Add => Value));
 
-            when Metric_Added =>
+            when Metric_Added                    =>
                null;
          end case;
       end if;
@@ -478,14 +471,15 @@ package body GNAThub.Reports.Messages is
       Column        : Gint;
       Metric_Value  : Float := 0.0)
    is
-      Model        : constant Gtk_Tree_Store := Self.Entities_Tree.Model;
-      Value        : constant Gint := (case Update_Action is
-                                          when Message_Added   => 1,
-                                          when Message_Removed => -1,
-                                          when Metric_Added    => 0);
-      Dummy        : Gtk_Tree_Iter;
-      Path         : Gtk_Tree_Path;
-      Project      : Project_Type := No_Project;
+      Model   : constant Gtk_Tree_Store := Self.Entities_Tree.Model;
+      Value   : constant Gint :=
+        (case Update_Action is
+           when Message_Added   => 1,
+           when Message_Removed => -1,
+           when Metric_Added    => 0);
+      Dummy   : Gtk_Tree_Iter;
+      Path    : Gtk_Tree_Path;
+      Project : Project_Type := No_Project;
 
       function Insert_Or_Update_Row
         (Parent : Gtk_Tree_Iter;
@@ -506,30 +500,24 @@ package body GNAThub.Reports.Messages is
          Info   : Semantic_Node_Info) return Gtk_Tree_Iter
       is
          Escaped_Name : constant String := Escape_Text (Name);
-         Iter : Gtk_Tree_Iter;
+         Iter         : Gtk_Tree_Iter;
 
-         procedure Update_Row
-           (Iter : Gtk_Tree_Iter);
+         procedure Update_Row (Iter : Gtk_Tree_Iter);
 
          ----------------
          -- Update_Row --
          ----------------
 
-         procedure Update_Row
-           (Iter : Gtk_Tree_Iter)
-         is
-            New_Total : constant Gint := Model.Get_Int (Iter, Total_Column)
-              + Value;
+         procedure Update_Row (Iter : Gtk_Tree_Iter) is
+            New_Total : constant Gint :=
+              Model.Get_Int (Iter, Total_Column) + Value;
          begin
             --  Update the row's counters. Negative total can happen when
             --  messages are being removed after the tree view's model has
             --  been cleared: avoid displaying them.
 
             if New_Total >= 0 then
-               Model.Set
-                 (Iter,
-                  Column => Total_Column,
-                  Value  => New_Total);
+               Model.Set (Iter, Column => Total_Column, Value => New_Total);
             end if;
 
             if Column /= -1 then
@@ -538,11 +526,12 @@ package body GNAThub.Reports.Messages is
                      Model.Set
                        (Iter,
                         Column => Column,
-                        Value  => Get_New_Value_For_Severity
-                          (Current_Value => Model.Get_String (Iter, Column),
-                           Value_To_Add  => Value));
+                        Value  =>
+                          Get_New_Value_For_Severity
+                            (Current_Value => Model.Get_String (Iter, Column),
+                             Value_To_Add  => Value));
 
-                  when Metric_Added =>
+                  when Metric_Added                    =>
                      --  Metrics are added once and don't need to get updated
                      null;
                end case;
@@ -552,11 +541,12 @@ package body GNAThub.Reports.Messages is
       begin
          --  Find the corresponding row or create a new one
 
-         Iter := Find_Node
-           (Model  => Model,
-            Name   => ID,
-            Column => Entity_ID_Column,
-            Parent => Parent);
+         Iter :=
+           Find_Node
+             (Model  => Model,
+              Name   => ID,
+              Column => Entity_ID_Column,
+              Parent => Parent);
 
          if Iter = Null_Iter then
             Self.Create_Row
@@ -579,16 +569,17 @@ package body GNAThub.Reports.Messages is
 
    begin
 
-      Dummy := Insert_Or_Update_Row
-        (Parent => Null_Iter,
-         Kind   => Total_Kind,
-         Name   => Total_Row_Name,
-         ID     => Total_Row_Name,
-         Info   => No_Node_Info);
+      Dummy :=
+        Insert_Or_Update_Row
+          (Parent => Null_Iter,
+           Kind   => Total_Kind,
+           Name   => Total_Row_Name,
+           ID     => Total_Row_Name,
+           Info   => No_Node_Info);
       Dummy := Null_Iter;
 
       declare
-         F_Info  : constant File_Info'Class :=
+         F_Info : constant File_Info'Class :=
            File_Info'Class
              (Self.Kernel.Registry.Tree.Info_Set (File).First_Element);
       begin
@@ -598,12 +589,13 @@ package body GNAThub.Reports.Messages is
          if Project = No_Project and then Has_Suffix (File, ".gpr") then
             Project := Lookup_Project (Self.Kernel, File);
 
-            Dummy := Insert_Or_Update_Row
-              (Parent => Dummy,
-               Kind   => Project_Kind,
-               Name   => Project.Name,
-               ID     => Project.Project_Path.Display_Full_Name,
-               Info   => No_Node_Info);
+            Dummy :=
+              Insert_Or_Update_Row
+                (Parent => Dummy,
+                 Kind   => Project_Kind,
+                 Name   => Project.Name,
+                 ID     => Project.Project_Path.Display_Full_Name,
+                 Info   => No_Node_Info);
 
             if Update_Action = Metric_Added then
                Model.Set
@@ -615,16 +607,17 @@ package body GNAThub.Reports.Messages is
             return;
          end if;
 
-         Dummy := Insert_Or_Update_Row
-           (Parent => Dummy,
-            Kind   => Project_Kind,
-            Name   => (if Project /= No_Project
-                       then Project.Name
-                       else Unknown_Name),
-            ID     => (if Project /= No_Project
-                       then Project.Project_Path.Display_Full_Name
-                       else Unknown_Name),
-            Info   => No_Node_Info);
+         Dummy :=
+           Insert_Or_Update_Row
+             (Parent => Dummy,
+              Kind   => Project_Kind,
+              Name   =>
+                (if Project /= No_Project then Project.Name else Unknown_Name),
+              ID     =>
+                (if Project /= No_Project
+                 then Project.Project_Path.Display_Full_Name
+                 else Unknown_Name),
+              Info   => No_Node_Info);
 
          if Project = No_Project then
             --  This file is related to no project thus don't show it as
@@ -633,21 +626,23 @@ package body GNAThub.Reports.Messages is
          end if;
       exception
          when E : others =>
-            Trace (Me,
-                   "Issue when trying to link "
-                   & File.Display_Full_Name
-                   & " to the loaded project with the following error: "
-                   & Ada.Exceptions.Exception_Message (E));
+            Trace
+              (Me,
+               "Issue when trying to link "
+               & File.Display_Full_Name
+               & " to the loaded project with the following error: "
+               & Ada.Exceptions.Exception_Message (E));
       end;
 
       --  Insert/update or get the directory
 
-      Dummy := Insert_Or_Update_Row
-        (Parent => Dummy,
-         Kind   => Dir_Kind,
-         Name   => File.Get_Parent.Display_Base_Dir_Name,
-         ID     => File.Display_Dir_Name,
-         Info   => No_Node_Info);
+      Dummy :=
+        Insert_Or_Update_Row
+          (Parent => Dummy,
+           Kind   => Dir_Kind,
+           Name   => File.Get_Parent.Display_Base_Dir_Name,
+           ID     => File.Display_Dir_Name,
+           Info   => No_Node_Info);
 
       --  Expand the nodes until the file
       Path := Model.Get_Path (Dummy);
@@ -657,12 +652,13 @@ package body GNAThub.Reports.Messages is
 
       --  Insert/update or get the file
 
-      Dummy := Insert_Or_Update_Row
-        (Parent => Dummy,
-         Kind   => File_Kind,
-         Name   => File.Display_Base_Name,
-         ID     => File.Display_Full_Name,
-         Info   => No_Node_Info);
+      Dummy :=
+        Insert_Or_Update_Row
+          (Parent => Dummy,
+           Kind   => File_Kind,
+           Name   => File.Display_Base_Name,
+           ID     => File.Display_Full_Name,
+           Info   => No_Node_Info);
 
       --  Insert/update or get the subprogram
 
@@ -674,12 +670,13 @@ package body GNAThub.Reports.Messages is
               File.Display_Full_Name & File_Line_Sep & Line;
             Info      : constant Semantic_Node_Info := Entity.Info;
          begin
-            Dummy := Insert_Or_Update_Row
-              (Parent => Dummy,
-               Kind   => Subprogram_Kind,
-               Name   => (if Subp_Name /= "" then Subp_Name else "<dummy>"),
-               ID     => ID,
-               Info   => Info);
+            Dummy :=
+              Insert_Or_Update_Row
+                (Parent => Dummy,
+                 Kind   => Subprogram_Kind,
+                 Name   => (if Subp_Name /= "" then Subp_Name else "<dummy>"),
+                 ID     => ID,
+                 Info   => Info);
 
             if Update_Action = Metric_Added then
                Model.Set
@@ -700,7 +697,8 @@ package body GNAThub.Reports.Messages is
    -- Message_Added --
    -------------------
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Messages_And_Metrics_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
    is
@@ -713,13 +711,13 @@ package body GNAThub.Reports.Messages is
 
       procedure Show_Message_Columns_If_Needed is
       begin
-         Self.View.Report_Tree.Get_Column
-           (Self.View.Total_Messages_Col).Set_Visible (True);
+         Self.View.Report_Tree.Get_Column (Self.View.Total_Messages_Col)
+           .Set_Visible (True);
 
          if not Self.View.Message_Columns_Shown then
             for Columns_Info of Self.View.Severities_Columns_Info loop
-               Self.View.Report_Tree.Get_Column
-                 (Columns_Info.Tree_Col).Set_Visible (True);
+               Self.View.Report_Tree.Get_Column (Columns_Info.Tree_Col)
+                 .Set_Visible (True);
             end loop;
 
             Self.View.Message_Columns_Shown := True;
@@ -736,8 +734,9 @@ package body GNAThub.Reports.Messages is
                  GNAThub_Message_Access (Message);
                File     : constant GNATCOLL.VFS.Virtual_File := Msg.Get_File;
                Severity : constant Severity_Access := Msg.Get_Severity;
-               Column   : constant Gint := Self.View.Severities_Columns_Info
-                 (Severity.Get_Name).Total_Col;
+               Column   : constant Gint :=
+                 Self.View.Severities_Columns_Info (Severity.Get_Name)
+                   .Total_Col;
             begin
                Self.View.Create_Or_Update_Row
                  (File          => File,
@@ -753,7 +752,8 @@ package body GNAThub.Reports.Messages is
    -- Message_Removed --
    ---------------------
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Messages_And_Metrics_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class) is
    begin
@@ -763,8 +763,8 @@ package body GNAThub.Reports.Messages is
               GNAThub_Message_Access (Message);
             File     : constant GNATCOLL.VFS.Virtual_File := Msg.Get_File;
             Severity : constant Severity_Access := Msg.Get_Severity;
-            Column   : constant Gint := Self.View.Severities_Columns_Info
-              (Severity.Get_Name).Total_Col;
+            Column   : constant Gint :=
+              Self.View.Severities_Columns_Info (Severity.Get_Name).Total_Col;
          begin
             Self.View.Create_Or_Update_Row
               (File          => File,
@@ -779,7 +779,8 @@ package body GNAThub.Reports.Messages is
    -- Metric_Added --
    ------------------
 
-   overriding procedure Metric_Added
+   overriding
+   procedure Metric_Added
      (Self   : not null access Messages_And_Metrics_Listener;
       Metric : not null access Metric_Record'Class) is
    begin
@@ -787,8 +788,8 @@ package body GNAThub.Reports.Messages is
         (File          => Metric.Get_File,
          Entity        => Metric.Get_Entity,
          Update_Action => Metric_Added,
-         Column        => Self.View.Metric_Rules_Column_IDs
-           (Metric.Get_Rule.Name).Model_Col,
+         Column        =>
+           Self.View.Metric_Rules_Column_IDs (Metric.Get_Rule.Name).Model_Col,
          Metric_Value  => Metric.Get_Value);
    end Metric_Added;
 
@@ -796,7 +797,8 @@ package body GNAThub.Reports.Messages is
    -- Metrics_Visibility_Changed --
    --------------------------------
 
-   overriding procedure Metrics_Visibility_Changed
+   overriding
+   procedure Metrics_Visibility_Changed
      (Self    : not null access Messages_And_Metrics_Listener;
       Metrics : Rule_Sets.Set)
    is
@@ -804,15 +806,16 @@ package body GNAThub.Reports.Messages is
    begin
       --  Hide all the metrics columns first...
       for Metric_Columns_Info of Self.View.Metric_Rules_Column_IDs loop
-         Tree_Column := Self.View.Report_Tree.Get_Column
-           (Metric_Columns_Info.Tree_Col);
+         Tree_Column :=
+           Self.View.Report_Tree.Get_Column (Metric_Columns_Info.Tree_Col);
          Tree_Column.Set_Visible (False);
       end loop;
 
       --  And show only the ones that should be visible now
       for Metric of Metrics loop
-         Tree_Column := Self.View.Report_Tree.Get_Column
-           (Self.View.Metric_Rules_Column_IDs (Metric.Name).Tree_Col);
+         Tree_Column :=
+           Self.View.Report_Tree.Get_Column
+             (Self.View.Metric_Rules_Column_IDs (Metric.Name).Tree_Col);
          Tree_Column.Set_Visible (True);
       end loop;
 
@@ -829,16 +832,16 @@ package body GNAThub.Reports.Messages is
    is
       Nb_Severities : constant Guint := Guint (Self.Severities.Length);
       Last_Col_Idx  : constant Guint :=
-        Total_Column + Nb_Severities * 2
-          + Guint (Self.Metric_Rules_Column_IDs.Length);
+        Total_Column
+        + Nb_Severities * 2
+        + Guint (Self.Metric_Rules_Column_IDs.Length);
 
-      Column_Types  : GType_Array
-        (Entity_Icon_Column .. Last_Col_Idx) :=
-        (Entity_Icon_Column     => GType_String,
-         Entity_Name_Column     => GType_String,
-         Entity_ID_Column       => GType_String,
-         Total_Column           => GType_Int,
-         others                 => <>);
+      Column_Types : GType_Array (Entity_Icon_Column .. Last_Col_Idx) :=
+        (Entity_Icon_Column => GType_String,
+         Entity_Name_Column => GType_String,
+         Entity_ID_Column   => GType_String,
+         Total_Column       => GType_Int,
+         others             => <>);
    begin
       for Columns_Info of Self.Severities_Columns_Info loop
          Column_Types (Guint (Columns_Info.Total_Col)) := GType_String;
@@ -883,10 +886,11 @@ package body GNAThub.Reports.Messages is
          for Severity of Self.Severities loop
             Self.Severities_Columns_Info.Insert
               (Key      => Severity.Get_Name,
-               New_Item => Severity_Columns_Info_Type'
-                 (Total_Col => Severity_Total_Col,
-                  Color_Col => Severity_Total_Col + Nb_Severities,
-                  Tree_Col  => -1));
+               New_Item =>
+                 Severity_Columns_Info_Type'
+                   (Total_Col => Severity_Total_Col,
+                    Color_Col => Severity_Total_Col + Nb_Severities,
+                    Tree_Col  => -1));
             Severity_Total_Col := Severity_Total_Col + 1;
          end loop;
       end Assign_Columns_To_Severities;
@@ -901,10 +905,11 @@ package body GNAThub.Reports.Messages is
          for Metric of Self.Metrics loop
             Self.Metric_Rules_Column_IDs.Insert
               (Key      => Metric.Name,
-               New_Item => Metric_Columns_Info_Type'
-                 (Has_Metrics => False,
-                  Model_Col   => Metric_Col,
-                  Tree_Col    => -1));
+               New_Item =>
+                 Metric_Columns_Info_Type'
+                   (Has_Metrics => False,
+                    Model_Col   => Metric_Col,
+                    Tree_Col    => -1));
             Metric_Col := Metric_Col + 1;
          end loop;
       end Assign_Columns_To_Metrics;
@@ -963,8 +968,7 @@ package body GNAThub.Reports.Messages is
       Self.Report_Tree := new GNAThub_Report_Tree_View_Record;
       Self.Report_Tree.Kernel := Kernel_Handle (Kernel);
       Gtkada.Tree_View.Initialize
-        (Widget => Self.Report_Tree,
-         Source => Self.Entities_Tree);
+        (Widget => Self.Report_Tree, Source => Self.Entities_Tree);
       Self.Report_Tree.Set_Name ("gnathub-report-tree");
       Self.Report_Tree.Get_Selection.Set_Mode (Selection_Multiple);
       Self.Report_Tree.Set_Propagate_Filtered_Status (False);
@@ -1074,8 +1078,9 @@ package body GNAThub.Reports.Messages is
 
       --  Regsiter all the needed listeners/callbacks/hook functions
 
-      Self.Listener := new Messages_And_Metrics_Listener'
-        (Abstract_Listener with View => Self);
+      Self.Listener :=
+        new Messages_And_Metrics_Listener'
+          (Abstract_Listener with View => Self);
 
       GPS.Kernel.Messages.Register_Listener
         (Self.Kernel.Get_Messages_Container,
@@ -1085,9 +1090,7 @@ package body GNAThub.Reports.Messages is
       GNAThub.Metrics.Register_Listener (Self.Listener);
 
       Preferences_Changed_Hook.Add
-        (new On_Pref_Changed'(Hook_Function with
-             View => Self),
-         Watch => Self);
+        (new On_Pref_Changed'(Hook_Function with View => Self), Watch => Self);
 
       Self.On_Destroy (On_Destroy'Access);
 
@@ -1139,21 +1142,20 @@ package body GNAThub.Reports.Messages is
      (Self    : not null GNAThub_Report_Messages;
       Command : Expansion_Command_Type) is
    begin
-      Expand_Or_Collapse_Selected_Rows
-        (Self.Entities_Tree, Command);
-      Expand_Or_Collapse_Selected_Rows
-        (Self.Report_Tree, Command);
+      Expand_Or_Collapse_Selected_Rows (Self.Entities_Tree, Command);
+      Expand_Or_Collapse_Selected_Rows (Self.Report_Tree, Command);
    end Expand_Or_Collapse_Selected_Rows;
 
    ----------------
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access GNAThub_Report_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean
    is
-      ID : constant String  := Self.Get_ID (Store_Iter);
+      ID : constant String := Self.Get_ID (Store_Iter);
    begin
       if ID = Unknown_Name then
          return not Hide_Others_Node.Get_Pref;
@@ -1166,10 +1168,7 @@ package body GNAThub.Reports.Messages is
    -- Show_Messages --
    -------------------
 
-   procedure Show_Messages
-     (Kernel : not null Kernel_Handle;
-      ID     : String)
-   is
+   procedure Show_Messages (Kernel : not null Kernel_Handle; ID : String) is
       File : Virtual_File;
 
       function For_Each (Item : String) return Boolean;
@@ -1190,8 +1189,7 @@ package body GNAThub.Reports.Messages is
            (Str      => ID,
             On       => File_Line_Sep,
             For_Each => For_Each'Unrestricted_Access);
-         Set_Locations_Filter
-           (Kernel, File.Display_Base_Name, Expand => True);
+         Set_Locations_Filter (Kernel, File.Display_Base_Name, Expand => True);
       end if;
    end Show_Messages;
 
@@ -1202,11 +1200,9 @@ package body GNAThub.Reports.Messages is
    function Get_ID
      (Self : not null access GNAThub_Report_Tree_View_Record'Class;
       Row  : Gtk_Tree_Iter) return String
-   is
-     (if Row = Null_Iter then
-         ""
-      else
-         Self.Model.Get_String (Row, Entity_ID_Column));
+   is (if Row = Null_Iter
+       then ""
+       else Self.Model.Get_String (Row, Entity_ID_Column));
 
    --------------------------
    -- On_Selection_Changed --
@@ -1257,8 +1253,7 @@ package body GNAThub.Reports.Messages is
 
             Show_Messages (Tree.Kernel, Tree.Get_ID (Iter));
 
-            Sync_Tree.Get_Selection.Select_Iter
-              (Sort_Iter);
+            Sync_Tree.Get_Selection.Select_Iter (Sort_Iter);
             G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
          end loop;
 
@@ -1278,13 +1273,11 @@ package body GNAThub.Reports.Messages is
       Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
       pragma Unreferenced (Iter);
-      Tree : constant GNAThub_Report_Tree_View :=
+      Tree  : constant GNAThub_Report_Tree_View :=
         GNAThub_Report_Tree_View (Self);
       Dummy : Boolean;
    begin
-      Dummy := Tree.Expand_Row
-        (Path     => Path,
-         Open_All => False);
+      Dummy := Tree.Expand_Row (Path => Path, Open_All => False);
    end On_Row_Expanded;
 
    ----------------------
@@ -1297,7 +1290,7 @@ package body GNAThub.Reports.Messages is
       Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
       pragma Unreferenced (Iter);
-      Tree : constant GNAThub_Report_Tree_View :=
+      Tree  : constant GNAThub_Report_Tree_View :=
         GNAThub_Report_Tree_View (Self);
       Dummy : Boolean;
    begin
@@ -1319,7 +1312,8 @@ package body GNAThub.Reports.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -1389,11 +1383,11 @@ package body GNAThub.Reports.Messages is
       pragma Unreferenced (X, Y);
       use Glib;
 
-      View       : constant GNAThub_Report_Tree_View :=
+      View      : constant GNAThub_Report_Tree_View :=
         GNAThub_Report_Tree_View (Self);
-      Model      : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Sort_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model     : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       if N_Press /= 2 then
@@ -1442,7 +1436,8 @@ package body GNAThub.Reports.Messages is
                Trace
                  (Me,
                   "Error on multipress, could not find a location "
-                  & "for ID: " & ID);
+                  & "for ID: "
+                  & ID);
 
                return False;
          end For_Each;
@@ -1495,8 +1490,7 @@ package body GNAThub.Reports.Messages is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (Self : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
       View : constant GNAThub_Report_Messages :=
         GNAThub_Report_Messages (Self);
    begin

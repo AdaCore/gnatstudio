@@ -26,8 +26,7 @@ package body Cpp_Semantic_Tree is
    function Parse_Expression_Backward
      (Buffer       : access constant Glib.UTF8_String;
       Start_Offset : String_Index_Type;
-      End_Offset   : String_Index_Type := 0)
-      return Parsed_Expression
+      End_Offset   : String_Index_Type := 0) return Parsed_Expression
    is
       use Token_List;
 
@@ -46,13 +45,13 @@ package body Cpp_Semantic_Tree is
 
       begin
          case Tok_Typ is
-            when Language.Cpp.Tok_Identifier  |
-                 Language.Cpp.Tok_Dot         |
-                 Language.Cpp.Tok_Scope       |
-                 Language.Cpp.Tok_Dereference =>
+            when Language.Cpp.Tok_Identifier
+               | Language.Cpp.Tok_Dot
+               | Language.Cpp.Tok_Scope
+               | Language.Cpp.Tok_Dereference      =>
                Prepend (Result.Tokens, Token);
 
-            when Language.Cpp.Tok_Left_Paren =>
+            when Language.Cpp.Tok_Left_Paren       =>
                if Is_First_Token then
                   Prepend (Result.Tokens, Token);
                else
@@ -63,11 +62,11 @@ package body Cpp_Semantic_Tree is
                Prepend (Result.Tokens, Token);
                Expression_Depth := Expression_Depth + 1;
 
-            when Language.Cpp.Tok_Left_Sq_Bracket =>
+            when Language.Cpp.Tok_Left_Sq_Bracket  =>
                Prepend (Result.Tokens, Token);
                Expression_Depth := Expression_Depth - 1;
 
-            when others =>
+            when others                            =>
                if Expression_Depth > 0 then
                   Prepend (Result.Tokens, Token);
                else
@@ -81,7 +80,7 @@ package body Cpp_Semantic_Tree is
 
    begin
       Cpp_Lang.Parse_Tokens_Backwards
-         (Buffer      => Buffer.all,
+        (Buffer       => Buffer.all,
          Start_Offset => Start_Offset,
          End_Offset   => End_Offset,
          Callback     => Handle_Token'Access);

@@ -20,41 +20,43 @@ with Glib.Unicode;          use Glib.Unicode;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed.Equal_Case_Insensitive;
 
-with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 
 package body Completion.Aliases is
 
    function "=" (A, B : String) return Boolean
-                 renames Ada.Strings.Fixed.Equal_Case_Insensitive;
+   renames Ada.Strings.Fixed.Equal_Case_Insensitive;
 
    ---------------
    -- Deep_Copy --
    ---------------
 
-   overriding function Deep_Copy
-     (Proposal : Alias_Completion_Proposal)
-      return Completion_Proposal'Class is
+   overriding
+   function Deep_Copy
+     (Proposal : Alias_Completion_Proposal) return Completion_Proposal'Class is
    begin
-      return Alias_Completion_Proposal'
-        (Simple_Completion_Proposal
-           (Completion.Deep_Copy (Simple_Completion_Proposal (Proposal)))
-         with Alias => Proposal.Alias);
+      return
+        Alias_Completion_Proposal'
+          (Simple_Completion_Proposal
+             (Completion.Deep_Copy (Simple_Completion_Proposal (Proposal)))
+           with Alias => Proposal.Alias);
    end Deep_Copy;
 
    -----------------------
    -- Get_Documentation --
    -----------------------
 
-   overriding function Get_Documentation
+   overriding
+   function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String
-   is
-     ("<b>Alias</b> " & Escape_Text (Proposal.Alias.Get_Expansion));
+   is ("<b>Alias</b> " & Escape_Text (Proposal.Alias.Get_Expansion));
 
    ---------------
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
@@ -67,7 +69,8 @@ package body Completion.Aliases is
    -- Get_Filter_Text --
    ---------------------
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
@@ -81,45 +84,47 @@ package body Completion.Aliases is
    -- Get_Sort_Text --
    -------------------
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
-   is
-     ("~" & Get_Label (Proposal, Db));
+   is ("~" & Get_Label (Proposal, Db));
 
    -----------------
    -- On_Selected --
    -----------------
 
-   overriding procedure On_Selected
-     (Proposal : Alias_Completion_Proposal;
-      Kernel   : not null Kernel_Handle)
+   overriding
+   procedure On_Selected
+     (Proposal : Alias_Completion_Proposal; Kernel : not null Kernel_Handle)
    is
       Action  : constant String := "Expand alias under cursor";
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      Success := Execute_Action
-        (Kernel               => Kernel,
-         Action               => Action,
-         Error_Msg_In_Console => True,
-         Synchronous          => True);
+      Success :=
+        Execute_Action
+          (Kernel               => Kernel,
+           Action               => Action,
+           Error_Msg_In_Console => True,
+           Synchronous          => True);
    end On_Selected;
    -------------------------
    -- Get_Completion_Root --
    -------------------------
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access Completion_Aliases;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List)
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access Completion_Aliases;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
    is
       Proposal : Alias_Completion_Proposal;
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
-      Word     : UTF8_String
-        (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
+      Word     :
+        UTF8_String (Natural (Offset) + 1 .. Natural (Context.End_Offset)) :=
           Context.Buffer
             (Natural (Offset) + 1 .. Natural (Context.End_Offset));
    begin
@@ -133,8 +138,7 @@ package body Completion.Aliases is
         or else Context.In_Comment
         or else Context.In_String
         or else
-        (Offset > 0
-         and then Context.Buffer (Natural (Offset)) in '.' | ':')
+          (Offset > 0 and then Context.Buffer (Natural (Offset)) in '.' | ':')
       then
          return;
       end if;
@@ -144,13 +148,13 @@ package body Completion.Aliases is
             Name : constant String := Alias.Get_Name;
          begin
             if Name'Length >= Word'Length
-              and then
-                Name (Name'First .. Name'First + Word'Length - 1) = Word
+              and then Name (Name'First .. Name'First + Word'Length - 1) = Word
             then
-               Proposal := (Resolver => Resolver,
-                            Name     => new String'(Alias.Get_Name),
-                            Category => Cat_Custom,
-                            Alias    => Alias);
+               Proposal :=
+                 (Resolver => Resolver,
+                  Name     => new String'(Alias.Get_Name),
+                  Category => Cat_Custom,
+                  Alias    => Alias);
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);
             end if;
@@ -165,9 +169,8 @@ package body Completion.Aliases is
    -- Get_Id --
    ------------
 
-   overriding function Get_Id
-     (Resolver : Completion_Aliases)
-      return String
+   overriding
+   function Get_Id (Resolver : Completion_Aliases) return String
    is ("Aliases");
 
 end Completion.Aliases;

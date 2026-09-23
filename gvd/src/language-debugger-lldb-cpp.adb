@@ -15,28 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;                          use Ada.Tags;
+with Ada.Tags; use Ada.Tags;
 
-with Language.Cpp;                      use Language.Cpp;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with Language.Cpp;   use Language.Cpp;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with String_Utils;                      use String_Utils;
-with GVD.Variables.Types;               use GVD.Variables.Types;
-with GVD.Variables.Types.Records;       use GVD.Variables.Types.Records;
-with GVD.Variables.Types.Classes;       use GVD.Variables.Types.Classes;
-with GVD.Variables.Types.Simples;       use GVD.Variables.Types.Simples;
+with String_Utils;                use String_Utils;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
 
-with Language.Debugger.Lldb.C;          use Language.Debugger.Lldb.C;
-with Debugger.LLDB;                     use Debugger.LLDB;
+with Language.Debugger.Lldb.C; use Language.Debugger.Lldb.C;
+with Debugger.LLDB;            use Debugger.LLDB;
 
 package body Language.Debugger.Lldb.Cpp is
 
    procedure Parse_Class_Type
-     (Lang      : access LLDB_Cpp_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder);
+     (Lang     : access LLDB_Cpp_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
    --  Parse the description of a class type. Index should point after the
    --  keyword "class ".
    --  The output of gdb looks like
@@ -62,7 +62,7 @@ package body Language.Debugger.Lldb.Cpp is
       Index    : in out Natural;
       Is_Union : Boolean;
       Result   : out GVD.Variables.Types.GVD_Type_Holder)
-     with Pre => Type_Str (Index - 1) = '{';
+   with Pre => Type_Str (Index - 1) = '{';
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
 
@@ -70,7 +70,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access LLDB_Cpp_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -82,7 +83,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Keywords --
    --------------
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access LLDB_Cpp_Language)
       return GNAT.Expect.Pattern_Matcher_Access
    is
@@ -91,7 +93,8 @@ package body Language.Debugger.Lldb.Cpp is
       return Keywords (Cpp_Lang);
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access LLDB_Cpp_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -103,7 +106,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Get_Language_Context --
    --------------------------
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access LLDB_Cpp_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -115,7 +119,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access LLDB_Cpp_Language) return Language.Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -127,7 +132,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Is_System_File --
    --------------------
 
-   overriding function Is_System_File
+   overriding
+   function Is_System_File
      (Lang : access LLDB_Cpp_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -139,9 +145,9 @@ package body Language.Debugger.Lldb.Cpp is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access LLDB_Cpp_Language;
-      Name : String) return String
+   overriding
+   function Dereference_Name
+     (Lang : access LLDB_Cpp_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -152,10 +158,10 @@ package body Language.Debugger.Lldb.Cpp is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access LLDB_Cpp_Language;
-      Name  : String;
-      Index : String) return String
+   overriding
+   function Array_Item_Name
+     (Lang : access LLDB_Cpp_Language; Name : String; Index : String)
+      return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -166,10 +172,10 @@ package body Language.Debugger.Lldb.Cpp is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access LLDB_Cpp_Language;
-      Name  : String;
-      Field : String) return String
+   overriding
+   function Record_Field_Name
+     (Lang : access LLDB_Cpp_Language; Name : String; Field : String)
+      return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -180,7 +186,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Parse_Type --
    ----------------
 
-   overriding procedure Parse_Type
+   overriding
+   procedure Parse_Type
      (Lang     : access LLDB_Cpp_Language;
       Type_Str : String;
       Entity   : String;
@@ -213,7 +220,7 @@ package body Language.Debugger.Lldb.Cpp is
       --  beginning of the union (why ?)
 
       if Looking_At (Type_Str, Index, "class ")
-         or else Looking_At (Type_Str, Index, "struct ")
+        or else Looking_At (Type_Str, Index, "struct ")
       then
          Index := Index + 6; --  skips "class "
          Parse_Class_Type (Lang, Type_Str, Entity, Index, Result);
@@ -233,7 +240,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Parse_Value --
    -----------------
 
-   overriding procedure Parse_Value
+   overriding
+   procedure Parse_Value
      (Lang       : access LLDB_Cpp_Language;
       Entity     : String;
       Type_Str   : String;
@@ -241,8 +249,8 @@ package body Language.Debugger.Lldb.Cpp is
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive)
    is
-      Ancestor   : Natural := 1;
-      V          : GVD_Type_Holder;
+      Ancestor      : Natural := 1;
+      V             : GVD_Type_Holder;
       Num_Ancestors : Natural;
 
    begin
@@ -266,15 +274,13 @@ package body Language.Debugger.Lldb.Cpp is
          --  example returned by gdb:
          --     <CL2> = {_vptr.CL2 = 0x8049e68, x = 10}, <No data fields>}
 
-         Num_Ancestors := GVD_Class_Type_Access
-           (Result.Get_Type).Get_Num_Ancestors;
-         while Ancestor <= Num_Ancestors
-           and then Type_Str (Index) = '<'
-         loop
+         Num_Ancestors :=
+           GVD_Class_Type_Access (Result.Get_Type).Get_Num_Ancestors;
+         while Ancestor <= Num_Ancestors and then Type_Str (Index) = '<' loop
             Skip_To_Char (Type_Str, Index, '>');
             Index := Index + 5;  --  skips "> = "
-            V := GVD_Class_Type_Access
-              (Result.Get_Type).Get_Ancestor (Ancestor);
+            V :=
+              GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (Ancestor);
             Parse_Value (Lang, Entity, Type_Str, Index, V, Repeat_Num);
             pragma Assert (Looking_At (Type_Str, Index, ", "));
             Index := Index + 2; --  skips ", "
@@ -289,9 +295,7 @@ package body Language.Debugger.Lldb.Cpp is
 
          if Looking_At (Type_Str, Index, "_vptr.") then
             Index := Index + 6;
-            while Type_Str (Index) /= ','
-              and then Type_Str (Index) /= '}'
-            loop
+            while Type_Str (Index) /= ',' and then Type_Str (Index) /= '}' loop
                Index := Index + 1;
             end loop;
 
@@ -299,8 +303,7 @@ package body Language.Debugger.Lldb.Cpp is
          end if;
 
          Internal_Parse_Value
-           (Lang, Entity, Type_Str, Index, V, Repeat_Num,
-            Parent => Result);
+           (Lang, Entity, Type_Str, Index, V, Repeat_Num, Parent => Result);
 
          --  If the class uses virtual methods, there is an extra field
          --  called '_vptr.' that should simply be skipped for now ???
@@ -309,7 +312,7 @@ package body Language.Debugger.Lldb.Cpp is
          --  We can also have the following format:
          --     ", _vptr. = 0x9049b60}, "    (ie no <..>)
 
-         if Looking_At (Type_Str, Index, ", _vptr.")  then
+         if Looking_At (Type_Str, Index, ", _vptr.") then
             Index := Index + 11;
             while Type_Str (Index) /= '}' loop
                Index := Index + 1;
@@ -326,7 +329,12 @@ package body Language.Debugger.Lldb.Cpp is
 
       else
          Internal_Parse_Value
-           (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+           (Lang,
+            Entity,
+            Type_Str,
+            Index,
+            Result,
+            Repeat_Num,
             Parent => Empty_GVD_Type_Holder);
       end if;
    end Parse_Value;
@@ -335,7 +343,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Parse_Array_Type --
    ----------------------
 
-   overriding procedure Parse_Array_Type
+   overriding
+   procedure Parse_Array_Type
      (Lang         : access LLDB_Cpp_Language;
       Type_Str     : String;
       Entity       : String;
@@ -343,22 +352,22 @@ package body Language.Debugger.Lldb.Cpp is
       Start_Of_Dim : Natural;
       Result       : out GVD.Variables.Types.GVD_Type_Holder) is
    begin
-      C_Parse_Array_Type
-        (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
+      C_Parse_Array_Type (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
    end Parse_Array_Type;
 
    -----------------------
    -- Parse_Record_Type --
    -----------------------
 
-   overriding procedure Parse_Record_Type
-     (Lang      : access LLDB_Cpp_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String) is
+   overriding
+   procedure Parse_Record_Type
+     (Lang     : access LLDB_Cpp_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String) is
    begin
       C_Parse_Record_Type
         (Lang, Type_Str, Entity, Index, Is_Union, Result, End_On);
@@ -376,11 +385,11 @@ package body Language.Debugger.Lldb.Cpp is
       Is_Union : Boolean;
       Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
-      Num_Fields  : Natural := 0;
-      Tmp         : Natural := Index;
-      Tmp2        : Natural;
-      Field       : Natural := 1;
-      Field_Value : GVD_Type_Holder;
+      Num_Fields                      : Natural := 0;
+      Tmp                             : Natural := Index;
+      Tmp2                            : Natural;
+      Field                           : Natural := 1;
+      Field_Value                     : GVD_Type_Holder;
       Name_Start, Name_End, Field_End : Natural;
 
    begin
@@ -391,8 +400,8 @@ package body Language.Debugger.Lldb.Cpp is
       --  If there is no blank line, there is no field or no methods.
 
       while Tmp <= Type_Str'Last
-        and then (Type_Str (Tmp) /= ASCII.LF
-                  or else Type_Str (Tmp + 1) /= ASCII.LF)
+        and then
+          (Type_Str (Tmp) /= ASCII.LF or else Type_Str (Tmp + 1) /= ASCII.LF)
       loop
          Tmp2 := Tmp;
          Skip_To_Char (Type_Str, Tmp, ';');
@@ -403,9 +412,7 @@ package body Language.Debugger.Lldb.Cpp is
          --      void foo ()     is a method
          if Tmp <= Type_Str'Last then
             Skip_To_Char (Type_Str (Tmp2 .. Tmp - 1), Tmp2, '(');
-            if Tmp2 >= Tmp - 1
-              or else Type_Str (Tmp2 + 1) = '*'
-            then
+            if Tmp2 >= Tmp - 1 or else Type_Str (Tmp2 + 1) = '*' then
                Num_Fields := Num_Fields + 1;
             end if;
          end if;
@@ -432,8 +439,14 @@ package body Language.Debugger.Lldb.Cpp is
 
          Skip_Blanks (Type_Str, Index);
          C_Field_Name
-           (Lang, Entity, Type_Str, Index, Name_Start, Name_End,
-            Field_End, Field_Value);
+           (Lang,
+            Entity,
+            Type_Str,
+            Index,
+            Name_Start,
+            Name_End,
+            Field_End,
+            Field_Value);
          GVD_Record_Type_Access (Result.Get_Type).Set_Field_Name
            (Field, Type_Str (Name_Start .. Name_End), Variant_Parts => 0);
 
@@ -454,11 +467,11 @@ package body Language.Debugger.Lldb.Cpp is
    ----------------------
 
    procedure Parse_Class_Type
-     (Lang      : access LLDB_Cpp_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder)
+     (Lang     : access LLDB_Cpp_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Initial        : constant Natural := Index;
       Visibility     : Natural;
@@ -510,8 +523,7 @@ package body Language.Debugger.Lldb.Cpp is
                Parent        : GVD_Type_Holder;
 
             begin
-               Parse_Type
-                 (Lang, Ancestor_Type, Ancestor_Name, Tmp2, Parent);
+               Parse_Type (Lang, Ancestor_Type, Ancestor_Name, Tmp2, Parent);
                GVD_Class_Type_Access (Result.Get_Type).Add_Ancestor
                  (Ancestor, Parent);
                Parent.Get_Type.Set_Type_Name
@@ -559,7 +571,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Parse_Array_Value --
    -----------------------
 
-   overriding procedure Parse_Array_Value
+   overriding
+   procedure Parse_Array_Value
      (Lang     : access LLDB_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
@@ -568,15 +581,15 @@ package body Language.Debugger.Lldb.Cpp is
       Lang_C : aliased LLDB_C_Language;
    begin
       Set_Debugger (Lang_C'Access, Get_Debugger (Lang));
-      Parse_Array_Value
-        (Lang_C'Access, Type_Str, Index, Result);
+      Parse_Array_Value (Lang_C'Access, Type_Str, Index, Result);
    end Parse_Array_Value;
 
    -----------------------------------
    -- Get_Language_Debugger_Context --
    -----------------------------------
 
-   overriding function Get_Language_Debugger_Context
+   overriding
+   function Get_Language_Debugger_Context
      (Lang : access LLDB_Cpp_Language) return Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
@@ -590,10 +603,10 @@ package body Language.Debugger.Lldb.Cpp is
    -- Set_Variable --
    ------------------
 
-   overriding function Set_Variable
-     (Lang     : access LLDB_Cpp_Language;
-      Var_Name : String;
-      Value    : String) return String
+   overriding
+   function Set_Variable
+     (Lang : access LLDB_Cpp_Language; Var_Name : String; Value : String)
+      return String
    is
       pragma Unreferenced (Lang);
 
@@ -606,9 +619,8 @@ package body Language.Debugger.Lldb.Cpp is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Lang : access LLDB_Cpp_Language) return String
-   is
+   overriding
+   function Get_Name (Lang : access LLDB_Cpp_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "c++";

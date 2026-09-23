@@ -15,45 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with VSS.Strings.Conversions;
 
-with Glib;                        use Glib;
+with Glib; use Glib;
 with Glib.Object;
 
 with Gdk.RGBA;
 
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu_Item;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 
-with Commands.Interactive;        use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 
 with GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;
 
 with DAP.Modules.Preferences;
 with DAP.Requests;
-with DAP.Clients.Stack_Trace;     use DAP.Clients.Stack_Trace;
+with DAP.Clients.Stack_Trace; use DAP.Clients.Stack_Trace;
 with DAP.Views.Registers.Scopes;
 
-with Default_Preferences;         use Default_Preferences;
-with String_Utils;                use String_Utils;
-with GUI_Utils;                   use GUI_Utils;
+with Default_Preferences; use Default_Preferences;
+with String_Utils;        use String_Utils;
+with GUI_Utils;           use GUI_Utils;
 
-with DAP.Views.Registers.Variables;
-use DAP.Views.Registers.Variables;
-with DAP.Views.Registers.SetExpression;
-use DAP.Views.Registers.SetExpression;
-with DAP.Views.Registers.SetVariable;
-use DAP.Views.Registers.SetVariable;
+with DAP.Views.Registers.Variables;     use DAP.Views.Registers.Variables;
+with DAP.Views.Registers.SetExpression; use DAP.Views.Registers.SetExpression;
+with DAP.Views.Registers.SetVariable;   use DAP.Views.Registers.SetVariable;
 
 package body DAP.Views.Registers is
 
@@ -62,7 +60,8 @@ package body DAP.Views.Registers is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Registers_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -70,20 +69,23 @@ package body DAP.Views.Registers is
    --  appropriately.
 
    type Add_All_Registers_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_All_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Add all the available registers in the view.
 
    type Add_Registers_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open a dialog to let the user choose the visible registers
 
-   type Remove_Selected_Registers_Command is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Remove_Selected_Registers_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Remove_Selected_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove the selected registers
@@ -121,7 +123,8 @@ package body DAP.Views.Registers is
 
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
-      Col_Number : Gint with Unreferenced;
+      Col_Number : Gint
+      with Unreferenced;
 
       procedure Create (Column : Glib.Gint; Allowed : Boolean; Name : String);
       --  Create column for registers values
@@ -130,8 +133,8 @@ package body DAP.Views.Registers is
       -- Create --
       ------------
 
-      procedure Create
-        (Column : Glib.Gint; Allowed : Boolean; Name : String) is
+      procedure Create (Column : Glib.Gint; Allowed : Boolean; Name : String)
+      is
       begin
          Gtk_New (Col);
          Col_Number := Self.Tree.Append_Column (Col);
@@ -157,7 +160,7 @@ package body DAP.Views.Registers is
       Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Self.Model, Column_Types);
-      Gtk_New (Self.Tree,  Self.Model);
+      Gtk_New (Self.Tree, Self.Model);
       Set_Name (Self.Tree, "Registers Tree");  --  For testsuite
 
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
@@ -179,9 +182,7 @@ package body DAP.Views.Registers is
       Create (Raw_Column, True, "Raw");
 
       Create
-        (Type_Column,
-         DAP.Modules.Preferences.Registers_Type.Get_Pref,
-         "Type");
+        (Type_Column, DAP.Modules.Preferences.Registers_Type.Get_Pref, "Type");
 
       Self.Model.Set_Sort_Func (Name_Column, Sort_Func'Access);
       Self.Model.Set_Sort_Column_Id (Name_Column, Sort_Descending);
@@ -190,8 +191,8 @@ package body DAP.Views.Registers is
 
       Preferences_Changed_Hook.Add
         (Obj   =>
-            new On_Pref_Changed'
-           (Hook_Function with View => Registers_View (Self)),
+           new On_Pref_Changed'
+             (Hook_Function with View => Registers_View (Self)),
          Watch => Self);
 
       return Gtk_Widget (Self.Tree);
@@ -201,7 +202,8 @@ package body DAP.Views.Registers is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding
+   procedure Load
      (Self  : in out Registers_Property_Record;
       Value : GNATCOLL.JSON.JSON_Value)
    is
@@ -209,8 +211,10 @@ package body DAP.Views.Registers is
 
       Values : constant JSON_Array := Value.Get ("value");
    begin
-      Trace (Me, "Loading variable view from JSON, has items ?"
-             &  Boolean'Image (Length (Values) > 0));
+      Trace
+        (Me,
+         "Loading variable view from JSON, has items ?"
+         & Boolean'Image (Length (Values) > 0));
 
       for Index in 1 .. Length (Values) loop
          declare
@@ -225,7 +229,8 @@ package body DAP.Views.Registers is
    -- On_Attach --
    ---------------
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self   : not null access Registers_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class)
    is
@@ -262,9 +267,7 @@ package body DAP.Views.Registers is
       Widget : constant Registers_View := Registers_View (Self);
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Widget);
    begin
-      if Client = null
-        or else not Client.Is_Available
-      then
+      if Client = null or else not Client.Is_Available then
          return;
       end if;
 
@@ -272,16 +275,20 @@ package body DAP.Views.Registers is
         and then Client.Get_Capabilities.Value.supportsSetExpression
       then
          declare
-            Req : DAP.Views.Registers.SetExpression.
-              Set_Expression_Request_Access :=
-                new DAP.Views.Registers.SetExpression.
-                  Set_Expression_Request (Widget.Kernel);
+            Req :
+              DAP
+                .Views
+                .Registers
+                .SetExpression
+                .Set_Expression_Request_Access :=
+                new DAP.Views.Registers.SetExpression.Set_Expression_Request
+                      (Widget.Kernel);
          begin
             Req.Parameters.arguments.expression :=
               VSS.Strings.Conversions.To_Virtual_String
-                ("$" & Widget.Model.Get_String
-                   (Widget.Model.Get_Iter_From_String (Path),
-                    Name_Column));
+                ("$"
+                 & Widget.Model.Get_String
+                     (Widget.Model.Get_Iter_From_String (Path), Name_Column));
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (New_Text);
             Req.Parameters.arguments.frameId :=
@@ -294,21 +301,19 @@ package body DAP.Views.Registers is
         and then Client.Get_Capabilities.Value.supportsSetVariable
       then
          declare
-            Req : DAP.Views.Registers.SetVariable.
-              Set_Variable_Request_Access :=
-                new DAP.Views.Registers.SetVariable.
-                  Set_Variable_Request (Widget.Kernel);
+            Req :
+              DAP.Views.Registers.SetVariable.Set_Variable_Request_Access :=
+                new DAP.Views.Registers.SetVariable.Set_Variable_Request
+                      (Widget.Kernel);
          begin
             Req.Parameters.arguments.variablesReference :=
               Integer
                 (Widget.Model.Get_Int
-                   (Widget.Model.Get_Iter_From_String (Path),
-                    Id_Column));
+                   (Widget.Model.Get_Iter_From_String (Path), Id_Column));
             Req.Parameters.arguments.name :=
               VSS.Strings.Conversions.To_Virtual_String
                 (Widget.Model.Get_String
-                   (Widget.Model.Get_Iter_From_String (Path),
-                    Name_Column));
+                   (Widget.Model.Get_Iter_From_String (Path), Name_Column));
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (New_Text);
 
@@ -325,7 +330,8 @@ package body DAP.Views.Registers is
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (View : not null access Registers_View_Record) is
    begin
       View.Old_Values.Clear;
@@ -335,7 +341,8 @@ package body DAP.Views.Registers is
    -- On_Status_Changed --
    -----------------------
 
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Status_Changed
      (Self   : not null access Registers_View_Record;
       Status : GPS.Debuggers.Debugger_State)
    is
@@ -352,7 +359,8 @@ package body DAP.Views.Registers is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Registers_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
@@ -366,7 +374,8 @@ package body DAP.Views.Registers is
    -- On_Detach --
    ---------------
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self   : not null access Registers_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class)
    is
@@ -398,8 +407,8 @@ package body DAP.Views.Registers is
             File       => Client.Get_Executable,
             Name       => "dap_debugger_registers",
             Property   =>
-               new Registers_Property_Record'
-                 (Items => Deep_Copy (Self.Registers)),
+              new Registers_Property_Record'
+                (Items => Deep_Copy (Self.Registers)),
             Persistent => True);
       end if;
    end On_Detach;
@@ -408,7 +417,8 @@ package body DAP.Views.Registers is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_All_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -430,7 +440,8 @@ package body DAP.Views.Registers is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -452,7 +463,8 @@ package body DAP.Views.Registers is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Selected_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -503,7 +515,8 @@ package body DAP.Views.Registers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -535,8 +548,7 @@ package body DAP.Views.Registers is
    ------------------
 
    procedure Send_Request
-     (Self : not null access Registers_View_Record;
-      Kind : Command_Kind)
+     (Self : not null access Registers_View_Record; Kind : Command_Kind)
    is
       use type DAP.Clients.DAP_Client_Access;
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
@@ -568,8 +580,7 @@ package body DAP.Views.Registers is
               new Variables_Request (Self.Kernel);
          begin
             Req.Kind := Kind;
-            Req.Parameters.arguments.variablesReference :=
-              Self.Registers_Id;
+            Req.Parameters.arguments.variablesReference := Self.Registers_Id;
             Get_Client (Self).Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
       end if;
@@ -579,7 +590,8 @@ package body DAP.Views.Registers is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Registers_Property_Record;
       Value : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -587,8 +599,9 @@ package body DAP.Views.Registers is
 
       Values : JSON_Array;
    begin
-      Trace (Me, "Saving registers view to JSON, has items ?"
-             & Self.Items.Length'Img);
+      Trace
+        (Me,
+         "Saving registers view to JSON, has items ?" & Self.Items.Length'Img);
 
       for Item of Self.Items loop
          declare
@@ -625,8 +638,8 @@ package body DAP.Views.Registers is
    ------------
 
    procedure Update (Client : not null access DAP.Clients.DAP_Client'Class) is
-      View : constant Registers_View := Registers_View
-        (Registers_MDI_Views.Retrieve_View (Client.Kernel));
+      View : constant Registers_View :=
+        Registers_View (Registers_MDI_Views.Retrieve_View (Client.Kernel));
    begin
       if View /= null then
          View.Update;
@@ -637,8 +650,8 @@ package body DAP.Views.Registers is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (Self : not null access Registers_View_Record) is
+   overriding
+   procedure Update (Self : not null access Registers_View_Record) is
    begin
       Self.Send_Request (Update_Registers);
    end Update;
@@ -662,7 +675,8 @@ package body DAP.Views.Registers is
          Filter      => Filter);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "registers add all",
+        (Kernel,
+         "registers add all",
          Command     => new Add_All_Registers_Command,
          Description => "Add all registers",
          Icon_Name   => "gps-add-symbolic",
@@ -670,7 +684,8 @@ package body DAP.Views.Registers is
          Filter      => Filter);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "registers add dialog",
+        (Kernel,
+         "registers add dialog",
          Command     => new Add_Registers_Command,
          Description => "Open a dialog to select the registers",
          Icon_Name   => "gps-add-symbolic",
@@ -678,7 +693,8 @@ package body DAP.Views.Registers is
          Filter      => Filter);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "registers delete selected",
+        (Kernel,
+         "registers delete selected",
          Command     => new Remove_Selected_Registers_Command,
          Description => "Remove the selected registers",
          Icon_Name   => "gps-remove-symbolic",

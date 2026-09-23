@@ -21,8 +21,8 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Gtk.Window;            use Gtk.Window;
-with GPS.Kernel;            use GPS.Kernel;
+with Gtk.Window; use Gtk.Window;
+with GPS.Kernel; use GPS.Kernel;
 
 package Welcome_Dialogs is
 
@@ -41,9 +41,10 @@ package Welcome_Dialogs is
    --  Type representing actions that can be displayed in a welcome dialog
    --  (e.g: Open a project).
 
-   type Welcome_Dialog_Action_Callback is access function
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Parent : not null access Gtk_Window_Record'Class) return Boolean;
+   type Welcome_Dialog_Action_Callback is
+     access function
+       (Kernel : not null access Kernel_Handle_Record'Class;
+        Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Type of the callbacks called when a given action is selected by the
    --  user (e.g: a callback that displays a dialog used to open a project).
    --
@@ -61,8 +62,7 @@ package Welcome_Dialogs is
 
    function Display_Welcome_Dialog
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Actions : Welcome_Dialog_Action_Array)
-      return Welcome_Dialog_Response;
+      Actions : Welcome_Dialog_Action_Array) return Welcome_Dialog_Response;
    --  Display a welcome dialog listing the given Actions and return the user's
    --  response.
 

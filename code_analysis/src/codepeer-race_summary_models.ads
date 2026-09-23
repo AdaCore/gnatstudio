@@ -23,8 +23,9 @@ with Gtkada.Abstract_List_Model;
 package CodePeer.Race_Summary_Models is
 
    type Race_Summary_Model_Record is
-     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record
-       with private;
+     new Gtkada
+          .Abstract_List_Model
+          .Gtk_Abstract_List_Model_Record with private;
 
    type Race_Summary_Model is access all Race_Summary_Model_Record'Class;
 
@@ -50,43 +51,49 @@ package CodePeer.Race_Summary_Models is
 private
 
    type Race_Summary_Model_Record is
-     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with record
+     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record
+   with record
       Data : Object_Race_Vectors.Vector;
    end record;
 
-   overriding function Get_Column_Type
-     (Self  : access Race_Summary_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
+   overriding
+   function Get_Column_Type
+     (Self : access Race_Summary_Model_Record; Index : Glib.Gint)
+      return Glib.GType;
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Race_Summary_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Race_Summary_Model_Record) return Glib.Gint;
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Race_Summary_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Race_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue);
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Race_Summary_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Glib.Gint;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint;
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Race_Summary_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Race_Summary_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;

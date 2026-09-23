@@ -71,7 +71,8 @@ package GPS.Core_Kernels is
 
    function Get_Buffer_Factory
      (Kernel : not null access Core_Kernel_Record)
-      return GPS.Editors.Editor_Buffer_Factory_Access is abstract;
+      return GPS.Editors.Editor_Buffer_Factory_Access
+   is abstract;
    --  Get the buffer factory for this kernel, which will in turn allow you to
    --  get buffer objects
 
@@ -100,8 +101,9 @@ package GPS.Core_Kernels is
    --  See Abstract_Language_Tree for Context description.
 
    procedure Semantic_Tree_Updated
-     (Kernel  : not null access Core_Kernel_Record;
-      File    : GNATCOLL.VFS.Virtual_File) is null;
+     (Kernel : not null access Core_Kernel_Record;
+      File   : GNATCOLL.VFS.Virtual_File)
+   is null;
    --  This procedure is called each time when a semantic tree finishes
    --  Update_Async routine.
 
@@ -110,9 +112,9 @@ package GPS.Core_Kernels is
       return Projects.Project_Registry_Access;
    --  The project registry
 
-   overriding function Get_Project_Tree
-     (Self : Core_Kernel_Record)
-      return GNATCOLL.Projects.Project_Tree_Access;
+   overriding
+   function Get_Project_Tree
+     (Self : Core_Kernel_Record) return GNATCOLL.Projects.Project_Tree_Access;
 
    function Databases
      (Kernel : access Core_Kernel_Record'Class)
@@ -122,23 +124,26 @@ package GPS.Core_Kernels is
    function Messages_Window
      (Self : not null access Core_Kernel_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access
-      is abstract;
+   is abstract;
    --  Return console window
 
    function Process_Launcher
      (Self : not null access Core_Kernel_Record)
-     return GPS.Process_Launchers.Process_Launcher is abstract;
+      return GPS.Process_Launchers.Process_Launcher
+   is abstract;
    --  Process launcher service
 
    function Get_Share_Dir
      (Self : not null access Core_Kernel_Record)
-     return GNATCOLL.VFS.Virtual_File is abstract;
+      return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Return share/gnatstudio/ in installation directory for GNAT Studio.
    --  This always ends up with a directory separator.
 
    function Get_System_Dir
      (Handle : not null access Core_Kernel_Record)
-      return GNATCOLL.VFS.Virtual_File is abstract;
+      return GNATCOLL.VFS.Virtual_File
+   is abstract;
    --  Return the installation directory for GNAT Studio. This always ends up
    --  with a directory separator
 
@@ -153,8 +158,7 @@ package GPS.Core_Kernels is
    function To_File
      (Kernel      : access Core_Kernel_Record'Class;
       Name        : String;
-      Check_Exist : Boolean := True)
-      return GNATCOLL.VFS.Virtual_File;
+      Check_Exist : Boolean := True) return GNATCOLL.VFS.Virtual_File;
    --  Convert from a file name read from the debugger to a Virtual_File.
    --  If Check_Exist is True, this takes into account the fact that program
    --  might have been compiled on another machine, with sources located
@@ -163,17 +167,20 @@ package GPS.Core_Kernels is
 
    function Opened_Files
      (Self : not null access Core_Kernel_Record)
-      return Basic_Types.File_Sets.Set is abstract;
+      return Basic_Types.File_Sets.Set
+   is abstract;
    --  Return the list of opened files (Do not free).
 
    procedure Create_Registry
      (Self   : not null access Core_Kernel_Record;
-      Result : out Projects.Project_Registry_Access) is abstract;
+      Result : out Projects.Project_Registry_Access)
+   is abstract;
    --  Initialize Registry with kernel specific version
 
    procedure Create_Database
      (Self   : not null access Core_Kernel_Record;
-      Result : out Xref.General_Xref_Database) is abstract;
+      Result : out Xref.General_Xref_Database)
+   is abstract;
    --  Initialize Database with kernel specific version
 
    procedure Create_Scripts_Repository
@@ -186,11 +193,13 @@ package GPS.Core_Kernels is
    --  Returns the current build mode.
 
    function Get_Target
-     (Self : not null access Core_Kernel_Record) return String is abstract;
+     (Self : not null access Core_Kernel_Record) return String
+   is abstract;
    --  Returns the current target
 
    function Get_Runtime
-     (Self : not null access Core_Kernel_Record) return String is abstract;
+     (Self : not null access Core_Kernel_Record) return String
+   is abstract;
    --  Return the current runtime
 
    function Get_Toolchains_Manager
@@ -221,23 +230,23 @@ package GPS.Core_Kernels is
    --  any service defined by each of its parents.
 
    function Module
-     (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module;
+     (Kernel : access Core_Kernel_Record'Class; Tag : Ada.Tags.Tag)
+      return Abstract_Module;
    --  Return last module that implement service with given Tag
 
-   package Abstract_Module_List is new Ada.Containers.Doubly_Linked_Lists
-     (Abstract_Module, "=");
+   package Abstract_Module_List is new
+     Ada.Containers.Doubly_Linked_Lists (Abstract_Module, "=");
 
    function Module_List
-     (Kernel : access Core_Kernel_Record'Class;
-      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List;
+     (Kernel : access Core_Kernel_Record'Class; Tag : Ada.Tags.Tag)
+      return Abstract_Module_List.List;
    --  Return list of modules that implement service with given Tag
 
    function Get_Scheduled_Command
      (Kernel        : not null access Core_Kernel_Record;
       Dummy_Command : access Commands.Root_Command'Class)
       return Commands.Command_Access
-     is (null);
+   is (null);
    --  Return the command that wraps Command in the task manager. Such a
    --  wrapper is used when commands are run in the background.
    --  This always returns null for the CLI kernel, since it does not include
@@ -256,31 +265,33 @@ package GPS.Core_Kernels is
       Editor  : Editor_Buffer'Class;
       Factory : Editor_Buffer_Factory'Class;
       Kernel  : Core_Kernel) return Editor_Listener_Access
-      is abstract;
+   is abstract;
 
 private
 
    function Hash (Tag : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
 
-   package Module_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Ada.Tags.Tag,
-      Element_Type    => Abstract_Module_List.List,
-      Hash            => Hash,
-      Equivalent_Keys => Ada.Tags."=",
-      "="             => Abstract_Module_List."=");
+   package Module_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Ada.Tags.Tag,
+        Element_Type    => Abstract_Module_List.List,
+        Hash            => Hash,
+        Equivalent_Keys => Ada.Tags."=",
+        "="             => Abstract_Module_List."=");
 
-   function Language_Hash (L : Language_Access) return Hash_Type is
-     (Ada.Strings.Hash (L.Get_Name));
+   function Language_Hash (L : Language_Access) return Hash_Type
+   is (Ada.Strings.Hash (L.Get_Name));
 
-   package Sem_Tree_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type     => Language_Access,
-      Element_Type => Semantic_Tree_Provider_Access,
-      Hash         => Language_Hash,
-      Equivalent_Keys => "=");
+   package Sem_Tree_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Language_Access,
+        Element_Type    => Semantic_Tree_Provider_Access,
+        Hash            => Language_Hash,
+        Equivalent_Keys => "=");
 
    type Core_Kernel_Record is abstract
-     new GNATCOLL.Scripts.Projects.Project_Tree_Retriever with
-   record
+     new GNATCOLL.Scripts.Projects.Project_Tree_Retriever
+   with record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
       --  The symbol used to store common strings read from sources
 

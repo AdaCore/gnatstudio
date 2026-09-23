@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                use Ada.Strings;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with GNAT.Regpat;                use GNAT.Regpat;
+with Ada.Strings;           use Ada.Strings;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Regpat;           use GNAT.Regpat;
 
 with VSS.Strings.Conversions;
 
@@ -41,11 +41,11 @@ package body Code_Coverage.Gcov is
       File_Contents : GNAT.Strings.String_Access)
    is
       Current           : Natural;
-      Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####|=====): *(\d+):(.*$)", Multiple_Lines);
+      Line_Regexp       : constant Pattern_Matcher :=
+        Compile ("^ +(\d+|#####|=====): *(\d+):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
-      Last_Line_Regexp  : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####|=====|-): *(\d+):", Multiple_Lines);
+      Last_Line_Regexp  : constant Pattern_Matcher :=
+        Compile ("^ +(\d+|#####|=====|-): *(\d+):", Multiple_Lines);
       Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
       Lines_Count       : Natural := 0;
@@ -62,8 +62,9 @@ package body Code_Coverage.Gcov is
 
       if Current = File_Contents'Last then
          if Current > 0 then
-            Current := Index
-              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
+            Current :=
+              Index
+                (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
 
             if Current = 0 then
                Set_Error (File_Node, File_Corrupted);
@@ -85,8 +86,9 @@ package body Code_Coverage.Gcov is
          exit when Last_Line_Matches (0) /= No_Match;
 
          if Current > 0 then
-            Current := Index
-              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
+            Current :=
+              Index
+                (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
 
             if Current = 0 then
                Set_Error (File_Node, File_Corrupted);
@@ -103,8 +105,14 @@ package body Code_Coverage.Gcov is
 
       --  Parsing of the line coverage information
 
-      File_Node.Lines := new Line_Array (1 .. Natural'Value (File_Contents
-        (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last)));
+      File_Node.Lines :=
+        new Line_Array
+              (1
+               ..
+                 Natural'Value
+                   (File_Contents
+                      (Last_Line_Matches (2).First
+                       .. Last_Line_Matches (2).Last)));
       --  Create a Line_Array with exactly the number of elements corresponding
       --  to the number of code lines in the original source code file.
 
@@ -116,36 +124,46 @@ package body Code_Coverage.Gcov is
          exit when Line_Matches (0) = No_Match;
 
          Lines_Count := Lines_Count + 1;
-         Line_Num := Natural'Value
-           (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
+         Line_Num :=
+           Natural'Value
+             (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
          File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
            new Gcov_Line_Coverage;
          Gcov_Line_Coverage
-           (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all).Status
-           := No_Code;
+           (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all)
+           .Status :=
+           No_Code;
 
          case File_Contents (Line_Matches (1).First) is
             when '#' | '=' =>
                Gcov_Line_Coverage
-                 (File_Node.Lines
-                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
-                 := Not_Covered;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
-                 := 0;
-               File_Node.Lines (Line_Num).Contents := new String'
-                 (File_Contents
-                    (Line_Matches (3).First .. Line_Matches (3).Last));
-               Not_Cov_Count := Not_Cov_Count + 1;
-            when others =>
-               Gcov_Line_Coverage
-                 (File_Node.Lines
-                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
-                 := Covered;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
-                 := Natural'Value
+                 (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all)
+                 .Status :=
+                 Not_Covered;
+               File_Node.Lines (Line_Num)
+                 .Analysis_Data
+                 .Coverage_Data
+                 .Coverage :=
+                 0;
+               File_Node.Lines (Line_Num).Contents :=
+                 new String'
                    (File_Contents
-                        (Line_Matches (1).First .. Line_Matches (1).Last));
+                      (Line_Matches (3).First .. Line_Matches (3).Last));
+               Not_Cov_Count := Not_Cov_Count + 1;
+
+            when others    =>
+               Gcov_Line_Coverage
+                 (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all)
+                 .Status :=
+                 Covered;
+               File_Node.Lines (Line_Num)
+                 .Analysis_Data
+                 .Coverage_Data
+                 .Coverage :=
+                 Natural'Value
+                   (File_Contents
+                      (Line_Matches (1).First .. Line_Matches (1).Last));
          end case;
 
          Current := Line_Matches (0).Last + 1;
@@ -162,27 +180,28 @@ package body Code_Coverage.Gcov is
    -- Add_Location_If_Uncovered --
    -------------------------------
 
-   overriding procedure Add_Location_If_Uncovered
-     (Coverage    : Gcov_Line_Coverage;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Line_Number : Positive;
-      Line_Text   : GNAT.Strings.String_Access;
-      Added       : in out Boolean;
+   overriding
+   procedure Add_Location_If_Uncovered
+     (Coverage                 : Gcov_Line_Coverage;
+      Kernel                   : GPS.Kernel.Kernel_Handle;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line_Number              : Positive;
+      Line_Text                : GNAT.Strings.String_Access;
+      Added                    : in out Boolean;
       Allow_Auto_Jump_To_First : Boolean) is
    begin
       if Coverage.Coverage = 0 then
          Added := True;
          Create_Simple_Message
-             (Kernel.Get_Messages_Container,
-              Uncovered_Category,
-              File,
-              Line_Number,
-              1,
-              VSS.Strings.Conversions.To_Virtual_String (Line_Text.all),
-              High,
-              Coverage_Message_Flags,
-              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+           (Kernel.Get_Messages_Container,
+            Uncovered_Category,
+            File,
+            Line_Number,
+            1,
+            VSS.Strings.Conversions.To_Virtual_String (Line_Text.all),
+            High,
+            Coverage_Message_Flags,
+            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       end if;
    end Add_Location_If_Uncovered;
 
@@ -190,7 +209,8 @@ package body Code_Coverage.Gcov is
    -- Line_Coverage_Info --
    ------------------------
 
-   overriding function Line_Coverage_Info
+   overriding
+   function Line_Coverage_Info
      (Coverage : access Gcov_Line_Coverage;
       Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
@@ -207,41 +227,47 @@ package body Code_Coverage.Gcov is
    begin
       if Bin_Mode then
          case Coverage.Coverage is
-         when 0 =>
-            Result.Image := Code_Analysis_GUI.Uncovered_Line_Pixbuf;
-            Result.Tooltip_Text := To_Unbounded_String
-              (-"The code for this line has not been executed.");
-         when others =>
-            Result.Image := Code_Analysis_GUI.Covered_Line_Pixbuf;
-            Result.Tooltip_Text := To_Unbounded_String
-              (-"The code for this line has been executed.");
+            when 0      =>
+               Result.Image := Code_Analysis_GUI.Uncovered_Line_Pixbuf;
+               Result.Tooltip_Text :=
+                 To_Unbounded_String
+                   (-"The code for this line has not been executed.");
+
+            when others =>
+               Result.Image := Code_Analysis_GUI.Covered_Line_Pixbuf;
+               Result.Tooltip_Text :=
+                 To_Unbounded_String
+                   (-"The code for this line has been executed.");
          end case;
       else
          case Coverage.Coverage is
-            when 0 =>
-               Result.Text := To_Unbounded_String
-                 (Pango_Markup_To_Open_1
-                  & "red"
-                  & Pango_Markup_To_Open_2
-                  & "#"
-                  & Pango_Markup_To_Close);
+            when 0      =>
+               Result.Text :=
+                 To_Unbounded_String
+                   (Pango_Markup_To_Open_1
+                    & "red"
+                    & Pango_Markup_To_Open_2
+                    & "#"
+                    & Pango_Markup_To_Close);
 
-            when 1 =>
-               Result.Text := To_Unbounded_String
-                 (Pango_Markup_To_Open_1
-                  & "black"
-                  & Pango_Markup_To_Open_2
-                  & (-" 1 time ")
-                  & Pango_Markup_To_Close);
+            when 1      =>
+               Result.Text :=
+                 To_Unbounded_String
+                   (Pango_Markup_To_Open_1
+                    & "black"
+                    & Pango_Markup_To_Open_2
+                    & (-" 1 time ")
+                    & Pango_Markup_To_Close);
 
             when others =>
-               Result.Text := To_Unbounded_String
-                 (Pango_Markup_To_Open_1
-                  & "black"
-                  & Pango_Markup_To_Open_2
-                  & Image (Coverage.Coverage)
-                  & " times"
-                  & Pango_Markup_To_Close);
+               Result.Text :=
+                 To_Unbounded_String
+                   (Pango_Markup_To_Open_1
+                    & "black"
+                    & Pango_Markup_To_Open_2
+                    & Image (Coverage.Coverage)
+                    & " times"
+                    & Pango_Markup_To_Close);
          end case;
       end if;
 
@@ -252,7 +278,8 @@ package body Code_Coverage.Gcov is
    -- Is_Valid --
    --------------
 
-   overriding function Is_Valid (Self : Gcov_Line_Coverage) return Boolean is
+   overriding
+   function Is_Valid (Self : Gcov_Line_Coverage) return Boolean is
    begin
       return Self.Status /= Undetermined;
    end Is_Valid;
@@ -261,8 +288,8 @@ package body Code_Coverage.Gcov is
    -- Print_Status --
    ------------------
 
-   overriding function Print_Status (Self : Gcov_Line_Coverage) return String
-   is
+   overriding
+   function Print_Status (Self : Gcov_Line_Coverage) return String is
    begin
       if Self.Status = Undetermined then
          return "Undetermined";

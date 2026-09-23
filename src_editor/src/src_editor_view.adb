@@ -18,66 +18,66 @@
 with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with System;
 
-with GNAT.Strings;               use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Cairo.Surface;              use Cairo.Surface;
+with Cairo.Surface; use Cairo.Surface;
 
-with Gdk;                        use Gdk;
-with Gdk.Cairo;                  use Gdk.Cairo;
-with Gdk.Event;                  use Gdk.Event;
+with Gdk;               use Gdk;
+with Gdk.Cairo;         use Gdk.Cairo;
+with Gdk.Event;         use Gdk.Event;
 with Gdk.Keyval;
-with Gdk.Rectangle;              use Gdk.Rectangle;
-with Gdk.RGBA;                   use Gdk.RGBA;
-with Gdk.Window;                 use Gdk.Window;
-with Gdk.Types;                  use Gdk.Types;
-with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Gdk.Rectangle;     use Gdk.Rectangle;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Window;        use Gdk.Window;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
-with Glib.Object;                use Glib.Object;
-with Glib.Values;                use Glib.Values;
+with Glib.Object; use Glib.Object;
+with Glib.Values; use Glib.Values;
 
 with Gtk.Accel_Group;
-with Gtk.Adjustment;             use Gtk.Adjustment;
-with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Notebook;               use Gtk.Notebook;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Style_Context;          use Gtk.Style_Context;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Drawing_Area;    use Gtk.Drawing_Area;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Style_Context;   use Gtk.Style_Context;
+with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
+with Gtk.Text_Iter;       use Gtk.Text_Iter;
+with Gtk.Widget;          use Gtk.Widget;
 
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Style;               use Gtkada.Style;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
+with Gtkada.Style;    use Gtkada.Style;
 
-with Pango.Layout;               use Pango.Layout;
-with Pango.Attributes;           use Pango.Attributes;
-with Pango.Tabs;                 use Pango.Tabs;
+with Pango.Layout;     use Pango.Layout;
+with Pango.Attributes; use Pango.Attributes;
+with Pango.Tabs;       use Pango.Tabs;
 with URIs;
 
 with VSS.Characters.Latin;
 
-with Src_Editor_Buffer;          use Src_Editor_Buffer;
-with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
-with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
-with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
-with Src_Editor_Module;          use Src_Editor_Module;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
+with Src_Editor_Buffer.Blocks;  use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
+with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_Module;         use Src_Editor_Module;
 
-with Config;                     use Config;
-with Default_Preferences;        use Default_Preferences;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
+with Config;                             use Config;
+with Default_Preferences;                use Default_Preferences;
+with GPS.Intl;                           use GPS.Intl;
+with GPS.Kernel;                         use GPS.Kernel;
 with GPS.Kernel.Actions;
-with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with Language;                   use Language;
-with Language.Tree;              use Language.Tree;
+with GPS.Kernel.Clipboard;               use GPS.Kernel.Clipboard;
+with GPS.Kernel.Contexts;                use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                   use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                     use GPS.Kernel.MDI;
+with GPS.Kernel.Project;                 use GPS.Kernel.Project;
+with Language;                           use Language;
+with Language.Tree;                      use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Box;
@@ -94,8 +94,8 @@ with Gtk.Target_List;            use Gtk.Target_List;
 with Gdk.Property;               use Gdk.Property;
 with Gtkada.Types;               use Gtkada.Types;
 
-with GUI_Utils;                  use GUI_Utils;
-with String_Utils;               use String_Utils;
+with GUI_Utils;    use GUI_Utils;
+with String_Utils; use String_Utils;
 
 --  Drawing the side info is organized this way:
 --
@@ -113,8 +113,7 @@ package body Src_Editor_View is
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.VIEW");
 
    Trace_Override_Middle_Click_Paste : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE",
-             GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
    --  When this is On, we do our own handling of middle mouse click to
    --  implement paste on Unix platforms. The default handling of the Xserver
    --  also copies the syntax highlighting which is unwanted if for instance we
@@ -124,28 +123,28 @@ package body Src_Editor_View is
    --  The margin left of the text
 
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
-   package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Widget_Type => Source_Buffer_Record,
-      User_Type   => Source_View,
-      Setup       => Setup);
+   package Source_Buffer_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Widget_Type => Source_Buffer_Record,
+        User_Type   => Source_View,
+        Setup       => Setup);
 
    package Source_View_Timeout is new Glib.Main.Generic_Sources (Source_View);
    package Source_View_Idle renames Source_View_Timeout;
 
    Target_Table : constant Target_Entry_Array :=
-     ((New_String ("text/uri-list"), 0, 0),
-      (New_String ("text/plain"), 0, 1));
+     ((New_String ("text/uri-list"), 0, 0), (New_String ("text/plain"), 0, 1));
 
    procedure On_Draw_Layer
      (Widget : System.Address;
       Layer  : Gtk_Text_View_Layer;
       Cr     : Cairo.Cairo_Context)
-     with Convention => C;
+   with Convention => C;
 
    View_Class_Record : Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
    procedure View_Class_Init (Self : GObject_Class)
-     with Convention => C;
+   with Convention => C;
    function View_Get_Type return Glib.GType;
    --  Support subprograms for creating our own class type, so that we can
    --  override the "draw_layer" virtual function.
@@ -196,32 +195,32 @@ package body Src_Editor_View is
    --  which was interacting badly with the Insert hooks
 
    function Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "button_press_event" signal
 
    function Button_Release_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "button_release_event" signal
 
    function Speed_Bar_Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "button_press_event" signal on the speed bar
 
    function Speed_Bar_Button_Release_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "button_press_event" signal on the speed bar
 
    function Key_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
 
    function Scroll_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Callback for the "scroll-event" signal
 
    function Line_Highlight_Redraw (User : Source_View) return Boolean;
@@ -268,28 +267,25 @@ package body Src_Editor_View is
    --  Callback for the "line_highlight_change" signal
 
    procedure Redraw_Columns
-     (View : access Source_View_Record'Class;
-      Cr   : Cairo_Context);
+     (View : access Source_View_Record'Class; Cr : Cairo_Context);
    --  Redraw the left area
 
    function On_Delete
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean;
    --  Callback for the "delete_event" signal
 
    function On_Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean;
    --  Callback for the "button_press_event"
 
-   procedure Restore_Cursor_Position
-     (View : access Source_View_Record'Class);
+   procedure Restore_Cursor_Position (View : access Source_View_Record'Class);
    --  Restore the stored cursor position
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Source_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -299,7 +295,8 @@ package body Src_Editor_View is
    type On_File_Saved is new File_Hooks_Function with record
       View : Source_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -320,21 +317,19 @@ package body Src_Editor_View is
    --  0.0 for the top of the view, 1.0 for the bottom of the view.
    --  (< 0.0 or > 1.0 if the cursor is off-screen)
 
-   procedure Remove_Synchronization
-     (View : access Source_View_Record'Class);
+   procedure Remove_Synchronization (View : access Source_View_Record'Class);
    --  Remove the synchronized scrolling loop related to this editor
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class);
    --  Callback when the adjustments have changed
 
    function Side_Area_Expose_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Cr     : Cairo_Context) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Cr : Cairo_Context)
+      return Boolean;
    --  Callback for an "expose" event on the speed bar
 
    function Scroll_Bar_Draw
-     (Object : access GObject_Record'Class;
-      Cr     : Cairo_Context) return Boolean;
+     (Object : access GObject_Record'Class; Cr : Cairo_Context) return Boolean;
    --  Draw on the scroll bar
 
    procedure Speed_Bar_Size_Allocate_Cb
@@ -393,12 +388,10 @@ package body Src_Editor_View is
 
    procedure Register_Idle_Column_Redraw (View : Source_View) is
    begin
-      if View.Get_Realized
-        and then not View.Idle_Redraw_Registered
-      then
+      if View.Get_Realized and then not View.Idle_Redraw_Registered then
          View.Idle_Redraw_Registered := True;
-         View.Idle_Redraw_Id := Source_View_Idle.Idle_Add
-           (Idle_Column_Redraw'Access, View);
+         View.Idle_Redraw_Id :=
+           Source_View_Idle.Idle_Add (Idle_Column_Redraw'Access, View);
       end if;
    end Register_Idle_Column_Redraw;
 
@@ -440,7 +433,7 @@ package body Src_Editor_View is
 
    procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
       Buffer      : constant Source_Buffer :=
-                      Source_Buffer (Get_Buffer (View));
+        Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
@@ -460,11 +453,10 @@ package body Src_Editor_View is
    -- Restore_Cursor_Position --
    -----------------------------
 
-   procedure Restore_Cursor_Position
-     (View : access Source_View_Record'Class)
+   procedure Restore_Cursor_Position (View : access Source_View_Record'Class)
    is
       Buffer      : constant Source_Buffer :=
-                      Source_Buffer (Get_Buffer (View));
+        Source_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
       Cursor_Iter : Gtk_Text_Iter;
    begin
@@ -530,8 +522,7 @@ package body Src_Editor_View is
    ---------------------
 
    function On_Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
       Src_View : constant Source_View := Source_View (View);
@@ -552,8 +543,7 @@ package body Src_Editor_View is
    ---------------
 
    function On_Delete
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
       Src_View : constant Source_View := Source_View (View);
@@ -579,7 +569,8 @@ package body Src_Editor_View is
       Modify_Font (View, Default_Style.Get_Pref_Font);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Realize_Cb;
 
    -----------------------
@@ -588,7 +579,8 @@ package body Src_Editor_View is
 
    procedure Invalidate_Window
      (User           : access Source_View_Record'Class;
-      Side_Area_Only : Boolean := False) is
+      Side_Area_Only : Boolean := False)
+   is
       procedure Invalidate (Window : Gdk_Window);
       --  Invalidate Window
 
@@ -637,16 +629,15 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      if not User.Redraw_Registered
-        and then User.Get_Realized
-      then
+      if not User.Redraw_Registered and then User.Get_Realized then
          User.Redraw_Idle_Handler :=
            Source_View_Idle.Idle_Add (Line_Highlight_Redraw'Access, User);
          User.Redraw_Registered := True;
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -668,7 +659,8 @@ package body Src_Editor_View is
       Invalidate_Window (User);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Buffer_Information_Change_Handler;
 
    ---------------------------------
@@ -700,7 +692,8 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
@@ -734,13 +727,14 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      Line : Gint;
-      Iter : Gtk_Text_Iter;
+      Line      : Gint;
+      Iter      : Gtk_Text_Iter;
       pragma Unreferenced (Params);
       Has_Focus : constant Boolean :=
-                    (User.Child /= null
-                     and then Gtkada.MDI.MDI_Child (User.Child) =
-                       Get_Focus_Child (Get_MDI (User.Kernel)));
+        (User.Child /= null
+         and then
+           Gtkada.MDI.MDI_Child (User.Child)
+           = Get_Focus_Child (Get_MDI (User.Kernel)));
    begin
       Buffer.Get_Iter_At_Mark (Iter, Buffer.Get_Insert);
       Line := Get_Line (Iter) + 1;
@@ -758,12 +752,9 @@ package body Src_Editor_View is
 
       --  Update the current line highlighting if the current line changed
 
-      if User.Highlight_Current
-          and then User.Current_Line /= Line
-      then
+      if User.Highlight_Current and then User.Current_Line /= Line then
          Invalidate_Window
-           (User,
-            Side_Area_Only => User.Highlight_As_Line = Gutter_Only);
+           (User, Side_Area_Only => User.Highlight_As_Line = Gutter_Only);
       end if;
 
       User.Current_Line := Line;
@@ -785,7 +776,8 @@ package body Src_Editor_View is
            Cursor_Screen_Position (Source_View (View));
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Size_Allocated_Before;
 
    --------------------
@@ -793,7 +785,7 @@ package body Src_Editor_View is
    --------------------
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
-      V      : constant Source_View := Source_View (View);
+      V : constant Source_View := Source_View (View);
    begin
       --  Recompute the lines currently displayed
       Recompute_Visible_Area (V);
@@ -809,7 +801,8 @@ package body Src_Editor_View is
    begin
       Prevent_CR_Insertion (Buffer, True);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Paste_Clipboard_Before;
 
    --------------------------------
@@ -827,7 +820,8 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Speed_Bar_Size_Allocate_Cb;
 
    ----------------------------
@@ -843,7 +837,7 @@ package body Src_Editor_View is
       Bottom_Line      : Buffer_Line_Type;
 
       Text_Window : constant Gdk.Gdk_Window :=
-                           View.Get_Window (Text_Window_Text);
+        View.Get_Window (Text_Window_Text);
 
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
@@ -859,13 +853,19 @@ package body Src_Editor_View is
       Get_Geometry (Text_Window, X, Y, Width, Height);
 
       Window_To_Buffer_Coords
-        (View, Text_Window_Text,
-         Window_X => 0, Window_Y => Y,
-         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+        (View,
+         Text_Window_Text,
+         Window_X => 0,
+         Window_Y => Y,
+         Buffer_X => Dummy_Gint,
+         Buffer_Y => Top_In_Buffer);
       Window_To_Buffer_Coords
-        (View, Text_Window_Text,
-         Window_X => 0, Window_Y => Y + Height,
-         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+        (View,
+         Text_Window_Text,
+         Window_X => 0,
+         Window_Y => Y + Height,
+         Buffer_X => Dummy_Gint,
+         Buffer_Y => Bottom_In_Buffer);
 
       Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
       Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
@@ -875,22 +875,19 @@ package body Src_Editor_View is
 
       --  If one of the values hadn't been initialized, display the
       --  whole range of lines.
-      View.Top_Line    := Top_Line;
+      View.Top_Line := Top_Line;
       View.Bottom_Line := Bottom_Line;
 
       --  Compute the smallest connected area that needs refresh
 
       if View.Side_Columns_Up_To_Date then
-         Find_Top_Line :
-         while Top_Line <= Bottom_Line loop
-            exit Find_Top_Line when
-              Line_Needs_Refresh (Buffer, Top_Line);
+         Find_Top_Line : while Top_Line <= Bottom_Line loop
+            exit Find_Top_Line when Line_Needs_Refresh (Buffer, Top_Line);
 
             Top_Line := Top_Line + 1;
          end loop Find_Top_Line;
 
-         Find_Bottom_Line :
-         while Bottom_Line >= Top_Line loop
+         Find_Bottom_Line : while Bottom_Line >= Top_Line loop
             exit Find_Bottom_Line when
               Line_Needs_Refresh (Buffer, Bottom_Line);
 
@@ -906,10 +903,9 @@ package body Src_Editor_View is
    ---------------------
 
    function Scroll_Bar_Draw
-     (Object : access GObject_Record'Class;
-      Cr     : Cairo_Context) return Boolean
+     (Object : access GObject_Record'Class; Cr : Cairo_Context) return Boolean
    is
-      View   : constant Source_View := Source_View (Object);
+      View : constant Source_View := Source_View (Object);
 
    begin
       --  The drawing of the scrollbar is a two-step process: first we draw
@@ -947,8 +943,8 @@ package body Src_Editor_View is
    -------------------------------
 
    function Side_Area_Expose_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Cr     : Cairo_Context) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Cr : Cairo_Context)
+      return Boolean
    is
       View : constant Source_View := Source_View (Widget);
 
@@ -970,7 +966,7 @@ package body Src_Editor_View is
       Layer  : Gtk_Text_View_Layer;
       Cr     : Cairo.Cairo_Context)
    is
-      View : constant Source_View :=
+      View   : constant Source_View :=
         Source_View (Get_User_Data_Or_Null (Widget));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
@@ -990,13 +986,13 @@ package body Src_Editor_View is
       --  background.
 
       procedure Draw_Below (Start_Iter : Gtk_Text_Iter) is
-         Line_Y           : Gint;
-         Line_Height      : Gint;
-         Dummy            : Gint := 0;
-         Dummy_Gint       : Gint;
-         Success          : Boolean;
-         Iter             : Gtk_Text_Iter := Start_Iter;
-         Color            : Gdk_RGBA;
+         Line_Y      : Gint;
+         Line_Height : Gint;
+         Dummy       : Gint := 0;
+         Dummy_Gint  : Gint;
+         Success     : Boolean;
+         Iter        : Gtk_Text_Iter := Start_Iter;
+         Color       : Gdk_RGBA;
       begin
          --  Highlight the line that contains the cursor
 
@@ -1005,7 +1001,7 @@ package body Src_Editor_View is
             Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
 
             case View.Highlight_As_Line is
-               when Whole_Line =>
+               when Whole_Line  =>
                   Set_Source_RGBA (Cr, View.Current_Line_Color);
                   Cairo.Rectangle
                     (Cr,
@@ -1014,14 +1010,18 @@ package body Src_Editor_View is
                      Gdouble (Visible_Rect.Width),
                      Gdouble (Line_Height));
                   Cairo.Fill (Cr);
-               when Underline =>
+
+               when Underline   =>
                   Set_Line_Width (Cr, 1.0);
 
-                  Draw_Line (Cr, View.Current_Line_Color,
-                             -1,
-                             Line_Y + Line_Height,
-                             Visible_Rect.Width,
-                             Line_Y + Line_Height);
+                  Draw_Line
+                    (Cr,
+                     View.Current_Line_Color,
+                     -1,
+                     Line_Y + Line_Height,
+                     Visible_Rect.Width,
+                     Line_Y + Line_Height);
+
                when Gutter_Only =>
                   --  We don't need to draw anything in the text area when
                   --  the current line should only be highlighted in the
@@ -1035,16 +1035,19 @@ package body Src_Editor_View is
          Iter := Start_Iter;
 
          for Line in Top_Line .. Bottom_Line loop
-            Color := Buffer.Get_Highlighter.Get_Highlight_Color
-              (Line, Context => Highlight_Editor);
+            Color :=
+              Buffer.Get_Highlighter.Get_Highlight_Color
+                (Line, Context => Highlight_Editor);
 
             if Color /= Null_RGBA then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
                Set_Source_Color (Cr, Color);
                Cairo.Rectangle
                  (Cr,
-                  Gdouble (Margin), Gdouble (Line_Y),
-                  Gdouble (Visible_Rect.Width), Gdouble (Line_Height));
+                  Gdouble (Margin),
+                  Gdouble (Line_Y),
+                  Gdouble (Visible_Rect.Width),
+                  Gdouble (Line_Height));
                Cairo.Fill (Cr);
             end if;
 
@@ -1055,13 +1058,12 @@ package body Src_Editor_View is
 
          declare
             Column : constant Gint :=
-                       Gint (Integer'(Highlight_Column.Get_Pref));
+              Gint (Integer'(Highlight_Column.Get_Pref));
             X      : Gint;
          begin
 
             if Column > 0 then
-               X := (Column * View.Width_Of_256_Chars) / 256
-                 + Margin;
+               X := (Column * View.Width_Of_256_Chars) / 256 + Margin;
 
                Save (Cr);
                Set_Line_Width (Cr, 1.0);
@@ -1097,26 +1099,24 @@ package body Src_Editor_View is
             Bracket_Offset : constant := 2;
             --  The distance between brackets and text
 
-            Block_Begin_Y  : Gint;
-            Block_End_Y    : Gint;
-            Height         : Gint;
-            X              : Gint;
+            Block_Begin_Y : Gint;
+            Block_End_Y   : Gint;
+            Height        : Gint;
+            X             : Gint;
 
-            Buffer_First   : constant Buffer_Line_Type
-              := Get_Buffer_Line (Buffer, B.First_Line);
-            Buffer_Last    : constant Buffer_Line_Type
-              := Get_Buffer_Line (Buffer, B.Last_Line);
+            Buffer_First : constant Buffer_Line_Type :=
+              Get_Buffer_Line (Buffer, B.First_Line);
+            Buffer_Last  : constant Buffer_Line_Type :=
+              Get_Buffer_Line (Buffer, B.Last_Line);
 
-            First          : constant Gint := Gint (Buffer_First - 1);
-            Last           : Gint := Gint (Buffer_Last - 1);
-            Offset         : Integer;
-            Iter           : Gtk_Text_Iter;
-            Dummy          : Gint := 0;
+            First  : constant Gint := Gint (Buffer_First - 1);
+            Last   : Gint := Gint (Buffer_Last - 1);
+            Offset : Integer;
+            Iter   : Gtk_Text_Iter;
+            Dummy  : Gint := 0;
 
          begin
-            if Buffer_First > Bottom_Line
-              or else Buffer_Last < Top_Line
-            then
+            if Buffer_First > Bottom_Line or else Buffer_Last < Top_Line then
                return;
             end if;
 
@@ -1134,32 +1134,42 @@ package body Src_Editor_View is
             end if;
 
             Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
-            Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
+            Get_Line_Yrange (View, Iter, Block_Begin_Y, Dummy);
 
             Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
             Get_Line_Yrange (View, Iter, Dummy, Height);
 
             Height := Dummy + Height - Block_Begin_Y;
 
-            X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
-              Bracket_Offset + Margin;
+            X :=
+              (Gint (Offset - 1) * View.Width_Of_256_Chars)
+              / 256
+              - Bracket_Offset
+              + Margin;
 
             Block_End_Y := Block_Begin_Y + Height;
 
             Set_Line_Width (Cr, 1.0);
 
             Draw_Line
-              (Cr, View.Current_Block_Color,
-               X, Block_End_Y, X + Bracket_Length, Block_End_Y);
+              (Cr,
+               View.Current_Block_Color,
+               X,
+               Block_End_Y,
+               X + Bracket_Length,
+               Block_End_Y);
 
             Draw_Line
-              (Cr, View.Current_Block_Color,
-               X, Block_Begin_Y, X, Block_End_Y);
+              (Cr, View.Current_Block_Color, X, Block_Begin_Y, X, Block_End_Y);
 
             if Block_Begin_Y >= 0 then
                Draw_Line
-               (Cr, View.Current_Block_Color,
-                X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
+                 (Cr,
+                  View.Current_Block_Color,
+                  X,
+                  Block_Begin_Y,
+                  X + Bracket_Length,
+                  Block_Begin_Y);
             end if;
          end Draw_Block;
 
@@ -1168,16 +1178,17 @@ package body Src_Editor_View is
 
          if View.Highlight_Blocks then
             declare
-               Line : Editable_Line_Type;
+               Line   : Editable_Line_Type;
                Column : Visible_Column_Type;
             begin
                Buffer.Get_Cursor_Position (Line, Column);
-               View.Current_Block := Get_Block
-                 (Buffer,
-                  Line,
-                  False,
-                  Filter => Categories_For_Block_Highlighting,
-                  Column => Column);
+               View.Current_Block :=
+                 Get_Block
+                   (Buffer,
+                    Line,
+                    False,
+                    Filter => Categories_For_Block_Highlighting,
+                    Column => Column);
                Draw_Block (View.Current_Block);
             end;
          end if;
@@ -1208,9 +1219,11 @@ package body Src_Editor_View is
       case Layer is
          when Text_View_Layer_Below_Text =>
             Draw_Below (Iter);
+
          when Text_View_Layer_Above_Text =>
             Draw_Above;
-         when others =>
+
+         when others                     =>
             null;
       end case;
 
@@ -1255,7 +1268,7 @@ package body Src_Editor_View is
    function Focus_In_Event_Cb
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
-      View : constant Source_View   := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
    begin
       if not View.Button_Pressed
         and then not Selection_Exists (Get_Buffer (View))
@@ -1302,12 +1315,11 @@ package body Src_Editor_View is
       --------------------
 
       procedure Is_In_Notebook
-        (Child : not null access GPS_MDI_Child_Record'Class)
-      is
+        (Child : not null access GPS_MDI_Child_Record'Class) is
       begin
          Is_Opened := True;
-         In_Notebook := In_Notebook or else
-           Get_Child_Notebook (Child) = Current_Notebook;
+         In_Notebook :=
+           In_Notebook or else Get_Child_Notebook (Child) = Current_Notebook;
          Found_Child := MDI_Child (Child);
       end Is_In_Notebook;
    begin
@@ -1342,10 +1354,11 @@ package body Src_Editor_View is
                   if Is_Opened and then not In_Notebook then
                      --  We don't have File in the current notebook thus create
                      --  a new file view for notebook.
-                     Ignore := New_View
-                       (View.Kernel,
-                        Get_Source_Box_From_MDI (Found_Child),
-                        No_Project);
+                     Ignore :=
+                       New_View
+                         (View.Kernel,
+                          Get_Source_Box_From_MDI (Found_Child),
+                          No_Project);
                   else
                      --  Only the last DnD file should steal the focus when DnD
                      --  on Source_View "A". Otherwise, if one of the DnD file
@@ -1401,8 +1414,7 @@ package body Src_Editor_View is
 
       for J in V.Source_Buffer_Handlers'Range loop
          Gtk.Handlers.Disconnect
-           (Get_Buffer (V),
-            V.Source_Buffer_Handlers (J));
+           (Get_Buffer (V), V.Source_Buffer_Handlers (J));
       end loop;
 
       Register_View (Source_Buffer (Get_Buffer (V)), Add => False);
@@ -1482,9 +1494,9 @@ package body Src_Editor_View is
          Target_Table,
          Gdk.Dnd.Action_Any);
 
-      View.Kernel  := Kernel_Handle (Kernel);
-      View.Scroll  := Gtk_Scrolled_Window (Scroll);
-      View.Area    := Area;
+      View.Kernel := Kernel_Handle (Kernel);
+      View.Scroll := Gtk_Scrolled_Window (Scroll);
+      View.Area := Area;
       View.Area.Ref;
       View.Set_Project (Project);
 
@@ -1511,55 +1523,63 @@ package body Src_Editor_View is
       View.Compute_Pango_Tabs;
 
       Set_Events
+        (Area, Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
+
+      Return_Callback.Object_Connect
         (Area,
-         Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
-
-      Return_Callback.Object_Connect
-        (Area, Signal_Button_Press_Event,
-         Marsh       => Return_Callback.To_Marshaller
-           (Speed_Bar_Button_Press_Event_Cb'Access),
+         Signal_Button_Press_Event,
+         Marsh       =>
+           Return_Callback.To_Marshaller
+             (Speed_Bar_Button_Press_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (Area, Signal_Motion_Notify_Event,
-         Marsh       => Return_Callback.To_Marshaller
-           (Speed_Bar_Button_Press_Event_Cb'Access),
+        (Area,
+         Signal_Motion_Notify_Event,
+         Marsh       =>
+           Return_Callback.To_Marshaller
+             (Speed_Bar_Button_Press_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (Area, Signal_Button_Release_Event,
-         Marsh       => Return_Callback.To_Marshaller
-           (Speed_Bar_Button_Release_Event_Cb'Access),
+        (Area,
+         Signal_Button_Release_Event,
+         Marsh       =>
+           Return_Callback.To_Marshaller
+             (Speed_Bar_Button_Release_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       Return_Callback.Object_Connect
-        (View.Area, Signal_Draw,
-         Marsh       => Return_Callback.To_Marshaller
-           (Side_Area_Expose_Event_Cb'Access),
+        (View.Area,
+         Signal_Draw,
+         Marsh       =>
+           Return_Callback.To_Marshaller (Side_Area_Expose_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
       View.Scroll.Get_Vscrollbar.On_Draw (Scroll_Bar_Draw'Access, View);
 
-      View.On_Drag_Data_Received
-        (View_On_Drag_Data_Received'Access);
+      View.On_Drag_Data_Received (View_On_Drag_Data_Received'Access);
 
       --  ??? Why connect twice to Size_Allocate
       Widget_Callback.Object_Connect
-        (Area, Signal_Size_Allocate,
-         Marsh       => Widget_Callback.To_Marshaller
-           (Speed_Bar_Size_Allocate_Cb'Access),
+        (Area,
+         Signal_Size_Allocate,
+         Marsh       =>
+           Widget_Callback.To_Marshaller (Speed_Bar_Size_Allocate_Cb'Access),
          After       => False,
          Slot_Object => View);
       Widget_Callback.Connect
-        (View, Signal_Size_Allocate,
+        (View,
+         Signal_Size_Allocate,
          Widget_Callback.To_Marshaller (Size_Allocated'Access),
          After => True);
       Widget_Callback.Connect
-        (View, Signal_Size_Allocate,
+        (View,
+         Signal_Size_Allocate,
          Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
          After => False);
 
@@ -1567,68 +1587,81 @@ package body Src_Editor_View is
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
       Widget_Callback.Connect
-        (View, Signal_Realize,
+        (View,
+         Signal_Realize,
          Marsh => Widget_Callback.To_Marshaller (Realize_Cb'Access),
          After => True);
       Return_Callback.Connect
-        (View, Signal_Focus_In_Event,
+        (View,
+         Signal_Focus_In_Event,
          Marsh => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, Signal_Focus_Out_Event,
+        (View,
+         Signal_Focus_Out_Event,
          Marsh => Return_Callback.To_Marshaller (Focus_Out_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, Signal_Button_Press_Event,
+        (View,
+         Signal_Button_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, Signal_Button_Release_Event,
-         Marsh => Return_Callback.To_Marshaller
-           (Button_Release_Event_Cb'Access),
+        (View,
+         Signal_Button_Release_Event,
+         Marsh =>
+           Return_Callback.To_Marshaller (Button_Release_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, Signal_Key_Press_Event,
+        (View,
+         Signal_Key_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
 
       Return_Callback.Connect
-        (View, Signal_Scroll_Event,
+        (View,
+         Signal_Scroll_Event,
          Marsh => Return_Callback.To_Marshaller (Scroll_Event_Cb'Access),
          After => False);
 
       Widget_Callback.Connect
-        (View, Signal_Paste_Clipboard,
+        (View,
+         Signal_Paste_Clipboard,
          Widget_Callback.To_Marshaller (Paste_Clipboard_Before'Access),
          After => False);
 
       View.Source_Buffer_Handlers :=
         (Source_Buffer_Callback.Connect
-           (Buffer, Signal_Cursor_Position_Changed,
+           (Buffer,
+            Signal_Cursor_Position_Changed,
             Cb        => Cursor_Position_Changed'Access,
             User_Data => Source_View (View),
             After     => True),
 
          Source_Buffer_Callback.Connect
-           (Buffer, Signal_Side_Column_Changed,
+           (Buffer,
+            Signal_Side_Column_Changed,
             Cb        => Side_Columns_Change_Handler'Access,
             User_Data => Source_View (View),
             After     => True),
 
          Source_Buffer_Callback.Connect
-           (Buffer, Signal_Side_Column_Configuration_Changed,
+           (Buffer,
+            Signal_Side_Column_Configuration_Changed,
             Cb        => Side_Columns_Config_Change_Handler'Access,
             User_Data => Source_View (View),
             After     => True),
 
          Source_Buffer_Callback.Connect
-           (Buffer, Signal_Buffer_Information_Changed,
+           (Buffer,
+            Signal_Buffer_Information_Changed,
             Cb        => Buffer_Information_Change_Handler'Access,
             User_Data => Source_View (View),
             After     => True),
 
          Source_Buffer_Callback.Connect
-           (Buffer, Signal_Line_Highlights_Changed,
+           (Buffer,
+            Signal_Line_Highlights_Changed,
             Cb        => Line_Highlight_Change_Handler'Access,
             User_Data => Source_View (View),
             After     => True));
@@ -1654,15 +1687,14 @@ package body Src_Editor_View is
       end if;
 
       Hook :=
-        new On_Pref_Changed'
-          (Hook_Function with View => Source_View (View));
+        new On_Pref_Changed'(Hook_Function with View => Source_View (View));
       Hook.Execute (Kernel, null);
       Preferences_Changed_Hook.Add (Hook, Watch => View);
 
       File_Saved_Hook.Add
-         (new On_File_Saved'
-             (File_Hooks_Function with View => Source_View (View)),
-          Watch => View);
+        (new On_File_Saved'
+           (File_Hooks_Function with View => Source_View (View)),
+         Watch => View);
 
       Widget_Callback.Object_Connect
         (Get_Vadjustment (View.Scroll),
@@ -1682,9 +1714,8 @@ package body Src_Editor_View is
       --  debugger are recomputed all at once (before the editor has a size).
 
       View.Connect_Expose_Registered := True;
-      View.Connect_Expose_Id := Source_View_Idle.Idle_Add
-        (Connect_Expose'Access,
-         Source_View (View));
+      View.Connect_Expose_Id :=
+        Source_View_Idle.Idle_Add (Connect_Expose'Access, Source_View (View));
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
@@ -1700,9 +1731,8 @@ package body Src_Editor_View is
    -- Recompute_Font_Size --
    -------------------------
 
-   procedure Recompute_Font_Size (Source : Source_View)
-   is
-      Layout : Pango_Layout;
+   procedure Recompute_Font_Size (Source : Source_View) is
+      Layout                 : Pango_Layout;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
    begin
       Layout := Create_Pango_Layout (Source);
@@ -1718,8 +1748,7 @@ package body Src_Editor_View is
    -- Compute_Pango_Tabs --
    ------------------------
 
-   procedure Compute_Pango_Tabs (View : access Source_View_Record'Class)
-   is
+   procedure Compute_Pango_Tabs (View : access Source_View_Record'Class) is
       P            : Pango.Tabs.Pango_Tab_Array;
       Lang         : constant Language_Access :=
         Source_Buffer (Get_Buffer (View)).Get_Language;
@@ -1739,9 +1768,10 @@ package body Src_Editor_View is
       --  set_tab takes a size in pixel: compute it using the size of the
       --  characters (assuming the font is monospace)
       Pango.Tabs.Set_Tab
-        (P, 0, Pango.Tabs.Pango_Tab_Left,
-         ((View.Width_Of_256_Chars / 256) + 1)
-         * Gint (Indent_Level));
+        (P,
+         0,
+         Pango.Tabs.Pango_Tab_Left,
+         ((View.Width_Of_256_Chars / 256) + 1) * Gint (Indent_Level));
       View.Set_Tabs (P);
    end Compute_Pango_Tabs;
 
@@ -1792,7 +1822,8 @@ package body Src_Editor_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -1803,9 +1834,7 @@ package body Src_Editor_View is
    begin
       --  Recompute the width of one character
 
-      if Pref = null
-        or else Pref = Preference (Default_Style)
-      then
+      if Pref = null or else Pref = Preference (Default_Style) then
          Recompute_Font_Size (Source);
 
          --  Modify the text background, color and font
@@ -1847,7 +1876,8 @@ package body Src_Editor_View is
       Source.Compute_Pango_Tabs;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Execute;
 
    --------------------------
@@ -1858,8 +1888,8 @@ package body Src_Editor_View is
      (Self   : not null access Source_View_Record'Class;
       Forced : Gdk.RGBA.Gdk_RGBA := Null_RGBA)
    is
-      Color : constant Gdk_RGBA := Default_Style.Get_Pref_Bg;
-      C     : Cairo_Color := Color;
+      Color        : constant Gdk_RGBA := Default_Style.Get_Pref_Bg;
+      C            : Cairo_Color := Color;
       Select_Color : Gdk_RGBA;
    begin
       if Self.Get_Editable then
@@ -1877,9 +1907,7 @@ package body Src_Editor_View is
 
       Self.Background_Color := C;
 
-      if not Self.Get_Editable
-        and then Alter_Bg_For_RO_Files.Get_Pref
-      then
+      if not Self.Get_Editable and then Alter_Bg_For_RO_Files.Get_Pref then
          C := Shade_Or_Lighten (C, Amount => 0.1);
       end if;
 
@@ -1889,8 +1917,7 @@ package body Src_Editor_View is
       Get_Style_Context (Self).Get_Background_Color
         (Gtk_State_Flag_Selected, Select_Color);
       Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
-      Self.Override_Background_Color
-         (Gtk_State_Flag_Selected, Select_Color);
+      Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
 
       Invalidate_Window (Self);
    end Set_Background_Color;
@@ -1899,7 +1926,8 @@ package body Src_Editor_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1909,14 +1937,11 @@ package body Src_Editor_View is
       Invalidate_Window (Self.View);
    end Execute;
 
-   function Execute_Scrolling_Command
-     (View : Source_View) return Boolean;
+   function Execute_Scrolling_Command (View : Source_View) return Boolean;
 
-   function Execute_Scrolling_Command
-     (View : Source_View) return Boolean
-   is
+   function Execute_Scrolling_Command (View : Source_View) return Boolean is
       function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean
-        with Inline => True;
+      with Inline => True;
       --  Check if given adjustment fits whole view
 
       ---------
@@ -1941,33 +1966,39 @@ package body Src_Editor_View is
       end if;
 
       if View.Scroll_Command.To_Cursor = False then
-         Set_Value
-           (Get_Vadjustment (View.Scroll),
-            View.Scroll_Command.Value);
+         Set_Value (Get_Vadjustment (View.Scroll), View.Scroll_Command.Value);
       else
          case View.Scroll_Command.Centering is
-         when Minimal =>
-            --  Perform minimal scrolling
-            Scroll_To_Mark
-              (View, View.Saved_Cursor_Mark, Use_Align => False,
-               Within_Margin                           => 0.0,
-               Xalign                                  => 0.5,
-               Yalign                                  => 0.5);
-         when Center =>
-            --  Place the cursor in the exact center of the screen
-            Scroll_To_Mark
-              (View, View.Saved_Cursor_Mark, Use_Align => True,
-               Within_Margin                           => 0.0,
-               Xalign                                  => 0.5,
-               Yalign                                  => 0.5);
-         when With_Margin =>
-            --  Perform minimal scrolling to place the cursor on the screen,
-            --  with a margin to see context above and below the cursor.
-            Scroll_To_Mark
-              (View, View.Saved_Cursor_Mark, Use_Align => False,
-               Within_Margin                           => 0.1,
-               Xalign                                  => 0.5,
-               Yalign                                  => 0.5);
+            when Minimal     =>
+               --  Perform minimal scrolling
+               Scroll_To_Mark
+                 (View,
+                  View.Saved_Cursor_Mark,
+                  Use_Align     => False,
+                  Within_Margin => 0.0,
+                  Xalign        => 0.5,
+                  Yalign        => 0.5);
+
+            when Center      =>
+               --  Place the cursor in the exact center of the screen
+               Scroll_To_Mark
+                 (View,
+                  View.Saved_Cursor_Mark,
+                  Use_Align     => True,
+                  Within_Margin => 0.0,
+                  Xalign        => 0.5,
+                  Yalign        => 0.5);
+
+            when With_Margin =>
+               --  Perform minimal scrolling to place the cursor on the screen,
+               --  with a margin to see context above and below the cursor.
+               Scroll_To_Mark
+                 (View,
+                  View.Saved_Cursor_Mark,
+                  Use_Align     => False,
+                  Within_Margin => 0.1,
+                  Xalign        => 0.5,
+                  Yalign        => 0.5);
          end case;
       end if;
 
@@ -1992,9 +2023,8 @@ package body Src_Editor_View is
    is
       use Glib.Main;
    begin
-      View.Scroll_Command := Scrolling_Command_Type'
-        (To_Cursor => True,
-         Centering => Centering);
+      View.Scroll_Command :=
+        Scrolling_Command_Type'(To_Cursor => True, Centering => Centering);
 
       if Synchronous then
          declare
@@ -2009,8 +2039,9 @@ package body Src_Editor_View is
             Glib.Main.Remove (View.Scroll_Timeout);
          end if;
 
-         View.Scroll_Timeout := Source_View_Timeout.Idle_Add
-           (Execute_Scrolling_Command'Access, Source_View (View));
+         View.Scroll_Timeout :=
+           Source_View_Timeout.Idle_Add
+             (Execute_Scrolling_Command'Access, Source_View (View));
       end if;
    end Scroll_To_Cursor_Location;
 
@@ -2022,10 +2053,12 @@ package body Src_Editor_View is
       Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
    begin
       Scroll_To_Mark
-        (View, Insert_Mark, Use_Align => False,
-         Within_Margin                => 0.1,
-         Xalign                       => 0.5,
-         Yalign                       => 0.5);
+        (View,
+         Insert_Mark,
+         Use_Align     => False,
+         Within_Margin => 0.1,
+         Xalign        => 0.5,
+         Yalign        => 0.5);
    end Center_Cursor;
 
    -------------------------
@@ -2069,13 +2102,16 @@ package body Src_Editor_View is
 
    begin
       Window_To_Buffer_Coords
-        (View, Text_Window_Text,
-         Window_X => X, Window_Y => Y,
-         Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
+        (View,
+         Text_Window_Text,
+         Window_X => X,
+         Window_Y => Y,
+         Buffer_X => Buffer_X,
+         Buffer_Y => Buffer_Y);
 
       Dummy := Get_Iter_At_Location (View, Iter'Access, Buffer_X, Buffer_Y);
 
-      Line   := Get_Line (Iter);
+      Line := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
 
       --  Get_Iter_At_Location does not behave quite exactly like I wished it
@@ -2100,7 +2136,8 @@ package body Src_Editor_View is
          Out_Of_Bounds := False;
       else
          Get_Iter_Location (View, Iter, Iter_Location);
-         Out_Of_Bounds := Buffer_X > Iter_Location.X + Iter_Location.Width
+         Out_Of_Bounds :=
+           Buffer_X > Iter_Location.X + Iter_Location.Width
            or else Buffer_Y > Iter_Location.Y + Iter_Location.Height;
       end if;
    end Window_To_Buffer_Coords;
@@ -2134,10 +2171,10 @@ package body Src_Editor_View is
       Root_X : out Gint;
       Root_Y : out Gint)
    is
-      Buffer    : constant Source_Buffer := Source_Buffer (View.Get_Buffer);
-      Iter      : Gtk_Text_Iter;
-      Location  : Gdk_Rectangle;
-      Area      : Gdk_Rectangle;
+      Buffer   : constant Source_Buffer := Source_Buffer (View.Get_Buffer);
+      Iter     : Gtk_Text_Iter;
+      Location : Gdk_Rectangle;
+      Area     : Gdk_Rectangle;
    begin
       Src_Editor_Buffer.Text_Handling.Get_Iter
         (Buffer => Buffer,
@@ -2152,20 +2189,12 @@ package body Src_Editor_View is
          return;
       end if;
 
-      View.Get_Iter_Location  (Iter, Location);
+      View.Get_Iter_Location (Iter, Location);
       View.Buffer_To_Window_Coords
-        (Text_Window_Text,
-         Location.X,
-         Location.Y,
-         Area.X,
-         Area.Y);
+        (Text_Window_Text, Location.X, Location.Y, Area.X, Area.Y);
 
       Gdk.Window.Get_Root_Coords
-        (View.Get_Window,
-         Area.X,
-         Area.Y,
-         Root_X,
-         Root_Y);
+        (View.Get_Window, Area.X, Area.Y, Root_X, Root_Y);
    end Get_Root_Coords_For_Location;
 
    -------------------------------------
@@ -2173,8 +2202,8 @@ package body Src_Editor_View is
    -------------------------------------
 
    function Speed_Bar_Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       View             : constant Source_View := Source_View (Widget);
       Dummy_X, Dummy_Y : Gint;
@@ -2182,7 +2211,7 @@ package body Src_Editor_View is
       Button_Y         : Gint;
       Lower, Upper     : Gdouble;
       Adj              : Gtk_Adjustment;
-      X, Y         : Gdouble;
+      X, Y             : Gdouble;
 
       procedure Handle_Press_On_Side_Info;
       --  Handle a click on the "side info" area
@@ -2211,9 +2240,12 @@ package body Src_Editor_View is
          --  Find the line number
 
          Window_To_Buffer_Coords
-           (View, Text_Window_Text,
-            Window_X => Button_X, Window_Y => Button_Y,
-            Buffer_X => X, Buffer_Y => Y);
+           (View,
+            Text_Window_Text,
+            Window_X => Button_X,
+            Window_Y => Button_Y,
+            Buffer_X => X,
+            Buffer_Y => Y);
 
          Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
          Line := Buffer_Line_Type (Get_Line (Iter) + 1);
@@ -2259,15 +2291,14 @@ package body Src_Editor_View is
          end if;
 
          View.Scroll_Command := Scroll_Command;
-         View.Scroll_Timeout := Source_View_Timeout.Timeout_Add
-           (10, Execute_Scrolling_Command'Access, View);
+         View.Scroll_Timeout :=
+           Source_View_Timeout.Timeout_Add
+             (10, Execute_Scrolling_Command'Access, View);
       end Handle_Press_On_Speed_Bar;
 
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
-      if View.Scrolling
-        or else View.Area = null
-      then
+      if View.Scrolling or else View.Area = null then
          return False;
       end if;
 
@@ -2282,9 +2313,7 @@ package body Src_Editor_View is
 
          Handle_Press_On_Speed_Bar;
 
-      elsif Event_Type = Button_Release
-        and then Get_Button (Event) = 1
-      then
+      elsif Event_Type = Button_Release and then Get_Button (Event) = 1 then
          --  This is a click on the side info area
 
          Handle_Press_On_Side_Info;
@@ -2303,8 +2332,8 @@ package body Src_Editor_View is
    ---------------------------------------
 
    function Speed_Bar_Button_Release_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean is
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean is
    begin
       return Speed_Bar_Button_Press_Event_Cb (Widget, Event);
 
@@ -2319,10 +2348,10 @@ package body Src_Editor_View is
    -----------------------------
 
    function Button_Release_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      View        : constant Source_View := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
 
    begin
       if Get_Event_Type (Event) = Button_Release
@@ -2347,12 +2376,13 @@ package body Src_Editor_View is
    ---------------------------
 
    function Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      View   : constant Source_View := Source_View (Widget);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Result : Boolean;
+      View         : constant Source_View := Source_View (Widget);
+      Buffer       : constant Source_Buffer :=
+        Source_Buffer (Get_Buffer (View));
+      Result       : Boolean;
       Focus_Widget : Gtk_Widget;
       pragma Unreferenced (Result);
    begin
@@ -2370,10 +2400,9 @@ package body Src_Editor_View is
       View.Cursor_Set_Explicitely := False;
 
       case Get_Event_Type (Event) is
-         when Button_Press =>
+         when Button_Press      =>
             if Get_Button (Event) = 1 then
-               if
-                 (Get_State (Event) and Shift_Mask) /= 0
+               if (Get_State (Event) and Shift_Mask) /= 0
                  and then (Get_State (Event) and Mod1_Mask) /= 0
                then
                   declare
@@ -2382,8 +2411,12 @@ package body Src_Editor_View is
 
                   begin
                      Window_To_Buffer_Coords
-                       (View, Text_Window_Text,
-                        Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
+                       (View,
+                        Text_Window_Text,
+                        Gint (Event.Button.X),
+                        Gint (Event.Button.Y),
+                        L,
+                        C);
 
                      if Get_Iter_At_Location (View, Iter'Access, L, C) then
                         Grab_Focus (View);
@@ -2394,10 +2427,11 @@ package body Src_Editor_View is
                   end;
                end if;
 
-               Result := Return_Callback.Emit_By_Name
-                 (Object => View.Get_Toplevel,
-                  Name   => Signal_Button_Press_Event,
-                  Param  => Event);
+               Result :=
+                 Return_Callback.Emit_By_Name
+                   (Object => View.Get_Toplevel,
+                    Name   => Signal_Button_Press_Event,
+                    Param  => Event);
 
             elsif Get_Button (Event) = 2 then
 
@@ -2423,9 +2457,9 @@ package body Src_Editor_View is
                   Copy_Clipboard (Get_Clipboard (View.Kernel), Focus_Widget);
 
                   declare
-                     L, C : Gint;
-                     X, Y : Gdouble;
-                     Iter : aliased Gtk_Text_Iter;
+                     L, C    : Gint;
+                     X, Y    : Gdouble;
+                     Iter    : aliased Gtk_Text_Iter;
                      Ignored : Boolean;
 
                   begin
@@ -2458,16 +2492,17 @@ package body Src_Editor_View is
          when Gdk_2button_Press =>
             if Get_Button (Event) = 1 then
                View.Double_Click := True;
-               --  ??? This is a tweak necessary to implement the feature
-               --  "select an entire word containing '_' when double-clicking".
-               --  See corresponding code in Button_Release_Event_Cb.
-               --  Might be worth investigating whether it could be implemented
-               --  at the gtk+ level (the proper fix would be to change the
-               --  Pango word break algorithms probably in break.c ?) and to
-               --  redefine the "is_word_break" behaviour of the underscore.
+            --  ??? This is a tweak necessary to implement the feature
+            --  "select an entire word containing '_' when double-clicking".
+            --  See corresponding code in Button_Release_Event_Cb.
+            --  Might be worth investigating whether it could be implemented
+            --  at the gtk+ level (the proper fix would be to change the
+            --  Pango word break algorithms probably in break.c ?) and to
+            --  redefine the "is_word_break" behaviour of the underscore.
+
             end if;
 
-         when others =>
+         when others            =>
             null;
       end case;
 
@@ -2479,17 +2514,16 @@ package body Src_Editor_View is
    ------------------------
 
    function Key_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      View        : constant Source_View   := Source_View (Widget);
-      Buffer      : constant Source_Buffer :=
-                      Source_Buffer (Get_Buffer (View));
-      Ignore      : Boolean;
+      View   : constant Source_View := Source_View (Widget);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Ignore : Boolean;
       pragma Unreferenced (Ignore);
 
-      Key         : Gdk_Key_Type;
-      Graph_Key   : Boolean := False;
+      Key       : Gdk_Key_Type;
+      Graph_Key : Boolean := False;
       --  Whether we are pressing a graphical key
 
    begin
@@ -2516,11 +2550,13 @@ package body Src_Editor_View is
         and then (Get_State (Event) and Control_Mask) = 0
       then
          case Key is
-            when GDK_BackSpace .. GDK_Return | GDK_Delete |
-                 GDK_KP_Tab .. GDK_KP_Enter | GDK_KP_Delete =>
+            when GDK_BackSpace .. GDK_Return
+               | GDK_Delete
+               | GDK_KP_Tab .. GDK_KP_Enter
+               | GDK_KP_Delete =>
                return True;
 
-            when others =>
+            when others        =>
                if Event.Key.String /= Null_Ptr then
                   declare
                      Str : constant String := Value (Event.Key.String);
@@ -2542,7 +2578,7 @@ package body Src_Editor_View is
       --  Special case for cancelling selection
 
       case Key is
-         when GDK_Return =>
+         when GDK_Return    =>
             Clear_Typed_Chars (Buffer);
 
             --  If we are in a smart completion, let the Return character be
@@ -2560,9 +2596,17 @@ package body Src_Editor_View is
             Scroll_To_Cursor_Location (View);
             return True;
 
-         when GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up | GDK_Page_Down |
-              GDK_End | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right
-            =>
+         when GDK_Linefeed
+            | GDK_Tab
+            | GDK_Home
+            | GDK_Page_Up
+            | GDK_Page_Down
+            | GDK_End
+            | GDK_Begin
+            | GDK_Up
+            | GDK_Down
+            | GDK_Left
+            | GDK_Right     =>
             Clear_Typed_Chars (Buffer);
             External_End_Action (Buffer);
             Graph_Key := True;
@@ -2589,7 +2633,7 @@ package body Src_Editor_View is
                end;
             end if;
 
-         when GDK_space =>
+         when GDK_space     =>
             --  ??? We need to make a special case here because the call to
             --  Get_String (see "when => others" below) is not reliable. In
             --  particular when using PyGTK to simulate a key press event
@@ -2607,7 +2651,7 @@ package body Src_Editor_View is
 
             Graph_Key := True;
 
-         when others =>
+         when others        =>
             declare
                use type VSS.Characters.Virtual_Character;
 
@@ -2653,8 +2697,8 @@ package body Src_Editor_View is
    ---------------------
 
    function Scroll_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       View      : constant Source_View := Source_View (Widget);
       Direction : Gdk_Scroll_Direction;
@@ -2664,28 +2708,27 @@ package body Src_Editor_View is
       --  when the user scrolls while pressing the primary key
       --  (e.g: Ctrl on Linux, Cmd on Mac)
 
-      if (Get_State (Event) and Gtk.Accel_Group.Get_Default_Mod_Mask) =
-        View.Get_Modifier_Mask (Primary_Accelerator)
+      if (Get_State (Event) and Gtk.Accel_Group.Get_Default_Mod_Mask)
+        = View.Get_Modifier_Mask (Primary_Accelerator)
       then
          Get_Scroll_Direction (Event, Direction);
 
          --  Attention: with the current version of GTK Direction is
          --  always equal to Scroll_Down so need to manually check the
          --  Deltas.
-         if Direction = Scroll_Up
-           or else Direction = Scroll_Down
-         then
+         if Direction = Scroll_Up or else Direction = Scroll_Down then
             declare
-               Delta_X   : Gdouble;
-               Delta_Y   : Gdouble;
+               Delta_X : Gdouble;
+               Delta_Y : Gdouble;
             begin
                Get_Scroll_Deltas (Event, Delta_X, Delta_Y);
                if Delta_Y /= Gdouble (0) then
-                  Dummy := GPS.Kernel.Actions.Execute_Action
-                    (View.Kernel,
-                     (if Delta_Y < Gdouble (0)
-                      then "increase text size"
-                      else "decrease text size"));
+                  Dummy :=
+                    GPS.Kernel.Actions.Execute_Action
+                      (View.Kernel,
+                       (if Delta_Y < Gdouble (0)
+                        then "increase text size"
+                        else "decrease text size"));
                   return True;
                else
                   return False;
@@ -2709,15 +2752,13 @@ package body Src_Editor_View is
    --------------------
 
    procedure Redraw_Columns
-     (View : access Source_View_Record'Class;
-      Cr   : Cairo_Context)
+     (View : access Source_View_Record'Class; Cr : Cairo_Context)
    is
-      Layout      : Pango_Layout;
-      Src_Buffer  : constant Source_Buffer :=
-                      Source_Buffer (Get_Buffer (View));
-      Some_Lines  : constant Boolean :=
-                      Display_Line_Numbers.Get_Pref = Preferences.Some_Lines;
-      Num_Color   : Gdk_RGBA;
+      Layout     : Pango_Layout;
+      Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Some_Lines : constant Boolean :=
+        Display_Line_Numbers.Get_Pref = Preferences.Some_Lines;
+      Num_Color  : Gdk_RGBA;
 
       Prev_Side_Info_Width : constant Gint := View.Side_Info_Width;
    begin
@@ -2790,8 +2831,8 @@ package body Src_Editor_View is
 
       Height, Width, Offset : Gint;
 
-      Window : Gdk_Window;
-      A      : Gtk_Allocation;
+      Window      : Gdk_Window;
+      A           : Gtk_Allocation;
       Src_Buffer  : Source_Buffer;
       Total_Lines : Gint;
    begin
@@ -2807,14 +2848,12 @@ package body Src_Editor_View is
       View.Scroll.Get_Vscrollbar.Get_Allocation (A);
 
       Height := A.Height - 2 * View.Scrollbar_Stepper_Size;
-      Width  := A.Width;
+      Width := A.Width;
       Offset := View.Scrollbar_Stepper_Size;
 
       View.Speed_Column_Buffer :=
         Create_Similar_Surface
-          (Window, Cairo_Content_Color_Alpha,
-           A.Width,
-           A.Height);
+          (Window, Cairo_Content_Color_Alpha, A.Width, A.Height);
 
       Buffer_Context := Create (View.Speed_Column_Buffer);
 
@@ -2830,14 +2869,15 @@ package body Src_Editor_View is
       Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
 
       for J in 1 .. Total_Lines loop
-         Color := Src_Buffer.Get_Highlighter.Get_Highlight_Color
-           (Buffer_Line_Type (J),
-            Context => Highlight_Speedbar);
+         Color :=
+           Src_Buffer.Get_Highlighter.Get_Highlight_Color
+             (Buffer_Line_Type (J), Context => Highlight_Speedbar);
 
          if Color /= Null_RGBA then
             Set_Source_Color (Buffer_Context, Color);
             Draw_Line
-              (Buffer_Context, Color,
+              (Buffer_Context,
+               Color,
                0,
                (Height * J) / Total_Lines + Offset,
                Width,
@@ -2853,8 +2893,7 @@ package body Src_Editor_View is
    -----------------------------
 
    procedure Set_Synchronized_Editor
-     (View  : access Source_View_Record;
-      Other : Source_View) is
+     (View : access Source_View_Record; Other : Source_View) is
    begin
       if View.Synchronized_Editor /= null then
          Remove_Synchronization (View);
@@ -2867,8 +2906,7 @@ package body Src_Editor_View is
    -- Remove_Synchronization --
    ----------------------------
 
-   procedure Remove_Synchronization
-     (View : access Source_View_Record'Class) is
+   procedure Remove_Synchronization (View : access Source_View_Record'Class) is
    begin
       if View.Scrolling then
          return;
@@ -2923,8 +2961,8 @@ package body Src_Editor_View is
    ---------------
 
    procedure Set_Child
-     (View  : access Source_View_Record;
-      Child : GPS.Kernel.MDI.GPS_MDI_Child) is
+     (View : access Source_View_Record; Child : GPS.Kernel.MDI.GPS_MDI_Child)
+   is
    begin
       View.Child := Child;
    end Set_Child;
@@ -2934,8 +2972,7 @@ package body Src_Editor_View is
    ---------------
 
    function Get_Child
-     (View  : access Source_View_Record)
-      return GPS.Kernel.MDI.GPS_MDI_Child is
+     (View : access Source_View_Record) return GPS.Kernel.MDI.GPS_MDI_Child is
    begin
       return View.Child;
    end Get_Child;
@@ -2944,8 +2981,7 @@ package body Src_Editor_View is
    -- Start_Completion --
    ----------------------
 
-   procedure Start_Completion
-     (View : access Source_View_Record'Class) is
+   procedure Start_Completion (View : access Source_View_Record'Class) is
    begin
       Set_In_Completion (Source_Buffer (Get_Buffer (View)), True);
    end Start_Completion;
@@ -2978,8 +3014,7 @@ package body Src_Editor_View is
    ------------------------------
 
    function Position_Set_Explicitely
-     (Self   : access Source_View_Record;
-      Reset  : Boolean) return Boolean
+     (Self : access Source_View_Record; Reset : Boolean) return Boolean
    is
       Set : constant Boolean := Self.Cursor_Set_Explicitely;
    begin
@@ -3008,8 +3043,7 @@ package body Src_Editor_View is
 
    function Get_Project
      (Self : not null access Source_View_Record'Class)
-      return GNATCOLL.Projects.Project_Type
-   is
+      return GNATCOLL.Projects.Project_Type is
    begin
       return Self.Kernel.Registry.Tree.Project_From_Path (Self.Project_Path);
    end Get_Project;
@@ -3029,8 +3063,8 @@ package body Src_Editor_View is
          declare
             F_Info : constant File_Info'Class :=
               File_Info'Class
-                (Get_Registry (Self.Kernel).Tree.Info_Set
-                 (Buffer.Get_Filename).First_Element);
+                (Get_Registry (Self.Kernel).Tree.Info_Set (Buffer.Get_Filename)
+                   .First_Element);
          begin
             Self.Project_Path := F_Info.Project.Project_Path;
          end;
@@ -3086,8 +3120,9 @@ package body Src_Editor_View is
    begin
       if Location = Location_Event
         and then
-        (Event = null
-         or else Get_Event_Type (Event) not in Button_Press .. Button_Release)
+          (Event = null
+           or else
+             Get_Event_Type (Event) not in Button_Press .. Button_Release)
       then
          Loc := Location_Cursor;
       end if;
@@ -3098,7 +3133,7 @@ package body Src_Editor_View is
       --  Output of this block is (Line, Column) within the editor.
 
       case Loc is
-         when Location_Event =>
+         when Location_Event  =>
             if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
                --  Click in the line numbers area
                Get_Coords (Event, Xevent, Yevent);
@@ -3137,14 +3172,14 @@ package body Src_Editor_View is
 
          when Location_Cursor =>
             Get_Iter_At_Mark (B, Start_Iter, Get_Insert (B));
-            Line   := Get_Line (Start_Iter);
+            Line := Get_Line (Start_Iter);
             Column := Get_Line_Offset (Start_Iter);
             Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
             Get_Iter_Position (B, Start_Iter, EL, Col);
 
-         when Location_Mouse =>
-            Get_Pointer (Get_Window (V, Text_Window_Text),
-                         Mouse_X, Mouse_Y, Mask, Win);
+         when Location_Mouse  =>
+            Get_Pointer
+              (Get_Window (V, Text_Window_Text), Mouse_X, Mouse_Y, Mask, Win);
             Window_To_Buffer_Coords
               (V, Mouse_X, Mouse_Y, Line, Column, Out_Of_Bounds);
             Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
@@ -3201,15 +3236,18 @@ package body Src_Editor_View is
         and then Get_Offset (Start_Iter) <= Get_Offset (Entity_Start)
         and then Get_Offset (Entity_Start) <= Get_Offset (End_Iter);
 
-      Str := Get_String_At_Line
-        (B,
-         Get_Editable_Line
-           (B, Buffer_Line_Type (Get_Line (Entity_Start)) + 1));
+      Str :=
+        Get_String_At_Line
+          (B,
+           Get_Editable_Line
+             (B, Buffer_Line_Type (Get_Line (Entity_Start)) + 1));
 
       Search_Entity_Bounds
-        (Entity_Start, Entity_End,
-         Maybe_File => Str.Contents /= null
-         and then Has_Include_Directive (Str.Contents (1 .. Str.Last)));
+        (Entity_Start,
+         Entity_End,
+         Maybe_File =>
+           Str.Contents /= null
+           and then Has_Include_Directive (Str.Contents (1 .. Str.Last)));
       Selection_Is_Single_Entity :=
         Has_Selection
         and then Equal (Entity_Start, Start_Iter)
@@ -3219,14 +3257,13 @@ package body Src_Editor_View is
       --  context. However, if the selection is a single entity, we should
       --  create a context such that cross-references menus also appear.
 
-      if not Selection_Is_Single_Entity
-        and then Click_In_Selection
-      then
+      if not Selection_Is_Single_Entity and then Click_In_Selection then
          Start_Line := Integer (EL);
 
-         End_Line   := Integer
-           (Get_Editable_Line
-              (B, Buffer_Line_Type (Get_Line (End_Iter) + 1)));
+         End_Line :=
+           Integer
+             (Get_Editable_Line
+                (B, Buffer_Line_Type (Get_Line (End_Iter) + 1)));
 
          --  Do not consider the last line selected if only the first
          --  character is selected.
@@ -3259,7 +3296,10 @@ package body Src_Editor_View is
          Set_Area_Information
            (Context,
             Get_Text (Start_Iter, End_Iter),
-            Start_Line, End_Line, Start_Iter, End_Iter);
+            Start_Line,
+            End_Line,
+            Start_Iter,
+            End_Iter);
 
          Free (Str);
          return Context;
@@ -3308,9 +3348,9 @@ package body Src_Editor_View is
                else
                   Set_Entity_Information
                     (Context,
-                     Entity_Name   => Name,
-                     Entity_Line   => The_Line,
-                     Entity_Column => Expand_Tabs (B, The_Line, The_Column),
+                     Entity_Name     => Name,
+                     Entity_Line     => The_Line,
+                     Entity_Column   => Expand_Tabs (B, The_Line, The_Column),
                      From_Expression =>
                        Parse_Reference_Backwards
                          (Get_Language (B),
@@ -3330,9 +3370,7 @@ package body Src_Editor_View is
 
       Free (Str);
 
-      if Event /= null
-        and then not Click_In_Selection
-      then
+      if Event /= null and then not Click_In_Selection then
          --  Move the cursor at the correct location. The cursor is
          --  grabbed automatically by the kernel when displaying the
          --  menu, and this would result in unwanted scrolling

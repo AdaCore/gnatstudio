@@ -24,7 +24,7 @@ with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Separator;       use Gtk.Separator;
 
-with GPS.Intl;            use GPS.Intl;
+with GPS.Intl; use GPS.Intl;
 
 package body Memory_View_Pkg is
 
@@ -164,8 +164,7 @@ package body Memory_View_Pkg is
       --  Scrolled window containing the memory
 
       Gtk_New (Scrolled);
-      Set_Policy
-        (Scrolled, Policy_Automatic, Policy_Automatic);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (Memory_View, Scrolled, True, True, 0);
 
       --  Memory view

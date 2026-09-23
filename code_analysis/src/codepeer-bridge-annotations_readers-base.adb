@@ -30,9 +30,9 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
-     (Self  : in out Annotations_Reader_Base;
-      Name  : String) is
+   overriding
+   procedure End_Element (Self : in out Annotations_Reader_Base; Name : String)
+   is
    begin
       null;
    end End_Element;
@@ -57,7 +57,7 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
       File       : not null Code_Analysis.File_Access) is
    begin
       Self.Categories := Categories;
-      Self.File       := File;
+      Self.File := File;
    end Initialize;
 
    ----------------------
@@ -76,8 +76,7 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
    begin
       if not Subprogram.Annotations.Contains (Annotation_Category) then
          Subprogram.Annotations.Insert
-           (Annotation_Category,
-            new CodePeer.Annotation_Vectors.Vector);
+           (Annotation_Category, new CodePeer.Annotation_Vectors.Vector);
       end if;
 
       Subprogram.Annotations.Element (Annotation_Category).Append
@@ -90,11 +89,11 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Annotations_Reader_Base;
       Name  : String;
-      Attrs : Sax.Attributes.Attributes'Class)
-   is
+      Attrs : Sax.Attributes.Attributes'Class) is
    begin
       if Name = File_Element then
          null;

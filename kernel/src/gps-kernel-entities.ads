@@ -21,7 +21,8 @@
 
 with GNATCOLL.Scripts;
 with Xref;
-with Commands.Interactive;          use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 
 package GPS.Kernel.Entities is
 
@@ -31,13 +32,14 @@ package GPS.Kernel.Entities is
       Writes_Only     : Boolean := False;
       Reads_Only      : Boolean := False;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_All_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Find_Specific_Refs_Command
-   is new Interactive_Command with null record;
-   overriding function Execute
+   type Find_Specific_Refs_Command is new Interactive_Command with null record;
+   overriding
+   function Execute
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -61,7 +63,7 @@ package GPS.Kernel.Entities is
    --  Temporary, until LSP is not activated
 
    procedure Register_Module
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register contextual menu and commands
 
 end GPS.Kernel.Entities;

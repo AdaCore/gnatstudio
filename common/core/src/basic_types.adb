@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;            use GNAT.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Basic_Types is
@@ -47,11 +47,13 @@ package body Basic_Types is
          begin
             for A in L1'Range loop
                for B in L2'Range loop
-                  if L2 (B) /= null and then
-                    ((Case_Sensitive and then L1 (A).all = L2 (B).all)
-                     or else
-                     (not Case_Sensitive
-                      and then To_Lower (L1 (A).all) = To_Lower (L2 (B).all)))
+                  if L2 (B) /= null
+                    and then
+                      ((Case_Sensitive and then L1 (A).all = L2 (B).all)
+                       or else
+                         (not Case_Sensitive
+                          and then
+                            To_Lower (L1 (A).all) = To_Lower (L2 (B).all)))
                   then
                      L1 (A) := null;
                      L2 (B) := null;
@@ -60,8 +62,7 @@ package body Basic_Types is
                end loop;
             end loop;
 
-            return L1 = (L1'Range => null)
-              and then L2 = (L2'Range => null);
+            return L1 = (L1'Range => null) and then L2 = (L2'Range => null);
          end;
       end if;
    end Is_Equal;

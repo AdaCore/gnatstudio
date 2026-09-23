@@ -24,8 +24,7 @@ package body DAP.Clients.Cancel is
    ------------
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return Cancel_Request_Access
+     (Kernel : not null Kernel_Handle) return Cancel_Request_Access
    is
       Self : constant Cancel_Request_Access := new Cancel_Request (Kernel);
    begin
@@ -36,7 +35,8 @@ package body DAP.Clients.Cancel is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Cancel_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.CancelResponse;

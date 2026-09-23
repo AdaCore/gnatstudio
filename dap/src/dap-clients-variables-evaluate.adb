@@ -28,8 +28,9 @@ package body DAP.Clients.Variables.Evaluate is
      (Client : not null access DAP.Clients.DAP_Client'Class;
       Params : Request_Parameters)
    is
-      Req : Evaluate_Request_Access := new Evaluate_Request
-        (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
+      Req : Evaluate_Request_Access :=
+        new Evaluate_Request
+              (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       Req.Params := Params;
       Req.Parameters.arguments.expression := Params.Item.Info.Get_Name;
@@ -45,7 +46,8 @@ package body DAP.Clients.Variables.Evaluate is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Evaluate_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
@@ -60,13 +62,13 @@ package body DAP.Clients.Variables.Evaluate is
          if Self.Params.Kind /= Python_API then
             --  Add the variable to the internal storage if the request is not
             --  from the Python API
-            Variable.Data.a_type           := Result.a_body.a_type;
-            Variable.Data.name             := Self.Params.Item.Info.Get_Name;
+            Variable.Data.a_type := Result.a_body.a_type;
+            Variable.Data.name := Self.Params.Item.Info.Get_Name;
             Variable.Data.indexedVariables := Result.a_body.indexedVariables;
-            Variable.Data.memoryReference  := Result.a_body.memoryReference;
-            Variable.Data.namedVariables   := Result.a_body.namedVariables;
+            Variable.Data.memoryReference := Result.a_body.memoryReference;
+            Variable.Data.namedVariables := Result.a_body.namedVariables;
             Variable.Data.presentationHint := Result.a_body.presentationHint;
-            Variable.Data.value            := Result.a_body.result;
+            Variable.Data.value := Result.a_body.result;
 
             --  Store variable
             Holder.Scopes.Append_Child (Holder.Scopes.Root, Variable);
@@ -88,13 +90,14 @@ package body DAP.Clients.Variables.Evaluate is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Evaluate_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.Evaluate.Evaluate_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.Evaluate.Evaluate_DAP_Request (Self).On_Error_Message
+        (Client, Message);
       DAP.Views.Variables.On_Variable_Not_Found (Client, Self.Params);
    end On_Error_Message;
 
@@ -102,9 +105,10 @@ package body DAP.Clients.Variables.Evaluate is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
-     (Self    : in out Evaluate_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class) is
+   overriding
+   procedure On_Rejected
+     (Self   : in out Evaluate_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.Evaluate.Evaluate_DAP_Request (Self).On_Rejected (Client);
       Client.Variables.On_Variable_Request_Rejected (Self.Params);

@@ -21,13 +21,14 @@ package body Language.Unknown is
 
    Keywords_Regexp : aliased String := "";
 
-   Keywords_List   : aliased Pattern_Matcher := GNAT.Regpat.Never_Match;
+   Keywords_List : aliased Pattern_Matcher := GNAT.Regpat.Never_Match;
 
    --------------------
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access Unknown_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang, Str);
@@ -39,9 +40,9 @@ package body Language.Unknown is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access Unknown_Language;
-      Name : String) return String
+   overriding
+   function Dereference_Name
+     (Lang : access Unknown_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
       pragma Unreferenced (Name);
@@ -53,10 +54,10 @@ package body Language.Unknown is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access Unknown_Language;
-      Name  : String;
-      Index : String) return String
+   overriding
+   function Array_Item_Name
+     (Lang : access Unknown_Language; Name : String; Index : String)
+      return String
    is
       pragma Unreferenced (Lang);
       pragma Unreferenced (Name);
@@ -69,10 +70,10 @@ package body Language.Unknown is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access Unknown_Language;
-      Name  : String;
-      Field : String) return String
+   overriding
+   function Record_Field_Name
+     (Lang : access Unknown_Language; Name : String; Field : String)
+      return String
    is
       pragma Unreferenced (Lang);
       pragma Unreferenced (Name);
@@ -85,7 +86,8 @@ package body Language.Unknown is
    -- Keywords --
    --------------
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Unknown_Language) return Strings.String_Access
    is
       pragma Unreferenced (Lang);
@@ -93,7 +95,8 @@ package body Language.Unknown is
       return Keywords_Regexp'Access;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Unknown_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -101,7 +104,8 @@ package body Language.Unknown is
       return Keywords_List'Access;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Unknown_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -113,7 +117,8 @@ package body Language.Unknown is
    -- Is_Interpolation_Char --
    ---------------------------
 
-   overriding function Is_Interpolation_Char
+   overriding
+   function Is_Interpolation_Char
      (Lang : access Unknown_Language; Char : Wide_Wide_Character)
       return Boolean
    is
@@ -129,21 +134,22 @@ package body Language.Unknown is
    Comment_Start_Pattern : aliased Pattern_Matcher := Never_Match;
 
    Unknown_Context : aliased Language_Context :=
-     (Syntax =>
+     (Syntax              =>
         (Comment_Start                 => null,
          Comment_End                   => null,
          New_Line_Comment_Start        => null,
          New_Line_Comment_Start_Regexp => Comment_Start_Pattern'Access),
-      String_Delimiter              => ASCII.NUL,
-      Quote_Character               => ASCII.NUL,
-      Constant_Character            => ASCII.NUL,
-      Can_Indent                    => False,
-      Syntax_Highlighting           => False,
-      Case_Sensitive                => True,
-      Accurate_Xref                 => False,
-      Use_Semicolon                 => False);
+      String_Delimiter    => ASCII.NUL,
+      Quote_Character     => ASCII.NUL,
+      Constant_Character  => ASCII.NUL,
+      Can_Indent          => False,
+      Syntax_Highlighting => False,
+      Case_Sensitive      => True,
+      Accurate_Xref       => False,
+      Use_Semicolon       => False);
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Unknown_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -155,7 +161,8 @@ package body Language.Unknown is
    -- Parse_Constructs --
    ----------------------
 
-   overriding procedure Parse_Constructs
+   overriding
+   procedure Parse_Constructs
      (Lang   : access Unknown_Language;
       File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
@@ -170,7 +177,8 @@ package body Language.Unknown is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
+   overriding
+   procedure Parse_Entities
      (Lang     : access Unknown_Language;
       Buffer   : String;
       Callback : Entity_Callback)
@@ -184,9 +192,8 @@ package body Language.Unknown is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Lang : access Unknown_Language) return String
-   is
+   overriding
+   function Get_Name (Lang : access Unknown_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "Unknown";

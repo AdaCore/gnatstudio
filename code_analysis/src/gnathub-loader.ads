@@ -18,7 +18,7 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAThub.Messages;      use GNAThub.Messages;
+with GNAThub.Messages; use GNAThub.Messages;
 with GNAThub.Module;
 with GPS.Scripts.Commands;
 
@@ -74,25 +74,27 @@ package GNAThub.Loader is
    type Loader_Listener_Interface is interface;
 
    procedure On_Finish_Loading
-     (Self : not null access Loader_Listener_Interface) is abstract;
+     (Self : not null access Loader_Listener_Interface)
+   is abstract;
    --  Called when the loader has finished to load data.
 
    procedure Register_Listener
-     (Self : not null access Loader_Type'Class;
+     (Self     : not null access Loader_Type'Class;
       Listener : not null access Loader_Listener_Interface'Class);
    --  Register a listener for the given loader.
 
    procedure Unregister_Listener
-     (Self : not null access Loader_Type'Class;
+     (Self     : not null access Loader_Type'Class;
       Listener : not null access Loader_Listener_Interface'Class);
    --  Unregister the listener for the given loader.
 
 private
 
-   package Loader_Listener_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => GNAThub.Module.Loader_Listener_Access,
-      "="          => GNAThub.Module."=");
+   package Loader_Listener_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => GNAThub.Module.Loader_Listener_Access,
+        "="          => GNAThub.Module."=");
 
    type Loader_Type is abstract tagged record
       Module    : GNAThub.Module.GNAThub_Module_Id;
@@ -102,7 +104,6 @@ private
    end record;
 
    procedure Insert_Message
-     (Self    : in out Loader_Type'Class;
-      Message : GNAThub_Message_Access);
+     (Self : in out Loader_Type'Class; Message : GNAThub_Message_Access);
 
 end GNAThub.Loader;

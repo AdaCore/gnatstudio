@@ -25,45 +25,51 @@ package Language.Java is
    Java_Lang : constant Language_Access;
    --  Class constant for the Java language.
 
-   overriding function Is_Simple_Type
-     (Lang : access Java_Language;
-      Str : String) return Boolean;
+   overriding
+   function Is_Simple_Type
+     (Lang : access Java_Language; Str : String) return Boolean;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Java_Language) return Strings.String_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Java_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Java_Language) return GNAT.Strings.String_List;
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Java_Language) return Language_Context_Access;
 
-   overriding function Dereference_Name
-     (Lang : access Java_Language;
-      Name : String) return String;
+   overriding
+   function Dereference_Name
+     (Lang : access Java_Language; Name : String) return String;
 
-   overriding function Array_Item_Name
-     (Lang  : access Java_Language;
-      Name  : String;
-      Index : String) return String;
+   overriding
+   function Array_Item_Name
+     (Lang : access Java_Language; Name : String; Index : String)
+      return String;
 
-   overriding function Record_Field_Name
-     (Lang  : access Java_Language;
-      Name  : String;
-      Field : String) return String;
+   overriding
+   function Record_Field_Name
+     (Lang : access Java_Language; Name : String; Field : String)
+      return String;
 
 private
    type Java_Language is new Language_Root with null record;
 
-   overriding function Get_Name (Lang : access Java_Language) return String;
+   overriding
+   function Get_Name (Lang : access Java_Language) return String;
    --  See inherited documentation
 
-   overriding function Is_Interpolation_Char
-     (Lang : access Java_Language; Char : Wide_Wide_Character)
-      return Boolean is (False);
+   overriding
+   function Is_Interpolation_Char
+     (Lang : access Java_Language; Char : Wide_Wide_Character) return Boolean
+   is (False);
 
    Java_Lang : constant Language_Access := new Java_Language;
 end Language.Java;
