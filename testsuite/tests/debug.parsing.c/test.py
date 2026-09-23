@@ -5,6 +5,12 @@ import re
 
 mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
 
+# Recent GDB versions print the enum type on several lines in CLI mode
+ENUM_COLORS_TYPES = [
+    "enum colors {Blue = 0, Red = 1, Green = 2}",
+    "enum colors {\n    Blue = 0,\n    Red = 1,\n    Green = 2\n}",
+]
+
 
 def check_simple(
     debug, name, allowed_types, value, description, pattern=False, var=None
@@ -82,7 +88,7 @@ def test_driver():
     check_simple(
         debug,
         "main::My_Enum_Variable",
-        "enum colors {Blue, Red, Green}",
+        ENUM_COLORS_TYPES,
         "Blue",
         "Enumeration",
     )
@@ -288,7 +294,7 @@ def test_driver():
     check_simple(
         debug,
         ".field",
-        "enum colors {Blue, Red, Green}",
+        ENUM_COLORS_TYPES,
         "Blue",
         "Enumeration",
         False,
