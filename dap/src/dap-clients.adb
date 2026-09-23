@@ -2437,6 +2437,14 @@ package body DAP.Clients is
          Self.Set_Program (+Exec.Full_Name);
          Node_Args.Append ("-i=dap");
 
+         --  GDB picks its host charset from the locale and, under a non
+         --  UTF-8 one, keeps non-ASCII Ada names in their GNAT encoding
+         --  (e.g. "<W0417...>"). We always decode its output as UTF-8, so
+         --  force it before the executable's symbols get loaded. Arguments
+         --  from the debugger command come after this and may override it.
+         Node_Args.Append ("-iex");
+         Node_Args.Append ("set host-charset UTF-8");
+
          for J in Debug_Adapter_Args'First + 1 .. Debug_Adapter_Args'Last loop
             Node_Args.Append (Debug_Adapter_Args (J).all);
          end loop;
