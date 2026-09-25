@@ -52,7 +52,6 @@ with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
-with Gtkada.MDI;             use Gtkada.MDI;
 
 with VSS.Strings.Conversions;
 
@@ -169,6 +168,9 @@ package body GPS.LSP_Client.Editors.Navigation is
       Kernel       : Kernel_Handle;
       Tree_View    : Gtk_Tree_View;
       Notes_Window : Gtk_Scrolled_Window;
+
+      Pointer_Grabbed : Boolean := False;
+      --  Whether the menu owns the pointer grab, and should thus release it
    end record;
    type Entity_Proposals_Menu is access all Entity_Proposals_Menu_Record'Class;
    --  Type representing a menu that displays several entity proposals.
@@ -205,32 +207,28 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  When specified, Root_X and Root_Y are used to position the menu: the
    --  current pointer's position is used otherwise.
 
-   type On_MDI_Child_Selected is new Mdi_Child_Hooks_Function with record
-      Proposals_Menu : Entity_Proposals_Menu;
-   end record;
-   overriding
-   procedure Execute
-     (Self   : On_MDI_Child_Selected;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Child  : Gtkada.MDI.MDI_Child);
-   --  Called when the focused MDI child changes. Used to close the
-   --  entities proposals menu.
-
    function On_Entity_Proposals_Menu_Key_Press
      (Self : access Gtk_Widget_Record'Class; Event : Gdk.Event.Gdk_Event_Key)
       return Boolean;
    --  Called when the users presses a key in the entity proposals menu.
    --  Close the menu if the ESC key was pressed.
 
+   function On_Entity_Proposals_Menu_Button_Press
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
+   --  Called when the user clicks while the entity proposals menu is shown.
+   --  Close the menu if the click happened outside of it.
+
    procedure On_Entity_Proposals_Menu_Show
      (Self : access Gtk_Widget_Record'Class);
    --  Called when the entity proposals menu is shown.
-   --  Used to grab the keyboard focus.
+   --  Used to grab the keyboard focus and the pointer, so that clicks
+   --  outside the menu are reported to it.
 
    procedure On_Entity_Proposals_Menu_Destroy
      (Self : access Gtk_Widget_Record'Class);
    --  Called when the entity proposals menu is destroyed.
-   --  Used to make sure we ungrab the keyboard focus.
+   --  Used to make sure we release the grabs.
 
    procedure On_Entity_Item_Clicked
      (Self   : access GObject_Record'Class;
@@ -950,6 +948,9 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       Proposals_Menu.On_Key_Press_Event
         (On_Entity_Proposals_Menu_Key_Press'Access);
+      Proposals_Menu.Add_Events (Button_Press_Mask);
+      Proposals_Menu.On_Button_Press_Event
+        (On_Entity_Proposals_Menu_Button_Press'Access);
       Proposals_Menu.On_Show (On_Entity_Proposals_Menu_Show'Access);
       Proposals_Menu.On_Destroy (On_Entity_Proposals_Menu_Destroy'Access);
 
@@ -1018,13 +1019,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Get_Size;
       Set_Position;
       Proposals_Menu.Show_All;
-
-      --  React on MDI focus changes, to close the entities proposals menu
-      --  if the user clicks somewhere else.
-      Mdi_Child_Selected_Hook.Add
-        (new On_MDI_Child_Selected'
-           (Mdi_Child_Hooks_Function with Proposals_Menu => Proposals_Menu),
-         Watch => Proposals_Menu);
    end Display_Menu_For_Entities_Proposals;
 
    ---------------------------------------------
@@ -1094,20 +1088,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       return Entities;
    end Get_Primitives_Hierarchy_On_Dispatching;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding
-   procedure Execute
-     (Self   : On_MDI_Child_Selected;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Child  : Gtkada.MDI.MDI_Child) is
-   begin
-      Self.Proposals_Menu.Notes_Window.Destroy;
-      Self.Proposals_Menu.Destroy;
-   end Execute;
-
    ----------------------------------------
    -- On_Entity_Proposals_Menu_Key_Press --
    ----------------------------------------
@@ -1131,6 +1111,43 @@ package body GPS.LSP_Client.Editors.Navigation is
       return False;
    end On_Entity_Proposals_Menu_Key_Press;
 
+   -------------------------------------------
+   -- On_Entity_Proposals_Menu_Button_Press --
+   -------------------------------------------
+
+   function On_Entity_Proposals_Menu_Button_Press
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
+   is
+      Menu             : constant Entity_Proposals_Menu :=
+        Entity_Proposals_Menu (Self);
+      Menu_X, Menu_Y   : Gint;
+      Click_X, Click_Y : Gint;
+   begin
+      --  Because of the grabs, this is also called for clicks that happen
+      --  outside of the menu. Compute the click's root coordinates from its
+      --  window rather than using the event's root coordinates, which are
+      --  not set for the events synthesized by the testsuite.
+
+      Get_Origin (Menu.Get_Window, Menu_X, Menu_Y);
+      Get_Origin (Event.Window, Click_X, Click_Y);
+      Click_X := Click_X + Gint (Event.X);
+      Click_Y := Click_Y + Gint (Event.Y);
+
+      if Click_X < Menu_X
+        or else Click_X >= Menu_X + Menu.Get_Allocated_Width
+        or else Click_Y < Menu_Y
+        or else Click_Y >= Menu_Y + Menu.Get_Allocated_Height
+      then
+         Menu.Notes_Window.Destroy;
+         Menu.Destroy;
+
+         return True;
+      end if;
+
+      return False;
+   end On_Entity_Proposals_Menu_Button_Press;
+
    -----------------------------------
    -- On_Entity_Proposals_Menu_Show --
    -----------------------------------
@@ -1144,6 +1161,21 @@ package body GPS.LSP_Client.Editors.Navigation is
       Grab_Toplevel_Focus (Get_MDI (Menu.Kernel), Menu.Tree_View);
 
       Dummy := Keyboard_Grab (Menu.Get_Window, False);
+
+      --  Report all the clicks to the menu: the ones made in GNAT Studio's
+      --  other windows through the GTK grab, the others through the pointer
+      --  grab. If the latter fails, the menu is still closed when clicking
+      --  in GNAT Studio.
+      Menu.Grab_Add;
+      Menu.Pointer_Grabbed := Pointer_Grab
+        (Menu.Get_Window,
+         Owner_Events => True,
+         Event_Mask   => Button_Press_Mask or Button_Release_Mask)
+        = Grab_Success;
+
+      if not Menu.Pointer_Grabbed then
+         Trace (Me, "Could not grab the pointer for the proposals menu");
+      end if;
    end On_Entity_Proposals_Menu_Show;
 
    --------------------------------------
@@ -1153,8 +1185,15 @@ package body GPS.LSP_Client.Editors.Navigation is
    procedure On_Entity_Proposals_Menu_Destroy
      (Self : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Self);
+      Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
    begin
+      Menu.Grab_Remove;
+
+      if Menu.Pointer_Grabbed then
+         Pointer_Ungrab;
+         Menu.Pointer_Grabbed := False;
+      end if;
+
       Keyboard_Ungrab;
    end On_Entity_Proposals_Menu_Destroy;
 
