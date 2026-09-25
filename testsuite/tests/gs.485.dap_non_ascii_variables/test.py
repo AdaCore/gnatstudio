@@ -11,7 +11,7 @@ expect = [
     "<b>Local variables</b> =  ",
     [
         "<b>is_bool</b> = boolean false",
-        "<b>ЗМІННА</b> = universal_real 3.1400000000000000001",
+        "<b>ЗМІННА</b> = universal_real 2.5",
     ],
 ]
 
